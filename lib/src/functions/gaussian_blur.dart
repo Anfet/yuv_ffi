@@ -1,0 +1,58 @@
+import 'dart:ffi';
+import 'dart:typed_data';
+
+import 'package:ffi/ffi.dart';
+import 'package:yuv_ffi/src/loader/loader.dart';
+import 'package:yuv_ffi/src/yuv/images/yuv_i420_image.dart';
+import 'package:yuv_ffi/src/yuv/yuv_image.dart';
+import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
+
+YuvImage gaussianBlur(YuvImage image, {int radius = 2, int sigma = 2}) {
+  switch (image.format) {
+    case YuvFileFormat.nv21:
+      // TODO: Handle this case.
+      throw UnimplementedError();
+    case YuvFileFormat.i420:
+      final (ySrcSize, ySrc) = image.yPlane.allocatePtr();
+      final (uSrcSize, uSrc) = image.uPlane.allocatePtr();
+      final (vSrcSize, vSrc) = image.vPlane.allocatePtr();
+
+      final (yDstSize, yDst) = YuvPlane.allocate(ySrcSize);
+      final (uDstSize, uDst) = YuvPlane.allocate(uSrcSize);
+      final (vDstSize, vDst) = YuvPlane.allocate(vSrcSize);
+
+      final yRowStride = image.yPlane.rowStride;
+      final yPixelStride = image.yPlane.pixelStride;
+      final uvRowStride = image.uPlane.rowStride;
+      final uvPixelStride = image.uPlane.pixelStride;
+      try {
+        ffiBingings.yuv420_gaussblur(
+          ySrc,
+          uSrc,
+          vSrc,
+          yRowStride,
+          yPixelStride,
+          uvRowStride,
+          uvPixelStride,
+          image.width,
+          image.height,
+          yDst,
+          uDst,
+          vDst,
+          radius,
+          sigma,
+        );
+        final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width);
+        final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, image.width);
+        final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, image.width);
+        return Yuv420Image.fromPlanes(image.width, image.height, [dstYPlane, dstuPlane, dstvPlane]);
+      } finally {
+        calloc.free(ySrc);
+        calloc.free(uSrc);
+        calloc.free(vSrc);
+        calloc.free(yDst);
+        calloc.free(uDst);
+        calloc.free(vDst);
+      }
+  }
+}

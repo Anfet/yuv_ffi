@@ -1,0 +1,42 @@
+name: yuv_ffi
+description: "A new Flutter project."
+version: 0.0.1+1
+homepage:
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.5.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.1.8
+
+
+  ffi: any
+dev_dependencies:
+  ffigen:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner:
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        ffiPlugin: true
+      ios:
+        ffiPlugin: true
+#      linux:
+#        ffiPlugin: true
+#      macos:
+#        ffiPlugin: true
+#      windows:
+#        ffiPlugin: true
+
+ffigen:
+  output: 'lib/src/yuv_ffi_bingings.dart'
+  headers:
+    entry-points:
+      - 'src/**.h'
