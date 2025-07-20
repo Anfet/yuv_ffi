@@ -30,20 +30,8 @@ YuvImage rotate(YuvImage image, YuvImageRotation rotation) {
       final (_, uSrc) = image.uPlane.allocatePtr();
       final (_, vSrc) = image.vPlane.allocatePtr();
 
-      ui.Size size = ui.Size(image.width.toDouble(), image.height.toDouble());
-      // final rectPtr = rect == null ? nullptr : calloc.allocate<Uint8>(4);
-      // if (rect != null) {
-      //   rectPtr.asTypedList(4)
-      //     ..[0] = rect.left.toInt()
-      //     ..[1] = rect.top.toInt()
-      //     ..[2] = rect.right.toInt()
-      //     ..[3] = rect.bottom.toInt();
-      //
-      //   size = ui.Size(rect.width, rect.height);
-      // }
-
-      final dstWidtn = (degrees == 90 || degrees == 270 ? size.height : size.width).toInt();
-      final dstHeight = (degrees == 90 || degrees == 270 ? size.width : size.height).toInt();
+      final dstWidtn = (degrees == 90 || degrees == 270 ? image.height : image.width).toInt();
+      final dstHeight = (degrees == 90 || degrees == 270 ? image.width : image.height).toInt();
 
       final ySrcSize = dstWidtn * dstHeight * image.yPlane.pixelStride;
       final uSrcSize = ((dstWidtn / 2) * (dstHeight / 2) * image.uPlane.pixelStride).toInt();
@@ -54,9 +42,16 @@ YuvImage rotate(YuvImage image, YuvImageRotation rotation) {
       try {
         ffiBingings.yuv420_rotate_interleaved(ySrc, uSrc, vSrc, yDst, uDst, vDst, image.width, image.height, degrees, image.yPlane.rowStride,
             image.yPlane.pixelStride, image.uPlane.rowStride, image.uPlane.pixelStride);
-        final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(ySrcSize)), image.yPlane.pixelStride, dstWidtn);
-        final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uSrcSize)), image.uPlane.pixelStride, dstWidtn);
-        final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vSrcSize)), image.vPlane.pixelStride, dstWidtn);
+        final dstYPlane =
+            YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(ySrcSize)), image.yPlane.pixelStride, image.width * image.yPlane.pixelStride);
+        final dstuPlane =
+            YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uSrcSize)), image.uPlane.pixelStride, image.width ~/ 2 * image.uPlane.pixelStride);
+        final dstvPlane =
+            YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vSrcSize)), image.vPlane.pixelStride, image.width ~/ 2 * image.vPlane.pixelStride);
+
+        // final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(ySrcSize)), image.yPlane.pixelStride, dstWidtn);
+        // final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uSrcSize)), image.uPlane.pixelStride, dstWidtn);
+        // final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vSrcSize)), image.vPlane.pixelStride, dstWidtn);
         return Yuv420Image.fromPlanes(dstWidtn, dstHeight, [dstYPlane, dstuPlane, dstvPlane]);
       } finally {
         calloc.free(ySrc);

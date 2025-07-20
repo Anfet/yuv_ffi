@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include "log.h"
 
 void yuv420_crop_rect(
         const uint8_t* y_src, const uint8_t* u_src, const uint8_t* v_src,

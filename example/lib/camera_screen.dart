@@ -5,10 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
-import 'package:yuv_ffi_example/yuv_camera_widget.dart';
+import 'package:yuv_ffi_example/widgets/yuv_camera_widget.dart';
 
 class CameraScreen extends StatefulWidget {
-
   const CameraScreen({super.key});
 
   @override
@@ -19,8 +18,8 @@ class _CameraScreenState extends State<CameraScreen> {
   CameraController? cameraController;
 
   CameraController get controller => cameraController!;
-
   Object? cameraError;
+  Completer<YuvImage>? nextFrameCompleter;
 
   @override
   void initState() {
@@ -67,6 +66,12 @@ class _CameraScreenState extends State<CameraScreen> {
                       // );
                       return YuvCameraWidget(
                         cameraController: controller,
+                        transform: (image) {
+                          if (nextFrameCompleter != null && nextFrameCompleter?.isCompleted != true) {
+                            nextFrameCompleter?.complete(image);
+                          }
+                          return image;
+                        },
                         // transform: (image) => crop(image, Rect.fromCenter(center: Offset(image.width / 2, image.height / 2), width: 100, height: 100)),
                       );
                     }
@@ -111,7 +116,7 @@ class _CameraScreenState extends State<CameraScreen> {
       }
 
       final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.back, orElse: () => cameras.first);
-      cameraController = CameraController(camera, ResolutionPreset.low, enableAudio: false, fps: 60);
+      cameraController = CameraController(camera, ResolutionPreset.medium, enableAudio: false, fps: 60);
       await controller.initialize();
     } catch (ex) {
       cameraError = '$ex';
@@ -121,25 +126,14 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future takePicture(BuildContext context) async {
-    final Completer<CameraImage> completer = Completer();
-    controller.startImageStream((image) {
-      if (!completer.isCompleted) {
-        completer.complete(image);
-      }
-    });
-    final image = await completer.future;
-    await controller.stopImageStream();
-    final disposingController = controller;
-    final sensorOrientation = disposingController.description.sensorOrientation;
-    cameraController = null;
-    setState(() {});
-    await disposingController.dispose();
-
-    await Future.delayed(Duration(seconds: 1));
-
-    YuvImageRotation rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == sensorOrientation.abs());
-    var yuv = image.toYuvImage();
-    yuv = rotate(yuv, rotation.toZero());
-    Navigator.of(context).pop(yuv);
+    assert(controller.value.isStreamingImages);
+    nextFrameCompleter = Completer();
+    try {
+      final yuv = await nextFrameCompleter!.future;
+      await Future.delayed(Duration(seconds: 1));
+      Navigator.of(context).pop(yuv);
+    } finally {
+      nextFrameCompleter = null;
+    }
   }
 }

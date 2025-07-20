@@ -2,6 +2,8 @@
 #define YUV_FFI_H
 
 #include <stdint.h>
+#include "yuv/utils/h/log.h"
+#include "yuv/utils/h/yuv_utils.h"
 #include "yuv/yuv420.h"
 
 #ifdef __cplusplus

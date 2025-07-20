@@ -46,7 +46,7 @@ class YuvNV21Image extends YuvImage {
   YuvNV21Image create(int width, int height) => YuvNV21Image(width, height);
 
   @override
-  Uint8List bgra8888() {
+  Uint8List toBgra8888() {
     final (_, yPtr) = yPlane.allocatePtr();
     final bgraBufferLength = width * height * 4;
     final bgraPtr = calloc.allocate<Uint8>(bgraBufferLength);
@@ -64,5 +64,16 @@ class YuvNV21Image extends YuvImage {
   YuvImage copy() {
     var planes = this.planes.map((p) => p.copy());
     return YuvNV21Image.fromPlanes(width, height, List.of(planes));
+  }
+
+  @override
+  void fromRgba8888(Uint8List bytes) {
+    // TODO: implement loadRgbaBytes
+  }
+
+  @override
+  Map<String, dynamic> toMap() {
+    // TODO: implement toMap
+    throw UnimplementedError();
   }
 }

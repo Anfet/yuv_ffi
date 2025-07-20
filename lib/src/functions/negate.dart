@@ -28,9 +28,9 @@ YuvImage negate(YuvImage image) {
       try {
         ffiBingings.yuv420_negate(
             ySrc, uSrc, vSrc, yRowStride, yPixelStride, uvRowStride, uvPixelStride, image.width, image.height, yDst, uDst, vDst);
-        final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width);
-        final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, image.width);
-        final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, image.width);
+        final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width * image.yPlane.pixelStride);
+        final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, image.width ~/ 2 * image.uPlane.pixelStride);
+        final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, image.width ~/ 2 * image.vPlane.pixelStride);
         return Yuv420Image.fromPlanes(image.width, image.height, [dstYPlane, dstuPlane, dstvPlane]);
       } finally {
         calloc.free(ySrc);

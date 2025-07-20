@@ -21,6 +21,7 @@ dependencies:
   share_plus: ^11.0.0
   path_provider: ^2.1.5
   material_design_icons_flutter: ^7.0.7296
+  image_picker:
 
 dev_dependencies:
   flutter_test:

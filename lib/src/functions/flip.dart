@@ -7,7 +7,6 @@ import 'package:yuv_ffi/src/yuv/images/yuv_i420_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
 
-
 YuvImage flipHorizontally(YuvImage image) {
   switch (image.format) {
     case YuvFileFormat.nv21:
@@ -24,9 +23,12 @@ YuvImage flipHorizontally(YuvImage image) {
       try {
         ffiBingings.yuv420_flip_horizontally(ySrc, uSrc, vSrc, yDst, uDst, vDst, image.width, image.height, image.yPlane.rowStride,
             image.yPlane.pixelStride, image.uPlane.rowStride, image.uPlane.pixelStride);
-        final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width);
-        final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, image.width);
-        final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, image.width);
+        final dstYPlane =
+            YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width * image.yPlane.pixelStride);
+        final dstuPlane = YuvPlane.fromBytes(
+            Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, (image.width ~/ 2) * image.uPlane.pixelStride);
+        final dstvPlane = YuvPlane.fromBytes(
+            Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, (image.width ~/ 2) * image.vPlane.pixelStride);
         return Yuv420Image.fromPlanes(image.width, image.height, [dstYPlane, dstuPlane, dstvPlane]);
       } finally {
         calloc.free(ySrc);
@@ -39,7 +41,7 @@ YuvImage flipHorizontally(YuvImage image) {
   }
 }
 
-YuvImage flipVertically(YuvImage image) {
+Future<YuvImage> flipVertically(YuvImage image) async {
   switch (image.format) {
     case YuvFileFormat.nv21:
       // TODO: Handle this case.
@@ -54,10 +56,13 @@ YuvImage flipVertically(YuvImage image) {
       final (vDstSize, vDst) = YuvPlane.allocate(vSrcsize);
       try {
         ffiBingings.yuv420_flip_vertically(ySrc, uSrc, vSrc, yDst, uDst, vDst, image.width, image.height, image.yPlane.rowStride,
-            image.yPlane.pixelStride, image.uPlane.rowStride, image.uPlane.pixelStride);
-        final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width);
-        final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, image.width);
-        final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, image.width);
+            image.yPlane.pixelStride, image.uPlane.rowStride, image.uPlane.pixelStride, nullptr);
+        final dstYPlane =
+            YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width * image.yPlane.pixelStride);
+        final dstuPlane =
+            YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, image.width ~/ 2 * image.uPlane.pixelStride);
+        final dstvPlane =
+            YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, image.width ~/ 2 * image.vPlane.pixelStride);
         return Yuv420Image.fromPlanes(image.width, image.height, [dstYPlane, dstuPlane, dstvPlane]);
       } finally {
         calloc.free(ySrc);

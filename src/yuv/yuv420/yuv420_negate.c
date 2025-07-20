@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include "log.h"
 
 void yuv420_negate(
         const uint8_t *y_src,

@@ -9,7 +9,8 @@ import 'package:flutter/foundation.dart';
 class YuvPlane {
   final String? name;
 
-  final Uint8List bytes;
+  Uint8List get bytes => _bytes;
+  Uint8List _bytes;
 
   //number of bytes per row
   final int rowStride;
@@ -25,25 +26,29 @@ class YuvPlane {
 
   int get height => (bytes.length / rowStride).round();
 
-  YuvPlane.fromBytes(Uint8List bytes, this.pixelStride, this.rowStride, {this.name}) : bytes = Uint8List.fromList(bytes);
+  YuvPlane.fromBytes(Uint8List bytes, this.pixelStride, this.rowStride, {this.name}) : _bytes = Uint8List.fromList(bytes);
 
   YuvPlane.empty(int width, int height, this.pixelStride, {this.name})
       : rowStride = pixelStride * width,
-        bytes = Uint8List(height * pixelStride * width)..fillRange(0, height * pixelStride * width, 0);
+        _bytes = Uint8List(height * pixelStride * width)..fillRange(0, height * pixelStride * width, 0);
 
-  YuvPlane.fromJson(Map<String, dynamic> json)
+  YuvPlane.fromJson(Map<String, dynamic> json, {bool bytesAsBinary = true, bool bytesAsList = false})
       : name = json['name'],
         rowStride = json['rowStride'],
         pixelStride = json['pixelStride'],
-        bytes = base64Decode(json['bytes']);
+        _bytes = bytesAsBinary
+            ? base64Decode(json['bytes'])
+            : bytesAsList
+                ? json['bytes']
+                : throw UnsupportedError('bytesAsBinary or bytesAsList should be set');
 
   int getPixel(int x, int y) {
     assert(x >= 0 && x < width, "bad x in plane '$name'; 0 <= '$x' < $width");
     assert(y >= 0 && y < height, "bad y in plane '$name'; 0 <= '$y' < $height");
 
     final int index = _indexOf(x, y);
-    assert(index >= 0 && index < bytes.length, "bad index in plane '$name'; must be 0 <= '$index' < ${bytes.length}");
-    return bytes[index];
+    assert(index >= 0 && index < _bytes.length, "bad index in plane '$name'; must be 0 <= '$index' < ${_bytes.length}");
+    return _bytes[index];
   }
 
   void setPixel(int x, int y, int value) {
@@ -51,27 +56,29 @@ class YuvPlane {
     assert(y >= 0 && y < height, "bad y in plane '$name'; 0 <= '$y' < $height");
 
     final int index = _indexOf(x, y);
-    assert(index >= 0 && index < bytes.length, "bad index in plane '$name'; must be 0 <= '$index' < ${bytes.length}");
-    bytes[index] = value;
+    assert(index >= 0 && index < _bytes.length, "bad index in plane '$name'; must be 0 <= '$index' < ${_bytes.length}");
+    _bytes[index] = value;
   }
 
-  YuvPlane copy() => YuvPlane.fromBytes(Uint8List.fromList(bytes), pixelStride, rowStride);
+  YuvPlane copy() => YuvPlane.fromBytes(Uint8List.fromList(_bytes), pixelStride, rowStride);
 
-  Uint8List copyBytes(int row, int start, int numberOfPixels) => bytes.sublist(_indexOf(start, row), _indexOf(start + numberOfPixels, row));
+  Uint8List copyBytes(int row, int start, int numberOfPixels) => _bytes.sublist(_indexOf(start, row), _indexOf(start + numberOfPixels, row));
 
   void pasteBytes(int row, int start, Uint8List bytes) {
     final int index = _indexOf(start, row);
-    this.bytes.setRange(index, index + bytes.length, bytes);
+    this._bytes.setRange(index, index + _bytes.length, bytes);
   }
 
   int _indexOf(int x, int y) => (y * rowStride) + (x * pixelStride);
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool bytesAsBinary = true, bool bytesAsList = false}) {
+    assert(bytesAsBinary || bytesAsList, 'bytesAsBinary or bytesAsList should be set');
     return {
       'name': name,
       'rowStride': rowStride,
       'pixelStride': pixelStride,
-      'bytes': base64Encode(bytes),
+      if (bytesAsBinary) 'bytes': base64Encode(_bytes),
+      if (bytesAsList) 'bytes': _bytes,
     };
   }
 
@@ -84,7 +91,13 @@ class YuvPlane {
   (int, Pointer<Uint8>) allocatePtr() {
     final size = width * height * pixelStride;
     final ptr = calloc.allocate<Uint8>(size);
-    ptr.asTypedList(size).setAll(0, bytes);
+    ptr.asTypedList(size).setAll(0, _bytes);
     return (size, ptr);
+  }
+}
+
+extension YuvPlaneLoaderExt on YuvPlane {
+  void assignFromPtr(Pointer<Uint8> ptr) {
+    _bytes = Uint8List.fromList(ptr.asTypedList(width * height * pixelStride));
   }
 }

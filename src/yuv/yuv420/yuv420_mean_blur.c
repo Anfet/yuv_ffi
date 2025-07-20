@@ -2,7 +2,7 @@
 #define INVERT_I420_H
 
 #include <stdint.h>
-#include "yuv_utils.h"
+#include "../yuv/utils/h/yuv_utils.h"
 
 void yuv420_mean_blur(
         const uint8_t *y_src,

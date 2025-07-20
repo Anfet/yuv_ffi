@@ -1,8 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include "log.h"
-#include "yuv_utils.h"
+#include "../yuv/utils/h/yuv_utils.h"
 
 void yuv420_rotate_interleaved(
         const uint8_t *y_src,

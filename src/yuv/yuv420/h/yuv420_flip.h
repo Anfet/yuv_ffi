@@ -30,7 +30,8 @@ void yuv420_flip_vertically(
         int yRowStride,
         int yPixelStride,
         int uvRowStride,
-        int uvPixelStride
+        int uvPixelStride,
+        uint32_t *rect
 );
 
 #endif

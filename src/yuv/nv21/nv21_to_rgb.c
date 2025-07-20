@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include "log.h"
 
 void nv21_to_rgb(uint8_t *nv21, uint8_t *bgra, int width, int height) {
     const int frameSize = width * height;

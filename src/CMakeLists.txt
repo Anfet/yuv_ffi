@@ -9,7 +9,11 @@ set_property(GLOBAL PROPERTY CMAKE_CONFIGURE_DEPENDS "yuv/*.c")
 
 # Собираем все исходники из папки yuv/
 file(GLOB_RECURSE SOURCES "yuv/*.c" "yuv_ffi.c" "**/*.c")
-add_library(yuv_ffi SHARED ${SOURCES})
+add_library(
+        yuv_ffi SHARED ${SOURCES}
+        "yuv/yuv420.c"
+        "yuv/yuv420/yuv420_from_rgba.c"
+)
 
 target_include_directories(
         yuv_ffi

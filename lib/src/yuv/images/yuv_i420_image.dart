@@ -1,75 +1,69 @@
-import 'dart:ffi';
-
-import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
-import 'package:yuv_ffi/src/loader/loader.dart';
+import 'package:yuv_ffi/src/functions/rgba8888.dart';
 
 import '../yuv_image.dart';
 import '../yuv_planes.dart';
 
-@immutable
 class Yuv420Image extends YuvImage {
   @override
   final YuvFileFormat format = YuvFileFormat.i420;
 
   @override
-  final int width;
+  int get width => _width;
+
+  int _width;
 
   @override
-  final int height;
+  int get height => _height;
+
+  int _height;
 
   @override
-  late final List<YuvPlane> planes;
+  List<YuvPlane> get planes => List.unmodifiable(_planes);
+
+  late List<YuvPlane> _planes;
 
   @override
-  YuvPlane get yPlane => planes[0];
+  YuvPlane get yPlane => _planes[0];
+
+  set yPlane(YuvPlane value) => _planes[0] = value;
 
   @override
-  YuvPlane get uPlane => planes[1];
+  YuvPlane get uPlane => _planes[1];
+
+  set uPlane(YuvPlane value) => _planes[1] = value;
 
   @override
-  YuvPlane get vPlane => planes[2];
+  YuvPlane get vPlane => _planes[2];
 
-  Yuv420Image._(this.width, this.height, this.planes);
+  set vPlane(YuvPlane value) => _planes[2] = value;
 
-  Yuv420Image(this.width, this.height) {
+  Yuv420Image._(this._width, this._height, this._planes);
+
+  Yuv420Image(this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1}) {
     final yplane = YuvPlane.empty(width, height, 1);
     final uvWidth = width ~/ 2;
     final uvHeight = height ~/ 2;
-    final uplane = YuvPlane.empty(uvWidth, uvHeight, 2);
-    final vplane = YuvPlane.empty(uvWidth, uvHeight, 2);
-    planes = List.unmodifiable([yplane, uplane, vplane]);
+    final uplane = YuvPlane.empty(uvWidth, uvHeight, 1);
+    final vplane = YuvPlane.empty(uvWidth, uvHeight, 1);
+    _planes = [yplane, uplane, vplane];
   }
 
-  Yuv420Image.fromPlanes(this.width, this.height, this.planes);
+  Yuv420Image.fromPlanes(this._width, this._height, this._planes);
 
   @override
   Yuv420Image create(int width, int height) => Yuv420Image(width, height);
 
   @override
-  Uint8List bgra8888() {
-    final (_, yPlane) = this.yPlane.allocatePtr();
-    final (_, uPlane) = this.uPlane.allocatePtr();
-    final (_, vPlane) = this.vPlane.allocatePtr();
-    final bgraPlaneLength = width * height * 4;
-    final bgraPlane = calloc.allocate<Uint8>(bgraPlaneLength);
-    try {
-      final uvRowStride = this.uPlane.rowStride;
-      final uvPixelStride = this.vPlane.pixelStride;
-      ffiBingings.yuv420_to_bgra8888(yPlane, uPlane, vPlane, this.yPlane.rowStride, uvRowStride, uvPixelStride, width, height, bgraPlane);
-      final result = Uint8List.fromList(bgraPlane.asTypedList(bgraPlaneLength));
-      return result;
-    } finally {
-      calloc.free(yPlane);
-      calloc.free(uPlane);
-      calloc.free(vPlane);
-      calloc.free(bgraPlane);
-    }
-  }
-
-  @override
   YuvImage copy() {
-    var planes = this.planes.map((p) => p.copy());
+    var planes = this._planes.map((p) => p.copy());
     return Yuv420Image.fromPlanes(width, height, List.of(planes));
   }
+
+  static YuvImage fromRGBA(Uint8List rgbaBuffer, int width, int height) {
+    final image = Yuv420Image(width, height);
+    image.fromRgba8888(rgbaBuffer);
+    return image;
+  }
+
 }

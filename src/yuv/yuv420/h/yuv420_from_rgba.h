@@ -1,0 +1,8 @@
+#ifndef YUV420_FROM_RGBA_H
+#define YUV420_FROM_RGBA_H
+
+#include <stdint.h>
+
+void yuv420_from_rgba8888(const uint8_t *rgba, const YUV420Def *src);
+
+#endif
