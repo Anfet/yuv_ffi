@@ -1,20 +1,19 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include "../yuv/yuv420.h"
 #include "../yuv/utils/h/yuv_utils.h"
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-
 void yuv420_box_blur(
-        const uint8_t *src,
-        uint8_t *dst,
-        int width,
-        int height,
-        int rowStride,
-        int pixelStride,
+        const YUV420Def *src,
         int radius,
-        const uint32_t *rect  // NULL или [left, top, right, bottom]
+        const uint32_t *rect
 ) {
+    const int width = src->width;
+    const int height = src->height;
+    const int rowStride = src->yRowStride;
+    const int pixelStride = src->yPixelStride;
+    uint8_t *dst = src->y;
+
     uint32_t left = 0, top = 0, right = width, bottom = height;
     if (rect) {
         left = rect[0];
@@ -27,7 +26,7 @@ void yuv420_box_blur(
     if (!temp) return;
 
     for (int y = 0; y < height; ++y) {
-        const uint8_t *row = src + y * rowStride;
+        const uint8_t *row = src->y + y * rowStride;
         uint8_t *temp_row = temp + y * rowStride;
 
         int sum = 0;
@@ -46,26 +45,6 @@ void yuv420_box_blur(
         }
     }
 
-//    // Вертикальный проход + условие rect
-//    for (int y = 0; y < height; ++y) {
-//        for (int x = 0; x < width; ++x) {
-//            int dstIndex = yuv_index(x, y, rowStride, pixelStride);
-//            uint8_t original = src[dstIndex];
-//
-//            if (x < left || x >= right || y < top || y >= bottom) {
-//                dst[dstIndex] = original;
-//                continue;
-//            }
-//
-//            int sum = 0;
-//            for (int dy = -radius; dy <= radius; ++dy) {
-//                int yy = MIN(height - 1, MAX(0, y + dy));
-//                sum += temp[yy * rowStride + x * pixelStride];
-//            }
-//
-//            dst[dstIndex] = (uint8_t)(sum / (2 * radius + 1));
-//        }
-//    }
     // Вертикальный проход (ускоренный)
     for (int x = 0; x < width; ++x) {
         int sum = 0;
@@ -78,7 +57,7 @@ void yuv420_box_blur(
 
         for (int y = 0; y < height; ++y) {
             int dstIndex = yuv_index(x, y, rowStride, pixelStride);
-            uint8_t original = src[dstIndex];
+            uint8_t original = src->y[dstIndex];
 
             if (x < left || x >= right || y < top || y >= bottom) {
                 dst[dstIndex] = original;

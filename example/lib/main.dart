@@ -98,7 +98,7 @@ class _MyAppState extends State<MyApp> {
                           ),
                           IconButton(onPressed: () => gaussianBlurImage(), icon: Icon(MdiIcons.blur, size: 32), tooltip: 'Gaussian blur'),
                           IconButton(onPressed: () => meanBlurImage(), icon: Icon(MdiIcons.blurLinear, size: 32), tooltip: 'Mean blur'),
-                          IconButton(onPressed: () => boxBlurImage(), icon: Icon(MdiIcons.blurOff, size: 32), tooltip: 'Box blur'),
+                          IconButton(onPressed: () => boxBlurImage(), icon: Icon(MdiIcons.box, size: 32), tooltip: 'Box blur'),
                         ],
                       ),
                     )
@@ -216,7 +216,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void boxBlurImage() {
-    logTimed(() => image = boxBlur(image!, radius: 5), name: '$image boxBlurImage');
+    logTimed(() => image = boxBlur(image!, radius: 10), name: '$image boxBlurImage');
   }
 
   Future loadImage() async {

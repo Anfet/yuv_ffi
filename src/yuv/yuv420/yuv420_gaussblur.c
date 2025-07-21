@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "../yuv/yuv420.h"
+#include "../yuv/utils/h/yuv_utils.h"
 
 // Генерация 1D гауссового ядра
 static void generate_gaussian_kernel(float *kernel, int radius, float sigma) {
@@ -89,21 +91,23 @@ void gaussian_blur_plane_strided(
 }
 
 void yuv420_gaussblur(
-        const uint8_t *y_src,
-        const uint8_t *u_src,
-        const uint8_t *v_src,
-        int y_row_stride,
-        int y_pixel_stride,
-        int uv_row_stride,
-        int uv_pixel_stride,
-        int width,
-        int height,
-        uint8_t *y_dst,
-        uint8_t *u_dst,
-        uint8_t *v_dst,
+        const YUV420Def *src,
         int radius,
         int sigma
 ) {
+    const int width = src->width;
+    const int height = src->height;
+    uint8_t *y_src = src->y;
+    uint8_t *y_dst = src->y;
+    uint8_t *u_src = src->u;
+    uint8_t *u_dst = src->u;
+    uint8_t *v_src = src->v;
+    uint8_t *v_dst = src->v;
+    const int y_row_stride = src->yRowStride;
+    const int y_pixel_stride = src->yPixelStride;
+    const int uv_row_stride = src->uvRowStride;
+    const int uv_pixel_stride = src->uvPixelStride;
+
     gaussian_blur_plane_strided(
             y_src, y_dst,
             width, height,

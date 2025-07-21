@@ -7,14 +7,9 @@
 
 
 void yuv420_box_blur(
-        const uint8_t *src,
-        uint8_t *dst,
-        int width,
-        int height,
-        int rowStride,
-        int pixelStride,
+        const YUV420Def *src,
         int radius,
-        const uint32_t *rect  // NULL или [left, top, right, bottom]
+        const uint32_t *rect
 );
 
 #endif
