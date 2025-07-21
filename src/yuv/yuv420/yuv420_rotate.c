@@ -2,28 +2,31 @@
 #include <string.h>
 #include <unistd.h>
 #include "../yuv/utils/h/yuv_utils.h"
+#include "../yuv/yuv420.h"
 
-void yuv420_rotate_interleaved(
-        const uint8_t *y_src,
-        const uint8_t *u_src,
-        const uint8_t *v_src,
-        uint8_t *y_dst,
-        uint8_t *u_dst,
-        uint8_t *v_dst,
-        int width,
-        int height,
-        int rotationDegrees,
-        int yRowStride,
-        int yPixelStride,
-        int uvRowStride,
-        int uvPixelStride
+void yuv420_rotate(
+        const YUV420Def *src,
+        const YUV420Def *dst,
+        int rotationDegrees
 ) {
+    const int rotation90 = rotationDegrees / 90.0;
+    const int dstWidth = dst->width;
+    const int dstHeight = dst->height;
+    const int uvDstWidth = dst->width / 2;
 
+    const int height = src->height;
+    const int width = src->width;
+    const int yRowStride = src->yRowStride;
+    const int yPixelStride = src->yPixelStride;
+    const int uvRowStride = src->uvRowStride;
+    const int uvPixelStride = src->uvPixelStride;
+    uint8_t *y_src = src->y;
+    uint8_t *u_src = src->u;
+    uint8_t *v_src = src->v;
 
-    const int rotation90 = (rotationDegrees % 360) / 90.0;
-    const int dstWidth = rotation90 % 2 == 0 ? width : height;
-    const int dstHeight = rotation90 % 2 == 0 ? height : width;
-    const int uvDstWidth = (rotation90 % 2 == 1 ? height : width) / 2;
+    uint8_t *y_dst = dst->y;
+    uint8_t *u_dst = dst->u;
+    uint8_t *v_dst = dst->v;
 
     for (int y = 0; y < dstHeight; ++y) {
         for (int x = 0; x < dstWidth; ++x) {

@@ -15,28 +15,15 @@ YuvImage blackwhite(YuvImage image) {
       throw UnimplementedError();
     case YuvFileFormat.i420:
       final def = YUV420DefClass(image);
-      final (ySrcSize, ySrc) = image.yPlane.allocatePtr();
-
-      final uSrcSize = image.uPlane.width * image.uPlane.height * image.uPlane.pixelStride;
-      final (yDstSize, yDst) = YuvPlane.allocate(ySrcSize);
-      final (uDstSize, uDst) = YuvPlane.allocate(uSrcSize);
-      final (vDstSize, vDst) = YuvPlane.allocate(uSrcSize);
-
-      final yRowStride = image.yPlane.rowStride;
-      final yPixelStride = image.yPlane.pixelStride;
-      final uvRowStride = image.uPlane.rowStride;
-      final uvPixelStride = image.uPlane.pixelStride;
       try {
-        ffiBingings.yuv420_blackwhite(ySrc, yRowStride, yPixelStride, uvRowStride, uvPixelStride, image.width, image.height, yDst, uDst, vDst);
-        final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width * image.yPlane.pixelStride);
-        final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, image.width ~/ 2 * image.uPlane.pixelStride);
-        final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, image.width ~/ 2 * image.vPlane.pixelStride);
-        return Yuv420Image.fromPlanes(image.width, image.height, [dstYPlane, dstuPlane, dstvPlane]);
+        ffiBingings.yuv420_blackwhite(def.pointer);
+        image.yPlane.assignFromPtr(def.pointer.ref.y);
+        image.uPlane.assignFromPtr(def.pointer.ref.u);
+        image.vPlane.assignFromPtr(def.pointer.ref.v);
       } finally {
-        calloc.free(ySrc);
-        calloc.free(yDst);
-        calloc.free(uDst);
-        calloc.free(vDst);
+        def.dispose();
       }
   }
+
+  return image;
 }

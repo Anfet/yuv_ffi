@@ -43,12 +43,9 @@ YuvImage gaussianBlur(YuvImage image, {int radius = 2, int sigma = 2}) {
           radius,
           sigma,
         );
-        final dstYPlane =
-            YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width * image.yPlane.pixelStride);
-        final dstuPlane =
-            YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, image.width ~/ 2 * image.uPlane.pixelStride);
-        final dstvPlane =
-            YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, image.width ~/ 2 * image.vPlane.pixelStride);
+        final dstYPlane = YuvPlane(image.height, yRowStride, yPixelStride, yDst.asTypedList(yDstSize));
+        final dstuPlane = YuvPlane(image.height, uvRowStride, uvPixelStride, uDst.asTypedList(uDstSize));
+        final dstvPlane = YuvPlane(image.height, uvRowStride, uvPixelStride, vDst.asTypedList(uDstSize));
         return Yuv420Image.fromPlanes(image.width, image.height, [dstYPlane, dstuPlane, dstvPlane]);
       } finally {
         calloc.free(ySrc);
@@ -82,8 +79,7 @@ YuvImage boxBlur(YuvImage image, {int radius = 10, ui.Rect? rect}) {
       final yPixelStride = image.yPlane.pixelStride;
       try {
         ffiBingings.yuv420_box_blur(ySrc, yDst, image.width, image.height, yRowStride, yPixelStride, radius, rectPtr);
-        final dstYPlane =
-            YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width * image.yPlane.pixelStride);
+        final dstYPlane = YuvPlane(image.height, yRowStride, yPixelStride, yDst.asTypedList(yDstSize));
         return Yuv420Image.fromPlanes(image.width, image.height, [dstYPlane, image.uPlane, image.vPlane]);
       } finally {
         calloc.free(ySrc);
@@ -116,8 +112,7 @@ YuvImage meanBlur(YuvImage image, {int radius = 2, ui.Rect? rect}) {
       final yPixelStride = image.yPlane.pixelStride;
       try {
         ffiBingings.yuv420_mean_blur(ySrc, yDst, image.width, image.height, radius, yRowStride, yPixelStride, rectPtr);
-        final dstYPlane =
-            YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width * image.yPlane.pixelStride);
+        final dstYPlane = YuvPlane(image.height, yRowStride, yPixelStride, yDst.asTypedList(yDstSize));
         return Yuv420Image.fromPlanes(image.width, image.height, [dstYPlane, image.uPlane, image.vPlane]);
       } finally {
         calloc.free(ySrc);

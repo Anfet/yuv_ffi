@@ -72,7 +72,6 @@ class _CameraScreenState extends State<CameraScreen> {
                           }
                           return image;
                         },
-                        // transform: (image) => crop(image, Rect.fromCenter(center: Offset(image.width / 2, image.height / 2), width: 100, height: 100)),
                       );
                     }
 

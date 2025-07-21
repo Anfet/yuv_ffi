@@ -26,26 +26,20 @@ class Yuv420Image extends YuvImage {
   @override
   YuvPlane get yPlane => _planes[0];
 
-  set yPlane(YuvPlane value) => _planes[0] = value;
-
   @override
   YuvPlane get uPlane => _planes[1];
-
-  set uPlane(YuvPlane value) => _planes[1] = value;
 
   @override
   YuvPlane get vPlane => _planes[2];
 
-  set vPlane(YuvPlane value) => _planes[2] = value;
-
   Yuv420Image._(this._width, this._height, this._planes);
 
-  Yuv420Image(this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1}) {
-    final yplane = YuvPlane.empty(width, height, 1);
+  Yuv420Image(this._width, this._height, [int yPixelStride = 1, int uvPixelStride = 1]) {
+    final yplane = YuvPlane(_height, this._width * yPixelStride, yPixelStride);
     final uvWidth = width ~/ 2;
     final uvHeight = height ~/ 2;
-    final uplane = YuvPlane.empty(uvWidth, uvHeight, 1);
-    final vplane = YuvPlane.empty(uvWidth, uvHeight, 1);
+    final uplane = YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
+    final vplane = YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
     _planes = [yplane, uplane, vplane];
   }
 
@@ -65,5 +59,4 @@ class Yuv420Image extends YuvImage {
     image.fromRgba8888(rgbaBuffer);
     return image;
   }
-
 }

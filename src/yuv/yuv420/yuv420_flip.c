@@ -3,93 +3,78 @@
 #include <unistd.h>
 #include "../yuv/utils/h/log.h"
 #include "../yuv/utils/h/yuv_utils.h"
+#include "../yuv/yuv420.h"
 
 void yuv420_flip_horizontally(
-        const uint8_t *y_src,
-        const uint8_t *u_src,
-        const uint8_t *v_src,
-        uint8_t *y_dst,
-        uint8_t *u_dst,
-        uint8_t *v_dst,
-        int width,
-        int height,
-        int yRowStride,
-        int yPixelStride,
-        int uvRowStride,
-        int uvPixelStride
+        const YUV420Def *src
 ) {
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int sx = width - 1 - x;
+    uint8_t yTemp[src->yPixelStride];
+    uint8_t uTemp[src->uvPixelStride];
+    uint8_t vTemp[src->uvPixelStride];
+    const int flipWidth = src->width / 2;
+    for (int y = 0; y < src->height; ++y) {
+        for (int x = 0; x < flipWidth; ++x) {
+            int sx = src->width - 1 - x;
             int sy = y;
             int dx = x;
             int dy = y;
 
-            const int srcYIndex = yuv_index(sx, sy, yRowStride, yPixelStride);
-            const int dstYIndex = yuv_index(dx, dy, yRowStride, yPixelStride);
-            y_dst[dstYIndex] = y_src[srcYIndex];
-            int srcUvIndex = yuv_index(sx / 2, sy / 2, uvRowStride, uvPixelStride);
-            int dstUvIndex = yuv_index(dx / 2, dy / 2, uvRowStride, uvPixelStride);
-            memcpy(u_dst + dstUvIndex, u_src + srcUvIndex, uvPixelStride);
-            memcpy(v_dst + dstUvIndex, v_src + srcUvIndex, uvPixelStride);
+            const int srcYIndex = yuv_index(sx, sy, src->yRowStride, src->yPixelStride);
+            const int dstYIndex = yuv_index(dx, dy, src->yRowStride, src->yPixelStride);
+
+            if (src->yPixelStride == 1) {
+                uint8_t temp = src->y[dstYIndex];
+                src->y[dstYIndex] = src->y[srcYIndex];
+                src->y[srcYIndex] = temp;
+            } else {
+                memcpy(yTemp, src->y + dstYIndex, src->yPixelStride);
+                memcpy(src->y + dstYIndex, src->y + srcYIndex, src->yPixelStride);
+                memcpy(src->y + srcYIndex, yTemp, src->yPixelStride);
+            }
+
+            if (x % 2 == 0 && y % 2 == 0) {
+                int srcUvIndex = yuv_index(sx / 2, sy / 2, src->uvRowStride, src->uvPixelStride);
+                int dstUvIndex = yuv_index(dx / 2, dy / 2, src->uvRowStride, src->uvPixelStride);
+
+                memcpy(uTemp, src->u + dstUvIndex, src->uvPixelStride);
+                memcpy(src->u + dstUvIndex, src->u + srcUvIndex, src->uvPixelStride);
+                memcpy(src->u + srcUvIndex, uTemp, src->uvPixelStride);
+
+                memcpy(vTemp, src->v + dstUvIndex, src->uvPixelStride);
+                memcpy(src->v + dstUvIndex, src->v + srcUvIndex, src->uvPixelStride);
+                memcpy(src->v + srcUvIndex, vTemp, src->uvPixelStride);
+            }
         }
     }
 }
 
 void yuv420_flip_vertically(
-        const uint8_t *y_src,
-        const uint8_t *u_src,
-        const uint8_t *v_src,
-        uint8_t *y_dst,
-        uint8_t *u_dst,
-        uint8_t *v_dst,
-        int width,
-        int height,
-        int yRowStride,
-        int yPixelStride,
-        int uvRowStride,
-        int uvPixelStride,
-        uint32_t *rect
+        const YUV420Def *src
 ) {
-    int left = rect == NULL ? 0 : rect[0];
-    int top = rect == NULL ? 0 : rect[1];
-    int right = rect == NULL ? width : rect[2];
-    int bottom = rect == NULL ? height : rect[3];
-    for (int y = 0; y < height; ++y) {
-        memcpy(y_dst, y_src, yRowStride);
-        memcpy(u_dst, u_src, uvRowStride);
-        memcpy(v_dst, v_src, uvRowStride);
+//    uint8_t yTemp[src->yRowStride];
+//    uint8_t uvTemp[src->uvRowStride];
 
-//        if (y >= top && y <= bottom) {
-//            int sx = left;
-//            int sy = height - 1 - y;
-//            int dx = left;
-//            int dy = y;
-//
-//            int yLen = (right - left) * yPixelStride;
-//            int uvLen = (right - left) * uvPixelStride;
-//
-//            memcpy(y_dst + dy * yRowStride + dx * yPixelStride, y_src + sy * yRowStride + sx * yPixelStride, yLen);
-//            memcpy(u_dst + dy * uvRowStride + dx * uvPixelStride, u_src + sy * uvRowStride + sx * uvPixelStride, uvLen);
-//            memcpy(v_dst + dy * uvRowStride + dx * uvPixelStride, v_src + sy * uvRowStride + sx * uvPixelStride, uvLen);
-//        }
+    const int flipHeight = src->height / 2;
+    for (int y = 0; y < flipHeight; ++y) {
+        uint8_t *srcYIndex = src->y + yuv_index(0, y, src->yRowStride, src->yPixelStride);
+        uint8_t *dstYIndex = src->y + yuv_index(0, src->height - y - 1, src->yRowStride, src->yPixelStride);
+        swap_bytes(srcYIndex, dstYIndex, src->yRowStride);
+//        memcpy(yTemp, dstYIndex, src->yRowStride);
+//        memcpy(dstYIndex, srcYIndex, src->yRowStride);
+//        memcpy(srcYIndex, yTemp, src->yRowStride);
+
+        if (y % 2 == 0) {
+            int srcUvIndex = yuv_index(0, y / 2, src->uvRowStride, src->uvPixelStride);
+            int dstUvIndex = yuv_index(0, (src->height - y - 1) / 2, src->uvRowStride, src->uvPixelStride);
+            swap_bytes(src->u + dstUvIndex, src->u + srcUvIndex, src->uvRowStride);
+//            memcpy(uvTemp, src->u + dstUvIndex, src->uvRowStride);
+//            memcpy(src->u + dstUvIndex, src->u + srcUvIndex, src->uvRowStride);
+//            memcpy(src->u + srcUvIndex, uvTemp, src->uvRowStride);
+
+            swap_bytes(src->v + dstUvIndex, src->v + srcUvIndex, src->uvRowStride);
+//            memcpy(uvTemp, src->v + dstUvIndex, src->uvRowStride);
+//            memcpy(src->v + dstUvIndex, src->v + srcUvIndex, src->uvRowStride);
+//            memcpy(src->v + srcUvIndex, uvTemp, src->uvRowStride);
+        }
     }
 }
-
-
-//        for (int x = 0; x < width; ++x) {
-//            int sx = x;
-//            int sy = height - 1 - y;
-//            int dx = x;
-//            int dy = y;
-//
-//            const int srcYIndex = (sy * yRowStride) + (sx * yPixelStride);
-//            const int dstYIndex = (dy * yPixelStride * width) + (dx * yPixelStride);
-//            y_dst[dstYIndex] = y_src[srcYIndex];
-//            int srcUvIndex = ((sy / 2) * uvRowStride) + ((sx / 2) * uvPixelStride);
-//            int dstUvIndex = ((dy / 2) * (width / 2) * uvPixelStride) + ((dx / 2) * uvPixelStride);
-//            for (int z = 0; z < uvPixelStride; ++z) {
-//                u_dst[dstUvIndex + z] = u_src[srcUvIndex + z];
-//                v_dst[dstUvIndex + z] = v_src[srcUvIndex + z];
-//            }
-//        }

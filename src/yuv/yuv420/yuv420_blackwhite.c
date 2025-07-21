@@ -2,28 +2,26 @@
 #include <string.h>
 #include <unistd.h>
 #include "../yuv/utils/h/log.h"
+#include "../yuv/yuv420.h"
+#include "../yuv/utils/h/yuv_utils.h"
 
-void yuv420_blackwhite(
-        const uint8_t *y_src,
-        int y_row_stride,
-        int y_pixel_stride,
-        int uv_row_stride,
-        int uv_pixel_stride,
-        int width,
-        int height,
-        uint8_t *y_dst,
-        uint8_t *u_dst,
-        uint8_t *v_dst
-) {
-    int y_plane_size = width * height * y_pixel_stride;
-    int uv_plane_size = (width / 2) * (height / 2) * uv_pixel_stride;
+void yuv420_blackwhite(const YUV420Def *src) {
+    const int height = src->height;
+    const int yRowStride = src->yRowStride;
+    const int uvRowStride = src->uvRowStride;
+    uint8_t *ySrc = src->y;
+    uint8_t *uDst = src->u;
+    uint8_t *vDst = src->v;
+
+    int y_plane_size = height * yRowStride;
+    int uv_plane_size = height / 2 * uvRowStride;
 
     // Бинаризуем яркость: 0 или 255
     for (int i = 0; i < y_plane_size; ++i) {
-        y_dst[i] = y_src[i] >= 127 ? 255 : 0;
+        ySrc[i] = ySrc[i] >= 127 ? 255 : 0;
     }
 
     // Цвет убираем — делаем нейтральный серый
-    memset(u_dst, 128, uv_plane_size);
-    memset(v_dst, 128, uv_plane_size);
+    memset(uDst, 128, uv_plane_size);
+    memset(vDst, 128, uv_plane_size);
 }

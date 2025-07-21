@@ -4,34 +4,11 @@
 #include <stdint.h>
 
 void yuv420_flip_horizontally(
-        const uint8_t *y_src,
-        const uint8_t *u_src,
-        const uint8_t *v_src,
-        uint8_t *y_dst,
-        uint8_t *u_dst,
-        uint8_t *v_dst,
-        int width,
-        int height,
-        int yRowStride,
-        int yPixelStride,
-        int uvRowStride,
-        int uvPixelStride
+        const YUV420Def *src
 );
 
 void yuv420_flip_vertically(
-        const uint8_t *y_src,
-        const uint8_t *u_src,
-        const uint8_t *v_src,
-        uint8_t *y_dst,
-        uint8_t *u_dst,
-        uint8_t *v_dst,
-        int width,
-        int height,
-        int yRowStride,
-        int yPixelStride,
-        int uvRowStride,
-        int uvPixelStride,
-        uint32_t *rect
+        const YUV420Def *src
 );
 
 #endif

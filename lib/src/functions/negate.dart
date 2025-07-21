@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
+import 'package:yuv_ffi/src/yuv/defs/yuv420def.dart';
 import 'package:yuv_ffi/src/yuv/images/yuv_i420_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
@@ -13,32 +14,17 @@ YuvImage negate(YuvImage image) {
       // TODO: Handle this case.
       throw UnimplementedError();
     case YuvFileFormat.i420:
-      final (ySrcSize, ySrc) = image.yPlane.allocatePtr();
-      final (uSrcSize, uSrc) = image.uPlane.allocatePtr();
-      final (vSrcSize, vSrc) = image.vPlane.allocatePtr();
+      final def = YUV420DefClass(image);
 
-      final (yDstSize, yDst) = YuvPlane.allocate(ySrcSize);
-      final (uDstSize, uDst) = YuvPlane.allocate(uSrcSize);
-      final (vDstSize, vDst) = YuvPlane.allocate(vSrcSize);
-
-      final yRowStride = image.yPlane.rowStride;
-      final yPixelStride = image.yPlane.pixelStride;
-      final uvRowStride = image.uPlane.rowStride;
-      final uvPixelStride = image.uPlane.pixelStride;
       try {
-        ffiBingings.yuv420_negate(
-            ySrc, uSrc, vSrc, yRowStride, yPixelStride, uvRowStride, uvPixelStride, image.width, image.height, yDst, uDst, vDst);
-        final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, image.width * image.yPlane.pixelStride);
-        final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, image.width ~/ 2 * image.uPlane.pixelStride);
-        final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, image.width ~/ 2 * image.vPlane.pixelStride);
-        return Yuv420Image.fromPlanes(image.width, image.height, [dstYPlane, dstuPlane, dstvPlane]);
+        ffiBingings.yuv420_negate(def.pointer);
+        image.yPlane.assignFromPtr(def.pointer.ref.y);
+        image.uPlane.assignFromPtr(def.pointer.ref.u);
+        image.vPlane.assignFromPtr(def.pointer.ref.v);
       } finally {
-        calloc.free(ySrc);
-        calloc.free(uSrc);
-        calloc.free(vSrc);
-        calloc.free(yDst);
-        calloc.free(uDst);
-        calloc.free(vDst);
+        def.dispose();
       }
   }
+
+  return image;
 }

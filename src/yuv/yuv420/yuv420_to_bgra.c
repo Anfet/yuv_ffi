@@ -18,11 +18,9 @@ void yuv420_to_bgra8888(
             yIndex = yuv_index(x, y, src->yRowStride, src->yPixelStride);
             yp = src->y[yIndex];
 
-            if ((x % 2 == 0) && (y % 2 == 0)) {
-                uvIndex = yuv_index(x / 2, y / 2, src->uvRowStride, src->uvPixelStride);
-                up = src->u[uvIndex] - 128;
-                vp = src->v[uvIndex] - 128;
-            }
+            uvIndex = yuv_index(x / 2, y / 2, src->uvRowStride, src->uvPixelStride);
+            up = src->u[uvIndex] - 128;
+            vp = src->v[uvIndex] - 128;
 
             r = (int) (yp + 1.370705 * vp);
             g = (int) (yp - 0.337633 * up - 0.698001 * vp);

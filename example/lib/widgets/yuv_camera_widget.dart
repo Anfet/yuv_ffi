@@ -20,7 +20,7 @@ class YuvCameraWidget extends StatefulWidget {
 }
 
 class _YuvCameraWidgetState extends State<YuvCameraWidget> {
-  final ValueNotifier<YuvImage?> cameraImageNotifier = ValueNotifier(null);
+  final StreamController<YuvImage?> streamController = StreamController.broadcast();
   final ValueNotifier<int> fpsNotifier = ValueNotifier(0);
   bool isProcessing = false;
   int fps = 0;
@@ -37,8 +37,7 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     if (oldWidget.cameraController != widget.cameraController &&
         oldWidget.cameraController.value.isInitialized &&
         oldWidget.cameraController.value.isStreamingImages) {
-      oldWidget.cameraController.stopImageStream();
-      resubscribe();
+      oldWidget.cameraController.stopImageStream().then((value) => resubscribe());
     }
     super.didUpdateWidget(oldWidget);
   }
@@ -49,7 +48,7 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
       widget.cameraController.stopImageStream();
     }
 
-    cameraImageNotifier.dispose();
+    streamController.close();
     fpsNotifier.dispose();
     timer?.cancel();
     super.dispose();
@@ -60,9 +59,11 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     return Stack(
       children: [
         Positioned.fill(
-          child: ValueListenableBuilder(
-            valueListenable: cameraImageNotifier,
-            builder: (context, yuv, child) {
+          child: StreamBuilder(
+            stream: streamController.stream,
+            initialData: null,
+            builder: (context, snapshot) {
+              final yuv = snapshot.data;
               return yuv != null ? AspectRatio(aspectRatio: yuv.width / yuv.height, child: YuvImageWidget(image: yuv)) : SizedBox();
             },
           ),
@@ -80,8 +81,8 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     );
   }
 
-  void resubscribe() {
-    widget.cameraController.startImageStream(onNewImageAvailable);
+  Future resubscribe() async {
+    await widget.cameraController.startImageStream(onNewImageAvailable);
     timer = Timer.periodic(
       Duration(seconds: 1),
       (timer) {
@@ -99,9 +100,9 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     isProcessing = true;
     try {
       YuvImageRotation rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
-      var yuv = image.toYuvImage(); //rotate(, rotation.toZero());
+      var yuv = rotate(image.toYuvImage(), rotation.toZero());
       yuv = widget.transform?.call(yuv) ?? yuv;
-      cameraImageNotifier.value = yuv;
+      streamController.add(yuv);
       fps++;
     } finally {
       isProcessing = false;

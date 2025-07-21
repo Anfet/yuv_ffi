@@ -236,7 +236,7 @@ class _MyAppState extends State<MyApp> {
     if (rgbaBytes == null) throw Exception('Could not decode image');
 
     var rgbaBuffer = rgbaBytes.buffer.asUint8List();
-    var image = YuvImage.fromRGBA(rgbaBuffer, img.width, img.height);
+    var image = Yuv420Image.fromRGBA(rgbaBuffer, img.width, img.height);
     var json = image.toJson();
     var dir = await getTemporaryDirectory();
     var path = '${dir.path}/image.json';

@@ -2463,265 +2463,72 @@ class YuvFfiBindings {
   late final _rmtmp1 = _rmtmpPtr.asFunction<int Function()>();
 
   void yuv420_blackwhite(
-    ffi.Pointer<ffi.Uint8> y_src,
-    int y_row_stride,
-    int y_pixel_stride,
-    int uv_row_stride,
-    int uv_pixel_stride,
-    int width,
-    int height,
-    ffi.Pointer<ffi.Uint8> y_dst,
-    ffi.Pointer<ffi.Uint8> u_dst,
-    ffi.Pointer<ffi.Uint8> v_dst,
+    ffi.Pointer<YUV420Def> src,
   ) {
     return _yuv420_blackwhite(
-      y_src,
-      y_row_stride,
-      y_pixel_stride,
-      uv_row_stride,
-      uv_pixel_stride,
-      width,
-      height,
-      y_dst,
-      u_dst,
-      v_dst,
+      src,
     );
   }
 
-  late final _yuv420_blackwhitePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>)>>('yuv420_blackwhite');
-  late final _yuv420_blackwhite = _yuv420_blackwhitePtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.Uint8>,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>)>();
+  late final _yuv420_blackwhitePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+          'yuv420_blackwhite');
+  late final _yuv420_blackwhite =
+      _yuv420_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUV420Def>)>();
 
   void yuv420_crop_rect(
-    ffi.Pointer<ffi.Uint8> y_src,
-    ffi.Pointer<ffi.Uint8> u_src,
-    ffi.Pointer<ffi.Uint8> v_src,
-    ffi.Pointer<ffi.Uint8> y_dst,
-    ffi.Pointer<ffi.Uint8> u_dst,
-    ffi.Pointer<ffi.Uint8> v_dst,
-    int src_width,
-    int src_height,
-    int crop_x,
-    int crop_y,
+    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUV420Def> dst,
+    int left,
+    int top,
     int crop_width,
     int crop_height,
-    int y_row_stride,
-    int u_row_stride,
-    int v_row_stride,
-    int y_pixel_stride,
-    int u_pixel_stride,
-    int v_pixel_stride,
   ) {
     return _yuv420_crop_rect(
-      y_src,
-      u_src,
-      v_src,
-      y_dst,
-      u_dst,
-      v_dst,
-      src_width,
-      src_height,
-      crop_x,
-      crop_y,
+      src,
+      dst,
+      left,
+      top,
       crop_width,
       crop_height,
-      y_row_stride,
-      u_row_stride,
-      v_row_stride,
-      y_pixel_stride,
-      u_pixel_stride,
-      v_pixel_stride,
     );
   }
 
   late final _yuv420_crop_rectPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int)>>('yuv420_crop_rect');
+          ffi.Void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<YUV420Def>,
+              ffi.Int, ffi.Int, ffi.Int, ffi.Int)>>('yuv420_crop_rect');
   late final _yuv420_crop_rect = _yuv420_crop_rectPtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int)>();
+      void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<YUV420Def>, int, int,
+          int, int)>();
 
   void yuv420_flip_horizontally(
-    ffi.Pointer<ffi.Uint8> y_src,
-    ffi.Pointer<ffi.Uint8> u_src,
-    ffi.Pointer<ffi.Uint8> v_src,
-    ffi.Pointer<ffi.Uint8> y_dst,
-    ffi.Pointer<ffi.Uint8> u_dst,
-    ffi.Pointer<ffi.Uint8> v_dst,
-    int width,
-    int height,
-    int yRowStride,
-    int yPixelStride,
-    int uvRowStride,
-    int uvPixelStride,
+    ffi.Pointer<YUV420Def> src,
   ) {
     return _yuv420_flip_horizontally(
-      y_src,
-      u_src,
-      v_src,
-      y_dst,
-      u_dst,
-      v_dst,
-      width,
-      height,
-      yRowStride,
-      yPixelStride,
-      uvRowStride,
-      uvPixelStride,
+      src,
     );
   }
 
-  late final _yuv420_flip_horizontallyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int)>>('yuv420_flip_horizontally');
-  late final _yuv420_flip_horizontally =
-      _yuv420_flip_horizontallyPtr.asFunction<
-          void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              int,
-              int,
-              int,
-              int,
-              int,
-              int)>();
+  late final _yuv420_flip_horizontallyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+          'yuv420_flip_horizontally');
+  late final _yuv420_flip_horizontally = _yuv420_flip_horizontallyPtr
+      .asFunction<void Function(ffi.Pointer<YUV420Def>)>();
 
   void yuv420_flip_vertically(
-    ffi.Pointer<ffi.Uint8> y_src,
-    ffi.Pointer<ffi.Uint8> u_src,
-    ffi.Pointer<ffi.Uint8> v_src,
-    ffi.Pointer<ffi.Uint8> y_dst,
-    ffi.Pointer<ffi.Uint8> u_dst,
-    ffi.Pointer<ffi.Uint8> v_dst,
-    int width,
-    int height,
-    int yRowStride,
-    int yPixelStride,
-    int uvRowStride,
-    int uvPixelStride,
-    ffi.Pointer<ffi.Uint32> rect,
+    ffi.Pointer<YUV420Def> src,
   ) {
     return _yuv420_flip_vertically(
-      y_src,
-      u_src,
-      v_src,
-      y_dst,
-      u_dst,
-      v_dst,
-      width,
-      height,
-      yRowStride,
-      yPixelStride,
-      uvRowStride,
-      uvPixelStride,
-      rect,
+      src,
     );
   }
 
-  late final _yuv420_flip_verticallyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Pointer<ffi.Uint32>)>>('yuv420_flip_vertically');
-  late final _yuv420_flip_vertically = _yuv420_flip_verticallyPtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          ffi.Pointer<ffi.Uint32>)>();
+  late final _yuv420_flip_verticallyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+          'yuv420_flip_vertically');
+  late final _yuv420_flip_vertically = _yuv420_flip_verticallyPtr
+      .asFunction<void Function(ffi.Pointer<YUV420Def>)>();
 
   void yuv420_gaussblur(
     ffi.Pointer<ffi.Uint8> y_src,
@@ -2792,56 +2599,18 @@ class YuvFfiBindings {
           int)>();
 
   void yuv420_grayscale(
-    ffi.Pointer<ffi.Uint8> y_src,
-    int y_row_stride,
-    int y_pixel_stride,
-    int uv_row_stride,
-    int uv_pixel_stride,
-    int width,
-    int height,
-    ffi.Pointer<ffi.Uint8> y_dst,
-    ffi.Pointer<ffi.Uint8> u_dst,
-    ffi.Pointer<ffi.Uint8> v_dst,
+    ffi.Pointer<YUV420Def> src,
   ) {
     return _yuv420_grayscale(
-      y_src,
-      y_row_stride,
-      y_pixel_stride,
-      uv_row_stride,
-      uv_pixel_stride,
-      width,
-      height,
-      y_dst,
-      u_dst,
-      v_dst,
+      src,
     );
   }
 
-  late final _yuv420_grayscalePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>)>>('yuv420_grayscale');
-  late final _yuv420_grayscale = _yuv420_grayscalePtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.Uint8>,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>)>();
+  late final _yuv420_grayscalePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+          'yuv420_grayscale');
+  late final _yuv420_grayscale =
+      _yuv420_grayscalePtr.asFunction<void Function(ffi.Pointer<YUV420Def>)>();
 
   void yuv420_mean_blur(
     ffi.Pointer<ffi.Uint8> y_src,
@@ -2880,70 +2649,24 @@ class YuvFfiBindings {
       void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int, int,
           int, int, int, ffi.Pointer<ffi.Uint8>)>();
 
-  void yuv420_rotate_interleaved(
-    ffi.Pointer<ffi.Uint8> y_src,
-    ffi.Pointer<ffi.Uint8> u_src,
-    ffi.Pointer<ffi.Uint8> v_src,
-    ffi.Pointer<ffi.Uint8> y_dst,
-    ffi.Pointer<ffi.Uint8> u_dst,
-    ffi.Pointer<ffi.Uint8> v_dst,
-    int width,
-    int height,
+  void yuv420_rotate(
+    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUV420Def> dst,
     int rotationDegrees,
-    int yRowStride,
-    int yPixelStride,
-    int uvRowStride,
-    int uvPixelStride,
   ) {
-    return _yuv420_rotate_interleaved(
-      y_src,
-      u_src,
-      v_src,
-      y_dst,
-      u_dst,
-      v_dst,
-      width,
-      height,
+    return _yuv420_rotate(
+      src,
+      dst,
       rotationDegrees,
-      yRowStride,
-      yPixelStride,
-      uvRowStride,
-      uvPixelStride,
     );
   }
 
-  late final _yuv420_rotate_interleavedPtr = _lookup<
+  late final _yuv420_rotatePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int)>>('yuv420_rotate_interleaved');
-  late final _yuv420_rotate_interleaved =
-      _yuv420_rotate_interleavedPtr.asFunction<
-          void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              int,
-              int,
-              int,
-              int,
-              int,
-              int,
-              int)>();
+          ffi.Void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<YUV420Def>,
+              ffi.Int)>>('yuv420_rotate');
+  late final _yuv420_rotate = _yuv420_rotatePtr.asFunction<
+      void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<YUV420Def>, int)>();
 
   void yuv420_to_bgra8888(
     ffi.Pointer<YUV420Def> src,
@@ -2963,64 +2686,18 @@ class YuvFfiBindings {
       void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<ffi.Uint8>)>();
 
   void yuv420_negate(
-    ffi.Pointer<ffi.Uint8> y_src,
-    ffi.Pointer<ffi.Uint8> u_src,
-    ffi.Pointer<ffi.Uint8> v_src,
-    int y_row_stride,
-    int y_pixel_stride,
-    int uv_row_stride,
-    int uv_pixel_stride,
-    int width,
-    int height,
-    ffi.Pointer<ffi.Uint8> y_dst,
-    ffi.Pointer<ffi.Uint8> u_dst,
-    ffi.Pointer<ffi.Uint8> v_dst,
+    ffi.Pointer<YUV420Def> src,
   ) {
     return _yuv420_negate(
-      y_src,
-      u_src,
-      v_src,
-      y_row_stride,
-      y_pixel_stride,
-      uv_row_stride,
-      uv_pixel_stride,
-      width,
-      height,
-      y_dst,
-      u_dst,
-      v_dst,
+      src,
     );
   }
 
-  late final _yuv420_negatePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>)>>('yuv420_negate');
-  late final _yuv420_negate = _yuv420_negatePtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          int,
-          int,
-          int,
-          int,
-          int,
-          int,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>,
-          ffi.Pointer<ffi.Uint8>)>();
+  late final _yuv420_negatePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+          'yuv420_negate');
+  late final _yuv420_negate =
+      _yuv420_negatePtr.asFunction<void Function(ffi.Pointer<YUV420Def>)>();
 
   ffi.Pointer<ffi.Void> _calloc_base(
     int _Count,
