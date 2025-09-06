@@ -4,7 +4,7 @@
 #include "../yuv/yuv420.h"
 
 void yuv420_grayscale(
-        const YUV420Def *src
+        const YUVDef *src
 ) {
     const int height = src->height;
     uint8_t *uDst = src->u;

@@ -5,8 +5,8 @@
 #include "../yuv/yuv420.h"
 
 void yuv420_rotate(
-        const YUV420Def *src,
-        const YUV420Def *dst,
+        const YUVDef *src,
+        const YUVDef *dst,
         int rotationDegrees
 ) {
     const int rotation90 = rotationDegrees / 90.0;

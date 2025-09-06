@@ -1,7 +1,8 @@
 #include <stdio.h>
-#include "yuv420.h"
+#include <stdlib.h>
+#include "yuv.h"
 
-void freeYUV420Def(YUV420Def *yuv) {
+void freeYUVDef(YUVDef *yuv) {
     if (!yuv) return;
     free(yuv->y);
     free(yuv->u);

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 void yuv420_gaussblur(
-        const YUV420Def *src,
+        const YUVDef *src,
         int radius,
         int sigma
 );

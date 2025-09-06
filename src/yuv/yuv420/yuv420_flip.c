@@ -6,7 +6,7 @@
 #include "../yuv/yuv420.h"
 
 void yuv420_flip_horizontally(
-        const YUV420Def *src
+        const YUVDef *src
 ) {
     uint8_t yTemp[src->yPixelStride];
     uint8_t uTemp[src->uvPixelStride];
@@ -49,7 +49,7 @@ void yuv420_flip_horizontally(
 }
 
 void yuv420_flip_vertically(
-        const YUV420Def *src
+        const YUVDef *src
 ) {
 //    uint8_t yTemp[src->yRowStride];
 //    uint8_t uvTemp[src->uvRowStride];

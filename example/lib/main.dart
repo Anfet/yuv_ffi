@@ -1,16 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:async';
-
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/camera_screen.dart';
+import 'package:yuv_ffi_example/widgets/crop_targets.dart';
+import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
+import 'package:yuv_ffi_example/widgets/shades.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,6 +31,7 @@ class _MyAppState extends State<MyApp> {
 
   bool imageExists = false;
   int? lastOpTiming;
+  Rect? faceBox;
 
   @override
   void initState() {
@@ -38,83 +42,80 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Builder(builder: (context) {
-        return Scaffold(
-          appBar: AppBar(
-            forceMaterialTransparency: true,
-            title: const Text('YUV FFI'),
-            actions: [
-              IconButton(onPressed: () => takePhoto(context), icon: Icon(Icons.camera), tooltip: 'Take photo'),
-              IconButton(onPressed: () => loadExisting(), icon: Icon(Icons.file_upload_outlined), tooltip: 'Load existing'),
-              IconButton(onPressed: () => loadImage(), icon: Icon(Icons.drive_folder_upload), tooltip: 'Load image'),
-            ],
-          ),
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: image != null
-                          ? SingleChildScrollView(
-                              child: AspectRatio(
-                                aspectRatio: image == null ? 1.0 : image!.width / image!.height,
-                                child: YuvImageWidget(image: image!),
-                              ),
-                            )
-                          : Container(color: Colors.black),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
-                      child: Wrap(
-                        spacing: 12,
-                        children: [
-                          IconButton(onPressed: () => rotateClockWise(), icon: Icon(Icons.rotate_right, size: 32), tooltip: 'Rotate Clockwise'),
-                          IconButton(
-                            onPressed: () => rotateCouterClockwise(),
-                            icon: Icon(Icons.rotate_left, size: 32),
-                            tooltip: 'Rotate Couterclockwise',
-                          ),
-                          IconButton(
-                            onPressed: () => flipImageVertically(),
-                            icon: Icon(MdiIcons.flipVertical, size: 32),
-                            tooltip: 'Flip vertically',
-                          ),
-                          IconButton(
-                              onPressed: () => flitImageHorizontally(), icon: Icon(MdiIcons.flipHorizontal, size: 32), tooltip: 'Flip horizontally'),
-                          IconButton(onPressed: () => cropImage(), icon: Icon(Icons.crop, size: 32), tooltip: 'crop image'),
-                          IconButton(onPressed: () => grayscaleImage(), icon: Icon(CupertinoIcons.color_filter, size: 32), tooltip: 'Grayscale'),
-                          IconButton(
-                            onPressed: () => blackwhiteImage(),
-                            icon: Icon(MdiIcons.imageFilterBlackWhite, size: 32),
-                            tooltip: 'Black&White',
-                          ),
-                          IconButton(
-                            onPressed: () => invertImage(),
-                            icon: Icon(MdiIcons.invertColors, size: 32),
-                            tooltip: 'Negate',
-                          ),
-                          IconButton(onPressed: () => gaussianBlurImage(), icon: Icon(MdiIcons.blur, size: 32), tooltip: 'Gaussian blur'),
-                          IconButton(onPressed: () => meanBlurImage(), icon: Icon(MdiIcons.blurLinear, size: 32), tooltip: 'Mean blur'),
-                          IconButton(onPressed: () => boxBlurImage(), icon: Icon(MdiIcons.box, size: 32), tooltip: 'Box blur'),
-                        ],
+      debugShowCheckedModeBanner: false,
+      home: Builder(
+        builder: (context) {
+          return Scaffold(
+            appBar: AppBar(
+              forceMaterialTransparency: true,
+              title: const Text('YUV FFI'),
+              actions: [
+                IconButton(onPressed: () => takePhoto(context), icon: Icon(Icons.camera), tooltip: 'Take photo'),
+                IconButton(onPressed: () => loadExisting(), icon: Icon(Icons.file_upload_outlined), tooltip: 'Load existing'),
+                IconButton(onPressed: () => loadImage(), icon: Icon(Icons.drive_folder_upload), tooltip: 'Load image'),
+              ],
+            ),
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                Positioned.fill(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: image != null ? _ImageWidget(image: image, faceBox: faceBox) : Container(color: Colors.black),
                       ),
-                    )
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
+                        child: Wrap(
+                          spacing: 12,
+                          children: [
+                            IconButton(onPressed: () => rotateClockWise(), icon: Icon(Icons.rotate_right, size: 32), tooltip: 'Rotate Clockwise'),
+                            IconButton(
+                              onPressed: () => rotateCouterClockwise(),
+                              icon: Icon(Icons.rotate_left, size: 32),
+                              tooltip: 'Rotate Couterclockwise',
+                            ),
+                            IconButton(
+                              onPressed: () => flipImageVertically(),
+                              icon: Icon(MdiIcons.flipVertical, size: 32),
+                              tooltip: 'Flip vertically',
+                            ),
+                            IconButton(
+                              onPressed: () => flitImageHorizontally(),
+                              icon: Icon(MdiIcons.flipHorizontal, size: 32),
+                              tooltip: 'Flip horizontally',
+                            ),
+                            IconButton(onPressed: () => cropImage(), icon: Icon(Icons.crop, size: 32), tooltip: 'crop image'),
+                            IconButton(onPressed: () => grayscaleImage(), icon: Icon(CupertinoIcons.color_filter, size: 32), tooltip: 'Grayscale'),
+                            IconButton(
+                              onPressed: () => blackwhiteImage(),
+                              icon: Icon(MdiIcons.imageFilterBlackWhite, size: 32),
+                              tooltip: 'Black&White',
+                            ),
+                            IconButton(onPressed: () => invertImage(), icon: Icon(MdiIcons.invertColors, size: 32), tooltip: 'Negate'),
+                            IconButton(onPressed: () => gaussianBlurImage(), icon: Icon(MdiIcons.blur, size: 32), tooltip: 'Gaussian blur'),
+                            IconButton(onPressed: () => meanBlurImage(), icon: Icon(MdiIcons.blurLinear, size: 32), tooltip: 'Mean blur'),
+                            IconButton(onPressed: () => boxBlurImage(), icon: Icon(MdiIcons.box, size: 32), tooltip: 'Box blur'),
+                            IconButton(onPressed: () => doFaceDetection(), icon: Icon(MdiIcons.faceManOutline, size: 32), tooltip: 'Face detection'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (lastOpTiming != null)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Text('${lastOpTiming} msec', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
-                )
-            ],
-          ),
-        );
-      }),
+                if (lastOpTiming != null)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Text('${lastOpTiming} msec', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -132,7 +133,7 @@ class _MyAppState extends State<MyApp> {
       return;
     }
 
-    var json = image.toJson();
+    var json = flipHorizontally(image).toJson();
     var dir = await getTemporaryDirectory();
     var path = '${dir.path}/image.json';
     var file = File(path);
@@ -159,6 +160,7 @@ class _MyAppState extends State<MyApp> {
 
       var json = await file.readAsString();
       image = YuvImage.fromJson(jsonDecode(json));
+      faceBox = null;
       setState(() {});
     }, name: 'loadExisting');
   }
@@ -180,10 +182,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   void cropImage() {
-    logTimed(
-        () => image =
-            crop(image!, Rect.fromCenter(center: Offset(image!.width / 2, image!.height / 2), width: image!.width / 2, height: image!.height / 2)),
-        name: '$image cropImage');
+    var cropTarget = CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85);
+    var r = cropTarget.place(image!.size);
+
+    logTimed(() => image = crop(image!, r), name: '$image cropImage');
   }
 
   void grayscaleImage() {
@@ -245,4 +247,77 @@ class _MyAppState extends State<MyApp> {
     imageExists = true;
     loadExisting();
   }
+
+  Future doFaceDetection() async {
+    final FaceDetector detector = FaceDetector(
+      options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
+    );
+
+    final rotation = InputImageRotation.rotation0deg;
+    final image = this.image!.toNv21();
+
+    final meta = InputImageMetadata(
+      size: Size(image.width.toDouble(), image.height.toDouble()),
+      rotation: rotation,
+      format: InputImageFormat.nv21,
+      bytesPerRow: image.planes.first.bytesPerRow,
+    );
+
+    var inputImage = InputImage.fromBytes(bytes: image.getBytes(), metadata: meta);
+    final faces = await detector.processImage(inputImage);
+    if (faces.isEmpty) {
+      faceBox = null;
+    } else {
+      faces.sort((a, b) => b.boundingBox.area.compareTo(a.boundingBox.area));
+      final face = faces.first;
+      faceBox = face.boundingBox;
+    }
+
+    setState(() {});
+  }
+}
+
+class _ImageWidget extends StatelessWidget {
+  final YuvImage? image;
+  final ui.Rect? faceBox;
+
+  const _ImageWidget({super.key, required this.image, required this.faceBox});
+
+  @override
+  Widget build(BuildContext context) {
+    if (image == null) {
+      return ColoredBox(color: Colors.black);
+    }
+
+    final i = image!;
+
+    return ColoredBox(
+      color: Colors.black,
+      child: FittedBox(
+        fit: BoxFit.cover,
+        alignment: Alignment.center,
+        clipBehavior: Clip.antiAlias,
+        child: SizedBox(
+          width: i.width.toDouble(),
+          height: i.height.toDouble(),
+          child: Stack(
+            clipBehavior: Clip.antiAlias,
+            fit: StackFit.expand,
+            children: [
+              YuvImageWidget(image: i),
+              ShadeWidget.oval(target: CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85)),
+              if (faceBox != null)
+                CustomPaint(
+                  painter: FaceRectPainter(rect: faceBox!, image: i),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+extension on Rect {
+  double get area => width * height;
 }

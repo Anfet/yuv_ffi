@@ -13,34 +13,40 @@ class YuvNV21Image extends YuvImage {
   final YuvFileFormat format = YuvFileFormat.nv21;
 
   @override
-  final int width;
+  int get width => _width;
+
+  int _width;
 
   @override
-  final int height;
+  int get height => _height;
+
+  int _height;
 
   @override
-  late final List<YuvPlane> planes;
+  List<YuvPlane> get planes => List.unmodifiable(_planes);
+
+  late List<YuvPlane> _planes;
 
   @override
-  YuvPlane get uPlane => throw UnimplementedError();
+  YuvPlane get uPlane => planes[1];
 
   @override
-  YuvPlane get vPlane => throw UnimplementedError();
+  YuvPlane get vPlane => planes[1];
 
   @override
-  YuvPlane get yPlane => throw UnimplementedError();
+  YuvPlane get yPlane => planes[0];
 
-  YuvNV21Image.fromPlanes(this.width, this.height, this.planes);
+  YuvNV21Image.fromPlanes(this._width, this._height, this._planes);
 
-  YuvNV21Image(this.width, this.height) {
-    final yplane = YuvPlane(width, height, 1);
+  YuvNV21Image(this._width, this._height, [int yPixelStride = 1, int uvPixelStride = 2]) {
+    final yplane = YuvPlane(height, width, 1);
     final uvWidth = (width / 2).round();
     final uvHeight = (height / 2).round();
-    final uvplane = YuvPlane(uvWidth, uvHeight, 2);
-    planes = List.unmodifiable([yplane, uvplane]);
+    final uvplane = YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
+    _planes = [yplane, uvplane];
   }
 
-  YuvNV21Image._(this.width, this.height, this.planes);
+  YuvNV21Image._(this._width, this._height, this._planes);
 
   @override
   YuvNV21Image create(int width, int height) => YuvNV21Image(width, height);

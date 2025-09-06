@@ -5,3 +5,5 @@ export 'functions/grayscale.dart';
 export 'functions/blackwhite.dart';
 export 'functions/negate.dart';
 export 'functions/blur.dart';
+export 'functions/yuv420_to_nv21.dart';
+export 'functions/to_nv21.dart';

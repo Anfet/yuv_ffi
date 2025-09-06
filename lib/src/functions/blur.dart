@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:ffi/ffi.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
-import 'package:yuv_ffi/src/yuv/defs/yuv420def.dart';
+import 'package:yuv_ffi/src/yuv/defs/yuv_def.dart';
 import 'package:yuv_ffi/src/yuv/images/yuv_i420_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
@@ -15,7 +15,7 @@ YuvImage gaussianBlur(YuvImage image, {int radius = 2, int sigma = 2}) {
       // TODO: Handle this case.
       throw UnimplementedError();
     case YuvFileFormat.i420:
-      final def = YUV420DefClass(image);
+      final def = YUVDefClass(image);
       try {
         ffiBingings.yuv420_gaussblur(def.pointer, radius, sigma);
         image.yPlane.assignFromPtr(def.pointer.ref.y);
@@ -35,7 +35,7 @@ YuvImage boxBlur(YuvImage image, {int radius = 10, ui.Rect? rect}) {
       // TODO: Handle this case.
       throw UnimplementedError();
     case YuvFileFormat.i420:
-      final def = YUV420DefClass(image);
+      final def = YUVDefClass(image);
       final rectPtr = rect == null ? nullptr : calloc.allocate<Uint32>(4 * 32);
       if (rect != null) {
         rectPtr.asTypedList(32)
@@ -62,7 +62,7 @@ YuvImage meanBlur(YuvImage image, {int radius = 2, ui.Rect? rect}) {
       // TODO: Handle this case.
       throw UnimplementedError();
     case YuvFileFormat.i420:
-      final def = YUV420DefClass(image);
+      final def = YUVDefClass(image);
       final rectPtr = rect == null ? nullptr : calloc.allocate<Uint32>(4 * 32);
       if (rect != null) {
         rectPtr.asTypedList(32)

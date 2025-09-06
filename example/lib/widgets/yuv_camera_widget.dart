@@ -8,12 +8,9 @@ import 'package:yuv_ffi_example/ext.dart';
 class YuvCameraWidget extends StatefulWidget {
   final CameraController cameraController;
   final YuvImage Function(YuvImage image)? transform;
+  final ValueChanged<int>? fpsChanged;
 
-  const YuvCameraWidget({
-    super.key,
-    required this.cameraController,
-    this.transform,
-  });
+  const YuvCameraWidget({super.key, required this.cameraController, this.transform, this.fpsChanged});
 
   @override
   State<YuvCameraWidget> createState() => _YuvCameraWidgetState();
@@ -21,7 +18,6 @@ class YuvCameraWidget extends StatefulWidget {
 
 class _YuvCameraWidgetState extends State<YuvCameraWidget> {
   final StreamController<YuvImage?> streamController = StreamController.broadcast();
-  final ValueNotifier<int> fpsNotifier = ValueNotifier(0);
   bool isProcessing = false;
   int fps = 0;
   Timer? timer;
@@ -49,47 +45,33 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     }
 
     streamController.close();
-    fpsNotifier.dispose();
     timer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: StreamBuilder(
-            stream: streamController.stream,
-            initialData: null,
-            builder: (context, snapshot) {
-              final yuv = snapshot.data;
-              return yuv != null ? AspectRatio(aspectRatio: yuv.width / yuv.height, child: YuvImageWidget(image: yuv)) : SizedBox();
-            },
-          ),
-        ),
-        Align(
-          alignment: Alignment.bottomRight,
-          child: ValueListenableBuilder(
-            valueListenable: fpsNotifier,
-            builder: (context, fps, child) {
-              return Text('fps: $fps', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white));
-            },
-          ),
-        ),
-      ],
+    return StreamBuilder(
+      stream: streamController.stream,
+      initialData: null,
+      builder: (context, snapshot) {
+        final yuv = snapshot.data;
+        return yuv != null
+            ? AspectRatio(
+                aspectRatio: yuv.width / yuv.height,
+                child: YuvImageWidget(image: yuv),
+              )
+            : SizedBox();
+      },
     );
   }
 
   Future resubscribe() async {
     await widget.cameraController.startImageStream(onNewImageAvailable);
-    timer = Timer.periodic(
-      Duration(seconds: 1),
-      (timer) {
-        fpsNotifier.value = fps;
-        fps = 0;
-      },
-    );
+    timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      widget.fpsChanged?.call(fps);
+      fps = 0;
+    });
   }
 
   Future onNewImageAvailable(CameraImage image) async {

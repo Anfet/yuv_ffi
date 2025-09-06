@@ -4,7 +4,7 @@
 #include "../yuv/yuv420.h"
 
 void yuv420_negate(
-        const YUV420Def *src
+        const YUVDef *src
 ) {
     int y_plane_size = src->height * src->yRowStride;
     int uv_plane_size = (src->height / 2) * src->uvRowStride;

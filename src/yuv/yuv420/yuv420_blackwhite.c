@@ -5,7 +5,7 @@
 #include "../yuv/yuv420.h"
 #include "../yuv/utils/h/yuv_utils.h"
 
-void yuv420_blackwhite(const YUV420Def *src) {
+void yuv420_blackwhite(const YUVDef *src) {
     const int height = src->height;
     const int yRowStride = src->yRowStride;
     const int uvRowStride = src->uvRowStride;

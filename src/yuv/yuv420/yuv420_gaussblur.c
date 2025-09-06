@@ -91,7 +91,7 @@ void gaussian_blur_plane_strided(
 }
 
 void yuv420_gaussblur(
-        const YUV420Def *src,
+        const YUVDef *src,
         int radius,
         int sigma
 ) {

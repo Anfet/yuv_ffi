@@ -11,8 +11,12 @@ set_property(GLOBAL PROPERTY CMAKE_CONFIGURE_DEPENDS "yuv/*.c")
 file(GLOB_RECURSE SOURCES "yuv/*.c" "yuv_ffi.c" "**/*.c")
 add_library(
         yuv_ffi SHARED ${SOURCES}
-        "yuv/yuv420.c"
+        "yuv/yuv.c"
         "yuv/yuv420/yuv420_from_rgba.c"
+        "yuv/yuv420/yuv420_to_nv21.c"
+        "yuv/nv21/nv21_to_420.c"
+        "yuv/nv21/nv21_crop.c"
+        "yuv/nv21/nv21_to_bgra8888.c"
 )
 
 target_include_directories(

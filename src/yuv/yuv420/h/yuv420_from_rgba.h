@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-void yuv420_from_rgba8888(const uint8_t *rgba, const YUV420Def *src);
+void yuv420_from_rgba8888(const uint8_t *rgba, const YUVDef *src);
 
 #endif

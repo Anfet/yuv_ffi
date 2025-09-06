@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 void yuv420_rotate(
-        const YUV420Def *src,
-        const YUV420Def *dst,
+        const YUVDef *src,
+        const YUVDef *dst,
         int rotationDegrees
 );
 

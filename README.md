@@ -1,92 +1,164 @@
 # yuv_ffi
 
-A new Flutter project.
+Набор высокопроизводительных C/FFI-рутину для работы с YUV-буферами (YUV420, NV21 и др.) с биндингами для Dart/Flutter.
 
-## Getting Started
+- 🚀 Конверсии: **YUV420 ↔ NV21**
+- ✂️ Кроп: **crop NV21**, crop YUV420
+- 🧩 Работа с плоскостями и stride
+- 🔗 Чистые FFI-вызовы без платформенных плагинов
+- 🧪 Тесты на корректность размеров/границ
 
-This project is a starting point for a Flutter
-[FFI plugin](https://docs.flutter.dev/development/platform-integration/c-interop),
-a specialized package that includes native code directly invoked with Dart FFI.
+> Библиотека предназначена для оффлайн-обработки кадров камеры, предпревью, постпроцессинга и подготовки текстур.
 
-## Project structure
+## Установка
 
-This template uses the following structure:
-
-* `src`: Contains the native source code, and a CmakeFile.txt file for building
-  that source code into a dynamic library.
-
-* `lib`: Contains the Dart code that defines the API of the plugin, and which
-  calls into the native code using `dart:ffi`.
-
-* platform folders (`android`, `ios`, `windows`, etc.): Contains the build files
-  for building and bundling the native code library with the platform application.
-
-## Building and bundling native code
-
-The `pubspec.yaml` specifies FFI plugins as follows:
+Добавь в `pubspec.yaml`:
 
 ```yaml
-  plugin:
-    platforms:
-      some_platform:
-        ffiPlugin: true
+dependencies:
+  yuv_ffi:
+    git:
+      url: https://github.com/Anfet/yuv_ffi.git
 ```
 
-This configuration invokes the native build for the various target platforms
-and bundles the binaries in Flutter applications using these FFI plugins.
+## Сборка нативной библиотеки
 
-This can be combined with dartPluginClass, such as when FFI is used for the
-implementation of one platform in a federated plugin:
+Библиотека использует общий C-код, собираемый в динамическую библиотеку:
 
-```yaml
-  plugin:
-    implements: some_other_plugin
-    platforms:
-      some_platform:
-        dartPluginClass: SomeClass
-        ffiPlugin: true
+- **Android**: `libyuv_ffi.so` (ABI: arm64-v8a, armeabi-v7a, x86_64)
+- **iOS/macOS**: `libyuv_ffi.dylib` или статическая `.a`
+- **Windows**: `yuv_ffi.dll`
+- **Linux**: `libyuv_ffi.so`
+
+### Быстрый путь (CMake)
+
+```
+/native
+  CMakeLists.txt
+  yuv_ffi.c
+  yuv_ffi.h
 ```
 
-A plugin can have both FFI and method channels:
+Пример `CMakeLists.txt`:
 
-```yaml
-  plugin:
-    platforms:
-      some_platform:
-        pluginClass: SomeName
-        ffiPlugin: true
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(yuv_ffi C)
+set(CMAKE_C_STANDARD 99)
+
+add_library(yuv_ffi SHARED
+    yuv_ffi.c
+)
+
+target_include_directories(yuv_ffi PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 ```
 
-The native build systems that are invoked by FFI (and method channel) plugins are:
+Сборка (Linux/macOS):
 
-* For Android: Gradle, which invokes the Android NDK for native builds.
-  * See the documentation in android/build.gradle.
-* For iOS and MacOS: Xcode, via CocoaPods.
-  * See the documentation in ios/yuv_ffi.podspec.
-  * See the documentation in macos/yuv_ffi.podspec.
-* For Linux and Windows: CMake.
-  * See the documentation in linux/CMakeLists.txt.
-  * See the documentation in windows/CMakeLists.txt.
+```bash
+mkdir -p build && cd build
+cmake ..
+cmake --build . --config Release
+```
 
-## Binding to native code
+#### Android (через NDK)
 
-To use the native code, bindings in Dart are needed.
-To avoid writing these by hand, they are generated from the header file
-(`src/yuv_ffi.h`) by `package:ffigen`.
-Regenerate the bindings by running `flutter pub run ffigen --config ffigen.yaml`.
+Добавь в `android/app/build.gradle`:
 
-## Invoking native code
+```gradle
+android {
+  defaultConfig { ndk { abiFilters "arm64-v8a", "armeabi-v7a", "x86_64" } }
+  externalNativeBuild { cmake { path "../../native/CMakeLists.txt" } }
+  sourceSets { main { jniLibs.srcDirs = ['src/main/jniLibs'] } }
+}
+```
 
-Very short-running native functions can be directly invoked from any isolate.
-For example, see `sum` in `lib/yuv_ffi.dart`.
+Скопируй артефакты `.so` в соответствующие `jniLibs/<abi>/`.
 
-Longer-running functions should be invoked on a helper isolate to avoid
-dropping frames in Flutter applications.
-For example, see `sumAsync` in `lib/yuv_ffi.dart`.
+#### iOS
 
-## Flutter help
+Варианты:
+- собрать статическую `libyuv_ffi.a` и подключить через `.podspec` как `vendored_libraries`,
+- либо собрать `.dylib` и добавить в Xcode (Embed & Sign).
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## API (C)
 
+```c
+// Базовое описание буфера YUV420
+typedef struct {
+    const uint8_t *y;
+    const uint8_t *u;
+    const uint8_t *v;
+    int width;
+    int height;
+    int stride_y;
+    int stride_u;
+    int stride_v;
+} YUV420Def;
+
+// Конвертация YUV420 -> NV21
+void yuv420_to_nv21(const YUV420Def *src, uint8_t *dst_y, uint8_t *dst_vu);
+
+// Конвертация NV21 -> YUV420
+void nv21_to_yuv420(const uint8_t *src_y, const uint8_t *src_vu, int width, int height,
+                    YUV420Def *dst);
+
+// Кроп NV21 (координаты кратны 2)
+int nv21_crop(const uint8_t *src_y, const uint8_t *src_vu, int src_w, int src_h,
+              int x, int y, int w, int h,
+              uint8_t *out_y, uint8_t *out_vu);
+```
+
+> ⚠️ Для субдискретизации 4:2:0 все `x`, `y`, `w`, `h` должны быть **чётными**.
+
+## Пример использования из Dart (FFI)
+
+```dart
+import 'dart:ffi' as ffi;
+import 'dart:io';
+import 'package:ffi/ffi.dart';
+
+typedef _Yuv420ToNv21C = ffi.Void Function(
+  ffi.Pointer<YUV420Def>, ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>
+);
+
+class YUV420Def extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint8> y;
+  external ffi.Pointer<ffi.Uint8> u;
+  external ffi.Pointer<ffi.Uint8> v;
+  @ffi.Int32()
+  external int width;
+  @ffi.Int32()
+  external int height;
+  @ffi.Int32()
+  external int stride_y;
+  @ffi.Int32()
+  external int stride_u;
+  @ffi.Int32()
+  external int stride_v;
+}
+
+class YuvFfi {
+  late final ffi.DynamicLibrary _lib;
+  late final void Function(
+    ffi.Pointer<YUV420Def>, ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>
+  ) yuv420ToNv21;
+
+  YuvFfi() {
+    _lib = Platform.isAndroid
+        ? ffi.DynamicLibrary.open('libyuv_ffi.so')
+        : Platform.isWindows
+            ? ffi.DynamicLibrary.open('yuv_ffi.dll')
+            : ffi.DynamicLibrary.open('libyuv_ffi.dylib');
+
+    yuv420ToNv21 = _lib
+        .lookupFunction<_Yuv420ToNv21C, void Function(
+          ffi.Pointer<YUV420Def>, ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>
+        )>('yuv420_to_nv21');
+  }
+}
+```
+
+## Лицензия
+
+[MIT](./LICENSE)

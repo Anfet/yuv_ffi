@@ -5,7 +5,7 @@
 
 
 void yuv420_to_bgra8888(
-        const YUV420Def *src,
+        const YUVDef *src,
         uint8_t *outBgra
 );
 

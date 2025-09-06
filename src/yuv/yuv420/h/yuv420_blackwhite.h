@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 void yuv420_blackwhite(
-        const YUV420Def *src
+        const YUVDef *src
 );
 
 #endif

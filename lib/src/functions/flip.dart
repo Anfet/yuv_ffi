@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
-import 'package:yuv_ffi/src/yuv/defs/yuv420def.dart';
+import 'package:yuv_ffi/src/yuv/defs/yuv_def.dart';
 import 'package:yuv_ffi/src/yuv/images/yuv_i420_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
@@ -14,7 +14,7 @@ YuvImage flipHorizontally(YuvImage image) {
       // TODO: Handle this case.
       throw UnimplementedError();
     case YuvFileFormat.i420:
-      final def = YUV420DefClass(image);
+      final def = YUVDefClass(image);
       try {
         ffiBingings.yuv420_flip_horizontally(def.pointer);
         image.yPlane.assignFromPtr(def.pointer.ref.y);
@@ -35,7 +35,7 @@ Future<YuvImage> flipVertically(YuvImage image) async {
       // TODO: Handle this case.
       throw UnimplementedError();
     case YuvFileFormat.i420:
-      final def = YUV420DefClass(image);
+      final def = YUVDefClass(image);
       try {
         ffiBingings.yuv420_flip_vertically(def.pointer);
         image.yPlane.assignFromPtr(def.pointer.ref.y);

@@ -5,8 +5,8 @@
 #include "../yuv/utils/h/yuv_utils.h"
 
 void yuv420_crop_rect(
-        const YUV420Def *src,
-        const YUV420Def *dst,
+        const YUVDef *src,
+        const YUVDef *dst,
         const int left,
         const int top,
         const int crop_width,

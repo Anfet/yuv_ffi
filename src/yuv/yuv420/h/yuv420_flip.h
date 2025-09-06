@@ -4,11 +4,11 @@
 #include <stdint.h>
 
 void yuv420_flip_horizontally(
-        const YUV420Def *src
+        const YUVDef *src
 );
 
 void yuv420_flip_vertically(
-        const YUV420Def *src
+        const YUVDef *src
 );
 
 #endif

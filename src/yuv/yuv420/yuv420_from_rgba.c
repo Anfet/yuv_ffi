@@ -4,7 +4,7 @@
 #include "../yuv/utils/h/yuv_utils.h"
 #include "../yuv/yuv420.h"
 
-void yuv420_from_rgba8888(const uint8_t *rgba, const YUV420Def *src) {
+void yuv420_from_rgba8888(const uint8_t *rgba, const YUVDef *src) {
     uint8_t *yPlane = src->y;
     uint8_t *uPlane = src->u;
     uint8_t *vPlane = src->v;

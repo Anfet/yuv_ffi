@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:ffi/ffi.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
-import 'package:yuv_ffi/src/yuv/defs/yuv420def.dart';
+import 'package:yuv_ffi/src/yuv/defs/yuv_def.dart';
 import 'package:yuv_ffi/src/yuv/images/yuv_i420_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
@@ -24,11 +24,11 @@ YuvImage rotate(YuvImage image, YuvImageRotation rotation) {
       // TODO: Handle this case.
       throw UnimplementedError();
     case YuvFileFormat.i420:
-      final srcDef = YUV420DefClass(image);
+      final srcDef = YUVDefClass(image);
       final dstWidtn = (rotation.swapSize ? image.height : image.width).toInt();
       final dstHeight = (rotation.swapSize ? image.width : image.height).toInt();
       final dstImage = Yuv420Image(dstWidtn, dstHeight, image.yPlane.pixelStride, image.uPlane.pixelStride);
-      final dstDef = YUV420DefClass(dstImage);
+      final dstDef = YUVDefClass(dstImage);
 
       try {
         ffiBingings.yuv420_rotate(srcDef.pointer, dstDef.pointer, degrees);

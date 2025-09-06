@@ -4946,7 +4946,7 @@ class YuvFfiBindings {
       .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   void yuv420_blackwhite(
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
   ) {
     return _yuv420_blackwhite(
       src,
@@ -4954,14 +4954,14 @@ class YuvFfiBindings {
   }
 
   late final _yuv420_blackwhitePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
           'yuv420_blackwhite');
   late final _yuv420_blackwhite =
-      _yuv420_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUV420Def>)>();
+      _yuv420_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void yuv420_crop_rect(
-    ffi.Pointer<YUV420Def> src,
-    ffi.Pointer<YUV420Def> dst,
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
     int left,
     int top,
     int crop_width,
@@ -4979,14 +4979,14 @@ class YuvFfiBindings {
 
   late final _yuv420_crop_rectPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<YUV420Def>,
-              ffi.Int, ffi.Int, ffi.Int, ffi.Int)>>('yuv420_crop_rect');
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Int, ffi.Int, ffi.Int)>>('yuv420_crop_rect');
   late final _yuv420_crop_rect = _yuv420_crop_rectPtr.asFunction<
-      void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<YUV420Def>, int, int,
-          int, int)>();
+      void Function(
+          ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
 
   void yuv420_flip_horizontally(
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
   ) {
     return _yuv420_flip_horizontally(
       src,
@@ -4994,13 +4994,13 @@ class YuvFfiBindings {
   }
 
   late final _yuv420_flip_horizontallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
           'yuv420_flip_horizontally');
   late final _yuv420_flip_horizontally = _yuv420_flip_horizontallyPtr
-      .asFunction<void Function(ffi.Pointer<YUV420Def>)>();
+      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void yuv420_flip_vertically(
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
   ) {
     return _yuv420_flip_vertically(
       src,
@@ -5008,13 +5008,13 @@ class YuvFfiBindings {
   }
 
   late final _yuv420_flip_verticallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
           'yuv420_flip_vertically');
   late final _yuv420_flip_vertically = _yuv420_flip_verticallyPtr
-      .asFunction<void Function(ffi.Pointer<YUV420Def>)>();
+      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void yuv420_gaussblur(
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
     int radius,
     int sigma,
   ) {
@@ -5028,12 +5028,12 @@ class YuvFfiBindings {
   late final _yuv420_gaussblurPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
-              ffi.Pointer<YUV420Def>, ffi.Int, ffi.Int)>>('yuv420_gaussblur');
+              ffi.Pointer<YUVDef>, ffi.Int, ffi.Int)>>('yuv420_gaussblur');
   late final _yuv420_gaussblur = _yuv420_gaussblurPtr
-      .asFunction<void Function(ffi.Pointer<YUV420Def>, int, int)>();
+      .asFunction<void Function(ffi.Pointer<YUVDef>, int, int)>();
 
   void yuv420_grayscale(
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
   ) {
     return _yuv420_grayscale(
       src,
@@ -5041,13 +5041,13 @@ class YuvFfiBindings {
   }
 
   late final _yuv420_grayscalePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
           'yuv420_grayscale');
   late final _yuv420_grayscale =
-      _yuv420_grayscalePtr.asFunction<void Function(ffi.Pointer<YUV420Def>)>();
+      _yuv420_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void yuv420_mean_blur(
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
     int radius,
     ffi.Pointer<ffi.Uint32> rect,
   ) {
@@ -5060,14 +5060,14 @@ class YuvFfiBindings {
 
   late final _yuv420_mean_blurPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUV420Def>, ffi.Int,
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
               ffi.Pointer<ffi.Uint32>)>>('yuv420_mean_blur');
   late final _yuv420_mean_blur = _yuv420_mean_blurPtr.asFunction<
-      void Function(ffi.Pointer<YUV420Def>, int, ffi.Pointer<ffi.Uint32>)>();
+      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
 
   void yuv420_rotate(
-    ffi.Pointer<YUV420Def> src,
-    ffi.Pointer<YUV420Def> dst,
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
     int rotationDegrees,
   ) {
     return _yuv420_rotate(
@@ -5079,13 +5079,13 @@ class YuvFfiBindings {
 
   late final _yuv420_rotatePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<YUV420Def>,
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>,
               ffi.Int)>>('yuv420_rotate');
   late final _yuv420_rotate = _yuv420_rotatePtr.asFunction<
-      void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<YUV420Def>, int)>();
+      void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
 
   void yuv420_to_bgra8888(
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
     ffi.Pointer<ffi.Uint8> outBgra,
   ) {
     return _yuv420_to_bgra8888(
@@ -5096,13 +5096,13 @@ class YuvFfiBindings {
 
   late final _yuv420_to_bgra8888Ptr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUV420Def>,
+          ffi.Void Function(ffi.Pointer<YUVDef>,
               ffi.Pointer<ffi.Uint8>)>>('yuv420_to_bgra8888');
-  late final _yuv420_to_bgra8888 = _yuv420_to_bgra8888Ptr.asFunction<
-      void Function(ffi.Pointer<YUV420Def>, ffi.Pointer<ffi.Uint8>)>();
+  late final _yuv420_to_bgra8888 = _yuv420_to_bgra8888Ptr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>();
 
   void yuv420_negate(
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
   ) {
     return _yuv420_negate(
       src,
@@ -5110,10 +5110,10 @@ class YuvFfiBindings {
   }
 
   late final _yuv420_negatePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUV420Def>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
           'yuv420_negate');
   late final _yuv420_negate =
-      _yuv420_negatePtr.asFunction<void Function(ffi.Pointer<YUV420Def>)>();
+      _yuv420_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   ffi.Pointer<ffi.Void> _calloc_base(
     int _Count,
@@ -9356,7 +9356,7 @@ class YuvFfiBindings {
   late final _onexit1 = _onexitPtr.asFunction<_onexit_t Function(_onexit_t)>();
 
   void yuv420_box_blur(
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
     int radius,
     ffi.Pointer<ffi.Uint32> rect,
   ) {
@@ -9369,14 +9369,14 @@ class YuvFfiBindings {
 
   late final _yuv420_box_blurPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUV420Def>, ffi.Int,
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
               ffi.Pointer<ffi.Uint32>)>>('yuv420_box_blur');
   late final _yuv420_box_blur = _yuv420_box_blurPtr.asFunction<
-      void Function(ffi.Pointer<YUV420Def>, int, ffi.Pointer<ffi.Uint32>)>();
+      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
 
   void yuv420_from_rgba8888(
     ffi.Pointer<ffi.Uint8> rgba,
-    ffi.Pointer<YUV420Def> src,
+    ffi.Pointer<YUVDef> src,
   ) {
     return _yuv420_from_rgba8888(
       rgba,
@@ -9387,9 +9387,52 @@ class YuvFfiBindings {
   late final _yuv420_from_rgba8888Ptr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<YUV420Def>)>>('yuv420_from_rgba8888');
-  late final _yuv420_from_rgba8888 = _yuv420_from_rgba8888Ptr.asFunction<
-      void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUV420Def>)>();
+              ffi.Pointer<YUVDef>)>>('yuv420_from_rgba8888');
+  late final _yuv420_from_rgba8888 = _yuv420_from_rgba8888Ptr
+      .asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>();
+
+  void yuv420_i420_to_nv21(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+  ) {
+    return _yuv420_i420_to_nv21(
+      src,
+      dst,
+    );
+  }
+
+  late final _yuv420_i420_to_nv21Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>,
+              ffi.Pointer<YUVDef>)>>('yuv420_i420_to_nv21');
+  late final _yuv420_i420_to_nv21 = _yuv420_i420_to_nv21Ptr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
+
+  void nv21_crop_rect(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+    int left,
+    int top,
+    int crop_width,
+    int crop_height,
+  ) {
+    return _nv21_crop_rect(
+      src,
+      dst,
+      left,
+      top,
+      crop_width,
+      crop_height,
+    );
+  }
+
+  late final _nv21_crop_rectPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Int, ffi.Int, ffi.Int)>>('nv21_crop_rect');
+  late final _nv21_crop_rect = _nv21_crop_rectPtr.asFunction<
+      void Function(
+          ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
 
   void nv21_to_rgb(
     ffi.Pointer<ffi.Uint8> nv21,
@@ -9412,57 +9455,26 @@ class YuvFfiBindings {
   late final _nv21_to_rgb = _nv21_to_rgbPtr.asFunction<
       void Function(
           ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int, int)>();
+
+  void nv21_to_bgra8888(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<ffi.Uint8> outBgra,
+  ) {
+    return _nv21_to_bgra8888(
+      src,
+      outBgra,
+    );
+  }
+
+  late final _nv21_to_bgra8888Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>,
+              ffi.Pointer<ffi.Uint8>)>>('nv21_to_bgra8888');
+  late final _nv21_to_bgra8888 = _nv21_to_bgra8888Ptr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>();
 }
 
 typedef va_list = ffi.Pointer<ffi.Char>;
-typedef ptrdiff_t = ffi.LongLong;
-typedef Dartptrdiff_t = int;
-typedef int_least8_t = ffi.SignedChar;
-typedef Dartint_least8_t = int;
-typedef int_least16_t = ffi.Short;
-typedef Dartint_least16_t = int;
-typedef int_least32_t = ffi.Int;
-typedef Dartint_least32_t = int;
-typedef int_least64_t = ffi.LongLong;
-typedef Dartint_least64_t = int;
-typedef uint_least8_t = ffi.UnsignedChar;
-typedef Dartuint_least8_t = int;
-typedef uint_least16_t = ffi.UnsignedShort;
-typedef Dartuint_least16_t = int;
-typedef uint_least32_t = ffi.UnsignedInt;
-typedef Dartuint_least32_t = int;
-typedef uint_least64_t = ffi.UnsignedLongLong;
-typedef Dartuint_least64_t = int;
-typedef int_fast8_t = ffi.SignedChar;
-typedef Dartint_fast8_t = int;
-typedef int_fast16_t = ffi.Int;
-typedef Dartint_fast16_t = int;
-typedef int_fast32_t = ffi.Int;
-typedef Dartint_fast32_t = int;
-typedef int_fast64_t = ffi.LongLong;
-typedef Dartint_fast64_t = int;
-typedef uint_fast8_t = ffi.UnsignedChar;
-typedef Dartuint_fast8_t = int;
-typedef uint_fast16_t = ffi.UnsignedInt;
-typedef Dartuint_fast16_t = int;
-typedef uint_fast32_t = ffi.UnsignedInt;
-typedef Dartuint_fast32_t = int;
-typedef uint_fast64_t = ffi.UnsignedLongLong;
-typedef Dartuint_fast64_t = int;
-typedef intmax_t = ffi.LongLong;
-typedef Dartintmax_t = int;
-typedef uintmax_t = ffi.UnsignedLongLong;
-typedef Dartuintmax_t = int;
-typedef errno_t = ffi.Int;
-typedef Darterrno_t = int;
-typedef wint_t = ffi.UnsignedShort;
-typedef Dartwint_t = int;
-typedef wctype_t = ffi.UnsignedShort;
-typedef Dartwctype_t = int;
-typedef __time32_t = ffi.Long;
-typedef Dart__time32_t = int;
-typedef __time64_t = ffi.LongLong;
-typedef Dart__time64_t = int;
 
 final class __crt_locale_data_public extends ffi.Struct {
   external ffi.Pointer<ffi.UnsignedShort> _locale_pctype;
@@ -9474,17 +9486,15 @@ final class __crt_locale_data_public extends ffi.Struct {
   external int _locale_lc_codepage;
 }
 
-final class __crt_locale_data extends ffi.Opaque {}
-
-final class __crt_multibyte_data extends ffi.Opaque {}
-
 final class __crt_locale_pointers extends ffi.Struct {
   external ffi.Pointer<__crt_locale_data> locinfo;
 
   external ffi.Pointer<__crt_multibyte_data> mbcinfo;
 }
 
-typedef _locale_t = ffi.Pointer<__crt_locale_pointers>;
+final class __crt_locale_data extends ffi.Opaque {}
+
+final class __crt_multibyte_data extends ffi.Opaque {}
 
 final class _Mbstatet extends ffi.Struct {
   @ffi.UnsignedLong()
@@ -9497,20 +9507,22 @@ final class _Mbstatet extends ffi.Struct {
   external int _State;
 }
 
-typedef mbstate_t = _Mbstatet;
-typedef time_t = __time64_t;
-typedef rsize_t = ffi.Size;
-typedef Dartrsize_t = int;
-
 final class _iobuf extends ffi.Struct {
   external ffi.Pointer<ffi.Void> _Placeholder;
 }
 
 typedef FILE = _iobuf;
+typedef wint_t = ffi.UnsignedShort;
+typedef Dartwint_t = int;
+typedef errno_t = ffi.Int;
+typedef Darterrno_t = int;
+typedef _locale_t = ffi.Pointer<__crt_locale_pointers>;
+typedef rsize_t = ffi.Size;
+typedef Dartrsize_t = int;
 typedef fpos_t = ffi.LongLong;
 typedef Dartfpos_t = int;
 
-final class YUV420Def extends ffi.Struct {
+final class YUVDef extends ffi.Struct {
   external ffi.Pointer<ffi.Uint8> y;
 
   external ffi.Pointer<ffi.Uint8> u;
@@ -9536,25 +9548,27 @@ final class YUV420Def extends ffi.Struct {
   external int uvPixelStride;
 }
 
+typedef _CoreCrtSecureSearchSortCompareFunction = ffi.Pointer<
+    ffi.NativeFunction<_CoreCrtSecureSearchSortCompareFunctionFunction>>;
 typedef _CoreCrtSecureSearchSortCompareFunctionFunction = ffi.Int Function(
     ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
 typedef Dart_CoreCrtSecureSearchSortCompareFunctionFunction = int Function(
     ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
-typedef _CoreCrtSecureSearchSortCompareFunction = ffi.Pointer<
-    ffi.NativeFunction<_CoreCrtSecureSearchSortCompareFunctionFunction>>;
+typedef _CoreCrtNonSecureSearchSortCompareFunction = ffi.Pointer<
+    ffi.NativeFunction<_CoreCrtNonSecureSearchSortCompareFunctionFunction>>;
 typedef _CoreCrtNonSecureSearchSortCompareFunctionFunction = ffi.Int Function(
     ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
 typedef Dart_CoreCrtNonSecureSearchSortCompareFunctionFunction = int Function(
     ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
-typedef _CoreCrtNonSecureSearchSortCompareFunction = ffi.Pointer<
-    ffi.NativeFunction<_CoreCrtNonSecureSearchSortCompareFunctionFunction>>;
+typedef _onexit_t = ffi.Pointer<ffi.NativeFunction<_onexit_tFunction>>;
 typedef _onexit_tFunction = ffi.Int Function();
 typedef Dart_onexit_tFunction = int Function();
-typedef _onexit_t = ffi.Pointer<ffi.NativeFunction<_onexit_tFunction>>;
-typedef _purecall_handlerFunction = ffi.Void Function();
-typedef Dart_purecall_handlerFunction = void Function();
 typedef _purecall_handler
     = ffi.Pointer<ffi.NativeFunction<_purecall_handlerFunction>>;
+typedef _purecall_handlerFunction = ffi.Void Function();
+typedef Dart_purecall_handlerFunction = void Function();
+typedef _invalid_parameter_handler
+    = ffi.Pointer<ffi.NativeFunction<_invalid_parameter_handlerFunction>>;
 typedef _invalid_parameter_handlerFunction = ffi.Void Function(
     ffi.Pointer<ffi.WChar>,
     ffi.Pointer<ffi.WChar>,
@@ -9567,8 +9581,6 @@ typedef Dart_invalid_parameter_handlerFunction = void Function(
     ffi.Pointer<ffi.WChar>,
     int,
     int);
-typedef _invalid_parameter_handler
-    = ffi.Pointer<ffi.NativeFunction<_invalid_parameter_handlerFunction>>;
 
 final class _div_t extends ffi.Struct {
   @ffi.Int()
@@ -9578,8 +9590,6 @@ final class _div_t extends ffi.Struct {
   external int rem;
 }
 
-typedef div_t = _div_t;
-
 final class _ldiv_t extends ffi.Struct {
   @ffi.Long()
   external int quot;
@@ -9587,8 +9597,6 @@ final class _ldiv_t extends ffi.Struct {
   @ffi.Long()
   external int rem;
 }
-
-typedef ldiv_t = _ldiv_t;
 
 final class _lldiv_t extends ffi.Struct {
   @ffi.LongLong()
@@ -9598,6 +9606,8 @@ final class _lldiv_t extends ffi.Struct {
   external int rem;
 }
 
+typedef div_t = _div_t;
+typedef ldiv_t = _ldiv_t;
 typedef lldiv_t = _lldiv_t;
 
 final class _LDOUBLE extends ffi.Struct {
@@ -9647,6 +9657,8 @@ const int _HAS_CXX17 = 0;
 const int _HAS_CXX20 = 0;
 
 const int _HAS_CXX23 = 0;
+
+const int _HAS_CXX26 = 0;
 
 const int _HAS_NODISCARD = 1;
 

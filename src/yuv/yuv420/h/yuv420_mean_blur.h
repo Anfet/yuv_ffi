@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 void yuv420_mean_blur(
-        const YUV420Def *src,
+        const YUVDef *src,
         int radius,
         const uint32_t *rect
 );

@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'package:yuv_ffi_example/ext.dart';
+import 'package:yuv_ffi_example/widgets/shades.dart';
 import 'package:yuv_ffi_example/widgets/yuv_camera_widget.dart';
+
+import 'widgets/crop_targets.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -18,8 +21,12 @@ class _CameraScreenState extends State<CameraScreen> {
   CameraController? cameraController;
 
   CameraController get controller => cameraController!;
+
+  ValueNotifier<YuvImage?> imageNotifier = ValueNotifier(null);
+
   Object? cameraError;
   Completer<YuvImage>? nextFrameCompleter;
+  int fps = 0;
 
   @override
   void initState() {
@@ -30,6 +37,7 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void dispose() {
     cameraController?.dispose();
+    imageNotifier.dispose();
     super.dispose();
   }
 
@@ -64,15 +72,51 @@ class _CameraScreenState extends State<CameraScreen> {
                       // return CameraPreview(
                       //   controller,
                       // );
-                      return YuvCameraWidget(
-                        cameraController: controller,
-                        transform: (image) {
-                          if (nextFrameCompleter != null && nextFrameCompleter?.isCompleted != true) {
-                            nextFrameCompleter?.complete(image);
-                          }
-                          return image;
-                        },
-                      );
+                      return LayoutBuilder(builder: (context, c) {
+                        return Stack(
+                          children: [
+                            Positioned.fill(
+                              child: Transform(
+                                transform: Matrix4.rotationY(pi),
+                                origin: Offset(c.maxWidth / 2.0, 0),
+                                child: YuvCameraWidget(
+                                  cameraController: controller,
+                                  transform: (image) {
+                                    if (nextFrameCompleter != null && nextFrameCompleter?.isCompleted != true) {
+                                      nextFrameCompleter?.complete(image);
+                                    }
+                                    imageNotifier.value = image;
+                                    return image;
+                                  },
+                                  fpsChanged: onFpsChanged,
+                                ),
+                              ),
+                            ),
+                            Positioned.fill(
+                              child: ShadeWidget.oval(
+                                target: CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: Text('fps: $fps', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: ValueListenableBuilder(
+                                valueListenable: imageNotifier,
+                                builder: (context, image, _) {
+                                  if (image == null) {
+                                    return SizedBox();
+                                  }
+                                  return Text('W/H [${image.width}:${image.height}];\nP:${image.planes.length}\nF:${image.format}]',
+                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white));
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      });
                     }
 
                     return Center(child: CircularProgressIndicator());
@@ -114,8 +158,14 @@ class _CameraScreenState extends State<CameraScreen> {
         return;
       }
 
-      final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.back, orElse: () => cameras.first);
-      cameraController = CameraController(camera, ResolutionPreset.medium, enableAudio: false, fps: 60);
+      final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.front, orElse: () => cameras.first);
+      cameraController = CameraController(
+        camera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+        fps: 30,
+        imageFormatGroup: ImageFormatGroup.yuv420,
+      );
       await controller.initialize();
     } catch (ex) {
       cameraError = '$ex';
@@ -134,5 +184,11 @@ class _CameraScreenState extends State<CameraScreen> {
     } finally {
       nextFrameCompleter = null;
     }
+  }
+
+  void onFpsChanged(int value) {
+    setState(() {
+      fps = value;
+    });
   }
 }
