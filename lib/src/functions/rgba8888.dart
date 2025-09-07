@@ -15,15 +15,14 @@ extension YuvImageBgra8888 on YuvImage {
     final def = YUVDefClass.template(this);
     try {
       switch (format) {
-        case YuvFileFormat.nv21:
-          // TODO: Handle this case.
-          throw UnimplementedError();
         case YuvFileFormat.i420:
           ffiBingings.yuv420_from_rgba8888(rgbaPtr, def.pointer);
           yPlane.assignFromPtr(def.pointer.ref.y);
           uPlane.assignFromPtr(def.pointer.ref.u);
           vPlane.assignFromPtr(def.pointer.ref.v);
           break;
+        default:
+          throw UnimplementedError();
       }
     } finally {
       def.dispose();

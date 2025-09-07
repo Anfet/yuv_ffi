@@ -6,21 +6,20 @@ import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
 
 YuvImage grayscale(YuvImage image) {
-  switch (image.format) {
-    case YuvFileFormat.nv21:
-      // TODO: Handle this case.
-      throw UnimplementedError();
-    case YuvFileFormat.i420:
-      final def = YUVDefClass(image);
+  final def = YUVDefClass(image);
 
-      try {
+  try {
+    switch (image.format) {
+      case YuvFileFormat.i420:
         ffiBingings.yuv420_grayscale(def.pointer);
         image.uPlane.assignFromPtr(def.pointer.ref.u);
         image.vPlane.assignFromPtr(def.pointer.ref.v);
-      } finally {
-        def.dispose();
-      }
+        break;
+      default:
+        throw UnimplementedError();
+    }
+  } finally {
+    def.dispose();
   }
-
   return image;
 }

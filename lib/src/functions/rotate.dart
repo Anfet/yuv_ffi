@@ -1,11 +1,7 @@
 import 'dart:ffi';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 
-import 'package:ffi/ffi.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/defs/yuv_def.dart';
-import 'package:yuv_ffi/src/yuv/images/yuv_i420_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
 
@@ -19,26 +15,26 @@ YuvImage rotate(YuvImage image, YuvImageRotation rotation) {
     return image;
   }
 
-  switch (image.format) {
-    case YuvFileFormat.nv21:
-      // TODO: Handle this case.
-      throw UnimplementedError();
-    case YuvFileFormat.i420:
-      final srcDef = YUVDefClass(image);
-      final dstWidtn = (rotation.swapSize ? image.height : image.width).toInt();
-      final dstHeight = (rotation.swapSize ? image.width : image.height).toInt();
-      final dstImage = Yuv420Image(dstWidtn, dstHeight, image.yPlane.pixelStride, image.uPlane.pixelStride);
-      final dstDef = YUVDefClass(dstImage);
-
-      try {
+  final srcDef = YUVDefClass(image);
+  final dstWidtn = (rotation.swapSize ? image.height : image.width).toInt();
+  final dstHeight = (rotation.swapSize ? image.width : image.height).toInt();
+  final dstImage = YuvImage(image.format, dstWidtn, dstHeight, yPixelStride: image.yPlane.pixelStride, uvPixelStride: image.uPlane.pixelStride);
+  final dstDef = YUVDefClass(dstImage);
+  try {
+    switch (image.format) {
+      case YuvFileFormat.i420:
         ffiBingings.yuv420_rotate(srcDef.pointer, dstDef.pointer, degrees);
         dstImage.yPlane.assignFromPtr(dstDef.pointer.ref.y);
         dstImage.uPlane.assignFromPtr(dstDef.pointer.ref.u);
         dstImage.vPlane.assignFromPtr(dstDef.pointer.ref.v);
-        return dstImage;
-      } finally {
-        srcDef.dispose();
-        dstDef.dispose();
-      }
+        break;
+      default:
+        throw UnimplementedError();
+    }
+  } finally {
+    srcDef.dispose();
+    dstDef.dispose();
   }
+
+  return dstImage;
 }

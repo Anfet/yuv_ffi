@@ -1,19 +1,14 @@
 import 'dart:ffi';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:ffi/ffi.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/defs/yuv_def.dart';
-import 'package:yuv_ffi/src/yuv/images/yuv_i420_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
 
 YuvImage gaussianBlur(YuvImage image, {int radius = 2, int sigma = 2}) {
   switch (image.format) {
-    case YuvFileFormat.nv21:
-      // TODO: Handle this case.
-      throw UnimplementedError();
     case YuvFileFormat.i420:
       final def = YUVDefClass(image);
       try {
@@ -24,6 +19,8 @@ YuvImage gaussianBlur(YuvImage image, {int radius = 2, int sigma = 2}) {
       } finally {
         def.dispose();
       }
+    default:
+      throw UnimplementedError();
   }
 
   return image;
@@ -31,9 +28,6 @@ YuvImage gaussianBlur(YuvImage image, {int radius = 2, int sigma = 2}) {
 
 YuvImage boxBlur(YuvImage image, {int radius = 10, ui.Rect? rect}) {
   switch (image.format) {
-    case YuvFileFormat.nv21:
-      // TODO: Handle this case.
-      throw UnimplementedError();
     case YuvFileFormat.i420:
       final def = YUVDefClass(image);
       final rectPtr = rect == null ? nullptr : calloc.allocate<Uint32>(4 * 32);
@@ -52,15 +46,14 @@ YuvImage boxBlur(YuvImage image, {int radius = 10, ui.Rect? rect}) {
         def.dispose();
       }
       break;
+    default:
+      throw UnimplementedError();
   }
   return image;
 }
 
 YuvImage meanBlur(YuvImage image, {int radius = 2, ui.Rect? rect}) {
   switch (image.format) {
-    case YuvFileFormat.nv21:
-      // TODO: Handle this case.
-      throw UnimplementedError();
     case YuvFileFormat.i420:
       final def = YUVDefClass(image);
       final rectPtr = rect == null ? nullptr : calloc.allocate<Uint32>(4 * 32);
@@ -79,6 +72,8 @@ YuvImage meanBlur(YuvImage image, {int radius = 2, ui.Rect? rect}) {
         def.dispose();
       }
       break;
+    default:
+      throw UnimplementedError();
   }
 
   return image;

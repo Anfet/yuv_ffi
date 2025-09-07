@@ -11,6 +11,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:path_provider/path_provider.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/camera_screen.dart';
+import 'package:yuv_ffi_example/ext.dart';
 import 'package:yuv_ffi_example/widgets/crop_targets.dart';
 import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
 import 'package:yuv_ffi_example/widgets/shades.dart';
@@ -28,6 +29,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   YuvImage? image;
+
+  YuvImage get requireImage => image!;
 
   bool imageExists = false;
   int? lastOpTiming;
@@ -166,46 +169,46 @@ class _MyAppState extends State<MyApp> {
   }
 
   void rotateClockWise() {
-    logTimed(() => image = rotate(image!, YuvImageRotation.rotation90), name: '$image rotateClockWise');
+    logTimed(() => image = rotate(requireImage, YuvImageRotation.rotation90), name: '$image rotateClockWise');
   }
 
   void rotateCouterClockwise() {
-    logTimed(() => image = rotate(image!, YuvImageRotation.rotation270), name: '$image rotateCouterClockwise');
+    logTimed(() => image = rotate(requireImage, YuvImageRotation.rotation270), name: '$image rotateCouterClockwise');
   }
 
   Future flipImageVertically() async {
-    logTimed(() async => image = await flipVertically(image!), name: '$image flipVertically');
+    logTimed(() async => image = await flipVertically(requireImage), name: '$image flipVertically');
   }
 
   void flitImageHorizontally() {
-    logTimed(() => image = flipHorizontally(image!), name: '$image flitHorizontally');
+    logTimed(() => image = flipHorizontally(requireImage), name: '$image flitHorizontally');
   }
 
   void cropImage() {
     var cropTarget = CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85);
-    var r = cropTarget.place(image!.size);
+    var r = cropTarget.place(requireImage.size);
 
-    logTimed(() => image = crop(image!, r), name: '$image cropImage');
+    logTimed(() => image = crop(requireImage, r), name: '$image cropImage');
   }
 
   void grayscaleImage() {
-    logTimed(() => image = grayscale(image!), name: '$image grayscaleImage');
+    logTimed(() => image = grayscale(requireImage), name: '$image grayscaleImage');
   }
 
   void blackwhiteImage() {
-    logTimed(() => image = blackwhite(image!), name: '$image blackwhiteImage');
+    logTimed(() => image = blackwhite(requireImage), name: '$image blackwhiteImage');
   }
 
   void invertImage() {
-    logTimed(() => image = negate(image!), name: '$image invertImage');
+    logTimed(() => image = negate(requireImage), name: '$image invertImage');
   }
 
   void gaussianBlurImage() {
-    logTimed(() => image = gaussianBlur(image!, radius: 10, sigma: 10), name: '$image gaussianBlurImage');
+    logTimed(() => image = gaussianBlur(requireImage, radius: 10, sigma: 10), name: '$image gaussianBlurImage');
   }
 
   void meanBlurImage() {
-    logTimed(() => image = meanBlur(image!, radius: 10), name: '$image meanBlurImage');
+    logTimed(() => image = meanBlur(requireImage, radius: 10), name: '$image meanBlurImage');
   }
 
   Future logTimed(FutureOr Function() execution, {String? name}) async {
@@ -218,7 +221,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void boxBlurImage() {
-    logTimed(() => image = boxBlur(image!, radius: 10), name: '$image boxBlurImage');
+    logTimed(() => image = boxBlur(requireImage, radius: 10), name: '$image boxBlurImage');
   }
 
   Future loadImage() async {
@@ -238,7 +241,7 @@ class _MyAppState extends State<MyApp> {
     if (rgbaBytes == null) throw Exception('Could not decode image');
 
     var rgbaBuffer = rgbaBytes.buffer.asUint8List();
-    var image = Yuv420Image.fromRGBA(rgbaBuffer, img.width, img.height);
+    var image = YuvImage.fromRGBA(YuvFileFormat.i420, img.width, img.height, rgbaBuffer);
     var json = image.toJson();
     var dir = await getTemporaryDirectory();
     var path = '${dir.path}/image.json';
@@ -253,17 +256,8 @@ class _MyAppState extends State<MyApp> {
       options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    final rotation = InputImageRotation.rotation0deg;
-    final image = this.image!.toNv21();
+    var inputImage = requireImage.toInputImage();
 
-    final meta = InputImageMetadata(
-      size: Size(image.width.toDouble(), image.height.toDouble()),
-      rotation: rotation,
-      format: InputImageFormat.nv21,
-      bytesPerRow: image.planes.first.bytesPerRow,
-    );
-
-    var inputImage = InputImage.fromBytes(bytes: image.getBytes(), metadata: meta);
     final faces = await detector.processImage(inputImage);
     if (faces.isEmpty) {
       faceBox = null;

@@ -8,14 +8,15 @@ extension CameraImageExt on CameraImage {
     final planes = List.of(this.planes.map((p) => YuvPlane(height, p.bytesPerRow, p.bytesPerPixel ?? 1, p.bytes)));
     switch (format.group) {
       case ImageFormatGroup.yuv420:
-        return Yuv420Image.fromPlanes(width, height, planes);
+        return YuvImage.i420(width, height, planes: planes);
 
       case ImageFormatGroup.nv21:
-        return YuvNV21Image.fromPlanes(width, height, planes);
-      case ImageFormatGroup.unknown:
+        return YuvImage.nv21(width, height, planes: planes);
       case ImageFormatGroup.bgra8888:
+        return YuvImage.bgra(width, height, planes: planes);
+      case ImageFormatGroup.unknown:
       case ImageFormatGroup.jpeg:
-        throw FormatException('Not supported format');
+        throw FormatException('Unsupported format for CameraImage to YuvImage; ${format.group}');
     }
   }
 }
@@ -23,29 +24,20 @@ extension CameraImageExt on CameraImage {
 extension YuvImageToCameraExt on YuvImage {
   InputImage toInputImage() {
     InputImageFormat format;
-    switch (this.runtimeType) {
-      case Yuv420Image:
+    switch (this.format) {
+      case YuvFileFormat.i420:
         format = InputImageFormat.yuv420;
         break;
-      case YuvNV21Image:
+      case YuvFileFormat.nv21:
         format = InputImageFormat.nv21;
-      default:
-        throw FormatException('Not supported format');
+        break;
+      case YuvFileFormat.bgra8888:
+        format = InputImageFormat.bgra8888;
+        break;
     }
 
-    final meta = InputImageMetadata(
-      size: size,
-      rotation: InputImageRotation.rotation0deg,
-      format: format,
-      bytesPerRow: planes.first.bytesPerRow,
-    );
+    final meta = InputImageMetadata(size: size, rotation: InputImageRotation.rotation0deg, format: format, bytesPerRow: planes.first.bytesPerRow);
 
-    final WriteBuffer buf = WriteBuffer();
-    for (final p in planes) {
-      buf.putUint8List(p.bytes);
-    }
-    final bytes = buf.done().buffer.asUint8List();
-
-    return InputImage.fromBytes(bytes: bytes, metadata: meta);
+    return InputImage.fromBytes(bytes: getBytes(), metadata: meta);
   }
 }
