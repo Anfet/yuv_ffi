@@ -1,5 +1,5 @@
-#ifndef NV21_TO_420_H
-#define NV21_TO_420_H
+#ifndef NV21_CROP_H
+#define NV21_CROP_H
 
 #include <stdint.h>
 

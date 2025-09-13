@@ -9434,6 +9434,23 @@ class YuvFfiBindings {
       void Function(
           ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
 
+  void nv21_to_i420(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+  ) {
+    return _nv21_to_i420(
+      src,
+      dst,
+    );
+  }
+
+  late final _nv21_to_i420Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('nv21_to_i420');
+  late final _nv21_to_i420 = _nv21_to_i420Ptr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
+
   void nv21_to_rgb(
     ffi.Pointer<ffi.Uint8> nv21,
     ffi.Pointer<ffi.Uint8> rgb_out,
@@ -9472,6 +9489,244 @@ class YuvFfiBindings {
               ffi.Pointer<ffi.Uint8>)>>('nv21_to_bgra8888');
   late final _nv21_to_bgra8888 = _nv21_to_bgra8888Ptr
       .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>();
+
+  void nv21_from_rgba8888(
+    ffi.Pointer<ffi.Uint8> rgba,
+    ffi.Pointer<YUVDef> dst,
+  ) {
+    return _nv21_from_rgba8888(
+      rgba,
+      dst,
+    );
+  }
+
+  late final _nv21_from_rgba8888Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ffi.Uint8>,
+              ffi.Pointer<YUVDef>)>>('nv21_from_rgba8888');
+  late final _nv21_from_rgba8888 = _nv21_from_rgba8888Ptr
+      .asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>();
+
+  void nv21_rotate(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+    int rotationDegrees,
+  ) {
+    return _nv21_rotate(
+      src,
+      dst,
+      rotationDegrees,
+    );
+  }
+
+  late final _nv21_rotatePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>,
+              ffi.Int)>>('nv21_rotate');
+  late final _nv21_rotate = _nv21_rotatePtr.asFunction<
+      void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
+
+  void nv21_blackwhite(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _nv21_blackwhite(
+      src,
+    );
+  }
+
+  late final _nv21_blackwhitePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'nv21_blackwhite');
+  late final _nv21_blackwhite =
+      _nv21_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void nv21_grayscale(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _nv21_grayscale(
+      src,
+    );
+  }
+
+  late final _nv21_grayscalePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'nv21_grayscale');
+  late final _nv21_grayscale =
+      _nv21_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void nv21_negate(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _nv21_negate(
+      src,
+    );
+  }
+
+  late final _nv21_negatePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'nv21_negate');
+  late final _nv21_negate =
+      _nv21_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void nv21_flip_horizontally(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _nv21_flip_horizontally(
+      src,
+    );
+  }
+
+  late final _nv21_flip_horizontallyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'nv21_flip_horizontally');
+  late final _nv21_flip_horizontally = _nv21_flip_horizontallyPtr
+      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void nv21_flip_vertically(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _nv21_flip_vertically(
+      src,
+    );
+  }
+
+  late final _nv21_flip_verticallyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'nv21_flip_vertically');
+  late final _nv21_flip_vertically =
+      _nv21_flip_verticallyPtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void bgra8888_from_rgba8888(
+    ffi.Pointer<ffi.Uint8> rgba,
+    ffi.Pointer<YUVDef> dst,
+  ) {
+    return _bgra8888_from_rgba8888(
+      rgba,
+      dst,
+    );
+  }
+
+  late final _bgra8888_from_rgba8888Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ffi.Uint8>,
+              ffi.Pointer<YUVDef>)>>('bgra8888_from_rgba8888');
+  late final _bgra8888_from_rgba8888 = _bgra8888_from_rgba8888Ptr
+      .asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>();
+
+  void bgra8888_rotate(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+    int rotationDegrees,
+  ) {
+    return _bgra8888_rotate(
+      src,
+      dst,
+      rotationDegrees,
+    );
+  }
+
+  late final _bgra8888_rotatePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>,
+              ffi.Int)>>('bgra8888_rotate');
+  late final _bgra8888_rotate = _bgra8888_rotatePtr.asFunction<
+      void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
+
+  void bgra8888_blackwhite(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _bgra8888_blackwhite(
+      src,
+    );
+  }
+
+  late final _bgra8888_blackwhitePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'bgra8888_blackwhite');
+  late final _bgra8888_blackwhite =
+      _bgra8888_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void bgra8888_grayscale(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _bgra8888_grayscale(
+      src,
+    );
+  }
+
+  late final _bgra8888_grayscalePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'bgra8888_grayscale');
+  late final _bgra8888_grayscale =
+      _bgra8888_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void bgra8888_negate(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _bgra8888_negate(
+      src,
+    );
+  }
+
+  late final _bgra8888_negatePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'bgra8888_negate');
+  late final _bgra8888_negate =
+      _bgra8888_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void bgra8888_crop_rect(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+    int left,
+    int top,
+    int crop_width,
+    int crop_height,
+  ) {
+    return _bgra8888_crop_rect(
+      src,
+      dst,
+      left,
+      top,
+      crop_width,
+      crop_height,
+    );
+  }
+
+  late final _bgra8888_crop_rectPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Int, ffi.Int, ffi.Int)>>('bgra8888_crop_rect');
+  late final _bgra8888_crop_rect = _bgra8888_crop_rectPtr.asFunction<
+      void Function(
+          ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
+
+  void bgra8888_flip_horizontally(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _bgra8888_flip_horizontally(
+      src,
+    );
+  }
+
+  late final _bgra8888_flip_horizontallyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'bgra8888_flip_horizontally');
+  late final _bgra8888_flip_horizontally = _bgra8888_flip_horizontallyPtr
+      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void bgra8888_flip_vertically(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _bgra8888_flip_vertically(
+      src,
+    );
+  }
+
+  late final _bgra8888_flip_verticallyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'bgra8888_flip_vertically');
+  late final _bgra8888_flip_vertically = _bgra8888_flip_verticallyPtr
+      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
 }
 
 typedef va_list = ffi.Pointer<ffi.Char>;

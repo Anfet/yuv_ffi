@@ -15,8 +15,14 @@ YuvImage grayscale(YuvImage image) {
         image.uPlane.assignFromPtr(def.pointer.ref.u);
         image.vPlane.assignFromPtr(def.pointer.ref.v);
         break;
-      default:
-        throw UnimplementedError();
+      case YuvFileFormat.nv21:
+        ffiBingings.nv21_grayscale(def.pointer);
+        image.uPlane.assignFromPtr(def.pointer.ref.u);
+        break;
+      case YuvFileFormat.bgra8888:
+        ffiBingings.bgra8888_grayscale(def.pointer);
+        image.yPlane.assignFromPtr(def.pointer.ref.y);
+        break;
     }
   } finally {
     def.dispose();

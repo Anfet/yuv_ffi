@@ -15,12 +15,12 @@ class YUVDefClass {
     pointer.ref.height = image.height;
     pointer.ref.yRowStride = image.yPlane.rowStride;
     pointer.ref.yPixelStride = image.yPlane.pixelStride;
-    pointer.ref.uvRowStride = image.uPlane.rowStride;
-    pointer.ref.uvPixelStride = image.uPlane.pixelStride;
+    pointer.ref.uvRowStride = image.u?.rowStride ?? 1;
+    pointer.ref.uvPixelStride = image.u?.pixelStride ?? 1;
 
     pointer.ref.y = calloc.allocate<Uint8>(image.yPlane.bytes.length);
-    pointer.ref.u = calloc.allocate<Uint8>(image.uPlane.bytes.length);
-    pointer.ref.v = calloc.allocate<Uint8>(image.vPlane.bytes.length);
+    if (image.u != null) pointer.ref.u = calloc.allocate<Uint8>(image.uPlane.bytes.length);
+    if (image.v != null) pointer.ref.v = calloc.allocate<Uint8>(image.vPlane.bytes.length);
   }
 
   factory YUVDefClass.template(YuvImage image) => YUVDefClass._(image);
@@ -28,15 +28,15 @@ class YUVDefClass {
   factory YUVDefClass(YuvImage image) {
     final def = YUVDefClass._(image);
     def.pointer.ref.y.asTypedList(image.yPlane.bytes.length).setAll(0, image.yPlane.bytes);
-    def.pointer.ref.u.asTypedList(image.uPlane.bytes.length).setAll(0, image.uPlane.bytes);
-    def.pointer.ref.v.asTypedList(image.vPlane.bytes.length).setAll(0, image.vPlane.bytes);
+    if (def.pointer.ref.u != nullptr) def.pointer.ref.u.asTypedList(image.uPlane.bytes.length).setAll(0, image.uPlane.bytes);
+    if (def.pointer.ref.v != nullptr) def.pointer.ref.v.asTypedList(image.vPlane.bytes.length).setAll(0, image.vPlane.bytes);
     return def;
   }
 
   void dispose() {
     calloc.free(pointer.ref.y);
-    calloc.free(pointer.ref.u);
-    calloc.free(pointer.ref.v);
+    if (pointer.ref.u != nullptr) calloc.free(pointer.ref.u);
+    if (pointer.ref.v != nullptr) calloc.free(pointer.ref.v);
     calloc.free(pointer);
   }
 }

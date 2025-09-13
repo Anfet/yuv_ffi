@@ -21,8 +21,15 @@ extension YuvImageBgra8888 on YuvImage {
           uPlane.assignFromPtr(def.pointer.ref.u);
           vPlane.assignFromPtr(def.pointer.ref.v);
           break;
-        default:
-          throw UnimplementedError();
+        case YuvFileFormat.nv21:
+          ffiBingings.nv21_from_rgba8888(rgbaPtr, def.pointer);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          break;
+        case YuvFileFormat.bgra8888:
+          ffiBingings.bgra8888_from_rgba8888(rgbaPtr, def.pointer);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          break;
       }
     } finally {
       def.dispose();

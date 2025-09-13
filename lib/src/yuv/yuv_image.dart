@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
-import 'package:yuv_ffi/src/functions/rgba8888.dart';
+import 'package:yuv_ffi/src/functions/from_rgba8888.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 enum YuvFileFormat {
@@ -27,16 +27,22 @@ class YuvImage {
 
   YuvPlane get vPlane => _planes[2];
 
+  YuvPlane get y => _planes[0];
+
+  YuvPlane? get u => _planes.length > 1 ? _planes[1] : null;
+
+  YuvPlane? get v => _planes.length > 2 ? _planes[2] : null;
+
   Size get size => Size(width.toDouble(), height.toDouble());
 
-  YuvImage.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
+  YuvImage.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
       : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImage.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
+  YuvImage.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
       : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImage.bgra(int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+  YuvImage.bgra(int width, int height, {Iterable<YuvPlane>? planes})
+      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: planes);
 
   YuvImage(this.format, this.width, this.height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
     if (planes != null) {
@@ -77,8 +83,8 @@ class YuvImage {
         width,
         height,
         planes: blank ? null : _planes,
-        yPixelStride: blank ? 1 : yPlane.pixelStride,
-        uvPixelStride: blank ? 1 : uPlane.pixelStride,
+        yPixelStride: y.pixelStride,
+        uvPixelStride: u?.pixelStride ?? 1,
       );
 
   String toJson({bool bytesAsBinary = true, bool bytesAsList = false}) {
@@ -98,12 +104,6 @@ class YuvImage {
     final height = json['height'];
     final planes = (json['planes'] as Iterable).map((j) => YuvPlane.fromJson(j, bytesAsList: bytesAsList, bytesAsBinary: bytesAsBinary)).toList();
     return YuvImage(format, width, height, planes: planes);
-  }
-
-  factory YuvImage.fromRGBA(YuvFileFormat format, int width, int height, Uint8List rgbaBuffer) {
-    var image = YuvImage(format, width, height);
-    image.fromRgba8888(rgbaBuffer);
-    return image;
   }
 
   @override

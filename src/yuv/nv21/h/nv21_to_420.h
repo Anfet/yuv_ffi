@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-void nv21_to_i420(const YUVDef* src, const YUVDef* dst)
+void nv21_to_i420(const YUVDef* src, const YUVDef* dst);
 
 #endif

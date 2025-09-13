@@ -21,7 +21,7 @@ extension YuvImageBgra8888 on YuvImage {
           ffiBingings.yuv420_to_bgra8888(def.pointer, bgraPlane);
           return Uint8List.fromList(bgraPlane.asTypedList(bgraPlaneLength));
         case YuvFileFormat.bgra8888:
-          throw UnimplementedError();
+          return yPlane.bytes;
       }
     } finally {
       calloc.free(bgraPlane);

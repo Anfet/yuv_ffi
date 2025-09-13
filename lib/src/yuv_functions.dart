@@ -6,3 +6,4 @@ export 'functions/grayscale.dart';
 export 'functions/negate.dart';
 export 'functions/rotate.dart';
 export 'functions/yuv420_to_nv21.dart';
+export 'functions/from_rgba8888.dart';

@@ -7,6 +7,7 @@
 #include "yuv/yuv.h"
 #include "yuv/yuv420.h"
 #include "yuv/nv21.h"
+#include "yuv/bgra8888.h"
 
 #ifdef __cplusplus
 extern "C" {

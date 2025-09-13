@@ -241,7 +241,7 @@ class _MyAppState extends State<MyApp> {
     if (rgbaBytes == null) throw Exception('Could not decode image');
 
     var rgbaBuffer = rgbaBytes.buffer.asUint8List();
-    var image = YuvImage.fromRGBA(YuvFileFormat.i420, img.width, img.height, rgbaBuffer);
+    var image = YuvImage.bgra(img.width, img.height)..fromRgba8888(rgbaBuffer);
     var json = image.toJson();
     var dir = await getTemporaryDirectory();
     var path = '${dir.path}/image.json';
@@ -299,7 +299,7 @@ class _ImageWidget extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               YuvImageWidget(image: i),
-              ShadeWidget.oval(target: CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85)),
+              // ShadeWidget.oval(target: CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85)),
               if (faceBox != null)
                 CustomPaint(
                   painter: FaceRectPainter(rect: faceBox!, image: i),

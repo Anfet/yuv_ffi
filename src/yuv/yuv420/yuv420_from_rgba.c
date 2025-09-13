@@ -28,15 +28,6 @@ void yuv420_from_rgba8888(const uint8_t *rgba, const YUVDef *src) {
 
             yPlane[yIndex] = yValue;
 
-//            if ((y % 2 == 0) && (x % 2 == 0)) {
-//                int uValue = CLAMP(((-38 * r - 74 * g + 112 * b + 128) >> 8) + 128);
-//                int vValue = CLAMP(((112 * r - 94 * g - 18 * b + 128) >> 8) + 128);
-//                int uvIndex = yuv_index(x / 2, y / 2, uvRowStride, uvPixelStride);
-//
-//                uPlane[uvIndex] = uValue;
-//                vPlane[uvIndex] = vValue;
-//            }
-
             if ((x % 2 == 0) && (y % 2 == 0)) {
                 int sumU = 0, sumV = 0;
 

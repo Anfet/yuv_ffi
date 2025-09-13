@@ -2,7 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:yuv_ffi/src/functions/bgra8888.dart';
+import 'package:yuv_ffi/src/functions/to_bgra8888.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 class YuvImageWidget extends StatefulWidget {
@@ -26,14 +26,18 @@ class _YuvImageWidgetState extends State<YuvImageWidget> {
 
   @override
   void initState() {
+    resetAndUpdate();
+    super.initState();
+  }
+
+  void resetAndUpdate() {
     _provider = YuvImageProvider(width: widget.image.width, height: widget.image.height);
     _provider.update(widget.image.toBgra8888());
-    super.initState();
   }
 
   @override
   void didUpdateWidget(covariant YuvImageWidget oldWidget) {
-    _provider.update(widget.image.toBgra8888());
+    resetAndUpdate();
     super.didUpdateWidget(oldWidget);
   }
 
