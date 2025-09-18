@@ -22,9 +22,9 @@ class YuvPlane {
   int _height;
 
   YuvPlane(this._height, this.rowStride, [this.pixelStride = 1, Uint8List? bytes]) {
-    _bytes = Uint8List(_height * rowStride);
+    _bytes = Uint8List(_height * rowStride * pixelStride);
     if (bytes == null) {
-      _bytes.fillRange(0, _height * rowStride, 0);
+      _bytes.fillRange(0, _height * rowStride * pixelStride, 0);
     } else {
       _bytes.setAll(0, bytes);
     }

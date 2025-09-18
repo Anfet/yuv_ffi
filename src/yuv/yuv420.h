@@ -2,6 +2,8 @@
 #define YUV420_H
 
 #include <stdio.h>
+#include "utils/h/yuv_utils.h"
+#include "utils/h/log.h"
 #include "yuv.h"
 #include "yuv420/h/yuv420_blackwhite.h"
 #include "yuv420/h/yuv420_crop.h"

@@ -123,7 +123,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future takePhoto(BuildContext context) async {
-    final image = await Navigator.of(context).push(
+    final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) {
           return CameraScreen();
@@ -132,9 +132,14 @@ class _MyAppState extends State<MyApp> {
       ),
     );
 
-    if (image is! YuvImage) {
+    if (result is! YuvImage) {
       return;
     }
+
+    await Future.delayed(Duration(seconds: 1));
+
+    YuvImage image = result;
+    image = image.toYuvBgra8888();
 
     var json = flipHorizontally(image).toJson();
     var dir = await getTemporaryDirectory();
@@ -163,6 +168,10 @@ class _MyAppState extends State<MyApp> {
 
       var json = await file.readAsString();
       image = YuvImage.fromJson(jsonDecode(json));
+
+      // image = image!.toYuvI420();
+      // image = image!.toYuvNv21();
+
       faceBox = null;
       setState(() {});
     }, name: 'loadExisting');
@@ -256,7 +265,7 @@ class _MyAppState extends State<MyApp> {
       options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    var inputImage = requireImage.toInputImage();
+    var inputImage = requireImage.toYuvNv21().toInputImage();
 
     final faces = await detector.processImage(inputImage);
     if (faces.isEmpty) {

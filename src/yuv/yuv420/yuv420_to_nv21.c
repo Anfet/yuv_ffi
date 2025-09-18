@@ -15,12 +15,13 @@ void yuv420_i420_to_nv21(const YUVDef *src, const YUVDef *dst) {
     const int ch = H >> 1;   // chroma height
 
 
-    for (int y = 0; y < H; ++y) {
-        const uint8_t *srow = src->y + y * src->yRowStride;
-        uint8_t *drow = dst->y + y * dst->yRowStride;
-
-        memcpy(drow, srow, dst->yRowStride);
-    }
+    memcpy(dst->y, src->y, src->height * src->yRowStride);
+//    for (int y = 0; y < H; ++y) {
+//        const uint8_t *srow = src->y + y * src->yRowStride;
+//        uint8_t *drow = dst->y + y * dst->yRowStride;
+//
+//        memcpy(drow, srow, dst->yRowStride);
+//    }
     // 2) Chroma: I420 планарные U/V -> NV21 интерлив (V,U) в строке шириной W.
     // Каждая строка dst VU должна иметь длину W байт: (V,U) пары на каждый i.
     for (int j = 0; j < ch; ++j) {

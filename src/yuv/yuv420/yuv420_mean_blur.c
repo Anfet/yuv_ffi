@@ -1,5 +1,3 @@
-#ifndef INVERT_I420_H
-#define INVERT_I420_H
 
 #include <stdint.h>
 #include "../yuv/yuv420.h"
@@ -48,5 +46,3 @@ void yuv420_mean_blur(
         }
     }
 }
-
-#endif

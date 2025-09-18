@@ -2,6 +2,8 @@
 #define NV21_H
 
 #include <stdio.h>
+#include "utils/h/yuv_utils.h"
+#include "utils/h/log.h"
 #include "yuv.h"
 #include "nv21//h/nv21_crop.h"
 #include "nv21//h/nv21_to_420.h"
@@ -13,5 +15,8 @@
 #include "nv21//h/nv21_grayscale.h"
 #include "nv21//h/nv21_negate.h"
 #include "nv21//h/nv21_flip.h"
+#include "nv21//h/nv21_box_blur.h"
+#include "nv21//h/nv21_mean_blur.h"
+#include "nv21//h/nv21_gaussblur.h"
 
 #endif

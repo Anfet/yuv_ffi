@@ -10,7 +10,7 @@ void bgra8888_grayscale(const YUVDef *src) {
         uint8_t* row = src->y + y * src->yRowStride;
 
         for (int x = 0; x < src->width; x++) {
-            uint8_t* pixel = row + x * 4;
+            uint8_t* pixel = row + x * src->yPixelStride;
 
             // Формула для преобразования RGB в оттенок серого
             uint8_t b = pixel[0];

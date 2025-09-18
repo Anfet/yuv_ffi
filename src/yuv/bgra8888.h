@@ -2,6 +2,8 @@
 #define BGRA8888_H
 
 #include <stdio.h>
+#include "utils/h/yuv_utils.h"
+#include "utils/h/log.h"
 #include "yuv.h"
 #include "bgra8888//h//bgra8888_from_rgba.h"
 #include "bgra8888//h//bgra8888_rotate.h"
@@ -10,5 +12,10 @@
 #include "bgra8888//h//bgra8888_negate.h"
 #include "bgra8888//h//bgra8888_crop.h"
 #include "bgra8888//h//bgra8888_flip.h"
+#include "bgra8888//h//bgra8888_box_blur.h"
+#include "bgra8888//h//bgra8888_mean_blur.h"
+#include "bgra8888//h//bgra8888_gaussblur.h"
+#include "bgra8888//h//bgra8888_to_i420.h"
+#include "bgra8888//h//bgra8888_to_nv21.h"
 
 #endif

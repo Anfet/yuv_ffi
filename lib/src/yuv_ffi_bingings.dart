@@ -4945,176 +4945,6 @@ class YuvFfiBindings {
   late final _strupr1 = _struprPtr
       .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
-  void yuv420_blackwhite(
-    ffi.Pointer<YUVDef> src,
-  ) {
-    return _yuv420_blackwhite(
-      src,
-    );
-  }
-
-  late final _yuv420_blackwhitePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_blackwhite');
-  late final _yuv420_blackwhite =
-      _yuv420_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
-
-  void yuv420_crop_rect(
-    ffi.Pointer<YUVDef> src,
-    ffi.Pointer<YUVDef> dst,
-    int left,
-    int top,
-    int crop_width,
-    int crop_height,
-  ) {
-    return _yuv420_crop_rect(
-      src,
-      dst,
-      left,
-      top,
-      crop_width,
-      crop_height,
-    );
-  }
-
-  late final _yuv420_crop_rectPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Int, ffi.Int, ffi.Int)>>('yuv420_crop_rect');
-  late final _yuv420_crop_rect = _yuv420_crop_rectPtr.asFunction<
-      void Function(
-          ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
-
-  void yuv420_flip_horizontally(
-    ffi.Pointer<YUVDef> src,
-  ) {
-    return _yuv420_flip_horizontally(
-      src,
-    );
-  }
-
-  late final _yuv420_flip_horizontallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_flip_horizontally');
-  late final _yuv420_flip_horizontally = _yuv420_flip_horizontallyPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
-
-  void yuv420_flip_vertically(
-    ffi.Pointer<YUVDef> src,
-  ) {
-    return _yuv420_flip_vertically(
-      src,
-    );
-  }
-
-  late final _yuv420_flip_verticallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_flip_vertically');
-  late final _yuv420_flip_vertically = _yuv420_flip_verticallyPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
-
-  void yuv420_gaussblur(
-    ffi.Pointer<YUVDef> src,
-    int radius,
-    int sigma,
-  ) {
-    return _yuv420_gaussblur(
-      src,
-      radius,
-      sigma,
-    );
-  }
-
-  late final _yuv420_gaussblurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<YUVDef>, ffi.Int, ffi.Int)>>('yuv420_gaussblur');
-  late final _yuv420_gaussblur = _yuv420_gaussblurPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, int, int)>();
-
-  void yuv420_grayscale(
-    ffi.Pointer<YUVDef> src,
-  ) {
-    return _yuv420_grayscale(
-      src,
-    );
-  }
-
-  late final _yuv420_grayscalePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_grayscale');
-  late final _yuv420_grayscale =
-      _yuv420_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
-
-  void yuv420_mean_blur(
-    ffi.Pointer<YUVDef> src,
-    int radius,
-    ffi.Pointer<ffi.Uint32> rect,
-  ) {
-    return _yuv420_mean_blur(
-      src,
-      radius,
-      rect,
-    );
-  }
-
-  late final _yuv420_mean_blurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Pointer<ffi.Uint32>)>>('yuv420_mean_blur');
-  late final _yuv420_mean_blur = _yuv420_mean_blurPtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
-
-  void yuv420_rotate(
-    ffi.Pointer<YUVDef> src,
-    ffi.Pointer<YUVDef> dst,
-    int rotationDegrees,
-  ) {
-    return _yuv420_rotate(
-      src,
-      dst,
-      rotationDegrees,
-    );
-  }
-
-  late final _yuv420_rotatePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>,
-              ffi.Int)>>('yuv420_rotate');
-  late final _yuv420_rotate = _yuv420_rotatePtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
-
-  void yuv420_to_bgra8888(
-    ffi.Pointer<YUVDef> src,
-    ffi.Pointer<ffi.Uint8> outBgra,
-  ) {
-    return _yuv420_to_bgra8888(
-      src,
-      outBgra,
-    );
-  }
-
-  late final _yuv420_to_bgra8888Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>,
-              ffi.Pointer<ffi.Uint8>)>>('yuv420_to_bgra8888');
-  late final _yuv420_to_bgra8888 = _yuv420_to_bgra8888Ptr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>();
-
-  void yuv420_negate(
-    ffi.Pointer<YUVDef> src,
-  ) {
-    return _yuv420_negate(
-      src,
-    );
-  }
-
-  late final _yuv420_negatePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_negate');
-  late final _yuv420_negate =
-      _yuv420_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
-
   ffi.Pointer<ffi.Void> _calloc_base(
     int _Count,
     int _Size,
@@ -9355,6 +9185,176 @@ class YuvFfiBindings {
       _lookup<ffi.NativeFunction<_onexit_t Function(_onexit_t)>>('onexit');
   late final _onexit1 = _onexitPtr.asFunction<_onexit_t Function(_onexit_t)>();
 
+  void yuv420_blackwhite(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _yuv420_blackwhite(
+      src,
+    );
+  }
+
+  late final _yuv420_blackwhitePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'yuv420_blackwhite');
+  late final _yuv420_blackwhite =
+      _yuv420_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void yuv420_crop_rect(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+    int left,
+    int top,
+    int crop_width,
+    int crop_height,
+  ) {
+    return _yuv420_crop_rect(
+      src,
+      dst,
+      left,
+      top,
+      crop_width,
+      crop_height,
+    );
+  }
+
+  late final _yuv420_crop_rectPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Int, ffi.Int, ffi.Int)>>('yuv420_crop_rect');
+  late final _yuv420_crop_rect = _yuv420_crop_rectPtr.asFunction<
+      void Function(
+          ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
+
+  void yuv420_flip_horizontally(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _yuv420_flip_horizontally(
+      src,
+    );
+  }
+
+  late final _yuv420_flip_horizontallyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'yuv420_flip_horizontally');
+  late final _yuv420_flip_horizontally = _yuv420_flip_horizontallyPtr
+      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void yuv420_flip_vertically(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _yuv420_flip_vertically(
+      src,
+    );
+  }
+
+  late final _yuv420_flip_verticallyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'yuv420_flip_vertically');
+  late final _yuv420_flip_vertically = _yuv420_flip_verticallyPtr
+      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void yuv420_gaussblur(
+    ffi.Pointer<YUVDef> src,
+    int radius,
+    int sigma,
+  ) {
+    return _yuv420_gaussblur(
+      src,
+      radius,
+      sigma,
+    );
+  }
+
+  late final _yuv420_gaussblurPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<YUVDef>, ffi.Int, ffi.Int)>>('yuv420_gaussblur');
+  late final _yuv420_gaussblur = _yuv420_gaussblurPtr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, int, int)>();
+
+  void yuv420_grayscale(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _yuv420_grayscale(
+      src,
+    );
+  }
+
+  late final _yuv420_grayscalePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'yuv420_grayscale');
+  late final _yuv420_grayscale =
+      _yuv420_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void yuv420_mean_blur(
+    ffi.Pointer<YUVDef> src,
+    int radius,
+    ffi.Pointer<ffi.Uint32> rect,
+  ) {
+    return _yuv420_mean_blur(
+      src,
+      radius,
+      rect,
+    );
+  }
+
+  late final _yuv420_mean_blurPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Pointer<ffi.Uint32>)>>('yuv420_mean_blur');
+  late final _yuv420_mean_blur = _yuv420_mean_blurPtr.asFunction<
+      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+
+  void yuv420_rotate(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+    int rotationDegrees,
+  ) {
+    return _yuv420_rotate(
+      src,
+      dst,
+      rotationDegrees,
+    );
+  }
+
+  late final _yuv420_rotatePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>,
+              ffi.Int)>>('yuv420_rotate');
+  late final _yuv420_rotate = _yuv420_rotatePtr.asFunction<
+      void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
+
+  void yuv420_to_bgra8888(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<ffi.Uint8> outBgra,
+  ) {
+    return _yuv420_to_bgra8888(
+      src,
+      outBgra,
+    );
+  }
+
+  late final _yuv420_to_bgra8888Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>,
+              ffi.Pointer<ffi.Uint8>)>>('yuv420_to_bgra8888');
+  late final _yuv420_to_bgra8888 = _yuv420_to_bgra8888Ptr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>();
+
+  void yuv420_negate(
+    ffi.Pointer<YUVDef> src,
+  ) {
+    return _yuv420_negate(
+      src,
+    );
+  }
+
+  late final _yuv420_negatePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
+          'yuv420_negate');
+  late final _yuv420_negate =
+      _yuv420_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
   void yuv420_box_blur(
     ffi.Pointer<YUVDef> src,
     int radius,
@@ -9596,6 +9596,63 @@ class YuvFfiBindings {
   late final _nv21_flip_vertically =
       _nv21_flip_verticallyPtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
+  void nv21_box_blur(
+    ffi.Pointer<YUVDef> src,
+    int radius,
+    ffi.Pointer<ffi.Uint32> rect,
+  ) {
+    return _nv21_box_blur(
+      src,
+      radius,
+      rect,
+    );
+  }
+
+  late final _nv21_box_blurPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Pointer<ffi.Uint32>)>>('nv21_box_blur');
+  late final _nv21_box_blur = _nv21_box_blurPtr.asFunction<
+      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+
+  void nv21_mean_blur(
+    ffi.Pointer<YUVDef> src,
+    int radius,
+    ffi.Pointer<ffi.Uint32> rect,
+  ) {
+    return _nv21_mean_blur(
+      src,
+      radius,
+      rect,
+    );
+  }
+
+  late final _nv21_mean_blurPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Pointer<ffi.Uint32>)>>('nv21_mean_blur');
+  late final _nv21_mean_blur = _nv21_mean_blurPtr.asFunction<
+      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+
+  void nv21_gaussian_blur(
+    ffi.Pointer<YUVDef> src,
+    int radius,
+    double sigma,
+  ) {
+    return _nv21_gaussian_blur(
+      src,
+      radius,
+      sigma,
+    );
+  }
+
+  late final _nv21_gaussian_blurPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<YUVDef>, ffi.Int, ffi.Float)>>('nv21_gaussian_blur');
+  late final _nv21_gaussian_blur = _nv21_gaussian_blurPtr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, int, double)>();
+
   void bgra8888_from_rgba8888(
     ffi.Pointer<ffi.Uint8> rgba,
     ffi.Pointer<YUVDef> dst,
@@ -9727,6 +9784,97 @@ class YuvFfiBindings {
           'bgra8888_flip_vertically');
   late final _bgra8888_flip_vertically = _bgra8888_flip_verticallyPtr
       .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+
+  void bgra8888_box_blur(
+    ffi.Pointer<YUVDef> src,
+    int radius,
+    ffi.Pointer<ffi.Uint32> rect,
+  ) {
+    return _bgra8888_box_blur(
+      src,
+      radius,
+      rect,
+    );
+  }
+
+  late final _bgra8888_box_blurPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Pointer<ffi.Uint32>)>>('bgra8888_box_blur');
+  late final _bgra8888_box_blur = _bgra8888_box_blurPtr.asFunction<
+      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+
+  void bgra8888_mean_blur(
+    ffi.Pointer<YUVDef> src,
+    int radius,
+    ffi.Pointer<ffi.Uint32> rect,
+  ) {
+    return _bgra8888_mean_blur(
+      src,
+      radius,
+      rect,
+    );
+  }
+
+  late final _bgra8888_mean_blurPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Pointer<ffi.Uint32>)>>('bgra8888_mean_blur');
+  late final _bgra8888_mean_blur = _bgra8888_mean_blurPtr.asFunction<
+      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+
+  void bgra8888_gaussian_blur(
+    ffi.Pointer<YUVDef> src,
+    int radius,
+    double sigma,
+  ) {
+    return _bgra8888_gaussian_blur(
+      src,
+      radius,
+      sigma,
+    );
+  }
+
+  late final _bgra8888_gaussian_blurPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
+              ffi.Float)>>('bgra8888_gaussian_blur');
+  late final _bgra8888_gaussian_blur = _bgra8888_gaussian_blurPtr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, int, double)>();
+
+  void bgra8888_to_i420(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+  ) {
+    return _bgra8888_to_i420(
+      src,
+      dst,
+    );
+  }
+
+  late final _bgra8888_to_i420Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('bgra8888_to_i420');
+  late final _bgra8888_to_i420 = _bgra8888_to_i420Ptr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
+
+  void bgra8888_to_nv21(
+    ffi.Pointer<YUVDef> src,
+    ffi.Pointer<YUVDef> dst,
+  ) {
+    return _bgra8888_to_nv21(
+      src,
+      dst,
+    );
+  }
+
+  late final _bgra8888_to_nv21Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('bgra8888_to_nv21');
+  late final _bgra8888_to_nv21 = _bgra8888_to_nv21Ptr
+      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
 }
 
 typedef va_list = ffi.Pointer<ffi.Char>;
@@ -9776,33 +9924,6 @@ typedef rsize_t = ffi.Size;
 typedef Dartrsize_t = int;
 typedef fpos_t = ffi.LongLong;
 typedef Dartfpos_t = int;
-
-final class YUVDef extends ffi.Struct {
-  external ffi.Pointer<ffi.Uint8> y;
-
-  external ffi.Pointer<ffi.Uint8> u;
-
-  external ffi.Pointer<ffi.Uint8> v;
-
-  @ffi.Int()
-  external int width;
-
-  @ffi.Int()
-  external int height;
-
-  @ffi.Int()
-  external int yRowStride;
-
-  @ffi.Int()
-  external int yPixelStride;
-
-  @ffi.Int()
-  external int uvRowStride;
-
-  @ffi.Int()
-  external int uvPixelStride;
-}
-
 typedef _CoreCrtSecureSearchSortCompareFunction = ffi.Pointer<
     ffi.NativeFunction<_CoreCrtSecureSearchSortCompareFunctionFunction>>;
 typedef _CoreCrtSecureSearchSortCompareFunctionFunction = ffi.Int Function(
@@ -9885,6 +10006,32 @@ final class _LONGDOUBLE extends ffi.Opaque {}
 final class _LDBL12 extends ffi.Struct {
   @ffi.Array.multi([12])
   external ffi.Array<ffi.UnsignedChar> ld12;
+}
+
+final class YUVDef extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint8> y;
+
+  external ffi.Pointer<ffi.Uint8> u;
+
+  external ffi.Pointer<ffi.Uint8> v;
+
+  @ffi.Int()
+  external int width;
+
+  @ffi.Int()
+  external int height;
+
+  @ffi.Int()
+  external int yRowStride;
+
+  @ffi.Int()
+  external int yPixelStride;
+
+  @ffi.Int()
+  external int uvRowStride;
+
+  @ffi.Int()
+  external int uvPixelStride;
 }
 
 const int _VCRT_COMPILER_PREPROCESSOR = 1;
