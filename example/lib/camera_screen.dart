@@ -164,7 +164,7 @@ class _CameraScreenState extends State<CameraScreen> {
         ResolutionPreset.medium,
         enableAudio: false,
         fps: 30,
-        imageFormatGroup: ImageFormatGroup.yuv420,
+        imageFormatGroup: ImageFormatGroup.nv21,
       );
       await controller.initialize();
     } catch (ex) {

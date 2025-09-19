@@ -139,9 +139,7 @@ class _MyAppState extends State<MyApp> {
     await Future.delayed(Duration(seconds: 1));
 
     YuvImage image = result;
-    image = image.toYuvBgra8888();
-
-    var json = flipHorizontally(image).toJson();
+    var json = image.toJson();
     var dir = await getTemporaryDirectory();
     var path = '${dir.path}/image.json';
     var file = File(path);

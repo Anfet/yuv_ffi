@@ -80,12 +80,14 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     }
 
     isProcessing = true;
+    fps++;
     try {
       YuvImageRotation rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
-      var yuv = rotate(image.toYuvImage(), rotation.toZero());
+      var yuv = image.toYuvImage(); //rotate(image.toYuvImage(), rotation.toZero());
       yuv = widget.transform?.call(yuv) ?? yuv;
       streamController.add(yuv);
-      fps++;
+    } catch (ex) {
+      print(ex);
     } finally {
       isProcessing = false;
     }
