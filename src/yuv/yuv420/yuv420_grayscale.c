@@ -1,29 +1,16 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "log.h"
+#include "..//yuv.h"
 
-void yuv420_grayscale(
-        const uint8_t *y_src,
-        int y_row_stride,
-        int y_pixel_stride,
-        int uv_row_stride,
-        int uv_pixel_stride,
-        int width,
-        int height,
-        uint8_t *y_dst,
-        uint8_t *u_dst,
-        uint8_t *v_dst
+FFI_PLUGIN_EXPORT void yuv420_grayscale(
+        const YUVDef *src
 ) {
-    int y_plane_size = height  *  width * y_pixel_stride;
-    int uv_width = width / 2;
-    int uv_height = height / 2;
-    int uv_plane_size = uv_width * uv_height  * uv_pixel_stride;
+    const int height = src->height;
+    uint8_t *uDst = src->u;
+    uint8_t *vDst = src->v;
 
-    // Копируем Y как есть
-    memcpy(y_dst, y_src, y_plane_size);
+    int uv_height = height / 2;
+    int uv_plane_size = uv_height * src->uvRowStride;
 
     // Заполняем U и V 128 (нейтральный цвет)
-    memset(u_dst, 128, uv_plane_size);
-    memset(v_dst, 128, uv_plane_size);
+    memset(uDst, 128, uv_plane_size);
+    memset(vDst, 128, uv_plane_size);
 }

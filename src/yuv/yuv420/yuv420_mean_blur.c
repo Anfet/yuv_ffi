@@ -1,20 +1,18 @@
-#ifndef INVERT_I420_H
-#define INVERT_I420_H
+#include "..//yuv.h"
 
-#include <stdint.h>
-#include "yuv_utils.h"
-
-void yuv420_mean_blur(
-        const uint8_t *y_src,
-        uint8_t *y_dst,
-        int width,
-        int height,
-        int kernel_size,
-        int rowStride,
-        int pixelStride,
-        const uint8_t *rect // rect[0]=left, rect[1]=top, rect[2]=right, rect[3]=bottom
+FFI_PLUGIN_EXPORT void yuv420_mean_blur(
+        const YUVDef *src,
+        int radius,
+        const uint32_t *rect
 ) {
-    int k = kernel_size / 2;
+    uint8_t *y_src = src->y;
+
+    const int height = src->height;
+    const int width = src->width;
+    const int rowStride = src->yRowStride;
+    const int pixelStride = src->yPixelStride;
+
+    const int k = radius / 2;
 
     int left = rect ? rect[0] : 0;
     int top = rect ? rect[1] : 0;
@@ -41,9 +39,7 @@ void yuv420_mean_blur(
             }
 
             int dst_index = yuv_index(x, y, rowStride, pixelStride);
-            y_dst[dst_index] = sum / count;
+            y_src[dst_index] = sum / count;
         }
     }
 }
-
-#endif

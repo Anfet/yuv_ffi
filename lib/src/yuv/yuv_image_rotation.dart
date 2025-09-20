@@ -7,6 +7,8 @@ enum YuvImageRotation {
 
   final int degrees;
 
+  bool get swapSize => this == rotation90 || this == rotation270;
+
   YuvImageRotation get clockwise => switch (this) {
         YuvImageRotation.rotation0 => YuvImageRotation.rotation90,
         YuvImageRotation.rotation90 => YuvImageRotation.rotation180,

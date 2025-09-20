@@ -1,0 +1,31 @@
+#include "..//yuv.h"
+
+FFI_PLUGIN_EXPORT void bgra8888_to_nv21(const YUVDef *src, const YUVDef *dst) {
+    const int W = src->width;
+    const int H = src->height;
+
+    for (int y = 0; y < H; ++y) {
+        for (int x = 0; x < W; ++x) {
+            const uint8_t *pixel = src->y + y * src->yRowStride + x * src->yPixelStride;
+            uint8_t B = pixel[0];
+            uint8_t G = pixel[1];
+            uint8_t R = pixel[2];
+
+            int Y = (77 * R + 150 * G + 29 * B) >> 8;
+            int U = ((-43 * R - 85 * G + 128 * B) >> 8) + 128;
+            int V = ((128 * R - 107 * G - 21 * B) >> 8) + 128;
+
+            int yIndex = yuv_index(x, y, dst->yRowStride, dst->yPixelStride);
+            dst->y[yIndex] = CLAMP(Y);
+
+            if ((y % 2 == 0) && (x % 2 == 0)) {
+                int j = y / 2;
+                int i = x / 2;
+
+                int uvIndex = yuv_index(i, j, dst->uvRowStride, dst->uvPixelStride); //j * dst->uvRowStride + i * dst->uvPixelStride;
+                dst->u[uvIndex] = CLAMP(U);
+                dst->u[uvIndex + 1] = CLAMP(V);
+            }
+        }
+    }
+}

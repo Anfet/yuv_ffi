@@ -1,48 +1,30 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <math.h>
+#include "..//yuv.h"
 
-static inline uint8_t
 
-clamp(int value) {
-    return (uint8_t)(value < 0 ? 0 : (value > 255 ? 255 : value));
-}
-
-void yuv420_to_bgra8888(
-        const uint8_t *yPlane,
-        const uint8_t *uPlane,
-        const uint8_t *vPlane,
-        int yRowStride,
-        int uvRowStride,
-        int uvPixelStride,
-        int width,
-        int height,
+FFI_PLUGIN_EXPORT void yuv420_to_bgra8888(
+        const YUVDef *src,
         uint8_t *outBgra
 ) {
-    int uvIndex, yIndex;
-    int yp, up, vp;
-    int r, g, b;
+    int uvIndex, yIndex = 0;
 
-    for (int y = 0; y < height; y++) {
-        int yRowStart = y * yRowStride;
-        int uvRowStart = (y >> 1) * uvRowStride;
+    for (int y = 0; y < src->height; y++) {
+        for (int x = 0; x < src->width; x++) {
+            yIndex = yuv_index(x, y, src->yRowStride, src->yPixelStride);
+            int Y = src->y[yIndex];
 
-        for (int x = 0; x < width; x++) {
-            yIndex = yRowStart + x;
-            uvIndex = uvRowStart + (x >> 1) * uvPixelStride;
+            uvIndex = yuv_index(x >> 1, y >> 1, src->uvRowStride, src->uvPixelStride);
+            int Uc = src->u[uvIndex] - 128;
+            int Vc = src->v[uvIndex] - 128;
 
-            yp = yPlane[yIndex];
-            up = uPlane[uvIndex] - 128;
-            vp = vPlane[uvIndex] - 128;
+            int C = Y - 16;
+            int R = (298 * C + 409 * Vc + 128) >> 8;
+            int G = (298 * C - 100 * Uc - 208 * Vc + 128) >> 8;
+            int B = (298 * C + 516 * Uc + 128) >> 8;
 
-            r = (int) (yp + 1.370705 * vp);
-            g = (int) (yp - 0.337633 * up - 0.698001 * vp);
-            b = (int) (yp + 1.732446 * up);
-
-            int outIndex = (y * width + x) * 4;
-            outBgra[outIndex + 0] = clamp(b);
-            outBgra[outIndex + 1] = clamp(g);
-            outBgra[outIndex + 2] = clamp(r);
+            int outIndex = (y * src->width + x) * 4;
+            outBgra[outIndex + 0] = CLAMP(B);
+            outBgra[outIndex + 1] = CLAMP(G);
+            outBgra[outIndex + 2] = CLAMP(R);
             outBgra[outIndex + 3] = 255;
         }
     }

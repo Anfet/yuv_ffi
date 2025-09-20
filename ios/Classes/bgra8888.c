@@ -1,0 +1,13 @@
+#include "../../src/yuv/bgra8888//bgra8888_from_rgba.c"
+#include "../../src/yuv/bgra8888//bgra8888_rotate.c"
+#include "../../src/yuv/bgra8888//bgra8888_blackwhite.c"
+#include "../../src/yuv/bgra8888//bgra8888_grayscale.c"
+#include "../../src/yuv/bgra8888//bgra8888_negate.c"
+#include "../../src/yuv/bgra8888//bgra8888_crop.c"
+#include "../../src/yuv/bgra8888//bgra8888_flip.c"
+#include "../../src/yuv/bgra8888//bgra8888_box_blur.c"
+#include "../../src/yuv/bgra8888//bgra8888_mean_blur.c"
+#include "../../src/yuv/bgra8888//bgra8888_gaussblur.c"
+#include "../../src/yuv/bgra8888//bgra8888_to_i420.c"
+#include "../../src/yuv/bgra8888//bgra8888_to_nv21.c"
+ 

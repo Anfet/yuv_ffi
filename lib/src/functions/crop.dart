@@ -1,58 +1,45 @@
 import 'dart:ffi';
-import 'dart:typed_data';
 import 'dart:ui';
-import 'package:ffi/ffi.dart';
 
+import 'package:yuv_ffi/src/yuv/defs/yuv_def.dart';
+import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 import '../loader/loader.dart' show ffiBingings;
 
 YuvImage crop(YuvImage image, Rect rect) {
-  switch (image.format) {
-    case YuvFileFormat.i420:
-      final (ySrcSize, ySrc) = image.yPlane.allocatePtr();
-      final (uSrcsize, uSrc) = image.uPlane.allocatePtr();
-      final (vSrcsize, vSrc) = image.vPlane.allocatePtr();
+  final YuvImage dst = YuvImage(
+    image.format,
+    rect.width.floor(),
+    rect.height.floor(),
+    yPixelStride: image.y.pixelStride,
+    uvPixelStride: image.u?.pixelStride ?? 1,
+  );
+  final srcDef = YUVDefClass(image);
+  final dstDef = YUVDefClass(dst);
+  try {
+    switch (image.format) {
+      case YuvFileFormat.i420:
+        ffiBingings.yuv420_crop_rect(srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
+        dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
+        dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
+        dst.vPlane.assignFromPtr(dstDef.pointer.ref.v);
 
-
-      final (yDstSize, yDst) = YuvPlane.allocate(rect.width.toInt() * rect.height.toInt() * image.yPlane.pixelStride);
-      final (uDstSize, uDst) = YuvPlane.allocate(rect.width ~/ 2 * rect.height ~/ 2 * image.uPlane.pixelStride);
-      final (vDstSize, vDst) = YuvPlane.allocate(rect.width ~/ 2 * rect.height ~/ 2 * image.vPlane.pixelStride);
-
-      try {
-        ffiBingings.yuv420_crop_rect(
-          ySrc,
-          uSrc,
-          vSrc,
-          yDst,
-          uDst,
-          vDst,
-          image.width,
-          image.height,
-          rect.left.toInt(),
-          rect.top.toInt(),
-          rect.width.toInt(),
-          rect.height.toInt(),
-          image.yPlane.rowStride,
-          image.uPlane.rowStride,
-          image.vPlane.rowStride,
-          image.yPlane.pixelStride,
-          image.uPlane.pixelStride,
-          image.vPlane.pixelStride,
-        );
-        final dstYPlane = YuvPlane.fromBytes(Uint8List.fromList(yDst.asTypedList(yDstSize)), image.yPlane.pixelStride, rect.width.toInt() * image.yPlane.pixelStride);
-        final dstuPlane = YuvPlane.fromBytes(Uint8List.fromList(uDst.asTypedList(uDstSize)), image.uPlane.pixelStride, rect.width ~/ 2 * image.uPlane.pixelStride);
-        final dstvPlane = YuvPlane.fromBytes(Uint8List.fromList(vDst.asTypedList(vDstSize)), image.vPlane.pixelStride, rect.width ~/ 2 * image.vPlane.pixelStride);
-        return Yuv420Image.fromPlanes(rect.width.toInt(), rect.height.toInt(), [dstYPlane, dstuPlane, dstvPlane]);
-      } finally {
-        calloc.free(ySrc);
-        calloc.free(uSrc);
-        calloc.free(vSrc);
-        calloc.free(yDst);
-        calloc.free(uDst);
-        calloc.free(vDst);
-      }
-    default:
-      throw UnimplementedError();
+        break;
+      case YuvFileFormat.nv21:
+        ffiBingings.nv21_crop_rect(srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
+        dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
+        dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
+        break;
+      case YuvFileFormat.bgra8888:
+        ffiBingings.bgra8888_crop_rect(srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
+        dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
+        break;
+    }
+  } finally {
+    srcDef.dispose();
+    dstDef.dispose();
   }
+
+  return dst;
 }
