@@ -1,3 +1,8 @@
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
 void generate_gaussian_kernel(float *kernel, int radius, float sigma) {
     float sum = 0.0f;
     for (int i = -radius; i <= radius; ++i) {

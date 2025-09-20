@@ -6,3 +6,8 @@
 //#include "../../src/yuv/bgra8888.h"
 #include "../../src/yuv_ffi.h"
 #include "../../src/yuv_ffi.c"
+#include "../../src/yuv/gauss.c"
+#include "../../src/yuv/yuv.c"
+#include "nv21.c"
+#include "bgra8888.c"
+#include "yuv420.c"

@@ -35,7 +35,7 @@ target_link_libraries(
 
 if (ANDROID)
     # Support Android 15 16k page size
-    target_link_options(ffi_experiments PRIVATE "-Wl,-z,max-page-size=16384")
+    target_link_options(yuv_ffi PRIVATE "-Wl,-z,max-page-size=16384")
 endif()
 
 
