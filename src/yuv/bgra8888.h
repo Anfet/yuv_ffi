@@ -1,10 +1,6 @@
 #ifndef BGRA8888_H
 #define BGRA8888_H
 
-#include <stdio.h>
-#include "utils/h/yuv_utils.h"
-#include "utils/h/log.h"
-#include "yuv.h"
 #include "bgra8888//h//bgra8888_from_rgba.h"
 #include "bgra8888//h//bgra8888_rotate.h"
 #include "bgra8888//h//bgra8888_blackwhite.h"

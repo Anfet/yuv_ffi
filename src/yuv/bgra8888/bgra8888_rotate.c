@@ -1,10 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/utils/h/yuv_utils.h"
-#include "../yuv/bgra8888.h"
+#include "..//yuv.h"
 
-void bgra8888_rotate(
+FFI_PLUGIN_EXPORT void bgra8888_rotate(
         const YUVDef *src,
         const YUVDef *dst,
         int rotationDegrees

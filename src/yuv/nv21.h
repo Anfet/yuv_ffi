@@ -18,5 +18,6 @@
 #include "nv21//h/nv21_box_blur.h"
 #include "nv21//h/nv21_mean_blur.h"
 #include "nv21//h/nv21_gaussblur.h"
+#include "nv21//h/nv21_to_nv12.h"
 
 #endif

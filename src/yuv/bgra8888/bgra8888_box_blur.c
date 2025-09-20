@@ -1,65 +1,77 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include "../yuv/utils/h/yuv_utils.h"
-#include "../yuv/yuv.h"
+#include "../yuv.h"
 
-void bgra8888_box_blur(
+FFI_PLUGIN_EXPORT void bgra8888_box_blur(
         const YUVDef *src,
-        int radius
+        int radius,
+        const uint32_t *rect
 ) {
-    const int width = src->width;
+    const int width  = src->width;
     const int height = src->height;
-    const int bytesPerPixel = 4;
-    const int rowStride = src->yRowStride;
+    const int stride = src->yRowStride;   // bytes per row
+    const int bpp    = 4;                 // BGRA
 
-    uint8_t *data = src->y; // трактуем как BGRA
-    uint8_t *temp = (uint8_t *) malloc(width * height * bytesPerPixel);
+    uint8_t *dst = src->y;
+
+    uint32_t left = 0, top = 0, right = width, bottom = height;
+    if (rect) {
+        left   = rect[0];
+        top    = rect[1];
+        right  = rect[2];
+        bottom = rect[3];
+    }
+
+    uint8_t *temp = (uint8_t *) malloc(height * stride);
     if (!temp) return;
 
     // --- Горизонтальный проход ---
     for (int y = 0; y < height; ++y) {
-        for (int c = 0; c < 4; ++c) {
+        const uint8_t *row = src->y + y * stride;
+        uint8_t *temp_row  = temp + y * stride;
+
+        for (int c = 0; c < bpp; ++c) {
             int sum = 0;
             for (int dx = -radius; dx <= radius; ++dx) {
                 int x = dx < 0 ? 0 : (dx >= width ? width - 1 : dx);
-                sum += data[y * rowStride + x * bytesPerPixel + c];
+                sum += row[x * bpp + c];
             }
-            temp[y * rowStride + 0 * bytesPerPixel + c] =
-                    (uint8_t)(sum / (2 * radius + 1));
+            temp_row[0 * bpp + c] = (uint8_t)(sum / (2 * radius + 1));
 
             for (int x = 1; x < width; ++x) {
-                int x_add = (x + radius < width) ? x + radius : width - 1;
+                int x_add    = (x + radius < width) ? x + radius : width - 1;
                 int x_remove = (x - radius - 1 >= 0) ? x - radius - 1 : 0;
-
-                sum += data[y * rowStride + x_add * bytesPerPixel + c];
-                sum -= data[y * rowStride + x_remove * bytesPerPixel + c];
-
-                temp[y * rowStride + x * bytesPerPixel + c] =
-                        (uint8_t)(sum / (2 * radius + 1));
+                sum += row[x_add * bpp + c];
+                sum -= row[x_remove * bpp + c];
+                temp_row[x * bpp + c] = (uint8_t)(sum / (2 * radius + 1));
             }
         }
     }
 
     // --- Вертикальный проход ---
     for (int x = 0; x < width; ++x) {
-        for (int c = 0; c < 4; ++c) {
+        for (int c = 0; c < bpp; ++c) {
             int sum = 0;
             for (int dy = -radius; dy <= radius; ++dy) {
-                int y = dy < 0 ? 0 : (dy >= height ? height - 1 : dy);
-                sum += temp[y * rowStride + x * bytesPerPixel + c];
+                int yy = dy < 0 ? 0 : (dy >= height ? height - 1 : dy);
+                sum += temp[yy * stride + x * bpp + c];
             }
-            data[0 * rowStride + x * bytesPerPixel + c] =
-                    (uint8_t)(sum / (2 * radius + 1));
 
-            for (int y = 1; y < height; ++y) {
-                int y_add = (y + radius < height) ? y + radius : height - 1;
-                int y_sub = (y - radius - 1 >= 0) ? y - radius - 1 : 0;
+            for (int y = 0; y < height; ++y) {
+                int idx = y * stride + x * bpp + c;
+                uint8_t original = src->y[idx];
 
-                sum += temp[y_add * rowStride + x * bytesPerPixel + c];
-                sum -= temp[y_sub * rowStride + x * bytesPerPixel + c];
+                if (x < (int)left || x >= (int)right ||
+                    y < (int)top  || y >= (int)bottom) {
+                    dst[idx] = original; // оставляем как есть
+                } else {
+                    dst[idx] = (uint8_t)(sum / (2 * radius + 1));
+                }
 
-                data[y * rowStride + x * bytesPerPixel + c] =
-                        (uint8_t)(sum / (2 * radius + 1));
+                if (y + 1 < height) {
+                    int y_add = (y + radius + 1 < height) ? y + radius + 1 : height - 1;
+                    int y_sub = (y - radius >= 0) ? y - radius : 0;
+                    sum += temp[y_add * stride + x * bpp + c];
+                    sum -= temp[y_sub * stride + x * bpp + c];
+                }
             }
         }
     }

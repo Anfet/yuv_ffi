@@ -1,9 +1,6 @@
+#include "..//yuv.h"
 
-#include <stdint.h>
-#include "../yuv/yuv420.h"
-#include "../yuv/utils/h/yuv_utils.h"
-
-void yuv420_mean_blur(
+FFI_PLUGIN_EXPORT void yuv420_mean_blur(
         const YUVDef *src,
         int radius,
         const uint32_t *rect

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "yuv.h"
 
+
 void freeYUVDef(YUVDef *yuv) {
     if (!yuv) return;
     free(yuv->y);
@@ -9,3 +10,8 @@ void freeYUVDef(YUVDef *yuv) {
     free(yuv->v);
     free(yuv);
 }
+
+#include "gauss.c"
+#include "nv21.c"
+#include "bgra8888.c"
+#include "yuv420.c"

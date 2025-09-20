@@ -1,9 +1,4 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <math.h>
-#include "../yuv/utils/h/yuv_utils.h"
-// поправь include под свой хедер NV21:
-#include "../yuv/nv21.h"
+#include "..//yuv.h"
 
 /**
  * Конвертирует RGBA8888 -> NV21.
@@ -16,7 +11,7 @@
  *  - Здесь, как и в твоей исходной функции, stride для RGBA берётся как (yRowStride * 4).
  *    Если у RGBA есть свой отличный stride, лучше протащить отдельный параметр.
  */
-void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst) {
+FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst) {
     uint8_t *yPlane = dst->y;
     uint8_t *uv     = dst->u; // interleaved VU
     const int width        = dst->width;

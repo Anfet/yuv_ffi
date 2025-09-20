@@ -1,9 +1,9 @@
 #ifndef GAUSS_BGRA8888_H
 #define GAUSS_BGRA8888_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void bgra8888_gaussian_blur(
+FFI_PLUGIN_EXPORT void bgra8888_gaussian_blur(
         const YUVDef *src,
         int radius,
         float sigma

@@ -7,6 +7,26 @@ import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
 
 extension ConvertExt on YuvImage {
+
+  YuvImage swapNv() {
+    var nvXX = format == YuvFileFormat.nv21 ? this : toYuvNv21();
+
+    final def = YUVDefClass(nvXX);
+    YuvImage nvYY = YuvImage.nv21(width, height);
+    final defYY = YUVDefClass(nvYY);
+    try {
+      ffiBingings.nvXX_to_nvYY(def.pointer.ref.u, defYY.pointer.ref.u, nvXX.width, nvYY.width, nvXX.uPlane.rowStride);
+
+      nvYY.yPlane.assignFromPtr(defYY.pointer.ref.y);
+      nvYY.uPlane.assignFromPtr(defYY.pointer.ref.u);
+    } finally {
+      def.dispose();
+      defYY.dispose();
+    }
+
+    return nvYY;
+  }
+
   YuvImage toYuvNv21() {
     if (format == YuvFileFormat.nv21) {
       return copy();

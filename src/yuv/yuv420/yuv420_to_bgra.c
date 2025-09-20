@@ -1,11 +1,7 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <math.h>
-#include "../yuv/utils/h/yuv_utils.h"
-#include "../yuv/yuv420.h"
+#include "..//yuv.h"
 
 
-void yuv420_to_bgra8888(
+FFI_PLUGIN_EXPORT void yuv420_to_bgra8888(
         const YUVDef *src,
         uint8_t *outBgra
 ) {

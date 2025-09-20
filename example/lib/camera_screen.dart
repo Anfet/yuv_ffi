@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:camera/camera.dart';
@@ -72,51 +73,52 @@ class _CameraScreenState extends State<CameraScreen> {
                       // return CameraPreview(
                       //   controller,
                       // );
-                      return LayoutBuilder(builder: (context, c) {
-                        return Stack(
-                          children: [
-                            Positioned.fill(
-                              child: Transform(
-                                transform: Matrix4.rotationY(pi),
-                                origin: Offset(c.maxWidth / 2.0, 0),
-                                child: YuvCameraWidget(
-                                  cameraController: controller,
-                                  transform: (image) {
-                                    if (nextFrameCompleter != null && nextFrameCompleter?.isCompleted != true) {
-                                      nextFrameCompleter?.complete(image);
-                                    }
-                                    imageNotifier.value = image;
-                                    return image;
-                                  },
-                                  fpsChanged: onFpsChanged,
+                      return LayoutBuilder(
+                        builder: (context, c) {
+                          var transform = Platform.isIOS ? 0.0 : pi;
+                          return Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Transform(
+                                  transform: Matrix4.rotationY(transform),
+                                  origin: Offset(c.maxWidth / 2.0, 0),
+                                  child: YuvCameraWidget(
+                                    cameraController: controller,
+                                    transform: (image) {
+                                      if (nextFrameCompleter != null && nextFrameCompleter?.isCompleted != true) {
+                                        nextFrameCompleter?.complete(image);
+                                      }
+                                      imageNotifier.value = image;
+                                      return image;
+                                    },
+                                    fpsChanged: onFpsChanged,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Positioned.fill(
-                              child: ShadeWidget.oval(
-                                target: CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85),
+                              Positioned.fill(child: ShadeWidget.oval(target: CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85))),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Text('fps: $fps', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
                               ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Text('fps: $fps', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: ValueListenableBuilder(
-                                valueListenable: imageNotifier,
-                                builder: (context, image, _) {
-                                  if (image == null) {
-                                    return SizedBox();
-                                  }
-                                  return Text('W/H [${image.width}:${image.height}];\nP:${image.planes.length}\nF:${image.format}]',
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white));
-                                },
+                              Align(
+                                alignment: Alignment.bottomLeft,
+                                child: ValueListenableBuilder(
+                                  valueListenable: imageNotifier,
+                                  builder: (context, image, _) {
+                                    if (image == null) {
+                                      return SizedBox();
+                                    }
+                                    return Text(
+                                      'W/H [${image.width}:${image.height}];\nP:${image.planes.length}\nF:${image.format}]',
+                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white),
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        );
-                      });
+                            ],
+                          );
+                        },
+                      );
                     }
 
                     return Center(child: CircularProgressIndicator());
@@ -159,13 +161,7 @@ class _CameraScreenState extends State<CameraScreen> {
       }
 
       final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.front, orElse: () => cameras.first);
-      cameraController = CameraController(
-        camera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-        fps: 30,
-        imageFormatGroup: ImageFormatGroup.nv21,
-      );
+      cameraController = CameraController(camera, ResolutionPreset.medium, enableAudio: false, fps: 30);
       await controller.initialize();
     } catch (ex) {
       cameraError = '$ex';
@@ -178,7 +174,11 @@ class _CameraScreenState extends State<CameraScreen> {
     assert(controller.value.isStreamingImages);
     nextFrameCompleter = Completer();
     try {
-      final yuv = await nextFrameCompleter!.future;
+      var yuv = await nextFrameCompleter!.future;
+      if (controller.description.lensDirection == CameraLensDirection.front && Platform.isAndroid) {
+        yuv = flipHorizontally(yuv);
+      }
+
       await Future.delayed(Duration(seconds: 1));
       Navigator.of(context).pop(yuv);
     } finally {

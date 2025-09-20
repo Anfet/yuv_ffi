@@ -1,9 +1,9 @@
 #ifndef GRAYSCALE_BGRA8888_H
 #define GRAYSCALE_BGRA8888_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void bgra8888_grayscale(
+FFI_PLUGIN_EXPORT void bgra8888_grayscale(
         const YUVDef *src
 );
 

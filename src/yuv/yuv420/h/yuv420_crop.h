@@ -1,9 +1,9 @@
 #ifndef CROP_I420_H
 #define CROP_I420_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void yuv420_crop_rect(
+FFI_PLUGIN_EXPORT void yuv420_crop_rect(
         const YUVDef *src,
         const YUVDef *dst,
         const int left,  int top, int crop_width, int crop_height

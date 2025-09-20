@@ -621,5 +621,5 @@ packages:
     source: path
     version: "0.0.1+1"
 sdks:
-  dart: ">=3.8.1 <4.0.0"
+  dart: ">=3.9.2 <4.0.0"
   flutter: ">=3.32.8"

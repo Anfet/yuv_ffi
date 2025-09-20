@@ -1,10 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/yuv420.h"
-#include "../yuv/utils/h/yuv_utils.h"
+#include "..//yuv.h"
 
-void bgra8888_crop_rect(
+FFI_PLUGIN_EXPORT void bgra8888_crop_rect(
         const YUVDef *src,
         const YUVDef *dst,
         const int left,

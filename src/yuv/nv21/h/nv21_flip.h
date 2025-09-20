@@ -1,13 +1,13 @@
 #ifndef FLIP_NV21_H
 #define FLIP_NV21_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void nv21_flip_horizontally(
+FFI_PLUGIN_EXPORT void nv21_flip_horizontally(
         const YUVDef *src
 );
 
-void nv21_flip_vertically(
+FFI_PLUGIN_EXPORT void nv21_flip_vertically(
         const YUVDef *src
 );
 

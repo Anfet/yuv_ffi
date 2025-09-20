@@ -1,7 +1,4 @@
-// nv21_to_i420.c
-#include <stdint.h>
-#include <string.h>
-#include "yuv.h"
+#include "..//yuv.h"
 
 
 // NV21 (Y + interleaved VU) -> I420 (Y + planar U, V)
@@ -9,7 +6,7 @@
 // src->u : интерлив VU (ширина строки = W)
 // src->v : не используется
 // dst    : I420, где dst->u — U-план, dst->v — V-план (обе размером W/2 x H/2)
-void nv21_to_i420(const YUVDef *src, const YUVDef *dst) {
+FFI_PLUGIN_EXPORT void nv21_to_i420(const YUVDef *src, const YUVDef *dst) {
     const int W = src->width;
     const int H = src->height;
     const int cw = W >> 1;

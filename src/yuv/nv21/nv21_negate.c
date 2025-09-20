@@ -1,9 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/yuv420.h"
+#include "..//yuv.h"
 
-void nv21_negate(
+FFI_PLUGIN_EXPORT void nv21_negate(
         const YUVDef *src
 ) {
     int y_plane_size = src->height * src->yRowStride;

@@ -1,11 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/utils/h/log.h"
-#include "../yuv/yuv420.h"
-#include "../yuv/utils/h/yuv_utils.h"
+#include "..//yuv.h"
 
-void nv21_blackwhite(const YUVDef *src) {
+FFI_PLUGIN_EXPORT void nv21_blackwhite(const YUVDef *src) {
     const int height = src->height;
     const int yRowStride = src->yRowStride;
     const int uvRowStride = src->uvRowStride;

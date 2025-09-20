@@ -1,9 +1,6 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include "../yuv/yuv420.h"
-#include "../yuv/utils/h/yuv_utils.h"
+#include "..//yuv.h"
 
-void yuv420_box_blur(
+FFI_PLUGIN_EXPORT void yuv420_box_blur(
         const YUVDef *src,
         int radius,
         const uint32_t *rect

@@ -1,10 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/utils/h/yuv_utils.h"
-#include "../yuv/yuv420.h"
+#include "..//yuv.h"
 
-void yuv420_rotate(
+FFI_PLUGIN_EXPORT void yuv420_rotate(
         const YUVDef *src,
         const YUVDef *dst,
         int rotationDegrees
@@ -54,7 +50,7 @@ void yuv420_rotate(
             const int dstYIndex = yuv_index(dx, dy, dstWidth, yPixelStride);
             y_dst[dstYIndex] = y_src[srcYIndex];
 
-            if (dy % 2 == 0 & dx % 2 == 0) {
+            if (dy % 2 == 0 && dx % 2 == 0) {
                 const int srcUvIndex = yuv_index(sx / 2, sy / 2, uvRowStride, uvPixelStride);
                 const int dstUvIndex = yuv_index(dx / 2, dy / 2, uvDstWidth * uvPixelStride, uvPixelStride);
                 memcpy(u_dst + dstUvIndex, u_src + srcUvIndex, uvPixelStride);

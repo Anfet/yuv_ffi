@@ -1,11 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/utils/h/log.h"
-#include "../yuv/utils/h/yuv_utils.h"
-#include "../yuv/yuv420.h"
+#include "..//yuv.h"
 
-void yuv420_flip_horizontally(
+FFI_PLUGIN_EXPORT void yuv420_flip_horizontally(
         const YUVDef *src
 ) {
     uint8_t yTemp[src->yPixelStride];
@@ -48,7 +43,7 @@ void yuv420_flip_horizontally(
     }
 }
 
-void yuv420_flip_vertically(
+FFI_PLUGIN_EXPORT void yuv420_flip_vertically(
         const YUVDef *src
 ) {
 //    uint8_t yTemp[src->yRowStride];

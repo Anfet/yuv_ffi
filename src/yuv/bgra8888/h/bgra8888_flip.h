@@ -1,13 +1,13 @@
 #ifndef FLIP_BGRA8888_H
 #define FLIP_BGRA8888_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void bgra8888_flip_horizontally(
+FFI_PLUGIN_EXPORT void bgra8888_flip_horizontally(
         const YUVDef *src
 );
 
-void bgra8888_flip_vertically(
+FFI_PLUGIN_EXPORT void bgra8888_flip_vertically(
         const YUVDef *src
 );
 

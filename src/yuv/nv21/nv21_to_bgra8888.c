@@ -1,10 +1,8 @@
-#include <stdint.h>
-#include "./yuv/utils/h/yuv_utils.h"
-#include "./yuv/yuv.h" // здесь объявлен YUVDef
+#include "..//yuv.h"
 
 // Ожидаем, что src->y указывает на Y, а src->v/src->u указывают на один и тот же VU-буфер,
 // при этом src->v = vu + 0, src->u = vu + 1, uvPixelStride == 2.
-void nv21_to_bgra8888(const YUVDef *src, uint8_t *outBgra) {
+FFI_PLUGIN_EXPORT void nv21_to_bgra8888(const YUVDef *src, uint8_t *outBgra) {
     int uvIndex, yIndex;
 
     for (int y = 0; y < src->height; ++y) {

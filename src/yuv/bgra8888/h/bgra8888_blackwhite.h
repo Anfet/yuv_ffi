@@ -1,9 +1,9 @@
 #ifndef BLACKWHITE_BGRA8888_H
 #define BLACKWHITE_BGRA8888_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void bgra8888_blackwhite(
+FFI_PLUGIN_EXPORT void bgra8888_blackwhite(
         const YUVDef *src
 );
 

@@ -1,9 +1,6 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include "../yuv/utils/h/yuv_utils.h"
-#include "../yuv/yuv.h"
+#include "..//yuv.h"
 
-void bgra8888_mean_blur(
+FFI_PLUGIN_EXPORT void bgra8888_mean_blur(
         const YUVDef *src,
         int radius,
         const uint32_t *rect

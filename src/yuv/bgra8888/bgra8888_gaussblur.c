@@ -1,23 +1,8 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include "../yuv/utils/h/yuv_utils.h"
-#include "../yuv/yuv.h"
+#include "..//yuv.h"
+#include "..//gauss.h"
 
-static void generate_gaussian_kernel(float *kernel, int radius, float sigma) {
-    float sum = 0.0f;
-    for (int i = -radius; i <= radius; ++i) {
-        float x = (float) i;
-        kernel[i + radius] = expf(-(x * x) / (2 * sigma * sigma));
-        sum += kernel[i + radius];
-    }
-    for (int i = 0; i < 2 * radius + 1; ++i) {
-        kernel[i] /= sum;
-    }
-}
 
-void bgra8888_gaussian_blur(
+FFI_PLUGIN_EXPORT void bgra8888_gaussian_blur(
         const YUVDef *src,
         int radius,
         float sigma

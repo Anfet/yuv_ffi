@@ -1,9 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include "bgra8888.h"
+#include "..//yuv.h"
 
-
-void bgra8888_to_i420(const YUVDef *src, const YUVDef *dst) {
+FFI_PLUGIN_EXPORT void bgra8888_to_i420(const YUVDef *src, const YUVDef *dst) {
     const int W = src->width;
     const int H = src->height;
 

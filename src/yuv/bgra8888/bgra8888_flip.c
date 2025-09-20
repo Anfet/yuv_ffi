@@ -1,11 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/utils/h/log.h"
-#include "../yuv/utils/h/yuv_utils.h"
-#include "../yuv/yuv420.h"
+#include "..//yuv.h"
 
-void bgra8888_flip_horizontally(
+FFI_PLUGIN_EXPORT void bgra8888_flip_horizontally(
         const YUVDef *src
 ) {
     const int bytesPerPixel = src->yPixelStride;
@@ -27,7 +22,7 @@ void bgra8888_flip_horizontally(
     }
 }
 
-void bgra8888_flip_vertically(
+FFI_PLUGIN_EXPORT void bgra8888_flip_vertically(
         const YUVDef *src
 ) {
     uint8_t *data = src->y;

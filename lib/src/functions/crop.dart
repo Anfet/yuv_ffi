@@ -27,7 +27,7 @@ YuvImage crop(YuvImage image, Rect rect) {
 
         break;
       case YuvFileFormat.nv21:
-        ffiBingings.yuv420_crop_rect(srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
+        ffiBingings.nv21_crop_rect(srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
         dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
         dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
         break;

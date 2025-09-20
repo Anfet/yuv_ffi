@@ -1,9 +1,9 @@
 #ifndef GRAYSCALE_NV21_H
 #define GRAYSCALE_NV21_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void nv21_grayscale(
+FFI_PLUGIN_EXPORT void nv21_grayscale(
         const YUVDef *src
 );
 

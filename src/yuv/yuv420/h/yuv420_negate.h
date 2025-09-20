@@ -1,9 +1,9 @@
 #ifndef NEGATE_I420_H
 #define NEGATE_I420_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void yuv420_negate(
+FFI_PLUGIN_EXPORT void yuv420_negate(
         const YUVDef *src
 );
 

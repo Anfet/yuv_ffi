@@ -1,9 +1,9 @@
 #ifndef GRAYSCALE_I420_H
 #define GRAYSCALE_I420_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void yuv420_grayscale(
+FFI_PLUGIN_EXPORT void yuv420_grayscale(
         const YUVDef *src
 );
 

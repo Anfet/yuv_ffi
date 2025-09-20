@@ -1,9 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/yuv420.h"
+#include "..//yuv.h"
 
-void nv21_grayscale(
+FFI_PLUGIN_EXPORT void nv21_grayscale(
         const YUVDef *src
 ) {
     const int height = src->height;

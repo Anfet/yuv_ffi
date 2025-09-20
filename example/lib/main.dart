@@ -263,7 +263,7 @@ class _MyAppState extends State<MyApp> {
       options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    var inputImage = requireImage.toYuvNv21().toInputImage();
+    var inputImage = (Platform.isIOS ? requireImage.toYuvBgra8888(): requireImage.toYuvNv21()).toInputImage();
 
     final faces = await detector.processImage(inputImage);
     if (faces.isEmpty) {
@@ -310,6 +310,12 @@ class _ImageWidget extends StatelessWidget {
               if (faceBox != null)
                 CustomPaint(
                   painter: FaceRectPainter(rect: faceBox!, image: i),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Text('${i.width}:${i.height}:${i.format.name}', textAlign: TextAlign.center, style: TextStyle(color: Colors.amber),),
                 ),
             ],
           ),

@@ -1,8 +1,8 @@
 #ifndef NV21_TO_420_H
 #define NV21_TO_420_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void nv21_to_i420(const YUVDef* src, const YUVDef* dst);
+FFI_PLUGIN_EXPORT void nv21_to_i420(const YUVDef* src, const YUVDef* dst);
 
 #endif

@@ -1,9 +1,9 @@
 #ifndef GAUSS_I420_H
 #define GAUSS_I420_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void yuv420_gaussblur(
+FFI_PLUGIN_EXPORT void yuv420_gaussblur(
         const YUVDef *src,
         int radius,
         int sigma

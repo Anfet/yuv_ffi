@@ -1,9 +1,9 @@
 #ifndef MEAN_I420_H
 #define MEAN_I420_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void yuv420_mean_blur(
+FFI_PLUGIN_EXPORT void yuv420_mean_blur(
         const YUVDef *src,
         int radius,
         const uint32_t *rect

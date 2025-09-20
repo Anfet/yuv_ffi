@@ -1,11 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/utils/h/log.h"
-#include "../yuv/yuv420.h"
-#include "../yuv/utils/h/yuv_utils.h"
+#include "..//yuv.h"
 
-void bgra8888_blackwhite(const YUVDef *src) {
+FFI_PLUGIN_EXPORT void bgra8888_blackwhite(const YUVDef *src) {
     const int BINARY_THRESHOLD = 128;
     for (int y = 0; y < src->height; y++) {
         uint8_t* row = src->y + y * src->yRowStride;

@@ -5,12 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:yuv_ffi/src/functions/from_rgba8888.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-enum YuvFileFormat {
-  nv21,
-  i420,
-  bgra8888,
-  ;
-}
+enum YuvFileFormat { nv21, i420, bgra8888 }
 
 class YuvImage {
   late final YuvFileFormat format;
@@ -36,13 +31,25 @@ class YuvImage {
   Size get size => Size(width.toDouble(), height.toDouble());
 
   YuvImage.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImage.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImage.bgra(int width, int height, {Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: planes);
+  YuvImage.bgra(this.width, this.height, {Iterable<YuvPlane>? planes}) : format = YuvFileFormat.bgra8888 {
+    Uint8List? bytes;
+    if (planes?.isNotEmpty == true) {
+      var rawY = planes!.first;
+      final WriteBuffer allBytes = WriteBuffer();
+      for (int y = 0; y < height; y++) {
+        allBytes.putUint8List(rawY.bytes.sublist(y * rawY.rowStride, y * rawY.rowStride + width * 4));
+      }
+      bytes = allBytes.done().buffer.asUint8List();
+    }
+    YuvPlane y = YuvPlane(this.height, width * 4, 4, bytes);
+
+    _planes = [y];
+  }
 
   YuvImage(this.format, this.width, this.height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
     if (planes != null) {
@@ -78,14 +85,8 @@ class YuvImage {
     return bytes;
   }
 
-  YuvImage copy({bool blank = false}) => YuvImage(
-        format,
-        width,
-        height,
-        planes: blank ? null : _planes,
-        yPixelStride: y.pixelStride,
-        uvPixelStride: u?.pixelStride ?? 1,
-      );
+  YuvImage copy({bool blank = false}) =>
+      YuvImage(format, width, height, planes: blank ? null : _planes, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
 
   String toJson({bool bytesAsBinary = true, bool bytesAsList = false}) {
     var json = {

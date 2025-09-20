@@ -1,9 +1,9 @@
 #ifndef ROTATE_BGRA8888_H
 #define ROTATE_BGRA8888_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void bgra8888_rotate(
+FFI_PLUGIN_EXPORT void bgra8888_rotate(
         const YUVDef *src,
         const YUVDef *dst,
         int rotationDegrees

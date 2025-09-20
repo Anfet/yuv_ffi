@@ -1,10 +1,6 @@
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include "../yuv/utils/h/yuv_utils.h"
-#include "../yuv/nv21.h"
+#include "..//yuv.h"
 
-void nv21_rotate(
+FFI_PLUGIN_EXPORT void nv21_rotate(
         const YUVDef *src,
         const YUVDef *dst,
         int rotationDegrees
@@ -55,13 +51,13 @@ void nv21_rotate(
             const int dstYIndex = yuv_index(dx, dy, dstWidth, yPixelStride);
             y_dst[dstYIndex] = y_src[srcYIndex];
 
-            if (dy % 2 == 0 & dx % 2 == 0) {
+            if ((dy % 2 == 0) && (dx % 2 == 0)) {
                 const int srcUvIndex = yuv_index(sx / 2, sy / 2, uvRowStride, uvPixelStride);
                 const int dstUvIndex = yuv_index(dx / 2, dy / 2, uvDstWidth * uvPixelStride, uvPixelStride);
                 int u = u_src[srcUvIndex];
                 int v = u_src[srcUvIndex + 1];
                 u_dst[dstUvIndex] = u;
-                u_dst[dstUvIndex] = v;
+                u_dst[dstUvIndex + 1] = v;
             }
         }
     }

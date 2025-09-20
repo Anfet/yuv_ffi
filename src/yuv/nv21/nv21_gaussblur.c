@@ -1,78 +1,73 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include "../yuv/yuv.h"
-#include "../yuv/utils/h/yuv_utils.h"
+#include "../yuv.h"
+#include "..//gauss.h"
 
-static void generate_gaussian_kernel(float *kernel, int radius, float sigma) {
-    float sum = 0.0f;
-    for (int i = -radius; i <= radius; ++i) {
-        kernel[i + radius] = expf(-(i * i) / (2 * sigma * sigma));
-        sum += kernel[i + radius];
-    }
-    for (int i = 0; i < 2 * radius + 1; ++i) kernel[i] /= sum;
-}
-
-void nv21_gaussian_blur(
+// --- Гауссовый блюр NV21 ---
+// src->y = Y plane
+// src->u = interleaved VU plane (NV21), src->v не используется
+FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
         const YUVDef *src,
         int radius,
         float sigma
 ) {
-    const int width = src->width;
+    const int width  = src->width;
     const int height = src->height;
-    uint8_t *yData = src->y;
-    uint8_t *uvData = src->v;
 
-    int uvWidth = width / 2;
-    int uvHeight = height / 2;
+    uint8_t *y_src = src->y;
+    uint8_t *y_dst = src->y;
+    uint8_t *vu_src = src->u;
+    uint8_t *vu_dst = src->u;
 
-    float *kernel = (float*) malloc((2 * radius + 1) * sizeof(float));
+    const int y_row_stride = src->yRowStride;
+    const int y_pixel_stride = src->yPixelStride;
+    const int uv_row_stride = src->uvRowStride;
 
-    generate_gaussian_kernel(kernel, radius, sigma);
+    // --- Y plane ---
+    gaussian_blur_plane_strided(
+            y_src, y_dst,
+            width, height,
+            y_row_stride, y_pixel_stride,
+            radius, sigma
+    );
 
-    // --- Y-плоскость ---
-    uint8_t *tempY = (uint8_t*) malloc(width * height);
-    memcpy(tempY, yData, width * height);
+    // --- UV plane (VU interleaved) ---
+    const int uv_width  = width / 2;
+    const int uv_height = height / 2;
 
-    // Горизонталь
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            float sum = 0.0f, weight = 0.0f;
-            for (int k = -radius; k <= radius; ++k) {
-                int xx = x + k;
-                if (xx < 0) xx = 0;
-                if (xx >= width) xx = width - 1;
-                sum += kernel[k + radius] * tempY[y * width + xx];
-                weight += kernel[k + radius];
-            }
-            yData[y * width + x] = (uint8_t)(sum / weight);
+    uint8_t *u_plane = (uint8_t *) malloc(uv_width * uv_height);
+    uint8_t *v_plane = (uint8_t *) malloc(uv_width * uv_height);
+
+    // Распаковка VU → отдельные U и V
+    for (int y = 0; y < uv_height; ++y) {
+        const uint8_t *row = vu_src + y * uv_row_stride;
+        for (int x = 0; x < uv_width; ++x) {
+            v_plane[y * uv_width + x] = row[x * 2 + 0];
+            u_plane[y * uv_width + x] = row[x * 2 + 1];
         }
     }
 
-    // --- UV-плоскость ---
-    uint8_t *tempUV = (uint8_t*) malloc(uvWidth * uvHeight * 2);
-    memcpy(tempUV, uvData, uvWidth * uvHeight * 2);
+    // Размытие U и V по отдельности
+    gaussian_blur_plane_strided(
+            u_plane, u_plane,
+            uv_width, uv_height,
+            uv_width, 1,
+            radius, sigma
+    );
+    gaussian_blur_plane_strided(
+            v_plane, v_plane,
+            uv_width, uv_height,
+            uv_width, 1,
+            radius, sigma
+    );
 
-    for (int y = 0; y < uvHeight; ++y) {
-        for (int x = 0; x < uvWidth; ++x) {
-            float sumV = 0, sumU = 0, weight = 0;
-            for (int k = -radius; k <= radius; ++k) {
-                int xx = x + k;
-                if (xx < 0) xx = 0;
-                if (xx >= uvWidth) xx = uvWidth - 1;
-                int idx = y * uvWidth * 2 + xx * 2;
-                sumV += kernel[k + radius] * tempUV[idx + 0];
-                sumU += kernel[k + radius] * tempUV[idx + 1];
-                weight += kernel[k + radius];
-            }
-            int dstIdx = y * uvWidth * 2 + x * 2;
-            uvData[dstIdx + 0] = (uint8_t)(sumV / weight);
-            uvData[dstIdx + 1] = (uint8_t)(sumU / weight);
+    // Сборка обратно в interleaved VU
+    for (int y = 0; y < uv_height; ++y) {
+        uint8_t *row = vu_dst + y * uv_row_stride;
+        for (int x = 0; x < uv_width; ++x) {
+            row[x * 2 + 0] = v_plane[y * uv_width + x];
+            row[x * 2 + 1] = u_plane[y * uv_width + x];
         }
     }
 
-    free(kernel);
-    free(tempY);
-    free(tempUV);
+    free(u_plane);
+    free(v_plane);
 }

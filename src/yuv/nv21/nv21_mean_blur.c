@@ -1,14 +1,12 @@
+#include "../yuv.h"
 
-#include <stdint.h>
-#include "../nv21.h"
-
-void nv21_mean_blur(
+FFI_PLUGIN_EXPORT void nv21_mean_blur(
         const YUVDef *src,
         int radius,
         const uint32_t *rect
 ) {
     uint8_t *yData = src->y;
-    uint8_t *uvData = src->v;
+    uint8_t *vuData = src->u;  // NV21: interleaved VU (V,U,V,U,...)
 
     const int width = src->width;
     const int height = src->height;
@@ -46,8 +44,8 @@ void nv21_mean_blur(
     // --- UV-плоскость ---
     int uvWidth = width / 2;
     int uvHeight = height / 2;
-    uint8_t *tempUV = (uint8_t*) malloc(uvWidth * uvHeight * 2);
-    memcpy(tempUV, uvData, uvWidth * uvHeight * 2);
+    uint8_t *tempVU = (uint8_t*) malloc(uvWidth * uvHeight * 2);
+    memcpy(tempVU, vuData, uvWidth * uvHeight * 2);
 
     for (int y = 0; y < uvHeight; ++y) {
         for (int x = 0; x < uvWidth; ++x) {
@@ -59,16 +57,16 @@ void nv21_mean_blur(
                     int nx = x + dx;
                     if (nx < 0 || nx >= uvWidth) continue;
                     int idx = (ny * uvWidth + nx) * 2;
-                    sumV += tempUV[idx + 0];
-                    sumU += tempUV[idx + 1];
+                    sumV += tempVU[idx + 0];
+                    sumU += tempVU[idx + 1];
                     count++;
                 }
             }
             int dstIdx = (y * uvWidth + x) * 2;
-            uvData[dstIdx + 0] = (uint8_t)(sumV / count);
-            uvData[dstIdx + 1] = (uint8_t)(sumU / count);
+            vuData[dstIdx + 0] = (uint8_t)(sumV / count);
+            vuData[dstIdx + 1] = (uint8_t)(sumU / count);
         }
     }
 
-    free(tempUV);
+    free(tempVU);
 }

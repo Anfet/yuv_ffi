@@ -1,9 +1,9 @@
 #ifndef ROTATE_I420_H
 #define ROTATE_I420_H
 
-#include <stdint.h>
+#include "..//..//yuv.h"
 
-void yuv420_rotate(
+FFI_PLUGIN_EXPORT void yuv420_rotate(
         const YUVDef *src,
         const YUVDef *dst,
         int rotationDegrees

@@ -1,14 +1,10 @@
-// i420_to_nv21_strided.c
-#include <stdint.h>
-#include <string.h>
-#include "yuv420.h"  // твой header с YUVDef
-
+#include "..//yuv.h"
 
 // I420 (Y, U, V) -> NV21 (Y + interleaved VU).
 // dst->y  : плоскость Y (stride = dst->yRowStride, обычно W)
 // dst->u  : плоскость VU (stride = dst->uvRowStride, ДОЛЖНА быть W)
 // dst->v  : не используется (может быть NULL)
-void yuv420_i420_to_nv21(const YUVDef *src, const YUVDef *dst) {
+FFI_PLUGIN_EXPORT void yuv420_i420_to_nv21(const YUVDef *src, const YUVDef *dst) {
     const int W = src->width;
     const int H = src->height;
     const int cw = W >> 1;   // chroma width

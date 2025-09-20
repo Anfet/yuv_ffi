@@ -10,12 +10,7 @@ class YuvImageWidget extends StatefulWidget {
   final WidgetBuilder? onPrepare;
   final BoxFit boxFit;
 
-  const YuvImageWidget({
-    super.key,
-    required this.image,
-    this.onPrepare,
-    this.boxFit = BoxFit.none,
-  });
+  const YuvImageWidget({super.key, required this.image, this.onPrepare, this.boxFit = BoxFit.none});
 
   @override
   State<YuvImageWidget> createState() => _YuvImageWidgetState();
@@ -60,11 +55,7 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
 
   final _completer = YuvImageStreamCompleter();
 
-  YuvImageProvider({
-    required this.width,
-    required this.height,
-    this.pixelFormat = ui.PixelFormat.bgra8888,
-  });
+  YuvImageProvider({required this.width, required this.height, this.pixelFormat = ui.PixelFormat.bgra8888});
 
   void update(Uint8List bytes) => _completer.update(bytes, width, height, pixelFormat);
 

@@ -10,7 +10,7 @@ set_property(GLOBAL PROPERTY CMAKE_CONFIGURE_DEPENDS "yuv/*.c")
 # Собираем все исходники из папки yuv/
 file(GLOB_RECURSE SOURCES "yuv/*.c" "yuv_ffi.c" "**/*.c")
 add_library(
-    yuv_ffi SHARED ${SOURCES}
+    yuv_ffi SHARED ${SOURCES} "yuv_ffi.c"
 )
 
 target_include_directories(
@@ -32,5 +32,10 @@ target_link_libraries(
         yuv_ffi
         log
 )
+
+if (ANDROID)
+    # Support Android 15 16k page size
+    target_link_options(ffi_experiments PRIVATE "-Wl,-z,max-page-size=16384")
+endif()
 
 
