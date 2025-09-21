@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 
 // NV21 (Y + interleaved VU) -> I420 (Y + planar U, V)

@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 // Ожидаем, что src->y указывает на Y, а src->v/src->u указывают на один и тот же VU-буфер,
 // при этом src->v = vu + 0, src->u = vu + 1, uvPixelStride == 2.

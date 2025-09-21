@@ -1,5 +1,4 @@
-#include "..//yuv.h"
-#include "..//gauss.h"
+#include "../yuv.h"
 
 
 FFI_PLUGIN_EXPORT void bgra8888_gaussian_blur(

@@ -5,6 +5,3 @@ output: lib/src/yuv_ffi_bingings.dart
 headers:
   entry-points:
     - 'src/yuv_ffi.h'
-  include-directives:
-    - '**/*.h'
-

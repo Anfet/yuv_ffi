@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void yuv420_flip_horizontally(
         const YUVDef *src

@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void yuv420_from_rgba8888(const uint8_t *rgba, const YUVDef *src) {
     uint8_t *yPlane = src->y;

@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "yuv.h"
 
 void freeYUVDef(YUVDef *yuv) {

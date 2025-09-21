@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void bgra8888_grayscale(const YUVDef *src) {
     for (int y = 0; y < src->height; y++) {
