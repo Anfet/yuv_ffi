@@ -176,7 +176,7 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       var yuv = await nextFrameCompleter!.future;
       if (controller.description.lensDirection == CameraLensDirection.front && Platform.isAndroid) {
-        yuv = flipHorizontally(yuv);
+        yuv = yuv.flipHorizontally();
       }
 
       await Future.delayed(Duration(seconds: 1));

@@ -29,14 +29,14 @@ extension ConvertExt on YuvImage {
 
   YuvImage toYuvNv21() {
     if (format == YuvFileFormat.nv21) {
-      return copy();
+      return this;
     }
 
     final def = YUVDefClass(this);
     YuvImage n21 = YuvImage.nv21(width, height);
     final def21 = YUVDefClass(n21);
     try {
-      switch (this.format) {
+      switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_i420_to_nv21(def.pointer, def21.pointer);
           break;
@@ -59,14 +59,14 @@ extension ConvertExt on YuvImage {
 
   YuvImage toYuvI420() {
     if (format == YuvFileFormat.i420) {
-      return copy();
+      return this;
     }
 
     final def = YUVDefClass(this);
     YuvImage i420 = YuvImage.i420(width, height);
     final def420 = YUVDefClass(i420);
     try {
-      switch (this.format) {
+      switch (format) {
         case YuvFileFormat.nv21:
           ffiBingings.nv21_to_i420(def.pointer, def420.pointer);
           break;
@@ -89,7 +89,7 @@ extension ConvertExt on YuvImage {
 
   YuvImage toYuvBgra8888() {
     if (format == YuvFileFormat.bgra8888) {
-      return copy();
+      return this;
     }
 
     var bytes = toBgra8888();

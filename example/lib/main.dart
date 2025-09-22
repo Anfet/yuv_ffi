@@ -14,7 +14,6 @@ import 'package:yuv_ffi_example/camera_screen.dart';
 import 'package:yuv_ffi_example/ext.dart';
 import 'package:yuv_ffi_example/widgets/crop_targets.dart';
 import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
-import 'package:yuv_ffi_example/widgets/shades.dart';
 
 void main() {
   runApp(const MyApp());
@@ -112,7 +111,7 @@ class _MyAppState extends State<MyApp> {
                   Positioned(
                     right: 8,
                     top: 8,
-                    child: Text('${lastOpTiming} msec', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
+                    child: Text('$lastOpTiming msec', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
                   ),
               ],
             ),
@@ -176,46 +175,46 @@ class _MyAppState extends State<MyApp> {
   }
 
   void rotateClockWise() {
-    logTimed(() => image = rotate(requireImage, YuvImageRotation.rotation90), name: '$image rotateClockWise');
+    logTimed(() => requireImage.rotate(YuvImageRotation.rotation90), name: '$image rotateClockWise');
   }
 
   void rotateCouterClockwise() {
-    logTimed(() => image = rotate(requireImage, YuvImageRotation.rotation270), name: '$image rotateCouterClockwise');
+    logTimed(() => requireImage.rotate(YuvImageRotation.rotation270), name: '$image rotateCouterClockwise');
   }
 
   Future flipImageVertically() async {
-    logTimed(() async => image = await flipVertically(requireImage), name: '$image flipVertically');
+    logTimed(() async => requireImage.flipVertically(), name: '$image flipVertically');
   }
 
   void flitImageHorizontally() {
-    logTimed(() => image = flipHorizontally(requireImage), name: '$image flitHorizontally');
+    logTimed(() => requireImage.flipHorizontally(), name: '$image flitHorizontally');
   }
 
   void cropImage() {
     var cropTarget = CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85);
     var r = cropTarget.place(requireImage.size);
 
-    logTimed(() => image = crop(requireImage, r), name: '$image cropImage');
+    logTimed(() => requireImage.crop(r), name: '$image cropImage');
   }
 
   void grayscaleImage() {
-    logTimed(() => image = grayscale(requireImage), name: '$image grayscaleImage');
+    logTimed(() => requireImage.grayscale(), name: '$image grayscaleImage');
   }
 
   void blackwhiteImage() {
-    logTimed(() => image = blackwhite(requireImage), name: '$image blackwhiteImage');
+    logTimed(() => requireImage.blackwhite(), name: '$image blackwhiteImage');
   }
 
   void invertImage() {
-    logTimed(() => image = negate(requireImage), name: '$image invertImage');
+    logTimed(() => requireImage.negate(), name: '$image invertImage');
   }
 
   void gaussianBlurImage() {
-    logTimed(() => image = gaussianBlur(requireImage, radius: 10, sigma: 10), name: '$image gaussianBlurImage');
+    logTimed(() => requireImage.gaussianBlur(radius: 10, sigma: 10), name: '$image gaussianBlurImage');
   }
 
   void meanBlurImage() {
-    logTimed(() => image = meanBlur(requireImage, radius: 10), name: '$image meanBlurImage');
+    logTimed(() => requireImage.meanBlur(radius: 10), name: '$image meanBlurImage');
   }
 
   Future logTimed(FutureOr Function() execution, {String? name}) async {
@@ -228,7 +227,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void boxBlurImage() {
-    logTimed(() => image = boxBlur(requireImage, radius: 10), name: '$image boxBlurImage');
+    logTimed(() => requireImage.boxBlur(radius: 10), name: '$image boxBlurImage');
   }
 
   Future loadImage() async {
@@ -263,7 +262,7 @@ class _MyAppState extends State<MyApp> {
       options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    var inputImage = (Platform.isIOS ? requireImage.toYuvBgra8888(): requireImage.toYuvNv21()).toInputImage();
+    var inputImage = (Platform.isIOS ? requireImage.toYuvBgra8888() : requireImage.toYuvNv21()).toInputImage();
 
     final faces = await detector.processImage(inputImage);
     if (faces.isEmpty) {
@@ -282,7 +281,7 @@ class _ImageWidget extends StatelessWidget {
   final YuvImage? image;
   final ui.Rect? faceBox;
 
-  const _ImageWidget({super.key, required this.image, required this.faceBox});
+  const _ImageWidget({required this.image, required this.faceBox});
 
   @override
   Widget build(BuildContext context) {
@@ -311,12 +310,16 @@ class _ImageWidget extends StatelessWidget {
                 CustomPaint(
                   painter: FaceRectPainter(rect: faceBox!, image: i),
                 ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Text('${i.width}:${i.height}:${i.format.name}', textAlign: TextAlign.center, style: TextStyle(color: Colors.amber),),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Text(
+                  '${i.width}:${i.height}:${i.format.name}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.amber),
                 ),
+              ),
             ],
           ),
         ),

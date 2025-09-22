@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
-import 'package:yuv_ffi/src/functions/from_rgba8888.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 enum YuvFileFormat { nv21, i420, bgra8888 }
@@ -46,7 +45,7 @@ class YuvImage {
       }
       bytes = allBytes.done().buffer.asUint8List();
     }
-    YuvPlane y = YuvPlane(this.height, width * 4, 4, bytes);
+    YuvPlane y = YuvPlane(height, width * 4, 4, bytes);
 
     _planes = [y];
   }
@@ -57,7 +56,7 @@ class YuvImage {
       return;
     }
 
-    final yplane = YuvPlane(height, this.width * yPixelStride, yPixelStride);
+    final yplane = YuvPlane(height, width * yPixelStride, yPixelStride);
     final uvWidth = width ~/ 2;
     final uvHeight = height ~/ 2;
     switch (format) {

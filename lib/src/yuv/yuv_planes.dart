@@ -19,7 +19,7 @@ class YuvPlane {
 
   int get bytesPerPixes => pixelStride;
 
-  int _height;
+  final int _height;
 
   YuvPlane(this._height, this.rowStride, [this.pixelStride = 1, Uint8List? bytes]) {
     _bytes = Uint8List(_height * rowStride * pixelStride);

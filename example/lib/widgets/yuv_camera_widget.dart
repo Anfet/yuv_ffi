@@ -87,7 +87,7 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
       YuvImageRotation rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
       var yuv = image.toYuvImage();
       if (Platform.isAndroid) {
-        yuv = rotate(yuv, rotation.toZero());
+        yuv = yuv.rotate(rotation.toZero());
       }
 
       yuv = widget.transform?.call(yuv) ?? yuv;

@@ -5,31 +5,32 @@ import 'package:yuv_ffi/src/yuv/defs/yuv_def.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
 
-YuvImage negate(YuvImage image) {
-  final def = YUVDefClass(image);
+extension NegateYuvImageExt on YuvImage {
+  YuvImage negate() {
+    final def = YUVDefClass(this);
 
-  try {
-    switch (image.format) {
-      case YuvFileFormat.i420:
-        ffiBingings.yuv420_negate(def.pointer);
-        image.yPlane.assignFromPtr(def.pointer.ref.y);
-        image.uPlane.assignFromPtr(def.pointer.ref.u);
-        image.vPlane.assignFromPtr(def.pointer.ref.v);
-        break;
-      case YuvFileFormat.nv21:
-        ffiBingings.nv21_negate(def.pointer);
-        image.yPlane.assignFromPtr(def.pointer.ref.y);
-        image.uPlane.assignFromPtr(def.pointer.ref.u);
-        break;
-      case YuvFileFormat.bgra8888:
-        ffiBingings.bgra8888_negate(def.pointer);
-        image.yPlane.assignFromPtr(def.pointer.ref.y);
-        break;
-
+    try {
+      switch (format) {
+        case YuvFileFormat.i420:
+          ffiBingings.yuv420_negate(def.pointer);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
+          break;
+        case YuvFileFormat.nv21:
+          ffiBingings.nv21_negate(def.pointer);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          break;
+        case YuvFileFormat.bgra8888:
+          ffiBingings.bgra8888_negate(def.pointer);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          break;
+      }
+    } finally {
+      def.dispose();
     }
-  } finally {
-    def.dispose();
-  }
 
-  return image;
+    return this;
+  }
 }

@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'dart:ui' show ClipOp;
 
 import 'package:flutter/material.dart';
@@ -26,7 +28,6 @@ class _OvalShades extends StatelessWidget implements ShadeWidget {
   final bool showGuides;
 
   const _OvalShades({
-    super.key,
     required this.target,
     this.shadeColor = const Color(0x99000000),
     this.borderWidth = 0,
@@ -37,7 +38,13 @@ class _OvalShades extends StatelessWidget implements ShadeWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _OvalShadesPainter(target: target, shadeColor: shadeColor, borderWidth: borderWidth, borderColor: borderColor, showGuides: showGuides),
+      painter: _OvalShadesPainter(
+        target: target,
+        shadeColor: shadeColor,
+        borderWidth: borderWidth,
+        borderColor: borderColor,
+        showGuides: showGuides,
+      ),
     );
   }
 }
@@ -52,9 +59,9 @@ class _OvalShadesPainter extends CustomPainter {
   _OvalShadesPainter({
     required this.target,
     required this.shadeColor,
-    required this.borderWidth,
-    required this.borderColor,
-    required this.showGuides,
+    this.borderWidth = 0,
+    this.borderColor = Colors.transparent,
+    this.showGuides = false,
   });
 
   @override
@@ -63,10 +70,12 @@ class _OvalShadesPainter extends CustomPainter {
     final rect = target.place(size);
 
     // 2) полный экран как Path
-    final full = Path()..addRect(Offset.zero & size);
+    final full = Path()
+      ..addRect(Offset.zero & size);
 
     // 3) овальное окно
-    final hole = Path()..addOval(rect);
+    final hole = Path()
+      ..addOval(rect);
 
     // 4) рисуем тень как «экран минус овал»
     final diff = Path.combine(PathOperation.difference, full, hole);
@@ -112,12 +121,18 @@ class _OvalShadesPainter extends CustomPainter {
 class _RectShade extends StatelessWidget implements ShadeWidget {
   final CropTarget target;
 
-  const _RectShade({Key? key, required this.target}) : super(key: key);
+  const _RectShade({required this.target});
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery
+        .of(context)
+        .size
+        .width;
+    final height = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     return CustomPaint(size: Size(width, height), painter: _RectShadesPainter(target));
   }
@@ -128,7 +143,8 @@ class _RectShadesPainter extends CustomPainter {
 
   _RectShadesPainter(this.target);
 
-  final Paint backgroundPaint = Paint()..color = const Color(0x80000000);
+  final Paint backgroundPaint = Paint()
+    ..color = const Color(0x80000000);
   final Paint linePaint = Paint()
     ..color = Colors.red
     ..style = PaintingStyle.stroke
