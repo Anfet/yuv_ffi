@@ -7,7 +7,7 @@ import 'package:yuv_ffi/src/yuv/defs/yuv_def.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 import 'package:yuv_ffi/src/yuv/yuv_planes.dart';
 
-extension YuvImageBgra8888 on YuvImage {
+extension YuvImageFromBgra8888 on YuvImage {
   void fromRgba8888(Uint8List bytes) {
     final rgbaPlaneLength = bytes.length;
     final rgbaPtr = calloc.allocate<Uint8>(rgbaPlaneLength);

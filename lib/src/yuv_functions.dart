@@ -7,3 +7,4 @@ export 'functions/negate.dart';
 export 'functions/rotate.dart';
 export 'functions/from_rgba8888.dart';
 export 'functions/convert.dart';
+export 'functions/to_bgra8888.dart';

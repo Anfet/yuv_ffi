@@ -6,7 +6,7 @@ import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/defs/yuv_def.dart';
 import 'package:yuv_ffi/src/yuv/yuv_image.dart';
 
-extension YuvImageBgra8888 on YuvImage {
+extension YuvImageToBgra8888 on YuvImage {
   Uint8List toBgra8888() {
     final def = YUVDefClass(this);
     final bgraPlaneLength = width * height * 4;
