@@ -11,7 +11,6 @@ extension YuvImageToBgra8888 on YuvImage {
     final def = YUVDefClass(this);
     final bgraPlaneLength = width * height * 4;
     final bgraPlane = calloc.allocate<Uint8>(bgraPlaneLength);
-    assert(bgraPlane != nullptr);
     try {
       switch (format) {
         case YuvFileFormat.nv21:
