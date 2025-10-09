@@ -4,29 +4,8 @@ import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 
 import 'package:flutter/foundation.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
-
-abstract class YuvPlaneImpl implements YuvPlane{
-  Uint8List get bytes;
-
-  int get rowStride;
-
-  int get bytesPerRow;
-
-  int get pixelStride;
-
-  int get bytesPerPixes;
-
-  int getPixel(int x, int y);
-
-  void setPixel(int x, int y, int value);
-
-  Map<String, dynamic> toJson({bool bytesAsBinary = true, bool bytesAsList = false});
-
-  YuvPlane copy();
-
-  factory YuvPlaneImpl(int height, int rowStride, [int pixelStride = 1, Uint8List? bytes]) => throw UnimplementedError();
-}
 
 abstract class YuvImageImpl implements YuvImage {
   YuvFileFormat get format;

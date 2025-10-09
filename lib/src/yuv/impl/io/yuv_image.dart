@@ -8,21 +8,25 @@ import 'package:flutter/foundation.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 import 'defs/yuv_def.dart';
 
 class YuvImageImpl implements YuvImage {
-  late final List<YuvPlane> _planes;
+  List<YuvPlane> _planes = const [];
+  YuvFileFormat _format;
+  int _width;
+  int _height;
 
   @override
-  late final YuvFileFormat format;
+  YuvFileFormat get format => _format;
 
   @override
-  final int width;
+  int get width => _width;
 
   @override
-  final int height;
+  int get height => _height;
 
   @override
   List<YuvPlane> get planes => List.unmodifiable(_planes);
@@ -54,7 +58,7 @@ class YuvImageImpl implements YuvImage {
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
       : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImageImpl.bgra(this.width, this.height, {Iterable<YuvPlane>? planes}) : format = YuvFileFormat.bgra8888 {
+  YuvImageImpl.bgra(this._width, this._height, {Iterable<YuvPlane>? planes}) : _format = YuvFileFormat.bgra8888 {
     Uint8List? bytes;
     if (planes?.isNotEmpty == true) {
       var rawY = planes!.first;
@@ -64,28 +68,28 @@ class YuvImageImpl implements YuvImage {
       }
       bytes = allBytes.done().buffer.asUint8List();
     }
-    YuvPlane y = YuvPlaneImpl(height, width * 4, 4, bytes);
+    YuvPlane y = YuvPlane(height, width * 4, 4, bytes);
 
     _planes = [y];
   }
 
-  YuvImageImpl(this.format, this.width, this.height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
+  YuvImageImpl(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
     if (planes != null) {
       _planes = List.of(planes.map((e) => e.copy()));
       return;
     }
 
-    final yplane = YuvPlaneImpl(height, width * yPixelStride, yPixelStride);
+    final yplane = YuvPlane(height, width * yPixelStride, yPixelStride);
     final uvWidth = width ~/ 2;
     final uvHeight = height ~/ 2;
     switch (format) {
       case YuvFileFormat.nv21:
-        final uvplane = YuvPlaneImpl(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
+        final uvplane = YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
         _planes = [yplane, uvplane];
         break;
       case YuvFileFormat.i420:
-        final uplane = YuvPlaneImpl(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
-        final vplane = YuvPlaneImpl(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
+        final uplane = YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
+        final vplane = YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
         _planes = [yplane, uplane, vplane];
         break;
       case YuvFileFormat.bgra8888:
@@ -124,7 +128,7 @@ class YuvImageImpl implements YuvImage {
     YuvFileFormat format = YuvFileFormat.values.byName(json['format']);
     final width = json['width'];
     final height = json['height'];
-    final planes = (json['planes'] as Iterable).map((j) => YuvPlaneImpl.fromJson(j, bytesAsList: bytesAsList, bytesAsBinary: bytesAsBinary)).toList();
+    final planes = (json['planes'] as Iterable).map((j) => YuvPlane.fromJson(j, bytesAsList: bytesAsList, bytesAsBinary: bytesAsBinary)).toList();
     return YuvImageImpl(format, width, height, planes: planes);
   }
 
@@ -140,18 +144,18 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_blackwhite(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
-          vPlane.assignFrom(def.pointer.ref.v);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_blackwhite(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_blackwhite(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
       }
     } finally {
@@ -176,16 +180,16 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_box_blur(def.pointer, radius, rectPtr);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_box_blur(def.pointer, radius, rectPtr);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_box_blur(def.pointer, radius, rectPtr);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
       }
     } finally {
@@ -196,41 +200,40 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage crop(ui.Rect rect) {
-    final YuvImage dst = YuvImageImpl(
-      format,
-      rect.width.floor(),
-      rect.height.floor(),
-      yPixelStride: y.pixelStride,
-      uvPixelStride: u?.pixelStride ?? 1,
-    );
+    final YuvImage dst =
+        YuvImageImpl(format, rect.width.floor(), rect.height.floor(), yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
     final srcDef = YUVDefClass(this);
     final dstDef = YUVDefClass(dst);
     try {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_crop_rect(srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
-          dst.yPlane.assignFrom(dstDef.pointer.ref.y);
-          dst.uPlane.assignFrom(dstDef.pointer.ref.u);
-          dst.vPlane.assignFrom(dstDef.pointer.ref.v);
+          dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
+          dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
+          dst.vPlane.assignFromPtr(dstDef.pointer.ref.v);
 
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_crop_rect(srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
-          dst.yPlane.assignFrom(dstDef.pointer.ref.y);
-          dst.uPlane.assignFrom(dstDef.pointer.ref.u);
+          dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
+          dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_crop_rect(
               srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
-          dst.yPlane.assignFrom(dstDef.pointer.ref.y);
+          dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           break;
       }
+
+      _width = dst.width;
+      _height = dst.height;
+      _planes = dst.planes;
     } finally {
       srcDef.dispose();
       dstDef.dispose();
     }
 
-    return dst;
+    return this;
   }
 
   @override
@@ -240,18 +243,18 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_flip_horizontally(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
-          vPlane.assignFrom(def.pointer.ref.v);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_flip_horizontally(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_flip_horizontally(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
       }
     } finally {
@@ -268,18 +271,18 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_flip_vertically(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
-          vPlane.assignFrom(def.pointer.ref.v);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_flip_vertically(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_flip_vertically(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
       }
     } finally {
@@ -298,18 +301,18 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_from_rgba8888(rgbaPtr, def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
-          vPlane.assignFrom(def.pointer.ref.v);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_from_rgba8888(rgbaPtr, def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_from_rgba8888(rgbaPtr, def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
       }
     } finally {
@@ -325,18 +328,18 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_gaussblur(def.pointer, radius, sigma);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
-          vPlane.assignFrom(def.pointer.ref.v);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_gaussian_blur(def.pointer, radius, sigma.toDouble());
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_gaussian_blur(def.pointer, radius, sigma.toDouble());
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
       }
     } finally {
@@ -354,16 +357,16 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_grayscale(def.pointer);
-          uPlane.assignFrom(def.pointer.ref.u);
-          vPlane.assignFrom(def.pointer.ref.v);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_grayscale(def.pointer);
-          uPlane.assignFrom(def.pointer.ref.u);
+          uPlane.assignFromPtr(def.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_grayscale(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
       }
     } finally {
@@ -387,17 +390,17 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_mean_blur(def.pointer, radius, rectPtr);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
 
         case YuvFileFormat.nv21:
           ffiBingings.nv21_mean_blur(def.pointer, radius, rectPtr);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_mean_blur(def.pointer, radius, rectPtr);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
       }
     } finally {
@@ -415,18 +418,18 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_negate(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
-          vPlane.assignFrom(def.pointer.ref.v);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_negate(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
-          uPlane.assignFrom(def.pointer.ref.u);
+          yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_negate(def.pointer);
-          yPlane.assignFrom(def.pointer.ref.y);
+          yPlane.assignFromPtr(def.pointer.ref.y);
           break;
       }
     } finally {
@@ -454,26 +457,29 @@ class YuvImageImpl implements YuvImage {
       switch (format) {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_rotate(srcDef.pointer, dstDef.pointer, degrees);
-          dstImage.yPlane.assignFrom(dstDef.pointer.ref.y);
-          dstImage.uPlane.assignFrom(dstDef.pointer.ref.u);
-          dstImage.vPlane.assignFrom(dstDef.pointer.ref.v);
+          dstImage.yPlane.assignFromPtr(dstDef.pointer.ref.y);
+          dstImage.uPlane.assignFromPtr(dstDef.pointer.ref.u);
+          dstImage.vPlane.assignFromPtr(dstDef.pointer.ref.v);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_rotate(srcDef.pointer, dstDef.pointer, degrees);
-          dstImage.yPlane.assignFrom(dstDef.pointer.ref.y);
-          dstImage.uPlane.assignFrom(dstDef.pointer.ref.u);
+          dstImage.yPlane.assignFromPtr(dstDef.pointer.ref.y);
+          dstImage.uPlane.assignFromPtr(dstDef.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_rotate(srcDef.pointer, dstDef.pointer, degrees);
-          dstImage.yPlane.assignFrom(dstDef.pointer.ref.y);
+          dstImage.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           break;
       }
+      _width = dstWidtn;
+      _height = dstHeight;
+      _planes = dstImage.planes;
     } finally {
       srcDef.dispose();
       dstDef.dispose();
     }
 
-    return dstImage;
+    return this;
   }
 
   @override
@@ -486,8 +492,8 @@ class YuvImageImpl implements YuvImage {
     try {
       ffiBingings.nvXX_to_nvYY(def.pointer.ref.u, defYY.pointer.ref.u, nvXX.width, nvYY.width, nvXX.uPlane.rowStride);
 
-      nvYY.yPlane.assignFrom(defYY.pointer.ref.y);
-      nvYY.uPlane.assignFrom(defYY.pointer.ref.u);
+      nvYY.yPlane.assignFromPtr(defYY.pointer.ref.y);
+      nvYY.uPlane.assignFromPtr(defYY.pointer.ref.u);
     } finally {
       def.dispose();
       defYY.dispose();
@@ -532,7 +538,7 @@ class YuvImageImpl implements YuvImage {
     }
 
     var bytes = toBgra8888();
-    var image = YuvImageImpl(YuvFileFormat.bgra8888, width, height, planes: [YuvPlaneImpl(height, width * 4, 4, bytes)], yPixelStride: 4);
+    var image = YuvImageImpl(YuvFileFormat.bgra8888, width, height, planes: [YuvPlane(height, width * 4, 4, bytes)], yPixelStride: 4);
     return image;
   }
 
@@ -557,9 +563,9 @@ class YuvImageImpl implements YuvImage {
           throw UnimplementedError();
       }
 
-      i420.yPlane.assignFrom(def420.pointer.ref.y);
-      i420.uPlane.assignFrom(def420.pointer.ref.u);
-      i420.vPlane.assignFrom(def420.pointer.ref.v);
+      i420.yPlane.assignFromPtr(def420.pointer.ref.y);
+      i420.uPlane.assignFromPtr(def420.pointer.ref.u);
+      i420.vPlane.assignFromPtr(def420.pointer.ref.v);
     } finally {
       def.dispose();
       def420.dispose();
@@ -588,8 +594,8 @@ class YuvImageImpl implements YuvImage {
           throw UnimplementedError();
       }
 
-      n21.yPlane.assignFrom(def21.pointer.ref.y);
-      n21.uPlane.assignFrom(def21.pointer.ref.u);
+      n21.yPlane.assignFromPtr(def21.pointer.ref.y);
+      n21.uPlane.assignFromPtr(def21.pointer.ref.u);
     } finally {
       def.dispose();
       def21.dispose();
@@ -597,4 +603,8 @@ class YuvImageImpl implements YuvImage {
 
     return n21;
   }
+}
+
+extension on YuvPlane {
+  void assignFromPtr(Pointer<Uint8> ptr) => assignFrom(ptr.asTypedList(this.bytes.length));
 }

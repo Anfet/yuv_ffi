@@ -1,36 +1,12 @@
-import 'yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_image.dart' if (dart.library.js_interop) 'impl/yuv_web.dart';
-import 'yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_plane.dart' if (dart.library.js_interop) 'impl/yuv_web.dart';
-
-export 'impl/yuv_io.dart' if (dart.library.js_interop) 'impl/yuv_web.dart';
-
-import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'dart:ui' as ui;
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 
-abstract interface class YuvPlane {
-  Uint8List get bytes;
+import 'impl/yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_image.dart' if (dart.library.js_interop) 'impl/web/yuv_web.dart';
 
-  int get rowStride;
-
-  int get bytesPerRow;
-
-  int get pixelStride;
-
-  int get bytesPerPixes;
-
-  int getPixel(int x, int y);
-
-  void setPixel(int x, int y, int value);
-
-  Map<String, dynamic> toJson({bool bytesAsBinary = true, bool bytesAsList = false});
-
-  YuvPlane copy();
-
-  void assignFrom(covariant Object other);
-
-  factory YuvPlane(int height, int rowStride, [int pixelStride, Uint8List? bytes]) = YuvPlaneImpl;
-}
+export 'impl/io/yuv_image.dart' if (dart.library.js_interop) 'impl/web/yuv_web.dart';
 
 abstract interface class YuvImage {
   YuvFileFormat get format;
