@@ -174,9 +174,9 @@ class _CameraScreenState extends State<CameraScreen> {
     assert(controller.value.isStreamingImages);
     nextFrameCompleter = Completer();
     try {
-      var yuv = await nextFrameCompleter!.future;
+      YuvImage yuv = await nextFrameCompleter!.future;
       if (controller.description.lensDirection == CameraLensDirection.front && Platform.isAndroid) {
-        yuv = yuv.flipHorizontally();
+        yuv = yuv.copy().flipHorizontally();
       }
 
       await Future.delayed(Duration(seconds: 1));

@@ -4,24 +4,31 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
+import 'package:yuv_ffi/yuv_ffi.dart';
 
-class YuvPlane {
+class YuvPlaneImpl implements YuvPlane {
+  @override
   Uint8List get bytes => _bytes;
+
   late Uint8List _bytes;
 
   //number of bytes per row
+  @override
   final int rowStride;
 
+  @override
   int get bytesPerRow => rowStride;
 
   //number of bytes per pixel
+  @override
   final int pixelStride;
 
+  @override
   int get bytesPerPixes => pixelStride;
 
   final int _height;
 
-  YuvPlane(this._height, this.rowStride, [this.pixelStride = 1, Uint8List? bytes]) {
+  YuvPlaneImpl(this._height, this.rowStride, [this.pixelStride = 1, Uint8List? bytes]) {
     _bytes = Uint8List(_height * rowStride * pixelStride);
     if (bytes == null) {
       _bytes.fillRange(0, _height * rowStride * pixelStride, 0);
@@ -30,7 +37,7 @@ class YuvPlane {
     }
   }
 
-  YuvPlane.fromJson(Map<String, dynamic> json, {bool bytesAsBinary = true, bool bytesAsList = false})
+  YuvPlaneImpl.fromJson(Map<String, dynamic> json, {bool bytesAsBinary = true, bool bytesAsList = false})
       : _height = json['height'],
         rowStride = json['rowStride'],
         pixelStride = json['pixelStride'],
@@ -40,12 +47,14 @@ class YuvPlane {
                 ? json['bytes']
                 : throw UnsupportedError('bytesAsBinary or bytesAsList should be set');
 
+  @override
   int getPixel(int x, int y) {
     final int index = _indexOf(x, y);
     assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
     return _bytes[index];
   }
 
+  @override
   void setPixel(int x, int y, int value) {
     final int index = _indexOf(x, y);
     assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
@@ -54,6 +63,7 @@ class YuvPlane {
 
   int _indexOf(int x, int y) => (y * rowStride) + (x * pixelStride);
 
+  @override
   Map<String, dynamic> toJson({bool bytesAsBinary = true, bool bytesAsList = false}) {
     assert(bytesAsBinary || bytesAsList, 'bytesAsBinary or bytesAsList should be set');
     return {
@@ -80,9 +90,11 @@ class YuvPlane {
     return (size, ptr);
   }
 
-  YuvPlane copy() => YuvPlane(_height, rowStride, pixelStride, _bytes);
-}
+  @override
+  YuvPlane copy() => YuvPlaneImpl(_height, rowStride, pixelStride, _bytes);
 
-extension YuvPlaneLoaderExt on YuvPlane {
-  void assignFromPtr(Pointer<Uint8> ptr) => _bytes.setAll(0, ptr.asTypedList(_bytes.length));
+  @override
+  void assignFrom(Pointer<Uint8> ptr) {
+    _bytes.setAll(0, ptr.asTypedList(_bytes.length));
+  }
 }

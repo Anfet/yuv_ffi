@@ -1,8 +1,8 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
-import 'package:yuv_ffi/src/yuv/yuv_image.dart';
-import 'package:yuv_ffi/src/yuv_ffi_bingings.dart';
+import 'package:yuv_ffi/src/functions/bindings/yuv_ffi_bingings.dart';
+import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 /// Dart holder for ffi pointer classes
 /// must be disposed to avoid memory leaks

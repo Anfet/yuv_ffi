@@ -2,8 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:yuv_ffi/src/functions/to_bgra8888.dart';
-import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 class YuvImageWidget extends StatefulWidget {
   final YuvImage image;
