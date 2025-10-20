@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
+import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
+import 'package:yuv_ffi/src/loader/data_io.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
@@ -80,8 +83,8 @@ class YuvImageImpl implements YuvImage {
     }
 
     final yplane = YuvPlane(height, width * yPixelStride, yPixelStride);
-    final uvWidth = width ~/ 2;
-    final uvHeight = height ~/ 2;
+    final uvWidth = (width / 2.0).ceil();
+    final uvHeight = (height / 2.0).ceil();
     switch (format) {
       case YuvFileFormat.nv21:
         final uvplane = YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
@@ -113,23 +116,46 @@ class YuvImageImpl implements YuvImage {
       YuvImageImpl(format, width, height, planes: blank ? null : _planes, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
 
   @override
-  String toJson({bool bytesAsBinary = true, bool bytesAsList = false}) {
+  Future save(Sink<List<int>> sink) async {
     var json = {
+      'version': 1,
       'format': format.name,
       'width': width,
       'height': height,
-      'planes': planes.map((p) => p.toJson(bytesAsBinary: bytesAsBinary, bytesAsList: bytesAsList)).toList(),
     };
-    var text = jsonEncode(json);
-    return text;
+
+    var writer = DataWriter(sink);
+    writer.writeString(jsonEncode(json));
+    writer.writeUint8(planes.length);
+    for (final plane in planes) {
+      writer.writeUint32(plane.height);
+      writer.writeUint32(plane.rowStride);
+      writer.writeUint32(plane.pixelStride);
+      writer.writeBytes(plane.bytes);
+    }
+    writer.write();
   }
 
-  factory YuvImageImpl.fromJson(Map<String, dynamic> json, {bool bytesAsBinary = true, bool bytesAsList = false}) {
-    YuvFileFormat format = YuvFileFormat.values.byName(json['format']);
-    final width = json['width'];
-    final height = json['height'];
-    final planes = (json['planes'] as Iterable).map((j) => YuvPlane.fromJson(j, bytesAsList: bytesAsList, bytesAsBinary: bytesAsBinary)).toList();
-    return YuvImageImpl(format, width, height, planes: planes);
+  Future<void> load(Stream<List<int>> stream) async {
+    var reader = DataReader(stream);
+    await reader.done();
+
+    var headerText = reader.readString();
+    var header = jsonDecode(headerText);
+
+    _width = header['width'];
+    _height = header['height'];
+    _format = YuvFileFormat.values.byName(header['format']);
+    var planesCount = reader.readUint8();
+    _planes = <YuvPlane>[];
+    for (var i = 0; i < planesCount; i++) {
+      var planeHeight = reader.readUint32();
+      var rowStride = reader.readUint32();
+      var pixelStride = reader.readUint32();
+      var planeBytes = reader.readBytes();
+      var plane = YuvPlane(planeHeight, rowStride, pixelStride, planeBytes);
+      _planes.add(plane);
+    }
   }
 
   @override

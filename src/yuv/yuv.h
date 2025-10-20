@@ -10,7 +10,11 @@
 #include "utils/h/log.h"
 #include "utils/h/gauss.h"
 
+#ifdef _WIN32
+#define FFI_PLUGIN_EXPORT __declspec(dllexport)
+#else
 #define FFI_PLUGIN_EXPORT
+#endif
 
 typedef struct {
     uint8_t *y;

@@ -21,24 +21,16 @@ class YuvPlane {
 
   final int _height;
 
+  int get height => _height;
+
   YuvPlane(this._height, this.rowStride, [this.pixelStride = 1, Uint8List? bytes]) {
-    _bytes = Uint8List(_height * rowStride * pixelStride);
+    _bytes = Uint8List(_height * rowStride);
     if (bytes == null) {
-      _bytes.fillRange(0, _height * rowStride * pixelStride, 0);
+      _bytes.fillRange(0, _height * rowStride, 0);
     } else {
       _bytes.setAll(0, bytes);
     }
   }
-
-  YuvPlane.fromJson(Map<String, dynamic> json, {bool bytesAsBinary = true, bool bytesAsList = false})
-      : _height = json['height'],
-        rowStride = json['rowStride'],
-        pixelStride = json['pixelStride'],
-        _bytes = bytesAsBinary
-            ? base64Decode(json['bytes'])
-            : bytesAsList
-                ? json['bytes']
-                : throw UnsupportedError('bytesAsBinary or bytesAsList should be set');
 
   int getPixel(int x, int y) {
     final int index = _indexOf(x, y);
@@ -53,17 +45,6 @@ class YuvPlane {
   }
 
   int _indexOf(int x, int y) => (y * rowStride) + (x * pixelStride);
-
-  Map<String, dynamic> toJson({bool bytesAsBinary = true, bool bytesAsList = false}) {
-    assert(bytesAsBinary || bytesAsList, 'bytesAsBinary or bytesAsList should be set');
-    return {
-      'height': _height,
-      'rowStride': rowStride,
-      'pixelStride': pixelStride,
-      if (bytesAsBinary) 'bytes': base64Encode(_bytes),
-      if (bytesAsList) 'bytes': _bytes,
-    };
-  }
 
   YuvPlane copy() => YuvPlane(_height, rowStride, pixelStride, _bytes);
 

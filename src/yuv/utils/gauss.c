@@ -52,8 +52,11 @@ void gaussian_blur_plane_strided(
 
     // --- Горизонтальное размытие ---
     for (int y = 0; y < height; ++y) {
-        uint8_t line_in[width];
-        uint8_t line_out[width];
+        uint8_t* line_in = (uint8_t*)malloc(width);
+        if (!line_in) return;
+        uint8_t* line_out = (uint8_t*)malloc(width);
+        if (!line_out) return;
+
 
         const uint8_t *row_ptr = src + y * row_stride;
 
@@ -66,12 +69,17 @@ void gaussian_blur_plane_strided(
         for (int x = 0; x < width; ++x) {
             tmp[y * width + x] = line_out[x];
         }
+        free(line_in);
+        free(line_out);
     }
 
     // --- Вертикальное размытие ---
     for (int x = 0; x < width; ++x) {
-        uint8_t col_in[height];
-        uint8_t col_out[height];
+        uint8_t* col_in = (uint8_t*)malloc(height);
+        if (!col_in) return;
+        uint8_t* col_out = (uint8_t*)malloc(height);
+        if (!col_out) return;
+
 
         for (int y = 0; y < height; ++y) {
             col_in[y] = tmp[y * width + x];
@@ -82,6 +90,8 @@ void gaussian_blur_plane_strided(
         for (int y = 0; y < height; ++y) {
             dst[y * row_stride + x * pixel_stride] = col_out[y];
         }
+        free(col_in);
+        free(col_out);
     }
 
     free(kernel);

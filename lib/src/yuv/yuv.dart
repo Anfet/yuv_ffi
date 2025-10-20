@@ -39,13 +39,14 @@ abstract interface class YuvImage {
 
   factory YuvImage(YuvFileFormat format, int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl;
 
-  factory YuvImage.fromJson(Map<String, dynamic> json, {bool bytesAsBinary, bool bytesAsList}) = YuvImageImpl.fromJson;
 
   Uint8List getBytes();
 
   YuvImage copy({bool blank = false});
 
-  String toJson({bool bytesAsBinary = true, bool bytesAsList = false});
+  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
+
+  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
 
   YuvImage blackwhite() => throw UnimplementedError();
 

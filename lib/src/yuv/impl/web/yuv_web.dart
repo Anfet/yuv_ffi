@@ -41,13 +41,13 @@ class YuvImageImpl implements YuvImage {
 
   YuvImageImpl(YuvFileFormat format, int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes});
 
-  factory YuvImageImpl.fromJson(Map<String, dynamic> json, {bool bytesAsBinary = true, bool bytesAsList = false}) => throw UnimplementedError();
-
   Uint8List getBytes() => throw UnimplementedError();
 
   YuvImage copy({bool blank = false}) => throw UnimplementedError();
 
-  String toJson({bool bytesAsBinary = true, bool bytesAsList = false}) => throw UnimplementedError();
+  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
+
+  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
 
   @override
   String toString();

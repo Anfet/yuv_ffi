@@ -45,9 +45,9 @@ abstract class YuvImageImpl implements YuvImage {
 
   YuvImage copy({bool blank = false});
 
-  String toJson({bool bytesAsBinary = true, bool bytesAsList = false});
+  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
 
-  factory YuvImageImpl.fromJson(Map<String, dynamic> json, {bool bytesAsBinary = true, bool bytesAsList = false}) => throw UnimplementedError();
+  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
 
   YuvImage blackwhite() => throw UnimplementedError();
 

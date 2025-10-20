@@ -27,7 +27,7 @@ class FaceRectPainter extends CustomPainter {
       imageSize: image.size,
       widgetSize: size,
       rotation: InputImageRotation.rotation0deg,
-      mirrorHorizontally: true,
+      mirrorHorizontally: false,
     );
 
     canvas.drawRect(rect, paint);
