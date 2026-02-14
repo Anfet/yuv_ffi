@@ -1,5 +1,11 @@
 # AGENTS Guide
 
+## Web Status Policy
+
+- Treat Web support as **stub-only** at the moment.
+- `lib/src/yuv/impl/yuv_stub.dart` is a placeholder/no-op backend, not a full processing implementation.
+- Do not present current Web behavior as feature-complete YUV processing.
+
 ## Generated Bindings Policy
 
 - Do not edit generated FFI bindings manually.

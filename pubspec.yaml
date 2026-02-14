@@ -1,8 +1,9 @@
 name: yuv_ffi
-description: "Yuv image manipulation library"
-version: 0.0.1+1
-publish_to: none
-homepage:
+description: "High-performance YUV/BGRA image processing for Flutter via native C/FFI."
+version: 0.1.1
+homepage: https://github.com/Anfet/yuv_ffi
+repository: https://github.com/Anfet/yuv_ffi
+issue_tracker: https://github.com/Anfet/yuv_ffi/issues
 
 environment:
   sdk: ^3.5.0
@@ -32,5 +33,5 @@ flutter:
         ffiPlugin: true
       linux:
         ffiPlugin: true
-      macox:
+      macos:
         ffiPlugin: true

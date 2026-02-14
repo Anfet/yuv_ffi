@@ -11,14 +11,19 @@ class YuvCameraWidget extends StatefulWidget {
   final YuvImage Function(YuvImage image)? transform;
   final ValueChanged<int>? fpsChanged;
 
-  const YuvCameraWidget({super.key, required this.cameraController, this.transform, this.fpsChanged});
+  const YuvCameraWidget(
+      {super.key,
+      required this.cameraController,
+      this.transform,
+      this.fpsChanged});
 
   @override
   State<YuvCameraWidget> createState() => _YuvCameraWidgetState();
 }
 
 class _YuvCameraWidgetState extends State<YuvCameraWidget> {
-  final StreamController<YuvImage?> streamController = StreamController.broadcast();
+  final StreamController<YuvImage?> streamController =
+      StreamController.broadcast();
   bool isProcessing = false;
   int fps = 0;
   Timer? timer;
@@ -31,17 +36,16 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
 
   @override
   void didUpdateWidget(covariant YuvCameraWidget oldWidget) {
-    if (oldWidget.cameraController != widget.cameraController &&
-        oldWidget.cameraController.value.isInitialized &&
-        oldWidget.cameraController.value.isStreamingImages) {
-      oldWidget.cameraController.stopImageStream().then((value) => resubscribe());
+    if (oldWidget.cameraController != widget.cameraController) {
+      unawaited(_resubscribeOnControllerChange(oldWidget.cameraController));
     }
     super.didUpdateWidget(oldWidget);
   }
 
   @override
   void dispose() {
-    if (widget.cameraController.value.isInitialized && widget.cameraController.value.isStreamingImages) {
+    if (widget.cameraController.value.isInitialized &&
+        widget.cameraController.value.isStreamingImages) {
       widget.cameraController.stopImageStream();
     }
 
@@ -68,11 +72,25 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
   }
 
   Future resubscribe() async {
+    timer?.cancel();
     await widget.cameraController.startImageStream(onNewImageAvailable);
     timer = Timer.periodic(Duration(seconds: 1), (timer) {
       widget.fpsChanged?.call(fps);
       fps = 0;
     });
+  }
+
+  Future<void> _resubscribeOnControllerChange(
+      CameraController oldController) async {
+    timer?.cancel();
+    if (oldController.value.isInitialized &&
+        oldController.value.isStreamingImages) {
+      await oldController.stopImageStream();
+    }
+    if (!mounted || !widget.cameraController.value.isInitialized) {
+      return;
+    }
+    await resubscribe();
   }
 
   Future onNewImageAvailable(CameraImage image) async {
@@ -84,7 +102,9 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     fps++;
     try {
       //  ? ;
-      YuvImageRotation rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
+      YuvImageRotation rotation = YuvImageRotation.values.firstWhere((e) =>
+          e.degrees ==
+          widget.cameraController.description.sensorOrientation.abs());
       var yuv = image.toYuvImage();
       if (Platform.isAndroid) {
         yuv = yuv.rotate(rotation.toZero());
@@ -93,7 +113,7 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
       yuv = widget.transform?.call(yuv) ?? yuv;
       streamController.add(yuv);
     } catch (ex) {
-      print(ex);
+      debugPrint('YuvCameraWidget stream error: $ex');
     } finally {
       isProcessing = false;
     }

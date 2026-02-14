@@ -20,7 +20,14 @@ When integrating with external camera/codec pipelines, swap U/V if needed.
 
 ## Installation
 
-`pub.dev` publishing is disabled (`publish_to: none`), so use Git dependency:
+From pub.dev:
+
+```yaml
+dependencies:
+  yuv_ffi: ^0.1.0
+```
+
+Or from Git:
 
 ```yaml
 dependencies:
@@ -66,7 +73,12 @@ Main constructors:
 - macOS: native FFI
 - Windows: native FFI
 - Linux: native FFI
-- Web: package builds, but processing implementation is currently a stub (`UnimplementedError` for operations)
+- Web: package builds, but `YuvImage` processing is currently a **stub/no-op** implementation (placeholder only)
+
+## TODO
+
+- Implement a real web backend for `YuvImage` operations.
+- Replace current web stub behavior (no-op placeholders, no native-quality processing).
 
 ## Build notes
 

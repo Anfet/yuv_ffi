@@ -1,5 +1,3 @@
-library yuv_ffi;
-
 export 'src/yuv/yuv.dart';
 export 'src/yuv/shared/yuv_plane.dart';
 export 'src/yuv/shared/yuv_image_rotation.dart';

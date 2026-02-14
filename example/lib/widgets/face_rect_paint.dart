@@ -34,8 +34,12 @@ class FaceRectPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant FaceRectPainter old) {
-    return true; //old.rect != rect || old.color != color || old.strokeWidth != strokeWidth;
+  bool shouldRepaint(covariant FaceRectPainter oldDelegate) {
+    return oldDelegate.rect != rect ||
+        oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.image.width != image.width ||
+        oldDelegate.image.height != image.height;
   }
 
   Rect mapImageRectToWidget({
@@ -46,7 +50,8 @@ class FaceRectPainter extends CustomPainter {
     required bool mirrorHorizontally, // фронталка: true
   }) {
     // 1) Учтём поворот 90/270: меняются оси
-    final swapped = rotation == InputImageRotation.rotation90deg || rotation == InputImageRotation.rotation270deg;
+    final swapped = rotation == InputImageRotation.rotation90deg ||
+        rotation == InputImageRotation.rotation270deg;
 
     double imgW = swapped ? imageSize.height : imageSize.width;
     double imgH = swapped ? imageSize.width : imageSize.height;
@@ -63,7 +68,9 @@ class FaceRectPainter extends CustomPainter {
     }
 
     // 2) Масштаб «как у CameraPreview (cover)» + центрирование
-    final scale = (widgetSize.width / imgW > widgetSize.height / imgH) ? widgetSize.width / imgW : widgetSize.height / imgH;
+    final scale = (widgetSize.width / imgW > widgetSize.height / imgH)
+        ? widgetSize.width / imgW
+        : widgetSize.height / imgH;
 
     final dx = (widgetSize.width - imgW * scale) / 2.0;
     final dy = (widgetSize.height - imgH * scale) / 2.0;

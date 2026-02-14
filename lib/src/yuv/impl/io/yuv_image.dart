@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:ffi/ffi.dart';
@@ -153,6 +152,7 @@ class YuvImageImpl implements YuvImage {
     writer.write();
   }
 
+  @override
   Future<void> load(Stream<List<int>> stream) async {
     var reader = DataReader(stream);
     await reader.done();
@@ -691,5 +691,5 @@ class YuvImageImpl implements YuvImage {
 
 extension on YuvPlane {
   void assignFromPtr(Pointer<Uint8> ptr) =>
-      assignFrom(ptr.asTypedList(this.bytes.length));
+      assignFrom(ptr.asTypedList(bytes.length));
 }
