@@ -175,6 +175,33 @@ void main() {
     );
   });
 
+  test('toBgra8888 repacks padded BGRA rowStride to tight buffer', () {
+    const width = 2;
+    const height = 2;
+    const rowStride = 12; // width*4 + 4 padding bytes
+    final padded = Uint8List.fromList([
+      // Row 0, two BGRA pixels + padding
+      1, 2, 3, 255, 4, 5, 6, 255, 99, 99, 99, 99,
+      // Row 1, two BGRA pixels + padding
+      7, 8, 9, 255, 10, 11, 12, 255, 88, 88, 88, 88,
+    ]);
+    final expected = Uint8List.fromList([
+      1, 2, 3, 255, 4, 5, 6, 255, // row 0 (tight)
+      7, 8, 9, 255, 10, 11, 12, 255, // row 1 (tight)
+    ]);
+
+    final image = YuvImage(
+      YuvFileFormat.bgra8888,
+      width,
+      height,
+      yPixelStride: 4,
+      planes: [YuvPlane(height, rowStride, 4, padded)],
+    );
+
+    final out = image.toBgra8888();
+    expect(out, orderedEquals(expected));
+  });
+
   test(
     'BGRA fromRgba8888 matches exact channel reorder',
     () {

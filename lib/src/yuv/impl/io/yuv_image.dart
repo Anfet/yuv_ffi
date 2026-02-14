@@ -555,7 +555,19 @@ class YuvImageImpl implements YuvImage {
           ffiBingings.yuv420_to_bgra8888(def.pointer, bgraPlane);
           return Uint8List.fromList(bgraPlane.asTypedList(bgraPlaneLength));
         case YuvFileFormat.bgra8888:
-          return yPlane.bytes;
+          final expectedRowStride = width * 4;
+          if (yPlane.rowStride == expectedRowStride) {
+            return Uint8List.fromList(yPlane.bytes);
+          }
+
+          // Repack BGRA rows when source plane has padding bytes per row.
+          final packed = Uint8List(bgraPlaneLength);
+          for (int y = 0; y < height; y++) {
+            final srcStart = y * yPlane.rowStride;
+            final dstStart = y * expectedRowStride;
+            packed.setRange(dstStart, dstStart + expectedRowStride, yPlane.bytes, srcStart);
+          }
+          return packed;
       }
     } finally {
       calloc.free(bgraPlane);

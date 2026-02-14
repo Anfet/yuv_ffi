@@ -58,63 +58,35 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
 
   @override
   ImageStreamCompleter loadImage(YuvImageProvider key, ImageDecoderCallback decode) {
-    final streamController = StreamController<ImageChunkEvent>();
-    final codecCompleter = Completer<ui.Codec>();
-
-    _loadAsync(key, decode, streamController, codecCompleter);
-
-    return MultiFrameImageStreamCompleter(
-      codec: codecCompleter.future,
-      scale: 1.0,
-      chunkEvents: streamController.stream,
-    );
+    return OneFrameImageStreamCompleter(_loadImageFrame(key));
   }
 
-  Future<void> _loadAsync(
-    YuvImageProvider key,
-    ImageDecoderCallback decode,
-    StreamController<ImageChunkEvent> chunkStream,
-    Completer<ui.Codec> codecCompleter,
-  ) async {
+  Future<ImageInfo> _loadImageFrame(YuvImageProvider key) async {
     const bytesPerPixel = 4;
     final expectedTotalBytes = image.width * image.height * bytesPerPixel;
-    ui.ImageDescriptor? descriptor;
     try {
-      chunkStream.add(
-        ImageChunkEvent(
-          cumulativeBytesLoaded: 0,
-          expectedTotalBytes: expectedTotalBytes,
-        ),
-      );
       // Allow one frame so placeholder can render before CPU-heavy conversion.
       await Future<void>.delayed(Duration.zero);
       final bytes = image.toBgra8888();
-      descriptor = ui.ImageDescriptor.raw(
-        await ui.ImmutableBuffer.fromUint8List(bytes),
-        width: image.width,
-        height: image.height,
-        pixelFormat: ui.PixelFormat.bgra8888,
-      );
-      final codec = await descriptor.instantiateCodec();
-      chunkStream.add(
-        ImageChunkEvent(
-          cumulativeBytesLoaded: bytes.length,
-          expectedTotalBytes: bytes.length,
-        ),
-      );
-      if (!codecCompleter.isCompleted) {
-        codecCompleter.complete(codec);
+      if (bytes.length != expectedTotalBytes) {
+        throw StateError(
+          'Invalid BGRA buffer size: got ${bytes.length}, expected $expectedTotalBytes '
+          'for ${image.width}x${image.height}',
+        );
       }
+      final imageCompleter = Completer<ui.Image>();
+      ui.decodeImageFromPixels(
+        bytes,
+        image.width,
+        image.height,
+        ui.PixelFormat.bgra8888,
+        imageCompleter.complete,
+      );
+      final decoded = await imageCompleter.future;
+      return ImageInfo(image: decoded, scale: 1.0);
     } catch (ex, stack) {
       PaintingBinding.instance.imageCache.evict(key);
-      if (!codecCompleter.isCompleted) {
-        codecCompleter.completeError(ex, stack);
-      }
-    } finally {
-      descriptor?.dispose();
-      if (!chunkStream.isClosed) {
-        await chunkStream.close();
-      }
+      Error.throwWithStackTrace(ex, stack);
     }
   }
 }
