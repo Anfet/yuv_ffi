@@ -27,15 +27,19 @@ class FaceRectPainter extends CustomPainter {
       imageSize: image.size,
       widgetSize: size,
       rotation: InputImageRotation.rotation0deg,
-      mirrorHorizontally: true,
+      mirrorHorizontally: false,
     );
 
     canvas.drawRect(rect, paint);
   }
 
   @override
-  bool shouldRepaint(covariant FaceRectPainter old) {
-    return true; //old.rect != rect || old.color != color || old.strokeWidth != strokeWidth;
+  bool shouldRepaint(covariant FaceRectPainter oldDelegate) {
+    return oldDelegate.rect != rect ||
+        oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.image.width != image.width ||
+        oldDelegate.image.height != image.height;
   }
 
   Rect mapImageRectToWidget({

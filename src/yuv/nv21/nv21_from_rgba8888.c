@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 /**
  * Конвертирует RGBA8888 -> NV21.

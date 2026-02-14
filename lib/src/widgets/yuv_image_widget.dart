@@ -1,77 +1,92 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:yuv_ffi/src/functions/to_bgra8888.dart';
-import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi/src/yuv/yuv.dart';
 
-class YuvImageWidget extends StatefulWidget {
+/// Flutter widget that renders a [YuvImage].
+class YuvImageWidget extends StatelessWidget {
+  /// Source image.
   final YuvImage image;
-  final WidgetBuilder? onPrepare;
+
+  /// Image fit behavior.
   final BoxFit boxFit;
 
-  const YuvImageWidget({super.key, required this.image, this.onPrepare, this.boxFit = BoxFit.none});
+  /// Optional loading builder delegated to [Image].
+  final ImageLoadingBuilder? loadingBuilder;
 
-  @override
-  State<YuvImageWidget> createState() => _YuvImageWidgetState();
-}
+  /// Optional error builder delegated to [Image].
+  final ImageErrorWidgetBuilder? errorBuilder;
 
-class _YuvImageWidgetState extends State<YuvImageWidget> {
-  late YuvImageProvider _provider;
+  /// Optional frame builder delegated to [Image].
+  final ImageFrameBuilder? frameBuilder;
 
-  @override
-  void initState() {
-    resetAndUpdate();
-    super.initState();
-  }
-
-  void resetAndUpdate() {
-    _provider = YuvImageProvider(width: widget.image.width, height: widget.image.height);
-    _provider.update(widget.image.toBgra8888());
-  }
-
-  @override
-  void didUpdateWidget(covariant YuvImageWidget oldWidget) {
-    resetAndUpdate();
-    super.didUpdateWidget(oldWidget);
-  }
+  const YuvImageWidget({
+    super.key,
+    required this.image,
+    this.loadingBuilder,
+    this.errorBuilder,
+    this.frameBuilder,
+    this.boxFit = BoxFit.none,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Image(
-      image: _provider,
+      image: YuvImageProvider(image),
       gaplessPlayback: true,
-      width: widget.image.width.toDouble(),
-      height: widget.image.height.toDouble(),
-      fit: widget.boxFit,
+      width: image.width.toDouble(),
+      height: image.height.toDouble(),
+      fit: boxFit,
+      loadingBuilder: loadingBuilder,
+      errorBuilder: errorBuilder,
+      frameBuilder: frameBuilder,
     );
   }
 }
 
 class YuvImageProvider extends ImageProvider<YuvImageProvider> {
-  final int width;
-  final int height;
-  final ui.PixelFormat pixelFormat;
+  /// Source image.
+  final YuvImage image;
 
-  final _completer = YuvImageStreamCompleter();
-
-  YuvImageProvider({required this.width, required this.height, this.pixelFormat = ui.PixelFormat.bgra8888});
-
-  void update(Uint8List bytes) => _completer.update(bytes, width, height, pixelFormat);
+  /// Creates an image provider for [image].
+  YuvImageProvider(this.image);
 
   @override
   Future<YuvImageProvider> obtainKey(ImageConfiguration configuration) => SynchronousFuture(this);
 
   @override
-  ImageStreamCompleter loadImage(YuvImageProvider key, ImageDecoderCallback decode) => _completer;
-}
+  ImageStreamCompleter loadImage(YuvImageProvider key, ImageDecoderCallback decode) {
+    return OneFrameImageStreamCompleter(_loadImageFrame(key));
+  }
 
-class YuvImageStreamCompleter extends ImageStreamCompleter {
-  void update(Uint8List bytes, int width, int height, ui.PixelFormat format) async {
-    final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
-    final descriptor = ui.ImageDescriptor.raw(buffer, width: width, height: height, pixelFormat: format);
-    final codec = await descriptor.instantiateCodec();
-    final frame = await codec.getNextFrame();
-    setImage(ImageInfo(image: frame.image));
+  Future<ImageInfo> _loadImageFrame(YuvImageProvider key) async {
+    const bytesPerPixel = 4;
+    final expectedTotalBytes = image.width * image.height * bytesPerPixel;
+    try {
+      // Allow one frame so placeholder can render before CPU-heavy conversion.
+      await Future<void>.delayed(Duration.zero);
+      final bytes = image.toBgra8888();
+      if (bytes.length != expectedTotalBytes) {
+        throw StateError(
+          'Invalid BGRA buffer size: got ${bytes.length}, expected $expectedTotalBytes '
+          'for ${image.width}x${image.height}',
+        );
+      }
+      final imageCompleter = Completer<ui.Image>();
+      ui.decodeImageFromPixels(
+        bytes,
+        image.width,
+        image.height,
+        ui.PixelFormat.bgra8888,
+        imageCompleter.complete,
+      );
+      final decoded = await imageCompleter.future;
+      return ImageInfo(image: decoded, scale: 1.0);
+    } catch (ex, stack) {
+      PaintingBinding.instance.imageCache.evict(key);
+      Error.throwWithStackTrace(ex, stack);
+    }
   }
 }

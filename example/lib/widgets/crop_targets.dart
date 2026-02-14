@@ -28,7 +28,7 @@ class _CropRotator implements CropTarget {
 
   @override
   Rect place(Size size) {
-    ImageRotation rotation = ImageRotation.fromDegrees(this.degrees);
+    ImageRotation rotation = ImageRotation.fromDegrees(degrees);
     if (rotation == ImageRotation.rotation0) {
       return source.place(size);
     }

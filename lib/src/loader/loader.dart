@@ -1,7 +1,7 @@
 import 'dart:ffi' as ffi;
 import 'dart:io' show Platform;
 
-import 'package:yuv_ffi/src/yuv_ffi_bingings.dart';
+import 'package:yuv_ffi/src/functions/bindings/yuv_ffi_bingings.dart';
 
 ffi.DynamicLibrary? _library;
 

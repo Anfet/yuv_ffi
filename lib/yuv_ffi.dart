@@ -1,5 +1,5 @@
-export 'src/yuv/yuv_image.dart';
-export 'src/yuv/yuv_planes.dart' show YuvPlane;
-export 'src/yuv/yuv_image_rotation.dart';
-export 'src/yuv_functions.dart';
+export 'src/yuv/yuv.dart';
+export 'src/yuv/shared/yuv_plane.dart';
+export 'src/yuv/shared/yuv_image_rotation.dart';
+export 'src/yuv/shared/yuv_file_format.dart';
 export 'src/widgets/yuv_image_widget.dart';

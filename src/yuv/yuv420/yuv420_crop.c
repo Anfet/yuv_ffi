@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void yuv420_crop_rect(
         const YUVDef *src,

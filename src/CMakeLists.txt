@@ -27,15 +27,21 @@ set_target_properties(yuv_ffi PROPERTIES
 
 target_compile_definitions(yuv_ffi PUBLIC DART_SHARED_LIB)
 
-# Связка с liblog (Android logcat)
-target_link_libraries(
-        yuv_ffi
-        log
-)
+# --- Platform-specific linking ---
 
+# Android: link with liblog for __android_log_print
 if (ANDROID)
-    # Support Android 15 16k page size
+    target_link_libraries(yuv_ffi log)
+    # Android 15: 16k page size support
     target_link_options(yuv_ffi PRIVATE "-Wl,-z,max-page-size=16384")
+
+    # Windows: link with basic system libraries (optional)
+elseif (WIN32)
+    target_link_libraries(yuv_ffi PRIVATE)
+
+elseif (APPLE)
+    find_library(CORE_FOUNDATION CoreFoundation)
+    if (CORE_FOUNDATION)
+        target_link_libraries(yuv_ffi PRIVATE ${CORE_FOUNDATION})
+    endif()
 endif()
-
-

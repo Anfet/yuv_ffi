@@ -1,7 +1,7 @@
 #ifndef MEAN_I420_H
 #define MEAN_I420_H
 
-#include "..//..//yuv.h"
+#include "../../yuv.h"
 
 FFI_PLUGIN_EXPORT void yuv420_mean_blur(
         const YUVDef *src,

@@ -1,5 +1,4 @@
 #include "../yuv.h"
-#include "..//gauss.h"
 
 // --- Гауссовый блюр NV21 ---
 // src->y = Y plane
@@ -9,7 +8,7 @@ FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
         int radius,
         float sigma
 ) {
-    const int width  = src->width;
+    const int width = src->width;
     const int height = src->height;
 
     uint8_t *y_src = src->y;
@@ -30,7 +29,7 @@ FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
     );
 
     // --- UV plane (VU interleaved) ---
-    const int uv_width  = width / 2;
+    const int uv_width = width / 2;
     const int uv_height = height / 2;
 
     uint8_t *u_plane = (uint8_t *) malloc(uv_width * uv_height);

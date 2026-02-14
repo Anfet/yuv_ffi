@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void bgra8888_blackwhite(const YUVDef *src) {
     const int BINARY_THRESHOLD = 128;

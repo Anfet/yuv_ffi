@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 // I420 (Y, U, V) -> NV21 (Y + interleaved VU).
 // dst->y  : плоскость Y (stride = dst->yRowStride, обычно W)

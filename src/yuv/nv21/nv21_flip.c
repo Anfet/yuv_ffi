@@ -1,11 +1,13 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void nv21_flip_horizontally(
         const YUVDef *src
 ) {
-    uint8_t yTemp[src->yPixelStride];
-    uint8_t uTemp[src->uvPixelStride];
-    uint8_t vTemp[src->uvPixelStride];
+
+    uint8_t* yTemp = (uint8_t*)malloc(src->yPixelStride);
+    if (!yTemp) return;
+    uint8_t* uTemp = (uint8_t*)malloc(src->uvPixelStride);
+    if (!uTemp) return;
     const int flipWidth = src->width / 2;
     for (int y = 0; y < src->height; ++y) {
         for (int x = 0; x < flipWidth; ++x) {
@@ -37,6 +39,8 @@ FFI_PLUGIN_EXPORT void nv21_flip_horizontally(
             }
         }
     }
+    free(yTemp);
+    free(uTemp);
 }
 
 FFI_PLUGIN_EXPORT void nv21_flip_vertically(

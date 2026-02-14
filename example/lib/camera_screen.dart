@@ -6,10 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'package:yuv_ffi_example/widgets/shades.dart';
 import 'package:yuv_ffi_example/widgets/yuv_camera_widget.dart';
-
-import 'widgets/crop_targets.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -95,7 +92,6 @@ class _CameraScreenState extends State<CameraScreen> {
                                   ),
                                 ),
                               ),
-                              Positioned.fill(child: ShadeWidget.oval(target: CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85))),
                               Align(
                                 alignment: Alignment.bottomRight,
                                 child: Text('fps: $fps', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
@@ -132,7 +128,7 @@ class _CameraScreenState extends State<CameraScreen> {
                   bottom: 64,
                   child: Center(
                     child: IconButton(
-                      onPressed: () => takePicture(context),
+                      onPressed: takePicture,
                       icon: Icon(Icons.camera, color: Colors.white, size: 64),
                     ),
                   ),
@@ -170,16 +166,19 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  Future takePicture(BuildContext context) async {
+  Future<void> takePicture() async {
     assert(controller.value.isStreamingImages);
     nextFrameCompleter = Completer();
     try {
-      var yuv = await nextFrameCompleter!.future;
+      YuvImage yuv = await nextFrameCompleter!.future;
       if (controller.description.lensDirection == CameraLensDirection.front && Platform.isAndroid) {
-        yuv = flipHorizontally(yuv);
+        yuv = yuv.copy().flipHorizontally();
       }
 
       await Future.delayed(Duration(seconds: 1));
+      if (!mounted) {
+        return;
+      }
       Navigator.of(context).pop(yuv);
     } finally {
       nextFrameCompleter = null;

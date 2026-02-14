@@ -1,4 +1,4 @@
-#include "..//yuv.h"
+#include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void bgra8888_from_rgba8888(const uint8_t *rgba, const YUVDef *dst) {
     int width = dst->width;

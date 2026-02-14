@@ -2,3 +2,11 @@ include: package:flutter_lints/flutter.yaml
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+
+analyzer:
+  exclude:
+    - lib/src/functions/bindings/yuv_ffi_bingings.dart
+
+formatter:
+  page_width: 150
+  line_length: 150
