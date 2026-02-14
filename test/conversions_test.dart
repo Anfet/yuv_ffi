@@ -297,8 +297,7 @@ void main() {
 
       final image = YuvImage.bgra(_w, _h);
       image.fromRgba8888(rgba);
-      image.crop(ui.Rect.fromLTWH(
-          left.toDouble(), top.toDouble(), cw.toDouble(), ch.toDouble()));
+      image.crop(ui.Rect.fromLTWH(left.toDouble(), top.toDouble(), cw.toDouble(), ch.toDouble()));
 
       final expected = _cropBgra(expectedBgra, _w, left, top, cw, ch);
       expect(image.width, cw);
@@ -403,14 +402,10 @@ void main() {
       final after = image.toBgra8888();
 
       for (int i = 0; i < after.length; i += 4) {
-        expect(after[i], 255 - before[i],
-            reason: 'B mismatch at pixel ${i ~/ 4}');
-        expect(after[i + 1], 255 - before[i + 1],
-            reason: 'G mismatch at pixel ${i ~/ 4}');
-        expect(after[i + 2], 255 - before[i + 2],
-            reason: 'R mismatch at pixel ${i ~/ 4}');
-        expect(after[i + 3], before[i + 3],
-            reason: 'A mismatch at pixel ${i ~/ 4}');
+        expect(after[i], 255 - before[i], reason: 'B mismatch at pixel ${i ~/ 4}');
+        expect(after[i + 1], 255 - before[i + 1], reason: 'G mismatch at pixel ${i ~/ 4}');
+        expect(after[i + 2], 255 - before[i + 2], reason: 'R mismatch at pixel ${i ~/ 4}');
+        expect(after[i + 3], before[i + 3], reason: 'A mismatch at pixel ${i ~/ 4}');
       }
     },
     skip: !_nativeAvailable,

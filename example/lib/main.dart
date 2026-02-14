@@ -55,18 +55,9 @@ class _MyAppState extends State<MyApp> {
               forceMaterialTransparency: true,
               title: const Text('YUV FFI'),
               actions: [
-                IconButton(
-                    onPressed: isSaving ? null : () => takePhoto(context),
-                    icon: Icon(Icons.camera),
-                    tooltip: 'Take photo'),
-                IconButton(
-                    onPressed: isSaving ? null : () => loadExisting(),
-                    icon: Icon(Icons.file_upload_outlined),
-                    tooltip: 'Load existing'),
-                IconButton(
-                    onPressed: isSaving ? null : () => loadImage(),
-                    icon: Icon(Icons.drive_folder_upload),
-                    tooltip: 'Load image'),
+                IconButton(onPressed: isSaving ? null : () => takePhoto(context), icon: Icon(Icons.camera), tooltip: 'Take photo'),
+                IconButton(onPressed: isSaving ? null : () => loadExisting(), icon: Icon(Icons.file_upload_outlined), tooltip: 'Load existing'),
+                IconButton(onPressed: isSaving ? null : () => loadImage(), icon: Icon(Icons.drive_folder_upload), tooltip: 'Load image'),
               ],
             ),
             body: Stack(
@@ -79,20 +70,15 @@ class _MyAppState extends State<MyApp> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Expanded(
-                        child:
-                            _ImageWidget(image: image.orNull, faceBox: faceBox),
+                        child: _ImageWidget(image: image.orNull, faceBox: faceBox),
                       ),
                       Container(
                         color: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12.0, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
                         child: Wrap(
                           spacing: 12,
                           children: [
-                            IconButton(
-                                onPressed: () => rotateClockWise(),
-                                icon: Icon(Icons.rotate_right, size: 32),
-                                tooltip: 'Rotate Clockwise'),
+                            IconButton(onPressed: () => rotateClockWise(), icon: Icon(Icons.rotate_right, size: 32), tooltip: 'Rotate Clockwise'),
                             IconButton(
                               onPressed: () => rotateCouterClockwise(),
                               icon: Icon(Icons.rotate_left, size: 32),
@@ -108,56 +94,21 @@ class _MyAppState extends State<MyApp> {
                               icon: Icon(MdiIcons.flipHorizontal, size: 32),
                               tooltip: 'Flip horizontally',
                             ),
-                            IconButton(
-                                onPressed: () => cropImage(),
-                                icon: Icon(Icons.crop, size: 32),
-                                tooltip: 'crop image'),
-                            IconButton(
-                                onPressed: () => grayscaleImage(),
-                                icon:
-                                    Icon(CupertinoIcons.color_filter, size: 32),
-                                tooltip: 'Grayscale'),
+                            IconButton(onPressed: () => cropImage(), icon: Icon(Icons.crop, size: 32), tooltip: 'crop image'),
+                            IconButton(onPressed: () => grayscaleImage(), icon: Icon(CupertinoIcons.color_filter, size: 32), tooltip: 'Grayscale'),
                             IconButton(
                               onPressed: () => blackwhiteImage(),
-                              icon: Icon(MdiIcons.imageFilterBlackWhite,
-                                  size: 32),
+                              icon: Icon(MdiIcons.imageFilterBlackWhite, size: 32),
                               tooltip: 'Black&White',
                             ),
-                            IconButton(
-                                onPressed: () => invertImage(),
-                                icon: Icon(MdiIcons.invertColors, size: 32),
-                                tooltip: 'Negate'),
-                            IconButton(
-                                onPressed: () => gaussianBlurImage(),
-                                icon: Icon(MdiIcons.blur, size: 32),
-                                tooltip: 'Gaussian blur'),
-                            IconButton(
-                                onPressed: () => meanBlurImage(),
-                                icon: Icon(MdiIcons.blurLinear, size: 32),
-                                tooltip: 'Mean blur'),
-                            IconButton(
-                                onPressed: () => boxBlurImage(),
-                                icon: Icon(MdiIcons.box, size: 32),
-                                tooltip: 'Box blur'),
-                            IconButton(
-                                onPressed: () => doFaceDetection(),
-                                icon: Icon(MdiIcons.faceManOutline, size: 32),
-                                tooltip: 'Face detection'),
-                            IconButton(
-                                onPressed: () => toI420(),
-                                icon: Text('To i420',
-                                    style: TextStyle(fontSize: 12)),
-                                tooltip: 'To i420'),
-                            IconButton(
-                                onPressed: () => toNV21(),
-                                icon: Text('To Nv21',
-                                    style: TextStyle(fontSize: 12)),
-                                tooltip: 'To NV21'),
-                            IconButton(
-                                onPressed: () => toBGRA(),
-                                icon: Text('To BGRA',
-                                    style: TextStyle(fontSize: 12)),
-                                tooltip: 'To BGRA8888'),
+                            IconButton(onPressed: () => invertImage(), icon: Icon(MdiIcons.invertColors, size: 32), tooltip: 'Negate'),
+                            IconButton(onPressed: () => gaussianBlurImage(), icon: Icon(MdiIcons.blur, size: 32), tooltip: 'Gaussian blur'),
+                            IconButton(onPressed: () => meanBlurImage(), icon: Icon(MdiIcons.blurLinear, size: 32), tooltip: 'Mean blur'),
+                            IconButton(onPressed: () => boxBlurImage(), icon: Icon(MdiIcons.box, size: 32), tooltip: 'Box blur'),
+                            IconButton(onPressed: () => doFaceDetection(), icon: Icon(MdiIcons.faceManOutline, size: 32), tooltip: 'Face detection'),
+                            IconButton(onPressed: () => toI420(), icon: Text('To i420', style: TextStyle(fontSize: 12)), tooltip: 'To i420'),
+                            IconButton(onPressed: () => toNV21(), icon: Text('To Nv21', style: TextStyle(fontSize: 12)), tooltip: 'To NV21'),
+                            IconButton(onPressed: () => toBGRA(), icon: Text('To BGRA', style: TextStyle(fontSize: 12)), tooltip: 'To BGRA8888'),
                           ],
                         ),
                       ),
@@ -168,21 +119,13 @@ class _MyAppState extends State<MyApp> {
                   Positioned(
                     right: 8,
                     top: 8,
-                    child: Text('$lastOpTiming msec',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelSmall
-                            ?.copyWith(color: Colors.white)),
+                    child: Text('$lastOpTiming msec', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
                   ),
                 if (image.isNotEmpty)
                   Positioned(
                     left: 8,
                     top: 8,
-                    child: Text('${image.value}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelSmall
-                            ?.copyWith(color: Colors.white)),
+                    child: Text('${image.value}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
                   ),
                 if (isSaving)
                   Positioned(
@@ -278,28 +221,23 @@ class _MyAppState extends State<MyApp> {
   }
 
   void rotateClockWise() {
-    logTimed(() => requireImage.rotate(YuvImageRotation.rotation90),
-        name: '$image rotateClockWise');
+    logTimed(() => requireImage.rotate(YuvImageRotation.rotation90), name: '$image rotateClockWise');
   }
 
   void rotateCouterClockwise() {
-    logTimed(() => requireImage.rotate(YuvImageRotation.rotation270),
-        name: '$image rotateCouterClockwise');
+    logTimed(() => requireImage.rotate(YuvImageRotation.rotation270), name: '$image rotateCouterClockwise');
   }
 
   Future flipImageVertically() async {
-    logTimed(() async => requireImage.flipVertically(),
-        name: '$image flipVertically');
+    logTimed(() async => requireImage.flipVertically(), name: '$image flipVertically');
   }
 
   void flitImageHorizontally() {
-    logTimed(() => requireImage.flipHorizontally(),
-        name: '$image flitHorizontally');
+    logTimed(() => requireImage.flipHorizontally(), name: '$image flitHorizontally');
   }
 
   void cropImage() {
-    var cropTarget =
-        CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85);
+    var cropTarget = CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85);
     var r = cropTarget.place(requireImage.size);
 
     logTimed(() => requireImage.crop(r), name: '$image cropImage');
@@ -318,13 +256,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   void gaussianBlurImage() {
-    logTimed(() => requireImage.gaussianBlur(radius: 10, sigma: 10),
-        name: '$image gaussianBlurImage');
+    logTimed(() => requireImage.gaussianBlur(radius: 10, sigma: 10), name: '$image gaussianBlurImage');
   }
 
   void meanBlurImage() {
-    logTimed(() => requireImage.meanBlur(radius: 10),
-        name: '$image meanBlurImage');
+    logTimed(() => requireImage.meanBlur(radius: 10), name: '$image meanBlurImage');
   }
 
   Future logTimed(FutureOr Function() execution, {String? name}) async {
@@ -337,8 +273,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void boxBlurImage() {
-    logTimed(() => requireImage.boxBlur(radius: 10),
-        name: '$image boxBlurImage');
+    logTimed(() => requireImage.boxBlur(radius: 10), name: '$image boxBlurImage');
   }
 
   Future loadImage() async {
@@ -355,15 +290,13 @@ class _MyAppState extends State<MyApp> {
     final ui.FrameInfo frame = await codec.getNextFrame();
     final ui.Image img = frame.image;
 
-    ByteData? rgbaBytes =
-        await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+    ByteData? rgbaBytes = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
     bytes = null;
     img.dispose();
 
     if (rgbaBytes == null) throw Exception('Could not decode image');
     setState(() {
-      image = Optional.of(YuvImage.bgra(img.width, img.height)
-        ..fromRgba8888(rgbaBytes!.buffer.asUint8List()));
+      image = Optional.of(YuvImage.bgra(img.width, img.height)..fromRgba8888(rgbaBytes!.buffer.asUint8List()));
       faceBox = null;
       imageExists = false;
       isLoading = false;
@@ -395,16 +328,10 @@ class _MyAppState extends State<MyApp> {
 
   Future doFaceDetection() async {
     final FaceDetector detector = FaceDetector(
-      options: FaceDetectorOptions(
-          enableClassification: true,
-          performanceMode: FaceDetectorMode.accurate,
-          enableTracking: true),
+      options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    var inputImage = (Platform.isIOS
-            ? requireImage.toYuvBgra8888()
-            : requireImage.toYuvNv21())
-        .toInputImage();
+    var inputImage = (Platform.isIOS ? requireImage.toYuvBgra8888() : requireImage.toYuvNv21()).toInputImage();
 
     final faces = await detector.processImage(inputImage);
     if (faces.isEmpty) {
@@ -419,18 +346,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future toI420() async {
-    logTimed(() => image = Optional.of(requireImage.toYuvI420()),
-        name: '$image toI420');
+    logTimed(() => image = Optional.of(requireImage.toYuvI420()), name: '$image toI420');
   }
 
   Future toNV21() async {
-    logTimed(() => image = Optional.of(requireImage.toYuvNv21()),
-        name: '$image toNV21');
+    logTimed(() => image = Optional.of(requireImage.toYuvNv21()), name: '$image toNV21');
   }
 
   Future toBGRA() async {
-    logTimed(() => image = Optional.of(requireImage.toYuvBgra8888()),
-        name: '$image toBGRA');
+    logTimed(() => image = Optional.of(requireImage.toYuvBgra8888()), name: '$image toBGRA');
   }
 }
 
@@ -462,8 +386,7 @@ class _ImageWidget extends StatelessWidget {
             YuvImageWidget(image: i, boxFit: BoxFit.none),
             if (faceBox != null)
               CustomPaint(
-                painter:
-                    FaceRectPainter(rect: faceBox!, image: i, strokeWidth: 10),
+                painter: FaceRectPainter(rect: faceBox!, image: i, strokeWidth: 10),
               ),
           ],
         ),

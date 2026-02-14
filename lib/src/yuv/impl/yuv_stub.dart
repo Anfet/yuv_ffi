@@ -178,12 +178,10 @@ class YuvImageImpl implements YuvImage {
   YuvImage swapNv() => this;
 
   @override
-  YuvImage toYuvNv21() =>
-      YuvImageImpl.nv21(_width, _height, yPixelStride: y.pixelStride);
+  YuvImage toYuvNv21() => YuvImageImpl.nv21(_width, _height, yPixelStride: y.pixelStride);
 
   @override
-  YuvImage toYuvI420() =>
-      YuvImageImpl.i420(_width, _height, yPixelStride: y.pixelStride);
+  YuvImage toYuvI420() => YuvImageImpl.i420(_width, _height, yPixelStride: y.pixelStride);
 
   @override
   YuvImage toYuvBgra8888() => YuvImageImpl.bgra(_width, _height);

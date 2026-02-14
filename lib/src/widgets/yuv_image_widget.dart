@@ -54,12 +54,10 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
   YuvImageProvider(this.image);
 
   @override
-  Future<YuvImageProvider> obtainKey(ImageConfiguration configuration) =>
-      SynchronousFuture(this);
+  Future<YuvImageProvider> obtainKey(ImageConfiguration configuration) => SynchronousFuture(this);
 
   @override
-  ImageStreamCompleter loadImage(
-      YuvImageProvider key, ImageDecoderCallback decode) {
+  ImageStreamCompleter loadImage(YuvImageProvider key, ImageDecoderCallback decode) {
     final streamController = StreamController<ImageChunkEvent>();
     final codecCompleter = Completer<ui.Codec>();
 

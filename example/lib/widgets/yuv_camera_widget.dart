@@ -11,19 +11,14 @@ class YuvCameraWidget extends StatefulWidget {
   final YuvImage Function(YuvImage image)? transform;
   final ValueChanged<int>? fpsChanged;
 
-  const YuvCameraWidget(
-      {super.key,
-      required this.cameraController,
-      this.transform,
-      this.fpsChanged});
+  const YuvCameraWidget({super.key, required this.cameraController, this.transform, this.fpsChanged});
 
   @override
   State<YuvCameraWidget> createState() => _YuvCameraWidgetState();
 }
 
 class _YuvCameraWidgetState extends State<YuvCameraWidget> {
-  final StreamController<YuvImage?> streamController =
-      StreamController.broadcast();
+  final StreamController<YuvImage?> streamController = StreamController.broadcast();
   bool isProcessing = false;
   int fps = 0;
   Timer? timer;
@@ -44,8 +39,7 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
 
   @override
   void dispose() {
-    if (widget.cameraController.value.isInitialized &&
-        widget.cameraController.value.isStreamingImages) {
+    if (widget.cameraController.value.isInitialized && widget.cameraController.value.isStreamingImages) {
       widget.cameraController.stopImageStream();
     }
 
@@ -80,11 +74,9 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     });
   }
 
-  Future<void> _resubscribeOnControllerChange(
-      CameraController oldController) async {
+  Future<void> _resubscribeOnControllerChange(CameraController oldController) async {
     timer?.cancel();
-    if (oldController.value.isInitialized &&
-        oldController.value.isStreamingImages) {
+    if (oldController.value.isInitialized && oldController.value.isStreamingImages) {
       await oldController.stopImageStream();
     }
     if (!mounted || !widget.cameraController.value.isInitialized) {
@@ -102,9 +94,7 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     fps++;
     try {
       //  ? ;
-      YuvImageRotation rotation = YuvImageRotation.values.firstWhere((e) =>
-          e.degrees ==
-          widget.cameraController.description.sensorOrientation.abs());
+      YuvImageRotation rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
       var yuv = image.toYuvImage();
       if (Platform.isAndroid) {
         yuv = yuv.rotate(rotation.toZero());

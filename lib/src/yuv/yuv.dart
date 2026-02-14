@@ -4,13 +4,9 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 
-import 'impl/yuv_stub.dart'
-    if (dart.library.ffi) 'impl/io/yuv_image.dart'
-    if (dart.library.js_interop) 'impl/web/yuv_web.dart';
+import 'impl/yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_image.dart' if (dart.library.js_interop) 'impl/web/yuv_web.dart';
 
-export 'impl/yuv_stub.dart'
-    if (dart.library.ffi) 'impl/io/yuv_image.dart'
-    if (dart.library.js_interop) 'impl/web/yuv_web.dart';
+export 'impl/yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_image.dart' if (dart.library.js_interop) 'impl/web/yuv_web.dart';
 
 /// Represents an in-memory image in one of supported YUV/BGRA formats.
 ///
@@ -59,28 +55,18 @@ abstract interface class YuvImage {
   ui.Size get size;
 
   /// Creates an I420 image.
-  factory YuvImage.i420(int width, int height,
-      {int yPixelStride,
-      int uvPixelStride,
-      Iterable<YuvPlane>? planes}) = YuvImageImpl.i420;
+  factory YuvImage.i420(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl.i420;
 
   /// Creates an NV21-labeled image.
   ///
   /// Note: in this project the `nv21` label is intentionally mapped to UV order.
-  factory YuvImage.nv21(int width, int height,
-      {int yPixelStride,
-      int uvPixelStride,
-      Iterable<YuvPlane>? planes}) = YuvImageImpl.nv21;
+  factory YuvImage.nv21(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl.nv21;
 
   /// Creates a BGRA8888 image.
-  factory YuvImage.bgra(int width, int height, {Iterable<YuvPlane>? planes}) =
-      YuvImageImpl.bgra;
+  factory YuvImage.bgra(int width, int height, {Iterable<YuvPlane>? planes}) = YuvImageImpl.bgra;
 
   /// Creates an image by explicit [format].
-  factory YuvImage(YuvFileFormat format, int width, int height,
-      {int yPixelStride,
-      int uvPixelStride,
-      Iterable<YuvPlane>? planes}) = YuvImageImpl;
+  factory YuvImage(YuvFileFormat format, int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl;
 
   /// Returns all planes concatenated into a single byte buffer.
   Uint8List getBytes();
@@ -100,22 +86,19 @@ abstract interface class YuvImage {
   YuvImage blackwhite() => throw UnimplementedError();
 
   /// Applies Gaussian blur in-place and returns `this`.
-  YuvImage gaussianBlur({int radius = 2, int sigma = 2}) =>
-      throw UnimplementedError();
+  YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => throw UnimplementedError();
 
   /// Applies box blur in-place.
   ///
   /// If [rect] is provided, blur is applied only within that region.
   /// Returns `this`.
-  YuvImage boxBlur({int radius = 10, ui.Rect? rect}) =>
-      throw UnimplementedError();
+  YuvImage boxBlur({int radius = 10, ui.Rect? rect}) => throw UnimplementedError();
 
   /// Applies mean blur in-place.
   ///
   /// If [rect] is provided, blur is applied only within that region.
   /// Returns `this`.
-  YuvImage meanBlur({int radius = 2, ui.Rect? rect}) =>
-      throw UnimplementedError();
+  YuvImage meanBlur({int radius = 2, ui.Rect? rect}) => throw UnimplementedError();
 
   /// Swaps interleaved chroma order for NV formats.
   ///

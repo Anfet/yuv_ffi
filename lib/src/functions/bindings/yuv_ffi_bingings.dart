@@ -7,18 +7,13 @@ import 'dart:ffi' as ffi;
 /// FFI bindings for native YUV code
 class YuvFfiBindings {
   /// Holds the symbol lookup function.
-  final ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName)
-      _lookup;
+  final ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) _lookup;
 
   /// The symbols are looked up in [dynamicLibrary].
-  YuvFfiBindings(ffi.DynamicLibrary dynamicLibrary)
-      : _lookup = dynamicLibrary.lookup;
+  YuvFfiBindings(ffi.DynamicLibrary dynamicLibrary) : _lookup = dynamicLibrary.lookup;
 
   /// The symbols are looked up with [lookup].
-  YuvFfiBindings.fromLookup(
-      ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName)
-          lookup)
-      : _lookup = lookup;
+  YuvFfiBindings.fromLookup(ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup) : _lookup = lookup;
 
   void __va_start(
     ffi.Pointer<va_list> arg0,
@@ -28,21 +23,15 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___va_startPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<va_list>)>>(
-          '__va_start');
-  late final ___va_start =
-      ___va_startPtr.asFunction<void Function(ffi.Pointer<va_list>)>();
+  late final ___va_startPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<va_list>)>>('__va_start');
+  late final ___va_start = ___va_startPtr.asFunction<void Function(ffi.Pointer<va_list>)>();
 
   void __security_init_cookie() {
     return ___security_init_cookie();
   }
 
-  late final ___security_init_cookiePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>(
-          '__security_init_cookie');
-  late final ___security_init_cookie =
-      ___security_init_cookiePtr.asFunction<void Function()>();
+  late final ___security_init_cookiePtr = _lookup<ffi.NativeFunction<ffi.Void Function()>>('__security_init_cookie');
+  late final ___security_init_cookie = ___security_init_cookiePtr.asFunction<void Function()>();
 
   void __security_check_cookie(
     int _StackCookie,
@@ -52,11 +41,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___security_check_cookiePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UintPtr)>>(
-          '__security_check_cookie');
-  late final ___security_check_cookie =
-      ___security_check_cookiePtr.asFunction<void Function(int)>();
+  late final ___security_check_cookiePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UintPtr)>>('__security_check_cookie');
+  late final ___security_check_cookie = ___security_check_cookiePtr.asFunction<void Function(int)>();
 
   void __report_gsfailure(
     int _StackCookie,
@@ -66,14 +52,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___report_gsfailurePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UintPtr)>>(
-          '__report_gsfailure');
-  late final ___report_gsfailure =
-      ___report_gsfailurePtr.asFunction<void Function(int)>();
+  late final ___report_gsfailurePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UintPtr)>>('__report_gsfailure');
+  late final ___report_gsfailure = ___report_gsfailurePtr.asFunction<void Function(int)>();
 
-  late final ffi.Pointer<ffi.UintPtr> ___security_cookie =
-      _lookup<ffi.UintPtr>('__security_cookie');
+  late final ffi.Pointer<ffi.UintPtr> ___security_cookie = _lookup<ffi.UintPtr>('__security_cookie');
 
   int get __security_cookie => ___security_cookie.value;
 
@@ -83,21 +65,15 @@ class YuvFfiBindings {
     return __invalid_parameter_noinfo();
   }
 
-  late final __invalid_parameter_noinfoPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>(
-          '_invalid_parameter_noinfo');
-  late final __invalid_parameter_noinfo =
-      __invalid_parameter_noinfoPtr.asFunction<void Function()>();
+  late final __invalid_parameter_noinfoPtr = _lookup<ffi.NativeFunction<ffi.Void Function()>>('_invalid_parameter_noinfo');
+  late final __invalid_parameter_noinfo = __invalid_parameter_noinfoPtr.asFunction<void Function()>();
 
   void _invalid_parameter_noinfo_noreturn() {
     return __invalid_parameter_noinfo_noreturn();
   }
 
-  late final __invalid_parameter_noinfo_noreturnPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>(
-          '_invalid_parameter_noinfo_noreturn');
-  late final __invalid_parameter_noinfo_noreturn =
-      __invalid_parameter_noinfo_noreturnPtr.asFunction<void Function()>();
+  late final __invalid_parameter_noinfo_noreturnPtr = _lookup<ffi.NativeFunction<ffi.Void Function()>>('_invalid_parameter_noinfo_noreturn');
+  late final __invalid_parameter_noinfo_noreturn = __invalid_parameter_noinfo_noreturnPtr.asFunction<void Function()>();
 
   void _invoke_watson(
     ffi.Pointer<ffi.WChar> _Expression,
@@ -117,15 +93,9 @@ class YuvFfiBindings {
 
   late final __invoke_watsonPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.UnsignedInt,
-              ffi.UintPtr)>>('_invoke_watson');
-  late final __invoke_watson = __invoke_watsonPtr.asFunction<
-      void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>, int, int)>();
+          ffi.Void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.UnsignedInt, ffi.UintPtr)>>('_invoke_watson');
+  late final __invoke_watson =
+      __invoke_watsonPtr.asFunction<void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<FILE> __acrt_iob_func(
     int _Ix,
@@ -135,11 +105,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___acrt_iob_funcPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.UnsignedInt)>>(
-          '__acrt_iob_func');
-  late final ___acrt_iob_func =
-      ___acrt_iob_funcPtr.asFunction<ffi.Pointer<FILE> Function(int)>();
+  late final ___acrt_iob_funcPtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.UnsignedInt)>>('__acrt_iob_func');
+  late final ___acrt_iob_func = ___acrt_iob_funcPtr.asFunction<ffi.Pointer<FILE> Function(int)>();
 
   int fgetwc(
     ffi.Pointer<FILE> _Stream,
@@ -149,16 +116,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fgetwcPtr =
-      _lookup<ffi.NativeFunction<wint_t Function(ffi.Pointer<FILE>)>>('fgetwc');
+  late final _fgetwcPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.Pointer<FILE>)>>('fgetwc');
   late final _fgetwc = _fgetwcPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _fgetwchar() {
     return __fgetwchar();
   }
 
-  late final __fgetwcharPtr =
-      _lookup<ffi.NativeFunction<wint_t Function()>>('_fgetwchar');
+  late final __fgetwcharPtr = _lookup<ffi.NativeFunction<wint_t Function()>>('_fgetwchar');
   late final __fgetwchar = __fgetwcharPtr.asFunction<int Function()>();
 
   int fputwc(
@@ -171,11 +136,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fputwcPtr = _lookup<
-      ffi
-      .NativeFunction<wint_t Function(ffi.WChar, ffi.Pointer<FILE>)>>('fputwc');
-  late final _fputwc =
-      _fputwcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final _fputwcPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.WChar, ffi.Pointer<FILE>)>>('fputwc');
+  late final _fputwc = _fputwcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int _fputwchar(
     int _Character,
@@ -185,8 +147,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fputwcharPtr =
-      _lookup<ffi.NativeFunction<wint_t Function(ffi.WChar)>>('_fputwchar');
+  late final __fputwcharPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.WChar)>>('_fputwchar');
   late final __fputwchar = __fputwcharPtr.asFunction<int Function(int)>();
 
   int getwc(
@@ -197,16 +158,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _getwcPtr =
-      _lookup<ffi.NativeFunction<wint_t Function(ffi.Pointer<FILE>)>>('getwc');
+  late final _getwcPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.Pointer<FILE>)>>('getwc');
   late final _getwc = _getwcPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int getwchar() {
     return _getwchar();
   }
 
-  late final _getwcharPtr =
-      _lookup<ffi.NativeFunction<wint_t Function()>>('getwchar');
+  late final _getwcharPtr = _lookup<ffi.NativeFunction<wint_t Function()>>('getwchar');
   late final _getwchar = _getwcharPtr.asFunction<int Function()>();
 
   ffi.Pointer<ffi.WChar> fgetws(
@@ -221,13 +180,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fgetwsPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.Int, ffi.Pointer<FILE>)>>('fgetws');
-  late final _fgetws = _fgetwsPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(
-          ffi.Pointer<ffi.WChar>, int, ffi.Pointer<FILE>)>();
+  late final _fgetwsPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Int, ffi.Pointer<FILE>)>>('fgetws');
+  late final _fgetws = _fgetwsPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<FILE>)>();
 
   int fputws(
     ffi.Pointer<ffi.WChar> _Buffer,
@@ -239,12 +193,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fputwsPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>>('fputws');
-  late final _fputws = _fputwsPtr
-      .asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>();
+  late final _fputwsPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>>('fputws');
+  late final _fputws = _fputwsPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>();
 
   ffi.Pointer<ffi.WChar> _getws_s(
     ffi.Pointer<ffi.WChar> _Buffer,
@@ -256,12 +206,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __getws_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.Size)>>('_getws_s');
-  late final __getws_s = __getws_sPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int)>();
+  late final __getws_sPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Size)>>('_getws_s');
+  late final __getws_s = __getws_sPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int)>();
 
   int putwc(
     int _Character,
@@ -273,11 +219,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _putwcPtr = _lookup<
-      ffi
-      .NativeFunction<wint_t Function(ffi.WChar, ffi.Pointer<FILE>)>>('putwc');
-  late final _putwc =
-      _putwcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final _putwcPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.WChar, ffi.Pointer<FILE>)>>('putwc');
+  late final _putwc = _putwcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int putwchar(
     int _Character,
@@ -287,8 +230,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _putwcharPtr =
-      _lookup<ffi.NativeFunction<wint_t Function(ffi.WChar)>>('putwchar');
+  late final _putwcharPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.WChar)>>('putwchar');
   late final _putwchar = _putwcharPtr.asFunction<int Function(int)>();
 
   int _putws(
@@ -299,11 +241,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __putwsPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>(
-          '_putws');
-  late final __putws =
-      __putwsPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
+  late final __putwsPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>('_putws');
+  late final __putws = __putwsPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
 
   int ungetwc(
     int _Character,
@@ -315,11 +254,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ungetwcPtr =
-      _lookup<ffi.NativeFunction<wint_t Function(wint_t, ffi.Pointer<FILE>)>>(
-          'ungetwc');
-  late final _ungetwc =
-      _ungetwcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final _ungetwcPtr = _lookup<ffi.NativeFunction<wint_t Function(wint_t, ffi.Pointer<FILE>)>>('ungetwc');
+  late final _ungetwc = _ungetwcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   ffi.Pointer<FILE> _wfdopen(
     int _FileHandle,
@@ -331,12 +267,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wfdopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(
-              ffi.Int, ffi.Pointer<ffi.WChar>)>>('_wfdopen');
-  late final __wfdopen = __wfdopenPtr
-      .asFunction<ffi.Pointer<FILE> Function(int, ffi.Pointer<ffi.WChar>)>();
+  late final __wfdopenPtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Int, ffi.Pointer<ffi.WChar>)>>('_wfdopen');
+  late final __wfdopen = __wfdopenPtr.asFunction<ffi.Pointer<FILE> Function(int, ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<FILE> _wfopen(
     ffi.Pointer<ffi.WChar> _FileName,
@@ -348,13 +280,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wfopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wfopen');
-  late final __wfopen = __wfopenPtr.asFunction<
-      ffi.Pointer<FILE> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final __wfopenPtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wfopen');
+  late final __wfopen = __wfopenPtr.asFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _wfopen_s(
     ffi.Pointer<ffi.Pointer<FILE>> _Stream,
@@ -368,13 +295,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wfopen_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Pointer<FILE>>,
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wfopen_s');
-  late final __wfopen_s = __wfopen_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>)>();
+  late final __wfopen_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wfopen_s');
+  late final __wfopen_s = __wfopen_sPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<FILE> _wfreopen(
     ffi.Pointer<ffi.WChar> _FileName,
@@ -388,13 +311,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wfreopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>>('_wfreopen');
-  late final __wfreopen = __wfreopenPtr.asFunction<
-      ffi.Pointer<FILE> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>();
+  late final __wfreopenPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>>('_wfreopen');
+  late final __wfreopen = __wfreopenPtr.asFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>();
 
   int _wfreopen_s(
     ffi.Pointer<ffi.Pointer<FILE>> _Stream,
@@ -411,15 +330,10 @@ class YuvFfiBindings {
   }
 
   late final __wfreopen_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Pointer<FILE>>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<FILE>)>>('_wfreopen_s');
-  late final __wfreopen_s = __wfreopen_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>();
+          ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>>(
+      '_wfreopen_s');
+  late final __wfreopen_s =
+      __wfreopen_sPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<FILE>)>();
 
   ffi.Pointer<FILE> _wfsopen(
     ffi.Pointer<ffi.WChar> _FileName,
@@ -433,13 +347,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wfsopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>, ffi.Int)>>('_wfsopen');
-  late final __wfsopen = __wfsopenPtr.asFunction<
-      ffi.Pointer<FILE> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final __wfsopenPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_wfsopen');
+  late final __wfsopen = __wfsopenPtr.asFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   void _wperror(
     ffi.Pointer<ffi.WChar> _ErrorMessage,
@@ -449,11 +359,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wperrorPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.WChar>)>>(
-          '_wperror');
-  late final __wperror =
-      __wperrorPtr.asFunction<void Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wperrorPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.WChar>)>>('_wperror');
+  late final __wperror = __wperrorPtr.asFunction<void Function(ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<FILE> _wpopen(
     ffi.Pointer<ffi.WChar> _Command,
@@ -465,13 +372,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wpopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wpopen');
-  late final __wpopen = __wpopenPtr.asFunction<
-      ffi.Pointer<FILE> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final __wpopenPtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wpopen');
+  late final __wpopen = __wpopenPtr.asFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _wremove(
     ffi.Pointer<ffi.WChar> _FileName,
@@ -481,11 +383,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wremovePtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>(
-          '_wremove');
-  late final __wremove =
-      __wremovePtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wremovePtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>('_wremove');
+  late final __wremove = __wremovePtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<ffi.WChar> _wtempnam(
     ffi.Pointer<ffi.WChar> _Directory,
@@ -497,13 +396,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtempnamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wtempnam');
-  late final __wtempnam = __wtempnamPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final __wtempnamPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wtempnam');
+  late final __wtempnam = __wtempnamPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _wtmpnam_s(
     ffi.Pointer<ffi.WChar> _Buffer,
@@ -515,11 +410,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtmpnam_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wtmpnam_s');
-  late final __wtmpnam_s =
-      __wtmpnam_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int)>();
+  late final __wtmpnam_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wtmpnam_s');
+  late final __wtmpnam_s = __wtmpnam_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> _wtmpnam(
     ffi.Pointer<ffi.WChar> _Buffer,
@@ -529,11 +421,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtmpnamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wtmpnam');
-  late final __wtmpnam = __wtmpnamPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wtmpnamPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wtmpnam');
+  late final __wtmpnam = __wtmpnamPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   int _fgetwc_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -543,11 +432,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fgetwc_nolockPtr =
-      _lookup<ffi.NativeFunction<wint_t Function(ffi.Pointer<FILE>)>>(
-          '_fgetwc_nolock');
-  late final __fgetwc_nolock =
-      __fgetwc_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __fgetwc_nolockPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.Pointer<FILE>)>>('_fgetwc_nolock');
+  late final __fgetwc_nolock = __fgetwc_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _fputwc_nolock(
     int _Character,
@@ -559,11 +445,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fputwc_nolockPtr = _lookup<
-          ffi.NativeFunction<wint_t Function(ffi.WChar, ffi.Pointer<FILE>)>>(
-      '_fputwc_nolock');
-  late final __fputwc_nolock =
-      __fputwc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final __fputwc_nolockPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.WChar, ffi.Pointer<FILE>)>>('_fputwc_nolock');
+  late final __fputwc_nolock = __fputwc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int _getwc_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -573,11 +456,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __getwc_nolockPtr =
-      _lookup<ffi.NativeFunction<wint_t Function(ffi.Pointer<FILE>)>>(
-          '_getwc_nolock');
-  late final __getwc_nolock =
-      __getwc_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __getwc_nolockPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.Pointer<FILE>)>>('_getwc_nolock');
+  late final __getwc_nolock = __getwc_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _putwc_nolock(
     int _Character,
@@ -589,11 +469,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __putwc_nolockPtr = _lookup<
-          ffi.NativeFunction<wint_t Function(ffi.WChar, ffi.Pointer<FILE>)>>(
-      '_putwc_nolock');
-  late final __putwc_nolock =
-      __putwc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final __putwc_nolockPtr = _lookup<ffi.NativeFunction<wint_t Function(ffi.WChar, ffi.Pointer<FILE>)>>('_putwc_nolock');
+  late final __putwc_nolock = __putwc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int _ungetwc_nolock(
     int _Character,
@@ -605,11 +482,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ungetwc_nolockPtr =
-      _lookup<ffi.NativeFunction<wint_t Function(wint_t, ffi.Pointer<FILE>)>>(
-          '_ungetwc_nolock');
-  late final __ungetwc_nolock =
-      __ungetwc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final __ungetwc_nolockPtr = _lookup<ffi.NativeFunction<wint_t Function(wint_t, ffi.Pointer<FILE>)>>('_ungetwc_nolock');
+  late final __ungetwc_nolock = __ungetwc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int __stdio_common_vfwprintf(
     int _Options,
@@ -627,18 +501,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vfwprintfPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<FILE>,
-              ffi.Pointer<ffi.WChar>,
-              _locale_t,
-              va_list)>>('__stdio_common_vfwprintf');
+  late final ___stdio_common_vfwprintfPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>>(
+          '__stdio_common_vfwprintf');
   late final ___stdio_common_vfwprintf =
-      ___stdio_common_vfwprintfPtr.asFunction<
-          int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>,
-              _locale_t, va_list)>();
+      ___stdio_common_vfwprintfPtr.asFunction<int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
 
   int __stdio_common_vfwprintf_s(
     int _Options,
@@ -656,18 +523,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vfwprintf_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<FILE>,
-              ffi.Pointer<ffi.WChar>,
-              _locale_t,
-              va_list)>>('__stdio_common_vfwprintf_s');
+  late final ___stdio_common_vfwprintf_sPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>>(
+          '__stdio_common_vfwprintf_s');
   late final ___stdio_common_vfwprintf_s =
-      ___stdio_common_vfwprintf_sPtr.asFunction<
-          int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>,
-              _locale_t, va_list)>();
+      ___stdio_common_vfwprintf_sPtr.asFunction<int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
 
   int __stdio_common_vfwprintf_p(
     int _Options,
@@ -685,18 +545,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vfwprintf_pPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<FILE>,
-              ffi.Pointer<ffi.WChar>,
-              _locale_t,
-              va_list)>>('__stdio_common_vfwprintf_p');
+  late final ___stdio_common_vfwprintf_pPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>>(
+          '__stdio_common_vfwprintf_p');
   late final ___stdio_common_vfwprintf_p =
-      ___stdio_common_vfwprintf_pPtr.asFunction<
-          int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>,
-              _locale_t, va_list)>();
+      ___stdio_common_vfwprintf_pPtr.asFunction<int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
 
   int __stdio_common_vfwscanf(
     int _Options,
@@ -714,17 +567,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vfwscanfPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<FILE>,
-              ffi.Pointer<ffi.WChar>,
-              _locale_t,
-              va_list)>>('__stdio_common_vfwscanf');
-  late final ___stdio_common_vfwscanf = ___stdio_common_vfwscanfPtr.asFunction<
-      int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>, _locale_t,
-          va_list)>();
+  late final ___stdio_common_vfwscanfPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>>(
+          '__stdio_common_vfwscanf');
+  late final ___stdio_common_vfwscanf =
+      ___stdio_common_vfwscanfPtr.asFunction<int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
 
   int __stdio_common_vswprintf(
     int _Options,
@@ -745,18 +592,10 @@ class YuvFfiBindings {
   }
 
   late final ___stdio_common_vswprintfPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              _locale_t,
-              va_list)>>('__stdio_common_vswprintf');
+          ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>>(
+      '__stdio_common_vswprintf');
   late final ___stdio_common_vswprintf =
-      ___stdio_common_vswprintfPtr.asFunction<
-          int Function(int, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>,
-              _locale_t, va_list)>();
+      ___stdio_common_vswprintfPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
 
   int __stdio_common_vswprintf_s(
     int _Options,
@@ -777,18 +616,10 @@ class YuvFfiBindings {
   }
 
   late final ___stdio_common_vswprintf_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              _locale_t,
-              va_list)>>('__stdio_common_vswprintf_s');
+          ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>>(
+      '__stdio_common_vswprintf_s');
   late final ___stdio_common_vswprintf_s =
-      ___stdio_common_vswprintf_sPtr.asFunction<
-          int Function(int, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>,
-              _locale_t, va_list)>();
+      ___stdio_common_vswprintf_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
 
   int __stdio_common_vsnwprintf_s(
     int _Options,
@@ -812,18 +643,10 @@ class YuvFfiBindings {
 
   late final ___stdio_common_vsnwprintf_sPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              _locale_t,
+          ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Size, ffi.Pointer<ffi.WChar>, _locale_t,
               va_list)>>('__stdio_common_vsnwprintf_s');
   late final ___stdio_common_vsnwprintf_s =
-      ___stdio_common_vsnwprintf_sPtr.asFunction<
-          int Function(int, ffi.Pointer<ffi.WChar>, int, int,
-              ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
+      ___stdio_common_vsnwprintf_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
 
   int __stdio_common_vswprintf_p(
     int _Options,
@@ -844,18 +667,10 @@ class YuvFfiBindings {
   }
 
   late final ___stdio_common_vswprintf_pPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              _locale_t,
-              va_list)>>('__stdio_common_vswprintf_p');
+          ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>>(
+      '__stdio_common_vswprintf_p');
   late final ___stdio_common_vswprintf_p =
-      ___stdio_common_vswprintf_pPtr.asFunction<
-          int Function(int, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>,
-              _locale_t, va_list)>();
+      ___stdio_common_vswprintf_pPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
 
   int __stdio_common_vswscanf(
     int _Options,
@@ -876,17 +691,10 @@ class YuvFfiBindings {
   }
 
   late final ___stdio_common_vswscanfPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              _locale_t,
-              va_list)>>('__stdio_common_vswscanf');
-  late final ___stdio_common_vswscanf = ___stdio_common_vswscanfPtr.asFunction<
-      int Function(int, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>,
-          _locale_t, va_list)>();
+          ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>>(
+      '__stdio_common_vswscanf');
+  late final ___stdio_common_vswscanf =
+      ___stdio_common_vswscanfPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, _locale_t, va_list)>();
 
   int _get_stream_buffer_pointers(
     ffi.Pointer<FILE> _Stream,
@@ -903,20 +711,12 @@ class YuvFfiBindings {
   }
 
   late final __get_stream_buffer_pointersPtr = _lookup<
-          ffi.NativeFunction<
-              errno_t Function(
-                  ffi.Pointer<FILE>,
-                  ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>,
-                  ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>,
-                  ffi.Pointer<ffi.Pointer<ffi.Int>>)>>(
-      '_get_stream_buffer_pointers');
-  late final __get_stream_buffer_pointers =
-      __get_stream_buffer_pointersPtr.asFunction<
-          int Function(
-              ffi.Pointer<FILE>,
-              ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>,
-              ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>,
-              ffi.Pointer<ffi.Pointer<ffi.Int>>)>();
+      ffi.NativeFunction<
+          errno_t Function(ffi.Pointer<FILE>, ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>, ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>,
+              ffi.Pointer<ffi.Pointer<ffi.Int>>)>>('_get_stream_buffer_pointers');
+  late final __get_stream_buffer_pointers = __get_stream_buffer_pointersPtr.asFunction<
+      int Function(ffi.Pointer<FILE>, ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>, ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>,
+          ffi.Pointer<ffi.Pointer<ffi.Int>>)>();
 
   int clearerr_s(
     ffi.Pointer<FILE> _Stream,
@@ -926,11 +726,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _clearerr_sPtr =
-      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<FILE>)>>(
-          'clearerr_s');
-  late final _clearerr_s =
-      _clearerr_sPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final _clearerr_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<FILE>)>>('clearerr_s');
+  late final _clearerr_s = _clearerr_sPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int fopen_s(
     ffi.Pointer<ffi.Pointer<FILE>> _Stream,
@@ -944,13 +741,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fopen_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Pointer<FILE>>,
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('fopen_s');
-  late final _fopen_s = _fopen_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>)>();
+  late final _fopen_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('fopen_s');
+  late final _fopen_s = _fopen_sPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int fread_s(
     ffi.Pointer<ffi.Void> _Buffer,
@@ -968,12 +761,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fread_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Size,
-              ffi.Pointer<FILE>)>>('fread_s');
-  late final _fread_s = _fread_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Void>, int, int, int, ffi.Pointer<FILE>)>();
+  late final _fread_sPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Size, ffi.Pointer<FILE>)>>('fread_s');
+  late final _fread_s = _fread_sPtr.asFunction<int Function(ffi.Pointer<ffi.Void>, int, int, int, ffi.Pointer<FILE>)>();
 
   int freopen_s(
     ffi.Pointer<ffi.Pointer<FILE>> _Stream,
@@ -989,16 +779,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final _freopen_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Pointer<FILE>>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<FILE>)>>('freopen_s');
-  late final _freopen_s = _freopen_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>();
+  late final _freopen_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>>(
+          'freopen_s');
+  late final _freopen_s =
+      _freopen_sPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<FILE>>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>();
 
   ffi.Pointer<ffi.Char> gets_s(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -1010,12 +795,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _gets_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, rsize_t)>>('gets_s');
-  late final _gets_s = _gets_sPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _gets_sPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, rsize_t)>>('gets_s');
+  late final _gets_s = _gets_sPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
 
   int tmpfile_s(
     ffi.Pointer<ffi.Pointer<FILE>> _Stream,
@@ -1025,11 +806,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tmpfile_sPtr = _lookup<
-          ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<FILE>>)>>(
-      'tmpfile_s');
-  late final _tmpfile_s =
-      _tmpfile_sPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<FILE>>)>();
+  late final _tmpfile_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<FILE>>)>>('tmpfile_s');
+  late final _tmpfile_s = _tmpfile_sPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<FILE>>)>();
 
   int tmpnam_s(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -1041,11 +819,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tmpnam_sPtr = _lookup<
-          ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, rsize_t)>>(
-      'tmpnam_s');
-  late final _tmpnam_s =
-      _tmpnam_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _tmpnam_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, rsize_t)>>('tmpnam_s');
+  late final _tmpnam_s = _tmpnam_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
 
   void clearerr(
     ffi.Pointer<FILE> _Stream,
@@ -1055,11 +830,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _clearerrPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>)>>(
-          'clearerr');
-  late final _clearerr =
-      _clearerrPtr.asFunction<void Function(ffi.Pointer<FILE>)>();
+  late final _clearerrPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>)>>('clearerr');
+  late final _clearerr = _clearerrPtr.asFunction<void Function(ffi.Pointer<FILE>)>();
 
   int fclose(
     ffi.Pointer<FILE> _Stream,
@@ -1069,17 +841,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fclosePtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          'fclose');
+  late final _fclosePtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('fclose');
   late final _fclose = _fclosePtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _fcloseall() {
     return __fcloseall();
   }
 
-  late final __fcloseallPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('_fcloseall');
+  late final __fcloseallPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('_fcloseall');
   late final __fcloseall = __fcloseallPtr.asFunction<int Function()>();
 
   ffi.Pointer<FILE> _fdopen(
@@ -1092,12 +861,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(
-              ffi.Int, ffi.Pointer<ffi.Char>)>>('_fdopen');
-  late final __fdopen = __fdopenPtr
-      .asFunction<ffi.Pointer<FILE> Function(int, ffi.Pointer<ffi.Char>)>();
+  late final __fdopenPtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Int, ffi.Pointer<ffi.Char>)>>('_fdopen');
+  late final __fdopen = __fdopenPtr.asFunction<ffi.Pointer<FILE> Function(int, ffi.Pointer<ffi.Char>)>();
 
   int feof(
     ffi.Pointer<FILE> _Stream,
@@ -1107,8 +872,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _feofPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('feof');
+  late final _feofPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('feof');
   late final _feof = _feofPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int ferror(
@@ -1119,9 +883,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ferrorPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          'ferror');
+  late final _ferrorPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('ferror');
   late final _ferror = _ferrorPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int fflush(
@@ -1132,9 +894,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fflushPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          'fflush');
+  late final _fflushPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('fflush');
   late final _fflush = _fflushPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int fgetc(
@@ -1145,16 +905,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fgetcPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('fgetc');
+  late final _fgetcPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('fgetc');
   late final _fgetc = _fgetcPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _fgetchar() {
     return __fgetchar();
   }
 
-  late final __fgetcharPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('_fgetchar');
+  late final __fgetcharPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('_fgetchar');
   late final __fgetchar = __fgetcharPtr.asFunction<int Function()>();
 
   int fgetpos(
@@ -1167,11 +925,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fgetposPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<FILE>, ffi.Pointer<fpos_t>)>>('fgetpos');
-  late final _fgetpos = _fgetposPtr
-      .asFunction<int Function(ffi.Pointer<FILE>, ffi.Pointer<fpos_t>)>();
+  late final _fgetposPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>, ffi.Pointer<fpos_t>)>>('fgetpos');
+  late final _fgetpos = _fgetposPtr.asFunction<int Function(ffi.Pointer<FILE>, ffi.Pointer<fpos_t>)>();
 
   ffi.Pointer<ffi.Char> fgets(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -1185,13 +940,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fgetsPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Int, ffi.Pointer<FILE>)>>('fgets');
-  late final _fgets = _fgetsPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, int, ffi.Pointer<FILE>)>();
+  late final _fgetsPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Pointer<FILE>)>>('fgets');
+  late final _fgets = _fgetsPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<FILE>)>();
 
   int _fileno(
     ffi.Pointer<FILE> _Stream,
@@ -1201,18 +951,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final __filenoPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          '_fileno');
-  late final __fileno =
-      __filenoPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __filenoPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('_fileno');
+  late final __fileno = __filenoPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _flushall() {
     return __flushall();
   }
 
-  late final __flushallPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('_flushall');
+  late final __flushallPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('_flushall');
   late final __flushall = __flushallPtr.asFunction<int Function()>();
 
   ffi.Pointer<FILE> fopen(
@@ -1225,13 +971,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('fopen');
-  late final _fopen = _fopenPtr.asFunction<
-      ffi.Pointer<FILE> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _fopenPtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('fopen');
+  late final _fopen = _fopenPtr.asFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int fputc(
     int _Character,
@@ -1243,11 +984,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fputcPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>(
-          'fputc');
-  late final _fputc =
-      _fputcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final _fputcPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>('fputc');
+  late final _fputc = _fputcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int _fputchar(
     int _Character,
@@ -1257,8 +995,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fputcharPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('_fputchar');
+  late final __fputcharPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('_fputchar');
   late final __fputchar = __fputcharPtr.asFunction<int Function(int)>();
 
   int fputs(
@@ -1271,11 +1008,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fputsPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>>('fputs');
-  late final _fputs = _fputsPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>();
+  late final _fputsPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>>('fputs');
+  late final _fputs = _fputsPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>();
 
   int fread(
     ffi.Pointer<ffi.Void> _Buffer,
@@ -1291,12 +1025,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _freadPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Void>, ffi.Size,
-              ffi.Size, ffi.Pointer<FILE>)>>('fread');
-  late final _fread = _freadPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Void>, int, int, ffi.Pointer<FILE>)>();
+  late final _freadPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Pointer<FILE>)>>('fread');
+  late final _fread = _freadPtr.asFunction<int Function(ffi.Pointer<ffi.Void>, int, int, ffi.Pointer<FILE>)>();
 
   ffi.Pointer<FILE> freopen(
     ffi.Pointer<ffi.Char> _FileName,
@@ -1310,13 +1041,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _freopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>>('freopen');
-  late final _freopen = _freopenPtr.asFunction<
-      ffi.Pointer<FILE> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>();
+  late final _freopenPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>>('freopen');
+  late final _freopen = _freopenPtr.asFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<FILE>)>();
 
   ffi.Pointer<FILE> _fsopen(
     ffi.Pointer<ffi.Char> _FileName,
@@ -1330,13 +1057,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fsopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>, ffi.Int)>>('_fsopen');
-  late final __fsopen = __fsopenPtr.asFunction<
-      ffi.Pointer<FILE> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final __fsopenPtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Int)>>('_fsopen');
+  late final __fsopen = __fsopenPtr.asFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int fsetpos(
     ffi.Pointer<FILE> _Stream,
@@ -1348,11 +1070,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fsetposPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<FILE>, ffi.Pointer<fpos_t>)>>('fsetpos');
-  late final _fsetpos = _fsetposPtr
-      .asFunction<int Function(ffi.Pointer<FILE>, ffi.Pointer<fpos_t>)>();
+  late final _fsetposPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>, ffi.Pointer<fpos_t>)>>('fsetpos');
+  late final _fsetpos = _fsetposPtr.asFunction<int Function(ffi.Pointer<FILE>, ffi.Pointer<fpos_t>)>();
 
   int fseek(
     ffi.Pointer<FILE> _Stream,
@@ -1366,11 +1085,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fseekPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<FILE>, ffi.Long, ffi.Int)>>('fseek');
-  late final _fseek =
-      _fseekPtr.asFunction<int Function(ffi.Pointer<FILE>, int, int)>();
+  late final _fseekPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>, ffi.Long, ffi.Int)>>('fseek');
+  late final _fseek = _fseekPtr.asFunction<int Function(ffi.Pointer<FILE>, int, int)>();
 
   int _fseeki64(
     ffi.Pointer<FILE> _Stream,
@@ -1384,12 +1100,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fseeki64Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<FILE>, ffi.LongLong, ffi.Int)>>('_fseeki64');
-  late final __fseeki64 =
-      __fseeki64Ptr.asFunction<int Function(ffi.Pointer<FILE>, int, int)>();
+  late final __fseeki64Ptr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>, ffi.LongLong, ffi.Int)>>('_fseeki64');
+  late final __fseeki64 = __fseeki64Ptr.asFunction<int Function(ffi.Pointer<FILE>, int, int)>();
 
   int ftell(
     ffi.Pointer<FILE> _Stream,
@@ -1399,9 +1111,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ftellPtr =
-      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<FILE>)>>(
-          'ftell');
+  late final _ftellPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<FILE>)>>('ftell');
   late final _ftell = _ftellPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _ftelli64(
@@ -1412,11 +1122,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ftelli64Ptr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<FILE>)>>(
-          '_ftelli64');
-  late final __ftelli64 =
-      __ftelli64Ptr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __ftelli64Ptr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<FILE>)>>('_ftelli64');
+  late final __ftelli64 = __ftelli64Ptr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int fwrite(
     ffi.Pointer<ffi.Void> _Buffer,
@@ -1432,12 +1139,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fwritePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Void>, ffi.Size,
-              ffi.Size, ffi.Pointer<FILE>)>>('fwrite');
-  late final _fwrite = _fwritePtr.asFunction<
-      int Function(ffi.Pointer<ffi.Void>, int, int, ffi.Pointer<FILE>)>();
+  late final _fwritePtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Pointer<FILE>)>>('fwrite');
+  late final _fwrite = _fwritePtr.asFunction<int Function(ffi.Pointer<ffi.Void>, int, int, ffi.Pointer<FILE>)>();
 
   int getc(
     ffi.Pointer<FILE> _Stream,
@@ -1447,24 +1151,21 @@ class YuvFfiBindings {
     );
   }
 
-  late final _getcPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('getc');
+  late final _getcPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('getc');
   late final _getc = _getcPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int getchar() {
     return _getchar();
   }
 
-  late final _getcharPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('getchar');
+  late final _getcharPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('getchar');
   late final _getchar = _getcharPtr.asFunction<int Function()>();
 
   int _getmaxstdio() {
     return __getmaxstdio();
   }
 
-  late final __getmaxstdioPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('_getmaxstdio');
+  late final __getmaxstdioPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('_getmaxstdio');
   late final __getmaxstdio = __getmaxstdioPtr.asFunction<int Function()>();
 
   int _getw(
@@ -1475,8 +1176,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __getwPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('_getw');
+  late final __getwPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('_getw');
   late final __getw = __getwPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   void perror(
@@ -1487,11 +1187,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _perrorPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
-          'perror');
-  late final _perror =
-      _perrorPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
+  late final _perrorPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>('perror');
+  late final _perror = _perrorPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 
   int _pclose(
     ffi.Pointer<FILE> _Stream,
@@ -1501,11 +1198,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __pclosePtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          '_pclose');
-  late final __pclose =
-      __pclosePtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __pclosePtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('_pclose');
+  late final __pclose = __pclosePtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   ffi.Pointer<FILE> _popen(
     ffi.Pointer<ffi.Char> _Command,
@@ -1517,13 +1211,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __popenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_popen');
-  late final __popen = __popenPtr.asFunction<
-      ffi.Pointer<FILE> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final __popenPtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_popen');
+  late final __popen = __popenPtr.asFunction<ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int putc(
     int _Character,
@@ -1535,11 +1224,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _putcPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>(
-          'putc');
-  late final _putc =
-      _putcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final _putcPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>('putc');
+  late final _putc = _putcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int putchar(
     int _Character,
@@ -1549,8 +1235,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _putcharPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('putchar');
+  late final _putcharPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('putchar');
   late final _putchar = _putcharPtr.asFunction<int Function(int)>();
 
   int puts(
@@ -1561,9 +1246,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _putsPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          'puts');
+  late final _putsPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>('puts');
   late final _puts = _putsPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int _putw(
@@ -1576,11 +1259,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __putwPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>(
-          '_putw');
-  late final __putw =
-      __putwPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final __putwPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>('_putw');
+  late final __putw = __putwPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int remove(
     ffi.Pointer<ffi.Char> _FileName,
@@ -1590,11 +1270,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _removePtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          'remove');
-  late final _remove =
-      _removePtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final _removePtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>('remove');
+  late final _remove = _removePtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int rename(
     ffi.Pointer<ffi.Char> _OldFileName,
@@ -1606,12 +1283,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _renamePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('rename');
-  late final _rename = _renamePtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _renamePtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('rename');
+  late final _rename = _renamePtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int _unlink(
     ffi.Pointer<ffi.Char> _FileName,
@@ -1621,11 +1294,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __unlinkPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          '_unlink');
-  late final __unlink =
-      __unlinkPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final __unlinkPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>('_unlink');
+  late final __unlink = __unlinkPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int unlink(
     ffi.Pointer<ffi.Char> _FileName,
@@ -1635,11 +1305,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _unlinkPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          'unlink');
-  late final _unlink1 =
-      _unlinkPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final _unlinkPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>('unlink');
+  late final _unlink1 = _unlinkPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   void rewind(
     ffi.Pointer<FILE> _Stream,
@@ -1649,18 +1316,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _rewindPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>)>>(
-          'rewind');
-  late final _rewind =
-      _rewindPtr.asFunction<void Function(ffi.Pointer<FILE>)>();
+  late final _rewindPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>)>>('rewind');
+  late final _rewind = _rewindPtr.asFunction<void Function(ffi.Pointer<FILE>)>();
 
   int _rmtmp() {
     return __rmtmp();
   }
 
-  late final __rmtmpPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('_rmtmp');
+  late final __rmtmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('_rmtmp');
   late final __rmtmp = __rmtmpPtr.asFunction<int Function()>();
 
   void setbuf(
@@ -1673,12 +1336,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _setbufPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>)>>('setbuf');
-  late final _setbuf = _setbufPtr
-      .asFunction<void Function(ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>)>();
+  late final _setbufPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>)>>('setbuf');
+  late final _setbuf = _setbufPtr.asFunction<void Function(ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>)>();
 
   int _setmaxstdio(
     int _Maximum,
@@ -1688,8 +1347,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __setmaxstdioPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('_setmaxstdio');
+  late final __setmaxstdioPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('_setmaxstdio');
   late final __setmaxstdio = __setmaxstdioPtr.asFunction<int Function(int)>();
 
   int setvbuf(
@@ -1706,12 +1364,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _setvbufPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, ffi.Int,
-              ffi.Size)>>('setvbuf');
-  late final _setvbuf = _setvbufPtr.asFunction<
-      int Function(ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, int, int)>();
+  late final _setvbufPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, ffi.Int, ffi.Size)>>('setvbuf');
+  late final _setvbuf = _setvbufPtr.asFunction<int Function(ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, int, int)>();
 
   ffi.Pointer<ffi.Char> _tempnam(
     ffi.Pointer<ffi.Char> _DirectoryName,
@@ -1723,20 +1377,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final __tempnamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_tempnam');
-  late final __tempnam = __tempnamPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final __tempnamPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_tempnam');
+  late final __tempnam = __tempnamPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<FILE> tmpfile() {
     return _tmpfile();
   }
 
-  late final _tmpfilePtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function()>>('tmpfile');
+  late final _tmpfilePtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function()>>('tmpfile');
   late final _tmpfile = _tmpfilePtr.asFunction<ffi.Pointer<FILE> Function()>();
 
   ffi.Pointer<ffi.Char> tmpnam(
@@ -1747,11 +1395,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tmpnamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('tmpnam');
-  late final _tmpnam = _tmpnamPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final _tmpnamPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('tmpnam');
+  late final _tmpnam = _tmpnamPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   int ungetc(
     int _Character,
@@ -1763,11 +1408,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ungetcPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>(
-          'ungetc');
-  late final _ungetc =
-      _ungetcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final _ungetcPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>('ungetc');
+  late final _ungetc = _ungetcPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   void _lock_file(
     ffi.Pointer<FILE> _Stream,
@@ -1777,11 +1419,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __lock_filePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>)>>(
-          '_lock_file');
-  late final __lock_file =
-      __lock_filePtr.asFunction<void Function(ffi.Pointer<FILE>)>();
+  late final __lock_filePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>)>>('_lock_file');
+  late final __lock_file = __lock_filePtr.asFunction<void Function(ffi.Pointer<FILE>)>();
 
   void _unlock_file(
     ffi.Pointer<FILE> _Stream,
@@ -1791,11 +1430,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __unlock_filePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>)>>(
-          '_unlock_file');
-  late final __unlock_file =
-      __unlock_filePtr.asFunction<void Function(ffi.Pointer<FILE>)>();
+  late final __unlock_filePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>)>>('_unlock_file');
+  late final __unlock_file = __unlock_filePtr.asFunction<void Function(ffi.Pointer<FILE>)>();
 
   int _fclose_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -1805,11 +1441,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fclose_nolockPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          '_fclose_nolock');
-  late final __fclose_nolock =
-      __fclose_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __fclose_nolockPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('_fclose_nolock');
+  late final __fclose_nolock = __fclose_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _fflush_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -1819,11 +1452,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fflush_nolockPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          '_fflush_nolock');
-  late final __fflush_nolock =
-      __fflush_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __fflush_nolockPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('_fflush_nolock');
+  late final __fflush_nolock = __fflush_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _fgetc_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -1833,11 +1463,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fgetc_nolockPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          '_fgetc_nolock');
-  late final __fgetc_nolock =
-      __fgetc_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __fgetc_nolockPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('_fgetc_nolock');
+  late final __fgetc_nolock = __fgetc_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _fputc_nolock(
     int _Character,
@@ -1849,11 +1476,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fputc_nolockPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>(
-          '_fputc_nolock');
-  late final __fputc_nolock =
-      __fputc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final __fputc_nolockPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>('_fputc_nolock');
+  late final __fputc_nolock = __fputc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int _fread_nolock(
     ffi.Pointer<ffi.Void> _Buffer,
@@ -1869,12 +1493,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fread_nolockPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size,
-              ffi.Pointer<FILE>)>>('_fread_nolock');
-  late final __fread_nolock = __fread_nolockPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Void>, int, int, ffi.Pointer<FILE>)>();
+  late final __fread_nolockPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Pointer<FILE>)>>('_fread_nolock');
+  late final __fread_nolock = __fread_nolockPtr.asFunction<int Function(ffi.Pointer<ffi.Void>, int, int, ffi.Pointer<FILE>)>();
 
   int _fread_nolock_s(
     ffi.Pointer<ffi.Void> _Buffer,
@@ -1892,12 +1513,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fread_nolock_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Size,
-              ffi.Pointer<FILE>)>>('_fread_nolock_s');
-  late final __fread_nolock_s = __fread_nolock_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Void>, int, int, int, ffi.Pointer<FILE>)>();
+  late final __fread_nolock_sPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Size, ffi.Pointer<FILE>)>>('_fread_nolock_s');
+  late final __fread_nolock_s = __fread_nolock_sPtr.asFunction<int Function(ffi.Pointer<ffi.Void>, int, int, int, ffi.Pointer<FILE>)>();
 
   int _fseek_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -1911,12 +1529,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fseek_nolockPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<FILE>, ffi.Long, ffi.Int)>>('_fseek_nolock');
-  late final __fseek_nolock =
-      __fseek_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>, int, int)>();
+  late final __fseek_nolockPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>, ffi.Long, ffi.Int)>>('_fseek_nolock');
+  late final __fseek_nolock = __fseek_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>, int, int)>();
 
   int _fseeki64_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -1930,12 +1544,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fseeki64_nolockPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<FILE>, ffi.LongLong, ffi.Int)>>('_fseeki64_nolock');
-  late final __fseeki64_nolock = __fseeki64_nolockPtr
-      .asFunction<int Function(ffi.Pointer<FILE>, int, int)>();
+  late final __fseeki64_nolockPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>, ffi.LongLong, ffi.Int)>>('_fseeki64_nolock');
+  late final __fseeki64_nolock = __fseeki64_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>, int, int)>();
 
   int _ftell_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -1945,11 +1555,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ftell_nolockPtr =
-      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<FILE>)>>(
-          '_ftell_nolock');
-  late final __ftell_nolock =
-      __ftell_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __ftell_nolockPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<FILE>)>>('_ftell_nolock');
+  late final __ftell_nolock = __ftell_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _ftelli64_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -1959,11 +1566,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ftelli64_nolockPtr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<FILE>)>>(
-          '_ftelli64_nolock');
-  late final __ftelli64_nolock =
-      __ftelli64_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __ftelli64_nolockPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<FILE>)>>('_ftelli64_nolock');
+  late final __ftelli64_nolock = __ftelli64_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _fwrite_nolock(
     ffi.Pointer<ffi.Void> _Buffer,
@@ -1979,12 +1583,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fwrite_nolockPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size,
-              ffi.Pointer<FILE>)>>('_fwrite_nolock');
-  late final __fwrite_nolock = __fwrite_nolockPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Void>, int, int, ffi.Pointer<FILE>)>();
+  late final __fwrite_nolockPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Pointer<FILE>)>>('_fwrite_nolock');
+  late final __fwrite_nolock = __fwrite_nolockPtr.asFunction<int Function(ffi.Pointer<ffi.Void>, int, int, ffi.Pointer<FILE>)>();
 
   int _getc_nolock(
     ffi.Pointer<FILE> _Stream,
@@ -1994,11 +1595,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __getc_nolockPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          '_getc_nolock');
-  late final __getc_nolock =
-      __getc_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final __getc_nolockPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('_getc_nolock');
+  late final __getc_nolock = __getc_nolockPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int _putc_nolock(
     int _Character,
@@ -2010,11 +1608,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __putc_nolockPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>(
-          '_putc_nolock');
-  late final __putc_nolock =
-      __putc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final __putc_nolockPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>('_putc_nolock');
+  late final __putc_nolock = __putc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int _ungetc_nolock(
     int _Character,
@@ -2026,21 +1621,15 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ungetc_nolockPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>(
-          '_ungetc_nolock');
-  late final __ungetc_nolock =
-      __ungetc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final __ungetc_nolockPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>('_ungetc_nolock');
+  late final __ungetc_nolock = __ungetc_nolockPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   ffi.Pointer<ffi.Int> __p__commode() {
     return ___p__commode();
   }
 
-  late final ___p__commodePtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>(
-          '__p__commode');
-  late final ___p__commode =
-      ___p__commodePtr.asFunction<ffi.Pointer<ffi.Int> Function()>();
+  late final ___p__commodePtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>('__p__commode');
+  late final ___p__commode = ___p__commodePtr.asFunction<ffi.Pointer<ffi.Int> Function()>();
 
   int __stdio_common_vfprintf(
     int _Options,
@@ -2058,17 +1647,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vfprintfPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<FILE>,
-              ffi.Pointer<ffi.Char>,
-              _locale_t,
-              va_list)>>('__stdio_common_vfprintf');
-  late final ___stdio_common_vfprintf = ___stdio_common_vfprintfPtr.asFunction<
-      int Function(
-          int, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
+  late final ___stdio_common_vfprintfPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>>(
+          '__stdio_common_vfprintf');
+  late final ___stdio_common_vfprintf =
+      ___stdio_common_vfprintfPtr.asFunction<int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
 
   int __stdio_common_vfprintf_s(
     int _Options,
@@ -2086,18 +1669,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vfprintf_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<FILE>,
-              ffi.Pointer<ffi.Char>,
-              _locale_t,
-              va_list)>>('__stdio_common_vfprintf_s');
+  late final ___stdio_common_vfprintf_sPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>>(
+          '__stdio_common_vfprintf_s');
   late final ___stdio_common_vfprintf_s =
-      ___stdio_common_vfprintf_sPtr.asFunction<
-          int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t,
-              va_list)>();
+      ___stdio_common_vfprintf_sPtr.asFunction<int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
 
   int __stdio_common_vfprintf_p(
     int _Options,
@@ -2115,18 +1691,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vfprintf_pPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<FILE>,
-              ffi.Pointer<ffi.Char>,
-              _locale_t,
-              va_list)>>('__stdio_common_vfprintf_p');
+  late final ___stdio_common_vfprintf_pPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>>(
+          '__stdio_common_vfprintf_p');
   late final ___stdio_common_vfprintf_p =
-      ___stdio_common_vfprintf_pPtr.asFunction<
-          int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t,
-              va_list)>();
+      ___stdio_common_vfprintf_pPtr.asFunction<int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
 
   int _set_printf_count_output(
     int _Value,
@@ -2136,21 +1705,15 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_printf_count_outputPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
-          '_set_printf_count_output');
-  late final __set_printf_count_output =
-      __set_printf_count_outputPtr.asFunction<int Function(int)>();
+  late final __set_printf_count_outputPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('_set_printf_count_output');
+  late final __set_printf_count_output = __set_printf_count_outputPtr.asFunction<int Function(int)>();
 
   int _get_printf_count_output() {
     return __get_printf_count_output();
   }
 
-  late final __get_printf_count_outputPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>(
-          '_get_printf_count_output');
-  late final __get_printf_count_output =
-      __get_printf_count_outputPtr.asFunction<int Function()>();
+  late final __get_printf_count_outputPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('_get_printf_count_output');
+  late final __get_printf_count_output = __get_printf_count_outputPtr.asFunction<int Function()>();
 
   int __stdio_common_vfscanf(
     int _Options,
@@ -2168,17 +1731,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vfscanfPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<FILE>,
-              ffi.Pointer<ffi.Char>,
-              _locale_t,
-              va_list)>>('__stdio_common_vfscanf');
-  late final ___stdio_common_vfscanf = ___stdio_common_vfscanfPtr.asFunction<
-      int Function(
-          int, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
+  late final ___stdio_common_vfscanfPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>>(
+          '__stdio_common_vfscanf');
+  late final ___stdio_common_vfscanf =
+      ___stdio_common_vfscanfPtr.asFunction<int Function(int, ffi.Pointer<FILE>, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
 
   int __stdio_common_vsprintf(
     int _Options,
@@ -2198,18 +1755,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vsprintfPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              _locale_t,
-              va_list)>>('__stdio_common_vsprintf');
-  late final ___stdio_common_vsprintf = ___stdio_common_vsprintfPtr.asFunction<
-      int Function(int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>,
-          _locale_t, va_list)>();
+  late final ___stdio_common_vsprintfPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.Char>, _locale_t, va_list)>>(
+          '__stdio_common_vsprintf');
+  late final ___stdio_common_vsprintf =
+      ___stdio_common_vsprintfPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
 
   int __stdio_common_vsprintf_s(
     int _Options,
@@ -2229,19 +1779,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vsprintf_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              _locale_t,
-              va_list)>>('__stdio_common_vsprintf_s');
+  late final ___stdio_common_vsprintf_sPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.Char>, _locale_t, va_list)>>(
+          '__stdio_common_vsprintf_s');
   late final ___stdio_common_vsprintf_s =
-      ___stdio_common_vsprintf_sPtr.asFunction<
-          int Function(int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>,
-              _locale_t, va_list)>();
+      ___stdio_common_vsprintf_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
 
   int __stdio_common_vsnprintf_s(
     int _Options,
@@ -2265,18 +1807,10 @@ class YuvFfiBindings {
 
   late final ___stdio_common_vsnprintf_sPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              _locale_t,
+          ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Size, ffi.Pointer<ffi.Char>, _locale_t,
               va_list)>>('__stdio_common_vsnprintf_s');
   late final ___stdio_common_vsnprintf_s =
-      ___stdio_common_vsnprintf_sPtr.asFunction<
-          int Function(int, ffi.Pointer<ffi.Char>, int, int,
-              ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
+      ___stdio_common_vsnprintf_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
 
   int __stdio_common_vsprintf_p(
     int _Options,
@@ -2296,19 +1830,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vsprintf_pPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              _locale_t,
-              va_list)>>('__stdio_common_vsprintf_p');
+  late final ___stdio_common_vsprintf_pPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.Char>, _locale_t, va_list)>>(
+          '__stdio_common_vsprintf_p');
   late final ___stdio_common_vsprintf_p =
-      ___stdio_common_vsprintf_pPtr.asFunction<
-          int Function(int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>,
-              _locale_t, va_list)>();
+      ___stdio_common_vsprintf_pPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
 
   int __stdio_common_vsscanf(
     int _Options,
@@ -2328,18 +1854,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___stdio_common_vsscanfPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              _locale_t,
-              va_list)>>('__stdio_common_vsscanf');
-  late final ___stdio_common_vsscanf = ___stdio_common_vsscanfPtr.asFunction<
-      int Function(int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>,
-          _locale_t, va_list)>();
+  late final ___stdio_common_vsscanfPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.Char>, _locale_t, va_list)>>(
+          '__stdio_common_vsscanf');
+  late final ___stdio_common_vsscanf =
+      ___stdio_common_vsscanfPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, _locale_t, va_list)>();
 
   ffi.Pointer<ffi.Char> tempnam(
     ffi.Pointer<ffi.Char> _Directory,
@@ -2351,20 +1870,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tempnamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('tempnam');
-  late final _tempnam1 = _tempnamPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _tempnamPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('tempnam');
+  late final _tempnam1 = _tempnamPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int fcloseall() {
     return _fcloseall1();
   }
 
-  late final _fcloseallPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('fcloseall');
+  late final _fcloseallPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('fcloseall');
   late final _fcloseall1 = _fcloseallPtr.asFunction<int Function()>();
 
   ffi.Pointer<FILE> fdopen(
@@ -2377,19 +1890,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fdopenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<FILE> Function(
-              ffi.Int, ffi.Pointer<ffi.Char>)>>('fdopen');
-  late final _fdopen1 = _fdopenPtr
-      .asFunction<ffi.Pointer<FILE> Function(int, ffi.Pointer<ffi.Char>)>();
+  late final _fdopenPtr = _lookup<ffi.NativeFunction<ffi.Pointer<FILE> Function(ffi.Int, ffi.Pointer<ffi.Char>)>>('fdopen');
+  late final _fdopen1 = _fdopenPtr.asFunction<ffi.Pointer<FILE> Function(int, ffi.Pointer<ffi.Char>)>();
 
   int fgetchar() {
     return _fgetchar1();
   }
 
-  late final _fgetcharPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('fgetchar');
+  late final _fgetcharPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('fgetchar');
   late final _fgetchar1 = _fgetcharPtr.asFunction<int Function()>();
 
   int fileno(
@@ -2400,18 +1908,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _filenoPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>(
-          'fileno');
-  late final _fileno1 =
-      _filenoPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
+  late final _filenoPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('fileno');
+  late final _fileno1 = _filenoPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int flushall() {
     return _flushall1();
   }
 
-  late final _flushallPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('flushall');
+  late final _flushallPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('flushall');
   late final _flushall1 = _flushallPtr.asFunction<int Function()>();
 
   int fputchar(
@@ -2422,8 +1926,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fputcharPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('fputchar');
+  late final _fputcharPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('fputchar');
   late final _fputchar1 = _fputcharPtr.asFunction<int Function(int)>();
 
   int getw(
@@ -2434,8 +1937,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _getwPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('getw');
+  late final _getwPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<FILE>)>>('getw');
   late final _getw1 = _getwPtr.asFunction<int Function(ffi.Pointer<FILE>)>();
 
   int putw(
@@ -2448,18 +1950,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _putwPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>(
-          'putw');
-  late final _putw1 =
-      _putwPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
+  late final _putwPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<FILE>)>>('putw');
+  late final _putw1 = _putwPtr.asFunction<int Function(int, ffi.Pointer<FILE>)>();
 
   int rmtmp() {
     return _rmtmp1();
   }
 
-  late final _rmtmpPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('rmtmp');
+  late final _rmtmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('rmtmp');
   late final _rmtmp1 = _rmtmpPtr.asFunction<int Function()>();
 
   ffi.Pointer<ffi.Void> _calloc_base(
@@ -2472,11 +1970,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __calloc_basePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Size, ffi.Size)>>('_calloc_base');
-  late final __calloc_base =
-      __calloc_basePtr.asFunction<ffi.Pointer<ffi.Void> Function(int, int)>();
+  late final __calloc_basePtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Size, ffi.Size)>>('_calloc_base');
+  late final __calloc_base = __calloc_basePtr.asFunction<ffi.Pointer<ffi.Void> Function(int, int)>();
 
   ffi.Pointer<ffi.Void> calloc(
     int _Count,
@@ -2488,11 +1983,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _callocPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Size, ffi.Size)>>('calloc');
-  late final _calloc =
-      _callocPtr.asFunction<ffi.Pointer<ffi.Void> Function(int, int)>();
+  late final _callocPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Size, ffi.Size)>>('calloc');
+  late final _calloc = _callocPtr.asFunction<ffi.Pointer<ffi.Void> Function(int, int)>();
 
   int _callnewh(
     int _Size,
@@ -2502,8 +1994,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __callnewhPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Size)>>('_callnewh');
+  late final __callnewhPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Size)>>('_callnewh');
   late final __callnewh = __callnewhPtr.asFunction<int Function(int)>();
 
   ffi.Pointer<ffi.Void> _expand(
@@ -2516,12 +2007,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __expandPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Size)>>('_expand');
-  late final __expand = __expandPtr
-      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int)>();
+  late final __expandPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size)>>('_expand');
+  late final __expand = __expandPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int)>();
 
   void _free_base(
     ffi.Pointer<ffi.Void> _Block,
@@ -2531,11 +2018,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __free_basePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
-          '_free_base');
-  late final __free_base =
-      __free_basePtr.asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+  late final __free_basePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>('_free_base');
+  late final __free_base = __free_basePtr.asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 
   void free(
     ffi.Pointer<ffi.Void> _Block,
@@ -2545,11 +2029,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _freePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
-          'free');
-  late final _free =
-      _freePtr.asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+  late final _freePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>('free');
+  late final _free = _freePtr.asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 
   ffi.Pointer<ffi.Void> _malloc_base(
     int _Size,
@@ -2559,11 +2040,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __malloc_basePtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Size)>>(
-          '_malloc_base');
-  late final __malloc_base =
-      __malloc_basePtr.asFunction<ffi.Pointer<ffi.Void> Function(int)>();
+  late final __malloc_basePtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Size)>>('_malloc_base');
+  late final __malloc_base = __malloc_basePtr.asFunction<ffi.Pointer<ffi.Void> Function(int)>();
 
   ffi.Pointer<ffi.Void> malloc(
     int _Size,
@@ -2573,11 +2051,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _mallocPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Size)>>(
-          'malloc');
-  late final _malloc =
-      _mallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(int)>();
+  late final _mallocPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Size)>>('malloc');
+  late final _malloc = _mallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(int)>();
 
   int _msize_base(
     ffi.Pointer<ffi.Void> _Block,
@@ -2587,11 +2062,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __msize_basePtr =
-      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Void>)>>(
-          '_msize_base');
-  late final __msize_base =
-      __msize_basePtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
+  late final __msize_basePtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Void>)>>('_msize_base');
+  late final __msize_base = __msize_basePtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
 
   int _msize(
     ffi.Pointer<ffi.Void> _Block,
@@ -2601,11 +2073,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __msizePtr =
-      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Void>)>>(
-          '_msize');
-  late final __msize =
-      __msizePtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
+  late final __msizePtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Void>)>>('_msize');
+  late final __msize = __msizePtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
 
   ffi.Pointer<ffi.Void> _realloc_base(
     ffi.Pointer<ffi.Void> _Block,
@@ -2617,12 +2086,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __realloc_basePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Size)>>('_realloc_base');
-  late final __realloc_base = __realloc_basePtr
-      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int)>();
+  late final __realloc_basePtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size)>>('_realloc_base');
+  late final __realloc_base = __realloc_basePtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int)>();
 
   ffi.Pointer<ffi.Void> realloc(
     ffi.Pointer<ffi.Void> _Block,
@@ -2634,12 +2099,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _reallocPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Size)>>('realloc');
-  late final _realloc = _reallocPtr
-      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int)>();
+  late final _reallocPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size)>>('realloc');
+  late final _realloc = _reallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int)>();
 
   ffi.Pointer<ffi.Void> _recalloc_base(
     ffi.Pointer<ffi.Void> _Block,
@@ -2653,12 +2114,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __recalloc_basePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size)>>('_recalloc_base');
-  late final __recalloc_base = __recalloc_basePtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
+  late final __recalloc_basePtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size)>>('_recalloc_base');
+  late final __recalloc_base = __recalloc_basePtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
 
   ffi.Pointer<ffi.Void> _recalloc(
     ffi.Pointer<ffi.Void> _Block,
@@ -2672,12 +2130,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __recallocPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size)>>('_recalloc');
-  late final __recalloc = __recallocPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
+  late final __recallocPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size)>>('_recalloc');
+  late final __recalloc = __recallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
 
   void _aligned_free(
     ffi.Pointer<ffi.Void> _Block,
@@ -2687,11 +2141,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __aligned_freePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
-          '_aligned_free');
-  late final __aligned_free =
-      __aligned_freePtr.asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+  late final __aligned_freePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>('_aligned_free');
+  late final __aligned_free = __aligned_freePtr.asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 
   ffi.Pointer<ffi.Void> _aligned_malloc(
     int _Size,
@@ -2703,12 +2154,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __aligned_mallocPtr = _lookup<
-          ffi
-          .NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Size, ffi.Size)>>(
-      '_aligned_malloc');
-  late final __aligned_malloc = __aligned_mallocPtr
-      .asFunction<ffi.Pointer<ffi.Void> Function(int, int)>();
+  late final __aligned_mallocPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Size, ffi.Size)>>('_aligned_malloc');
+  late final __aligned_malloc = __aligned_mallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(int, int)>();
 
   ffi.Pointer<ffi.Void> _aligned_offset_malloc(
     int _Size,
@@ -2722,12 +2169,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __aligned_offset_mallocPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Size, ffi.Size, ffi.Size)>>('_aligned_offset_malloc');
-  late final __aligned_offset_malloc = __aligned_offset_mallocPtr
-      .asFunction<ffi.Pointer<ffi.Void> Function(int, int, int)>();
+  late final __aligned_offset_mallocPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Size, ffi.Size, ffi.Size)>>('_aligned_offset_malloc');
+  late final __aligned_offset_malloc = __aligned_offset_mallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(int, int, int)>();
 
   int _aligned_msize(
     ffi.Pointer<ffi.Void> _Block,
@@ -2741,12 +2185,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __aligned_msizePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(
-              ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size)>>('_aligned_msize');
-  late final __aligned_msize = __aligned_msizePtr
-      .asFunction<int Function(ffi.Pointer<ffi.Void>, int, int)>();
+  late final __aligned_msizePtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size)>>('_aligned_msize');
+  late final __aligned_msize = __aligned_msizePtr.asFunction<int Function(ffi.Pointer<ffi.Void>, int, int)>();
 
   ffi.Pointer<ffi.Void> _aligned_offset_realloc(
     ffi.Pointer<ffi.Void> _Block,
@@ -2762,12 +2202,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __aligned_offset_reallocPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size,
-              ffi.Size, ffi.Size)>>('_aligned_offset_realloc');
-  late final __aligned_offset_realloc = __aligned_offset_reallocPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int, int)>();
+  late final __aligned_offset_reallocPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Size)>>('_aligned_offset_realloc');
+  late final __aligned_offset_realloc =
+      __aligned_offset_reallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int, int)>();
 
   ffi.Pointer<ffi.Void> _aligned_offset_recalloc(
     ffi.Pointer<ffi.Void> _Block,
@@ -2785,14 +2223,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final __aligned_offset_recallocPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size,
-              ffi.Size, ffi.Size, ffi.Size)>>('_aligned_offset_recalloc');
+  late final __aligned_offset_recallocPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Size, ffi.Size)>>(
+          '_aligned_offset_recalloc');
   late final __aligned_offset_recalloc =
-      __aligned_offset_recallocPtr.asFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, int, int, int, int)>();
+      __aligned_offset_recallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int, int, int)>();
 
   ffi.Pointer<ffi.Void> _aligned_realloc(
     ffi.Pointer<ffi.Void> _Block,
@@ -2806,12 +2241,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __aligned_reallocPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size)>>('_aligned_realloc');
-  late final __aligned_realloc = __aligned_reallocPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
+  late final __aligned_reallocPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size)>>('_aligned_realloc');
+  late final __aligned_realloc = __aligned_reallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
 
   ffi.Pointer<ffi.Void> _aligned_recalloc(
     ffi.Pointer<ffi.Void> _Block,
@@ -2827,19 +2259,15 @@ class YuvFfiBindings {
     );
   }
 
-  late final __aligned_recallocPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size,
-              ffi.Size, ffi.Size)>>('_aligned_recalloc');
-  late final __aligned_recalloc = __aligned_recallocPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int, int)>();
+  late final __aligned_recallocPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, ffi.Size)>>('_aligned_recalloc');
+  late final __aligned_recalloc = __aligned_recallocPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int, int)>();
 
   ffi.Pointer<ffi.Int> _errno() {
     return __errno();
   }
 
-  late final __errnoPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>('_errno');
+  late final __errnoPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>('_errno');
   late final __errno = __errnoPtr.asFunction<ffi.Pointer<ffi.Int> Function()>();
 
   int _set_errno(
@@ -2850,8 +2278,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_errnoPtr =
-      _lookup<ffi.NativeFunction<errno_t Function(ffi.Int)>>('_set_errno');
+  late final __set_errnoPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Int)>>('_set_errno');
   late final __set_errno = __set_errnoPtr.asFunction<int Function(int)>();
 
   int _get_errno(
@@ -2862,26 +2289,21 @@ class YuvFfiBindings {
     );
   }
 
-  late final __get_errnoPtr =
-      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Int>)>>(
-          '_get_errno');
-  late final __get_errno =
-      __get_errnoPtr.asFunction<int Function(ffi.Pointer<ffi.Int>)>();
+  late final __get_errnoPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Int>)>>('_get_errno');
+  late final __get_errno = __get_errnoPtr.asFunction<int Function(ffi.Pointer<ffi.Int>)>();
 
   int __threadid() {
     return ___threadid();
   }
 
-  late final ___threadidPtr =
-      _lookup<ffi.NativeFunction<ffi.UnsignedLong Function()>>('__threadid');
+  late final ___threadidPtr = _lookup<ffi.NativeFunction<ffi.UnsignedLong Function()>>('__threadid');
   late final ___threadid = ___threadidPtr.asFunction<int Function()>();
 
   int __threadhandle() {
     return ___threadhandle();
   }
 
-  late final ___threadhandlePtr =
-      _lookup<ffi.NativeFunction<ffi.UintPtr Function()>>('__threadhandle');
+  late final ___threadhandlePtr = _lookup<ffi.NativeFunction<ffi.UintPtr Function()>>('__threadhandle');
   late final ___threadhandle = ___threadhandlePtr.asFunction<int Function()>();
 
   ffi.Pointer<ffi.Void> bsearch_s(
@@ -2904,21 +2326,11 @@ class YuvFfiBindings {
 
   late final _bsearch_sPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>,
-              rsize_t,
-              rsize_t,
-              _CoreCrtSecureSearchSortCompareFunction,
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, rsize_t, rsize_t, _CoreCrtSecureSearchSortCompareFunction,
               ffi.Pointer<ffi.Void>)>>('bsearch_s');
   late final _bsearch_s = _bsearch_sPtr.asFunction<
       ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.Void>,
-          int,
-          int,
-          _CoreCrtSecureSearchSortCompareFunction,
-          ffi.Pointer<ffi.Void>)>();
+          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int, int, _CoreCrtSecureSearchSortCompareFunction, ffi.Pointer<ffi.Void>)>();
 
   void qsort_s(
     ffi.Pointer<ffi.Void> _Base,
@@ -2938,15 +2350,9 @@ class YuvFfiBindings {
 
   late final _qsort_sPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Void>,
-              rsize_t,
-              rsize_t,
-              _CoreCrtSecureSearchSortCompareFunction,
-              ffi.Pointer<ffi.Void>)>>('qsort_s');
-  late final _qsort_s = _qsort_sPtr.asFunction<
-      void Function(ffi.Pointer<ffi.Void>, int, int,
-          _CoreCrtSecureSearchSortCompareFunction, ffi.Pointer<ffi.Void>)>();
+          ffi.Void Function(ffi.Pointer<ffi.Void>, rsize_t, rsize_t, _CoreCrtSecureSearchSortCompareFunction, ffi.Pointer<ffi.Void>)>>('qsort_s');
+  late final _qsort_s =
+      _qsort_sPtr.asFunction<void Function(ffi.Pointer<ffi.Void>, int, int, _CoreCrtSecureSearchSortCompareFunction, ffi.Pointer<ffi.Void>)>();
 
   ffi.Pointer<ffi.Void> bsearch(
     ffi.Pointer<ffi.Void> _Key,
@@ -2967,18 +2373,9 @@ class YuvFfiBindings {
   late final _bsearchPtr = _lookup<
       ffi.NativeFunction<
           ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>,
-              ffi.Size,
-              ffi.Size,
-              _CoreCrtNonSecureSearchSortCompareFunction)>>('bsearch');
+              ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, _CoreCrtNonSecureSearchSortCompareFunction)>>('bsearch');
   late final _bsearch = _bsearchPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.Void>,
-          int,
-          int,
-          _CoreCrtNonSecureSearchSortCompareFunction)>();
+      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int, int, _CoreCrtNonSecureSearchSortCompareFunction)>();
 
   void qsort(
     ffi.Pointer<ffi.Void> _Base,
@@ -2994,13 +2391,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _qsortPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size,
-              _CoreCrtNonSecureSearchSortCompareFunction)>>('qsort');
-  late final _qsort = _qsortPtr.asFunction<
-      void Function(ffi.Pointer<ffi.Void>, int, int,
-          _CoreCrtNonSecureSearchSortCompareFunction)>();
+  late final _qsortPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>, ffi.Size, ffi.Size, _CoreCrtNonSecureSearchSortCompareFunction)>>('qsort');
+  late final _qsort = _qsortPtr.asFunction<void Function(ffi.Pointer<ffi.Void>, int, int, _CoreCrtNonSecureSearchSortCompareFunction)>();
 
   ffi.Pointer<ffi.Void> _lfind_s(
     ffi.Pointer<ffi.Void> _Key,
@@ -3022,21 +2415,11 @@ class YuvFfiBindings {
 
   late final __lfind_sPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.UnsignedInt>,
-              ffi.Size,
-              _CoreCrtSecureSearchSortCompareFunction,
-              ffi.Pointer<ffi.Void>)>>('_lfind_s');
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, ffi.Size,
+              _CoreCrtSecureSearchSortCompareFunction, ffi.Pointer<ffi.Void>)>>('_lfind_s');
   late final __lfind_s = __lfind_sPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.UnsignedInt>,
-          int,
-          _CoreCrtSecureSearchSortCompareFunction,
-          ffi.Pointer<ffi.Void>)>();
+      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, int,
+          _CoreCrtSecureSearchSortCompareFunction, ffi.Pointer<ffi.Void>)>();
 
   ffi.Pointer<ffi.Void> _lfind(
     ffi.Pointer<ffi.Void> _Key,
@@ -3056,19 +2439,11 @@ class YuvFfiBindings {
 
   late final __lfindPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.UnsignedInt>,
-              ffi.UnsignedInt,
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, ffi.UnsignedInt,
               _CoreCrtNonSecureSearchSortCompareFunction)>>('_lfind');
   late final __lfind = __lfindPtr.asFunction<
       ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.UnsignedInt>,
-          int,
-          _CoreCrtNonSecureSearchSortCompareFunction)>();
+          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, int, _CoreCrtNonSecureSearchSortCompareFunction)>();
 
   ffi.Pointer<ffi.Void> _lsearch_s(
     ffi.Pointer<ffi.Void> _Key,
@@ -3090,21 +2465,11 @@ class YuvFfiBindings {
 
   late final __lsearch_sPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.UnsignedInt>,
-              ffi.Size,
-              _CoreCrtSecureSearchSortCompareFunction,
-              ffi.Pointer<ffi.Void>)>>('_lsearch_s');
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, ffi.Size,
+              _CoreCrtSecureSearchSortCompareFunction, ffi.Pointer<ffi.Void>)>>('_lsearch_s');
   late final __lsearch_s = __lsearch_sPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.UnsignedInt>,
-          int,
-          _CoreCrtSecureSearchSortCompareFunction,
-          ffi.Pointer<ffi.Void>)>();
+      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, int,
+          _CoreCrtSecureSearchSortCompareFunction, ffi.Pointer<ffi.Void>)>();
 
   ffi.Pointer<ffi.Void> _lsearch(
     ffi.Pointer<ffi.Void> _Key,
@@ -3124,19 +2489,11 @@ class YuvFfiBindings {
 
   late final __lsearchPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.UnsignedInt>,
-              ffi.UnsignedInt,
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, ffi.UnsignedInt,
               _CoreCrtNonSecureSearchSortCompareFunction)>>('_lsearch');
   late final __lsearch = __lsearchPtr.asFunction<
       ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.UnsignedInt>,
-          int,
-          _CoreCrtNonSecureSearchSortCompareFunction)>();
+          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, int, _CoreCrtNonSecureSearchSortCompareFunction)>();
 
   ffi.Pointer<ffi.Void> lfind(
     ffi.Pointer<ffi.Void> _Key,
@@ -3156,19 +2513,11 @@ class YuvFfiBindings {
 
   late final _lfindPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.UnsignedInt>,
-              ffi.UnsignedInt,
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, ffi.UnsignedInt,
               _CoreCrtNonSecureSearchSortCompareFunction)>>('lfind');
   late final _lfind1 = _lfindPtr.asFunction<
       ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.UnsignedInt>,
-          int,
-          _CoreCrtNonSecureSearchSortCompareFunction)>();
+          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, int, _CoreCrtNonSecureSearchSortCompareFunction)>();
 
   ffi.Pointer<ffi.Void> lsearch(
     ffi.Pointer<ffi.Void> _Key,
@@ -3188,19 +2537,11 @@ class YuvFfiBindings {
 
   late final _lsearchPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.UnsignedInt>,
-              ffi.UnsignedInt,
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, ffi.UnsignedInt,
               _CoreCrtNonSecureSearchSortCompareFunction)>>('lsearch');
   late final _lsearch1 = _lsearchPtr.asFunction<
       ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.UnsignedInt>,
-          int,
-          _CoreCrtNonSecureSearchSortCompareFunction)>();
+          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.UnsignedInt>, int, _CoreCrtNonSecureSearchSortCompareFunction)>();
 
   int _itow_s(
     int _Value,
@@ -3216,12 +2557,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __itow_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Int, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Int)>>('_itow_s');
-  late final __itow_s = __itow_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
+  late final __itow_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Int, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Int)>>('_itow_s');
+  late final __itow_s = __itow_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<ffi.WChar> _itow(
     int _Value,
@@ -3235,12 +2572,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __itowPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Int, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_itow');
-  late final __itow = __itowPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
+  late final __itowPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Int, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_itow');
+  late final __itow = __itowPtr.asFunction<ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
 
   int _ltow_s(
     int _Value,
@@ -3256,12 +2589,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ltow_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Long, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Int)>>('_ltow_s');
-  late final __ltow_s = __ltow_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
+  late final __ltow_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Long, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Int)>>('_ltow_s');
+  late final __ltow_s = __ltow_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<ffi.WChar> _ltow(
     int _Value,
@@ -3275,12 +2604,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ltowPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Long, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_ltow');
-  late final __ltow = __ltowPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
+  late final __ltowPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Long, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_ltow');
+  late final __ltow = __ltowPtr.asFunction<ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
 
   int _ultow_s(
     int _Value,
@@ -3296,12 +2621,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ultow_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.UnsignedLong, ffi.Pointer<ffi.WChar>, ffi.Size,
-              ffi.Int)>>('_ultow_s');
-  late final __ultow_s = __ultow_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
+  late final __ultow_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.UnsignedLong, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Int)>>('_ultow_s');
+  late final __ultow_s = __ultow_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<ffi.WChar> _ultow(
     int _Value,
@@ -3315,12 +2636,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ultowPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.UnsignedLong, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_ultow');
-  late final __ultow = __ultowPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
+  late final __ultowPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.UnsignedLong, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_ultow');
+  late final __ultow = __ultowPtr.asFunction<ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
 
   double wcstod(
     ffi.Pointer<ffi.WChar> _String,
@@ -3332,13 +2649,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcstodPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>('wcstod');
-  late final _wcstod = _wcstodPtr.asFunction<
-      double Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
+  late final _wcstodPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>('wcstod');
+  late final _wcstod = _wcstodPtr.asFunction<double Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
 
   double _wcstod_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3352,13 +2664,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstod_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>, _locale_t)>>('_wcstod_l');
-  late final __wcstod_l = __wcstod_lPtr.asFunction<
-      double Function(ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.Pointer<ffi.WChar>>, _locale_t)>();
+  late final __wcstod_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, _locale_t)>>('_wcstod_l');
+  late final __wcstod_l = __wcstod_lPtr.asFunction<double Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, _locale_t)>();
 
   int wcstol(
     ffi.Pointer<ffi.WChar> _String,
@@ -3372,13 +2680,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcstolPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Long Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('wcstol');
-  late final _wcstol = _wcstolPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
+  late final _wcstolPtr =
+      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('wcstol');
+  late final _wcstol = _wcstolPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
 
   int _wcstol_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3394,16 +2698,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstol_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Long Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-              ffi.Int,
-              _locale_t)>>('_wcstol_l');
-  late final __wcstol_l = __wcstol_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-          int, _locale_t)>();
+  late final __wcstol_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int, _locale_t)>>('_wcstol_l');
+  late final __wcstol_l = __wcstol_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int, _locale_t)>();
 
   int wcstoll(
     ffi.Pointer<ffi.WChar> _String,
@@ -3417,13 +2714,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcstollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('wcstoll');
-  late final _wcstoll = _wcstollPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
+  late final _wcstollPtr =
+      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('wcstoll');
+  late final _wcstoll = _wcstollPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
 
   int _wcstoll_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3439,16 +2732,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-              ffi.Int,
-              _locale_t)>>('_wcstoll_l');
-  late final __wcstoll_l = __wcstoll_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-          int, _locale_t)>();
+  late final __wcstoll_lPtr =
+      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int, _locale_t)>>(
+          '_wcstoll_l');
+  late final __wcstoll_l = __wcstoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int, _locale_t)>();
 
   int wcstoul(
     ffi.Pointer<ffi.WChar> _String,
@@ -3462,13 +2749,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcstoulPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLong Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('wcstoul');
-  late final _wcstoul = _wcstoulPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
+  late final _wcstoulPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('wcstoul');
+  late final _wcstoul = _wcstoulPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
 
   int _wcstoul_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3484,16 +2767,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstoul_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLong Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-              ffi.Int,
-              _locale_t)>>('_wcstoul_l');
-  late final __wcstoul_l = __wcstoul_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-          int, _locale_t)>();
+  late final __wcstoul_lPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int, _locale_t)>>(
+          '_wcstoul_l');
+  late final __wcstoul_l = __wcstoul_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int, _locale_t)>();
 
   int wcstoull(
     ffi.Pointer<ffi.WChar> _String,
@@ -3507,13 +2784,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcstoullPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('wcstoull');
-  late final _wcstoull = _wcstoullPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
+  late final _wcstoullPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('wcstoull');
+  late final _wcstoull = _wcstoullPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
 
   int _wcstoull_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3529,16 +2802,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstoull_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-              ffi.Int,
-              _locale_t)>>('_wcstoull_l');
-  late final __wcstoull_l = __wcstoull_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-          int, _locale_t)>();
+  late final __wcstoull_lPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int, _locale_t)>>(
+          '_wcstoull_l');
+  late final __wcstoull_l = __wcstoull_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int, _locale_t)>();
 
   double wcstof(
     ffi.Pointer<ffi.WChar> _String,
@@ -3550,13 +2817,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcstofPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Float Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>('wcstof');
-  late final _wcstof = _wcstofPtr.asFunction<
-      double Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
+  late final _wcstofPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>('wcstof');
+  late final _wcstof = _wcstofPtr.asFunction<double Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
 
   double _wcstof_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3570,13 +2832,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstof_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Float Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>, _locale_t)>>('_wcstof_l');
-  late final __wcstof_l = __wcstof_lPtr.asFunction<
-      double Function(ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.Pointer<ffi.WChar>>, _locale_t)>();
+  late final __wcstof_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, _locale_t)>>('_wcstof_l');
+  late final __wcstof_l = __wcstof_lPtr.asFunction<double Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, _locale_t)>();
 
   double _wtof(
     ffi.Pointer<ffi.WChar> _String,
@@ -3586,11 +2844,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtofPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.WChar>)>>(
-          '_wtof');
-  late final __wtof =
-      __wtofPtr.asFunction<double Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wtofPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.WChar>)>>('_wtof');
+  late final __wtof = __wtofPtr.asFunction<double Function(ffi.Pointer<ffi.WChar>)>();
 
   double _wtof_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3602,11 +2857,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtof_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtof_l');
-  late final __wtof_l = __wtof_lPtr
-      .asFunction<double Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wtof_lPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtof_l');
+  late final __wtof_l = __wtof_lPtr.asFunction<double Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int _wtoi(
     ffi.Pointer<ffi.WChar> _String,
@@ -3616,11 +2868,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtoiPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>(
-          '_wtoi');
-  late final __wtoi =
-      __wtoiPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wtoiPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>('_wtoi');
+  late final __wtoi = __wtoiPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
 
   int _wtoi_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3632,11 +2881,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtoi_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtoi_l');
-  late final __wtoi_l =
-      __wtoi_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wtoi_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtoi_l');
+  late final __wtoi_l = __wtoi_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int _wtol(
     ffi.Pointer<ffi.WChar> _String,
@@ -3646,11 +2892,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtolPtr =
-      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.WChar>)>>(
-          '_wtol');
-  late final __wtol =
-      __wtolPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wtolPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.WChar>)>>('_wtol');
+  late final __wtol = __wtolPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
 
   int _wtol_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3662,11 +2905,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtol_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Long Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtol_l');
-  late final __wtol_l =
-      __wtol_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wtol_lPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtol_l');
+  late final __wtol_l = __wtol_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int _wtoll(
     ffi.Pointer<ffi.WChar> _String,
@@ -3676,11 +2916,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtollPtr = _lookup<
-      ffi
-      .NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>)>>('_wtoll');
-  late final __wtoll =
-      __wtollPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wtollPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>)>>('_wtoll');
+  late final __wtoll = __wtollPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
 
   int _wtoll_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3692,12 +2929,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(
-              ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtoll_l');
-  late final __wtoll_l = __wtoll_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wtoll_lPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtoll_l');
+  late final __wtoll_l = __wtoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int _i64tow_s(
     int _Value,
@@ -3713,12 +2946,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __i64tow_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.LongLong, ffi.Pointer<ffi.WChar>, ffi.Size,
-              ffi.Int)>>('_i64tow_s');
-  late final __i64tow_s = __i64tow_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
+  late final __i64tow_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.LongLong, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Int)>>('_i64tow_s');
+  late final __i64tow_s = __i64tow_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<ffi.WChar> _i64tow(
     int _Value,
@@ -3732,12 +2961,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __i64towPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.LongLong, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_i64tow');
-  late final __i64tow = __i64towPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
+  late final __i64towPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.LongLong, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_i64tow');
+  late final __i64tow = __i64towPtr.asFunction<ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
 
   int _ui64tow_s(
     int _Value,
@@ -3753,12 +2978,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ui64tow_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.WChar>,
-              ffi.Size, ffi.Int)>>('_ui64tow_s');
-  late final __ui64tow_s = __ui64tow_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
+  late final __ui64tow_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Int)>>('_ui64tow_s');
+  late final __ui64tow_s = __ui64tow_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<ffi.WChar> _ui64tow(
     int _Value,
@@ -3772,12 +2994,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ui64towPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.WChar>, ffi.Int)>>('_ui64tow');
-  late final __ui64tow = __ui64towPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
+  late final __ui64towPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.WChar>, ffi.Int)>>('_ui64tow');
+  late final __ui64tow = __ui64towPtr.asFunction<ffi.Pointer<ffi.WChar> Function(int, ffi.Pointer<ffi.WChar>, int)>();
 
   int _wtoi64(
     ffi.Pointer<ffi.WChar> _String,
@@ -3787,11 +3006,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtoi64Ptr = _lookup<
-          ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>)>>(
-      '_wtoi64');
-  late final __wtoi64 =
-      __wtoi64Ptr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wtoi64Ptr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>)>>('_wtoi64');
+  late final __wtoi64 = __wtoi64Ptr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
 
   int _wtoi64_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3803,12 +3019,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wtoi64_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(
-              ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtoi64_l');
-  late final __wtoi64_l = __wtoi64_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wtoi64_lPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wtoi64_l');
+  late final __wtoi64_l = __wtoi64_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int _wcstoi64(
     ffi.Pointer<ffi.WChar> _String,
@@ -3822,13 +3034,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstoi64Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('_wcstoi64');
-  late final __wcstoi64 = __wcstoi64Ptr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
+  late final __wcstoi64Ptr =
+      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('_wcstoi64');
+  late final __wcstoi64 = __wcstoi64Ptr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
 
   int _wcstoi64_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3844,16 +3052,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstoi64_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-              ffi.Int,
-              _locale_t)>>('_wcstoi64_l');
-  late final __wcstoi64_l = __wcstoi64_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-          int, _locale_t)>();
+  late final __wcstoi64_lPtr =
+      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int, _locale_t)>>(
+          '_wcstoi64_l');
+  late final __wcstoi64_l = __wcstoi64_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int, _locale_t)>();
 
   int _wcstoui64(
     ffi.Pointer<ffi.WChar> _String,
@@ -3867,13 +3069,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstoui64Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('_wcstoui64');
-  late final __wcstoui64 = __wcstoui64Ptr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
+  late final __wcstoui64Ptr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int)>>('_wcstoui64');
+  late final __wcstoui64 = __wcstoui64Ptr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int)>();
 
   int _wcstoui64_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -3889,16 +3087,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstoui64_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-              ffi.Int,
-              _locale_t)>>('_wcstoui64_l');
-  late final __wcstoui64_l = __wcstoui64_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-          int, _locale_t)>();
+  late final __wcstoui64_lPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Int, _locale_t)>>(
+          '_wcstoui64_l');
+  late final __wcstoui64_l = __wcstoui64_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>, int, _locale_t)>();
 
   ffi.Pointer<ffi.WChar> _wfullpath(
     ffi.Pointer<ffi.WChar> _Buffer,
@@ -3912,13 +3104,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wfullpathPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wfullpath');
-  late final __wfullpath = __wfullpathPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final __wfullpathPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wfullpath');
+  late final __wfullpath = __wfullpathPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   int _wmakepath_s(
     ffi.Pointer<ffi.WChar> _Buffer,
@@ -3940,21 +3128,10 @@ class YuvFfiBindings {
 
   late final __wmakepath_sPtr = _lookup<
       ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
+          errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
               ffi.Pointer<ffi.WChar>)>>('_wmakepath_s');
   late final __wmakepath_s = __wmakepath_sPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>,
-          int,
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>)>();
+      int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   void _wmakepath(
     ffi.Pointer<ffi.WChar> _Buffer,
@@ -3975,18 +3152,9 @@ class YuvFfiBindings {
   late final __wmakepathPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>)>>('_wmakepath');
+              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wmakepath');
   late final __wmakepath = __wmakepathPtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>)>();
+      void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   void _wsplitpath(
     ffi.Pointer<ffi.WChar> _FullPath,
@@ -4006,19 +3174,10 @@ class YuvFfiBindings {
 
   late final __wsplitpathPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
+          ffi.Void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
               ffi.Pointer<ffi.WChar>)>>('_wsplitpath');
   late final __wsplitpath = __wsplitpathPtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>)>();
+      void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _wsplitpath_s(
     ffi.Pointer<ffi.WChar> _FullPath,
@@ -4046,27 +3205,11 @@ class YuvFfiBindings {
 
   late final __wsplitpath_sPtr = _lookup<
       ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size)>>('_wsplitpath_s');
+          errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.WChar>,
+              ffi.Size, ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wsplitpath_s');
   late final __wsplitpath_s = __wsplitpath_sPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>,
-          int,
-          ffi.Pointer<ffi.WChar>,
-          int,
-          ffi.Pointer<ffi.WChar>,
-          int,
-          ffi.Pointer<ffi.WChar>,
-          int)>();
+      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, int,
+          ffi.Pointer<ffi.WChar>, int)>();
 
   int _wdupenv_s(
     ffi.Pointer<ffi.Pointer<ffi.WChar>> _Buffer,
@@ -4080,13 +3223,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wdupenv_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Pointer<ffi.WChar>>,
-              ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>)>>('_wdupenv_s');
-  late final __wdupenv_s = __wdupenv_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Pointer<ffi.Size>,
-          ffi.Pointer<ffi.WChar>)>();
+  late final __wdupenv_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>)>>('_wdupenv_s');
+  late final __wdupenv_s =
+      __wdupenv_sPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<ffi.WChar>>, ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<ffi.WChar> _wgetenv(
     ffi.Pointer<ffi.WChar> _VarName,
@@ -4096,11 +3236,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wgetenvPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wgetenv');
-  late final __wgetenv = __wgetenvPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wgetenvPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wgetenv');
+  late final __wgetenv = __wgetenvPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   int _wgetenv_s(
     ffi.Pointer<ffi.Size> _RequiredCount,
@@ -4116,13 +3253,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wgetenv_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>,
-              ffi.Size, ffi.Pointer<ffi.WChar>)>>('_wgetenv_s');
-  late final __wgetenv_s = __wgetenv_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>, int,
-          ffi.Pointer<ffi.WChar>)>();
+  late final __wgetenv_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.WChar>)>>('_wgetenv_s');
+  late final __wgetenv_s = __wgetenv_sPtr.asFunction<int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>)>();
 
   int _wputenv(
     ffi.Pointer<ffi.WChar> _EnvString,
@@ -4132,11 +3265,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wputenvPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>(
-          '_wputenv');
-  late final __wputenv =
-      __wputenvPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wputenvPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>('_wputenv');
+  late final __wputenv = __wputenvPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
 
   int _wputenv_s(
     ffi.Pointer<ffi.WChar> _Name,
@@ -4148,12 +3278,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wputenv_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wputenv_s');
-  late final __wputenv_s = __wputenv_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final __wputenv_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wputenv_s');
+  late final __wputenv_s = __wputenv_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _wsearchenv_s(
     ffi.Pointer<ffi.WChar> _Filename,
@@ -4169,13 +3295,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wsearchenv_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wsearchenv_s');
-  late final __wsearchenv_s = __wsearchenv_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>, int)>();
+  late final __wsearchenv_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>(
+          '_wsearchenv_s');
+  late final __wsearchenv_s =
+      __wsearchenv_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   void _wsearchenv(
     ffi.Pointer<ffi.WChar> _Filename,
@@ -4189,13 +3313,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wsearchenvPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>)>>('_wsearchenv');
-  late final __wsearchenv = __wsearchenvPtr.asFunction<
-      void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>)>();
+  late final __wsearchenvPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wsearchenv');
+  late final __wsearchenv = __wsearchenvPtr.asFunction<void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _wsystem(
     ffi.Pointer<ffi.WChar> _Command,
@@ -4205,11 +3325,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wsystemPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>(
-          '_wsystem');
-  late final __wsystem =
-      __wsystemPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wsystemPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>)>>('_wsystem');
+  late final __wsystem = __wsystemPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
 
   void _swab(
     ffi.Pointer<ffi.Char> _Buf1,
@@ -4223,12 +3340,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __swabPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Int)>>('_swab');
-  late final __swab = __swabPtr.asFunction<
-      void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final __swabPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Int)>>('_swab');
+  late final __swab = __swabPtr.asFunction<void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   void exit(
     int _Code,
@@ -4238,8 +3351,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _exitPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('exit');
+  late final _exitPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('exit');
   late final _exit1 = _exitPtr.asFunction<void Function(int)>();
 
   void _exit(
@@ -4250,8 +3362,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __exitPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('_exit');
+  late final __exitPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('_exit');
   late final __exit = __exitPtr.asFunction<void Function(int)>();
 
   void _Exit(
@@ -4262,8 +3373,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ExitPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('_Exit');
+  late final __ExitPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('_Exit');
   late final __Exit = __ExitPtr.asFunction<void Function(int)>();
 
   void quick_exit(
@@ -4274,16 +3384,14 @@ class YuvFfiBindings {
     );
   }
 
-  late final _quick_exitPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('quick_exit');
+  late final _quick_exitPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('quick_exit');
   late final _quick_exit = _quick_exitPtr.asFunction<void Function(int)>();
 
   void abort() {
     return _abort();
   }
 
-  late final _abortPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('abort');
+  late final _abortPtr = _lookup<ffi.NativeFunction<ffi.Void Function()>>('abort');
   late final _abort = _abortPtr.asFunction<void Function()>();
 
   int _set_abort_behavior(
@@ -4296,12 +3404,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_abort_behaviorPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedInt Function(
-              ffi.UnsignedInt, ffi.UnsignedInt)>>('_set_abort_behavior');
-  late final __set_abort_behavior =
-      __set_abort_behaviorPtr.asFunction<int Function(int, int)>();
+  late final __set_abort_behaviorPtr = _lookup<ffi.NativeFunction<ffi.UnsignedInt Function(ffi.UnsignedInt, ffi.UnsignedInt)>>('_set_abort_behavior');
+  late final __set_abort_behavior = __set_abort_behaviorPtr.asFunction<int Function(int, int)>();
 
   int atexit(
     ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> arg0,
@@ -4311,12 +3415,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atexitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>('atexit');
-  late final _atexit = _atexitPtr.asFunction<
-      int Function(ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>();
+  late final _atexitPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>('atexit');
+  late final _atexit = _atexitPtr.asFunction<int Function(ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>();
 
   _onexit_t _onexit(
     _onexit_t _Func,
@@ -4326,8 +3426,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __onexitPtr =
-      _lookup<ffi.NativeFunction<_onexit_t Function(_onexit_t)>>('_onexit');
+  late final __onexitPtr = _lookup<ffi.NativeFunction<_onexit_t Function(_onexit_t)>>('_onexit');
   late final __onexit = __onexitPtr.asFunction<_onexit_t Function(_onexit_t)>();
 
   int at_quick_exit(
@@ -4338,13 +3437,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _at_quick_exitPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>(
-      'at_quick_exit');
-  late final _at_quick_exit = _at_quick_exitPtr.asFunction<
-      int Function(ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>();
+  late final _at_quick_exitPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>('at_quick_exit');
+  late final _at_quick_exit = _at_quick_exitPtr.asFunction<int Function(ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>();
 
   _purecall_handler _set_purecall_handler(
     _purecall_handler _Handler,
@@ -4354,21 +3448,15 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_purecall_handlerPtr = _lookup<
-          ffi.NativeFunction<_purecall_handler Function(_purecall_handler)>>(
-      '_set_purecall_handler');
-  late final __set_purecall_handler = __set_purecall_handlerPtr
-      .asFunction<_purecall_handler Function(_purecall_handler)>();
+  late final __set_purecall_handlerPtr = _lookup<ffi.NativeFunction<_purecall_handler Function(_purecall_handler)>>('_set_purecall_handler');
+  late final __set_purecall_handler = __set_purecall_handlerPtr.asFunction<_purecall_handler Function(_purecall_handler)>();
 
   _purecall_handler _get_purecall_handler() {
     return __get_purecall_handler();
   }
 
-  late final __get_purecall_handlerPtr =
-      _lookup<ffi.NativeFunction<_purecall_handler Function()>>(
-          '_get_purecall_handler');
-  late final __get_purecall_handler =
-      __get_purecall_handlerPtr.asFunction<_purecall_handler Function()>();
+  late final __get_purecall_handlerPtr = _lookup<ffi.NativeFunction<_purecall_handler Function()>>('_get_purecall_handler');
+  late final __get_purecall_handler = __get_purecall_handlerPtr.asFunction<_purecall_handler Function()>();
 
   _invalid_parameter_handler _set_invalid_parameter_handler(
     _invalid_parameter_handler _Handler,
@@ -4378,24 +3466,18 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_invalid_parameter_handlerPtr = _lookup<
-      ffi.NativeFunction<
-          _invalid_parameter_handler Function(
-              _invalid_parameter_handler)>>('_set_invalid_parameter_handler');
+  late final __set_invalid_parameter_handlerPtr =
+      _lookup<ffi.NativeFunction<_invalid_parameter_handler Function(_invalid_parameter_handler)>>('_set_invalid_parameter_handler');
   late final __set_invalid_parameter_handler =
-      __set_invalid_parameter_handlerPtr.asFunction<
-          _invalid_parameter_handler Function(_invalid_parameter_handler)>();
+      __set_invalid_parameter_handlerPtr.asFunction<_invalid_parameter_handler Function(_invalid_parameter_handler)>();
 
   _invalid_parameter_handler _get_invalid_parameter_handler() {
     return __get_invalid_parameter_handler();
   }
 
   late final __get_invalid_parameter_handlerPtr =
-      _lookup<ffi.NativeFunction<_invalid_parameter_handler Function()>>(
-          '_get_invalid_parameter_handler');
-  late final __get_invalid_parameter_handler =
-      __get_invalid_parameter_handlerPtr
-          .asFunction<_invalid_parameter_handler Function()>();
+      _lookup<ffi.NativeFunction<_invalid_parameter_handler Function()>>('_get_invalid_parameter_handler');
+  late final __get_invalid_parameter_handler = __get_invalid_parameter_handlerPtr.asFunction<_invalid_parameter_handler Function()>();
 
   _invalid_parameter_handler _set_thread_local_invalid_parameter_handler(
     _invalid_parameter_handler _Handler,
@@ -4405,24 +3487,19 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_thread_local_invalid_parameter_handlerPtr = _lookup<
-          ffi.NativeFunction<
-              _invalid_parameter_handler Function(_invalid_parameter_handler)>>(
-      '_set_thread_local_invalid_parameter_handler');
+  late final __set_thread_local_invalid_parameter_handlerPtr =
+      _lookup<ffi.NativeFunction<_invalid_parameter_handler Function(_invalid_parameter_handler)>>('_set_thread_local_invalid_parameter_handler');
   late final __set_thread_local_invalid_parameter_handler =
-      __set_thread_local_invalid_parameter_handlerPtr.asFunction<
-          _invalid_parameter_handler Function(_invalid_parameter_handler)>();
+      __set_thread_local_invalid_parameter_handlerPtr.asFunction<_invalid_parameter_handler Function(_invalid_parameter_handler)>();
 
   _invalid_parameter_handler _get_thread_local_invalid_parameter_handler() {
     return __get_thread_local_invalid_parameter_handler();
   }
 
   late final __get_thread_local_invalid_parameter_handlerPtr =
-      _lookup<ffi.NativeFunction<_invalid_parameter_handler Function()>>(
-          '_get_thread_local_invalid_parameter_handler');
+      _lookup<ffi.NativeFunction<_invalid_parameter_handler Function()>>('_get_thread_local_invalid_parameter_handler');
   late final __get_thread_local_invalid_parameter_handler =
-      __get_thread_local_invalid_parameter_handlerPtr
-          .asFunction<_invalid_parameter_handler Function()>();
+      __get_thread_local_invalid_parameter_handlerPtr.asFunction<_invalid_parameter_handler Function()>();
 
   int _set_error_mode(
     int _Mode,
@@ -4432,20 +3509,15 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_error_modePtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('_set_error_mode');
-  late final __set_error_mode =
-      __set_error_modePtr.asFunction<int Function(int)>();
+  late final __set_error_modePtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('_set_error_mode');
+  late final __set_error_mode = __set_error_modePtr.asFunction<int Function(int)>();
 
   ffi.Pointer<ffi.UnsignedLong> __doserrno() {
     return ___doserrno();
   }
 
-  late final ___doserrnoPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.UnsignedLong> Function()>>(
-          '__doserrno');
-  late final ___doserrno =
-      ___doserrnoPtr.asFunction<ffi.Pointer<ffi.UnsignedLong> Function()>();
+  late final ___doserrnoPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.UnsignedLong> Function()>>('__doserrno');
+  late final ___doserrno = ___doserrnoPtr.asFunction<ffi.Pointer<ffi.UnsignedLong> Function()>();
 
   int _set_doserrno(
     int _Value,
@@ -4455,9 +3527,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_doserrnoPtr =
-      _lookup<ffi.NativeFunction<errno_t Function(ffi.UnsignedLong)>>(
-          '_set_doserrno');
+  late final __set_doserrnoPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.UnsignedLong)>>('_set_doserrno');
   late final __set_doserrno = __set_doserrnoPtr.asFunction<int Function(int)>();
 
   int _get_doserrno(
@@ -4468,61 +3538,43 @@ class YuvFfiBindings {
     );
   }
 
-  late final __get_doserrnoPtr = _lookup<
-          ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.UnsignedLong>)>>(
-      '_get_doserrno');
-  late final __get_doserrno = __get_doserrnoPtr
-      .asFunction<int Function(ffi.Pointer<ffi.UnsignedLong>)>();
+  late final __get_doserrnoPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.UnsignedLong>)>>('_get_doserrno');
+  late final __get_doserrno = __get_doserrnoPtr.asFunction<int Function(ffi.Pointer<ffi.UnsignedLong>)>();
 
   ffi.Pointer<ffi.Pointer<ffi.Char>> __sys_errlist() {
     return ___sys_errlist();
   }
 
-  late final ___sys_errlistPtr = _lookup<
-          ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>>(
-      '__sys_errlist');
-  late final ___sys_errlist = ___sys_errlistPtr
-      .asFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>();
+  late final ___sys_errlistPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>>('__sys_errlist');
+  late final ___sys_errlist = ___sys_errlistPtr.asFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>();
 
   ffi.Pointer<ffi.Int> __sys_nerr() {
     return ___sys_nerr();
   }
 
-  late final ___sys_nerrPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>(
-          '__sys_nerr');
-  late final ___sys_nerr =
-      ___sys_nerrPtr.asFunction<ffi.Pointer<ffi.Int> Function()>();
+  late final ___sys_nerrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>('__sys_nerr');
+  late final ___sys_nerr = ___sys_nerrPtr.asFunction<ffi.Pointer<ffi.Int> Function()>();
 
   ffi.Pointer<ffi.Pointer<ffi.Char>> __p__pgmptr() {
     return ___p__pgmptr();
   }
 
-  late final ___p__pgmptrPtr = _lookup<
-          ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>>(
-      '__p__pgmptr');
-  late final ___p__pgmptr = ___p__pgmptrPtr
-      .asFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>();
+  late final ___p__pgmptrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>>('__p__pgmptr');
+  late final ___p__pgmptr = ___p__pgmptrPtr.asFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>();
 
   ffi.Pointer<ffi.Pointer<ffi.WChar>> __p__wpgmptr() {
     return ___p__wpgmptr();
   }
 
-  late final ___p__wpgmptrPtr = _lookup<
-          ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.WChar>> Function()>>(
-      '__p__wpgmptr');
-  late final ___p__wpgmptr = ___p__wpgmptrPtr
-      .asFunction<ffi.Pointer<ffi.Pointer<ffi.WChar>> Function()>();
+  late final ___p__wpgmptrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.WChar>> Function()>>('__p__wpgmptr');
+  late final ___p__wpgmptr = ___p__wpgmptrPtr.asFunction<ffi.Pointer<ffi.Pointer<ffi.WChar>> Function()>();
 
   ffi.Pointer<ffi.Int> __p__fmode() {
     return ___p__fmode();
   }
 
-  late final ___p__fmodePtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>(
-          '__p__fmode');
-  late final ___p__fmode =
-      ___p__fmodePtr.asFunction<ffi.Pointer<ffi.Int> Function()>();
+  late final ___p__fmodePtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>('__p__fmode');
+  late final ___p__fmode = ___p__fmodePtr.asFunction<ffi.Pointer<ffi.Int> Function()>();
 
   int _get_pgmptr(
     ffi.Pointer<ffi.Pointer<ffi.Char>> _Value,
@@ -4532,11 +3584,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __get_pgmptrPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Pointer<ffi.Char>>)>>('_get_pgmptr');
-  late final __get_pgmptr = __get_pgmptrPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+  late final __get_pgmptrPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<ffi.Char>>)>>('_get_pgmptr');
+  late final __get_pgmptr = __get_pgmptrPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
 
   int _get_wpgmptr(
     ffi.Pointer<ffi.Pointer<ffi.WChar>> _Value,
@@ -4546,12 +3595,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __get_wpgmptrPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>('_get_wpgmptr');
-  late final __get_wpgmptr = __get_wpgmptrPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
+  late final __get_wpgmptrPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>('_get_wpgmptr');
+  late final __get_wpgmptr = __get_wpgmptrPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
 
   int _set_fmode(
     int _Mode,
@@ -4561,8 +3606,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_fmodePtr =
-      _lookup<ffi.NativeFunction<errno_t Function(ffi.Int)>>('_set_fmode');
+  late final __set_fmodePtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Int)>>('_set_fmode');
   late final __set_fmode = __set_fmodePtr.asFunction<int Function(int)>();
 
   int _get_fmode(
@@ -4573,11 +3617,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __get_fmodePtr =
-      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Int>)>>(
-          '_get_fmode');
-  late final __get_fmode =
-      __get_fmodePtr.asFunction<int Function(ffi.Pointer<ffi.Int>)>();
+  late final __get_fmodePtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Int>)>>('_get_fmode');
+  late final __get_fmode = __get_fmodePtr.asFunction<int Function(ffi.Pointer<ffi.Int>)>();
 
   int abs(
     int _Number,
@@ -4587,8 +3628,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _absPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('abs');
+  late final _absPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('abs');
   late final _abs = _absPtr.asFunction<int Function(int)>();
 
   int labs(
@@ -4599,8 +3639,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _labsPtr =
-      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Long)>>('labs');
+  late final _labsPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Long)>>('labs');
   late final _labs = _labsPtr.asFunction<int Function(int)>();
 
   int llabs(
@@ -4611,8 +3650,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _llabsPtr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.LongLong)>>('llabs');
+  late final _llabsPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.LongLong)>>('llabs');
   late final _llabs = _llabsPtr.asFunction<int Function(int)>();
 
   int _abs64(
@@ -4623,9 +3661,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __abs64Ptr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.LongLong)>>(
-          '_abs64');
+  late final __abs64Ptr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.LongLong)>>('_abs64');
   late final __abs64 = __abs64Ptr.asFunction<int Function(int)>();
 
   int _byteswap_ushort(
@@ -4636,11 +3672,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __byteswap_ushortPtr = _lookup<
-          ffi.NativeFunction<ffi.UnsignedShort Function(ffi.UnsignedShort)>>(
-      '_byteswap_ushort');
-  late final __byteswap_ushort =
-      __byteswap_ushortPtr.asFunction<int Function(int)>();
+  late final __byteswap_ushortPtr = _lookup<ffi.NativeFunction<ffi.UnsignedShort Function(ffi.UnsignedShort)>>('_byteswap_ushort');
+  late final __byteswap_ushort = __byteswap_ushortPtr.asFunction<int Function(int)>();
 
   int _byteswap_ulong(
     int _Number,
@@ -4650,11 +3683,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __byteswap_ulongPtr =
-      _lookup<ffi.NativeFunction<ffi.UnsignedLong Function(ffi.UnsignedLong)>>(
-          '_byteswap_ulong');
-  late final __byteswap_ulong =
-      __byteswap_ulongPtr.asFunction<int Function(int)>();
+  late final __byteswap_ulongPtr = _lookup<ffi.NativeFunction<ffi.UnsignedLong Function(ffi.UnsignedLong)>>('_byteswap_ulong');
+  late final __byteswap_ulong = __byteswap_ulongPtr.asFunction<int Function(int)>();
 
   int _byteswap_uint64(
     int _Number,
@@ -4664,12 +3694,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __byteswap_uint64Ptr = _lookup<
-          ffi
-          .NativeFunction<ffi.UnsignedLongLong Function(ffi.UnsignedLongLong)>>(
-      '_byteswap_uint64');
-  late final __byteswap_uint64 =
-      __byteswap_uint64Ptr.asFunction<int Function(int)>();
+  late final __byteswap_uint64Ptr = _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.UnsignedLongLong)>>('_byteswap_uint64');
+  late final __byteswap_uint64 = __byteswap_uint64Ptr.asFunction<int Function(int)>();
 
   div_t div(
     int _Numerator,
@@ -4681,8 +3707,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _divPtr =
-      _lookup<ffi.NativeFunction<div_t Function(ffi.Int, ffi.Int)>>('div');
+  late final _divPtr = _lookup<ffi.NativeFunction<div_t Function(ffi.Int, ffi.Int)>>('div');
   late final _div = _divPtr.asFunction<div_t Function(int, int)>();
 
   ldiv_t ldiv(
@@ -4695,8 +3720,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ldivPtr =
-      _lookup<ffi.NativeFunction<ldiv_t Function(ffi.Long, ffi.Long)>>('ldiv');
+  late final _ldivPtr = _lookup<ffi.NativeFunction<ldiv_t Function(ffi.Long, ffi.Long)>>('ldiv');
   late final _ldiv = _ldivPtr.asFunction<ldiv_t Function(int, int)>();
 
   lldiv_t lldiv(
@@ -4709,9 +3733,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _lldivPtr =
-      _lookup<ffi.NativeFunction<lldiv_t Function(ffi.LongLong, ffi.LongLong)>>(
-          'lldiv');
+  late final _lldivPtr = _lookup<ffi.NativeFunction<lldiv_t Function(ffi.LongLong, ffi.LongLong)>>('lldiv');
   late final _lldiv = _lldivPtr.asFunction<lldiv_t Function(int, int)>();
 
   int _rotl(
@@ -4724,9 +3746,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __rotlPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedInt Function(ffi.UnsignedInt, ffi.Int)>>('_rotl');
+  late final __rotlPtr = _lookup<ffi.NativeFunction<ffi.UnsignedInt Function(ffi.UnsignedInt, ffi.Int)>>('_rotl');
   late final __rotl = __rotlPtr.asFunction<int Function(int, int)>();
 
   int _lrotl(
@@ -4739,9 +3759,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __lrotlPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLong Function(ffi.UnsignedLong, ffi.Int)>>('_lrotl');
+  late final __lrotlPtr = _lookup<ffi.NativeFunction<ffi.UnsignedLong Function(ffi.UnsignedLong, ffi.Int)>>('_lrotl');
   late final __lrotl = __lrotlPtr.asFunction<int Function(int, int)>();
 
   int _rotl64(
@@ -4754,10 +3772,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __rotl64Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(
-              ffi.UnsignedLongLong, ffi.Int)>>('_rotl64');
+  late final __rotl64Ptr = _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.UnsignedLongLong, ffi.Int)>>('_rotl64');
   late final __rotl64 = __rotl64Ptr.asFunction<int Function(int, int)>();
 
   int _rotr(
@@ -4770,9 +3785,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __rotrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedInt Function(ffi.UnsignedInt, ffi.Int)>>('_rotr');
+  late final __rotrPtr = _lookup<ffi.NativeFunction<ffi.UnsignedInt Function(ffi.UnsignedInt, ffi.Int)>>('_rotr');
   late final __rotr = __rotrPtr.asFunction<int Function(int, int)>();
 
   int _lrotr(
@@ -4785,9 +3798,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __lrotrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLong Function(ffi.UnsignedLong, ffi.Int)>>('_lrotr');
+  late final __lrotrPtr = _lookup<ffi.NativeFunction<ffi.UnsignedLong Function(ffi.UnsignedLong, ffi.Int)>>('_lrotr');
   late final __lrotr = __lrotrPtr.asFunction<int Function(int, int)>();
 
   int _rotr64(
@@ -4800,10 +3811,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __rotr64Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(
-              ffi.UnsignedLongLong, ffi.Int)>>('_rotr64');
+  late final __rotr64Ptr = _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.UnsignedLongLong, ffi.Int)>>('_rotr64');
   late final __rotr64 = __rotr64Ptr.asFunction<int Function(int, int)>();
 
   void srand(
@@ -4814,8 +3822,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _srandPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UnsignedInt)>>('srand');
+  late final _srandPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UnsignedInt)>>('srand');
   late final _srand = _srandPtr.asFunction<void Function(int)>();
 
   int rand() {
@@ -4833,11 +3840,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atofPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.Char>)>>(
-          'atof');
-  late final _atof =
-      _atofPtr.asFunction<double Function(ffi.Pointer<ffi.Char>)>();
+  late final _atofPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.Char>)>>('atof');
+  late final _atof = _atofPtr.asFunction<double Function(ffi.Pointer<ffi.Char>)>();
 
   int atoi(
     ffi.Pointer<ffi.Char> _String,
@@ -4847,9 +3851,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atoiPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          'atoi');
+  late final _atoiPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>('atoi');
   late final _atoi = _atoiPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int atol(
@@ -4860,9 +3862,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atolPtr =
-      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.Char>)>>(
-          'atol');
+  late final _atolPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.Char>)>>('atol');
   late final _atol = _atolPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int atoll(
@@ -4873,11 +3873,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atollPtr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>)>>(
-          'atoll');
-  late final _atoll =
-      _atollPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final _atollPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>)>>('atoll');
+  late final _atoll = _atollPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int _atoi64(
     ffi.Pointer<ffi.Char> _String,
@@ -4887,11 +3884,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atoi64Ptr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>)>>(
-          '_atoi64');
-  late final __atoi64 =
-      __atoi64Ptr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final __atoi64Ptr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>)>>('_atoi64');
+  late final __atoi64 = __atoi64Ptr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   double _atof_l(
     ffi.Pointer<ffi.Char> _String,
@@ -4903,11 +3897,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atof_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_atof_l');
-  late final __atof_l = __atof_lPtr
-      .asFunction<double Function(ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __atof_lPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_atof_l');
+  late final __atof_l = __atof_lPtr.asFunction<double Function(ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int _atoi_l(
     ffi.Pointer<ffi.Char> _String,
@@ -4919,11 +3910,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atoi_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_atoi_l');
-  late final __atoi_l =
-      __atoi_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __atoi_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_atoi_l');
+  late final __atoi_l = __atoi_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int _atol_l(
     ffi.Pointer<ffi.Char> _String,
@@ -4935,11 +3923,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atol_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Long Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_atol_l');
-  late final __atol_l =
-      __atol_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __atol_lPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_atol_l');
+  late final __atol_l = __atol_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int _atoll_l(
     ffi.Pointer<ffi.Char> _String,
@@ -4951,11 +3936,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_atoll_l');
-  late final __atoll_l =
-      __atoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __atoll_lPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_atoll_l');
+  late final __atoll_l = __atoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int _atoi64_l(
     ffi.Pointer<ffi.Char> _String,
@@ -4967,12 +3949,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atoi64_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(
-              ffi.Pointer<ffi.Char>, _locale_t)>>('_atoi64_l');
-  late final __atoi64_l = __atoi64_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __atoi64_lPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_atoi64_l');
+  late final __atoi64_l = __atoi64_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int _atoflt(
     ffi.Pointer<_CRT_FLOAT> _Result,
@@ -4984,12 +3962,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atofltPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<_CRT_FLOAT>, ffi.Pointer<ffi.Char>)>>('_atoflt');
-  late final __atoflt = __atofltPtr.asFunction<
-      int Function(ffi.Pointer<_CRT_FLOAT>, ffi.Pointer<ffi.Char>)>();
+  late final __atofltPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<_CRT_FLOAT>, ffi.Pointer<ffi.Char>)>>('_atoflt');
+  late final __atoflt = __atofltPtr.asFunction<int Function(ffi.Pointer<_CRT_FLOAT>, ffi.Pointer<ffi.Char>)>();
 
   int _atodbl(
     ffi.Pointer<_CRT_DOUBLE> _Result,
@@ -5001,12 +3975,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atodblPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<_CRT_DOUBLE>, ffi.Pointer<ffi.Char>)>>('_atodbl');
-  late final __atodbl = __atodblPtr.asFunction<
-      int Function(ffi.Pointer<_CRT_DOUBLE>, ffi.Pointer<ffi.Char>)>();
+  late final __atodblPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<_CRT_DOUBLE>, ffi.Pointer<ffi.Char>)>>('_atodbl');
+  late final __atodbl = __atodblPtr.asFunction<int Function(ffi.Pointer<_CRT_DOUBLE>, ffi.Pointer<ffi.Char>)>();
 
   int _atoldbl(
     ffi.Pointer<_LDOUBLE> _Result,
@@ -5018,12 +3988,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atoldblPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<_LDOUBLE>, ffi.Pointer<ffi.Char>)>>('_atoldbl');
-  late final __atoldbl = __atoldblPtr
-      .asFunction<int Function(ffi.Pointer<_LDOUBLE>, ffi.Pointer<ffi.Char>)>();
+  late final __atoldblPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<_LDOUBLE>, ffi.Pointer<ffi.Char>)>>('_atoldbl');
+  late final __atoldbl = __atoldblPtr.asFunction<int Function(ffi.Pointer<_LDOUBLE>, ffi.Pointer<ffi.Char>)>();
 
   int _atoflt_l(
     ffi.Pointer<_CRT_FLOAT> _Result,
@@ -5037,13 +4003,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atoflt_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<_CRT_FLOAT>, ffi.Pointer<ffi.Char>,
-              _locale_t)>>('_atoflt_l');
-  late final __atoflt_l = __atoflt_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<_CRT_FLOAT>, ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __atoflt_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<_CRT_FLOAT>, ffi.Pointer<ffi.Char>, _locale_t)>>('_atoflt_l');
+  late final __atoflt_l = __atoflt_lPtr.asFunction<int Function(ffi.Pointer<_CRT_FLOAT>, ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int _atodbl_l(
     ffi.Pointer<_CRT_DOUBLE> _Result,
@@ -5057,13 +4018,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atodbl_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<_CRT_DOUBLE>, ffi.Pointer<ffi.Char>,
-              _locale_t)>>('_atodbl_l');
-  late final __atodbl_l = __atodbl_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<_CRT_DOUBLE>, ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __atodbl_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<_CRT_DOUBLE>, ffi.Pointer<ffi.Char>, _locale_t)>>('_atodbl_l');
+  late final __atodbl_l = __atodbl_lPtr.asFunction<int Function(ffi.Pointer<_CRT_DOUBLE>, ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int _atoldbl_l(
     ffi.Pointer<_LDOUBLE> _Result,
@@ -5077,12 +4033,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __atoldbl_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<_LDOUBLE>, ffi.Pointer<ffi.Char>,
-              _locale_t)>>('_atoldbl_l');
-  late final __atoldbl_l = __atoldbl_lPtr.asFunction<
-      int Function(ffi.Pointer<_LDOUBLE>, ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __atoldbl_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<_LDOUBLE>, ffi.Pointer<ffi.Char>, _locale_t)>>('_atoldbl_l');
+  late final __atoldbl_l = __atoldbl_lPtr.asFunction<int Function(ffi.Pointer<_LDOUBLE>, ffi.Pointer<ffi.Char>, _locale_t)>();
 
   double strtof(
     ffi.Pointer<ffi.Char> _String,
@@ -5094,13 +4046,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strtofPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Float Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>)>>('strtof');
-  late final _strtof = _strtofPtr.asFunction<
-      double Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+  late final _strtofPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>>('strtof');
+  late final _strtof = _strtofPtr.asFunction<double Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
 
   double _strtof_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5114,13 +4061,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtof_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Float Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>, _locale_t)>>('_strtof_l');
-  late final __strtof_l = __strtof_lPtr.asFunction<
-      double Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>,
-          _locale_t)>();
+  late final __strtof_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, _locale_t)>>('_strtof_l');
+  late final __strtof_l = __strtof_lPtr.asFunction<double Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, _locale_t)>();
 
   double strtod(
     ffi.Pointer<ffi.Char> _String,
@@ -5132,13 +4075,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strtodPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>)>>('strtod');
-  late final _strtod = _strtodPtr.asFunction<
-      double Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+  late final _strtodPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>>('strtod');
+  late final _strtod = _strtodPtr.asFunction<double Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
 
   double _strtod_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5152,13 +4090,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtod_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>, _locale_t)>>('_strtod_l');
-  late final __strtod_l = __strtod_lPtr.asFunction<
-      double Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>,
-          _locale_t)>();
+  late final __strtod_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, _locale_t)>>('_strtod_l');
+  late final __strtod_l = __strtod_lPtr.asFunction<double Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, _locale_t)>();
 
   int strtol(
     ffi.Pointer<ffi.Char> _String,
@@ -5172,13 +4106,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strtolPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Long Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('strtol');
-  late final _strtol = _strtolPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
+  late final _strtolPtr =
+      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('strtol');
+  late final _strtol = _strtolPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
 
   int _strtol_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5194,16 +4124,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtol_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Long Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Int,
-              _locale_t)>>('_strtol_l');
-  late final __strtol_l = __strtol_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>,
-          int, _locale_t)>();
+  late final __strtol_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int, _locale_t)>>('_strtol_l');
+  late final __strtol_l = __strtol_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int, _locale_t)>();
 
   int strtoll(
     ffi.Pointer<ffi.Char> _String,
@@ -5217,13 +4140,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strtollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('strtoll');
-  late final _strtoll = _strtollPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
+  late final _strtollPtr =
+      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('strtoll');
+  late final _strtoll = _strtollPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
 
   int _strtoll_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5239,16 +4158,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Int,
-              _locale_t)>>('_strtoll_l');
-  late final __strtoll_l = __strtoll_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>,
-          int, _locale_t)>();
+  late final __strtoll_lPtr =
+      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int, _locale_t)>>('_strtoll_l');
+  late final __strtoll_l = __strtoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int, _locale_t)>();
 
   int strtoul(
     ffi.Pointer<ffi.Char> _String,
@@ -5262,13 +4174,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strtoulPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLong Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('strtoul');
-  late final _strtoul = _strtoulPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
+  late final _strtoulPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('strtoul');
+  late final _strtoul = _strtoulPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
 
   int _strtoul_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5284,16 +4192,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtoul_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLong Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Int,
-              _locale_t)>>('_strtoul_l');
-  late final __strtoul_l = __strtoul_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>,
-          int, _locale_t)>();
+  late final __strtoul_lPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int, _locale_t)>>(
+          '_strtoul_l');
+  late final __strtoul_l = __strtoul_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int, _locale_t)>();
 
   int strtoull(
     ffi.Pointer<ffi.Char> _String,
@@ -5307,13 +4209,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strtoullPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('strtoull');
-  late final _strtoull = _strtoullPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
+  late final _strtoullPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('strtoull');
+  late final _strtoull = _strtoullPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
 
   int _strtoull_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5329,16 +4227,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtoull_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Int,
-              _locale_t)>>('_strtoull_l');
-  late final __strtoull_l = __strtoull_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>,
-          int, _locale_t)>();
+  late final __strtoull_lPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int, _locale_t)>>(
+          '_strtoull_l');
+  late final __strtoull_l = __strtoull_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int, _locale_t)>();
 
   int _strtoi64(
     ffi.Pointer<ffi.Char> _String,
@@ -5352,13 +4244,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtoi64Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('_strtoi64');
-  late final __strtoi64 = __strtoi64Ptr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
+  late final __strtoi64Ptr =
+      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('_strtoi64');
+  late final __strtoi64 = __strtoi64Ptr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
 
   int _strtoi64_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5374,16 +4262,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtoi64_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.LongLong Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Int,
-              _locale_t)>>('_strtoi64_l');
-  late final __strtoi64_l = __strtoi64_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>,
-          int, _locale_t)>();
+  late final __strtoi64_lPtr =
+      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int, _locale_t)>>(
+          '_strtoi64_l');
+  late final __strtoi64_l = __strtoi64_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int, _locale_t)>();
 
   int _strtoui64(
     ffi.Pointer<ffi.Char> _String,
@@ -5397,13 +4279,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtoui64Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('_strtoui64');
-  late final __strtoui64 = __strtoui64Ptr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
+  late final __strtoui64Ptr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int)>>('_strtoui64');
+  late final __strtoui64 = __strtoui64Ptr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)>();
 
   int _strtoui64_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5419,16 +4297,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strtoui64_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Int,
-              _locale_t)>>('_strtoui64_l');
-  late final __strtoui64_l = __strtoui64_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>,
-          int, _locale_t)>();
+  late final __strtoui64_lPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Int, _locale_t)>>(
+          '_strtoui64_l');
+  late final __strtoui64_l = __strtoui64_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>, int, _locale_t)>();
 
   int _itoa_s(
     int _Value,
@@ -5444,12 +4316,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __itoa_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Int, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('_itoa_s');
-  late final __itoa_s = __itoa_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
+  late final __itoa_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Int, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('_itoa_s');
+  late final __itoa_s = __itoa_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
 
   ffi.Pointer<ffi.Char> _itoa(
     int _Value,
@@ -5463,12 +4331,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __itoaPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Int, ffi.Pointer<ffi.Char>, ffi.Int)>>('_itoa');
-  late final __itoa = __itoaPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
+  late final __itoaPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int, ffi.Pointer<ffi.Char>, ffi.Int)>>('_itoa');
+  late final __itoa = __itoaPtr.asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
 
   int _ltoa_s(
     int _Value,
@@ -5484,12 +4348,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ltoa_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Long, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('_ltoa_s');
-  late final __ltoa_s = __ltoa_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
+  late final __ltoa_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Long, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('_ltoa_s');
+  late final __ltoa_s = __ltoa_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
 
   ffi.Pointer<ffi.Char> _ltoa(
     int _Value,
@@ -5503,12 +4363,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ltoaPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Long, ffi.Pointer<ffi.Char>, ffi.Int)>>('_ltoa');
-  late final __ltoa = __ltoaPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
+  late final __ltoaPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Long, ffi.Pointer<ffi.Char>, ffi.Int)>>('_ltoa');
+  late final __ltoa = __ltoaPtr.asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
 
   int _ultoa_s(
     int _Value,
@@ -5524,12 +4380,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ultoa_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.UnsignedLong, ffi.Pointer<ffi.Char>, ffi.Size,
-              ffi.Int)>>('_ultoa_s');
-  late final __ultoa_s = __ultoa_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
+  late final __ultoa_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.UnsignedLong, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('_ultoa_s');
+  late final __ultoa_s = __ultoa_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
 
   ffi.Pointer<ffi.Char> _ultoa(
     int _Value,
@@ -5543,12 +4395,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ultoaPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.UnsignedLong, ffi.Pointer<ffi.Char>, ffi.Int)>>('_ultoa');
-  late final __ultoa = __ultoaPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
+  late final __ultoaPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.UnsignedLong, ffi.Pointer<ffi.Char>, ffi.Int)>>('_ultoa');
+  late final __ultoa = __ultoaPtr.asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
 
   int _i64toa_s(
     int _Value,
@@ -5564,12 +4412,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __i64toa_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.LongLong, ffi.Pointer<ffi.Char>, ffi.Size,
-              ffi.Int)>>('_i64toa_s');
-  late final __i64toa_s = __i64toa_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
+  late final __i64toa_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.LongLong, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('_i64toa_s');
+  late final __i64toa_s = __i64toa_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
 
   ffi.Pointer<ffi.Char> _i64toa(
     int _Value,
@@ -5583,12 +4427,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __i64toaPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.LongLong, ffi.Pointer<ffi.Char>, ffi.Int)>>('_i64toa');
-  late final __i64toa = __i64toaPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
+  late final __i64toaPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.LongLong, ffi.Pointer<ffi.Char>, ffi.Int)>>('_i64toa');
+  late final __i64toa = __i64toaPtr.asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
 
   int _ui64toa_s(
     int _Value,
@@ -5604,12 +4444,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ui64toa_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.Char>,
-              ffi.Size, ffi.Int)>>('_ui64toa_s');
-  late final __ui64toa_s = __ui64toa_sPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
+  late final __ui64toa_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('_ui64toa_s');
+  late final __ui64toa_s = __ui64toa_sPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
 
   ffi.Pointer<ffi.Char> _ui64toa(
     int _Value,
@@ -5623,12 +4460,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ui64toaPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.UnsignedLongLong,
-              ffi.Pointer<ffi.Char>, ffi.Int)>>('_ui64toa');
-  late final __ui64toa = __ui64toaPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
+  late final __ui64toaPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.UnsignedLongLong, ffi.Pointer<ffi.Char>, ffi.Int)>>('_ui64toa');
+  late final __ui64toa = __ui64toaPtr.asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
 
   int _ecvt_s(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -5648,13 +4482,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ecvt_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Double, ffi.Int,
-              ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('_ecvt_s');
-  late final __ecvt_s = __ecvt_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, int, double, int,
-          ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
+  late final __ecvt_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Double, ffi.Int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>(
+          '_ecvt_s');
+  late final __ecvt_s = __ecvt_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
 
   ffi.Pointer<ffi.Char> _ecvt(
     double _Value,
@@ -5670,13 +4501,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ecvtPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int,
-              ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('_ecvt');
-  late final __ecvt = __ecvtPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
+  late final __ecvtPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('_ecvt');
+  late final __ecvt = __ecvtPtr.asFunction<ffi.Pointer<ffi.Char> Function(double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
 
   int _fcvt_s(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -5696,13 +4523,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fcvt_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Double, ffi.Int,
-              ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('_fcvt_s');
-  late final __fcvt_s = __fcvt_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, int, double, int,
-          ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
+  late final __fcvt_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Double, ffi.Int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>(
+          '_fcvt_s');
+  late final __fcvt_s = __fcvt_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
 
   ffi.Pointer<ffi.Char> _fcvt(
     double _Value,
@@ -5718,13 +4542,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fcvtPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int,
-              ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('_fcvt');
-  late final __fcvt = __fcvtPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
+  late final __fcvtPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('_fcvt');
+  late final __fcvt = __fcvtPtr.asFunction<ffi.Pointer<ffi.Char> Function(double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
 
   int _gcvt_s(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -5740,12 +4560,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __gcvt_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Double,
-              ffi.Int)>>('_gcvt_s');
-  late final __gcvt_s = __gcvt_sPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, double, int)>();
+  late final __gcvt_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Double, ffi.Int)>>('_gcvt_s');
+  late final __gcvt_s = __gcvt_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, double, int)>();
 
   ffi.Pointer<ffi.Char> _gcvt(
     double _Value,
@@ -5759,21 +4575,15 @@ class YuvFfiBindings {
     );
   }
 
-  late final __gcvtPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Double, ffi.Int, ffi.Pointer<ffi.Char>)>>('_gcvt');
-  late final __gcvt = __gcvtPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(double, int, ffi.Pointer<ffi.Char>)>();
+  late final __gcvtPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int, ffi.Pointer<ffi.Char>)>>('_gcvt');
+  late final __gcvt = __gcvtPtr.asFunction<ffi.Pointer<ffi.Char> Function(double, int, ffi.Pointer<ffi.Char>)>();
 
   int ___mb_cur_max_func() {
     return ____mb_cur_max_func();
   }
 
-  late final ____mb_cur_max_funcPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('___mb_cur_max_func');
-  late final ____mb_cur_max_func =
-      ____mb_cur_max_funcPtr.asFunction<int Function()>();
+  late final ____mb_cur_max_funcPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('___mb_cur_max_func');
+  late final ____mb_cur_max_func = ____mb_cur_max_funcPtr.asFunction<int Function()>();
 
   int ___mb_cur_max_l_func(
     _locale_t _Locale,
@@ -5783,11 +4593,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final ____mb_cur_max_l_funcPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(_locale_t)>>(
-          '___mb_cur_max_l_func');
-  late final ____mb_cur_max_l_func =
-      ____mb_cur_max_l_funcPtr.asFunction<int Function(_locale_t)>();
+  late final ____mb_cur_max_l_funcPtr = _lookup<ffi.NativeFunction<ffi.Int Function(_locale_t)>>('___mb_cur_max_l_func');
+  late final ____mb_cur_max_l_func = ____mb_cur_max_l_funcPtr.asFunction<int Function(_locale_t)>();
 
   int mblen(
     ffi.Pointer<ffi.Char> _Ch,
@@ -5799,11 +4606,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _mblenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('mblen');
-  late final _mblen =
-      _mblenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _mblenPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('mblen');
+  late final _mblen = _mblenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
 
   int _mblen_l(
     ffi.Pointer<ffi.Char> _Ch,
@@ -5817,12 +4621,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __mblen_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_mblen_l');
-  late final __mblen_l = __mblen_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __mblen_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_mblen_l');
+  late final __mblen_l = __mblen_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   int _mbstrlen(
     ffi.Pointer<ffi.Char> _String,
@@ -5832,11 +4632,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __mbstrlenPtr =
-      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>)>>(
-          '_mbstrlen');
-  late final __mbstrlen =
-      __mbstrlenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final __mbstrlenPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>)>>('_mbstrlen');
+  late final __mbstrlen = __mbstrlenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int _mbstrlen_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5848,11 +4645,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __mbstrlen_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_mbstrlen_l');
-  late final __mbstrlen_l = __mbstrlen_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __mbstrlen_lPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_mbstrlen_l');
+  late final __mbstrlen_l = __mbstrlen_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int _mbstrnlen(
     ffi.Pointer<ffi.Char> _String,
@@ -5864,11 +4658,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __mbstrnlenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('_mbstrnlen');
-  late final __mbstrnlen =
-      __mbstrnlenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
+  late final __mbstrnlenPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('_mbstrnlen');
+  late final __mbstrnlen = __mbstrnlenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
 
   int _mbstrnlen_l(
     ffi.Pointer<ffi.Char> _String,
@@ -5882,12 +4673,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __mbstrnlen_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(
-              ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_mbstrnlen_l');
-  late final __mbstrnlen_l = __mbstrnlen_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __mbstrnlen_lPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_mbstrnlen_l');
+  late final __mbstrnlen_l = __mbstrnlen_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   int mbtowc(
     ffi.Pointer<ffi.WChar> _DstCh,
@@ -5901,12 +4688,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _mbtowcPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('mbtowc');
-  late final _mbtowc = _mbtowcPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, int)>();
+  late final _mbtowcPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, ffi.Size)>>('mbtowc');
+  late final _mbtowc = _mbtowcPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, int)>();
 
   int _mbtowc_l(
     ffi.Pointer<ffi.WChar> _DstCh,
@@ -5922,13 +4705,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __mbtowc_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>,
-              ffi.Size, _locale_t)>>('_mbtowc_l');
-  late final __mbtowc_l = __mbtowc_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __mbtowc_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_mbtowc_l');
+  late final __mbtowc_l = __mbtowc_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   int mbstowcs_s(
     ffi.Pointer<ffi.Size> _PtNumOfCharConverted,
@@ -5946,13 +4725,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final _mbstowcs_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>,
-              ffi.Size, ffi.Pointer<ffi.Char>, ffi.Size)>>('mbstowcs_s');
-  late final _mbstowcs_s = _mbstowcs_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>, int,
-          ffi.Pointer<ffi.Char>, int)>();
+  late final _mbstowcs_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.Char>, ffi.Size)>>(
+          'mbstowcs_s');
+  late final _mbstowcs_s = _mbstowcs_sPtr.asFunction<int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.Char>, int)>();
 
   int mbstowcs(
     ffi.Pointer<ffi.WChar> _Dest,
@@ -5966,12 +4742,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _mbstowcsPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('mbstowcs');
-  late final _mbstowcs = _mbstowcsPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, int)>();
+  late final _mbstowcsPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, ffi.Size)>>('mbstowcs');
+  late final _mbstowcs = _mbstowcsPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, int)>();
 
   int _mbstowcs_s_l(
     ffi.Pointer<ffi.Size> _PtNumOfCharConverted,
@@ -5992,17 +4764,10 @@ class YuvFfiBindings {
   }
 
   late final __mbstowcs_s_lPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Size>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              _locale_t)>>('_mbstowcs_s_l');
-  late final __mbstowcs_s_l = __mbstowcs_s_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>, int,
-          ffi.Pointer<ffi.Char>, int, _locale_t)>();
+          ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>(
+      '_mbstowcs_s_l');
+  late final __mbstowcs_s_l =
+      __mbstowcs_s_lPtr.asFunction<int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   int _mbstowcs_l(
     ffi.Pointer<ffi.WChar> _Dest,
@@ -6018,13 +4783,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __mbstowcs_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>,
-              ffi.Size, _locale_t)>>('_mbstowcs_l');
-  late final __mbstowcs_l = __mbstowcs_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __mbstowcs_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_mbstowcs_l');
+  late final __mbstowcs_l = __mbstowcs_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   int wctomb(
     ffi.Pointer<ffi.Char> _MbCh,
@@ -6036,11 +4797,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wctombPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.WChar)>>('wctomb');
-  late final _wctomb =
-      _wctombPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _wctombPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.WChar)>>('wctomb');
+  late final _wctomb = _wctombPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
 
   int _wctomb_l(
     ffi.Pointer<ffi.Char> _MbCh,
@@ -6054,12 +4812,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wctomb_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.WChar, _locale_t)>>('_wctomb_l');
-  late final __wctomb_l = __wctomb_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __wctomb_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.WChar, _locale_t)>>('_wctomb_l');
+  late final __wctomb_l = __wctomb_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   int wctomb_s(
     ffi.Pointer<ffi.Int> _SizeConverted,
@@ -6075,12 +4829,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wctomb_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Char>, rsize_t,
-              ffi.WChar)>>('wctomb_s');
-  late final _wctomb_s = _wctomb_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Char>, int, int)>();
+  late final _wctomb_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Char>, rsize_t, ffi.WChar)>>('wctomb_s');
+  late final _wctomb_s = _wctomb_sPtr.asFunction<int Function(ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Char>, int, int)>();
 
   int _wctomb_s_l(
     ffi.Pointer<ffi.Int> _SizeConverted,
@@ -6098,13 +4849,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wctomb_s_lPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Char>,
-              ffi.Size, ffi.WChar, _locale_t)>>('_wctomb_s_l');
-  late final __wctomb_s_l = __wctomb_s_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Char>, int, int, _locale_t)>();
+  late final __wctomb_s_lPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Char>, ffi.Size, ffi.WChar, _locale_t)>>('_wctomb_s_l');
+  late final __wctomb_s_l = __wctomb_s_lPtr.asFunction<int Function(ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Char>, int, int, _locale_t)>();
 
   int wcstombs_s(
     ffi.Pointer<ffi.Size> _PtNumOfCharConverted,
@@ -6122,13 +4869,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcstombs_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>,
-              ffi.Size, ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcstombs_s');
-  late final _wcstombs_s = _wcstombs_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>, int,
-          ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcstombs_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.WChar>, ffi.Size)>>(
+          'wcstombs_s');
+  late final _wcstombs_s = _wcstombs_sPtr.asFunction<int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.WChar>, int)>();
 
   int wcstombs(
     ffi.Pointer<ffi.Char> _Dest,
@@ -6142,12 +4886,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcstombsPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.WChar>,
-              ffi.Size)>>('wcstombs');
-  late final _wcstombs = _wcstombsPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcstombsPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcstombs');
+  late final _wcstombs = _wcstombsPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.WChar>, int)>();
 
   int _wcstombs_s_l(
     ffi.Pointer<ffi.Size> _PtNumOfCharConverted,
@@ -6168,17 +4908,10 @@ class YuvFfiBindings {
   }
 
   late final __wcstombs_s_lPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Size>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Size,
-              _locale_t)>>('_wcstombs_s_l');
-  late final __wcstombs_s_l = __wcstombs_s_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>, int,
-          ffi.Pointer<ffi.WChar>, int, _locale_t)>();
+          ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>(
+      '_wcstombs_s_l');
+  late final __wcstombs_s_l =
+      __wcstombs_s_lPtr.asFunction<int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
 
   int _wcstombs_l(
     ffi.Pointer<ffi.Char> _Dest,
@@ -6194,13 +4927,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcstombs_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.WChar>,
-              ffi.Size, _locale_t)>>('_wcstombs_l');
-  late final __wcstombs_l = __wcstombs_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
+  late final __wcstombs_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>('_wcstombs_l');
+  late final __wcstombs_l = __wcstombs_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
 
   ffi.Pointer<ffi.Char> _fullpath(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -6214,13 +4943,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fullpathPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>, ffi.Size)>>('_fullpath');
-  late final __fullpath = __fullpathPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final __fullpathPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('_fullpath');
+  late final __fullpath = __fullpathPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int _makepath_s(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -6242,21 +4967,10 @@ class YuvFfiBindings {
 
   late final __makepath_sPtr = _lookup<
       ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
+          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Char>)>>('_makepath_s');
   late final __makepath_s = __makepath_sPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>,
-          int,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>)>();
+      int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   void _makepath(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -6277,18 +4991,9 @@ class YuvFfiBindings {
   late final __makepathPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>)>>('_makepath');
-  late final __makepath = __makepathPtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>)>();
+              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_makepath');
+  late final __makepath = __makepathPtr
+      .asFunction<void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   void _splitpath(
     ffi.Pointer<ffi.Char> _FullPath,
@@ -6309,18 +5014,9 @@ class YuvFfiBindings {
   late final __splitpathPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>)>>('_splitpath');
-  late final __splitpath = __splitpathPtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>)>();
+              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_splitpath');
+  late final __splitpath = __splitpathPtr
+      .asFunction<void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int _splitpath_s(
     ffi.Pointer<ffi.Char> _FullPath,
@@ -6348,27 +5044,11 @@ class YuvFfiBindings {
 
   late final __splitpath_sPtr = _lookup<
       ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size,
-              ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('_splitpath_s');
+          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.Char>, ffi.Size,
+              ffi.Pointer<ffi.Char>, ffi.Size)>>('_splitpath_s');
   late final __splitpath_s = __splitpath_sPtr.asFunction<
       int Function(
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          int,
-          ffi.Pointer<ffi.Char>,
-          int,
-          ffi.Pointer<ffi.Char>,
-          int,
-          ffi.Pointer<ffi.Char>,
-          int)>();
+          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, int)>();
 
   int getenv_s(
     ffi.Pointer<ffi.Size> _RequiredCount,
@@ -6384,67 +5064,44 @@ class YuvFfiBindings {
     );
   }
 
-  late final _getenv_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>,
-              rsize_t, ffi.Pointer<ffi.Char>)>>('getenv_s');
-  late final _getenv_s = _getenv_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>, int,
-          ffi.Pointer<ffi.Char>)>();
+  late final _getenv_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>, rsize_t, ffi.Pointer<ffi.Char>)>>('getenv_s');
+  late final _getenv_s = _getenv_sPtr.asFunction<int Function(ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Int> __p___argc() {
     return ___p___argc();
   }
 
-  late final ___p___argcPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>(
-          '__p___argc');
-  late final ___p___argc =
-      ___p___argcPtr.asFunction<ffi.Pointer<ffi.Int> Function()>();
+  late final ___p___argcPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function()>>('__p___argc');
+  late final ___p___argc = ___p___argcPtr.asFunction<ffi.Pointer<ffi.Int> Function()>();
 
   ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> __p___argv() {
     return ___p___argv();
   }
 
-  late final ___p___argvPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>
-              Function()>>('__p___argv');
-  late final ___p___argv = ___p___argvPtr
-      .asFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> Function()>();
+  late final ___p___argvPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> Function()>>('__p___argv');
+  late final ___p___argv = ___p___argvPtr.asFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> Function()>();
 
   ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>> __p___wargv() {
     return ___p___wargv();
   }
 
-  late final ___p___wargvPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>>
-              Function()>>('__p___wargv');
-  late final ___p___wargv = ___p___wargvPtr.asFunction<
-      ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>> Function()>();
+  late final ___p___wargvPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>> Function()>>('__p___wargv');
+  late final ___p___wargv = ___p___wargvPtr.asFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>> Function()>();
 
   ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> __p__environ() {
     return ___p__environ();
   }
 
-  late final ___p__environPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>>
-              Function()>>('__p__environ');
-  late final ___p__environ = ___p__environPtr
-      .asFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> Function()>();
+  late final ___p__environPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> Function()>>('__p__environ');
+  late final ___p__environ = ___p__environPtr.asFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> Function()>();
 
   ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>> __p__wenviron() {
     return ___p__wenviron();
   }
 
-  late final ___p__wenvironPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>>
-              Function()>>('__p__wenviron');
-  late final ___p__wenviron = ___p__wenvironPtr.asFunction<
-      ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>> Function()>();
+  late final ___p__wenvironPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>> Function()>>('__p__wenviron');
+  late final ___p__wenviron = ___p__wenvironPtr.asFunction<ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.WChar>>> Function()>();
 
   ffi.Pointer<ffi.Char> getenv(
     ffi.Pointer<ffi.Char> _VarName,
@@ -6454,11 +5111,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _getenvPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('getenv');
-  late final _getenv = _getenvPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final _getenvPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('getenv');
+  late final _getenv = _getenvPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   int _dupenv_s(
     ffi.Pointer<ffi.Pointer<ffi.Char>> _Buffer,
@@ -6472,13 +5126,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dupenv_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>)>>('_dupenv_s');
-  late final __dupenv_s = __dupenv_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Pointer<ffi.Size>,
-          ffi.Pointer<ffi.Char>)>();
+  late final __dupenv_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>)>>('_dupenv_s');
+  late final __dupenv_s = __dupenv_sPtr.asFunction<int Function(ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Pointer<ffi.Size>, ffi.Pointer<ffi.Char>)>();
 
   int system(
     ffi.Pointer<ffi.Char> _Command,
@@ -6488,11 +5138,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _systemPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          'system');
-  late final _system =
-      _systemPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final _systemPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>('system');
+  late final _system = _systemPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int _putenv(
     ffi.Pointer<ffi.Char> _EnvString,
@@ -6502,11 +5149,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __putenvPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          '_putenv');
-  late final __putenv =
-      __putenvPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final __putenvPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>('_putenv');
+  late final __putenv = __putenvPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int _putenv_s(
     ffi.Pointer<ffi.Char> _Name,
@@ -6518,12 +5162,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __putenv_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_putenv_s');
-  late final __putenv_s = __putenv_sPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final __putenv_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_putenv_s');
+  late final __putenv_s = __putenv_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int _searchenv_s(
     ffi.Pointer<ffi.Char> _Filename,
@@ -6539,13 +5179,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __searchenv_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>, ffi.Size)>>('_searchenv_s');
-  late final __searchenv_s = __searchenv_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>, int)>();
+  late final __searchenv_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('_searchenv_s');
+  late final __searchenv_s = __searchenv_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   void _searchenv(
     ffi.Pointer<ffi.Char> _Filename,
@@ -6559,13 +5195,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __searchenvPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>)>>('_searchenv');
-  late final __searchenv = __searchenvPtr.asFunction<
-      void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>)>();
+  late final __searchenvPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_searchenv');
+  late final __searchenv = __searchenvPtr.asFunction<void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   void _seterrormode(
     int _Mode,
@@ -6575,10 +5207,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __seterrormodePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('_seterrormode');
-  late final __seterrormode =
-      __seterrormodePtr.asFunction<void Function(int)>();
+  late final __seterrormodePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('_seterrormode');
+  late final __seterrormode = __seterrormodePtr.asFunction<void Function(int)>();
 
   void _beep(
     int _Frequency,
@@ -6590,9 +5220,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __beepPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.UnsignedInt, ffi.UnsignedInt)>>('_beep');
+  late final __beepPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UnsignedInt, ffi.UnsignedInt)>>('_beep');
   late final __beep = __beepPtr.asFunction<void Function(int, int)>();
 
   void _sleep(
@@ -6603,9 +5231,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __sleepPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UnsignedLong)>>(
-          '_sleep');
+  late final __sleepPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UnsignedLong)>>('_sleep');
   late final __sleep = __sleepPtr.asFunction<void Function(int)>();
 
   ffi.Pointer<ffi.Char> ecvt(
@@ -6622,13 +5248,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ecvtPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int,
-              ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('ecvt');
-  late final _ecvt1 = _ecvtPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
+  late final _ecvtPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('ecvt');
+  late final _ecvt1 = _ecvtPtr.asFunction<ffi.Pointer<ffi.Char> Function(double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
 
   ffi.Pointer<ffi.Char> fcvt(
     double _Value,
@@ -6644,13 +5266,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fcvtPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int,
-              ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('fcvt');
-  late final _fcvt1 = _fcvtPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
+  late final _fcvtPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>('fcvt');
+  late final _fcvt1 = _fcvtPtr.asFunction<ffi.Pointer<ffi.Char> Function(double, int, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
 
   ffi.Pointer<ffi.Char> gcvt(
     double _Value,
@@ -6664,12 +5282,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _gcvtPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Double, ffi.Int, ffi.Pointer<ffi.Char>)>>('gcvt');
-  late final _gcvt1 = _gcvtPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(double, int, ffi.Pointer<ffi.Char>)>();
+  late final _gcvtPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Double, ffi.Int, ffi.Pointer<ffi.Char>)>>('gcvt');
+  late final _gcvt1 = _gcvtPtr.asFunction<ffi.Pointer<ffi.Char> Function(double, int, ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> itoa(
     int _Value,
@@ -6683,12 +5297,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _itoaPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Int, ffi.Pointer<ffi.Char>, ffi.Int)>>('itoa');
-  late final _itoa1 = _itoaPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
+  late final _itoaPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int, ffi.Pointer<ffi.Char>, ffi.Int)>>('itoa');
+  late final _itoa1 = _itoaPtr.asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> ltoa(
     int _Value,
@@ -6702,12 +5312,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ltoaPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Long, ffi.Pointer<ffi.Char>, ffi.Int)>>('ltoa');
-  late final _ltoa1 = _ltoaPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
+  late final _ltoaPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Long, ffi.Pointer<ffi.Char>, ffi.Int)>>('ltoa');
+  late final _ltoa1 = _ltoaPtr.asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
 
   void swab(
     ffi.Pointer<ffi.Char> _Buf1,
@@ -6721,12 +5327,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _swabPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Int)>>('swab');
-  late final _swab1 = _swabPtr.asFunction<
-      void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final _swabPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Int)>>('swab');
+  late final _swab1 = _swabPtr.asFunction<void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> ultoa(
     int _Value,
@@ -6740,12 +5342,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ultoaPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.UnsignedLong, ffi.Pointer<ffi.Char>, ffi.Int)>>('ultoa');
-  late final _ultoa1 = _ultoaPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
+  late final _ultoaPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.UnsignedLong, ffi.Pointer<ffi.Char>, ffi.Int)>>('ultoa');
+  late final _ultoa1 = _ultoaPtr.asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>, int)>();
 
   int putenv(
     ffi.Pointer<ffi.Char> _EnvString,
@@ -6755,11 +5353,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _putenvPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          'putenv');
-  late final _putenv1 =
-      _putenvPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final _putenvPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>('putenv');
+  late final _putenv1 = _putenvPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   _onexit_t onexit(
     _onexit_t _Func,
@@ -6769,8 +5364,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _onexitPtr =
-      _lookup<ffi.NativeFunction<_onexit_t Function(_onexit_t)>>('onexit');
+  late final _onexitPtr = _lookup<ffi.NativeFunction<_onexit_t Function(_onexit_t)>>('onexit');
   late final _onexit1 = _onexitPtr.asFunction<_onexit_t Function(_onexit_t)>();
 
   ffi.Pointer<ffi.Void> memchr(
@@ -6785,12 +5379,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _memchrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>>('memchr');
-  late final _memchr = _memchrPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
+  late final _memchrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>>('memchr');
+  late final _memchr = _memchrPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
 
   int memcmp(
     ffi.Pointer<ffi.Void> _Buf1,
@@ -6804,12 +5394,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _memcmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>,
-              ffi.Size)>>('memcmp');
-  late final _memcmp = _memcmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
+  late final _memcmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Size)>>('memcmp');
+  late final _memcmp = _memcmpPtr.asFunction<int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
 
   ffi.Pointer<ffi.Void> memcpy(
     ffi.Pointer<ffi.Void> _Dst,
@@ -6823,13 +5409,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _memcpyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>, ffi.Size)>>('memcpy');
-  late final _memcpy = _memcpyPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
+  late final _memcpyPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Size)>>('memcpy');
+  late final _memcpy = _memcpyPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
 
   ffi.Pointer<ffi.Void> memmove(
     ffi.Pointer<ffi.Void> _Dst,
@@ -6843,13 +5425,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _memmovePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>, ffi.Size)>>('memmove');
-  late final _memmove = _memmovePtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
+  late final _memmovePtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Size)>>('memmove');
+  late final _memmove = _memmovePtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
 
   ffi.Pointer<ffi.Void> memset(
     ffi.Pointer<ffi.Void> _Dst,
@@ -6863,12 +5441,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _memsetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>>('memset');
-  late final _memset = _memsetPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
+  late final _memsetPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>>('memset');
+  late final _memset = _memsetPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
 
   ffi.Pointer<ffi.Char> strchr(
     ffi.Pointer<ffi.Char> _Str,
@@ -6880,12 +5454,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strchrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Int)>>('strchr');
-  late final _strchr = _strchrPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _strchrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Int)>>('strchr');
+  late final _strchr = _strchrPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> strrchr(
     ffi.Pointer<ffi.Char> _Str,
@@ -6897,12 +5467,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strrchrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Int)>>('strrchr');
-  late final _strrchr = _strrchrPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _strrchrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Int)>>('strrchr');
+  late final _strrchr = _strrchrPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> strstr(
     ffi.Pointer<ffi.Char> _Str,
@@ -6914,13 +5480,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strstrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strstr');
-  late final _strstr = _strstrPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strstrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strstr');
+  late final _strstr = _strstrPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.UnsignedShort> wcschr(
     ffi.Pointer<ffi.WChar> _Str,
@@ -6932,12 +5493,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcschrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.UnsignedShort> Function(
-              ffi.Pointer<ffi.WChar>, ffi.WChar)>>('wcschr');
-  late final _wcschr = _wcschrPtr.asFunction<
-      ffi.Pointer<ffi.UnsignedShort> Function(ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcschrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.UnsignedShort> Function(ffi.Pointer<ffi.WChar>, ffi.WChar)>>('wcschr');
+  late final _wcschr = _wcschrPtr.asFunction<ffi.Pointer<ffi.UnsignedShort> Function(ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> wcsrchr(
     ffi.Pointer<ffi.WChar> _Str,
@@ -6949,12 +5506,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsrchrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.WChar)>>('wcsrchr');
-  late final _wcsrchr = _wcsrchrPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcsrchrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.WChar)>>('wcsrchr');
+  late final _wcsrchr = _wcsrchrPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> wcsstr(
     ffi.Pointer<ffi.WChar> _Str,
@@ -6966,13 +5519,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsstrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcsstr');
-  late final _wcsstr = _wcsstrPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcsstrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcsstr');
+  late final _wcsstr = _wcsstrPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _memicmp(
     ffi.Pointer<ffi.Void> _Buf1,
@@ -6986,12 +5534,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __memicmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>,
-              ffi.Size)>>('_memicmp');
-  late final __memicmp = __memicmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
+  late final __memicmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Size)>>('_memicmp');
+  late final __memicmp = __memicmpPtr.asFunction<int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
 
   int _memicmp_l(
     ffi.Pointer<ffi.Void> _Buf1,
@@ -7007,13 +5551,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __memicmp_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>,
-              ffi.Size, _locale_t)>>('_memicmp_l');
-  late final __memicmp_l = __memicmp_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int, _locale_t)>();
+  late final __memicmp_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Size, _locale_t)>>('_memicmp_l');
+  late final __memicmp_l = __memicmp_lPtr.asFunction<int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int, _locale_t)>();
 
   ffi.Pointer<ffi.Void> memccpy(
     ffi.Pointer<ffi.Void> _Dst,
@@ -7029,13 +5569,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _memccpyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>>('memccpy');
-  late final _memccpy1 = _memccpyPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int, int)>();
+  late final _memccpyPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>>('memccpy');
+  late final _memccpy1 = _memccpyPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int, int)>();
 
   int memicmp(
     ffi.Pointer<ffi.Void> _Buf1,
@@ -7049,12 +5585,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _memicmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>,
-              ffi.Size)>>('memicmp');
-  late final _memicmp1 = _memicmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
+  late final _memicmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Size)>>('memicmp');
+  late final _memicmp1 = _memicmpPtr.asFunction<int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
 
   int wcscat_s(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7068,12 +5600,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcscat_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, rsize_t,
-              ffi.Pointer<ffi.WChar>)>>('wcscat_s');
-  late final _wcscat_s = _wcscat_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>)>();
+  late final _wcscat_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, rsize_t, ffi.Pointer<ffi.WChar>)>>('wcscat_s');
+  late final _wcscat_s = _wcscat_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>)>();
 
   int wcscpy_s(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7087,12 +5615,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcscpy_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, rsize_t,
-              ffi.Pointer<ffi.WChar>)>>('wcscpy_s');
-  late final _wcscpy_s = _wcscpy_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>)>();
+  late final _wcscpy_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, rsize_t, ffi.Pointer<ffi.WChar>)>>('wcscpy_s');
+  late final _wcscpy_s = _wcscpy_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>)>();
 
   int wcsncat_s(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7108,12 +5632,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsncat_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, rsize_t,
-              ffi.Pointer<ffi.WChar>, rsize_t)>>('wcsncat_s');
-  late final _wcsncat_s = _wcsncat_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcsncat_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, rsize_t, ffi.Pointer<ffi.WChar>, rsize_t)>>('wcsncat_s');
+  late final _wcsncat_s = _wcsncat_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, int)>();
 
   int wcsncpy_s(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7129,12 +5650,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsncpy_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, rsize_t,
-              ffi.Pointer<ffi.WChar>, rsize_t)>>('wcsncpy_s');
-  late final _wcsncpy_s = _wcsncpy_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcsncpy_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, rsize_t, ffi.Pointer<ffi.WChar>, rsize_t)>>('wcsncpy_s');
+  late final _wcsncpy_s = _wcsncpy_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> wcstok_s(
     ffi.Pointer<ffi.WChar> _String,
@@ -7149,14 +5667,10 @@ class YuvFfiBindings {
   }
 
   late final _wcstok_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>('wcstok_s');
-  late final _wcstok_s = _wcstok_sPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
+          ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>(
+      'wcstok_s');
+  late final _wcstok_s =
+      _wcstok_sPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
 
   ffi.Pointer<ffi.WChar> _wcsdup(
     ffi.Pointer<ffi.WChar> _String,
@@ -7166,11 +5680,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsdupPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wcsdup');
-  late final __wcsdup = __wcsdupPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wcsdupPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wcsdup');
+  late final __wcsdup = __wcsdupPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<ffi.WChar> wcscat(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7182,13 +5693,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcscatPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscat');
-  late final _wcscat = _wcscatPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcscatPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscat');
+  late final _wcscat = _wcscatPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int wcscmp(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7200,12 +5706,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcscmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscmp');
-  late final _wcscmp = _wcscmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcscmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscmp');
+  late final _wcscmp = _wcscmpPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<ffi.WChar> wcscpy(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7217,13 +5719,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcscpyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscpy');
-  late final _wcscpy = _wcscpyPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcscpyPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscpy');
+  late final _wcscpy = _wcscpyPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int wcscspn(
     ffi.Pointer<ffi.WChar> _String,
@@ -7235,12 +5732,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcscspnPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscspn');
-  late final _wcscspn = _wcscspnPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcscspnPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscspn');
+  late final _wcscspn = _wcscspnPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int wcslen(
     ffi.Pointer<ffi.WChar> _String,
@@ -7250,11 +5743,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcslenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(ffi.Pointer<ffi.WChar>)>>('wcslen');
-  late final _wcslen =
-      _wcslenPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
+  late final _wcslenPtr = _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.WChar>)>>('wcslen');
+  late final _wcslen = _wcslenPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>)>();
 
   int wcsnlen(
     ffi.Pointer<ffi.WChar> _Source,
@@ -7266,11 +5756,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsnlenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcsnlen');
-  late final _wcsnlen =
-      _wcsnlenPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcsnlenPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcsnlen');
+  late final _wcsnlen = _wcsnlenPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> wcsncat(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7284,13 +5771,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsncatPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcsncat');
-  late final _wcsncat = _wcsncatPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcsncatPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcsncat');
+  late final _wcsncat = _wcsncatPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   int wcsncmp(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7304,12 +5787,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsncmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size)>>('wcsncmp');
-  late final _wcsncmp = _wcsncmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcsncmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcsncmp');
+  late final _wcsncmp = _wcsncmpPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> wcsncpy(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7323,13 +5802,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsncpyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcsncpy');
-  late final _wcsncpy = _wcsncpyPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcsncpyPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcsncpy');
+  late final _wcsncpy = _wcsncpyPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> wcspbrk(
     ffi.Pointer<ffi.WChar> _String,
@@ -7341,13 +5816,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcspbrkPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcspbrk');
-  late final _wcspbrk = _wcspbrkPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcspbrkPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcspbrk');
+  late final _wcspbrk = _wcspbrkPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int wcsspn(
     ffi.Pointer<ffi.WChar> _String,
@@ -7359,12 +5829,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsspnPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcsspn');
-  late final _wcsspn = _wcsspnPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcsspnPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcsspn');
+  late final _wcsspn = _wcsspnPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<ffi.WChar> wcstok(
     ffi.Pointer<ffi.WChar> _String,
@@ -7379,14 +5845,10 @@ class YuvFfiBindings {
   }
 
   late final _wcstokPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.WChar>,
-              ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>('wcstok');
-  late final _wcstok = _wcstokPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>,
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
+          ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>>(
+      'wcstok');
+  late final _wcstok =
+      _wcstokPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.Pointer<ffi.WChar>>)>();
 
   ffi.Pointer<ffi.WChar> _wcserror(
     int _ErrorNumber,
@@ -7396,11 +5858,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcserrorPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Int)>>(
-          '_wcserror');
-  late final __wcserror1 =
-      __wcserrorPtr.asFunction<ffi.Pointer<ffi.WChar> Function(int)>();
+  late final __wcserrorPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Int)>>('_wcserror');
+  late final __wcserror1 = __wcserrorPtr.asFunction<ffi.Pointer<ffi.WChar> Function(int)>();
 
   int _wcserror_s(
     ffi.Pointer<ffi.WChar> _Buffer,
@@ -7414,12 +5873,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcserror_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Int)>>('_wcserror_s');
-  late final __wcserror_s1 = __wcserror_sPtr
-      .asFunction<int Function(ffi.Pointer<ffi.WChar>, int, int)>();
+  late final __wcserror_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Int)>>('_wcserror_s');
+  late final __wcserror_s1 = __wcserror_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<ffi.WChar> __wcserror(
     ffi.Pointer<ffi.WChar> _String,
@@ -7429,12 +5884,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___wcserrorPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>)>>('__wcserror');
-  late final ___wcserror = ___wcserrorPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final ___wcserrorPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('__wcserror');
+  late final ___wcserror = ___wcserrorPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   int __wcserror_s(
     ffi.Pointer<ffi.WChar> _Buffer,
@@ -7448,12 +5899,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___wcserror_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size,
-              ffi.Pointer<ffi.WChar>)>>('__wcserror_s');
-  late final ___wcserror_s = ___wcserror_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>)>();
+  late final ___wcserror_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size, ffi.Pointer<ffi.WChar>)>>('__wcserror_s');
+  late final ___wcserror_s = ___wcserror_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, ffi.Pointer<ffi.WChar>)>();
 
   int _wcsicmp(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7465,12 +5913,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsicmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wcsicmp');
-  late final __wcsicmp = __wcsicmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final __wcsicmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wcsicmp');
+  late final __wcsicmp = __wcsicmpPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _wcsicmp_l(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7484,13 +5928,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsicmp_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              _locale_t)>>('_wcsicmp_l');
-  late final __wcsicmp_l = __wcsicmp_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wcsicmp_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, _locale_t)>>('_wcsicmp_l');
+  late final __wcsicmp_l = __wcsicmp_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int _wcsnicmp(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7504,12 +5943,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsnicmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size)>>('_wcsnicmp');
-  late final __wcsnicmp = __wcsnicmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final __wcsnicmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wcsnicmp');
+  late final __wcsnicmp = __wcsnicmpPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   int _wcsnicmp_l(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7525,13 +5960,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsnicmp_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size, _locale_t)>>('_wcsnicmp_l');
-  late final __wcsnicmp_l = __wcsnicmp_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
+  late final __wcsnicmp_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>('_wcsnicmp_l');
+  late final __wcsnicmp_l = __wcsnicmp_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
 
   int _wcsnset_s(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7547,12 +5978,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsnset_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size, ffi.WChar,
-              ffi.Size)>>('_wcsnset_s');
-  late final __wcsnset_s = __wcsnset_sPtr
-      .asFunction<int Function(ffi.Pointer<ffi.WChar>, int, int, int)>();
+  late final __wcsnset_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size, ffi.WChar, ffi.Size)>>('_wcsnset_s');
+  late final __wcsnset_s = __wcsnset_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, int, int)>();
 
   ffi.Pointer<ffi.WChar> _wcsnset(
     ffi.Pointer<ffi.WChar> _String,
@@ -7566,12 +5993,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsnsetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.WChar, ffi.Size)>>('_wcsnset');
-  late final __wcsnset = __wcsnsetPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int, int)>();
+  late final __wcsnsetPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.WChar, ffi.Size)>>('_wcsnset');
+  late final __wcsnset = __wcsnsetPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<ffi.WChar> _wcsrev(
     ffi.Pointer<ffi.WChar> _String,
@@ -7581,11 +6004,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsrevPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wcsrev');
-  late final __wcsrev = __wcsrevPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wcsrevPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wcsrev');
+  late final __wcsrev = __wcsrevPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   int _wcsset_s(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7599,12 +6019,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsset_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.WChar>, ffi.Size, ffi.WChar)>>('_wcsset_s');
-  late final __wcsset_s = __wcsset_sPtr
-      .asFunction<int Function(ffi.Pointer<ffi.WChar>, int, int)>();
+  late final __wcsset_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size, ffi.WChar)>>('_wcsset_s');
+  late final __wcsset_s = __wcsset_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<ffi.WChar> _wcsset(
     ffi.Pointer<ffi.WChar> _String,
@@ -7616,12 +6032,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcssetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.WChar)>>('_wcsset');
-  late final __wcsset = __wcssetPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int)>();
+  late final __wcssetPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.WChar)>>('_wcsset');
+  late final __wcsset = __wcssetPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int)>();
 
   int _wcslwr_s(
     ffi.Pointer<ffi.WChar> _String,
@@ -7633,11 +6045,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcslwr_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wcslwr_s');
-  late final __wcslwr_s =
-      __wcslwr_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int)>();
+  late final __wcslwr_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wcslwr_s');
+  late final __wcslwr_s = __wcslwr_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> _wcslwr(
     ffi.Pointer<ffi.WChar> _String,
@@ -7647,11 +6056,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcslwrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wcslwr');
-  late final __wcslwr = __wcslwrPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wcslwrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wcslwr');
+  late final __wcslwr = __wcslwrPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   int _wcslwr_s_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -7665,12 +6071,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcslwr_s_lPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>('_wcslwr_s_l');
-  late final __wcslwr_s_l = __wcslwr_s_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.WChar>, int, _locale_t)>();
+  late final __wcslwr_s_lPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>('_wcslwr_s_l');
+  late final __wcslwr_s_l = __wcslwr_s_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, _locale_t)>();
 
   ffi.Pointer<ffi.WChar> _wcslwr_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -7682,12 +6084,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcslwr_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, _locale_t)>>('_wcslwr_l');
-  late final __wcslwr_l = __wcslwr_lPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wcslwr_lPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wcslwr_l');
+  late final __wcslwr_l = __wcslwr_lPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int _wcsupr_s(
     ffi.Pointer<ffi.WChar> _String,
@@ -7699,11 +6097,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsupr_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wcsupr_s');
-  late final __wcsupr_s =
-      __wcsupr_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int)>();
+  late final __wcsupr_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wcsupr_s');
+  late final __wcsupr_s = __wcsupr_sPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> _wcsupr(
     ffi.Pointer<ffi.WChar> _String,
@@ -7713,11 +6108,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsuprPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wcsupr');
-  late final __wcsupr = __wcsuprPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final __wcsuprPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('_wcsupr');
+  late final __wcsupr = __wcsuprPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   int _wcsupr_s_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -7731,12 +6123,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsupr_s_lPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>('_wcsupr_s_l');
-  late final __wcsupr_s_l = __wcsupr_s_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.WChar>, int, _locale_t)>();
+  late final __wcsupr_s_lPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>('_wcsupr_s_l');
+  late final __wcsupr_s_l = __wcsupr_s_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, int, _locale_t)>();
 
   ffi.Pointer<ffi.WChar> _wcsupr_l(
     ffi.Pointer<ffi.WChar> _String,
@@ -7748,12 +6136,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsupr_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, _locale_t)>>('_wcsupr_l');
-  late final __wcsupr_l = __wcsupr_lPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wcsupr_lPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, _locale_t)>>('_wcsupr_l');
+  late final __wcsupr_l = __wcsupr_lPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int wcsxfrm(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7767,12 +6151,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsxfrmPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size)>>('wcsxfrm');
-  late final _wcsxfrm = _wcsxfrmPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcsxfrmPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcsxfrm');
+  late final _wcsxfrm = _wcsxfrmPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   int _wcsxfrm_l(
     ffi.Pointer<ffi.WChar> _Destination,
@@ -7788,13 +6168,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsxfrm_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size, _locale_t)>>('_wcsxfrm_l');
-  late final __wcsxfrm_l = __wcsxfrm_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
+  late final __wcsxfrm_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>('_wcsxfrm_l');
+  late final __wcsxfrm_l = __wcsxfrm_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
 
   int wcscoll(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7806,12 +6182,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcscollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscoll');
-  late final _wcscoll = _wcscollPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcscollPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcscoll');
+  late final _wcscoll = _wcscollPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _wcscoll_l(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7825,13 +6197,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcscoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              _locale_t)>>('_wcscoll_l');
-  late final __wcscoll_l = __wcscoll_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wcscoll_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, _locale_t)>>('_wcscoll_l');
+  late final __wcscoll_l = __wcscoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int _wcsicoll(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7843,12 +6210,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsicollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wcsicoll');
-  late final __wcsicoll = __wcsicollPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final __wcsicollPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('_wcsicoll');
+  late final __wcsicoll = __wcsicollPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int _wcsicoll_l(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7862,13 +6225,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsicoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              _locale_t)>>('_wcsicoll_l');
-  late final __wcsicoll_l = __wcsicoll_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, _locale_t)>();
+  late final __wcsicoll_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, _locale_t)>>('_wcsicoll_l');
+  late final __wcsicoll_l = __wcsicoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, _locale_t)>();
 
   int _wcsncoll(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7882,12 +6241,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsncollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size)>>('_wcsncoll');
-  late final __wcsncoll = __wcsncollPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final __wcsncollPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wcsncoll');
+  late final __wcsncoll = __wcsncollPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   int _wcsncoll_l(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7903,13 +6258,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsncoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size, _locale_t)>>('_wcsncoll_l');
-  late final __wcsncoll_l = __wcsncoll_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
+  late final __wcsncoll_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>('_wcsncoll_l');
+  late final __wcsncoll_l = __wcsncoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
 
   int _wcsnicoll(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7923,12 +6274,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsnicollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size)>>('_wcsnicoll');
-  late final __wcsnicoll = __wcsnicollPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final __wcsnicollPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('_wcsnicoll');
+  late final __wcsnicoll = __wcsnicollPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   int _wcsnicoll_l(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7944,13 +6291,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __wcsnicoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size, _locale_t)>>('_wcsnicoll_l');
-  late final __wcsnicoll_l = __wcsnicoll_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
+  late final __wcsnicoll_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size, _locale_t)>>('_wcsnicoll_l');
+  late final __wcsnicoll_l = __wcsnicoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, _locale_t)>();
 
   ffi.Pointer<ffi.WChar> wcsdup(
     ffi.Pointer<ffi.WChar> _String,
@@ -7960,11 +6303,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsdupPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('wcsdup');
-  late final _wcsdup1 = _wcsdupPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final _wcsdupPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('wcsdup');
+  late final _wcsdup1 = _wcsdupPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   int wcsicmp(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7976,12 +6316,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsicmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcsicmp');
-  late final _wcsicmp1 = _wcsicmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcsicmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcsicmp');
+  late final _wcsicmp1 = _wcsicmpPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int wcsnicmp(
     ffi.Pointer<ffi.WChar> _String1,
@@ -7995,12 +6331,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsnicmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>,
-              ffi.Size)>>('wcsnicmp');
-  late final _wcsnicmp1 = _wcsnicmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcsnicmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Size)>>('wcsnicmp');
+  late final _wcsnicmp1 = _wcsnicmpPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> wcsnset(
     ffi.Pointer<ffi.WChar> _String,
@@ -8014,12 +6346,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsnsetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.WChar, ffi.Size)>>('wcsnset');
-  late final _wcsnset1 = _wcsnsetPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int, int)>();
+  late final _wcsnsetPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.WChar, ffi.Size)>>('wcsnset');
+  late final _wcsnset1 = _wcsnsetPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int, int)>();
 
   ffi.Pointer<ffi.WChar> wcsrev(
     ffi.Pointer<ffi.WChar> _String,
@@ -8029,11 +6357,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsrevPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('wcsrev');
-  late final _wcsrev1 = _wcsrevPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final _wcsrevPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('wcsrev');
+  late final _wcsrev1 = _wcsrevPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<ffi.WChar> wcsset(
     ffi.Pointer<ffi.WChar> _String,
@@ -8045,12 +6370,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcssetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(
-              ffi.Pointer<ffi.WChar>, ffi.WChar)>>('wcsset');
-  late final _wcsset1 = _wcssetPtr.asFunction<
-      ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int)>();
+  late final _wcssetPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, ffi.WChar)>>('wcsset');
+  late final _wcsset1 = _wcssetPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>, int)>();
 
   ffi.Pointer<ffi.WChar> wcslwr(
     ffi.Pointer<ffi.WChar> _String,
@@ -8060,11 +6381,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcslwrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('wcslwr');
-  late final _wcslwr1 = _wcslwrPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final _wcslwrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('wcslwr');
+  late final _wcslwr1 = _wcslwrPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   ffi.Pointer<ffi.WChar> wcsupr(
     ffi.Pointer<ffi.WChar> _String,
@@ -8074,11 +6392,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsuprPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('wcsupr');
-  late final _wcsupr1 = _wcsuprPtr
-      .asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
+  late final _wcsuprPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>>('wcsupr');
+  late final _wcsupr1 = _wcsuprPtr.asFunction<ffi.Pointer<ffi.WChar> Function(ffi.Pointer<ffi.WChar>)>();
 
   int wcsicoll(
     ffi.Pointer<ffi.WChar> _String1,
@@ -8090,12 +6405,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _wcsicollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcsicoll');
-  late final _wcsicoll1 = _wcsicollPtr.asFunction<
-      int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
+  late final _wcsicollPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>>('wcsicoll');
+  late final _wcsicoll1 = _wcsicollPtr.asFunction<int Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>)>();
 
   int strcpy_s(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8109,12 +6420,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strcpy_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, rsize_t,
-              ffi.Pointer<ffi.Char>)>>('strcpy_s');
-  late final _strcpy_s = _strcpy_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>)>();
+  late final _strcpy_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, rsize_t, ffi.Pointer<ffi.Char>)>>('strcpy_s');
+  late final _strcpy_s = _strcpy_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>)>();
 
   int strcat_s(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8128,12 +6435,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strcat_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, rsize_t,
-              ffi.Pointer<ffi.Char>)>>('strcat_s');
-  late final _strcat_s = _strcat_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>)>();
+  late final _strcat_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, rsize_t, ffi.Pointer<ffi.Char>)>>('strcat_s');
+  late final _strcat_s = _strcat_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>)>();
 
   int strerror_s(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -8147,12 +6450,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strerror_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('strerror_s');
-  late final _strerror_s1 = _strerror_sPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, int)>();
+  late final _strerror_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('strerror_s');
+  late final _strerror_s1 = _strerror_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, int)>();
 
   int strncat_s(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8168,12 +6467,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strncat_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, rsize_t,
-              ffi.Pointer<ffi.Char>, rsize_t)>>('strncat_s');
-  late final _strncat_s = _strncat_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, int)>();
+  late final _strncat_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, rsize_t, ffi.Pointer<ffi.Char>, rsize_t)>>('strncat_s');
+  late final _strncat_s = _strncat_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, int)>();
 
   int strncpy_s(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8189,12 +6485,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strncpy_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, rsize_t,
-              ffi.Pointer<ffi.Char>, rsize_t)>>('strncpy_s');
-  late final _strncpy_s = _strncpy_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, int)>();
+  late final _strncpy_sPtr =
+      _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, rsize_t, ffi.Pointer<ffi.Char>, rsize_t)>>('strncpy_s');
+  late final _strncpy_s = _strncpy_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> strtok_s(
     ffi.Pointer<ffi.Char> _String,
@@ -8208,15 +6501,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strtok_sPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>)>>('strtok_s');
-  late final _strtok_s = _strtok_sPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+  late final _strtok_sPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+          'strtok_s');
+  late final _strtok_s =
+      _strtok_sPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
 
   ffi.Pointer<ffi.Void> _memccpy(
     ffi.Pointer<ffi.Void> _Dst,
@@ -8232,13 +6521,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __memccpyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>,
-              ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>>('_memccpy');
-  late final __memccpy = __memccpyPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int, int)>();
+  late final __memccpyPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>>('_memccpy');
+  late final __memccpy = __memccpyPtr.asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int, int)>();
 
   ffi.Pointer<ffi.Char> strcat(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8250,13 +6535,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strcatPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcat');
-  late final _strcat = _strcatPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strcatPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcat');
+  late final _strcat = _strcatPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int strcmp(
     ffi.Pointer<ffi.Char> _Str1,
@@ -8268,12 +6548,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strcmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcmp');
-  late final _strcmp = _strcmpPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strcmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcmp');
+  late final _strcmp = _strcmpPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int _strcmpi(
     ffi.Pointer<ffi.Char> _String1,
@@ -8285,12 +6561,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strcmpiPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_strcmpi');
-  late final __strcmpi = __strcmpiPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final __strcmpiPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_strcmpi');
+  late final __strcmpi = __strcmpiPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int strcoll(
     ffi.Pointer<ffi.Char> _String1,
@@ -8302,12 +6574,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strcollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcoll');
-  late final _strcoll = _strcollPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strcollPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcoll');
+  late final _strcoll = _strcollPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int _strcoll_l(
     ffi.Pointer<ffi.Char> _String1,
@@ -8321,12 +6589,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strcoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              _locale_t)>>('_strcoll_l');
-  late final __strcoll_l = __strcoll_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __strcoll_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, _locale_t)>>('_strcoll_l');
+  late final __strcoll_l = __strcoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, _locale_t)>();
 
   ffi.Pointer<ffi.Char> strcpy(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8338,13 +6602,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strcpyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcpy');
-  late final _strcpy = _strcpyPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strcpyPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcpy');
+  late final _strcpy = _strcpyPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int strcspn(
     ffi.Pointer<ffi.Char> _Str,
@@ -8356,12 +6615,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strcspnPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcspn');
-  late final _strcspn = _strcspnPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strcspnPtr = _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcspn');
+  late final _strcspn = _strcspnPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> _strdup(
     ffi.Pointer<ffi.Char> _Source,
@@ -8371,11 +6626,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strdupPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strdup');
-  late final __strdup = __strdupPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final __strdupPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strdup');
+  late final __strdup = __strdupPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> _strerror(
     ffi.Pointer<ffi.Char> _ErrorMessage,
@@ -8385,11 +6637,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strerrorPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strerror');
-  late final __strerror = __strerrorPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final __strerrorPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strerror');
+  late final __strerror = __strerrorPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   int _strerror_s(
     ffi.Pointer<ffi.Char> _Buffer,
@@ -8403,12 +6652,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strerror_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size,
-              ffi.Pointer<ffi.Char>)>>('_strerror_s');
-  late final __strerror_s = __strerror_sPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>)>();
+  late final __strerror_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Pointer<ffi.Char>)>>('_strerror_s');
+  late final __strerror_s = __strerror_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> strerror(
     int _ErrorMessage,
@@ -8418,11 +6663,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strerrorPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>(
-          'strerror');
-  late final _strerror1 =
-      _strerrorPtr.asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+  late final _strerrorPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>('strerror');
+  late final _strerror1 = _strerrorPtr.asFunction<ffi.Pointer<ffi.Char> Function(int)>();
 
   int _stricmp(
     ffi.Pointer<ffi.Char> _String1,
@@ -8434,12 +6676,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __stricmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_stricmp');
-  late final __stricmp = __stricmpPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final __stricmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_stricmp');
+  late final __stricmp = __stricmpPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int _stricoll(
     ffi.Pointer<ffi.Char> _String1,
@@ -8451,12 +6689,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __stricollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_stricoll');
-  late final __stricoll = __stricollPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final __stricollPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('_stricoll');
+  late final __stricoll = __stricollPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int _stricoll_l(
     ffi.Pointer<ffi.Char> _String1,
@@ -8470,12 +6704,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __stricoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              _locale_t)>>('_stricoll_l');
-  late final __stricoll_l = __stricoll_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __stricoll_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, _locale_t)>>('_stricoll_l');
+  late final __stricoll_l = __stricoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int _stricmp_l(
     ffi.Pointer<ffi.Char> _String1,
@@ -8489,12 +6719,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __stricmp_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              _locale_t)>>('_stricmp_l');
-  late final __stricmp_l = __stricmp_lPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __stricmp_lPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, _locale_t)>>('_stricmp_l');
+  late final __stricmp_l = __stricmp_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int strlen(
     ffi.Pointer<ffi.Char> _Str,
@@ -8504,11 +6730,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strlenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>)>>('strlen');
-  late final _strlen =
-      _strlenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final _strlenPtr = _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>)>>('strlen');
+  late final _strlen = _strlenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   int _strlwr_s(
     ffi.Pointer<ffi.Char> _String,
@@ -8520,11 +6743,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strlwr_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('_strlwr_s');
-  late final __strlwr_s =
-      __strlwr_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
+  late final __strlwr_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('_strlwr_s');
+  late final __strlwr_s = __strlwr_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> _strlwr(
     ffi.Pointer<ffi.Char> _String,
@@ -8534,11 +6754,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strlwrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strlwr');
-  late final __strlwr = __strlwrPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final __strlwrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strlwr');
+  late final __strlwr = __strlwrPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   int _strlwr_s_l(
     ffi.Pointer<ffi.Char> _String,
@@ -8552,12 +6769,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strlwr_s_lPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_strlwr_s_l');
-  late final __strlwr_s_l = __strlwr_s_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __strlwr_s_lPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_strlwr_s_l');
+  late final __strlwr_s_l = __strlwr_s_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   ffi.Pointer<ffi.Char> _strlwr_l(
     ffi.Pointer<ffi.Char> _String,
@@ -8569,12 +6782,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strlwr_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, _locale_t)>>('_strlwr_l');
-  late final __strlwr_l = __strlwr_lPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __strlwr_lPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_strlwr_l');
+  late final __strlwr_l = __strlwr_lPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, _locale_t)>();
 
   ffi.Pointer<ffi.Char> strncat(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8588,13 +6797,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strncatPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>, ffi.Size)>>('strncat');
-  late final _strncat = _strncatPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final _strncatPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('strncat');
+  late final _strncat = _strncatPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int strncmp(
     ffi.Pointer<ffi.Char> _Str1,
@@ -8608,12 +6813,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strncmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('strncmp');
-  late final _strncmp = _strncmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final _strncmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('strncmp');
+  late final _strncmp = _strncmpPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int _strnicmp(
     ffi.Pointer<ffi.Char> _String1,
@@ -8627,12 +6828,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strnicmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('_strnicmp');
-  late final __strnicmp = __strnicmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final __strnicmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('_strnicmp');
+  late final __strnicmp = __strnicmpPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int _strnicmp_l(
     ffi.Pointer<ffi.Char> _String1,
@@ -8648,13 +6845,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strnicmp_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size, _locale_t)>>('_strnicmp_l');
-  late final __strnicmp_l = __strnicmp_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __strnicmp_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_strnicmp_l');
+  late final __strnicmp_l = __strnicmp_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   int _strnicoll(
     ffi.Pointer<ffi.Char> _String1,
@@ -8668,12 +6861,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strnicollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('_strnicoll');
-  late final __strnicoll = __strnicollPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final __strnicollPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('_strnicoll');
+  late final __strnicoll = __strnicollPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int _strnicoll_l(
     ffi.Pointer<ffi.Char> _String1,
@@ -8689,13 +6878,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strnicoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size, _locale_t)>>('_strnicoll_l');
-  late final __strnicoll_l = __strnicoll_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __strnicoll_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_strnicoll_l');
+  late final __strnicoll_l = __strnicoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   int _strncoll(
     ffi.Pointer<ffi.Char> _String1,
@@ -8709,12 +6894,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strncollPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('_strncoll');
-  late final __strncoll = __strncollPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final __strncollPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('_strncoll');
+  late final __strncoll = __strncollPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int _strncoll_l(
     ffi.Pointer<ffi.Char> _String1,
@@ -8730,13 +6911,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strncoll_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size, _locale_t)>>('_strncoll_l');
-  late final __strncoll_l = __strncoll_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __strncoll_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_strncoll_l');
+  late final __strncoll_l = __strncoll_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   int __strncnt(
     ffi.Pointer<ffi.Char> _String,
@@ -8748,11 +6925,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final ___strncntPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('__strncnt');
-  late final ___strncnt =
-      ___strncntPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
+  late final ___strncntPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('__strncnt');
+  late final ___strncnt = ___strncntPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> strncpy(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8766,13 +6940,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strncpyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>, ffi.Size)>>('strncpy');
-  late final _strncpy = _strncpyPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final _strncpyPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('strncpy');
+  late final _strncpy = _strncpyPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int strnlen(
     ffi.Pointer<ffi.Char> _String,
@@ -8784,11 +6954,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strnlenPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('strnlen');
-  late final _strnlen =
-      _strnlenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _strnlenPtr = _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('strnlen');
+  late final _strnlen = _strnlenPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
 
   int _strnset_s(
     ffi.Pointer<ffi.Char> _String,
@@ -8804,12 +6971,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strnset_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int,
-              ffi.Size)>>('_strnset_s');
-  late final __strnset_s = __strnset_sPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, int, int)>();
+  late final __strnset_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int, ffi.Size)>>('_strnset_s');
+  late final __strnset_s = __strnset_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, int, int)>();
 
   ffi.Pointer<ffi.Char> _strnset(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8823,12 +6986,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strnsetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Int, ffi.Size)>>('_strnset');
-  late final __strnset = __strnsetPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int, int)>();
+  late final __strnsetPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Size)>>('_strnset');
+  late final __strnset = __strnsetPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int, int)>();
 
   ffi.Pointer<ffi.Char> strpbrk(
     ffi.Pointer<ffi.Char> _Str,
@@ -8840,13 +6999,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strpbrkPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strpbrk');
-  late final _strpbrk = _strpbrkPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strpbrkPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strpbrk');
+  late final _strpbrk = _strpbrkPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> _strrev(
     ffi.Pointer<ffi.Char> _Str,
@@ -8856,11 +7010,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strrevPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strrev');
-  late final __strrev = __strrevPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final __strrevPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strrev');
+  late final __strrev = __strrevPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   int _strset_s(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8874,12 +7025,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strset_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('_strset_s');
-  late final __strset_s =
-      __strset_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, int)>();
+  late final __strset_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, ffi.Int)>>('_strset_s');
+  late final __strset_s = __strset_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, int)>();
 
   ffi.Pointer<ffi.Char> _strset(
     ffi.Pointer<ffi.Char> _Destination,
@@ -8891,12 +7038,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strsetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Int)>>('_strset');
-  late final __strset = __strsetPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
+  late final __strsetPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Int)>>('_strset');
+  late final __strset = __strsetPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
 
   int strspn(
     ffi.Pointer<ffi.Char> _Str,
@@ -8908,12 +7051,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strspnPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strspn');
-  late final _strspn = _strspnPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strspnPtr = _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strspn');
+  late final _strspn = _strspnPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> strtok(
     ffi.Pointer<ffi.Char> _String,
@@ -8925,13 +7064,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strtokPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strtok');
-  late final _strtok = _strtokPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strtokPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strtok');
+  late final _strtok = _strtokPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int _strupr_s(
     ffi.Pointer<ffi.Char> _String,
@@ -8943,11 +7077,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strupr_sPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('_strupr_s');
-  late final __strupr_s =
-      __strupr_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
+  late final __strupr_sPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size)>>('_strupr_s');
+  late final __strupr_s = __strupr_sPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> _strupr(
     ffi.Pointer<ffi.Char> _String,
@@ -8957,11 +7088,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __struprPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strupr');
-  late final __strupr = __struprPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final __struprPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('_strupr');
+  late final __strupr = __struprPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   int _strupr_s_l(
     ffi.Pointer<ffi.Char> _String,
@@ -8975,12 +7103,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strupr_s_lPtr = _lookup<
-      ffi.NativeFunction<
-          errno_t Function(
-              ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_strupr_s_l');
-  late final __strupr_s_l = __strupr_s_lPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __strupr_s_lPtr = _lookup<ffi.NativeFunction<errno_t Function(ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_strupr_s_l');
+  late final __strupr_s_l = __strupr_s_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   ffi.Pointer<ffi.Char> _strupr_l(
     ffi.Pointer<ffi.Char> _String,
@@ -8992,12 +7116,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strupr_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, _locale_t)>>('_strupr_l');
-  late final __strupr_l = __strupr_lPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, _locale_t)>();
+  late final __strupr_lPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, _locale_t)>>('_strupr_l');
+  late final __strupr_l = __strupr_lPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, _locale_t)>();
 
   int strxfrm(
     ffi.Pointer<ffi.Char> _Destination,
@@ -9011,12 +7131,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strxfrmPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>, ffi.Size)>>('strxfrm');
-  late final _strxfrm = _strxfrmPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final _strxfrmPtr =
+      _lookup<ffi.NativeFunction<ffi.UnsignedLongLong Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('strxfrm');
+  late final _strxfrm = _strxfrmPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int _strxfrm_l(
     ffi.Pointer<ffi.Char> _Destination,
@@ -9032,13 +7149,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final __strxfrm_lPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size, _locale_t)>>('_strxfrm_l');
-  late final __strxfrm_l = __strxfrm_lPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
+  late final __strxfrm_lPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size, _locale_t)>>('_strxfrm_l');
+  late final __strxfrm_l = __strxfrm_lPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int, _locale_t)>();
 
   ffi.Pointer<ffi.Char> strdup(
     ffi.Pointer<ffi.Char> _String,
@@ -9048,11 +7161,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strdupPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('strdup');
-  late final _strdup1 = _strdupPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final _strdupPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('strdup');
+  late final _strdup1 = _strdupPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   int strcmpi(
     ffi.Pointer<ffi.Char> _String1,
@@ -9064,12 +7174,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strcmpiPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcmpi');
-  late final _strcmpi1 = _strcmpiPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _strcmpiPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcmpi');
+  late final _strcmpi1 = _strcmpiPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   int stricmp(
     ffi.Pointer<ffi.Char> _String1,
@@ -9081,12 +7187,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _stricmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('stricmp');
-  late final _stricmp1 = _stricmpPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _stricmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('stricmp');
+  late final _stricmp1 = _stricmpPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> strlwr(
     ffi.Pointer<ffi.Char> _String,
@@ -9096,11 +7198,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strlwrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('strlwr');
-  late final _strlwr1 = _strlwrPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final _strlwrPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('strlwr');
+  late final _strlwr1 = _strlwrPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   int strnicmp(
     ffi.Pointer<ffi.Char> _String1,
@@ -9114,12 +7213,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strnicmpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('strnicmp');
-  late final _strnicmp1 = _strnicmpPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+  late final _strnicmpPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>('strnicmp');
+  late final _strnicmp1 = _strnicmpPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> strnset(
     ffi.Pointer<ffi.Char> _String,
@@ -9133,12 +7228,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strnsetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Int, ffi.Size)>>('strnset');
-  late final _strnset1 = _strnsetPtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int, int)>();
+  late final _strnsetPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Size)>>('strnset');
+  late final _strnset1 = _strnsetPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int, int)>();
 
   ffi.Pointer<ffi.Char> strrev(
     ffi.Pointer<ffi.Char> _String,
@@ -9148,11 +7239,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strrevPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('strrev');
-  late final _strrev1 = _strrevPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final _strrevPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('strrev');
+  late final _strrev1 = _strrevPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<ffi.Char> strset(
     ffi.Pointer<ffi.Char> _String,
@@ -9164,12 +7252,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _strsetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>, ffi.Int)>>('strset');
-  late final _strset1 = _strsetPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _strsetPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Int)>>('strset');
+  late final _strset1 = _strsetPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> strupr(
     ffi.Pointer<ffi.Char> _String,
@@ -9179,11 +7263,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _struprPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('strupr');
-  late final _strupr1 = _struprPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final _struprPtr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('strupr');
+  late final _strupr1 = _struprPtr.asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
   late final ffi.Pointer<ffi.Double> __HUGE = _lookup<ffi.Double>('_HUGE');
 
@@ -9197,8 +7278,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fperrraisePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('_fperrraise');
+  late final __fperrraisePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('_fperrraise');
   late final __fperrraise = __fperrraisePtr.asFunction<void Function(int)>();
 
   int _dclass(
@@ -9209,8 +7289,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dclassPtr =
-      _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Double)>>('_dclass');
+  late final __dclassPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Double)>>('_dclass');
   late final __dclass = __dclassPtr.asFunction<int Function(double)>();
 
   int _fdclass(
@@ -9221,8 +7300,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdclassPtr =
-      _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Float)>>('_fdclass');
+  late final __fdclassPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Float)>>('_fdclass');
   late final __fdclass = __fdclassPtr.asFunction<int Function(double)>();
 
   int _dsign(
@@ -9233,8 +7311,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dsignPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Double)>>('_dsign');
+  late final __dsignPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Double)>>('_dsign');
   late final __dsign = __dsignPtr.asFunction<int Function(double)>();
 
   int _fdsign(
@@ -9245,8 +7322,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdsignPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('_fdsign');
+  late final __fdsignPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('_fdsign');
   late final __fdsign = __fdsignPtr.asFunction<int Function(double)>();
 
   int _dpcomp(
@@ -9259,9 +7335,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dpcompPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Double, ffi.Double)>>(
-          '_dpcomp');
+  late final __dpcompPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Double, ffi.Double)>>('_dpcomp');
   late final __dpcomp = __dpcompPtr.asFunction<int Function(double, double)>();
 
   int _fdpcomp(
@@ -9274,11 +7348,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdpcompPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float, ffi.Float)>>(
-          '_fdpcomp');
-  late final __fdpcomp =
-      __fdpcompPtr.asFunction<int Function(double, double)>();
+  late final __fdpcompPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float, ffi.Float)>>('_fdpcomp');
+  late final __fdpcomp = __fdpcompPtr.asFunction<int Function(double, double)>();
 
   int _dtest(
     ffi.Pointer<ffi.Double> _Px,
@@ -9288,11 +7359,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dtestPtr =
-      _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Double>)>>(
-          '_dtest');
-  late final __dtest =
-      __dtestPtr.asFunction<int Function(ffi.Pointer<ffi.Double>)>();
+  late final __dtestPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Double>)>>('_dtest');
+  late final __dtest = __dtestPtr.asFunction<int Function(ffi.Pointer<ffi.Double>)>();
 
   int _fdtest(
     ffi.Pointer<ffi.Float> _Px,
@@ -9302,11 +7370,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdtestPtr =
-      _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Float>)>>(
-          '_fdtest');
-  late final __fdtest =
-      __fdtestPtr.asFunction<int Function(ffi.Pointer<ffi.Float>)>();
+  late final __fdtestPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Float>)>>('_fdtest');
+  late final __fdtest = __fdtestPtr.asFunction<int Function(ffi.Pointer<ffi.Float>)>();
 
   int _d_int(
     ffi.Pointer<ffi.Double> _Px,
@@ -9318,11 +7383,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __d_intPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(ffi.Pointer<ffi.Double>, ffi.Short)>>('_d_int');
-  late final __d_int =
-      __d_intPtr.asFunction<int Function(ffi.Pointer<ffi.Double>, int)>();
+  late final __d_intPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Double>, ffi.Short)>>('_d_int');
+  late final __d_int = __d_intPtr.asFunction<int Function(ffi.Pointer<ffi.Double>, int)>();
 
   int _fd_int(
     ffi.Pointer<ffi.Float> _Px,
@@ -9334,11 +7396,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fd_intPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(ffi.Pointer<ffi.Float>, ffi.Short)>>('_fd_int');
-  late final __fd_int =
-      __fd_intPtr.asFunction<int Function(ffi.Pointer<ffi.Float>, int)>();
+  late final __fd_intPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Float>, ffi.Short)>>('_fd_int');
+  late final __fd_int = __fd_intPtr.asFunction<int Function(ffi.Pointer<ffi.Float>, int)>();
 
   int _dscale(
     ffi.Pointer<ffi.Double> _Px,
@@ -9350,11 +7409,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dscalePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(ffi.Pointer<ffi.Double>, ffi.Long)>>('_dscale');
-  late final __dscale =
-      __dscalePtr.asFunction<int Function(ffi.Pointer<ffi.Double>, int)>();
+  late final __dscalePtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Double>, ffi.Long)>>('_dscale');
+  late final __dscale = __dscalePtr.asFunction<int Function(ffi.Pointer<ffi.Double>, int)>();
 
   int _fdscale(
     ffi.Pointer<ffi.Float> _Px,
@@ -9366,11 +7422,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdscalePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(ffi.Pointer<ffi.Float>, ffi.Long)>>('_fdscale');
-  late final __fdscale =
-      __fdscalePtr.asFunction<int Function(ffi.Pointer<ffi.Float>, int)>();
+  late final __fdscalePtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Float>, ffi.Long)>>('_fdscale');
+  late final __fdscale = __fdscalePtr.asFunction<int Function(ffi.Pointer<ffi.Float>, int)>();
 
   int _dunscale(
     ffi.Pointer<ffi.Short> _Pex,
@@ -9382,12 +7435,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dunscalePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(
-              ffi.Pointer<ffi.Short>, ffi.Pointer<ffi.Double>)>>('_dunscale');
-  late final __dunscale = __dunscalePtr.asFunction<
-      int Function(ffi.Pointer<ffi.Short>, ffi.Pointer<ffi.Double>)>();
+  late final __dunscalePtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Short>, ffi.Pointer<ffi.Double>)>>('_dunscale');
+  late final __dunscale = __dunscalePtr.asFunction<int Function(ffi.Pointer<ffi.Short>, ffi.Pointer<ffi.Double>)>();
 
   int _fdunscale(
     ffi.Pointer<ffi.Short> _Pex,
@@ -9399,12 +7448,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdunscalePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(
-              ffi.Pointer<ffi.Short>, ffi.Pointer<ffi.Float>)>>('_fdunscale');
-  late final __fdunscale = __fdunscalePtr.asFunction<
-      int Function(ffi.Pointer<ffi.Short>, ffi.Pointer<ffi.Float>)>();
+  late final __fdunscalePtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Short>, ffi.Pointer<ffi.Float>)>>('_fdunscale');
+  late final __fdunscale = __fdunscalePtr.asFunction<int Function(ffi.Pointer<ffi.Short>, ffi.Pointer<ffi.Float>)>();
 
   int _dexp(
     ffi.Pointer<ffi.Double> _Px,
@@ -9418,12 +7463,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dexpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(
-              ffi.Pointer<ffi.Double>, ffi.Double, ffi.Long)>>('_dexp');
-  late final __dexp = __dexpPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Double>, double, int)>();
+  late final __dexpPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Double>, ffi.Double, ffi.Long)>>('_dexp');
+  late final __dexp = __dexpPtr.asFunction<int Function(ffi.Pointer<ffi.Double>, double, int)>();
 
   int _fdexp(
     ffi.Pointer<ffi.Float> _Px,
@@ -9437,12 +7478,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdexpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(
-              ffi.Pointer<ffi.Float>, ffi.Float, ffi.Long)>>('_fdexp');
-  late final __fdexp = __fdexpPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Float>, double, int)>();
+  late final __fdexpPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.Float>, ffi.Float, ffi.Long)>>('_fdexp');
+  late final __fdexp = __fdexpPtr.asFunction<int Function(ffi.Pointer<ffi.Float>, double, int)>();
 
   int _dnorm(
     ffi.Pointer<ffi.UnsignedShort> _Ps,
@@ -9452,11 +7489,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dnormPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(ffi.Pointer<ffi.UnsignedShort>)>>('_dnorm');
-  late final __dnorm =
-      __dnormPtr.asFunction<int Function(ffi.Pointer<ffi.UnsignedShort>)>();
+  late final __dnormPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.UnsignedShort>)>>('_dnorm');
+  late final __dnorm = __dnormPtr.asFunction<int Function(ffi.Pointer<ffi.UnsignedShort>)>();
 
   int _fdnorm(
     ffi.Pointer<ffi.UnsignedShort> _Ps,
@@ -9466,11 +7500,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdnormPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Short Function(ffi.Pointer<ffi.UnsignedShort>)>>('_fdnorm');
-  late final __fdnorm =
-      __fdnormPtr.asFunction<int Function(ffi.Pointer<ffi.UnsignedShort>)>();
+  late final __fdnormPtr = _lookup<ffi.NativeFunction<ffi.Short Function(ffi.Pointer<ffi.UnsignedShort>)>>('_fdnorm');
+  late final __fdnorm = __fdnormPtr.asFunction<int Function(ffi.Pointer<ffi.UnsignedShort>)>();
 
   double _dpoly(
     double _X,
@@ -9484,12 +7515,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dpolyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(
-              ffi.Double, ffi.Pointer<ffi.Double>, ffi.Int)>>('_dpoly');
-  late final __dpoly = __dpolyPtr
-      .asFunction<double Function(double, ffi.Pointer<ffi.Double>, int)>();
+  late final __dpolyPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Pointer<ffi.Double>, ffi.Int)>>('_dpoly');
+  late final __dpoly = __dpolyPtr.asFunction<double Function(double, ffi.Pointer<ffi.Double>, int)>();
 
   double _fdpoly(
     double _X,
@@ -9503,12 +7530,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdpolyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Float Function(
-              ffi.Float, ffi.Pointer<ffi.Float>, ffi.Int)>>('_fdpoly');
-  late final __fdpoly = __fdpolyPtr
-      .asFunction<double Function(double, ffi.Pointer<ffi.Float>, int)>();
+  late final __fdpolyPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Pointer<ffi.Float>, ffi.Int)>>('_fdpoly');
+  late final __fdpoly = __fdpolyPtr.asFunction<double Function(double, ffi.Pointer<ffi.Float>, int)>();
 
   double _dlog(
     double _X,
@@ -9520,9 +7543,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dlogPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Int)>>(
-          '_dlog');
+  late final __dlogPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Int)>>('_dlog');
   late final __dlog = __dlogPtr.asFunction<double Function(double, int)>();
 
   double _fdlog(
@@ -9535,9 +7556,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdlogPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Int)>>(
-          '_fdlog');
+  late final __fdlogPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Int)>>('_fdlog');
   late final __fdlog = __fdlogPtr.asFunction<double Function(double, int)>();
 
   double _dsin(
@@ -9550,9 +7569,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __dsinPtr = _lookup<
-          ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.UnsignedInt)>>(
-      '_dsin');
+  late final __dsinPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.UnsignedInt)>>('_dsin');
   late final __dsin = __dsinPtr.asFunction<double Function(double, int)>();
 
   double _fdsin(
@@ -9565,103 +7582,82 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fdsinPtr = _lookup<
-          ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.UnsignedInt)>>(
-      '_fdsin');
+  late final __fdsinPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.UnsignedInt)>>('_fdsin');
   late final __fdsin = __fdsinPtr.asFunction<double Function(double, int)>();
 
-  late final ffi.Pointer<_float_const> __Denorm_C =
-      _lookup<_float_const>('_Denorm_C');
+  late final ffi.Pointer<_float_const> __Denorm_C = _lookup<_float_const>('_Denorm_C');
 
   ffi.Pointer<_float_const> get _Denorm_C => __Denorm_C;
 
-  late final ffi.Pointer<_float_const> __Inf_C =
-      _lookup<_float_const>('_Inf_C');
+  late final ffi.Pointer<_float_const> __Inf_C = _lookup<_float_const>('_Inf_C');
 
   ffi.Pointer<_float_const> get _Inf_C => __Inf_C;
 
-  late final ffi.Pointer<_float_const> __Nan_C =
-      _lookup<_float_const>('_Nan_C');
+  late final ffi.Pointer<_float_const> __Nan_C = _lookup<_float_const>('_Nan_C');
 
   ffi.Pointer<_float_const> get _Nan_C => __Nan_C;
 
-  late final ffi.Pointer<_float_const> __Snan_C =
-      _lookup<_float_const>('_Snan_C');
+  late final ffi.Pointer<_float_const> __Snan_C = _lookup<_float_const>('_Snan_C');
 
   ffi.Pointer<_float_const> get _Snan_C => __Snan_C;
 
-  late final ffi.Pointer<_float_const> __Hugeval_C =
-      _lookup<_float_const>('_Hugeval_C');
+  late final ffi.Pointer<_float_const> __Hugeval_C = _lookup<_float_const>('_Hugeval_C');
 
   ffi.Pointer<_float_const> get _Hugeval_C => __Hugeval_C;
 
-  late final ffi.Pointer<_float_const> __FDenorm_C =
-      _lookup<_float_const>('_FDenorm_C');
+  late final ffi.Pointer<_float_const> __FDenorm_C = _lookup<_float_const>('_FDenorm_C');
 
   ffi.Pointer<_float_const> get _FDenorm_C => __FDenorm_C;
 
-  late final ffi.Pointer<_float_const> __FInf_C =
-      _lookup<_float_const>('_FInf_C');
+  late final ffi.Pointer<_float_const> __FInf_C = _lookup<_float_const>('_FInf_C');
 
   ffi.Pointer<_float_const> get _FInf_C => __FInf_C;
 
-  late final ffi.Pointer<_float_const> __FNan_C =
-      _lookup<_float_const>('_FNan_C');
+  late final ffi.Pointer<_float_const> __FNan_C = _lookup<_float_const>('_FNan_C');
 
   ffi.Pointer<_float_const> get _FNan_C => __FNan_C;
 
-  late final ffi.Pointer<_float_const> __FSnan_C =
-      _lookup<_float_const>('_FSnan_C');
+  late final ffi.Pointer<_float_const> __FSnan_C = _lookup<_float_const>('_FSnan_C');
 
   ffi.Pointer<_float_const> get _FSnan_C => __FSnan_C;
 
-  late final ffi.Pointer<_float_const> __LDenorm_C =
-      _lookup<_float_const>('_LDenorm_C');
+  late final ffi.Pointer<_float_const> __LDenorm_C = _lookup<_float_const>('_LDenorm_C');
 
   ffi.Pointer<_float_const> get _LDenorm_C => __LDenorm_C;
 
-  late final ffi.Pointer<_float_const> __LInf_C =
-      _lookup<_float_const>('_LInf_C');
+  late final ffi.Pointer<_float_const> __LInf_C = _lookup<_float_const>('_LInf_C');
 
   ffi.Pointer<_float_const> get _LInf_C => __LInf_C;
 
-  late final ffi.Pointer<_float_const> __LNan_C =
-      _lookup<_float_const>('_LNan_C');
+  late final ffi.Pointer<_float_const> __LNan_C = _lookup<_float_const>('_LNan_C');
 
   ffi.Pointer<_float_const> get _LNan_C => __LNan_C;
 
-  late final ffi.Pointer<_float_const> __LSnan_C =
-      _lookup<_float_const>('_LSnan_C');
+  late final ffi.Pointer<_float_const> __LSnan_C = _lookup<_float_const>('_LSnan_C');
 
   ffi.Pointer<_float_const> get _LSnan_C => __LSnan_C;
 
-  late final ffi.Pointer<_float_const> __Eps_C =
-      _lookup<_float_const>('_Eps_C');
+  late final ffi.Pointer<_float_const> __Eps_C = _lookup<_float_const>('_Eps_C');
 
   ffi.Pointer<_float_const> get _Eps_C => __Eps_C;
 
-  late final ffi.Pointer<_float_const> __Rteps_C =
-      _lookup<_float_const>('_Rteps_C');
+  late final ffi.Pointer<_float_const> __Rteps_C = _lookup<_float_const>('_Rteps_C');
 
   ffi.Pointer<_float_const> get _Rteps_C => __Rteps_C;
 
-  late final ffi.Pointer<_float_const> __FEps_C =
-      _lookup<_float_const>('_FEps_C');
+  late final ffi.Pointer<_float_const> __FEps_C = _lookup<_float_const>('_FEps_C');
 
   ffi.Pointer<_float_const> get _FEps_C => __FEps_C;
 
-  late final ffi.Pointer<_float_const> __FRteps_C =
-      _lookup<_float_const>('_FRteps_C');
+  late final ffi.Pointer<_float_const> __FRteps_C = _lookup<_float_const>('_FRteps_C');
 
   ffi.Pointer<_float_const> get _FRteps_C => __FRteps_C;
 
-  late final ffi.Pointer<_float_const> __LEps_C =
-      _lookup<_float_const>('_LEps_C');
+  late final ffi.Pointer<_float_const> __LEps_C = _lookup<_float_const>('_LEps_C');
 
   ffi.Pointer<_float_const> get _LEps_C => __LEps_C;
 
-  late final ffi.Pointer<_float_const> __LRteps_C =
-      _lookup<_float_const>('_LRteps_C');
+  late final ffi.Pointer<_float_const> __LRteps_C = _lookup<_float_const>('_LRteps_C');
 
   ffi.Pointer<_float_const> get _LRteps_C => __LRteps_C;
 
@@ -9689,8 +7685,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _acosPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('acos');
+  late final _acosPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('acos');
   late final _acos = _acosPtr.asFunction<double Function(double)>();
 
   double asin(
@@ -9701,8 +7696,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _asinPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('asin');
+  late final _asinPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('asin');
   late final _asin = _asinPtr.asFunction<double Function(double)>();
 
   double atan(
@@ -9713,8 +7707,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atanPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('atan');
+  late final _atanPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('atan');
   late final _atan = _atanPtr.asFunction<double Function(double)>();
 
   double atan2(
@@ -9727,9 +7720,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atan2Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'atan2');
+  late final _atan2Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('atan2');
   late final _atan2 = _atan2Ptr.asFunction<double Function(double, double)>();
 
   double cos(
@@ -9740,8 +7731,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _cosPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('cos');
+  late final _cosPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('cos');
   late final _cos = _cosPtr.asFunction<double Function(double)>();
 
   double cosh(
@@ -9752,8 +7742,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _coshPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('cosh');
+  late final _coshPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('cosh');
   late final _cosh = _coshPtr.asFunction<double Function(double)>();
 
   double exp(
@@ -9764,8 +7753,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _expPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('exp');
+  late final _expPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('exp');
   late final _exp = _expPtr.asFunction<double Function(double)>();
 
   double fabs(
@@ -9776,8 +7764,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fabsPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('fabs');
+  late final _fabsPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('fabs');
   late final _fabs = _fabsPtr.asFunction<double Function(double)>();
 
   double fmod(
@@ -9790,9 +7777,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fmodPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'fmod');
+  late final _fmodPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('fmod');
   late final _fmod = _fmodPtr.asFunction<double Function(double, double)>();
 
   double log(
@@ -9803,8 +7788,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _logPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('log');
+  late final _logPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('log');
   late final _log = _logPtr.asFunction<double Function(double)>();
 
   double log10(
@@ -9815,8 +7799,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _log10Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('log10');
+  late final _log10Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('log10');
   late final _log10 = _log10Ptr.asFunction<double Function(double)>();
 
   double pow(
@@ -9829,9 +7812,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _powPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'pow');
+  late final _powPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('pow');
   late final _pow = _powPtr.asFunction<double Function(double, double)>();
 
   double sin(
@@ -9842,8 +7823,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _sinPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('sin');
+  late final _sinPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('sin');
   late final _sin = _sinPtr.asFunction<double Function(double)>();
 
   double sinh(
@@ -9854,8 +7834,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _sinhPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('sinh');
+  late final _sinhPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('sinh');
   late final _sinh = _sinhPtr.asFunction<double Function(double)>();
 
   double sqrt(
@@ -9866,8 +7845,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _sqrtPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('sqrt');
+  late final _sqrtPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('sqrt');
   late final _sqrt = _sqrtPtr.asFunction<double Function(double)>();
 
   double tan(
@@ -9878,8 +7856,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tanPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('tan');
+  late final _tanPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('tan');
   late final _tan = _tanPtr.asFunction<double Function(double)>();
 
   double tanh(
@@ -9890,8 +7867,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tanhPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('tanh');
+  late final _tanhPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('tanh');
   late final _tanh = _tanhPtr.asFunction<double Function(double)>();
 
   double acosh(
@@ -9902,8 +7878,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _acoshPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('acosh');
+  late final _acoshPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('acosh');
   late final _acosh = _acoshPtr.asFunction<double Function(double)>();
 
   double asinh(
@@ -9914,8 +7889,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _asinhPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('asinh');
+  late final _asinhPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('asinh');
   late final _asinh = _asinhPtr.asFunction<double Function(double)>();
 
   double atanh(
@@ -9926,8 +7900,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atanhPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('atanh');
+  late final _atanhPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('atanh');
   late final _atanh = _atanhPtr.asFunction<double Function(double)>();
 
   double _cabs(
@@ -9938,8 +7911,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __cabsPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(_complex)>>('_cabs');
+  late final __cabsPtr = _lookup<ffi.NativeFunction<ffi.Double Function(_complex)>>('_cabs');
   late final __cabs = __cabsPtr.asFunction<double Function(_complex)>();
 
   double cbrt(
@@ -9950,8 +7922,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _cbrtPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('cbrt');
+  late final _cbrtPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('cbrt');
   late final _cbrt = _cbrtPtr.asFunction<double Function(double)>();
 
   double ceil(
@@ -9962,8 +7933,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ceilPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('ceil');
+  late final _ceilPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('ceil');
   late final _ceil = _ceilPtr.asFunction<double Function(double)>();
 
   double _chgsign(
@@ -9974,8 +7944,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __chgsignPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_chgsign');
+  late final __chgsignPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_chgsign');
   late final __chgsign = __chgsignPtr.asFunction<double Function(double)>();
 
   double copysign(
@@ -9988,11 +7957,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _copysignPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'copysign');
-  late final _copysign1 =
-      _copysignPtr.asFunction<double Function(double, double)>();
+  late final _copysignPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('copysign');
+  late final _copysign1 = _copysignPtr.asFunction<double Function(double, double)>();
 
   double _copysign(
     double _Number,
@@ -10004,11 +7970,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __copysignPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          '_copysign');
-  late final __copysign =
-      __copysignPtr.asFunction<double Function(double, double)>();
+  late final __copysignPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('_copysign');
+  late final __copysign = __copysignPtr.asFunction<double Function(double, double)>();
 
   double erf(
     double _X,
@@ -10018,8 +7981,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _erfPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('erf');
+  late final _erfPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('erf');
   late final _erf = _erfPtr.asFunction<double Function(double)>();
 
   double erfc(
@@ -10030,8 +7992,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _erfcPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('erfc');
+  late final _erfcPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('erfc');
   late final _erfc = _erfcPtr.asFunction<double Function(double)>();
 
   double exp2(
@@ -10042,8 +8003,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _exp2Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('exp2');
+  late final _exp2Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('exp2');
   late final _exp2 = _exp2Ptr.asFunction<double Function(double)>();
 
   double expm1(
@@ -10054,8 +8014,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _expm1Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('expm1');
+  late final _expm1Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('expm1');
   late final _expm1 = _expm1Ptr.asFunction<double Function(double)>();
 
   double fdim(
@@ -10068,9 +8027,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fdimPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'fdim');
+  late final _fdimPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('fdim');
   late final _fdim = _fdimPtr.asFunction<double Function(double, double)>();
 
   double floor(
@@ -10081,8 +8038,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _floorPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('floor');
+  late final _floorPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('floor');
   late final _floor = _floorPtr.asFunction<double Function(double)>();
 
   double fma(
@@ -10097,11 +8053,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fmaPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(ffi.Double, ffi.Double, ffi.Double)>>('fma');
-  late final _fma =
-      _fmaPtr.asFunction<double Function(double, double, double)>();
+  late final _fmaPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double, ffi.Double)>>('fma');
+  late final _fma = _fmaPtr.asFunction<double Function(double, double, double)>();
 
   double fmax(
     double _X,
@@ -10113,9 +8066,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fmaxPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'fmax');
+  late final _fmaxPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('fmax');
   late final _fmax = _fmaxPtr.asFunction<double Function(double, double)>();
 
   double fmin(
@@ -10128,9 +8079,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fminPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'fmin');
+  late final _fminPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('fmin');
   late final _fmin = _fminPtr.asFunction<double Function(double, double)>();
 
   double frexp(
@@ -10143,11 +8092,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _frexpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(ffi.Double, ffi.Pointer<ffi.Int>)>>('frexp');
-  late final _frexp =
-      _frexpPtr.asFunction<double Function(double, ffi.Pointer<ffi.Int>)>();
+  late final _frexpPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Pointer<ffi.Int>)>>('frexp');
+  late final _frexp = _frexpPtr.asFunction<double Function(double, ffi.Pointer<ffi.Int>)>();
 
   double hypot(
     double _X,
@@ -10159,9 +8105,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _hypotPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'hypot');
+  late final _hypotPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('hypot');
   late final _hypot1 = _hypotPtr.asFunction<double Function(double, double)>();
 
   double _hypot(
@@ -10174,9 +8118,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __hypotPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          '_hypot');
+  late final __hypotPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('_hypot');
   late final __hypot = __hypotPtr.asFunction<double Function(double, double)>();
 
   int ilogb(
@@ -10187,8 +8129,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ilogbPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Double)>>('ilogb');
+  late final _ilogbPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Double)>>('ilogb');
   late final _ilogb = _ilogbPtr.asFunction<int Function(double)>();
 
   double ldexp(
@@ -10201,9 +8142,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ldexpPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Int)>>(
-          'ldexp');
+  late final _ldexpPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Int)>>('ldexp');
   late final _ldexp = _ldexpPtr.asFunction<double Function(double, int)>();
 
   double lgamma(
@@ -10214,8 +8153,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _lgammaPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('lgamma');
+  late final _lgammaPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('lgamma');
   late final _lgamma = _lgammaPtr.asFunction<double Function(double)>();
 
   int llrint(
@@ -10226,8 +8164,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _llrintPtr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Double)>>('llrint');
+  late final _llrintPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Double)>>('llrint');
   late final _llrint = _llrintPtr.asFunction<int Function(double)>();
 
   int llround(
@@ -10238,8 +8175,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _llroundPtr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Double)>>('llround');
+  late final _llroundPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Double)>>('llround');
   late final _llround = _llroundPtr.asFunction<int Function(double)>();
 
   double log1p(
@@ -10250,8 +8186,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _log1pPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('log1p');
+  late final _log1pPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('log1p');
   late final _log1p = _log1pPtr.asFunction<double Function(double)>();
 
   double log2(
@@ -10262,8 +8197,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _log2Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('log2');
+  late final _log2Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('log2');
   late final _log2 = _log2Ptr.asFunction<double Function(double)>();
 
   double logb(
@@ -10274,8 +8208,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _logbPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('logb');
+  late final _logbPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('logb');
   late final _logb = _logbPtr.asFunction<double Function(double)>();
 
   int lrint(
@@ -10286,8 +8219,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _lrintPtr =
-      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Double)>>('lrint');
+  late final _lrintPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Double)>>('lrint');
   late final _lrint = _lrintPtr.asFunction<int Function(double)>();
 
   int lround(
@@ -10298,8 +8230,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _lroundPtr =
-      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Double)>>('lround');
+  late final _lroundPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Double)>>('lround');
   late final _lround = _lroundPtr.asFunction<int Function(double)>();
 
   int _matherr(
@@ -10310,11 +8241,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __matherrPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<_exception>)>>(
-          '_matherr');
-  late final __matherr =
-      __matherrPtr.asFunction<int Function(ffi.Pointer<_exception>)>();
+  late final __matherrPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<_exception>)>>('_matherr');
+  late final __matherr = __matherrPtr.asFunction<int Function(ffi.Pointer<_exception>)>();
 
   double modf(
     double _X,
@@ -10326,11 +8254,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _modfPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(ffi.Double, ffi.Pointer<ffi.Double>)>>('modf');
-  late final _modf =
-      _modfPtr.asFunction<double Function(double, ffi.Pointer<ffi.Double>)>();
+  late final _modfPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Pointer<ffi.Double>)>>('modf');
+  late final _modf = _modfPtr.asFunction<double Function(double, ffi.Pointer<ffi.Double>)>();
 
   double nan(
     ffi.Pointer<ffi.Char> _X,
@@ -10340,11 +8265,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nanPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.Char>)>>(
-          'nan');
-  late final _nan =
-      _nanPtr.asFunction<double Function(ffi.Pointer<ffi.Char>)>();
+  late final _nanPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Pointer<ffi.Char>)>>('nan');
+  late final _nan = _nanPtr.asFunction<double Function(ffi.Pointer<ffi.Char>)>();
 
   double nearbyint(
     double _X,
@@ -10354,8 +8276,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nearbyintPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('nearbyint');
+  late final _nearbyintPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('nearbyint');
   late final _nearbyint = _nearbyintPtr.asFunction<double Function(double)>();
 
   double nextafter(
@@ -10368,11 +8289,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nextafterPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'nextafter');
-  late final _nextafter =
-      _nextafterPtr.asFunction<double Function(double, double)>();
+  late final _nextafterPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('nextafter');
+  late final _nextafter = _nextafterPtr.asFunction<double Function(double, double)>();
 
   double remainder(
     double _X,
@@ -10384,11 +8302,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _remainderPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-          'remainder');
-  late final _remainder =
-      _remainderPtr.asFunction<double Function(double, double)>();
+  late final _remainderPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>('remainder');
+  late final _remainder = _remainderPtr.asFunction<double Function(double, double)>();
 
   double remquo(
     double _X,
@@ -10402,12 +8317,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _remquoPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Double Function(
-              ffi.Double, ffi.Double, ffi.Pointer<ffi.Int>)>>('remquo');
-  late final _remquo = _remquoPtr
-      .asFunction<double Function(double, double, ffi.Pointer<ffi.Int>)>();
+  late final _remquoPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double, ffi.Pointer<ffi.Int>)>>('remquo');
+  late final _remquo = _remquoPtr.asFunction<double Function(double, double, ffi.Pointer<ffi.Int>)>();
 
   double rint(
     double _X,
@@ -10417,8 +8328,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _rintPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('rint');
+  late final _rintPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('rint');
   late final _rint = _rintPtr.asFunction<double Function(double)>();
 
   double round(
@@ -10429,8 +8339,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _roundPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('round');
+  late final _roundPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('round');
   late final _round = _roundPtr.asFunction<double Function(double)>();
 
   double scalbln(
@@ -10443,9 +8352,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _scalblnPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Long)>>(
-          'scalbln');
+  late final _scalblnPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Long)>>('scalbln');
   late final _scalbln = _scalblnPtr.asFunction<double Function(double, int)>();
 
   double scalbn(
@@ -10458,9 +8365,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _scalbnPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Int)>>(
-          'scalbn');
+  late final _scalbnPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Int)>>('scalbn');
   late final _scalbn = _scalbnPtr.asFunction<double Function(double, int)>();
 
   double tgamma(
@@ -10471,8 +8376,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tgammaPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('tgamma');
+  late final _tgammaPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('tgamma');
   late final _tgamma = _tgammaPtr.asFunction<double Function(double)>();
 
   double trunc(
@@ -10483,8 +8387,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _truncPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('trunc');
+  late final _truncPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('trunc');
   late final _trunc = _truncPtr.asFunction<double Function(double)>();
 
   double _j0(
@@ -10495,8 +8398,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __j0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_j0');
+  late final __j0Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_j0');
   late final __j0 = __j0Ptr.asFunction<double Function(double)>();
 
   double _j1(
@@ -10507,8 +8409,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __j1Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_j1');
+  late final __j1Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_j1');
   late final __j1 = __j1Ptr.asFunction<double Function(double)>();
 
   double _jn(
@@ -10521,9 +8422,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __jnPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Int, ffi.Double)>>(
-          '_jn');
+  late final __jnPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Int, ffi.Double)>>('_jn');
   late final __jn = __jnPtr.asFunction<double Function(int, double)>();
 
   double _y0(
@@ -10534,8 +8433,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __y0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_y0');
+  late final __y0Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_y0');
   late final __y0 = __y0Ptr.asFunction<double Function(double)>();
 
   double _y1(
@@ -10546,8 +8444,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __y1Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_y1');
+  late final __y1Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('_y1');
   late final __y1 = __y1Ptr.asFunction<double Function(double)>();
 
   double _yn(
@@ -10560,9 +8457,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __ynPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Int, ffi.Double)>>(
-          '_yn');
+  late final __ynPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Int, ffi.Double)>>('_yn');
   late final __yn = __ynPtr.asFunction<double Function(int, double)>();
 
   double acoshf(
@@ -10573,8 +8468,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _acoshfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('acoshf');
+  late final _acoshfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('acoshf');
   late final _acoshf = _acoshfPtr.asFunction<double Function(double)>();
 
   double asinhf(
@@ -10585,8 +8479,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _asinhfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('asinhf');
+  late final _asinhfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('asinhf');
   late final _asinhf = _asinhfPtr.asFunction<double Function(double)>();
 
   double atanhf(
@@ -10597,8 +8490,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atanhfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('atanhf');
+  late final _atanhfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('atanhf');
   late final _atanhf = _atanhfPtr.asFunction<double Function(double)>();
 
   double cbrtf(
@@ -10609,8 +8501,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _cbrtfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('cbrtf');
+  late final _cbrtfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('cbrtf');
   late final _cbrtf = _cbrtfPtr.asFunction<double Function(double)>();
 
   double _chgsignf(
@@ -10621,8 +8512,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __chgsignfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('_chgsignf');
+  late final __chgsignfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('_chgsignf');
   late final __chgsignf = __chgsignfPtr.asFunction<double Function(double)>();
 
   double copysignf(
@@ -10635,11 +8525,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _copysignfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          'copysignf');
-  late final _copysignf1 =
-      _copysignfPtr.asFunction<double Function(double, double)>();
+  late final _copysignfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('copysignf');
+  late final _copysignf1 = _copysignfPtr.asFunction<double Function(double, double)>();
 
   double _copysignf(
     double _Number,
@@ -10651,11 +8538,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __copysignfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          '_copysignf');
-  late final __copysignf =
-      __copysignfPtr.asFunction<double Function(double, double)>();
+  late final __copysignfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('_copysignf');
+  late final __copysignf = __copysignfPtr.asFunction<double Function(double, double)>();
 
   double erff(
     double _X,
@@ -10665,8 +8549,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _erffPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('erff');
+  late final _erffPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('erff');
   late final _erff = _erffPtr.asFunction<double Function(double)>();
 
   double erfcf(
@@ -10677,8 +8560,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _erfcfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('erfcf');
+  late final _erfcfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('erfcf');
   late final _erfcf = _erfcfPtr.asFunction<double Function(double)>();
 
   double expm1f(
@@ -10689,8 +8571,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _expm1fPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('expm1f');
+  late final _expm1fPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('expm1f');
   late final _expm1f = _expm1fPtr.asFunction<double Function(double)>();
 
   double exp2f(
@@ -10701,8 +8582,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _exp2fPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('exp2f');
+  late final _exp2fPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('exp2f');
   late final _exp2f = _exp2fPtr.asFunction<double Function(double)>();
 
   double fdimf(
@@ -10715,9 +8595,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fdimfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          'fdimf');
+  late final _fdimfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('fdimf');
   late final _fdimf = _fdimfPtr.asFunction<double Function(double, double)>();
 
   double fmaf(
@@ -10732,11 +8610,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fmafPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Float Function(ffi.Float, ffi.Float, ffi.Float)>>('fmaf');
-  late final _fmaf =
-      _fmafPtr.asFunction<double Function(double, double, double)>();
+  late final _fmafPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float, ffi.Float)>>('fmaf');
+  late final _fmaf = _fmafPtr.asFunction<double Function(double, double, double)>();
 
   double fmaxf(
     double _X,
@@ -10748,9 +8623,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fmaxfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          'fmaxf');
+  late final _fmaxfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('fmaxf');
   late final _fmaxf = _fmaxfPtr.asFunction<double Function(double, double)>();
 
   double fminf(
@@ -10763,9 +8636,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fminfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          'fminf');
+  late final _fminfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('fminf');
   late final _fminf = _fminfPtr.asFunction<double Function(double, double)>();
 
   double _hypotf(
@@ -10778,11 +8649,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __hypotfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          '_hypotf');
-  late final __hypotf =
-      __hypotfPtr.asFunction<double Function(double, double)>();
+  late final __hypotfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('_hypotf');
+  late final __hypotf = __hypotfPtr.asFunction<double Function(double, double)>();
 
   int ilogbf(
     double _X,
@@ -10792,8 +8660,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ilogbfPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('ilogbf');
+  late final _ilogbfPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('ilogbf');
   late final _ilogbf = _ilogbfPtr.asFunction<int Function(double)>();
 
   double lgammaf(
@@ -10804,8 +8671,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _lgammafPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('lgammaf');
+  late final _lgammafPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('lgammaf');
   late final _lgammaf = _lgammafPtr.asFunction<double Function(double)>();
 
   int llrintf(
@@ -10816,8 +8682,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _llrintfPtr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Float)>>('llrintf');
+  late final _llrintfPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Float)>>('llrintf');
   late final _llrintf = _llrintfPtr.asFunction<int Function(double)>();
 
   int llroundf(
@@ -10828,8 +8693,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _llroundfPtr =
-      _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Float)>>('llroundf');
+  late final _llroundfPtr = _lookup<ffi.NativeFunction<ffi.LongLong Function(ffi.Float)>>('llroundf');
   late final _llroundf = _llroundfPtr.asFunction<int Function(double)>();
 
   double log1pf(
@@ -10840,8 +8704,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _log1pfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('log1pf');
+  late final _log1pfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('log1pf');
   late final _log1pf = _log1pfPtr.asFunction<double Function(double)>();
 
   double log2f(
@@ -10852,8 +8715,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _log2fPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('log2f');
+  late final _log2fPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('log2f');
   late final _log2f = _log2fPtr.asFunction<double Function(double)>();
 
   double logbf(
@@ -10864,8 +8726,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _logbfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('logbf');
+  late final _logbfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('logbf');
   late final _logbf1 = _logbfPtr.asFunction<double Function(double)>();
 
   int lrintf(
@@ -10876,8 +8737,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _lrintfPtr =
-      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Float)>>('lrintf');
+  late final _lrintfPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Float)>>('lrintf');
   late final _lrintf = _lrintfPtr.asFunction<int Function(double)>();
 
   int lroundf(
@@ -10888,8 +8748,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _lroundfPtr =
-      _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Float)>>('lroundf');
+  late final _lroundfPtr = _lookup<ffi.NativeFunction<ffi.Long Function(ffi.Float)>>('lroundf');
   late final _lroundf = _lroundfPtr.asFunction<int Function(double)>();
 
   double nanf(
@@ -10900,11 +8759,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nanfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Pointer<ffi.Char>)>>(
-          'nanf');
-  late final _nanf =
-      _nanfPtr.asFunction<double Function(ffi.Pointer<ffi.Char>)>();
+  late final _nanfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Pointer<ffi.Char>)>>('nanf');
+  late final _nanf = _nanfPtr.asFunction<double Function(ffi.Pointer<ffi.Char>)>();
 
   double nearbyintf(
     double _X,
@@ -10914,8 +8770,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nearbyintfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('nearbyintf');
+  late final _nearbyintfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('nearbyintf');
   late final _nearbyintf = _nearbyintfPtr.asFunction<double Function(double)>();
 
   double nextafterf(
@@ -10928,11 +8783,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nextafterfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          'nextafterf');
-  late final _nextafterf1 =
-      _nextafterfPtr.asFunction<double Function(double, double)>();
+  late final _nextafterfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('nextafterf');
+  late final _nextafterf1 = _nextafterfPtr.asFunction<double Function(double, double)>();
 
   double remainderf(
     double _X,
@@ -10944,11 +8796,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _remainderfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          'remainderf');
-  late final _remainderf =
-      _remainderfPtr.asFunction<double Function(double, double)>();
+  late final _remainderfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('remainderf');
+  late final _remainderf = _remainderfPtr.asFunction<double Function(double, double)>();
 
   double remquof(
     double _X,
@@ -10962,12 +8811,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _remquofPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Float Function(
-              ffi.Float, ffi.Float, ffi.Pointer<ffi.Int>)>>('remquof');
-  late final _remquof = _remquofPtr
-      .asFunction<double Function(double, double, ffi.Pointer<ffi.Int>)>();
+  late final _remquofPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float, ffi.Pointer<ffi.Int>)>>('remquof');
+  late final _remquof = _remquofPtr.asFunction<double Function(double, double, ffi.Pointer<ffi.Int>)>();
 
   double rintf(
     double _X,
@@ -10977,8 +8822,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _rintfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('rintf');
+  late final _rintfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('rintf');
   late final _rintf = _rintfPtr.asFunction<double Function(double)>();
 
   double roundf(
@@ -10989,8 +8833,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _roundfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('roundf');
+  late final _roundfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('roundf');
   late final _roundf = _roundfPtr.asFunction<double Function(double)>();
 
   double scalblnf(
@@ -11003,11 +8846,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _scalblnfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Long)>>(
-          'scalblnf');
-  late final _scalblnf =
-      _scalblnfPtr.asFunction<double Function(double, int)>();
+  late final _scalblnfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Long)>>('scalblnf');
+  late final _scalblnf = _scalblnfPtr.asFunction<double Function(double, int)>();
 
   double scalbnf(
     double _X,
@@ -11019,9 +8859,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _scalbnfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Int)>>(
-          'scalbnf');
+  late final _scalbnfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Int)>>('scalbnf');
   late final _scalbnf = _scalbnfPtr.asFunction<double Function(double, int)>();
 
   double tgammaf(
@@ -11032,8 +8870,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tgammafPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('tgammaf');
+  late final _tgammafPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('tgammaf');
   late final _tgammaf = _tgammafPtr.asFunction<double Function(double)>();
 
   double truncf(
@@ -11044,8 +8881,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _truncfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('truncf');
+  late final _truncfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('truncf');
   late final _truncf = _truncfPtr.asFunction<double Function(double)>();
 
   double _logbf(
@@ -11056,8 +8892,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __logbfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('_logbf');
+  late final __logbfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('_logbf');
   late final __logbf = __logbfPtr.asFunction<double Function(double)>();
 
   double _nextafterf(
@@ -11070,11 +8905,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final __nextafterfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          '_nextafterf');
-  late final __nextafterf =
-      __nextafterfPtr.asFunction<double Function(double, double)>();
+  late final __nextafterfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('_nextafterf');
+  late final __nextafterf = __nextafterfPtr.asFunction<double Function(double, double)>();
 
   int _finitef(
     double _X,
@@ -11084,8 +8916,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __finitefPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('_finitef');
+  late final __finitefPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('_finitef');
   late final __finitef = __finitefPtr.asFunction<int Function(double)>();
 
   int _isnanf(
@@ -11096,8 +8927,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __isnanfPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('_isnanf');
+  late final __isnanfPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('_isnanf');
   late final __isnanf = __isnanfPtr.asFunction<int Function(double)>();
 
   int _fpclassf(
@@ -11108,8 +8938,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final __fpclassfPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('_fpclassf');
+  late final __fpclassfPtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Float)>>('_fpclassf');
   late final __fpclassf = __fpclassfPtr.asFunction<int Function(double)>();
 
   int _set_FMA3_enable(
@@ -11120,20 +8949,15 @@ class YuvFfiBindings {
     );
   }
 
-  late final __set_FMA3_enablePtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
-          '_set_FMA3_enable');
-  late final __set_FMA3_enable =
-      __set_FMA3_enablePtr.asFunction<int Function(int)>();
+  late final __set_FMA3_enablePtr = _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('_set_FMA3_enable');
+  late final __set_FMA3_enable = __set_FMA3_enablePtr.asFunction<int Function(int)>();
 
   int _get_FMA3_enable() {
     return __get_FMA3_enable();
   }
 
-  late final __get_FMA3_enablePtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('_get_FMA3_enable');
-  late final __get_FMA3_enable =
-      __get_FMA3_enablePtr.asFunction<int Function()>();
+  late final __get_FMA3_enablePtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('_get_FMA3_enable');
+  late final __get_FMA3_enable = __get_FMA3_enablePtr.asFunction<int Function()>();
 
   double acosf(
     double _X,
@@ -11143,8 +8967,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _acosfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('acosf');
+  late final _acosfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('acosf');
   late final _acosf = _acosfPtr.asFunction<double Function(double)>();
 
   double asinf(
@@ -11155,8 +8978,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _asinfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('asinf');
+  late final _asinfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('asinf');
   late final _asinf = _asinfPtr.asFunction<double Function(double)>();
 
   double atan2f(
@@ -11169,9 +8991,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atan2fPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          'atan2f');
+  late final _atan2fPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('atan2f');
   late final _atan2f = _atan2fPtr.asFunction<double Function(double, double)>();
 
   double atanf(
@@ -11182,8 +9002,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _atanfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('atanf');
+  late final _atanfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('atanf');
   late final _atanf = _atanfPtr.asFunction<double Function(double)>();
 
   double ceilf(
@@ -11194,8 +9013,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ceilfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('ceilf');
+  late final _ceilfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('ceilf');
   late final _ceilf = _ceilfPtr.asFunction<double Function(double)>();
 
   double cosf(
@@ -11206,8 +9024,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _cosfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('cosf');
+  late final _cosfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('cosf');
   late final _cosf = _cosfPtr.asFunction<double Function(double)>();
 
   double coshf(
@@ -11218,8 +9035,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _coshfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('coshf');
+  late final _coshfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('coshf');
   late final _coshf = _coshfPtr.asFunction<double Function(double)>();
 
   double expf(
@@ -11230,8 +9046,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _expfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('expf');
+  late final _expfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('expf');
   late final _expf = _expfPtr.asFunction<double Function(double)>();
 
   double floorf(
@@ -11242,8 +9057,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _floorfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('floorf');
+  late final _floorfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('floorf');
   late final _floorf = _floorfPtr.asFunction<double Function(double)>();
 
   double fmodf(
@@ -11256,9 +9070,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _fmodfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          'fmodf');
+  late final _fmodfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('fmodf');
   late final _fmodf = _fmodfPtr.asFunction<double Function(double, double)>();
 
   double log10f(
@@ -11269,8 +9081,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _log10fPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('log10f');
+  late final _log10fPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('log10f');
   late final _log10f = _log10fPtr.asFunction<double Function(double)>();
 
   double logf(
@@ -11281,8 +9092,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _logfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('logf');
+  late final _logfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('logf');
   late final _logf = _logfPtr.asFunction<double Function(double)>();
 
   double modff(
@@ -11295,11 +9105,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _modffPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Float Function(ffi.Float, ffi.Pointer<ffi.Float>)>>('modff');
-  late final _modff =
-      _modffPtr.asFunction<double Function(double, ffi.Pointer<ffi.Float>)>();
+  late final _modffPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Pointer<ffi.Float>)>>('modff');
+  late final _modff = _modffPtr.asFunction<double Function(double, ffi.Pointer<ffi.Float>)>();
 
   double powf(
     double _X,
@@ -11311,9 +9118,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _powfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>(
-          'powf');
+  late final _powfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>('powf');
   late final _powf = _powfPtr.asFunction<double Function(double, double)>();
 
   double sinf(
@@ -11324,8 +9129,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _sinfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('sinf');
+  late final _sinfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('sinf');
   late final _sinf = _sinfPtr.asFunction<double Function(double)>();
 
   double sinhf(
@@ -11336,8 +9140,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _sinhfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('sinhf');
+  late final _sinhfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('sinhf');
   late final _sinhf = _sinhfPtr.asFunction<double Function(double)>();
 
   double sqrtf(
@@ -11348,8 +9151,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _sqrtfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('sqrtf');
+  late final _sqrtfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('sqrtf');
   late final _sqrtf = _sqrtfPtr.asFunction<double Function(double)>();
 
   double tanf(
@@ -11360,8 +9162,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tanfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('tanf');
+  late final _tanfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('tanf');
   late final _tanf = _tanfPtr.asFunction<double Function(double)>();
 
   double tanhf(
@@ -11372,8 +9173,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _tanhfPtr =
-      _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('tanhf');
+  late final _tanhfPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Float)>>('tanhf');
   late final _tanhf = _tanhfPtr.asFunction<double Function(double)>();
 
   late final ffi.Pointer<ffi.Double> _HUGE1 = _lookup<ffi.Double>('HUGE');
@@ -11390,8 +9190,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _j0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('j0');
+  late final _j0Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('j0');
   late final _j01 = _j0Ptr.asFunction<double Function(double)>();
 
   double j1(
@@ -11402,8 +9201,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _j1Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('j1');
+  late final _j1Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('j1');
   late final _j11 = _j1Ptr.asFunction<double Function(double)>();
 
   double jn(
@@ -11416,9 +9214,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _jnPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Int, ffi.Double)>>(
-          'jn');
+  late final _jnPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Int, ffi.Double)>>('jn');
   late final _jn1 = _jnPtr.asFunction<double Function(int, double)>();
 
   double y0(
@@ -11429,8 +9225,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _y0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('y0');
+  late final _y0Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('y0');
   late final _y01 = _y0Ptr.asFunction<double Function(double)>();
 
   double y1(
@@ -11441,8 +9236,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _y1Ptr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('y1');
+  late final _y1Ptr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double)>>('y1');
   late final _y11 = _y1Ptr.asFunction<double Function(double)>();
 
   double yn(
@@ -11455,9 +9249,7 @@ class YuvFfiBindings {
     );
   }
 
-  late final _ynPtr =
-      _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Int, ffi.Double)>>(
-          'yn');
+  late final _ynPtr = _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Int, ffi.Double)>>('yn');
   late final _yn1 = _ynPtr.asFunction<double Function(int, double)>();
 
   void generate_gaussian_kernel(
@@ -11472,12 +9264,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _generate_gaussian_kernelPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Float>, ffi.Int,
-              ffi.Float)>>('generate_gaussian_kernel');
-  late final _generate_gaussian_kernel = _generate_gaussian_kernelPtr
-      .asFunction<void Function(ffi.Pointer<ffi.Float>, int, double)>();
+  late final _generate_gaussian_kernelPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Float>, ffi.Int, ffi.Float)>>('generate_gaussian_kernel');
+  late final _generate_gaussian_kernel = _generate_gaussian_kernelPtr.asFunction<void Function(ffi.Pointer<ffi.Float>, int, double)>();
 
   void apply_1d_gaussian(
     ffi.Pointer<ffi.Uint8> src,
@@ -11495,13 +9284,11 @@ class YuvFfiBindings {
     );
   }
 
-  late final _apply_1d_gaussianPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>,
-              ffi.Int, ffi.Pointer<ffi.Float>, ffi.Int)>>('apply_1d_gaussian');
-  late final _apply_1d_gaussian = _apply_1d_gaussianPtr.asFunction<
-      void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int,
-          ffi.Pointer<ffi.Float>, int)>();
+  late final _apply_1d_gaussianPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, ffi.Int, ffi.Pointer<ffi.Float>, ffi.Int)>>(
+          'apply_1d_gaussian');
+  late final _apply_1d_gaussian =
+      _apply_1d_gaussianPtr.asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int, ffi.Pointer<ffi.Float>, int)>();
 
   void gaussian_blur_plane_strided(
     ffi.Pointer<ffi.Uint8> src,
@@ -11526,20 +9313,11 @@ class YuvFfiBindings {
   }
 
   late final _gaussian_blur_plane_stridedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<ffi.Uint8>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Int,
-              ffi.Float)>>('gaussian_blur_plane_strided');
+          ffi
+          .NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, ffi.Int, ffi.Int, ffi.Int, ffi.Int, ffi.Int, ffi.Float)>>(
+      'gaussian_blur_plane_strided');
   late final _gaussian_blur_plane_strided =
-      _gaussian_blur_plane_stridedPtr.asFunction<
-          void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int,
-              int, int, int, int, double)>();
+      _gaussian_blur_plane_stridedPtr.asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int, int, int, int, int, double)>();
 
   void bgra8888_from_rgba8888(
     ffi.Pointer<ffi.Uint8> rgba,
@@ -11551,12 +9329,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_from_rgba8888Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<YUVDef>)>>('bgra8888_from_rgba8888');
-  late final _bgra8888_from_rgba8888 = _bgra8888_from_rgba8888Ptr
-      .asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>();
+  late final _bgra8888_from_rgba8888Ptr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>>('bgra8888_from_rgba8888');
+  late final _bgra8888_from_rgba8888 = _bgra8888_from_rgba8888Ptr.asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>();
 
   void bgra8888_rotate(
     ffi.Pointer<YUVDef> src,
@@ -11570,12 +9345,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_rotatePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>,
-              ffi.Int)>>('bgra8888_rotate');
-  late final _bgra8888_rotate = _bgra8888_rotatePtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
+  late final _bgra8888_rotatePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int)>>('bgra8888_rotate');
+  late final _bgra8888_rotate = _bgra8888_rotatePtr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
 
   void bgra8888_blackwhite(
     ffi.Pointer<YUVDef> src,
@@ -11585,11 +9357,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_blackwhitePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'bgra8888_blackwhite');
-  late final _bgra8888_blackwhite =
-      _bgra8888_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _bgra8888_blackwhitePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('bgra8888_blackwhite');
+  late final _bgra8888_blackwhite = _bgra8888_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void bgra8888_grayscale(
     ffi.Pointer<YUVDef> src,
@@ -11599,11 +9368,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_grayscalePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'bgra8888_grayscale');
-  late final _bgra8888_grayscale =
-      _bgra8888_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _bgra8888_grayscalePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('bgra8888_grayscale');
+  late final _bgra8888_grayscale = _bgra8888_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void bgra8888_negate(
     ffi.Pointer<YUVDef> src,
@@ -11613,11 +9379,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_negatePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'bgra8888_negate');
-  late final _bgra8888_negate =
-      _bgra8888_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _bgra8888_negatePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('bgra8888_negate');
+  late final _bgra8888_negate = _bgra8888_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void bgra8888_crop_rect(
     ffi.Pointer<YUVDef> src,
@@ -11637,13 +9400,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_crop_rectPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Int, ffi.Int, ffi.Int)>>('bgra8888_crop_rect');
-  late final _bgra8888_crop_rect = _bgra8888_crop_rectPtr.asFunction<
-      void Function(
-          ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
+  late final _bgra8888_crop_rectPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int, ffi.Int, ffi.Int, ffi.Int)>>(
+          'bgra8888_crop_rect');
+  late final _bgra8888_crop_rect = _bgra8888_crop_rectPtr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
 
   void bgra8888_flip_horizontally(
     ffi.Pointer<YUVDef> src,
@@ -11653,11 +9413,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_flip_horizontallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'bgra8888_flip_horizontally');
-  late final _bgra8888_flip_horizontally = _bgra8888_flip_horizontallyPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _bgra8888_flip_horizontallyPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('bgra8888_flip_horizontally');
+  late final _bgra8888_flip_horizontally = _bgra8888_flip_horizontallyPtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void bgra8888_flip_vertically(
     ffi.Pointer<YUVDef> src,
@@ -11667,11 +9424,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_flip_verticallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'bgra8888_flip_vertically');
-  late final _bgra8888_flip_vertically = _bgra8888_flip_verticallyPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _bgra8888_flip_verticallyPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('bgra8888_flip_vertically');
+  late final _bgra8888_flip_vertically = _bgra8888_flip_verticallyPtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void bgra8888_box_blur(
     ffi.Pointer<YUVDef> src,
@@ -11685,12 +9439,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_box_blurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Pointer<ffi.Uint32>)>>('bgra8888_box_blur');
-  late final _bgra8888_box_blur = _bgra8888_box_blurPtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+  late final _bgra8888_box_blurPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int, ffi.Pointer<ffi.Uint32>)>>('bgra8888_box_blur');
+  late final _bgra8888_box_blur = _bgra8888_box_blurPtr.asFunction<void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
 
   void bgra8888_mean_blur(
     ffi.Pointer<YUVDef> src,
@@ -11704,12 +9455,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_mean_blurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Pointer<ffi.Uint32>)>>('bgra8888_mean_blur');
-  late final _bgra8888_mean_blur = _bgra8888_mean_blurPtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+  late final _bgra8888_mean_blurPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int, ffi.Pointer<ffi.Uint32>)>>('bgra8888_mean_blur');
+  late final _bgra8888_mean_blur = _bgra8888_mean_blurPtr.asFunction<void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
 
   void bgra8888_gaussian_blur(
     ffi.Pointer<YUVDef> src,
@@ -11723,12 +9471,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_gaussian_blurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Float)>>('bgra8888_gaussian_blur');
-  late final _bgra8888_gaussian_blur = _bgra8888_gaussian_blurPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, int, double)>();
+  late final _bgra8888_gaussian_blurPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int, ffi.Float)>>('bgra8888_gaussian_blur');
+  late final _bgra8888_gaussian_blur = _bgra8888_gaussian_blurPtr.asFunction<void Function(ffi.Pointer<YUVDef>, int, double)>();
 
   void bgra8888_to_i420(
     ffi.Pointer<YUVDef> src,
@@ -11740,12 +9485,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_to_i420Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('bgra8888_to_i420');
-  late final _bgra8888_to_i420 = _bgra8888_to_i420Ptr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
+  late final _bgra8888_to_i420Ptr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('bgra8888_to_i420');
+  late final _bgra8888_to_i420 = _bgra8888_to_i420Ptr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
 
   void bgra8888_to_nv21(
     ffi.Pointer<YUVDef> src,
@@ -11757,12 +9498,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _bgra8888_to_nv21Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('bgra8888_to_nv21');
-  late final _bgra8888_to_nv21 = _bgra8888_to_nv21Ptr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
+  late final _bgra8888_to_nv21Ptr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('bgra8888_to_nv21');
+  late final _bgra8888_to_nv21 = _bgra8888_to_nv21Ptr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
 
   void yuv420_blackwhite(
     ffi.Pointer<YUVDef> src,
@@ -11772,11 +9509,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_blackwhitePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_blackwhite');
-  late final _yuv420_blackwhite =
-      _yuv420_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _yuv420_blackwhitePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('yuv420_blackwhite');
+  late final _yuv420_blackwhite = _yuv420_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void yuv420_crop_rect(
     ffi.Pointer<YUVDef> src,
@@ -11796,13 +9530,10 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_crop_rectPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Int, ffi.Int, ffi.Int)>>('yuv420_crop_rect');
-  late final _yuv420_crop_rect = _yuv420_crop_rectPtr.asFunction<
-      void Function(
-          ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
+  late final _yuv420_crop_rectPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int, ffi.Int, ffi.Int, ffi.Int)>>(
+          'yuv420_crop_rect');
+  late final _yuv420_crop_rect = _yuv420_crop_rectPtr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
 
   void yuv420_flip_horizontally(
     ffi.Pointer<YUVDef> src,
@@ -11812,11 +9543,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_flip_horizontallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_flip_horizontally');
-  late final _yuv420_flip_horizontally = _yuv420_flip_horizontallyPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _yuv420_flip_horizontallyPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('yuv420_flip_horizontally');
+  late final _yuv420_flip_horizontally = _yuv420_flip_horizontallyPtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void yuv420_flip_vertically(
     ffi.Pointer<YUVDef> src,
@@ -11826,11 +9554,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_flip_verticallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_flip_vertically');
-  late final _yuv420_flip_vertically = _yuv420_flip_verticallyPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _yuv420_flip_verticallyPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('yuv420_flip_vertically');
+  late final _yuv420_flip_vertically = _yuv420_flip_verticallyPtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void yuv420_gaussblur(
     ffi.Pointer<YUVDef> src,
@@ -11844,12 +9569,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_gaussblurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<YUVDef>, ffi.Int, ffi.Int)>>('yuv420_gaussblur');
-  late final _yuv420_gaussblur = _yuv420_gaussblurPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, int, int)>();
+  late final _yuv420_gaussblurPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int, ffi.Int)>>('yuv420_gaussblur');
+  late final _yuv420_gaussblur = _yuv420_gaussblurPtr.asFunction<void Function(ffi.Pointer<YUVDef>, int, int)>();
 
   void yuv420_grayscale(
     ffi.Pointer<YUVDef> src,
@@ -11859,11 +9580,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_grayscalePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_grayscale');
-  late final _yuv420_grayscale =
-      _yuv420_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _yuv420_grayscalePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('yuv420_grayscale');
+  late final _yuv420_grayscale = _yuv420_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void yuv420_mean_blur(
     ffi.Pointer<YUVDef> src,
@@ -11877,12 +9595,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_mean_blurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Pointer<ffi.Uint32>)>>('yuv420_mean_blur');
-  late final _yuv420_mean_blur = _yuv420_mean_blurPtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+  late final _yuv420_mean_blurPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int, ffi.Pointer<ffi.Uint32>)>>('yuv420_mean_blur');
+  late final _yuv420_mean_blur = _yuv420_mean_blurPtr.asFunction<void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
 
   void yuv420_rotate(
     ffi.Pointer<YUVDef> src,
@@ -11896,12 +9611,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_rotatePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>,
-              ffi.Int)>>('yuv420_rotate');
-  late final _yuv420_rotate = _yuv420_rotatePtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
+  late final _yuv420_rotatePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int)>>('yuv420_rotate');
+  late final _yuv420_rotate = _yuv420_rotatePtr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
 
   void yuv420_to_bgra8888(
     ffi.Pointer<YUVDef> src,
@@ -11913,12 +9624,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_to_bgra8888Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>,
-              ffi.Pointer<ffi.Uint8>)>>('yuv420_to_bgra8888');
-  late final _yuv420_to_bgra8888 = _yuv420_to_bgra8888Ptr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>();
+  late final _yuv420_to_bgra8888Ptr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>>('yuv420_to_bgra8888');
+  late final _yuv420_to_bgra8888 = _yuv420_to_bgra8888Ptr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>();
 
   void yuv420_negate(
     ffi.Pointer<YUVDef> src,
@@ -11928,11 +9636,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_negatePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'yuv420_negate');
-  late final _yuv420_negate =
-      _yuv420_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _yuv420_negatePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('yuv420_negate');
+  late final _yuv420_negate = _yuv420_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void yuv420_box_blur(
     ffi.Pointer<YUVDef> src,
@@ -11946,12 +9651,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_box_blurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Pointer<ffi.Uint32>)>>('yuv420_box_blur');
-  late final _yuv420_box_blur = _yuv420_box_blurPtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+  late final _yuv420_box_blurPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int, ffi.Pointer<ffi.Uint32>)>>('yuv420_box_blur');
+  late final _yuv420_box_blur = _yuv420_box_blurPtr.asFunction<void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
 
   void yuv420_from_rgba8888(
     ffi.Pointer<ffi.Uint8> rgba,
@@ -11963,12 +9665,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_from_rgba8888Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<YUVDef>)>>('yuv420_from_rgba8888');
-  late final _yuv420_from_rgba8888 = _yuv420_from_rgba8888Ptr
-      .asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>();
+  late final _yuv420_from_rgba8888Ptr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>>('yuv420_from_rgba8888');
+  late final _yuv420_from_rgba8888 = _yuv420_from_rgba8888Ptr.asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>();
 
   void yuv420_i420_to_nv21(
     ffi.Pointer<YUVDef> src,
@@ -11980,12 +9679,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _yuv420_i420_to_nv21Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>,
-              ffi.Pointer<YUVDef>)>>('yuv420_i420_to_nv21');
-  late final _yuv420_i420_to_nv21 = _yuv420_i420_to_nv21Ptr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
+  late final _yuv420_i420_to_nv21Ptr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('yuv420_i420_to_nv21');
+  late final _yuv420_i420_to_nv21 = _yuv420_i420_to_nv21Ptr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
 
   void nv21_crop_rect(
     ffi.Pointer<YUVDef> src,
@@ -12005,13 +9701,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_crop_rectPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Int, ffi.Int, ffi.Int)>>('nv21_crop_rect');
-  late final _nv21_crop_rect = _nv21_crop_rectPtr.asFunction<
-      void Function(
-          ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
+  late final _nv21_crop_rectPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int, ffi.Int, ffi.Int, ffi.Int)>>('nv21_crop_rect');
+  late final _nv21_crop_rect = _nv21_crop_rectPtr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int, int, int, int)>();
 
   void nv21_to_i420(
     ffi.Pointer<YUVDef> src,
@@ -12023,12 +9715,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_to_i420Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('nv21_to_i420');
-  late final _nv21_to_i420 = _nv21_to_i420Ptr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
+  late final _nv21_to_i420Ptr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>>('nv21_to_i420');
+  late final _nv21_to_i420 = _nv21_to_i420Ptr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>)>();
 
   void nv21_to_rgb(
     ffi.Pointer<ffi.Uint8> nv21,
@@ -12044,13 +9732,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_to_rgbPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>,
-              ffi.Int, ffi.Int)>>('nv21_to_rgb');
-  late final _nv21_to_rgb = _nv21_to_rgbPtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int, int)>();
+  late final _nv21_to_rgbPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, ffi.Int, ffi.Int)>>('nv21_to_rgb');
+  late final _nv21_to_rgb = _nv21_to_rgbPtr.asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int, int)>();
 
   void nv21_to_bgra8888(
     ffi.Pointer<YUVDef> src,
@@ -12062,12 +9746,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_to_bgra8888Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>,
-              ffi.Pointer<ffi.Uint8>)>>('nv21_to_bgra8888');
-  late final _nv21_to_bgra8888 = _nv21_to_bgra8888Ptr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>();
+  late final _nv21_to_bgra8888Ptr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>>('nv21_to_bgra8888');
+  late final _nv21_to_bgra8888 = _nv21_to_bgra8888Ptr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<ffi.Uint8>)>();
 
   void nv21_from_rgba8888(
     ffi.Pointer<ffi.Uint8> rgba,
@@ -12079,12 +9759,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_from_rgba8888Ptr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Uint8>,
-              ffi.Pointer<YUVDef>)>>('nv21_from_rgba8888');
-  late final _nv21_from_rgba8888 = _nv21_from_rgba8888Ptr
-      .asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>();
+  late final _nv21_from_rgba8888Ptr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>>('nv21_from_rgba8888');
+  late final _nv21_from_rgba8888 = _nv21_from_rgba8888Ptr.asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<YUVDef>)>();
 
   void nv21_rotate(
     ffi.Pointer<YUVDef> src,
@@ -12098,12 +9775,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_rotatePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>,
-              ffi.Int)>>('nv21_rotate');
-  late final _nv21_rotate = _nv21_rotatePtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
+  late final _nv21_rotatePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, ffi.Int)>>('nv21_rotate');
+  late final _nv21_rotate = _nv21_rotatePtr.asFunction<void Function(ffi.Pointer<YUVDef>, ffi.Pointer<YUVDef>, int)>();
 
   void nv21_blackwhite(
     ffi.Pointer<YUVDef> src,
@@ -12113,11 +9786,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_blackwhitePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'nv21_blackwhite');
-  late final _nv21_blackwhite =
-      _nv21_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _nv21_blackwhitePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('nv21_blackwhite');
+  late final _nv21_blackwhite = _nv21_blackwhitePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void nv21_grayscale(
     ffi.Pointer<YUVDef> src,
@@ -12127,11 +9797,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_grayscalePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'nv21_grayscale');
-  late final _nv21_grayscale =
-      _nv21_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _nv21_grayscalePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('nv21_grayscale');
+  late final _nv21_grayscale = _nv21_grayscalePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void nv21_negate(
     ffi.Pointer<YUVDef> src,
@@ -12141,11 +9808,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_negatePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'nv21_negate');
-  late final _nv21_negate =
-      _nv21_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _nv21_negatePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('nv21_negate');
+  late final _nv21_negate = _nv21_negatePtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void nv21_flip_horizontally(
     ffi.Pointer<YUVDef> src,
@@ -12155,11 +9819,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_flip_horizontallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'nv21_flip_horizontally');
-  late final _nv21_flip_horizontally = _nv21_flip_horizontallyPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _nv21_flip_horizontallyPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('nv21_flip_horizontally');
+  late final _nv21_flip_horizontally = _nv21_flip_horizontallyPtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void nv21_flip_vertically(
     ffi.Pointer<YUVDef> src,
@@ -12169,11 +9830,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_flip_verticallyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>(
-          'nv21_flip_vertically');
-  late final _nv21_flip_vertically =
-      _nv21_flip_verticallyPtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
+  late final _nv21_flip_verticallyPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>)>>('nv21_flip_vertically');
+  late final _nv21_flip_vertically = _nv21_flip_verticallyPtr.asFunction<void Function(ffi.Pointer<YUVDef>)>();
 
   void nv21_box_blur(
     ffi.Pointer<YUVDef> src,
@@ -12187,12 +9845,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_box_blurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Pointer<ffi.Uint32>)>>('nv21_box_blur');
-  late final _nv21_box_blur = _nv21_box_blurPtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+  late final _nv21_box_blurPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int, ffi.Pointer<ffi.Uint32>)>>('nv21_box_blur');
+  late final _nv21_box_blur = _nv21_box_blurPtr.asFunction<void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
 
   void nv21_mean_blur(
     ffi.Pointer<YUVDef> src,
@@ -12206,12 +9861,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_mean_blurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int,
-              ffi.Pointer<ffi.Uint32>)>>('nv21_mean_blur');
-  late final _nv21_mean_blur = _nv21_mean_blurPtr.asFunction<
-      void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
+  late final _nv21_mean_blurPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int, ffi.Pointer<ffi.Uint32>)>>('nv21_mean_blur');
+  late final _nv21_mean_blur = _nv21_mean_blurPtr.asFunction<void Function(ffi.Pointer<YUVDef>, int, ffi.Pointer<ffi.Uint32>)>();
 
   void nv21_gaussian_blur(
     ffi.Pointer<YUVDef> src,
@@ -12225,12 +9877,8 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nv21_gaussian_blurPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<YUVDef>, ffi.Int, ffi.Float)>>('nv21_gaussian_blur');
-  late final _nv21_gaussian_blur = _nv21_gaussian_blurPtr
-      .asFunction<void Function(ffi.Pointer<YUVDef>, int, double)>();
+  late final _nv21_gaussian_blurPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<YUVDef>, ffi.Int, ffi.Float)>>('nv21_gaussian_blur');
+  late final _nv21_gaussian_blur = _nv21_gaussian_blurPtr.asFunction<void Function(ffi.Pointer<YUVDef>, int, double)>();
 
   void nvXX_to_nvYY(
     ffi.Pointer<ffi.Uint8> srcVU,
@@ -12248,13 +9896,9 @@ class YuvFfiBindings {
     );
   }
 
-  late final _nvXX_to_nvYYPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>,
-              ffi.Int, ffi.Int, ffi.Int)>>('nvXX_to_nvYY');
-  late final _nvXX_to_nvYY = _nvXX_to_nvYYPtr.asFunction<
-      void Function(
-          ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int, int, int)>();
+  late final _nvXX_to_nvYYPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, ffi.Int, ffi.Int, ffi.Int)>>('nvXX_to_nvYY');
+  late final _nvXX_to_nvYY = _nvXX_to_nvYYPtr.asFunction<void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int, int, int)>();
 }
 
 typedef va_list = ffi.Pointer<ffi.Char>;
@@ -12304,39 +9948,22 @@ typedef rsize_t = ffi.Size;
 typedef Dartrsize_t = int;
 typedef fpos_t = ffi.LongLong;
 typedef Dartfpos_t = int;
-typedef _CoreCrtSecureSearchSortCompareFunction = ffi.Pointer<
-    ffi.NativeFunction<_CoreCrtSecureSearchSortCompareFunctionFunction>>;
-typedef _CoreCrtSecureSearchSortCompareFunctionFunction = ffi.Int Function(
-    ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
-typedef Dart_CoreCrtSecureSearchSortCompareFunctionFunction = int Function(
-    ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
-typedef _CoreCrtNonSecureSearchSortCompareFunction = ffi.Pointer<
-    ffi.NativeFunction<_CoreCrtNonSecureSearchSortCompareFunctionFunction>>;
-typedef _CoreCrtNonSecureSearchSortCompareFunctionFunction = ffi.Int Function(
-    ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
-typedef Dart_CoreCrtNonSecureSearchSortCompareFunctionFunction = int Function(
-    ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
+typedef _CoreCrtSecureSearchSortCompareFunction = ffi.Pointer<ffi.NativeFunction<_CoreCrtSecureSearchSortCompareFunctionFunction>>;
+typedef _CoreCrtSecureSearchSortCompareFunctionFunction = ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
+typedef Dart_CoreCrtSecureSearchSortCompareFunctionFunction = int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
+typedef _CoreCrtNonSecureSearchSortCompareFunction = ffi.Pointer<ffi.NativeFunction<_CoreCrtNonSecureSearchSortCompareFunctionFunction>>;
+typedef _CoreCrtNonSecureSearchSortCompareFunctionFunction = ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
+typedef Dart_CoreCrtNonSecureSearchSortCompareFunctionFunction = int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>);
 typedef _onexit_t = ffi.Pointer<ffi.NativeFunction<_onexit_tFunction>>;
 typedef _onexit_tFunction = ffi.Int Function();
 typedef Dart_onexit_tFunction = int Function();
-typedef _purecall_handler
-    = ffi.Pointer<ffi.NativeFunction<_purecall_handlerFunction>>;
+typedef _purecall_handler = ffi.Pointer<ffi.NativeFunction<_purecall_handlerFunction>>;
 typedef _purecall_handlerFunction = ffi.Void Function();
 typedef Dart_purecall_handlerFunction = void Function();
-typedef _invalid_parameter_handler
-    = ffi.Pointer<ffi.NativeFunction<_invalid_parameter_handlerFunction>>;
+typedef _invalid_parameter_handler = ffi.Pointer<ffi.NativeFunction<_invalid_parameter_handlerFunction>>;
 typedef _invalid_parameter_handlerFunction = ffi.Void Function(
-    ffi.Pointer<ffi.WChar>,
-    ffi.Pointer<ffi.WChar>,
-    ffi.Pointer<ffi.WChar>,
-    ffi.UnsignedInt,
-    ffi.UintPtr);
-typedef Dart_invalid_parameter_handlerFunction = void Function(
-    ffi.Pointer<ffi.WChar>,
-    ffi.Pointer<ffi.WChar>,
-    ffi.Pointer<ffi.WChar>,
-    int,
-    int);
+    ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.UnsignedInt, ffi.UintPtr);
+typedef Dart_invalid_parameter_handlerFunction = void Function(ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, ffi.Pointer<ffi.WChar>, int, int);
 
 final class _div_t extends ffi.Struct {
   @ffi.Int()

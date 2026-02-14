@@ -31,8 +31,7 @@ class YuvPlane {
   /// Creates a plane.
   ///
   /// If [bytes] is omitted, the plane is initialized with zeros.
-  YuvPlane(this._height, this.rowStride,
-      [this.pixelStride = 1, Uint8List? bytes]) {
+  YuvPlane(this._height, this.rowStride, [this.pixelStride = 1, Uint8List? bytes]) {
     _bytes = Uint8List(_height * rowStride);
     if (bytes == null) {
       _bytes.fillRange(0, _height * rowStride, 0);
@@ -44,16 +43,14 @@ class YuvPlane {
   /// Returns value at pixel coordinate.
   int getPixel(int x, int y) {
     final int index = _indexOf(x, y);
-    assert(index >= 0 && index < _bytes.length,
-        "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
+    assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
     return _bytes[index];
   }
 
   /// Sets value at pixel coordinate.
   void setPixel(int x, int y, int value) {
     final int index = _indexOf(x, y);
-    assert(index >= 0 && index < _bytes.length,
-        "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
+    assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
     _bytes[index] = value;
   }
 

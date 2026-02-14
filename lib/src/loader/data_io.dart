@@ -68,43 +68,37 @@ class DataReader with ChangeNotifier {
 
   int readUint8() {
     assert(_readBuffer != null, 'reading is not ready, use done ');
-    assert(_readBuffer!.data.buffer.lengthInBytes >= 1,
-        'there is no sufficient bytes available to read (1)}');
+    assert(_readBuffer!.data.buffer.lengthInBytes >= 1, 'there is no sufficient bytes available to read (1)}');
 
     return _readBuffer!.getUint8();
   }
 
   int readUint16() {
     assert(_readBuffer != null, 'reading is not ready, use done ');
-    assert(_readBuffer!.data.buffer.lengthInBytes >= 2,
-        'there is no sufficient bytes available to read (2)}');
+    assert(_readBuffer!.data.buffer.lengthInBytes >= 2, 'there is no sufficient bytes available to read (2)}');
 
     return _readBuffer!.getUint16(endian: Endian.little);
   }
 
   int readUint32() {
     assert(_readBuffer != null, 'reading is not ready, use done ');
-    assert(_readBuffer!.data.buffer.lengthInBytes >= 4,
-        'there is no sufficient bytes available to read (4)}');
+    assert(_readBuffer!.data.buffer.lengthInBytes >= 4, 'there is no sufficient bytes available to read (4)}');
 
     return _readBuffer!.getUint32(endian: Endian.little);
   }
 
   double readDouble() {
     assert(_readBuffer != null, 'reading is not ready, use done ');
-    assert(_readBuffer!.data.buffer.lengthInBytes >= 8,
-        'there is no sufficient bytes available to read (8)}');
+    assert(_readBuffer!.data.buffer.lengthInBytes >= 8, 'there is no sufficient bytes available to read (8)}');
 
     return _readBuffer!.getFloat64(endian: Endian.little);
   }
 
   String readString() {
     assert(_readBuffer != null, 'reading is not ready, use done ');
-    assert(_readBuffer!.data.buffer.lengthInBytes >= 4,
-        'there is no sufficient bytes to read string length (4)}');
+    assert(_readBuffer!.data.buffer.lengthInBytes >= 4, 'there is no sufficient bytes to read string length (4)}');
     var length = _readBuffer!.getUint32(endian: Endian.little);
-    assert(_readBuffer!.data.buffer.lengthInBytes >= length,
-        'there is no sufficient bytes available to read string ($length)}');
+    assert(_readBuffer!.data.buffer.lengthInBytes >= length, 'there is no sufficient bytes available to read string ($length)}');
     var bytes = _readBuffer!.getUint8List(length);
     var text = utf8.decode(bytes);
     return text;
@@ -112,11 +106,9 @@ class DataReader with ChangeNotifier {
 
   Uint8List readBytes() {
     assert(_readBuffer != null, 'reading is not ready, use done ');
-    assert(_readBuffer!.data.buffer.lengthInBytes >= 4,
-        'there is no sufficient bytes to read string length (4)}');
+    assert(_readBuffer!.data.buffer.lengthInBytes >= 4, 'there is no sufficient bytes to read string length (4)}');
     var length = _readBuffer!.getUint32(endian: Endian.little);
-    assert(_readBuffer!.data.buffer.lengthInBytes >= length,
-        'there is no sufficient bytes available to read string ($length)}');
+    assert(_readBuffer!.data.buffer.lengthInBytes >= length, 'there is no sufficient bytes available to read string ($length)}');
     var bytes = _readBuffer!.getUint8List(length);
     return bytes;
   }
