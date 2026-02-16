@@ -14,7 +14,7 @@ final bool _nativeAvailable = _checkNativeAvailable();
 
 bool _checkNativeAvailable() {
   try {
-    openYuvLibrary();
+    library;
     return true;
   } catch (_) {
     return false;
@@ -162,6 +162,11 @@ void main() {
   late Uint8List expectedBgra;
 
   setUpAll(() async {
+    try {
+      await YuvFfi.ensureInitialized();
+    } catch (_) {
+      // Tests with native dependency are already guarded by `_nativeAvailable`.
+    }
     rgba = await _loadPngAsRgba('test/assets/test_pattern_512.png');
     expect(rgba.length, _w * _h * 4);
     expectedBgra = _rgbaToBgra(rgba);
@@ -330,6 +335,26 @@ void main() {
       expect(image.width, cw);
       expect(image.height, ch);
       expect(image.toBgra8888(), orderedEquals(expected));
+    },
+    skip: !_nativeAvailable,
+  );
+
+  test(
+    'crop clamps out-of-bounds rect and keeps no-op for empty crop',
+    () {
+      final image = YuvImage.bgra(_w, _h);
+      image.fromRgba8888(rgba);
+
+      image.crop(const ui.Rect.fromLTWH(-50.3, -10.5, 9999.0, 9999.0));
+      expect(image.width, _w);
+      expect(image.height, _h);
+      expect(image.toBgra8888(), orderedEquals(expectedBgra));
+
+      final before = image.toBgra8888();
+      image.crop(const ui.Rect.fromLTWH(100.0, 100.0, -20.0, 10.0));
+      expect(image.width, _w);
+      expect(image.height, _h);
+      expect(image.toBgra8888(), orderedEquals(before));
     },
     skip: !_nativeAvailable,
   );

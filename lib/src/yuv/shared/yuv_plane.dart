@@ -61,4 +61,12 @@ class YuvPlane {
 
   /// Replaces this plane content with [other].
   void assignFrom(Uint8List other) => _bytes.setAll(0, other);
+
+  @override
+  String toString() {
+    final estimatedWidth = pixelStride == 0 ? 0 : rowStride ~/ pixelStride;
+    return 'YuvPlane(height: $height, rowStride: $rowStride, '
+        'pixelStride: $pixelStride, estimatedWidth: $estimatedWidth, '
+        'bytes: ${_bytes.length})';
+  }
 }

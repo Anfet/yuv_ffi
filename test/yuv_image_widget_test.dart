@@ -7,8 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 const String _testAssetPath = 'test/assets/test_pattern_512.png';
-const String _testAssetGoldenPath =
-    'goldens/yuv_image_widget_from_test_pattern.png';
+const String _testAssetGoldenPath = 'goldens/yuv_image_widget_from_test_pattern.png';
 const Key _goldenBoundaryKey = ValueKey<String>('yuv-widget-golden-boundary');
 
 Future<_FakeBgraImage> _loadFakeBgraFromAsset() async {
@@ -17,10 +16,7 @@ Future<_FakeBgraImage> _loadFakeBgraFromAsset() async {
   final frame = await codec.getNextFrame();
   final width = frame.image.width;
   final height = frame.image.height;
-  final rgba =
-      (await frame.image.toByteData(format: ui.ImageByteFormat.rawRgba))!
-          .buffer
-          .asUint8List();
+  final rgba = (await frame.image.toByteData(format: ui.ImageByteFormat.rawRgba))!.buffer.asUint8List();
 
   final bgra = Uint8List(rgba.length);
   for (int i = 0; i < rgba.length; i += 4) {
@@ -101,16 +97,13 @@ class _FakeBgraImage implements YuvImage {
   YuvImage blackwhite() => throw UnimplementedError();
 
   @override
-  YuvImage gaussianBlur({int radius = 2, int sigma = 2}) =>
-      throw UnimplementedError();
+  YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => throw UnimplementedError();
 
   @override
-  YuvImage boxBlur({int radius = 10, ui.Rect? rect}) =>
-      throw UnimplementedError();
+  YuvImage boxBlur({int radius = 10, ui.Rect? rect}) => throw UnimplementedError();
 
   @override
-  YuvImage meanBlur({int radius = 2, ui.Rect? rect}) =>
-      throw UnimplementedError();
+  YuvImage meanBlur({int radius = 2, ui.Rect? rect}) => throw UnimplementedError();
 
   @override
   YuvImage swapNv() => throw UnimplementedError();
@@ -163,6 +156,11 @@ void main() {
   late _FakeBgraImage imageFromAsset;
 
   setUpAll(() async {
+    try {
+      await YuvFfi.ensureInitialized();
+    } catch (_) {
+      // Widget tests can run without native backend initialization.
+    }
     imageFromAsset = await _loadFakeBgraFromAsset();
   });
 
@@ -185,8 +183,7 @@ void main() {
     expect(calls, greaterThan(0));
   });
 
-  testWidgets('YuvImageWidget applies width/height from YuvImage',
-      (tester) async {
+  testWidgets('YuvImageWidget applies width/height from YuvImage', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Center(
@@ -201,8 +198,7 @@ void main() {
     expect(imageWidget.height, imageFromAsset.height.toDouble());
   });
 
-  testWidgets('YuvImageWidget delegates errorBuilder on provider errors',
-      (tester) async {
+  testWidgets('YuvImageWidget delegates errorBuilder on provider errors', (tester) async {
     final broken = _FakeBgraImage(
       imageFromAsset.width,
       imageFromAsset.height,

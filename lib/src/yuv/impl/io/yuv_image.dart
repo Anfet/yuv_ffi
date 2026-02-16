@@ -159,7 +159,7 @@ class YuvImageImpl implements YuvImage {
 
   @override
   String toString() {
-    return '$runtimeType($format;$width:$height)';
+    return '${format.name}, $width:$height / ${planes.length}';
   }
 
   @override
@@ -228,27 +228,62 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage crop(ui.Rect rect) {
-    final YuvImage dst =
-        YuvImageImpl(format, rect.width.floor(), rect.height.floor(), yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
+    final left = rect.left.floor().clamp(0, _width).toInt();
+    final top = rect.top.floor().clamp(0, _height).toInt();
+    final right = rect.right.ceil().clamp(left, _width).toInt();
+    final bottom = rect.bottom.ceil().clamp(top, _height).toInt();
+    final cropWidth = right - left;
+    final cropHeight = bottom - top;
+    if (cropWidth <= 0 || cropHeight <= 0) {
+      return this;
+    }
+
+    final YuvImage dst = YuvImageImpl(
+      format,
+      cropWidth,
+      cropHeight,
+      yPixelStride: y.pixelStride,
+      uvPixelStride: u?.pixelStride ?? 1,
+    );
     final srcDef = YUVDefClass(this);
     final dstDef = YUVDefClass(dst);
     try {
       switch (format) {
         case YuvFileFormat.i420:
-          ffiBingings.yuv420_crop_rect(srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
+          ffiBingings.yuv420_crop_rect(
+            srcDef.pointer,
+            dstDef.pointer,
+            left,
+            top,
+            cropWidth,
+            cropHeight,
+          );
           dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
           dst.vPlane.assignFromPtr(dstDef.pointer.ref.v);
 
           break;
         case YuvFileFormat.nv21:
-          ffiBingings.nv21_crop_rect(srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
+          ffiBingings.nv21_crop_rect(
+            srcDef.pointer,
+            dstDef.pointer,
+            left,
+            top,
+            cropWidth,
+            cropHeight,
+          );
           dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
           ffiBingings.bgra8888_crop_rect(
-              srcDef.pointer, dstDef.pointer, rect.left.floor(), rect.top.floor(), rect.width.floor(), rect.height.floor());
+            srcDef.pointer,
+            dstDef.pointer,
+            left,
+            top,
+            cropWidth,
+            cropHeight,
+          );
           dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           break;
       }

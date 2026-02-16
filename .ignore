@@ -1,0 +1,7 @@
+build/
+**/build/
+**/intermediates/
+.gradle/
+.dart_tool/
+ios/Pods/
+android/.gradle/

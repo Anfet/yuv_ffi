@@ -1,22 +1,21 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/camera_screen.dart';
 import 'package:yuv_ffi_example/ext.dart';
 import 'package:yuv_ffi_example/widgets/crop_targets.dart';
 import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await YuvFfi.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -28,24 +27,27 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Optional<YuvImage> image = Optional.absent();
+  YuvImage? original;
 
-  YuvImage get requireImage => image.value;
+  bool get originalExists => original != null;
+
+  YuvImage? image;
+
+  YuvImage get requireImage => image!;
+
   bool isLoading = false;
-  bool isSaving = false;
 
-  bool imageExists = false;
   int? lastOpTiming;
   Rect? faceBox;
 
   @override
-  void initState() {
-    verifyExisting();
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    var baseStyle = (Theme.of(context).textTheme.labelSmall ?? const TextStyle(fontSize: 11)).copyWith(
+      // color: Colors.cyanAccent,
+      foreground: ui.Paint()
+        ..blendMode = ui.BlendMode.difference
+        ..color = Colors.white,
+    );
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Builder(
@@ -55,9 +57,9 @@ class _MyAppState extends State<MyApp> {
               forceMaterialTransparency: true,
               title: const Text('YUV FFI'),
               actions: [
-                IconButton(onPressed: isSaving ? null : () => takePhoto(context), icon: Icon(Icons.camera), tooltip: 'Take photo'),
-                IconButton(onPressed: isSaving ? null : () => loadExisting(), icon: Icon(Icons.file_upload_outlined), tooltip: 'Load existing'),
-                IconButton(onPressed: isSaving ? null : () => loadImage(), icon: Icon(Icons.drive_folder_upload), tooltip: 'Load image'),
+                IconButton(onPressed: () => takePhoto(context), icon: Icon(Icons.camera), tooltip: 'Take photo'),
+                IconButton(onPressed: () => loadExisting(), icon: Icon(Icons.undo), tooltip: 'Load existing'),
+                IconButton(onPressed: () => loadImage(), icon: Icon(Icons.drive_folder_upload), tooltip: 'Load image'),
               ],
             ),
             body: Stack(
@@ -70,7 +72,7 @@ class _MyAppState extends State<MyApp> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Expanded(
-                        child: _ImageWidget(image: image.orNull, faceBox: faceBox),
+                        child: _ImageWidget(image: image, faceBox: faceBox),
                       ),
                       Container(
                         color: Colors.white,
@@ -115,26 +117,8 @@ class _MyAppState extends State<MyApp> {
                     ],
                   ),
                 ),
-                if (lastOpTiming != null)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Text('$lastOpTiming msec', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
-                  ),
-                if (image.isNotEmpty)
-                  Positioned(
-                    left: 8,
-                    top: 8,
-                    child: Text('${image.value}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
-                  ),
-                if (isSaving)
-                  Positioned(
-                    left: 8,
-                    top: 8,
-                    width: 32,
-                    height: 32,
-                    child: CircularProgressIndicator(),
-                  ),
+                if (lastOpTiming != null) Positioned(right: 8, top: 8, child: Text('$lastOpTiming msec', style: baseStyle)),
+                if (image != null) Positioned(left: 8, top: 8, child: Text('$image', style: baseStyle)),
                 if (isLoading)
                   Center(
                     child: CircularProgressIndicator(),
@@ -164,60 +148,27 @@ class _MyAppState extends State<MyApp> {
     await Future.delayed(Duration(seconds: 1));
 
     setState(() {
-      image = Optional.of(result);
+      image = result;
+      original = result.copy();
       faceBox = null;
-      isSaving = true;
-    });
-
-    var dir = await getTemporaryDirectory();
-    var path = '${dir.path}/image.yuv';
-    var file = File(path);
-
-    var sink = file.openWrite();
-    await image.value.save(sink);
-    await sink.flush();
-    await sink.close();
-
-    setState(() {
       isLoading = false;
-      isSaving = false;
     });
-  }
-
-  Future verifyExisting() async {
-    var dir = await getTemporaryDirectory();
-    var path = '${dir.path}/image.yuv';
-    var file = File(path);
-    imageExists = file.existsSync();
   }
 
   Future loadExisting() async {
-    logTimed(() async {
-      var dir = await getTemporaryDirectory();
-      var definitionFile = '${dir.path}/image.yuv';
-      var file = File(definitionFile);
-      if (!file.existsSync()) {
-        return;
-      }
+    if (!originalExists) {
+      return;
+    }
 
-      setState(() {
-        isLoading = true;
-        isSaving = false;
-      });
+    setState(() {
+      isLoading = false;
+      image = original!.copy();
 
-      YuvImage result = YuvImage.bgra(1, 1);
-      await result.load(file.openRead());
+      // image = image!.toYuvI420();
+      // image = image!.toYuvNv21();
 
-      setState(() {
-        isLoading = false;
-        image = Optional.of(result);
-
-        // image = image!.toYuvI420();
-        // image = image!.toYuvNv21();
-
-        faceBox = null;
-      });
-    }, name: 'loadExisting');
+      faceBox = null;
+    });
   }
 
   void rotateClockWise() {
@@ -296,33 +247,10 @@ class _MyAppState extends State<MyApp> {
 
     if (rgbaBytes == null) throw Exception('Could not decode image');
     setState(() {
-      image = Optional.of(YuvImage.bgra(img.width, img.height)..fromRgba8888(rgbaBytes!.buffer.asUint8List()));
+      image = YuvImage.bgra(img.width, img.height)..fromRgba8888(rgbaBytes.buffer.asUint8List());
+      original = image!.copy();
       faceBox = null;
-      imageExists = false;
       isLoading = false;
-      isSaving = true;
-    });
-
-    // if (image!.height > 1024 && image!.width > 1024) {
-    //   setState(() {
-    //     if (kDebugMode) {
-    //       print('Warning; Image is too large to save');
-    //     }
-    //   });
-    //
-    //   return;
-    // }
-    rgbaBytes = null;
-    var dir = await getTemporaryDirectory();
-    var file = File('${dir.path}/image.yuv');
-    var sink = file.openWrite();
-    image.value.save(sink);
-    await sink.flush();
-    await sink.close();
-
-    setState(() {
-      imageExists = true;
-      isSaving = false;
     });
   }
 
@@ -331,7 +259,8 @@ class _MyAppState extends State<MyApp> {
       options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    var inputImage = (Platform.isIOS ? requireImage.toYuvBgra8888() : requireImage.toYuvNv21()).toInputImage();
+    var inputImage =
+        ((!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? requireImage.toYuvBgra8888() : requireImage.toYuvNv21()).toInputImage();
 
     final faces = await detector.processImage(inputImage);
     if (faces.isEmpty) {
@@ -346,15 +275,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future toI420() async {
-    logTimed(() => image = Optional.of(requireImage.toYuvI420()), name: '$image toI420');
+    logTimed(() => image = requireImage.toYuvI420(), name: '$image toI420');
   }
 
   Future toNV21() async {
-    logTimed(() => image = Optional.of(requireImage.toYuvNv21()), name: '$image toNV21');
+    logTimed(() => image = requireImage.toYuvNv21(), name: '$image toNV21');
   }
 
   Future toBGRA() async {
-    logTimed(() => image = Optional.of(requireImage.toYuvBgra8888()), name: '$image toBGRA');
+    logTimed(() => image = requireImage.toYuvBgra8888(), name: '$image toBGRA');
   }
 }
 

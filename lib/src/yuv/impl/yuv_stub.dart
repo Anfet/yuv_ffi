@@ -163,6 +163,12 @@ class YuvImageImpl implements YuvImage {
   }
 
   @override
+  String toString() {
+    return '$runtimeType(format: ${format.name}, width: $width, '
+        'height: $height, planes: ${planes.length})';
+  }
+
+  @override
   YuvImage blackwhite() => this;
 
   @override
