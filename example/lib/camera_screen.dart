@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi_example/widgets/yuv_camera_preview.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -20,6 +19,7 @@ class _CameraScreenState extends State<CameraScreen> {
   CameraController get controller => cameraController!;
 
   Object? cameraError;
+  Completer<YuvImage?>? captureCompleter;
 
   @override
   void initState() {
@@ -61,21 +61,10 @@ class _CameraScreenState extends State<CameraScreen> {
                     }
 
                     if (cameraController?.value.isInitialized == true) {
-                      return CameraPreview(
-                        controller,
-                        child: Align(
-                          alignment: Alignment.bottomLeft,
-                          child: ListenableBuilder(
-                            listenable: controller,
-                            builder: (context, _) {
-                              var size = controller.value.previewSize ?? Size.zero;
-                              return Text(
-                                'W/H [${size.width}:${size.height}]',
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white),
-                              );
-                            },
-                          ),
-                        ),
+                      return YuvCameraPreview(
+                        cameraController: controller,
+                        showDebugInfo: true,
+                        transform: imageCapturer,
                       );
                     }
 
@@ -130,40 +119,48 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> takePicture() async {
     try {
-      var xfile = await controller.takePicture();
-      var bytes = await xfile.readAsBytes();
-      final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      final image = frame.image;
-
-      final int width = image.width;
-      final int height = image.height;
-
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-      final Uint8List rgba = byteData!.buffer.asUint8List();
-
-
-      YuvImage yuv = YuvImage.bgra(width, height);
-      yuv.fromRgba8888(rgba);
-
-      if (controller.description.lensDirection == CameraLensDirection.front && _isAndroid) {
-        yuv = yuv.copy().flipHorizontally();
+      Completer<YuvImage?> capturer = captureCompleter = Completer();
+      var yuv = await capturer.future;
+      if (yuv == null) {
+        return;
       }
 
-      await Future.delayed(Duration(seconds: 1));
+      // var xfile = await controller.takePicture();
+      // var bytes = await xfile.readAsBytes();
+      // final codec = await ui.instantiateImageCodec(bytes);
+      // final frame = await codec.getNextFrame();
+      // final image = frame.image;
+      //
+      // final int width = image.width;
+      // final int height = image.height;
+      //
+      // final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      // final Uint8List rgba = byteData!.buffer.asUint8List();
+      //
+      // YuvImage yuv = YuvImage.bgra(width, height);
+      // yuv.fromRgba8888(rgba);
+      //
+      // if (controller.description.lensDirection == CameraLensDirection.front && _isAndroid) {
+      //   yuv = yuv.copy().flipHorizontally();
+      // }
+
+      await Future.delayed(Duration(milliseconds: 500));
       if (!mounted) {
         return;
       }
 
       Navigator.of(context).pop(yuv);
     } catch (ex, stack) {
-      print(ex);
-      print(stack);
-      //skip error
+      debugPrint('takePicture error: $ex');
+      debugPrint('$stack');
     }
   }
+
+  YuvImage imageCapturer(YuvImage image) {
+    if (captureCompleter != null && !captureCompleter!.isCompleted) {
+      captureCompleter!.complete(image);
+    }
+
+    return image;
+  }
 }
-
-bool get _isIOS => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
-
-bool get _isAndroid => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;

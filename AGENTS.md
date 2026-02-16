@@ -37,3 +37,6 @@
 - When updating `CHANGELOG.md`, always add new changes under the next release entry at the top, preserving chronological order from the previous listed release.
 - Keep `pubspec.yaml` version synchronized with the latest top release version in `CHANGELOG.md`.
 - Do not leave changelog and package version out of sync.
+
+## Native C code
+- Do not change any native code without explicit permissions, plan, explain and change after approoval only

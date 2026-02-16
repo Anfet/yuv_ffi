@@ -42,6 +42,10 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    var baseStyle = (Theme.of(context).textTheme.labelSmall ?? const TextStyle(fontSize: 11)).copyWith(
+      // color: Colors.cyanAccent,
+      foreground: ui.Paint()..blendMode = ui.BlendMode.difference..color = Colors.white,
+    );
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Builder(
@@ -111,18 +115,8 @@ class _MyAppState extends State<MyApp> {
                     ],
                   ),
                 ),
-                if (lastOpTiming != null)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Text('$lastOpTiming msec', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
-                  ),
-                if (image != null)
-                  Positioned(
-                    left: 8,
-                    top: 8,
-                    child: Text('${image}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
-                  ),
+                if (lastOpTiming != null) Positioned(right: 8, top: 8, child: Text('$lastOpTiming msec', style: baseStyle)),
+                if (image != null) Positioned(left: 8, top: 8, child: Text('$image', style: baseStyle)),
                 if (isLoading)
                   Center(
                     child: CircularProgressIndicator(),
