@@ -2,9 +2,9 @@
 
 ## Web Status Policy
 
-- Treat Web support as **stub-only** at the moment.
-- `lib/src/yuv/impl/yuv_stub.dart` is a placeholder/no-op backend, not a full processing implementation.
-- Do not present current Web behavior as feature-complete YUV processing.
+- Treat Web support as a **partial WASM backend** (work in progress).
+- Web implementation lives in `lib/src/yuv/impl/web/yuv_web.dart`.
+- Do not present current Web behavior as feature-complete parity with native backends.
 
 ## Generated Bindings Policy
 
@@ -17,3 +17,23 @@
 
 - Config: `ffigen.yaml`
 - Typical command: `flutter pub run ffigen --config ffigen.yaml`
+
+## Content Scope Policy
+
+- For all agents: completely exclude any `build/` directories from content retrieval.
+- Do not read, index, search, analyze, or summarize files under `build/` paths.
+
+## Platform Implementation Layout Policy
+
+- All platform-dependent implementations must be placed under an `impl/` directory.
+- Use explicit platform suffixes in implementation filenames:
+  - `_io` for native/mobile/desktop IO implementations
+  - `_web` for Web implementations
+- Keep shared, platform-agnostic interfaces/types outside `impl/`.
+- check .ignore file for folders to be excluded from any content retrieval.
+
+## Release & Changelog Policy
+
+- When updating `CHANGELOG.md`, always add new changes under the next release entry at the top, preserving chronological order from the previous listed release.
+- Keep `pubspec.yaml` version synchronized with the latest top release version in `CHANGELOG.md`.
+- Do not leave changelog and package version out of sync.

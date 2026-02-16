@@ -163,6 +163,11 @@ void main() {
   late _FakeBgraImage imageFromAsset;
 
   setUpAll(() async {
+    try {
+      await YuvFfi.ensureInitialized();
+    } catch (_) {
+      // Widget tests can run without native backend initialization.
+    }
     imageFromAsset = await _loadFakeBgraFromAsset();
   });
 

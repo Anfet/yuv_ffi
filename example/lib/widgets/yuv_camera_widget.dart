@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
@@ -96,7 +96,7 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
       //  ? ;
       YuvImageRotation rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
       var yuv = image.toYuvImage();
-      if (Platform.isAndroid) {
+      if (_isAndroid) {
         yuv = yuv.rotate(rotation.toZero());
       }
 
@@ -109,3 +109,5 @@ class _YuvCameraWidgetState extends State<YuvCameraWidget> {
     }
   }
 }
+  bool get _isAndroid =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;

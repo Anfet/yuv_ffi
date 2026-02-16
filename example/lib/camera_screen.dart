@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'package:yuv_ffi_example/widgets/yuv_camera_widget.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -20,11 +19,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   CameraController get controller => cameraController!;
 
-  ValueNotifier<YuvImage?> imageNotifier = ValueNotifier(null);
-
   Object? cameraError;
-  Completer<YuvImage>? nextFrameCompleter;
-  int fps = 0;
 
   @override
   void initState() {
@@ -35,7 +30,6 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void dispose() {
     cameraController?.dispose();
-    imageNotifier.dispose();
     super.dispose();
   }
 
@@ -67,53 +61,21 @@ class _CameraScreenState extends State<CameraScreen> {
                     }
 
                     if (cameraController?.value.isInitialized == true) {
-                      // return CameraPreview(
-                      //   controller,
-                      // );
-                      return LayoutBuilder(
-                        builder: (context, c) {
-                          var transform = Platform.isIOS ? 0.0 : pi;
-                          return Stack(
-                            children: [
-                              Positioned.fill(
-                                child: Transform(
-                                  transform: Matrix4.rotationY(transform),
-                                  origin: Offset(c.maxWidth / 2.0, 0),
-                                  child: YuvCameraWidget(
-                                    cameraController: controller,
-                                    transform: (image) {
-                                      if (nextFrameCompleter != null && nextFrameCompleter?.isCompleted != true) {
-                                        nextFrameCompleter?.complete(image);
-                                      }
-                                      imageNotifier.value = image;
-                                      return image;
-                                    },
-                                    fpsChanged: onFpsChanged,
-                                  ),
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.bottomRight,
-                                child: Text('fps: $fps', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
-                              ),
-                              Align(
-                                alignment: Alignment.bottomLeft,
-                                child: ValueListenableBuilder(
-                                  valueListenable: imageNotifier,
-                                  builder: (context, image, _) {
-                                    if (image == null) {
-                                      return SizedBox();
-                                    }
-                                    return Text(
-                                      'W/H [${image.width}:${image.height}];\nP:${image.planes.length}\nF:${image.format}]',
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                      return CameraPreview(
+                        controller,
+                        child: Align(
+                          alignment: Alignment.bottomLeft,
+                          child: ListenableBuilder(
+                            listenable: controller,
+                            builder: (context, _) {
+                              var size = controller.value.previewSize ?? Size.zero;
+                              return Text(
+                                'W/H [${size.width}:${size.height}]',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white),
+                              );
+                            },
+                          ),
+                        ),
                       );
                     }
 
@@ -167,11 +129,24 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> takePicture() async {
-    assert(controller.value.isStreamingImages);
-    nextFrameCompleter = Completer();
     try {
-      YuvImage yuv = await nextFrameCompleter!.future;
-      if (controller.description.lensDirection == CameraLensDirection.front && Platform.isAndroid) {
+      var xfile = await controller.takePicture();
+      var bytes = await xfile.readAsBytes();
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
+
+      final int width = image.width;
+      final int height = image.height;
+
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      final Uint8List rgba = byteData!.buffer.asUint8List();
+
+
+      YuvImage yuv = YuvImage.bgra(width, height);
+      yuv.fromRgba8888(rgba);
+
+      if (controller.description.lensDirection == CameraLensDirection.front && _isAndroid) {
         yuv = yuv.copy().flipHorizontally();
       }
 
@@ -179,15 +154,16 @@ class _CameraScreenState extends State<CameraScreen> {
       if (!mounted) {
         return;
       }
+
       Navigator.of(context).pop(yuv);
-    } finally {
-      nextFrameCompleter = null;
+    } catch (ex, stack) {
+      print(ex);
+      print(stack);
+      //skip error
     }
   }
-
-  void onFpsChanged(int value) {
-    setState(() {
-      fps = value;
-    });
-  }
 }
+
+bool get _isIOS => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+bool get _isAndroid => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;

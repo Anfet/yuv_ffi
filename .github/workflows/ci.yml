@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  analyze-and-test-vm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Unit tests
+        run: flutter test
+
+  wasm-web-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Emscripten SDK
+        shell: bash
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
+          "$HOME/emsdk/emsdk" install latest
+          "$HOME/emsdk/emsdk" activate latest
+
+      - name: Build WASM artifacts
+        shell: bash
+        run: |
+          source "$HOME/emsdk/emsdk_env.sh"
+          emcc -v
+          sh ./tool/wasm/build_wasm.sh --profile release
+          test -f assets/wasm/yuv_ffi.js
+          test -f assets/wasm/yuv_ffi.wasm
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Enable Flutter web
+        run: flutter config --enable-web
+
+      - name: Web tests (Chrome)
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(test/web/*.dart)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No web test files found under test/web"
+            exit 1
+          fi
+          for f in "${files[@]}"; do
+            echo "Running web test: $f"
+            xvfb-run -a flutter test -d chrome "$f"
+          done

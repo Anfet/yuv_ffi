@@ -1,6 +1,6 @@
 name: yuv_ffi
 description: "High-performance YUV/BGRA image processing for Flutter via native C/FFI."
-version: 0.1.1
+version: 0.2.2
 homepage: https://github.com/Anfet/yuv_ffi
 repository: https://github.com/Anfet/yuv_ffi
 issue_tracker: https://github.com/Anfet/yuv_ffi/issues
@@ -11,6 +11,8 @@ environment:
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_web_plugins:
     sdk: flutter
   plugin_platform_interface: ^2.1.8
   ffi: ^2.1.3
@@ -35,3 +37,11 @@ flutter:
         ffiPlugin: true
       macos:
         ffiPlugin: true
+      web:
+        pluginClass: YuvFfiWebPlugin
+        fileName: yuv_ffi_web.dart
+  # Package assets needed by Web WASM loader bootstrap.
+  # The actual files (`yuv_ffi.js`, `yuv_ffi.wasm`) are generated into this
+  # directory by `tool/wasm/build_wasm.sh`.
+  assets:
+    - assets/wasm/
