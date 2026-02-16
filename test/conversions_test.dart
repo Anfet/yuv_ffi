@@ -329,13 +329,32 @@ void main() {
 
       final image = YuvImage.bgra(_w, _h);
       image.fromRgba8888(rgba);
-      image.crop(ui.Rect.fromLTWH(
-          left.toDouble(), top.toDouble(), cw.toDouble(), ch.toDouble()));
+      image.crop(ui.Rect.fromLTWH(left.toDouble(), top.toDouble(), cw.toDouble(), ch.toDouble()));
 
       final expected = _cropBgra(expectedBgra, _w, left, top, cw, ch);
       expect(image.width, cw);
       expect(image.height, ch);
       expect(image.toBgra8888(), orderedEquals(expected));
+    },
+    skip: !_nativeAvailable,
+  );
+
+  test(
+    'crop clamps out-of-bounds rect and keeps no-op for empty crop',
+    () {
+      final image = YuvImage.bgra(_w, _h);
+      image.fromRgba8888(rgba);
+
+      image.crop(const ui.Rect.fromLTWH(-50.3, -10.5, 9999.0, 9999.0));
+      expect(image.width, _w);
+      expect(image.height, _h);
+      expect(image.toBgra8888(), orderedEquals(expectedBgra));
+
+      final before = image.toBgra8888();
+      image.crop(const ui.Rect.fromLTWH(100.0, 100.0, -20.0, 10.0));
+      expect(image.width, _w);
+      expect(image.height, _h);
+      expect(image.toBgra8888(), orderedEquals(before));
     },
     skip: !_nativeAvailable,
   );
@@ -435,14 +454,10 @@ void main() {
       final after = image.toBgra8888();
 
       for (int i = 0; i < after.length; i += 4) {
-        expect(after[i], 255 - before[i],
-            reason: 'B mismatch at pixel ${i ~/ 4}');
-        expect(after[i + 1], 255 - before[i + 1],
-            reason: 'G mismatch at pixel ${i ~/ 4}');
-        expect(after[i + 2], 255 - before[i + 2],
-            reason: 'R mismatch at pixel ${i ~/ 4}');
-        expect(after[i + 3], before[i + 3],
-            reason: 'A mismatch at pixel ${i ~/ 4}');
+        expect(after[i], 255 - before[i], reason: 'B mismatch at pixel ${i ~/ 4}');
+        expect(after[i + 1], 255 - before[i + 1], reason: 'G mismatch at pixel ${i ~/ 4}');
+        expect(after[i + 2], 255 - before[i + 2], reason: 'R mismatch at pixel ${i ~/ 4}');
+        expect(after[i + 3], before[i + 3], reason: 'A mismatch at pixel ${i ~/ 4}');
       }
     },
     skip: !_nativeAvailable,

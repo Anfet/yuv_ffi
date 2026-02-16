@@ -44,7 +44,9 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     var baseStyle = (Theme.of(context).textTheme.labelSmall ?? const TextStyle(fontSize: 11)).copyWith(
       // color: Colors.cyanAccent,
-      foreground: ui.Paint()..blendMode = ui.BlendMode.difference..color = Colors.white,
+      foreground: ui.Paint()
+        ..blendMode = ui.BlendMode.difference
+        ..color = Colors.white,
     );
     return MaterialApp(
       debugShowCheckedModeBanner: false,

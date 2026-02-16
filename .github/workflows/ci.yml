@@ -60,16 +60,24 @@ jobs:
       - name: Enable Flutter web
         run: flutter config --enable-web
 
-      - name: Web tests (Chrome)
+      - name: Web parity gate (Chrome)
         shell: bash
         run: |
-          shopt -s nullglob
-          files=(test/web/*.dart)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No web test files found under test/web"
-            exit 1
-          fi
-          for f in "${files[@]}"; do
+          required=(
+            test/web/yuv_web_wasm_test.dart
+            test/web/wasm_parity_conversions_test.dart
+            test/web/wasm_parity_transforms_test.dart
+            test/web/wasm_parity_edge_cases_test.dart
+          )
+
+          for f in "${required[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "Required web parity test is missing: $f"
+              exit 1
+            fi
+          done
+
+          for f in "${required[@]}"; do
             echo "Running web test: $f"
             xvfb-run -a flutter test -d chrome "$f"
           done

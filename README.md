@@ -13,7 +13,8 @@
 
 ## Important format note (`nv21`)
 
-In this project, the `nv21` API label is intentionally kept for compatibility, but camera input on target devices is often delivered in **UV** interleaving (closer to `NV12` than classic `NV21` VU).
+In this project, the `nv21` API label is intentionally kept for compatibility, but camera input on target
+devices is often delivered in **UV** interleaving (closer to `NV12` than classic `NV21` VU).
 
 This is based on observed device output in real pipelines.  
 Do not blindly swap U/V: on these inputs, swapping chroma produces incorrect colors.
@@ -78,6 +79,20 @@ Main constructors:
 - Linux: native FFI
 - Web: package builds and uses a **partial WASM backend** (work in progress, not feature-complete)
 
+## Example camera preview notes
+
+In `example/`, camera preview behavior differs by platform backend:
+
+- Mobile (Android/iOS): real-time frame stream is available, so preview can run per-frame `YuvImage` transforms.
+- Web: real-time frame extraction path is available in the example and supports transformed preview.
+- Desktop (Windows/macOS/Linux): the example uses fast native preview rendering and a throttled frame-capture
+  path for processing. Full per-frame transformed live preview is not currently provided by this desktop setup.
+
+Processing backend note:
+
+- YUV conversions/transforms are native on IO platforms (Android/iOS/macOS/Windows/Linux) via C + FFI.
+- Web uses the current partial WASM backend (work in progress, not parity-complete with native backends).
+
 ## Initialization
 
 Call package bootstrap once at app start:
@@ -118,6 +133,39 @@ Limitations:
 - Web backend is still in-progress and should be treated as non-final.
 - Web tests are maintained separately under `test/web/` and are intended for browser runner execution.
 
+### Known limitations (explicit)
+
+- Web backend parity is validated by tests, but is not yet declared feature-complete with native backends.
+- Browser runtime constraints apply on Web (WASM init lifecycle, browser memory/runtime limits).
+- Example desktop camera preview uses fast native preview plus throttled processing path,
+  not full per-frame transformed live feed.
+
+### Web parity matrix (v1)
+
+This matrix defines current parity targets and validation scope for Web WASM against native backends.
+
+- `Conversions`:
+  scope: `fromRgba8888`, `toYuvI420`, `toYuvNv21`, `toYuvBgra8888`, `toBgra8888`
+  validation: round-trip quality thresholds and dimension checks
+  (`test/web/wasm_parity_conversions_test.dart`)
+- `Geometry transforms`:
+  scope: `crop`, `rotate`, `flipHorizontally`, `flipVertically`
+  validation: exact/predictable BGRA checks
+  (`test/web/wasm_parity_transforms_test.dart`)
+- `Effects/blur`:
+  scope: `grayscale`, `blackwhite`, `negate`, `boxBlur`, `meanBlur`, `gaussianBlur`
+  validation: web runtime smoke coverage (`test/web/yuv_web_wasm_test.dart`)
+- `Edge cases`:
+  scope: odd sizes (`1x1`, `3x5`, `127x255`), custom rowStride/pixelStride,
+  out-of-bounds crop, transform chains
+  validation: dedicated edge-case coverage (`test/web/wasm_parity_edge_cases_test.dart`)
+
+Acceptance intent:
+
+- Behavior parity: no crashes, deterministic geometry, expected dimensions/plane layouts.
+- Numeric parity: conversion quality remains within test thresholds (`MAE`) for Web round-trips.
+- Stride parity: custom row/pixel stride layouts produce stable BGRA output.
+
 Build command (Shell; macOS + Windows via Git Bash/WSL):
 
 ```sh
@@ -136,6 +184,7 @@ Web tests (browser runner):
 flutter test -d chrome test/web/yuv_web_wasm_test.dart
 flutter test -d chrome test/web/wasm_parity_conversions_test.dart
 flutter test -d chrome test/web/wasm_parity_transforms_test.dart
+flutter test -d chrome test/web/wasm_parity_edge_cases_test.dart
 ```
 
 On Windows Git Bash, the build script auto-falls back to `emcc.bat`/`emcc.cmd`

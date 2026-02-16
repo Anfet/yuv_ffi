@@ -436,9 +436,7 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage rotate(YuvImageRotation rotation) {
-    final int degrees =
-        (rotation.degrees < 0 ? 360 - rotation.degrees.abs() : rotation.degrees) %
-            360;
+    final int degrees = (rotation.degrees < 0 ? 360 - rotation.degrees.abs() : rotation.degrees) % 360;
     if (degrees == 0) {
       return this;
     }

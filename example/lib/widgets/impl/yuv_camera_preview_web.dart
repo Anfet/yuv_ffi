@@ -36,8 +36,7 @@ class _YuvCameraPreviewWeb extends StatefulWidget {
 }
 
 class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
-  final StreamController<YuvImage?> _streamController =
-      StreamController<YuvImage?>.broadcast();
+  final StreamController<YuvImage?> _streamController = StreamController<YuvImage?>.broadcast();
 
   late final html.VideoElement _videoElement;
   late final html.CanvasElement _canvasElement;
@@ -135,13 +134,11 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       final constraints = <String, dynamic>{
         'audio': false,
         'video': <String, dynamic>{
-          'facingMode': _facingModeFromLens(
-              widget.cameraController.description.lensDirection),
+          'facingMode': _facingModeFromLens(widget.cameraController.description.lensDirection),
         },
       };
 
-      _mediaStream =
-          await html.window.navigator.mediaDevices?.getUserMedia(constraints);
+      _mediaStream = await html.window.navigator.mediaDevices?.getUserMedia(constraints);
       if (_mediaStream == null) {
         throw StateError('Could not access user media stream');
       }
@@ -170,8 +167,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
   bool _tryStartTrackProcessor() {
     final stream = _mediaStream;
     if (stream == null) {
-      debugPrint(
-          '[YuvCameraPreviewWeb] TrackProcessor unavailable: media stream is null');
+      debugPrint('[YuvCameraPreviewWeb] TrackProcessor unavailable: media stream is null');
       return false;
     }
     if (!js_util.hasProperty(html.window, 'MediaStreamTrackProcessor')) {
@@ -181,15 +177,13 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
 
     final tracks = stream.getVideoTracks();
     if (tracks.isEmpty) {
-      debugPrint(
-          '[YuvCameraPreviewWeb] TrackProcessor unavailable: no video tracks');
+      debugPrint('[YuvCameraPreviewWeb] TrackProcessor unavailable: no video tracks');
       return false;
     }
 
     try {
       final track = tracks.first;
-      final ctor =
-          js_util.getProperty<Object>(html.window, 'MediaStreamTrackProcessor');
+      final ctor = js_util.getProperty<Object>(html.window, 'MediaStreamTrackProcessor');
       final processor = js_util.callConstructor<Object>(
         ctor as dynamic,
         [
@@ -197,15 +191,12 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
         ],
       );
       final readable = js_util.getProperty<Object>(processor, 'readable');
-      _trackReader =
-          js_util.callMethod<Object>(readable, 'getReader', const []);
-      debugPrint(
-          '[YuvCameraPreviewWeb] Using MediaStreamTrackProcessor + VideoFrame.copyTo');
+      _trackReader = js_util.callMethod<Object>(readable, 'getReader', const []);
+      debugPrint('[YuvCameraPreviewWeb] Using MediaStreamTrackProcessor + VideoFrame.copyTo');
       unawaited(_trackReadLoop());
       return true;
     } catch (e) {
-      debugPrint(
-          '[YuvCameraPreviewWeb] TrackProcessor init failed, fallback to scheduler: $e');
+      debugPrint('[YuvCameraPreviewWeb] TrackProcessor init failed, fallback to scheduler: $e');
       _trackReader = null;
       return false;
     }
@@ -260,13 +251,8 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
 
     _isProcessing = true;
     try {
-      final width = js_util.getProperty<num?>(frame, 'displayWidth')?.toInt() ??
-          js_util.getProperty<num?>(frame, 'codedWidth')?.toInt() ??
-          0;
-      final height =
-          js_util.getProperty<num?>(frame, 'displayHeight')?.toInt() ??
-              js_util.getProperty<num?>(frame, 'codedHeight')?.toInt() ??
-              0;
+      final width = js_util.getProperty<num?>(frame, 'displayWidth')?.toInt() ?? js_util.getProperty<num?>(frame, 'codedWidth')?.toInt() ?? 0;
+      final height = js_util.getProperty<num?>(frame, 'displayHeight')?.toInt() ?? js_util.getProperty<num?>(frame, 'codedHeight')?.toInt() ?? 0;
       if (width <= 0 || height <= 0) {
         return;
       }
@@ -281,26 +267,22 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       if (usedBgraCopyFormat) {
         try {
           await js_util.promiseToFuture<Object>(
-            js_util.callMethod<Object>(
-                frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsBgra]),
+            js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsBgra]),
           );
         } catch (e) {
           _copyToUseBgra = false;
           usedBgraCopyFormat = false;
           if (!_loggedCopyToFormatFallback) {
-            debugPrint(
-                '[YuvCameraPreviewWeb] copyTo(BGRA) unsupported, fallback to RGBA: $e');
+            debugPrint('[YuvCameraPreviewWeb] copyTo(BGRA) unsupported, fallback to RGBA: $e');
             _loggedCopyToFormatFallback = true;
           }
           await js_util.promiseToFuture<Object>(
-            js_util.callMethod<Object>(
-                frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsRgba]),
+            js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsRgba]),
           );
         }
       } else {
         await js_util.promiseToFuture<Object>(
-          js_util.callMethod<Object>(
-              frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsRgba]),
+          js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsRgba]),
         );
       }
       var yuv = _reusableBgraFrame;
@@ -325,8 +307,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
   void _scheduleNextTick() {
     if (_supportsVideoFrameCallback()) {
       if (!_loggedSchedulerPath) {
-        debugPrint(
-            '[YuvCameraPreviewWeb] Using requestVideoFrameCallback scheduler');
+        debugPrint('[YuvCameraPreviewWeb] Using requestVideoFrameCallback scheduler');
         _loggedSchedulerPath = true;
       }
       _scheduleVideoFrameCallback();
@@ -415,8 +396,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
         _canvasElement.height = height;
       }
 
-      ctx.drawImageScaled(
-          _videoElement, 0, 0, width.toDouble(), height.toDouble());
+      ctx.drawImageScaled(_videoElement, 0, 0, width.toDouble(), height.toDouble());
       final imageData = ctx.getImageData(0, 0, width, height);
       final rgba = imageData.data;
       final rgbaBytes = Uint8List.sublistView(rgba);
@@ -454,8 +434,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
     }
 
     final vfId = _videoFrameRequestId;
-    if (vfId != null &&
-        js_util.hasProperty(_videoElement, 'cancelVideoFrameCallback')) {
+    if (vfId != null && js_util.hasProperty(_videoElement, 'cancelVideoFrameCallback')) {
       js_util.callMethod<void>(
         _videoElement,
         'cancelVideoFrameCallback',
