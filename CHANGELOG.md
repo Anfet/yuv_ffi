@@ -1,3 +1,13 @@
+## 0.2.3
+
+### Changes
+
+- Fixed Web JS interop imports for compatibility with lower dependency bounds used by pub.dev static analysis:
+  - replaced `dart:js_util` with `package:js/js_util.dart` in package Web implementation files.
+- Fixed the same `dart:js_util` import in `example/` Web camera preview implementation.
+- Added explicit `js` dependency declarations where required to satisfy analyzer dependency checks.
+- Improved pub.dev static analysis compatibility (`pub downgrade` + `flutter analyze` flow).
+
 ## 0.2.2
 
 ### Changes
