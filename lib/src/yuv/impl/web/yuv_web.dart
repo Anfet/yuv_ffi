@@ -2,11 +2,11 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:js_util' as js_util;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show WriteBuffer;
+import 'package:js/js_util.dart' as js_util;
 import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 import 'package:yuv_ffi/src/loader/data_io.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';

@@ -2,11 +2,11 @@
 
 import 'dart:async';
 import 'dart:html' as html;
-import 'dart:js_util' as js_util;
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:js/js_util.dart' as js_util;
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 Widget buildYuvCameraPreview({
