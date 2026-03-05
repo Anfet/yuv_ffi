@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
 
 import 'dart:async';
 import 'dart:html' as html;
@@ -6,14 +6,17 @@ import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:js/js_util.dart' as js_util;
 import 'package:yuv_ffi/yuv_ffi.dart';
+import 'js_util_compat.dart' as js_util;
 
 Widget buildYuvCameraPreview({
   Key? key,
-  required CameraController cameraController,
+  CameraController? cameraController,
   YuvImage Function(YuvImage image)? transform,
 }) {
+  if (cameraController == null) {
+    throw ArgumentError('CameraController is required on web platform');
+  }
   return _YuvCameraPreviewWeb(
     key: key,
     cameraController: cameraController,

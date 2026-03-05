@@ -76,6 +76,8 @@ void main() {
     final swapped = image.swapNv();
     final restored = swapped.swapNv();
 
+    expect(identical(swapped, image), isTrue);
+    expect(identical(restored, swapped), isTrue);
     expect(restored.width, w);
     expect(restored.height, h);
     expect(restored.uPlane.bytes, orderedEquals(originalU));
@@ -107,14 +109,7 @@ Uint8List _rgbaToBgra(Uint8List rgba) {
   return out;
 }
 
-Uint8List _cropBgra(
-  Uint8List src,
-  int srcWidth,
-  int left,
-  int top,
-  int cropWidth,
-  int cropHeight,
-) {
+Uint8List _cropBgra(Uint8List src, int srcWidth, int left, int top, int cropWidth, int cropHeight) {
   final out = Uint8List(cropWidth * cropHeight * 4);
   for (int y = 0; y < cropHeight; y++) {
     for (int x = 0; x < cropWidth; x++) {

@@ -6,9 +6,9 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show WriteBuffer;
-import 'package:js/js_util.dart' as js_util;
 import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 import 'package:yuv_ffi/src/loader/data_io.dart';
+import 'package:yuv_ffi/src/web/js_util_compat.dart' as js_util;
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
@@ -16,57 +16,16 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 /// Web backend implementation backed by WASM exports where available.
 class YuvImageImpl implements YuvImage {
-  YuvImageImpl.i420(
-    int width,
-    int height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 2,
-    Iterable<YuvPlane>? planes,
-  }) : this(
-          YuvFileFormat.i420,
-          width,
-          height,
-          yPixelStride: yPixelStride,
-          uvPixelStride: uvPixelStride,
-          planes: planes,
-        );
+  YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImageImpl.nv21(
-    int width,
-    int height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 2,
-    Iterable<YuvPlane>? planes,
-  }) : this(
-          YuvFileFormat.nv21,
-          width,
-          height,
-          yPixelStride: yPixelStride,
-          uvPixelStride: uvPixelStride,
-          planes: planes,
-        );
+  YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImageImpl.bgra(
-    int width,
-    int height, {
-    Iterable<YuvPlane>? planes,
-  }) : this(
-          YuvFileFormat.bgra8888,
-          width,
-          height,
-          yPixelStride: 4,
-          uvPixelStride: 1,
-          planes: planes,
-        );
+  YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
+    : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
 
-  YuvImageImpl(
-    this._format,
-    this._width,
-    this._height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 1,
-    Iterable<YuvPlane>? planes,
-  }) {
+  YuvImageImpl(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
     if (planes != null) {
       _planes = List<YuvPlane>.from(planes.map((p) => p.copy()));
       return;
@@ -82,17 +41,10 @@ class YuvImageImpl implements YuvImage {
 
     switch (_format) {
       case YuvFileFormat.nv21:
-        _planes = [
-          yPlane,
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-        ];
+        _planes = [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
         break;
       case YuvFileFormat.i420:
-        _planes = [
-          yPlane,
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-        ];
+        _planes = [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride), YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
         break;
       case YuvFileFormat.bgra8888:
         _planes = [yPlane];
@@ -153,23 +105,12 @@ class YuvImageImpl implements YuvImage {
   }
 
   @override
-  YuvImage copy({bool blank = false}) => YuvImageImpl(
-        _format,
-        _width,
-        _height,
-        yPixelStride: y.pixelStride,
-        uvPixelStride: u?.pixelStride ?? 1,
-        planes: blank ? null : _planes,
-      );
+  YuvImage copy({bool blank = false}) =>
+      YuvImageImpl(_format, _width, _height, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1, planes: blank ? null : _planes);
 
   @override
   Future<void> save(Sink<List<int>> sink) async {
-    final json = {
-      'version': 1,
-      'format': format.name,
-      'width': width,
-      'height': height,
-    };
+    final json = {'version': 1, 'format': format.name, 'width': width, 'height': height};
 
     final writer = DataWriter(sink);
     writer.writeString(jsonEncode(json));
@@ -212,53 +153,25 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage blackwhite() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_blackwhite',
-      nv21: 'nv21_blackwhite',
-      bgra: 'bgra8888_blackwhite',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_blackwhite', nv21: 'nv21_blackwhite', bgra: 'bgra8888_blackwhite'));
     return this;
   }
 
   @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) {
-    _callInPlaceBlur(
-      _symbolForFormat(
-        i420: 'yuv420_gaussblur',
-        nv21: 'nv21_gaussian_blur',
-        bgra: 'bgra8888_gaussian_blur',
-      ),
-      radius,
-      sigma,
-    );
+    _callInPlaceBlur(_symbolForFormat(i420: 'yuv420_gaussblur', nv21: 'nv21_gaussian_blur', bgra: 'bgra8888_gaussian_blur'), radius, sigma);
     return this;
   }
 
   @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) {
-    _callInPlaceBlurWithRect(
-      _symbolForFormat(
-        i420: 'yuv420_box_blur',
-        nv21: 'nv21_box_blur',
-        bgra: 'bgra8888_box_blur',
-      ),
-      radius,
-      rect,
-    );
+    _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_box_blur', nv21: 'nv21_box_blur', bgra: 'bgra8888_box_blur'), radius, rect);
     return this;
   }
 
   @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) {
-    _callInPlaceBlurWithRect(
-      _symbolForFormat(
-        i420: 'yuv420_mean_blur',
-        nv21: 'nv21_mean_blur',
-        bgra: 'bgra8888_mean_blur',
-      ),
-      radius,
-      rect,
-    );
+    _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_mean_blur', nv21: 'nv21_mean_blur', bgra: 'bgra8888_mean_blur'), radius, rect);
     return this;
   }
 
@@ -268,35 +181,24 @@ class YuvImageImpl implements YuvImage {
 
     final rawModule = _requireModule();
     final srcAlloc = _WasmYuvAlloc.fromImage(rawModule, source as YuvImageImpl);
-    final dst = YuvImageImpl.nv21(
-      source.width,
-      source.height,
-      yPixelStride: source.y.pixelStride,
-      uvPixelStride: source.u?.pixelStride ?? 1,
-    );
+    final dst = YuvImageImpl.nv21(source.width, source.height, yPixelStride: source.y.pixelStride, uvPixelStride: source.u?.pixelStride ?? 1);
     final dstAlloc = _WasmYuvAlloc.fromImage(rawModule, dst);
     try {
       // nvXX_to_nvYY swaps interleaved chroma ordering in UV buffer.
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          'nvXX_to_nvYY',
-          'void',
-          <String>['number', 'number', 'number', 'number', 'number'],
-          <Object?>[
-            srcAlloc.uPtr,
-            dstAlloc.uPtr,
-            source.width,
-            source.height,
-            source.uPlane.rowStride,
-          ],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        'nvXX_to_nvYY',
+        'void',
+        <String>['number', 'number', 'number', 'number', 'number'],
+        <Object?>[srcAlloc.uPtr, dstAlloc.uPtr, source.width, source.height, source.uPlane.rowStride],
+      ]);
       // Y plane is unchanged; copy it directly.
       _heapWrite(rawModule, dstAlloc.yPtr, source.yPlane.bytes);
       dstAlloc.copyBack();
-      return dst;
+      _format = dst.format;
+      _width = dst.width;
+      _height = dst.height;
+      _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+      return this;
     } finally {
       srcAlloc.dispose();
       dstAlloc.dispose();
@@ -315,7 +217,11 @@ class YuvImageImpl implements YuvImage {
       YuvFileFormat.nv21 => throw StateError('unreachable'),
     };
     _callFormatConversion(symbol: symbol, dst: dst);
-    return dst;
+    _format = dst.format;
+    _width = dst.width;
+    _height = dst.height;
+    _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+    return this;
   }
 
   @override
@@ -330,7 +236,11 @@ class YuvImageImpl implements YuvImage {
       YuvFileFormat.i420 => throw StateError('unreachable'),
     };
     _callFormatConversion(symbol: symbol, dst: dst);
-    return dst;
+    _format = dst.format;
+    _width = dst.width;
+    _height = dst.height;
+    _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+    return this;
   }
 
   @override
@@ -339,11 +249,12 @@ class YuvImageImpl implements YuvImage {
       return this;
     }
     final bytes = toBgra8888();
-    return YuvImageImpl.bgra(
-      _width,
-      _height,
-      planes: [YuvPlane(_height, _width * _bytesPerPixel, _bytesPerPixel, bytes)],
-    );
+    final dst = YuvImageImpl.bgra(_width, _height, planes: [YuvPlane(_height, _width * _bytesPerPixel, _bytesPerPixel, bytes)]);
+    _format = dst.format;
+    _width = dst.width;
+    _height = dst.height;
+    _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+    return this;
   }
 
   @override
@@ -358,11 +269,7 @@ class YuvImageImpl implements YuvImage {
       return this;
     }
 
-    final symbol = _symbolForFormat(
-      i420: 'yuv420_crop_rect',
-      nv21: 'nv21_crop_rect',
-      bgra: 'bgra8888_crop_rect',
-    );
+    final symbol = _symbolForFormat(i420: 'yuv420_crop_rect', nv21: 'nv21_crop_rect', bgra: 'bgra8888_crop_rect');
     _callSrcDst(
       symbol: symbol,
       dstWidth: cropWidth,
@@ -375,21 +282,13 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage flipHorizontally() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_flip_horizontally',
-      nv21: 'nv21_flip_horizontally',
-      bgra: 'bgra8888_flip_horizontally',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_flip_horizontally', nv21: 'nv21_flip_horizontally', bgra: 'bgra8888_flip_horizontally'));
     return this;
   }
 
   @override
   YuvImage flipVertically() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_flip_vertically',
-      nv21: 'nv21_flip_vertically',
-      bgra: 'bgra8888_flip_vertically',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_flip_vertically', nv21: 'nv21_flip_vertically', bgra: 'bgra8888_flip_vertically'));
     return this;
   }
 
@@ -397,40 +296,21 @@ class YuvImageImpl implements YuvImage {
   void fromRgba8888(Uint8List bytes) {
     final expectedLength = _width * _height * _bytesPerPixel;
     if (bytes.length != expectedLength) {
-      throw ArgumentError.value(
-        bytes.length,
-        'bytes.length',
-        'Expected $expectedLength bytes for RGBA8888 frame ${_width}x$_height',
-      );
+      throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${_width}x$_height');
     }
 
-    _callFromRgba(
-      _symbolForFormat(
-        i420: 'yuv420_from_rgba8888',
-        nv21: 'nv21_from_rgba8888',
-        bgra: 'bgra8888_from_rgba8888',
-      ),
-      bytes,
-    );
+    _callFromRgba(_symbolForFormat(i420: 'yuv420_from_rgba8888', nv21: 'nv21_from_rgba8888', bgra: 'bgra8888_from_rgba8888'), bytes);
   }
 
   @override
   YuvImage grayscale() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_grayscale',
-      nv21: 'nv21_grayscale',
-      bgra: 'bgra8888_grayscale',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_grayscale', nv21: 'nv21_grayscale', bgra: 'bgra8888_grayscale'));
     return this;
   }
 
   @override
   YuvImage negate() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_negate',
-      nv21: 'nv21_negate',
-      bgra: 'bgra8888_negate',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_negate', nv21: 'nv21_negate', bgra: 'bgra8888_negate'));
     return this;
   }
 
@@ -442,18 +322,8 @@ class YuvImageImpl implements YuvImage {
     }
     final dstWidth = rotation.swapSize ? _height : _width;
     final dstHeight = rotation.swapSize ? _width : _height;
-    final symbol = _symbolForFormat(
-      i420: 'yuv420_rotate',
-      nv21: 'nv21_rotate',
-      bgra: 'bgra8888_rotate',
-    );
-    _callSrcDst(
-      symbol: symbol,
-      dstWidth: dstWidth,
-      dstHeight: dstHeight,
-      extraArgTypes: const <String>['number'],
-      extraArgs: <Object?>[degrees],
-    );
+    final symbol = _symbolForFormat(i420: 'yuv420_rotate', nv21: 'nv21_rotate', bgra: 'bgra8888_rotate');
+    _callSrcDst(symbol: symbol, dstWidth: dstWidth, dstHeight: dstHeight, extraArgTypes: const <String>['number'], extraArgs: <Object?>[degrees]);
     return this;
   }
 
@@ -462,33 +332,17 @@ class YuvImageImpl implements YuvImage {
     if (_format == YuvFileFormat.bgra8888) {
       return Uint8List.fromList(yPlane.bytes);
     }
-    return _callToBgra(
-      _symbolForFormat(
-        i420: 'yuv420_to_bgra8888',
-        nv21: 'nv21_to_bgra8888',
-        bgra: 'unused',
-      ),
-    );
+    return _callToBgra(_symbolForFormat(i420: 'yuv420_to_bgra8888', nv21: 'nv21_to_bgra8888', bgra: 'unused'));
   }
 
   @override
   Future<ui.Image> toImage() {
     final completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(
-      toBgra8888(),
-      _width,
-      _height,
-      ui.PixelFormat.bgra8888,
-      completer.complete,
-    );
+    ui.decodeImageFromPixels(toBgra8888(), _width, _height, ui.PixelFormat.bgra8888, completer.complete);
     return completer.future;
   }
 
-  String _symbolForFormat({
-    required String i420,
-    required String nv21,
-    required String bgra,
-  }) {
+  String _symbolForFormat({required String i420, required String nv21, required String bgra}) {
     return switch (_format) {
       YuvFileFormat.i420 => i420,
       YuvFileFormat.nv21 => nv21,
@@ -500,16 +354,12 @@ class YuvImageImpl implements YuvImage {
     final rawModule = _requireModule();
     final alloc = _WasmYuvAlloc.fromImage(rawModule, this);
     try {
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number'],
-          <Object?>[alloc.defPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number'],
+        <Object?>[alloc.defPtr],
+      ]);
       alloc.copyBack();
     } finally {
       alloc.dispose();
@@ -520,16 +370,12 @@ class YuvImageImpl implements YuvImage {
     final rawModule = _requireModule();
     final alloc = _WasmYuvAlloc.fromImage(rawModule, this);
     try {
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number', 'number'],
-          <Object?>[alloc.defPtr, radius, sigma],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number', 'number'],
+        <Object?>[alloc.defPtr, radius, sigma],
+      ]);
       alloc.copyBack();
     } finally {
       alloc.dispose();
@@ -549,16 +395,12 @@ class YuvImageImpl implements YuvImage {
         final bottom = rect.bottom.toInt();
         _writeInt32Values(rawModule, rectPtr, <int>[left, top, right, bottom]);
       }
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number', 'number'],
-          <Object?>[alloc.defPtr, radius, rectPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number', 'number'],
+        <Object?>[alloc.defPtr, radius, rectPtr],
+      ]);
       alloc.copyBack();
     } finally {
       if (rectPtr != 0) {
@@ -577,22 +419,12 @@ class YuvImageImpl implements YuvImage {
   }) {
     final rawModule = _requireModule();
     final srcAlloc = _WasmYuvAlloc.fromImage(rawModule, this);
-    final dst = YuvImageImpl(
-      _format,
-      dstWidth,
-      dstHeight,
-      yPixelStride: y.pixelStride,
-      uvPixelStride: u?.pixelStride ?? 1,
-    );
+    final dst = YuvImageImpl(_format, dstWidth, dstHeight, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
     final dstAlloc = _WasmYuvAlloc.fromImage(rawModule, dst);
     try {
       final argTypes = <String>['number', 'number', ...extraArgTypes];
       final args = <Object?>[srcAlloc.defPtr, dstAlloc.defPtr, ...extraArgs];
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[symbol, 'void', argTypes, args],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[symbol, 'void', argTypes, args]);
       dstAlloc.copyBack();
       _width = dstWidth;
       _height = dstHeight;
@@ -603,24 +435,17 @@ class YuvImageImpl implements YuvImage {
     }
   }
 
-  void _callFormatConversion({
-    required String symbol,
-    required YuvImageImpl dst,
-  }) {
+  void _callFormatConversion({required String symbol, required YuvImageImpl dst}) {
     final rawModule = _requireModule();
     final srcAlloc = _WasmYuvAlloc.fromImage(rawModule, this);
     final dstAlloc = _WasmYuvAlloc.fromImage(rawModule, dst);
     try {
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number'],
-          <Object?>[srcAlloc.defPtr, dstAlloc.defPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number'],
+        <Object?>[srcAlloc.defPtr, dstAlloc.defPtr],
+      ]);
       dstAlloc.copyBack();
     } finally {
       srcAlloc.dispose();
@@ -634,16 +459,12 @@ class YuvImageImpl implements YuvImage {
     final alloc = _WasmYuvAlloc.fromImage(rawModule, this);
     try {
       _heapWrite(rawModule, rgbaPtr, rgba);
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number'],
-          <Object?>[rgbaPtr, alloc.defPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number'],
+        <Object?>[rgbaPtr, alloc.defPtr],
+      ]);
       alloc.copyBack();
     } finally {
       _free(rawModule, rgbaPtr);
@@ -657,16 +478,12 @@ class YuvImageImpl implements YuvImage {
     final outLength = _width * _height * _bytesPerPixel;
     final outPtr = _malloc(rawModule, outLength);
     try {
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number'],
-          <Object?>[alloc.defPtr, outPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number'],
+        <Object?>[alloc.defPtr, outPtr],
+      ]);
       return _heapRead(rawModule, outPtr, outLength);
     } finally {
       _free(rawModule, outPtr);
@@ -687,14 +504,7 @@ class YuvImageImpl implements YuvImage {
 }
 
 final class _WasmYuvAlloc {
-  _WasmYuvAlloc._({
-    required this.module,
-    required this.image,
-    required this.defPtr,
-    required this.yPtr,
-    required this.uPtr,
-    required this.vPtr,
-  });
+  _WasmYuvAlloc._({required this.module, required this.image, required this.defPtr, required this.yPtr, required this.uPtr, required this.vPtr});
 
   final Object module;
   final YuvImageImpl image;
@@ -734,14 +544,7 @@ final class _WasmYuvAlloc {
       uvPixelStride: image.u?.pixelStride ?? 0,
     );
 
-    return _WasmYuvAlloc._(
-      module: module,
-      image: image,
-      defPtr: defPtr,
-      yPtr: yPtr,
-      uPtr: uPtr,
-      vPtr: vPtr,
-    );
+    return _WasmYuvAlloc._(module: module, image: image, defPtr: defPtr, yPtr: yPtr, uPtr: uPtr, vPtr: vPtr);
   }
 
   void copyBack() {

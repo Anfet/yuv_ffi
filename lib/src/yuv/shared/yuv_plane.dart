@@ -30,7 +30,14 @@ class YuvPlane {
 
   /// Creates a plane.
   ///
+  /// [height] is the number of rows in the plane.
+  /// [rowStride] is the number of bytes per row.
+  /// [pixelStride] is the byte step between neighboring pixels in a row.
+  ///
   /// If [bytes] is omitted, the plane is initialized with zeros.
+  ///
+  /// Throws a [RangeError] if [bytes] has fewer than `height * rowStride`
+  /// elements.
   YuvPlane(this._height, this.rowStride, [this.pixelStride = 1, Uint8List? bytes]) {
     _bytes = Uint8List(_height * rowStride);
     if (bytes == null) {
@@ -40,14 +47,20 @@ class YuvPlane {
     }
   }
 
-  /// Returns value at pixel coordinate.
+  /// Returns a single byte value at pixel coordinate `[x, y]`.
+  ///
+  /// In debug mode, asserts when computed index is out of bounds.
+  /// In release mode, out-of-bounds access throws at runtime.
   int getPixel(int x, int y) {
     final int index = _indexOf(x, y);
     assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
     return _bytes[index];
   }
 
-  /// Sets value at pixel coordinate.
+  /// Sets a single byte [value] at pixel coordinate `[x, y]`.
+  ///
+  /// In debug mode, asserts when computed index is out of bounds.
+  /// In release mode, out-of-bounds access throws at runtime.
   void setPixel(int x, int y, int value) {
     final int index = _indexOf(x, y);
     assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
@@ -60,6 +73,9 @@ class YuvPlane {
   YuvPlane copy() => YuvPlane(_height, rowStride, pixelStride, _bytes);
 
   /// Replaces this plane content with [other].
+  ///
+  /// [other] must have at least [bytes.length] bytes.
+  /// Throws a [RangeError] when [other] is shorter.
   void assignFrom(Uint8List other) => _bytes.setAll(0, other);
 
   @override

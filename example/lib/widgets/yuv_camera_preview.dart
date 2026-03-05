@@ -7,14 +7,14 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 import 'impl/yuv_camera_preview_web.dart' if (dart.library.io) 'impl/yuv_camera_preview_io.dart' as impl;
 
 class YuvCameraPreview extends StatefulWidget {
-  final CameraController cameraController;
+  final CameraController? cameraController;
   final YuvImage Function(YuvImage image)? transform;
   final Widget? child;
   final bool showDebugInfo;
 
   const YuvCameraPreview({
     super.key,
-    required this.cameraController,
+    this.cameraController,
     this.transform,
     this.child,
     this.showDebugInfo = false,

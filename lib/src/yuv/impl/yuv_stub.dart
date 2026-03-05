@@ -8,57 +8,16 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 class YuvImageImpl implements YuvImage {
-  YuvImageImpl.i420(
-    int width,
-    int height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 2,
-    Iterable<YuvPlane>? planes,
-  }) : this(
-          YuvFileFormat.i420,
-          width,
-          height,
-          yPixelStride: yPixelStride,
-          uvPixelStride: uvPixelStride,
-          planes: planes,
-        );
+  YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImageImpl.nv21(
-    int width,
-    int height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 2,
-    Iterable<YuvPlane>? planes,
-  }) : this(
-          YuvFileFormat.nv21,
-          width,
-          height,
-          yPixelStride: yPixelStride,
-          uvPixelStride: uvPixelStride,
-          planes: planes,
-        );
+  YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImageImpl.bgra(
-    int width,
-    int height, {
-    Iterable<YuvPlane>? planes,
-  }) : this(
-          YuvFileFormat.bgra8888,
-          width,
-          height,
-          yPixelStride: 4,
-          uvPixelStride: 1,
-          planes: planes,
-        );
+  YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
+    : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
 
-  YuvImageImpl(
-    this._format,
-    this._width,
-    this._height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 1,
-    Iterable<YuvPlane>? planes,
-  }) {
+  YuvImageImpl(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
     if (planes != null) {
       _planes = List<YuvPlane>.from(planes.map((p) => p.copy()));
       return;
@@ -75,17 +34,10 @@ class YuvImageImpl implements YuvImage {
 
     switch (_format) {
       case YuvFileFormat.nv21:
-        _planes = [
-          yPlane,
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-        ];
+        _planes = [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
         break;
       case YuvFileFormat.i420:
-        _planes = [
-          yPlane,
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-        ];
+        _planes = [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride), YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
         break;
       case YuvFileFormat.bgra8888:
         _planes = [yPlane];
@@ -143,14 +95,8 @@ class YuvImageImpl implements YuvImage {
   }
 
   @override
-  YuvImage copy({bool blank = false}) => YuvImageImpl(
-        _format,
-        _width,
-        _height,
-        yPixelStride: y.pixelStride,
-        uvPixelStride: u?.pixelStride ?? 1,
-        planes: blank ? null : _planes,
-      );
+  YuvImage copy({bool blank = false}) =>
+      YuvImageImpl(_format, _width, _height, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1, planes: blank ? null : _planes);
 
   @override
   Future<void> save(Sink<List<int>> sink) async {
@@ -184,13 +130,34 @@ class YuvImageImpl implements YuvImage {
   YuvImage swapNv() => this;
 
   @override
-  YuvImage toYuvNv21() => YuvImageImpl.nv21(_width, _height, yPixelStride: y.pixelStride);
+  YuvImage toYuvNv21() {
+    if (_format == YuvFileFormat.nv21) {
+      return this;
+    }
+    _format = YuvFileFormat.nv21;
+    _planes = YuvImageImpl.nv21(_width, _height, yPixelStride: y.pixelStride).planes;
+    return this;
+  }
 
   @override
-  YuvImage toYuvI420() => YuvImageImpl.i420(_width, _height, yPixelStride: y.pixelStride);
+  YuvImage toYuvI420() {
+    if (_format == YuvFileFormat.i420) {
+      return this;
+    }
+    _format = YuvFileFormat.i420;
+    _planes = YuvImageImpl.i420(_width, _height, yPixelStride: y.pixelStride).planes;
+    return this;
+  }
 
   @override
-  YuvImage toYuvBgra8888() => YuvImageImpl.bgra(_width, _height);
+  YuvImage toYuvBgra8888() {
+    if (_format == YuvFileFormat.bgra8888) {
+      return this;
+    }
+    _format = YuvFileFormat.bgra8888;
+    _planes = YuvImageImpl.bgra(_width, _height).planes;
+    return this;
+  }
 
   @override
   YuvImage crop(ui.Rect rect) {
@@ -258,13 +225,7 @@ class YuvImageImpl implements YuvImage {
   @override
   Future<ui.Image> toImage() {
     final completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(
-      toBgra8888(),
-      _width,
-      _height,
-      ui.PixelFormat.bgra8888,
-      completer.complete,
-    );
+    ui.decodeImageFromPixels(toBgra8888(), _width, _height, ui.PixelFormat.bgra8888, completer.complete);
     return completer.future;
   }
 }

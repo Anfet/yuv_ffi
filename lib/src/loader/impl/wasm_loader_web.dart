@@ -1,11 +1,11 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
 //
 // This file is the Web-only WASM bootstrap implementation and is imported
 // through a conditional export (`wasm_loader.dart`), so web libraries here are
 // intentional and isolated from non-web targets.
 import 'dart:async';
 import 'dart:html' as html;
-import 'package:js/js_util.dart' as js_util;
+import 'package:yuv_ffi/src/web/js_util_compat.dart' as js_util;
 
 /// Holds a reference to an initialized Emscripten module object.
 ///

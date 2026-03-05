@@ -53,6 +53,8 @@ void main() {
     final back = nv21.toYuvI420();
     final outBgra = back.toBgra8888();
 
+    expect(identical(nv21, i420), isTrue);
+    expect(identical(back, nv21), isTrue);
     expect(nv21.width, w);
     expect(nv21.height, h);
     expect(back.width, w);
@@ -67,6 +69,7 @@ void main() {
     final nv21 = YuvImage.nv21(w, h)..fromRgba8888(rgba);
 
     final bgra = nv21.toYuvBgra8888();
+    expect(identical(bgra, nv21), isTrue);
     expect(bgra.format, YuvFileFormat.bgra8888);
     expect(bgra.width, w);
     expect(bgra.height, h);

@@ -1,11 +1,30 @@
+## 0.2.4
+
+### Breaking changes
+
+- Converted `swapNv()` and format conversion methods (`toYuvNv21()`, `toYuvI420()`, `toYuvBgra8888()`) to in-place behavior. These methods now mutate the current image and return `this` instead of returning a new image instance.
+- If you need the previous "return new object" behavior, call `copy()` first, e.g. `image.copy().toYuvI420()`.
+
+### Changes
+
+- Migrated Web JS interop compatibility layer from removed `dart:js_util` APIs to a local shim built on `dart:js_interop` + `dart:js_interop_unsafe`.
+- Updated package Web implementation imports to use the new compatibility shim:
+  - `lib/src/loader/impl/wasm_loader_web.dart`
+  - `lib/src/yuv/impl/web/yuv_web.dart`
+- Updated `example/` Web camera preview to use the same compatibility approach.
+- Improved pub.dev analyzer compatibility for current stable SDK/runtime used by pub points checks.
+- Fixed desktop (`Windows`/`Linux`) example camera startup by skipping `camera` plugin initialization (`availableCameras()`), preventing `MissingPluginException` on platforms without camera plugin implementation.
+- Updated example camera preview wiring to support desktop WebRTC-only flow without requiring `CameraController`.
+- Kept `CameraController` required for mobile/web preview paths and added explicit argument validation in platform-specific preview builders.
+
 ## 0.2.3
 
 ### Changes
 
 - Fixed Web JS interop imports for compatibility with lower dependency bounds used by pub.dev static analysis:
-  - replaced `dart:js_util` with `package:js/js_util.dart` in package Web implementation files.
-- Fixed the same `dart:js_util` import in `example/` Web camera preview implementation.
-- Added explicit `js` dependency declarations where required to satisfy analyzer dependency checks.
+  - replaced `package:js/js_util.dart` with `dart:js_util` in package Web implementation files.
+- Fixed the same Web interop import in `example/` Web camera preview implementation.
+- Removed explicit direct `js` dependency declarations from package manifests.
 - Improved pub.dev static analysis compatibility (`pub downgrade` + `flutter analyze` flow).
 
 ## 0.2.2
