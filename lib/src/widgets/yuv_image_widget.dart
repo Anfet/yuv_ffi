@@ -22,14 +22,11 @@ class YuvImageWidget extends StatelessWidget {
   /// Optional frame builder delegated to [Image].
   final ImageFrameBuilder? frameBuilder;
 
-  const YuvImageWidget({
-    super.key,
-    required this.image,
-    this.loadingBuilder,
-    this.errorBuilder,
-    this.frameBuilder,
-    this.boxFit = BoxFit.none,
-  });
+  /// Creates a widget that renders [image] as a Flutter [Image].
+  ///
+  /// [boxFit] controls layout fitting behavior.
+  /// Builder callbacks are forwarded to the underlying [Image] widget.
+  const YuvImageWidget({super.key, required this.image, this.loadingBuilder, this.errorBuilder, this.frameBuilder, this.boxFit = BoxFit.none});
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +43,10 @@ class YuvImageWidget extends StatelessWidget {
   }
 }
 
+/// [ImageProvider] implementation backed by a [YuvImage].
+///
+/// Converts source frame to tightly packed BGRA8888 bytes and decodes it into
+/// a single-frame [ui.Image].
 class YuvImageProvider extends ImageProvider<YuvImageProvider> {
   /// Source image.
   final YuvImage image;
@@ -75,13 +76,7 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
         );
       }
       final imageCompleter = Completer<ui.Image>();
-      ui.decodeImageFromPixels(
-        bytes,
-        image.width,
-        image.height,
-        ui.PixelFormat.bgra8888,
-        imageCompleter.complete,
-      );
+      ui.decodeImageFromPixels(bytes, image.width, image.height, ui.PixelFormat.bgra8888, imageCompleter.complete);
       final decoded = await imageCompleter.future;
       return ImageInfo(image: decoded, scale: 1.0);
     } catch (ex, stack) {

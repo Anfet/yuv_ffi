@@ -259,8 +259,9 @@ class _MyAppState extends State<MyApp> {
       options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    var inputImage =
-        ((!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? requireImage.toYuvBgra8888() : requireImage.toYuvNv21()).toInputImage();
+    final yuvForMlInput =
+        (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? requireImage.copy().toYuvBgra8888() : requireImage.copy().toYuvNv21();
+    final inputImage = yuvForMlInput.toInputImage();
 
     final faces = await detector.processImage(inputImage);
     if (faces.isEmpty) {
@@ -275,15 +276,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future toI420() async {
-    logTimed(() => image = requireImage.toYuvI420(), name: '$image toI420');
+    logTimed(() => requireImage.toYuvI420(), name: '$image toI420');
   }
 
   Future toNV21() async {
-    logTimed(() => image = requireImage.toYuvNv21(), name: '$image toNV21');
+    logTimed(() => requireImage.toYuvNv21(), name: '$image toNV21');
   }
 
   Future toBGRA() async {
-    logTimed(() => image = requireImage.toYuvBgra8888(), name: '$image toBGRA');
+    logTimed(() => requireImage.toYuvBgra8888(), name: '$image toBGRA');
   }
 }
 

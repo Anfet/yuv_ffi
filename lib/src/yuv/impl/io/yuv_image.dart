@@ -54,10 +54,10 @@ class YuvImageImpl implements YuvImage {
   ui.Size get size => ui.Size(width.toDouble(), height.toDouble());
 
   YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.bgra(this._width, this._height, {Iterable<YuvPlane>? planes}) : _format = YuvFileFormat.bgra8888 {
     Uint8List? bytes;
@@ -115,12 +115,7 @@ class YuvImageImpl implements YuvImage {
 
   @override
   Future save(Sink<List<int>> sink) async {
-    var json = {
-      'version': 1,
-      'format': format.name,
-      'width': width,
-      'height': height,
-    };
+    var json = {'version': 1, 'format': format.name, 'width': width, 'height': height};
 
     var writer = DataWriter(sink);
     writer.writeString(jsonEncode(json));
@@ -238,52 +233,25 @@ class YuvImageImpl implements YuvImage {
       return this;
     }
 
-    final YuvImage dst = YuvImageImpl(
-      format,
-      cropWidth,
-      cropHeight,
-      yPixelStride: y.pixelStride,
-      uvPixelStride: u?.pixelStride ?? 1,
-    );
+    final YuvImage dst = YuvImageImpl(format, cropWidth, cropHeight, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
     final srcDef = YUVDefClass(this);
     final dstDef = YUVDefClass(dst);
     try {
       switch (format) {
         case YuvFileFormat.i420:
-          ffiBingings.yuv420_crop_rect(
-            srcDef.pointer,
-            dstDef.pointer,
-            left,
-            top,
-            cropWidth,
-            cropHeight,
-          );
+          ffiBingings.yuv420_crop_rect(srcDef.pointer, dstDef.pointer, left, top, cropWidth, cropHeight);
           dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
           dst.vPlane.assignFromPtr(dstDef.pointer.ref.v);
 
           break;
         case YuvFileFormat.nv21:
-          ffiBingings.nv21_crop_rect(
-            srcDef.pointer,
-            dstDef.pointer,
-            left,
-            top,
-            cropWidth,
-            cropHeight,
-          );
+          ffiBingings.nv21_crop_rect(srcDef.pointer, dstDef.pointer, left, top, cropWidth, cropHeight);
           dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
-          ffiBingings.bgra8888_crop_rect(
-            srcDef.pointer,
-            dstDef.pointer,
-            left,
-            top,
-            cropWidth,
-            cropHeight,
-          );
+          ffiBingings.bgra8888_crop_rect(srcDef.pointer, dstDef.pointer, left, top, cropWidth, cropHeight);
           dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           break;
       }
@@ -358,11 +326,7 @@ class YuvImageImpl implements YuvImage {
   void fromRgba8888(Uint8List bytes) {
     final expectedLength = width * height * 4;
     if (bytes.length != expectedLength) {
-      throw ArgumentError.value(
-        bytes.length,
-        'bytes.length',
-        'Expected $expectedLength bytes for RGBA8888 frame ${width}x$height',
-      );
+      throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${width}x$height');
     }
     final rgbaPlaneLength = bytes.length;
     final rgbaPtr = calloc.allocate<Uint8>(rgbaPlaneLength);
@@ -558,10 +522,10 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage swapNv() {
-    var nvXX = format == YuvFileFormat.nv21 ? this : toYuvNv21();
+    final nvXX = format == YuvFileFormat.nv21 ? this : toYuvNv21();
 
     final def = YUVDefClass(nvXX);
-    YuvImage nvYY = YuvImageImpl.nv21(width, height);
+    final YuvImage nvYY = YuvImageImpl.nv21(width, height);
     final defYY = YUVDefClass(nvYY);
     try {
       ffiBingings.nvXX_to_nvYY(def.pointer.ref.u, defYY.pointer.ref.u, nvXX.width, nvYY.height, nvXX.uPlane.rowStride);
@@ -573,7 +537,11 @@ class YuvImageImpl implements YuvImage {
       defYY.dispose();
     }
 
-    return nvYY;
+    _format = nvYY.format;
+    _width = nvYY.width;
+    _height = nvYY.height;
+    _planes = nvYY.planes.map((p) => p.copy()).toList(growable: false);
+    return this;
   }
 
   @override
@@ -623,9 +591,13 @@ class YuvImageImpl implements YuvImage {
       return this;
     }
 
-    var bytes = toBgra8888();
-    var image = YuvImageImpl(YuvFileFormat.bgra8888, width, height, planes: [YuvPlane(height, width * 4, 4, bytes)], yPixelStride: 4);
-    return image;
+    final bytes = toBgra8888();
+    final image = YuvImageImpl(YuvFileFormat.bgra8888, width, height, planes: [YuvPlane(height, width * 4, 4, bytes)], yPixelStride: 4);
+    _format = image.format;
+    _width = image.width;
+    _height = image.height;
+    _planes = image.planes.map((p) => p.copy()).toList(growable: false);
+    return this;
   }
 
   @override
@@ -656,7 +628,11 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
       def420.dispose();
     }
-    return i420;
+    _format = i420.format;
+    _width = i420.width;
+    _height = i420.height;
+    _planes = i420.planes.map((p) => p.copy()).toList(growable: false);
+    return this;
   }
 
   @override
@@ -687,7 +663,11 @@ class YuvImageImpl implements YuvImage {
       def21.dispose();
     }
 
-    return n21;
+    _format = n21.format;
+    _width = n21.width;
+    _height = n21.height;
+    _planes = n21.planes.map((p) => p.copy()).toList(growable: false);
+    return this;
   }
 }
 
