@@ -16,12 +16,13 @@
 
 | Failure ID | Case ID | Backend | Статус | Приоритет | Fix task | Кратко |
 |---|---|---|---|---|---|---|
-| F-001 | WEB-COMPILE-001 | Web/Chrome | OPEN | P0 | YUV-01 | Настоящий Web test suite не компилируется из-за нетипизированного `Function.toJS` |
+| F-001 | WEB-COMPILE-001 | Web/Chrome | READY FOR RETEST | P0 | YUV-01 | `Function.toJS` blocker устранён в Web build; полный Chrome suite заблокирован F-007 |
 | F-002 | SWAP-NV-LUMA-001 | Native/Windows | OPEN | P1 | YUV-03 | Один `swapNv()` заменяет Y-плоскость нулями |
 | F-003 | GET-BYTES-LENGTH-001 | Native/Windows | OPEN | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
 | F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows | OPEN | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
 | F-005 | BINDINGS-CACHE-001 | Native/Windows | OPEN | P1 | YUV-19 | Кэш `YuvFfiBindings` не заполняется, каждый вызов заново резолвит символы |
 | F-006 | IMAGE-CACHE-KEY-001 | Native/Windows | OPEN | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
+| F-007 | CHROME-RUNNER-HANG-001 | Web/Chrome | OPEN | P0 | YUV-02 | Даже минимальный Flutter Web test зависает на стадии `loading` |
 
 ## Текущее состояние reference matrix
 
@@ -39,7 +40,7 @@
 ## F-001 — Web suite не компилируется
 
 - Case ID: `WEB-COMPILE-001`
-- Статус: OPEN
+- Статус: READY FOR RETEST
 - Обнаружено: 2026-09-12
 - Commit: `5f52fd14540a283da91a6d80e1fc7128bba1c796`
 - Backend: Web / Chrome compiler
@@ -81,8 +82,9 @@ but Type 'Function' is not a precise function type.
 
 ### Resolution
 
-- Fix commit: не заполнен
-- Retest command/result: не заполнен
+- Fix commit: текущий YUV-01 task commit; hash записать при финальном retest
+- Compile evidence: `flutter build web --no-pub` из `example/` — exit 0; исходный `Function.toJS` diagnostic отсутствует
+- Retest command/result: полный Chrome suite не завершён из-за F-007
 
 ---
 
@@ -419,6 +421,73 @@ YUV-20 должен доказать оба сценария счётчиком 
 - Native retest command/result: не заполнен
 - Web retest command/result: не заполнен
 - Full `test_pattern_512.png` case result: не заполнен
+
+---
+
+## F-007 — минимальный Chrome test зависает на `loading`
+
+- Case ID: `CHROME-RUNNER-HANG-001`
+- Статус: OPEN
+- Обнаружено: 2026-09-13
+- Commit: `f6d403c` + рабочий YUV-01 candidate
+- Backend: Web / Chrome на Windows x64
+- Environment: Flutter 3.38.10, Dart 3.10.9, headless Chrome 148
+- Source image: не требуется
+- Operation: запуск минимального `flutter_test` через Chrome platform runner
+- Fix task: YUV-02
+
+### Диагностический case
+
+```dart
+import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('Chrome runner executes a minimal Flutter test', () {
+    expect(kIsWeb, isTrue);
+  });
+}
+```
+
+Case намеренно не импортирует `yuv_ffi`, не вызывает `YuvFfi.ensureInitialized()` и не загружает WASM. Временный test file удалён после воспроизведения.
+
+### Команда
+
+```powershell
+flutter test --no-pub --platform chrome test/web/_chrome_runner_smoke_test.dart --reporter expanded
+```
+
+### Ожидалось
+
+Один минимальный test регистрируется, выполняется в Chrome и завершается с exit `0`.
+
+### Получено
+
+Runner запустил headless Chrome, но более 90 секунд не продвинулся дальше:
+
+```text
+00:00 +0: loading D:/.projects/yuv_ffi/test/web/_chrome_runner_smoke_test.dart
+```
+
+Процесс остановлен вручную, exit `1`. Полный `test/web` проявляет то же поведение на первом test file. При этом `flutter build web --no-pub` для example успешно завершился, поэтому F-007 отделён от исходного compile blocker F-001.
+
+### Артефакты и метрики
+
+- Зарегистрированных/выполненных tests: `0`
+- Время без прогресса: `>90 s`
+- Импортов package/WASM в контрольном case: `0`
+- Headless Chrome process: создан runner-ом
+- Оставшиеся диагностические процессы и временный test file: удалены после прогона
+
+### Retest
+
+YUV-02 должен сначала воспроизвести минимальный case с verbose runner diagnostics, проверить совместимость Flutter test runner/Chrome и только затем полный `test/web`. Не менять production-код плагина, пока минимальный test без `yuv_ffi` не запускается.
+
+### Resolution
+
+- Fix commit: не заполнен
+- Minimal Chrome retest: не заполнен
+- Full `test/web` retest: не заполнен
 
 ---
 

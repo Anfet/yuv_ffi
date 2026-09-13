@@ -5,7 +5,9 @@
 // intentional and isolated from non-web targets.
 import 'dart:async';
 import 'dart:html' as html;
-import 'package:yuv_ffi/src/web/js_util_compat.dart' as js_util;
+import 'dart:js_interop';
+
+import 'package:yuv_ffi/src/web/impl/js_util_compat_web.dart' as js_util;
 
 /// Holds a reference to an initialized Emscripten module object.
 ///
@@ -91,19 +93,23 @@ final class YuvWasmLoader {
     // Emscripten accepts an options object. We set `locateFile` so runtime
     // always resolves the `.wasm` binary from our package asset path.
     final moduleConfig = js_util.newObject();
+    String locateFile(JSString requestedName, JSAny? scriptDirectory) {
+      final requestedNameDart = requestedName.toDart;
+      if (requestedNameDart.endsWith('.wasm')) {
+        return wasmPath;
+      }
+      final scriptDirectoryDart = scriptDirectory?.dartify();
+      final prefix = scriptDirectoryDart is String ? scriptDirectoryDart : '';
+      if (prefix.isNotEmpty) {
+        return '$prefix$requestedNameDart';
+      }
+      return requestedNameDart;
+    }
+
     js_util.setProperty(
       moduleConfig,
       'locateFile',
-      js_util.allowInterop((String requestedName, Object? scriptDirectory) {
-        if (requestedName.endsWith('.wasm')) {
-          return wasmPath;
-        }
-        final prefix = scriptDirectory is String ? scriptDirectory : '';
-        if (prefix.isNotEmpty) {
-          return '$prefix$requestedName';
-        }
-        return requestedName;
-      }),
+      locateFile.toJS,
     );
 
     final modulePromise = js_util.callMethod<Object>(

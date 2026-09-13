@@ -2,12 +2,13 @@
 
 import 'dart:async';
 import 'dart:html' as html;
+import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'js_util_compat.dart' as js_util;
+import 'js_util_compat_web.dart' as js_util;
 
 Widget buildYuvCameraPreview({
   Key? key,
@@ -332,15 +333,15 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       return;
     }
 
-    final callback = js_util.allowInterop((num _, Object __) {
+    void callback(num _, JSAny __) {
       _onFrameTick();
       _scheduleVideoFrameCallback();
-    });
+    }
 
     final id = js_util.callMethod<Object>(
       _videoElement,
       'requestVideoFrameCallback',
-      [callback],
+      [callback.toJS],
     );
     if (id is int) {
       _videoFrameRequestId = id;

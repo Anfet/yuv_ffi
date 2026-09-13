@@ -16,8 +16,6 @@ void setProperty(Object object, String property, Object? value) {
 
 Object newObject() => JSObject();
 
-Object allowInterop(Function function) => function.toJS;
-
 T callMethod<T>(Object object, String method, List<Object?> arguments) {
   final value = _asJsObject(object).callMethodVarArgs<JSAny?>(
     method.toJS,

@@ -8,7 +8,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart' show WriteBuffer;
 import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 import 'package:yuv_ffi/src/loader/data_io.dart';
-import 'package:yuv_ffi/src/web/js_util_compat.dart' as js_util;
+import 'package:yuv_ffi/src/web/impl/js_util_compat_web.dart' as js_util;
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
@@ -17,13 +17,13 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// Web backend implementation backed by WASM exports where available.
 class YuvImageImpl implements YuvImage {
   YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+      : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+      : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
-    : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
+      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
 
   YuvImageImpl(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
     if (planes != null) {

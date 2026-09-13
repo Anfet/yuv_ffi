@@ -8,7 +8,7 @@
 
 | Готово | ID | Владелец | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|
-| [ ] | YUV-01 | Terra | P0 | TODO | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
+| [ ] | YUV-01 | Terra | P0 | READY FOR REVIEW | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
 | [ ] | YUV-02 | Luna | P0 | BLOCKED | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [ ] | YUV-03 | Luna | P1 | TODO | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
 | [ ] | YUV-04 | Opus | P0 | BLOCKED | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
@@ -104,7 +104,7 @@ Native C permission:
 
 - Владелец: Terra
 - Приоритет: P0 / release blocker
-- Статус: TODO
+- Статус: READY FOR REVIEW
 - Зависимости: нет
 - Scope:
   - `lib/src/web/js_util_compat.dart`
@@ -161,7 +161,40 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+Статус: READY FOR REVIEW
+Commit: текущий YUV-01 task commit
+Изменённые файлы:
+- `lib/src/web/js_util_compat.dart` → `lib/src/web/impl/js_util_compat_web.dart`
+- `lib/src/loader/impl/wasm_loader_web.dart`
+- `lib/src/yuv/impl/web/yuv_web.dart`
+- `example/lib/widgets/impl/js_util_compat.dart` → `example/lib/widgets/impl/js_util_compat_web.dart`
+- `example/lib/widgets/impl/yuv_camera_preview_web.dart`
+
+Что сделано:
+- Удалён нетипизированный `allowInterop(Function)` в package и example.
+- `locateFile` и `requestVideoFrameCallback` получили статически известные JS interop signatures перед `.toJS`.
+- Package helper перенесён под `impl/` и получил суффикс `_web`.
+- Web по-прежнему документируется как частичный WASM backend.
+
+Проверки:
+- `flutter analyze --no-pub lib test` — exit 0, no issues.
+- `flutter test --no-pub` — exit 0, 30 tests passed; Web cases в этом VM-run были skipped ожидаемо.
+- `flutter analyze --no-pub` из `example/` — exit 0, no issues.
+- `flutter build web --no-pub` из `example/` — exit 0 за 44,4 s; были только существующие WASM dry-run warnings для `dart:html`.
+- `dart format --output=none --set-exit-if-changed lib example/lib test` — exit 0 после format; production diff проверен отдельно.
+- `git diff --check` — exit 0.
+
+Ручная проверка:
+- Исходный compiler diagnostic `Function.toJS` больше не возникает ни в package, ни в example Web build.
+- `flutter test --platform chrome test/web` не завершился: runner завис на `loading` первого test file.
+- Контрольный test только с `flutter_test` и `kIsWeb`, без импорта `yuv_ffi`, завис так же. Это отделено в F-007 и передано YUV-02.
+
+Остаточные риски:
+- F-001 остаётся `READY FOR RETEST`, а YUV-01 нельзя перевести в `DONE` до завершённого настоящего Chrome-run.
+- Текущий host Chrome runner блокирует runtime evidence, хотя dart2js Web build компилируется успешно.
+
+Native C permission:
+- не требовалось; native C и generated bindings не менялись.
 
 ---
 
@@ -174,7 +207,8 @@ git status --short
 - Scope:
   - `.github/workflows/ci.yml`
   - `README.md`, только команды запуска Web-тестов
-  - при необходимости небольшой Web-runner sentinel test
+  - небольшой Web-runner sentinel test
+  - `failed-test-cases.md`, запись F-007
 
 ### Проблема
 
@@ -182,18 +216,23 @@ git status --short
 
 README повторяет ту же неверную команду. Поэтому заявления о Web parity не защищены CI.
 
+После YUV-01 обнаружен дополнительный независимый блокер: даже минимальный test только с `flutter_test` и `kIsWeb`, без импорта `yuv_ffi`/WASM, запускает headless Chrome, но более 90 секунд остаётся на `loading`. Полный `test/web` ведёт себя так же. При этом `flutter build web` example проходит, поэтому это не прежняя ошибка `Function.toJS`; подробности зафиксированы в F-007.
+
 ### Зафиксированное решение
 
-1. Использовать `flutter test --platform chrome`, не `-d chrome`.
-2. Запускать Web job как минимум на `pull_request` и push в релизные/основные ветки, а не только вручную.
-3. Перед тестами пересобирать WASM из текущего C source и проверять наличие обоих артефактов.
-4. Сохранить отдельные тестовые файлы или запускать весь `test/web`; выбранный вариант должен явно исполнить все четыре набора.
-5. Добавить защиту от ложного VM-запуска: Web gate должен упасть, если тестовая среда не Web.
-6. Обновить команды README на тот же фактический runner.
+1. Сначала добавить/запустить минимальный Web sentinel и собрать verbose diagnostics F-007. Пока sentinel без package imports не работает, не менять production-код плагина в попытке починить runner.
+2. Проверить совместимость установленного Chrome с Flutter Web test runner и сравнить локальный результат с чистым CI runner. Если зависание только локальное, записать точную границу доказательства и не объявлять его package defect.
+3. Использовать `flutter test --platform chrome`, не `-d chrome`.
+4. Запускать Web job как минимум на `pull_request` и push в релизные/основные ветки, а не только вручную.
+5. Перед тестами пересобирать WASM из текущего C source и проверять наличие обоих артефактов.
+6. Сохранить отдельные тестовые файлы или запускать весь `test/web`; выбранный вариант должен явно исполнить все четыре набора.
+7. Sentinel обязан падать вне Web и защищать от ложного VM-запуска.
+8. Обновить команды README на тот же фактический runner.
 
 ### DoD
 
 - PR не может пройти при Web compile error или падении любого Web parity test.
+- Минимальный sentinel реально исполняется в Chrome; F-007 получает `RESOLVED` либо подтверждённый local-only статус с успешным CI evidence.
 - В CI-логе видны реальные названия Web-тестов, а не четыре skip-теста.
 - Job запускается автоматически на PR.
 - WASM собирается из того же commit, который тестируется.
@@ -202,6 +241,7 @@ README повторяет ту же неверную команду. Поэто�
 ### Проверка
 
 ```powershell
+flutter test --platform chrome test/web/web_platform_sentinel_test.dart --reporter expanded
 flutter test --platform chrome test/web/yuv_web_wasm_test.dart
 flutter test --platform chrome test/web/wasm_parity_conversions_test.dart
 flutter test --platform chrome test/web/wasm_parity_transforms_test.dart
@@ -222,8 +262,8 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P1
-- Статус: BLOCKED
-- Зависимости: YUV-01 для обязательного реального Chrome retest; зависимости от YUV-19 нет
+- Статус: TODO
+- Зависимости: нет
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
   - `test/conversions_test.dart`
@@ -1219,8 +1259,8 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: TODO
-- Зависимости: нет
+- Статус: BLOCKED
+- Зависимости: YUV-01 для обязательного реального Chrome retest; зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
   - `lib/src/yuv/yuv.dart` и IO/Web implementations для revision/identity seam
