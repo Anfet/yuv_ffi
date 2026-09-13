@@ -21,7 +21,7 @@
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
-| [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | READY FOR REVIEW | — | Ограничить ffigen только используемым ABI и убрать platform CRT из bindings |
+| [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | REJECTED | добавить Unix regeneration evidence | Ограничить ffigen только используемым ABI и убрать platform CRT из bindings |
 | [ ] | YUV-28 | Opus | Claude Opus 5 | P2 | BLOCKED | после YUV-18 | Сократить дублирование backend-классов после релиза `0.2.5` |
 | [ ] | YUV-29 | Luna | Claude Haiku 4.5 | P3 | BLOCKED | разрешение на C headers | Удалить неиспользуемое объявление `nv21_to_rgb` без реализации |
 | [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-06…YUV-09, YUV-12…YUV-15, YUV-20…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
@@ -2114,7 +2114,7 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P3
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: нет
 - Anthropic-вариант: Claude Haiku 4.5; при расхождении generated ABI повысить до Claude Sonnet 5
 - Scope:
@@ -2303,6 +2303,28 @@ DoD пока не выполнен.
 - Блокер приёмки: отсутствует требуемая повторная генерация на Linux/macOS с
   машинным сравнением набора members и signatures. Windows-only evidence не
   позволяет поставить `DONE`.
+
+### Повторное независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+Предыдущее замечание не устранено: текущие GitHub Actions jobs не запускают
+ffigen и не сравнивают generated ABI, поэтому зелёные run #24/#25 не являются
+Unix evidence для YUV-26. Локально WSL optional component не установлен,
+Docker/Podman отсутствуют; повторить Unix regeneration на этой машине нельзя.
+
+Windows implementation и audit приняты: 40/40 используемых symbols найдены,
+лишние CRT members отсутствуют, analyzer и focused VM suite 114/114 проходят.
+Для повторного review требуется:
+
+1. на Linux или macOS выполнить `flutter pub run ffigen --config ffigen.yaml`;
+2. запустить `tool/verify_bindings_audit.dart`;
+3. машинно сравнить с принятой Windows-генерацией имена, return/argument types
+   всех public wrappers и приложить diff/логи;
+4. подтвердить отсутствие неожиданного tracked diff после повторной генерации.
+
+Native headers/sources менять не требуется. Generated bindings разрешено менять
+только результатом ffigen, не вручную.
 
 ---
 

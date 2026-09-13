@@ -302,7 +302,8 @@ metadata должен остаться независимым от EOF. Подд
 ### Опционально, не блокирует `0.2.5`
 
 - YUV-24 — CMake source discovery cleanup после разрешения.
-- YUV-26 — host-independent ffigen filtering без изменения native headers.
+- YUV-26 — REJECTED до Unix regeneration/signature evidence; native headers
+  менять не требуется.
 - YUV-27 завершена и перемещена в `completed-tasks.md`.
 - YUV-29 — удалить dead native declaration после отдельного разрешения.
 
