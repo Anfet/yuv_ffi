@@ -71,7 +71,8 @@ bfa85d7  ci: analyzed and built the example as its own package
 первичные результаты YUV-07/YUV-20/YUV-21 были записаны для Flutter 3.38.10.
 Повторные реализации YUV-07/YUV-20 и текущее root-review проверены на Flutter
 3.44.9; пользователь также отдельно разрешил использовать Flutter 3.38.
-Обязательное Web runtime evidence всё ещё отсутствует.
+YUV-02 принята после успешного required Chrome integration gate в CI run #24;
+focused Web evidence для YUV-14/YUV-15/YUV-20/YUV-21 ещё требуется.
 
 ---
 
@@ -204,8 +205,8 @@ frame к zero orientation. Семантическое изменение без 
 
 Первичный аудит подтвердил лишний хвост на малых и обычных размерах и внешний
 consumer в example/ML Kit. Реализация исправлена для IO/Web, добавлены tests на
-точное равенство длины сумме planes. `DONE` пока запрещён зависимостью от
-реального Web runtime YUV-02.
+точное равенство длины сумме planes. YUV-02 уже предоставляет integration
+harness; до `DONE` остаётся перенести и выполнить focused Web case YUV-14.
 
 Исторические измерения сохранены как evidence:
 
@@ -225,9 +226,9 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
   REJECTED из-за timeout-эвристики на границе payload.
 - YUV-20 provider cache — functional seam реализован в `e3c235d`, interface
   compatibility исправлена в `a6851d7`, safe always-miss для foreign images
-  восстановлен в `8b9d600`; задача ожидает Web retest.
-- YUV-21 initialization contract — READY FOR REVIEW, Web evidence зависит от
-  YUV-02.
+  восстановлен в `8b9d600`; задача ожидает focused Web retest.
+- YUV-21 initialization contract — READY FOR REVIEW, integration harness
+  доступен после принятой YUV-02; focused case ещё не выполнен.
 - YUV-06 loader paths/macOS packaging — BLOCKED до разрешения на C-forwarders;
   бывшая отдельная YUV-25 объединена с этой карточкой.
 
@@ -260,7 +261,7 @@ Behavioral regression исправлен commit `8b9d600`: revision-based equali
 Неизвестные внешние реализации снова используют безопасный always-miss, как в
 `0.2.4`. Добавлены regressions с реально мутирующим legacy-методом без
 `markDirty()` и с неизменённым foreign image; VM-проверка проходит. Для DONE
-остаётся Web-compatible cache test после YUV-02.
+остаётся выполнить Web-compatible cache test в готовом integration harness.
 
 ---
 
@@ -291,8 +292,9 @@ metadata должен остаться независимым от EOF. Подд
 ### До release acceptance
 
 1. Исправить замечание YUV-07; YUV-20 оставить в READY FOR REVIEW до Web retest.
-2. Независимо проверить READY FOR REVIEW задачи YUV-14, YUV-15 и YUV-21;
-   Web-зависимые не переводить в DONE до YUV-02. YUV-17 принята и архивирована.
+2. Перенести focused cases YUV-14, YUV-15, YUV-20 и YUV-21 в принятый
+   integration harness и выполнить их до перевода задач в DONE. YUV-17 принята
+   и архивирована.
 3. После явного native permission выполнить единым scope YUV-06, включая
    macOS source forwarding, затем YUV-22/YUV-23.
 4. Закрыть reference/Web/documentation dependencies и выполнить YUV-18.

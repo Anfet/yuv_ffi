@@ -9,6 +9,7 @@
 | ID | Владелец | Статус |
 |---|---|---|
 | YUV-01 | Terra | DONE |
+| YUV-02 | Terra | DONE |
 | YUV-03 | Luna | DONE |
 | YUV-04 | Opus | DONE |
 | YUV-05 | Root | DONE |
@@ -1473,5 +1474,245 @@ YUV-06 не являлся DoD этой карточки и не требова�
   зелёный и изолирован от root reference failures.
 - Зависимость YUV-17 снята с YUV-09 и YUV-18; полная карточка перемещена из
   `todo.md` по правилу архивации завершённых задач.
+
+---
+
+## YUV-02 — сделать Web CI настоящим обязательным gate
+
+- Владелец: Terra
+- Приоритет: P0 / release blocker
+- Статус: DONE
+- Зависимости: YUV-01 принята; требуется обязательный integration CI run
+- Scope:
+  - `.github/workflows/ci.yml`
+  - `README.md`, только команды запуска Web-тестов
+  - небольшой Web-runner sentinel test
+  - `example/integration_test/**` и `example/test_driver/**` для Web harness
+  - `failed-test-cases.md`, запись F-007
+
+### Проблема
+
+Текущий job `wasm-web-smoke` запускается только при `workflow_dispatch`. Команда `flutter test -d chrome` не выбирает Web test platform: локально все четыре файла выполнились на VM и прошли через ветку `if (!kIsWeb)`, дав ложный зелёный результат.
+
+README повторяет ту же неверную команду. Поэтому заявления о Web parity не защищены CI.
+
+После YUV-01 обнаружен дополнительный независимый блокер: даже минимальный test только с `flutter_test` и `kIsWeb`, без импорта `yuv_ffi`/WASM, запускает headless Chrome, но более 90 секунд остаётся на `loading`. Полный `test/web` ведёт себя так же. При этом `flutter build web` example проходит, поэтому это не прежняя ошибка `Function.toJS`; подробности зафиксированы в F-007.
+
+### Зафиксированное решение
+
+1. Сначала добавить/запустить минимальный Web sentinel и собрать verbose diagnostics F-007. Пока sentinel без package imports не работает, не менять production-код плагина в попытке починить runner.
+2. Проверить совместимость установленного Chrome с Flutter Web test runner и сравнить локальный результат с чистым CI runner. Если зависание только локальное, записать точную границу доказательства и не объявлять его package defect.
+3. Для tests, загружающих WASM assets, использовать `flutter drive` +
+   `integration_test` на собранном example-приложении. Старый
+   `flutter test --platform chrome` оставить только для asset-independent tests.
+4. Запускать Web job как минимум на `pull_request` и push в релизные/основные ветки, а не только вручную.
+5. Перед тестами пересобирать WASM из текущего C source и проверять наличие обоих артефактов.
+6. В YUV-02 сделать обязательным минимальный integration gate: `kIsWeb == true`,
+   загрузка WASM из asset bundle и одна реальная конверсия. Полную Web reference
+   matrix не переносить в эту карточку: её добавляет YUV-12 в тот же harness;
+   YUV-08/14/15/20/21 добавляют свои focused cases.
+7. Sentinel обязан падать вне Web и защищать от ложного VM-запуска.
+8. Обновить команды README на тот же фактический runner.
+
+### DoD
+
+- PR не может пройти при Web compile error, ошибке загрузки WASM либо падении
+  обязательного integration bootstrap test.
+- Минимальный integration sentinel реально исполняется в Chrome с
+  `kIsWeb == true`, загружает WASM из asset bundle и выполняет конверсию.
+- Job не содержит `continue-on-error`; его падение делает workflow красным.
+- Старый заведомо непроходимый `wasm-web-smoke` удалён либо превращён в
+  asset-independent build check и больше не дублирует runtime gate.
+- Job запускается автоматически на PR.
+- WASM собирается из того же commit, который тестируется.
+- Команды README совпадают с CI.
+
+### Проверка
+
+```powershell
+Push-Location example
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/wasm_bootstrap_test.dart -d web-server --browser-name=chrome --headless
+Pop-Location
+git diff --check
+git status --short
+```
+
+Также приложить ссылку на успешный автоматический CI run из PR/push, не на `workflow_dispatch`-only запуск.
+
+### Результат
+
+Статус: READY FOR REVIEW
+Commit: текущий YUV-02 task commit
+Изменённые файлы:
+- `.github/workflows/ci.yml`
+- `README.md`
+- `test/web/web_platform_sentinel.dart`
+
+Что сделано:
+- Web job включён для автоматических `push`/`pull_request`, а не только `workflow_dispatch`.
+- Все пять обязательных Web test files, включая sentinel, запускаются через `flutter test --platform chrome`.
+- Sentinel размещён под `test/`, но без суффикса `_test.dart`: explicit `flutter test --platform chrome test/web/web_platform_sentinel.dart` поддерживается, а обычный VM discovery его не подхватывает.
+- README использует те же реальные VM/Web runner commands.
+- WASM по-прежнему пересобирается из текущего checkout перед Web tests; наличие `.js` и `.wasm` проверяется.
+
+Проверки:
+- `flutter test --no-pub --reporter expanded` — exit 1 из-за независимого незакоммиченного `test/reference_native_conversions_test.dart` (YUV-10); базовые тесты до него проходят, sentinel автоматически не подхвачен.
+- `flutter test --no-pub test/web/web_platform_sentinel.dart --reporter expanded` — exit 1 ожидаемо, `kIsWeb == false`; защита от ложного runner подтверждена.
+- `flutter analyze --no-pub test/web/web_platform_sentinel.dart` — exit 0, no issues.
+- `dart format --output=none --set-exit-if-changed test/web/web_platform_sentinel.dart` — exit 0.
+- `git diff --check` — exit 0.
+
+Ручная проверка:
+- Локальный настоящий Chrome sentinel стартует через explicit path, но зависает на `loading` более 90 секунд; F-007 остаётся `OPEN`. Проявление локализовано в Windows runner Flutter 3.38.10: CanvasKit path формируется с несовместимыми разделителями, и Chrome/Edge не находят `/canvaskit/chromium` assets. Обязательный gate уже использует Linux runner; локально нужно обновить Flutter SDK и повторить проверку.
+- Production-код, native C и generated bindings не менялись.
+
+Остаточные риски:
+- Без push/PR невозможно приложить обязательный успешный автоматический CI run; F-007 не считается resolved без этого CI evidence.
+- YUV-02 и YUV-01 нельзя перевести в `DONE`, пока clean CI не исполнит sentinel и четыре Web suites либо F-007 не будет локализован и устранён.
+
+Native C permission:
+- не требовалось; задача меняет только CI, README и sentinel.
+
+Повторная приёмка root, Flutter 3.44.9, 2026-09-13:
+- Статус остаётся READY FOR REVIEW: implementation/configuration blockers не
+  найдены, но обязательный CI evidence отсутствует.
+- Коммит `86be219` закрепил `flutter-version: '3.44.9'` в обоих CI jobs вместо
+  плавающего `channel: stable`.
+- Workflow автоматически запускается на `push` и `pull_request`, пересобирает
+  WASM до Web gate, проверяет наличие artifacts и последовательно запускает
+  sentinel плюс четыре Web suites через `--platform chrome`.
+- Локальный sentinel на Windows/Flutter 3.44.9 повторно остался на `loading`
+  более 60 секунд и был остановлен вручную; зарегистрированных tests — 0.
+- Ветка `fix/0.2.5-release-readiness` отсутствует на remote, `gh` CLI не
+  установлен; без разрешения на push/PR получить требуемый автоматический
+  Linux CI run невозможно.
+
+Уточнение 2026-09-13 (измерено, заменяет догадки выше):
+- Утверждение «ветка отсутствует на remote, поэтому CI run невозможен» было
+  верно лишь наполовину. `origin` настроен
+  (`https://github.com/Anfet/yuv_ffi.git`), workflow триггерится на
+  `push: branches: ["**"]`, а job `wasm-web-smoke` на `ubuntu-latest` собирает
+  WASM через emsdk и гоняет все пять Web-файлов под
+  `xvfb-run flutter test --platform chrome`. Для push `gh` CLI не нужен.
+  С разрешения владельца ветка запушена; CI evidence ожидается из Actions.
+- F-007 охарактеризован неверно по трём пунктам:
+  1. Это не зависание на `loading`. Прогон падает детерминированно после
+     фиксированного browser timeout ~183 s с
+     `Failed to load ...: Connection closed before test suite loaded`.
+  2. Причина «CanvasKit path с несовместимыми разделителями» не подтверждается:
+     verbose-лог показывает, что Chromium стартует штатно и DevTools
+     цепляется (`DevTools listening on ws://127.0.0.1:...`), после чего
+     harness внутри страницы просто не отвечает manager websocket.
+  3. Это не специфично для Chrome: Edge через `CHROME_EXECUTABLE` даёт ровно ту
+     же ошибку. Запущенного Chrome в системе при этом нет (`tasklist` пуст),
+     сам Chrome headless работает (`--dump-dom` возвращает DOM, exit 0).
+- Контрольный эксперимент отделяет Flutter от окружения: чистый пакет с
+  `dart test --platform chrome` на этой же машине и том же Dart 3.12.2 проходит
+  («All tests passed!»). То есть браузер, websocket и browser-test
+  инфраструктура исправны; ломается именно `flutter test --platform chrome`
+  (компиляция идёт через `--target=dartdevc`, ~14.5 s).
+- Вывод: F-007 остаётся `OPEN` как дефект локального Windows-окружения,
+  но его прежнее описание использовать нельзя — оно указывает на несуществующую
+  причину. Обязательный gate в любом случае Linux-овый.
+
+Реальная причина F-007 установлена 2026-09-13 по логам CI (run #18):
+- Web gate падает с `Bad state: Failed to load WASM loader script:
+  assets/packages/yuv_ffi/assets/wasm/yuv_ffi.js` в `setUpAll`.
+- Измерено напрямую: test-сервер `flutter test --platform chrome` отдаёт
+  `/static/index.html` → 200, но `/assets/packages/yuv_ffi/assets/wasm/yuv_ffi.js`
+  → **404** и `/assets/AssetManifest.json` → **404**. Harness не поднимает asset
+  bundle вообще.
+- Значит это ограничение test runner'а, а НЕ дефект пакета: `assets: -
+  assets/wasm/` в `pubspec.yaml` объявлен корректно, оба артефакта на месте
+  (`yuv_ffi.js` 13579 B, `yuv_ffi.wasm` 39809 B). Загрузчик инжектит
+  `<script src=...>`, который под harness'ем резолвиться не может ни на Windows,
+  ни на Linux — что и подтвердил идентичный отказ на ubuntu CI.
+- Следствие: `test/web/*` в текущем виде не могут проходить через
+  `flutter test --platform chrome` в принципе. Нужен либо build-based Web gate
+  (`flutter build web` + браузерный прогон), либо инжект артефактов в harness,
+  либо guard на недоступность модуля. Это меняет DoD YUV-02 и требует решения
+  владельца.
+
+VM job (`analyze-and-test-vm`) — отдельный дефект, исправлен:
+- `142 passed, 103 failed, 75 skipped` на CI объяснялись тем, что
+  `markTestSkipped()` не прерывает тело теста: все 119 reference-кейсов всё
+  равно шли в native-вызов и падали.
+- Воспроизведено локально скрытием `yuv_ffi.dll`: было `-103`, стало `~119`.
+  С библиотекой — `+90 -31`, без изменений.
+- Остаётся один намеренный failure: guard «native library required by the
+  backend is available». Ни один CI job не собирает нативную библиотеку
+  (`cmake`/`gcc` в `ci.yml` отсутствуют), поэтому VM gate не станет зелёным,
+  пока не добавлен шаг сборки `src/CMakeLists.txt` под Linux.
+- Поэтому YUV-02 не переведена в DONE, F-007 остаётся OPEN, а задачи,
+  требующие фактического Web runtime, сохраняют YUV-02 как acceptance gate.
+
+### Независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+- На remote HEAD `bb93fb2` run #23 подтверждает жизнеспособность нового пути:
+  `web-integration-probe` успешно собрал WASM, поднял настоящее
+  example-приложение и выполнил bootstrap conversion в Chrome.
+- Это пока не gate: job объявлен `continue-on-error: true`. Одновременно
+  обязательный `wasm-web-smoke` продолжает запускать asset-dependent suites
+  через непригодный `flutter test --platform chrome` и падает. Workflow #23
+  завершился `failure`.
+- Решение по инструменту принято: переносить Web runtime проверки в
+  `integration_test`/`flutter drive`; временный probe превратить в required
+  job и убрать `continue-on-error`.
+- Сужение Web-матрицы не принято. Исходное требование пользователя — эталонный
+  case для каждой функции — сохраняется. YUV-12 должна перенести полную
+  reference matrix в integration harness; YUV-02 отвечает только за рабочий
+  обязательный bootstrap gate, чтобы разорвать зависимость.
+- `example-analyze-and-build` в том же run зелёный; это evidence для YUV-17,
+  но не закрывает YUV-02.
+
+Дополнение реализации 2026-09-14:
+
+- Удалены непригодный asset-dependent `wasm-web-smoke` и временный
+  `web-integration-probe`; их заменяет required `wasm-web-integration` без
+  `continue-on-error`.
+- Bootstrap integration test теперь явно требует `kIsWeb == true`, загружает
+  WASM из bundle и выполняет RGBA -> BGRA -> I420 -> BGRA conversion. Полная
+  matrix YUV-12 в этой карточке не сокращалась и не переносилась.
+- Локальный `flutter drive` на Windows 10 x64, Flutter 3.44.9, Chrome и
+  ChromeDriver 148.0.7778.179 дошёл только до `Waiting for connection from
+  debug service on Web Server` и был остановлен; это не является успешным
+  runtime evidence. Статус остаётся `REJECTED` до успешного required CI run.
+
+---
+
+
+---
+
+
+---
+
+
+---
+
+
+### Независимая приёмка root 2026-09-14
+
+- Статус: DONE.
+- Реализация: `8e534fc ci: require Web WASM bootstrap integration gate`.
+- Автоматический push-run #24 выполнен для commit `54ca369`.
+- Required job `wasm-web-integration` завершилась успешно. Все её шаги зелёные:
+  matching Chrome/ChromeDriver, Emscripten, свежая сборка WASM, example
+  dependency resolution и Chrome bootstrap test.
+- Test реально потребовал `kIsWeb == true`, загрузил WASM из asset bundle и
+  выполнил RGBA -> BGRA -> I420 -> BGRA conversion.
+- В job нет `continue-on-error`; прежние asset-dependent
+  `flutter test --platform chrome` и soft-fail probe удалены.
+- Example job того же run также зелёная. Общий workflow красный только из-за
+  31 известных native reference failures в отдельной VM job; это не дефект и
+  не acceptance scope YUV-02.
+- CI run:
+  `https://github.com/Anfet/yuv_ffi/actions/runs/34785533720`.
+- Web job:
+  `https://github.com/Anfet/yuv_ffi/actions/runs/34785533720/job/103800211131`.
+- F-007 остаётся исторической проблемой Flutter browser-test runner, но больше
+  не блокирует asset-dependent runtime gate.
+- Production Dart, native C и generated bindings не менялись.
 
 ---
