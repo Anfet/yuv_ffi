@@ -64,7 +64,11 @@ void main() {
   for (final entry in _casesFromManifest()) {
     test(entry['id'] as String, () async {
       if (!nativeAvailable) {
+        // markTestSkipped only records the skip: without returning, execution
+        // falls straight into the native call below and the case fails instead
+        // of skipping.
         markTestSkipped('YUV-11 native library is not available on this host');
+        return;
       }
       final result = await _runCase(entry, source);
       _assertCase(entry, result, expectedImages);
