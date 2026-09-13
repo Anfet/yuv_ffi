@@ -26,12 +26,12 @@ YUV-17, YUV-20 и YUV-21.
 | A-06: rotation assert и `dstWidtn` | YUV-27 | TODO / optional | Механическая Dart cleanup без изменения semantics |
 | A-07: `getBytes()` backing buffer | YUV-14 | READY FOR REVIEW | Реализовано commit `3bd12bf`; нужен обязательный Web retest |
 | A-08: bindings cache | YUV-19 | DONE / archived | Принято и перемещено в `completed-tasks.md` |
-| A-08: serialization | YUV-07 | REJECTED | Основной codec готов, но streaming/memory DoD не выполнен |
+| A-08: serialization | YUV-07 | REJECTED | Streaming реализован, но format-specific geometry проверяется после чтения plane |
 | A-08: image cache | YUV-20 | REJECTED | Поведение исправлено, но patch-релиз получил breaking interface change |
 | A-08: initialization | YUV-21 | READY FOR REVIEW | Реализовано commit `ad92431`; требуется Web runtime evidence |
 | A-09: локальный `_tmp_*` | — | CLOSED / local | Файл отсутствует; удаление локальных tmp не является package task |
 | A-10: breaking revision API | YUV-20 | REJECTED | Нужен source-compatible revision seam либо релиз `0.3.0` |
-| A-11: whole-stream buffering | YUV-07 | REJECTED | Нужен последовательный decoder с validation до plane allocation |
+| A-11: поздняя geometry validation | YUV-07 | REJECTED | Самосогласованная, но неверная metadata должна отклоняться до чтения plane body |
 
 Дополнительная синхронизация build/tooling backlog:
 
@@ -217,8 +217,8 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
 ## A-08 — сверка ранее зарегистрированных задач
 
 - YUV-19 bindings cache — DONE, данные в `completed-tasks.md`.
-- YUV-07 shared serialization — реализована основа в `c52e13c`, но задача
-  возвращена в REJECTED по A-11.
+- YUV-07 shared serialization — основа реализована в `c52e13c`, streaming в
+  `ded01b0`, но задача повторно возвращена в REJECTED по A-11.
 - YUV-20 provider cache — functional seam реализован в `e3c235d`, но задача
   возвращена в REJECTED по A-10.
 - YUV-21 initialization contract — READY FOR REVIEW, Web evidence зависит от
@@ -259,29 +259,27 @@ extension/top-level invalidation API. Альтернатива — отдель�
 
 ---
 
-## A-11 — YUV-07 сохраняет whole-stream buffering
+## A-11 — YUV-07 поздно проверяет format-specific geometry
 
 - Статус: OPEN / implementation REJECTED
 - Приоритет: P2
 - Задача: расширена YUV-07
 
-`YuvCodec.collect()` хранит все chunks, затем выделяет ещё один contiguous
-buffer. `maxPayloadBytes = 2 GiB` ограничивает бесконечность, но допускает
-многогигабайтный peak memory и проверяет `maxPlaneBytes` только после полного
-завершения stream. Это не выполняет уже записанное решение YUV-07 о
-последовательном parsing.
+Commit `ded01b0` убрал whole-stream collection, удалил мёртвые
+`DataReader`/`DataWriter` и добавил последовательный cursor. Предыдущее описание
+этой находки больше не актуально.
 
-Требуется stream cursor, который:
+Оставшийся дефект уже: перед `readBytes()` проверяются только предел длины и
+равенство `planeHeight * rowStride == byteLength`. Соответствие высоты формату,
+минимальный row stride и допустимый pixel stride проверяются общим
+`YuvGeometry.validateImage()` лишь после чтения всех bytes и создания
+`YuvPlane`. Самосогласованная, но заведомо неверная metadata способна заставить
+decoder ждать или копировать до 1 GiB перед отказом.
 
-1. читает header и plane metadata через произвольные chunk boundaries;
-2. валидирует version/format/geometry/declared length до plane allocation;
-3. удерживает только текущий chunk и уже принятые planes, без второй копии всего
-   файла;
-4. отклоняет уже невалидную metadata, даже если stream ещё не закрыт;
-5. сохраняет image и revision при любой ошибке, а при successful atomic commit
-   увеличивает revision ровно один раз.
-
-В той же задаче удаляются ставшие мёртвыми `DataReader`/`DataWriter`.
+YUV-07 должна вычислить ожидаемую geometry каждой plane из header/format и
+отклонить несовместимые metadata до чтения body. Regression обязан использовать
+незакрытый stream: после валидной по арифметике, но неверной для формата metadata
+decoder должен завершиться `FormatException`, не запросив plane bytes.
 
 ---
 

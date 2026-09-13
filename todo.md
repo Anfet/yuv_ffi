@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | READY FOR REVIEW | CI evidence | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | READY FOR REVIEW | замечания независимого ревью; Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | ранняя geometry validation; Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
@@ -337,7 +337,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-04 принята; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/loader/data_io.dart`
@@ -592,6 +592,33 @@ Commit: fix: made the save/load codec read the stream sequentially
 Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
+
+### Повторное независимое ревью 2026-09-13
+
+Статус: `REJECTED`.
+
+1. Последовательное чтение реализовано, но format-specific geometry всё ещё
+   проверяется только после `readBytes()` и создания `YuvPlane`. До чтения
+   проверяются лишь `maxPlaneBytes` и равенство `height * rowStride == length`.
+   Например, BGRA `1x1` с самосогласованными metadata `height=2`,
+   `rowStride=4`, `pixelStride=4`, `byteLength=8` уже заведомо невалидна, но
+   decoder будет ждать body вместо немедленного `FormatException`.
+2. При длине до `maxPlaneBytes` decoder способен прочитать до 1 GiB, затем
+   создать ещё одну копию в `YuvPlane` и только после этого отклонить layout в
+   `YuvGeometry.validateImage()`. Это не выполняет DoD о проверке geometry до
+   allocation соответствующей plane.
+3. Тест `invalid metadata is rejected without reading the declared plane`
+   меняет только `byteLength` и попадает в раннюю арифметическую проверку. Нужен
+   незакрытый stream с самосогласованным `height * rowStride == byteLength`, но
+   geometry, несовместимой с header/format; decoder не должен запрашивать body.
+4. Web runtime evidence отсутствует. После YUV-02 отдельно выполнить
+   `flutter test --platform chrome test/yuv_serialization_test.dart` с
+   подтверждённым `kIsWeb == true`.
+
+Независимо подтверждено на Flutter 3.44.9: focused serialization suite 31/31,
+общий focused review suite 151/151, `flutter analyze --no-pub lib test` и
+`git diff --check` проходят. Atomic commit и revision-контракт для проверенных
+VM-сценариев корректны; native C/generated bindings не менялись.
 
 ---
 
