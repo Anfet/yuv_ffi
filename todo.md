@@ -8,7 +8,7 @@
 
 | Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|---|
-| [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | REJECTED | обязательный integration Web gate | Сделать Web CI реальным обязательным gate с asset bundle |
+| [ ] | YUV-02 | Terra | Claude Sonnet 5 | P0 | REJECTED | обязательный integration Web gate | Сделать Web CI реальным обязательным gate с asset bundle |
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | исправить строгую проверку trailing bytes | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
@@ -149,7 +149,7 @@ Native C permission:
 
 ## YUV-02 — сделать Web CI настоящим обязательным gate
 
-- Владелец: Luna
+- Владелец: Terra
 - Приоритет: P0 / release blocker
 - Статус: REJECTED
 - Зависимости: YUV-01 принята; требуется обязательный integration CI run
