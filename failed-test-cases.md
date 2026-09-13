@@ -20,7 +20,7 @@
 | F-002 | SWAP-NV-LUMA-001 | Native/Windows | RESOLVED | P1 | YUV-03 | `swapNv()` сохраняет Y и exact-переставляет chroma pairs |
 | F-003 | GET-BYTES-LENGTH-001 | Native/Windows | OPEN | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
 | F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows | OPEN | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
-| F-005 | BINDINGS-CACHE-001 | Native/Windows | OPEN | P1 | YUV-19 | Кэш `YuvFfiBindings` не заполняется, каждый вызов заново резолвит символы |
+| F-005 | BINDINGS-CACHE-001 | Native/Windows | RESOLVED | P1 | YUV-19 | Повторные обращения переиспользуют один экземпляр `YuvFfiBindings` |
 | F-006 | IMAGE-CACHE-KEY-001 | Native/Windows | OPEN | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
 | F-007 | CHROME-RUNNER-HANG-001 | Web/Chrome | OPEN | P0 | YUV-02 | Даже минимальный Flutter Web test зависает на стадии `loading` |
 
@@ -307,7 +307,7 @@ YUV-15 должен добавить постоянные Native/Web tests дл�
 ## F-005 — кэш bindings не заполняется
 
 - Case ID: `BINDINGS-CACHE-001`
-- Статус: OPEN
+- Статус: RESOLVED
 - Обнаружено: 2026-09-13
 - Commit: `5f52fd14540a283da91a6d80e1fc7128bba1c796`
 - Backend: Native / Windows x64; Web не затронут, там своя WASM-обвязка
@@ -360,8 +360,11 @@ YUV-19 должен добавить regression, фиксирующий identity
 
 ### Resolution
 
-- Fix commit: не заполнен
-- Native retest command/result: не заполнен
+- Исправлено: 2026-09-13
+- Fix commit: текущий commit YUV-19
+- Native retest command/result: `flutter test --no-pub test/loader_io_test.dart --reporter expanded` — 1/1 passed, Windows x64, локальный `yuv_ffi.dll`
+- Identity: три последовательных обращения к `ffiBingings` возвращают один объект
+- Linux/host без native artifact: case явно skipped вместо падения полного VM suite
 - Web retest command/result: не применимо
 - Full `test_pattern_512.png` case result: не применимо
 

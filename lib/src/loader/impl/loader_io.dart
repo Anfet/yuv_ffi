@@ -19,7 +19,7 @@ ffi.DynamicLibrary get library {
 
 YuvFfiBindings? _ffiBingings;
 
-YuvFfiBindings get ffiBingings => _ffiBingings ?? YuvFfiBindings(library);
+YuvFfiBindings get ffiBingings => _ffiBingings ??= YuvFfiBindings(library);
 
 ffi.DynamicLibrary _openYuvLibrary() {
   _library = Platform.isMacOS

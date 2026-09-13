@@ -25,9 +25,9 @@
 | [ ] | YUV-15 | Terra | P1 | BLOCKED | YUV-04 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [x] | YUV-16 | Opus | P1 | DONE | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
 | [ ] | YUV-17 | Luna | P2 | BLOCKED | YUV-01 | Добавить отдельный analyzer/build gate для package `example/` |
-| [ ] | YUV-19 | Terra | P1 | TODO | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
+| [x] | YUV-19 | Terra | P1 | DONE | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
 | [ ] | YUV-20 | Opus | P1 | BLOCKED | YUV-01 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
-| [ ] | YUV-21 | Opus | P1 | BLOCKED | YUV-01, YUV-19 | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-21 | Opus | P1 | BLOCKED | YUV-01 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-18 | Terra | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-21 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
 
 ## Статусы
@@ -1510,7 +1510,7 @@ git status --short
 
 - Владелец: Terra
 - Приоритет: P1
-- Статус: TODO
+- Статус: DONE
 - Зависимости: нет
 - Scope:
   - `lib/src/loader/impl/loader_io.dart`
@@ -1559,7 +1559,14 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+- Исправление выполнено моделью Terra, high и принято после независимого ревью root.
+- Getter использует `_ffiBingings ??= YuvFfiBindings(library)`, поэтому повторные обращения возвращают один экземпляр и сохраняют внутренний lazy symbol cache.
+- Добавлен identity regression на три последовательных обращения. На host без собранной native library он делает явный skip, не ломая Linux VM job; на Windows x64 с локальным `yuv_ffi.dll` case реально выполнен.
+- `flutter test --no-pub test/loader_io_test.dart --reporter expanded` — 1/1 passed.
+- Полный `flutter test --no-pub` у исполнителя — 72/72 passed; root отдельно подтвердил baseline 71/71 и новый focused case 1/1.
+- `flutter analyze --no-pub lib/src/loader/impl/loader_io.dart test/loader_io_test.dart` — no issues.
+- Format-check и `git diff --check` — passed.
+- Публичный API, initialization/retry policy, native C и generated bindings не изменялись.
 
 ---
 
