@@ -578,6 +578,18 @@ YUV-02 должен сначала воспроизвести минимальн
 runner. F-007 нельзя переводить в `RESOLVED` без успешного автоматического CI
 evidence либо отдельного устранения Windows runner issue.
 
+Asset-dependent Web runtime checks больше не используют этот runner: YUV-02
+переводит обязательный bootstrap в `example/integration_test` + `flutter
+drive`, где существует bundle package assets. Сам F-007 остаётся `OPEN`, пока
+не будет отдельно воспроизведён и устранён Flutter `flutter test --platform
+chrome` runner issue; это не должно блокировать integration gate.
+
+Локальная попытка `flutter drive` 2026-09-14 (Windows 10 x64, Flutter 3.44.9,
+Chrome/ChromeDriver 148.0.7778.179) дошла до `Waiting for connection from
+debug service on Web Server` и была остановлена без зарегистрированного test.
+Она не является ни успешным Web evidence, ни новым проявлением F-007: это
+другая execution path, которую требуется подтвердить required Linux CI run.
+
 ---
 
 ## Шаблон новой записи

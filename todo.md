@@ -337,6 +337,19 @@ VM job (`analyze-and-test-vm`) — отдельный дефект, исправ
 - `example-analyze-and-build` в том же run зелёный; это evidence для YUV-17,
   но не закрывает YUV-02.
 
+Дополнение реализации 2026-09-14:
+
+- Удалены непригодный asset-dependent `wasm-web-smoke` и временный
+  `web-integration-probe`; их заменяет required `wasm-web-integration` без
+  `continue-on-error`.
+- Bootstrap integration test теперь явно требует `kIsWeb == true`, загружает
+  WASM из bundle и выполняет RGBA -> BGRA -> I420 -> BGRA conversion. Полная
+  matrix YUV-12 в этой карточке не сокращалась и не переносилась.
+- Локальный `flutter drive` на Windows 10 x64, Flutter 3.44.9, Chrome и
+  ChromeDriver 148.0.7778.179 дошёл только до `Waiting for connection from
+  debug service on Web Server` и был остановлен; это не является успешным
+  runtime evidence. Статус остаётся `REJECTED` до успешного required CI run.
+
 ---
 
 

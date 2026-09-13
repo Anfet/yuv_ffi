@@ -178,15 +178,22 @@ Smoke checks:
 flutter test
 ```
 
-Web tests (browser runner):
+Web WASM bootstrap gate (real app asset bundle):
 
 ```sh
-flutter test --platform chrome test/web/web_platform_sentinel.dart
-flutter test --platform chrome test/web/yuv_web_wasm_test.dart
-flutter test --platform chrome test/web/wasm_parity_conversions_test.dart
-flutter test --platform chrome test/web/wasm_parity_transforms_test.dart
-flutter test --platform chrome test/web/wasm_parity_edge_cases_test.dart
+# Terminal 1: start a matching ChromeDriver.
+chromedriver --port=4444
+
+# Terminal 2: run the same integration harness as CI.
+cd example
+flutter drive --driver=test_driver/integration_test.dart \
+  --target=integration_test/wasm_bootstrap_test.dart \
+  -d web-server --browser-name=chrome --headless
 ```
+
+`flutter test --platform chrome` does not serve the package asset bundle and
+must not be used for WASM runtime tests. The full Web reference matrix remains
+the YUV-12 scope and will run through this integration harness.
 
 On Windows Git Bash, the build script auto-falls back to `emcc.bat`/`emcc.cmd`
 when plain `emcc` is not resolvable by `command -v`.

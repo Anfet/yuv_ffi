@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
@@ -10,19 +11,33 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// so the loader's script tag can never resolve there. This runs against a real
 /// built application instead, where those assets exist.
 ///
-/// It deliberately proves only the bootstrap. If this passes, the four suites in
-/// `test/web/` can move here; if it fails, nothing else is worth porting yet.
+/// It deliberately proves only the bootstrap. The full reference matrix remains
+/// YUV-12 work and must use this same harness.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('the WASM runtime initializes from the app asset bundle', (tester) async {
+  testWidgets('the Web WASM runtime initializes and converts a frame', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
+
     await YuvFfi.ensureInitialized();
 
-    // A conversion is the cheapest end-to-end proof that the module is not just
-    // loaded but callable: it crosses into WASM and back.
-    final image = YuvImage.bgra(4, 4);
+    // This crosses the asset-loaded module boundary three times: RGBA -> BGRA,
+    // BGRA -> I420, and I420 -> BGRA. A module that only loaded but could not
+    // execute a conversion fails this test.
+    final image = YuvImage.bgra(2, 2)
+      ..fromRgba8888(
+        Uint8List.fromList(<int>[
+          255, 0, 0, 255,
+          0, 255, 0, 255,
+          0, 0, 255, 255,
+          255, 255, 255, 255,
+        ]),
+      )
+      ..toYuvI420();
+
     final bytes = image.toBgra8888();
 
-    expect(bytes.length, 4 * 4 * 4);
+    expect(bytes, hasLength(2 * 2 * 4));
+    expect(bytes.any((byte) => byte != 0), isTrue);
   });
 }

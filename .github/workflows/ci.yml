@@ -62,70 +62,11 @@ jobs:
         working-directory: example
         run: flutter build web
 
-  wasm-web-smoke:
+  # The package WASM loader needs Flutter's asset bundle. `flutter test --platform
+  # chrome` does not serve that bundle, so every asset-dependent runtime test
+  # belongs in example/integration_test and runs through flutter drive.
+  wasm-web-integration:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.44.9'
-
-      - name: Install Emscripten SDK
-        shell: bash
-        run: |
-          git clone https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
-          "$HOME/emsdk/emsdk" install latest
-          "$HOME/emsdk/emsdk" activate latest
-
-      - name: Build WASM artifacts
-        shell: bash
-        run: |
-          source "$HOME/emsdk/emsdk_env.sh"
-          emcc -v
-          sh ./tool/wasm/build_wasm.sh --profile release
-          test -f assets/wasm/yuv_ffi.js
-          test -f assets/wasm/yuv_ffi.wasm
-
-      - name: Flutter pub get
-        run: flutter pub get
-
-      - name: Enable Flutter web
-        run: flutter config --enable-web
-
-      - name: Web parity gate (Chrome)
-        shell: bash
-        run: |
-          required=(
-            test/web/web_platform_sentinel.dart
-            test/web/yuv_web_wasm_test.dart
-            test/web/wasm_parity_conversions_test.dart
-            test/web/wasm_parity_transforms_test.dart
-            test/web/wasm_parity_edge_cases_test.dart
-          )
-
-          for f in "${required[@]}"; do
-            if [ ! -f "$f" ]; then
-              echo "Required web parity test is missing: $f"
-              exit 1
-            fi
-          done
-
-          for f in "${required[@]}"; do
-            echo "Running web test: $f"
-            xvfb-run -a flutter test --platform chrome --no-pub "$f" --reporter expanded
-          done
-
-  # Probe for YUV-02. The gate above cannot load the WASM assets, because the
-  # `flutter test --platform chrome` server serves no asset bundle. This runs one
-  # bootstrap test against a real app, where the bundle exists. It is allowed to
-  # fail without failing the workflow: its only job right now is to answer
-  # whether porting the four web suites here is worth doing.
-  web-integration-probe:
-    runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -177,12 +118,22 @@ jobs:
         working-directory: example
         run: flutter pub get
 
-      - name: WASM bootstrap probe
+      - name: Required WASM bootstrap gate
         working-directory: example
         shell: bash
         run: |
-          chromedriver --port=4444 &
-          sleep 5
+          chromedriver --port=4444 > /tmp/chromedriver.log 2>&1 &
+          chromedriver_pid=$!
+          trap 'cat /tmp/chromedriver.log; kill "$chromedriver_pid"' EXIT
+
+          for _ in $(seq 1 10); do
+            if curl --fail --silent http://127.0.0.1:4444/status > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4444/status > /dev/null
+
           xvfb-run -a flutter drive \
             --driver=test_driver/integration_test.dart \
             --target=integration_test/wasm_bootstrap_test.dart \
