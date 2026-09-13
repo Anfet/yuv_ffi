@@ -53,6 +53,36 @@ abstract interface class YuvImage {
   /// Convenience size object built from [width] and [height].
   ui.Size get size;
 
+  /// Monotonic counter identifying the current frame content.
+  ///
+  /// Because this image is mutable in place, object identity alone does not
+  /// identify a frame: every in-place operation keeps the same instance while
+  /// replacing its content. [revision] closes that gap and forms the cache
+  /// coherency contract used by `YuvImageProvider`.
+  ///
+  /// Every successful mutating operation increments it exactly once. Operations
+  /// that genuinely change nothing — rotating by 0 degrees, an empty crop, or
+  /// converting to the format the image already has — leave it untouched.
+  ///
+  /// Direct writes through the mutable plane API are invisible here and require
+  /// an explicit [markDirty] call. See [markDirty] and [YuvPlane.bytes].
+  int get revision;
+
+  /// Signals that plane content was modified through the mutable plane API.
+  ///
+  /// Writing straight into [YuvPlane.bytes] (or calling [YuvPlane.setPixel] and
+  /// [YuvPlane.assignFrom]) cannot be intercepted, so such changes do not bump
+  /// [revision] on their own. Call this afterwards, or a widget may keep
+  /// showing the previous frame from the image cache:
+  ///
+  /// ```dart
+  /// image.yPlane.bytes[0] = 0xFF;
+  /// image.markDirty();
+  /// ```
+  ///
+  /// Calling it when nothing changed is harmless: it only costs a cache miss.
+  void markDirty();
+
   /// Creates an I420 image.
   ///
   /// [width] and [height] are image dimensions in pixels.

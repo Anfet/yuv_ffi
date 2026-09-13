@@ -75,6 +75,14 @@ class YuvImageImpl implements YuvImage {
   int _height;
   List<YuvPlane> _planes = const [];
 
+  int _revision = 0;
+
+  @override
+  int get revision => _revision;
+
+  @override
+  void markDirty() => _revision++;
+
   @override
   YuvFileFormat get format => _format;
 
@@ -169,6 +177,7 @@ class YuvImageImpl implements YuvImage {
     _height = loadedHeight;
     _format = loadedFormat;
     _planes = loadedPlanes;
+    _revision++;
   }
 
   @override
@@ -180,6 +189,7 @@ class YuvImageImpl implements YuvImage {
   @override
   YuvImage blackwhite() {
     _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_blackwhite', nv21: 'nv21_blackwhite', bgra: 'bgra8888_blackwhite'));
+    _revision++;
     return this;
   }
 
@@ -208,6 +218,7 @@ class YuvImageImpl implements YuvImage {
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) {
     _requireTightBgraFor('gaussianBlur');
     _callInPlaceBlur(_symbolForFormat(i420: 'yuv420_gaussblur', nv21: 'nv21_gaussian_blur', bgra: 'bgra8888_gaussian_blur'), radius, sigma);
+    _revision++;
     return this;
   }
 
@@ -215,6 +226,7 @@ class YuvImageImpl implements YuvImage {
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) {
     _requireTightBgraFor('boxBlur');
     _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_box_blur', nv21: 'nv21_box_blur', bgra: 'bgra8888_box_blur'), radius, rect);
+    _revision++;
     return this;
   }
 
@@ -222,11 +234,16 @@ class YuvImageImpl implements YuvImage {
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) {
     _requireTightBgraFor('meanBlur');
     _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_mean_blur', nv21: 'nv21_mean_blur', bgra: 'bgra8888_mean_blur'), radius, rect);
+    _revision++;
     return this;
   }
 
   @override
   YuvImage swapNv() {
+    // A conversion to NV21 bumps the revision on its own. Snapshot it here so
+    // one public swapNv() advances the counter exactly once, whatever path it
+    // took to get there.
+    final revisionBefore = _revision;
     final source = _format == YuvFileFormat.nv21 ? this : toYuvNv21();
 
     final rawModule = _requireModule();
@@ -258,6 +275,7 @@ class YuvImageImpl implements YuvImage {
       _width = dst.width;
       _height = dst.height;
       _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+      _revision = revisionBefore + 1;
       return this;
     } finally {
       srcAlloc.dispose();
@@ -281,6 +299,7 @@ class YuvImageImpl implements YuvImage {
     _width = dst.width;
     _height = dst.height;
     _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
     return this;
   }
 
@@ -300,6 +319,7 @@ class YuvImageImpl implements YuvImage {
     _width = dst.width;
     _height = dst.height;
     _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
     return this;
   }
 
@@ -314,6 +334,7 @@ class YuvImageImpl implements YuvImage {
     _width = dst.width;
     _height = dst.height;
     _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
     return this;
   }
 
@@ -337,18 +358,21 @@ class YuvImageImpl implements YuvImage {
       extraArgTypes: const <String>['number', 'number', 'number', 'number'],
       extraArgs: <Object?>[left, top, cropWidth, cropHeight],
     );
+    _revision++;
     return this;
   }
 
   @override
   YuvImage flipHorizontally() {
     _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_flip_horizontally', nv21: 'nv21_flip_horizontally', bgra: 'bgra8888_flip_horizontally'));
+    _revision++;
     return this;
   }
 
   @override
   YuvImage flipVertically() {
     _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_flip_vertically', nv21: 'nv21_flip_vertically', bgra: 'bgra8888_flip_vertically'));
+    _revision++;
     return this;
   }
 
@@ -371,21 +395,27 @@ class YuvImageImpl implements YuvImage {
           yPlane.bytes.setRange(destination, destination + _bytesPerPixel, tight.yPlane.bytes, source);
         }
       }
+      // This branch writes the planes directly and returns early, so it has to
+      // bump the revision itself.
+      _revision++;
       return;
     }
 
     _callFromRgba(_symbolForFormat(i420: 'yuv420_from_rgba8888', nv21: 'nv21_from_rgba8888', bgra: 'bgra8888_from_rgba8888'), bytes);
+    _revision++;
   }
 
   @override
   YuvImage grayscale() {
     _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_grayscale', nv21: 'nv21_grayscale', bgra: 'bgra8888_grayscale'));
+    _revision++;
     return this;
   }
 
   @override
   YuvImage negate() {
     _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_negate', nv21: 'nv21_negate', bgra: 'bgra8888_negate'));
+    _revision++;
     return this;
   }
 
@@ -399,6 +429,7 @@ class YuvImageImpl implements YuvImage {
     final dstHeight = rotation.swapSize ? _width : _height;
     final symbol = _symbolForFormat(i420: 'yuv420_rotate', nv21: 'nv21_rotate', bgra: 'bgra8888_rotate');
     _callSrcDst(symbol: symbol, dstWidth: dstWidth, dstHeight: dstHeight, extraArgTypes: const <String>['number'], extraArgs: <Object?>[degrees]);
+    _revision++;
     return this;
   }
 

@@ -21,7 +21,7 @@
 | F-003 | GET-BYTES-LENGTH-001 | Native/Windows | READY FOR RETEST | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
 | F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows | READY FOR RETEST | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
 | F-005 | BINDINGS-CACHE-001 | Native/Windows | RESOLVED | P1 | YUV-19 | Повторные обращения переиспользуют один экземпляр `YuvFfiBindings` |
-| F-006 | IMAGE-CACHE-KEY-001 | Native/Windows | OPEN | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
+| F-006 | IMAGE-CACHE-KEY-001 | Native/Windows | READY FOR RETEST | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
 | F-007 | CHROME-RUNNER-HANG-001 | Web/Chrome | OPEN | P0 | YUV-02 | Даже минимальный Flutter Web test зависает на стадии `loading` |
 
 ## Текущее состояние reference matrix
@@ -474,9 +474,28 @@ YUV-20 должен доказать оба сценария счётчиком 
 
 ### Resolution
 
-- Fix commit: не заполнен
-- Native retest command/result: не заполнен
-- Web retest command/result: не заполнен
+- Статус: `READY FOR RETEST`. Native сторона исправлена и покрыта постоянными
+  regression cases; `RESOLVED` требует настоящего Chrome прогона, который
+  остаётся заблокированным F-007/YUV-02.
+- Fix commit: см. commit задачи YUV-20 (`fix: keyed the image cache by frame revision`)
+- Исправление: в `YuvImage` добавлены `revision` и `markDirty()`.
+  `YuvImageProvider` сохраняет revision snapshot при создании, а его
+  `==`/`hashCode` строятся из `identityHashCode(image)` и этого snapshot.
+- Счётчик фактических conversion calls добавлен в fake и подтверждает оба
+  сценария, а не только равенство provider:
+  - неизменённый кадр — `conversions` не растёт при rebuild (cache hit);
+  - после `mutateInPlace()` — `conversions` растёт (обязательный refresh).
+- Отдельный case меняет `plane.bytes`, проверяет, что ключ при этом ещё не
+  изменился, затем вызывает `markDirty()` и подтверждает инвалидацию.
+- Native retest command/result:
+  `flutter test test/yuv_image_widget_test.dart` — exit 0, 11 tests passed;
+  `flutter test test/yuv_image_revision_test.dart` — exit 0, 14 tests passed
+  (Windows 10 x64 / AMD64, Flutter 3.38.10).
+- Regression доказан: при откате только `lib/src/widgets/yuv_image_widget.dart`
+  три cache-case падают, включая решающий «an unchanged frame is converted once
+  across rebuilds».
+- Web retest command/result: `NOT RUN`, до устранения F-007/YUV-02. Revision и
+  `markDirty()` реализованы в web backend симметрично.
 - Full `test_pattern_512.png` case result: не заполнен
 
 ---

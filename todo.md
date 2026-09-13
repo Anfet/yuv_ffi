@@ -18,7 +18,7 @@
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | TODO | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
-| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | TODO | Web retest: YUV-02 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | TODO | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
@@ -942,7 +942,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: TODO
+- Статус: READY FOR REVIEW
 - Зависимости: implementation разблокирована принятием YUV-01; финальный реальный Chrome retest зависит от YUV-02; зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
@@ -1005,7 +1005,83 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+```text
+Статус: READY FOR REVIEW
+Commit: fix: keyed the image cache by frame revision
+Изменённые файлы:
+- lib/src/yuv/yuv.dart
+- lib/src/yuv/shared/yuv_plane.dart
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- lib/src/yuv/impl/yuv_stub.dart
+- lib/src/widgets/yuv_image_widget.dart
+- test/yuv_image_widget_test.dart
+- test/yuv_image_revision_test.dart (новый)
+- failed-test-cases.md
+
+Что сделано:
+- В `YuvImage` добавлены монотонный `revision` и публичный `markDirty()`
+  (решения 1 и 7), задокументированные как cache coherency contract.
+- Все штатные мутирующие методы увеличивают revision ровно один раз после
+  успешного изменения: 17 точек в IO, 17 в Web, 5 в stub (решения 2 и 6).
+  Реальные no-op ветки — `rotate(rotation0)`, пустой crop, `toYuv*` в уже
+  целевом формате, а также stub-методы, которые возвращают `this` ничего не
+  меняя, — revision не трогают.
+- `swapNv()` в IO и Web вызывает внутри `toYuvNv21()`, который бампает сам.
+  Добавлен snapshot `revisionBefore` и присваивание `revisionBefore + 1`,
+  поэтому один публичный вызов = ровно один revision, а не два.
+- Ветка `fromRgba8888` для padded BGRA пишет planes напрямую и выходит через
+  ранний `return`, поэтому бампает revision отдельно — иначе эта мутация была
+  бы невидимой для кэша.
+- `YuvPlane` намеренно НЕ сигнализирует owning image (решение 3, ветка
+  «документация»): backends вызывают `assignFrom()` около 40 раз внутри своих
+  же мутирующих методов, и авто-сигнал ломал бы правило «ровно один раз».
+  Вместо этого `bytes`, `setPixel()` и `assignFrom()` документируют требование
+  вызвать `markDirty()`.
+- `YuvImageProvider` сохраняет revision snapshot в конструкторе; `==` — по
+  `identical(image)` плюс snapshot, `hashCode` — `Object.hash(identityHashCode(image), snapshot)`
+  (решение 4). Живой revision в `hashCode` не читается: это меняло бы hashCode
+  уже закэшированного ключа и делало запись недостижимой. Содержимое planes не
+  хэшируется (решение 5). Поведение `evict` при ошибке не менялось (решение 8).
+
+Проверки:
+- flutter test test/yuv_image_revision_test.dart — exit 0, 14 tests passed
+- flutter test test/yuv_image_widget_test.dart — exit 0, 11 tests passed
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test (полный VM suite) — 227 passed / 31 failed против baseline
+  206 passed / 31 failed: +21 новых теста, новых падений нет
+- dart format --output=none --set-exit-if-changed --line-length 150 — exit 0 для
+  всех изменённых файлов
+- git diff --check — exit 0
+- git status --short — приложен ниже
+
+Regression evidence:
+- При откате только `lib/src/widgets/yuv_image_widget.dart` падают три
+  cache-case, включая решающий «an unchanged frame is converted once across
+  rebuilds». Тест считает фактические вызовы конверсии, а не сравнивает
+  provider между собой, как и требует DoD.
+
+Ручная проверка:
+- Windows 10 x64 / AMD64, Flutter 3.38.10, Dart 3.10.9, native backend из
+  локального `yuv_ffi.dll`.
+- Web: `NOT RUN`. Chrome runner заблокирован F-007/YUV-02, `kIsWeb == true`
+  подтвердить нельзя. Revision/`markDirty()` в web backend реализованы
+  симметрично и покрыты теми же контрактными правилами.
+
+Остаточные риски:
+- Публичный API расширен двумя членами (`revision`, `markDirty`). Для
+  `YuvImage` как `abstract interface class` это breaking change для внешних
+  реализаций; в репозитории единственная такая реализация — fake в
+  widget-тесте, он обновлён. В `example/` реализаций нет.
+- Прямая запись в `plane.bytes` по-прежнему требует ручного `markDirty()`:
+  перехватить `Uint8List.operator[]=` нельзя без смены публичного типа
+  (прямо зафиксировано решением 3).
+- Web-сторона проверена инспекцией; runtime evidence отсутствует до YUV-02,
+  поэтому F-006 переведён в `READY FOR RETEST`, а не в `RESOLVED`.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
 
 ---
 

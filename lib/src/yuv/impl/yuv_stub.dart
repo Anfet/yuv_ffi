@@ -65,6 +65,14 @@ class YuvImageImpl implements YuvImage {
   int _height;
   List<YuvPlane> _planes = const [];
 
+  int _revision = 0;
+
+  @override
+  int get revision => _revision;
+
+  @override
+  void markDirty() => _revision++;
+
   @override
   YuvFileFormat get format => _format;
 
@@ -150,6 +158,7 @@ class YuvImageImpl implements YuvImage {
     }
     _format = YuvFileFormat.nv21;
     _planes = YuvImageImpl.nv21(_width, _height, yPixelStride: y.pixelStride).planes;
+    _revision++;
     return this;
   }
 
@@ -160,6 +169,7 @@ class YuvImageImpl implements YuvImage {
     }
     _format = YuvFileFormat.i420;
     _planes = YuvImageImpl.i420(_width, _height, yPixelStride: y.pixelStride).planes;
+    _revision++;
     return this;
   }
 
@@ -170,6 +180,7 @@ class YuvImageImpl implements YuvImage {
     }
     _format = YuvFileFormat.bgra8888;
     _planes = YuvImageImpl.bgra(_width, _height).planes;
+    _revision++;
     return this;
   }
 
@@ -192,6 +203,7 @@ class YuvImageImpl implements YuvImage {
         break;
     }
 
+    _revision++;
     return this;
   }
 
@@ -216,6 +228,7 @@ class YuvImageImpl implements YuvImage {
         bgra[i + 3] = bytes[i + 3];
       }
       _planes[0].assignFrom(bgra);
+      _revision++;
     }
   }
 

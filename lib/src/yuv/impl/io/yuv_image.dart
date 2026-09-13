@@ -21,6 +21,13 @@ class YuvImageImpl implements YuvImage {
   YuvFileFormat _format;
   int _width;
   int _height;
+  int _revision = 0;
+
+  @override
+  int get revision => _revision;
+
+  @override
+  void markDirty() => _revision++;
 
   @override
   YuvFileFormat get format => _format;
@@ -174,6 +181,7 @@ class YuvImageImpl implements YuvImage {
     _height = loadedHeight;
     _format = loadedFormat;
     _planes = loadedPlanes;
+    _revision++;
   }
 
   @override
@@ -206,6 +214,7 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -249,6 +258,7 @@ class YuvImageImpl implements YuvImage {
       }
       def.dispose();
     }
+    _revision++;
     return this;
   }
 
@@ -301,6 +311,7 @@ class YuvImageImpl implements YuvImage {
       dstDef.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -329,6 +340,7 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -356,6 +368,7 @@ class YuvImageImpl implements YuvImage {
     } finally {
       def.dispose();
     }
+    _revision++;
     return this;
   }
 
@@ -378,6 +391,9 @@ class YuvImageImpl implements YuvImage {
           yPlane.bytes.setRange(destination, destination + 4, tight.yPlane.bytes, source);
         }
       }
+      // This branch writes the planes directly and returns early, so it has to
+      // bump the revision itself.
+      _revision++;
       return;
     }
     final rgbaPlaneLength = bytes.length;
@@ -416,6 +432,7 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
       NativeAllocator.instance.free(rgbaPtr);
     }
+    _revision++;
   }
 
   /// Rejects a padded BGRA plane before an operation that cannot handle it.
@@ -464,6 +481,7 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -490,6 +508,7 @@ class YuvImageImpl implements YuvImage {
     } finally {
       def.dispose();
     }
+    _revision++;
     return this;
   }
 
@@ -535,6 +554,7 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -564,6 +584,7 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -614,11 +635,16 @@ class YuvImageImpl implements YuvImage {
       dstDef.dispose();
     }
 
+    _revision++;
     return this;
   }
 
   @override
   YuvImage swapNv() {
+    // A conversion to NV21 bumps the revision on its own. Snapshot it here so
+    // one public swapNv() advances the counter exactly once, whatever path it
+    // took to get there.
+    final revisionBefore = _revision;
     final nvXX = format == YuvFileFormat.nv21 ? this : toYuvNv21();
 
     final def = YUVDefClass(nvXX);
@@ -658,6 +684,7 @@ class YuvImageImpl implements YuvImage {
     _width = nvYY.width;
     _height = nvYY.height;
     _planes = nvYY.planes;
+    _revision = revisionBefore + 1;
     return this;
   }
 
@@ -720,6 +747,7 @@ class YuvImageImpl implements YuvImage {
     _width = image.width;
     _height = image.height;
     _planes = image.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
     return this;
   }
 
@@ -762,6 +790,7 @@ class YuvImageImpl implements YuvImage {
     _width = i420.width;
     _height = i420.height;
     _planes = i420.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
     return this;
   }
 
@@ -804,6 +833,7 @@ class YuvImageImpl implements YuvImage {
     _width = n21.width;
     _height = n21.height;
     _planes = n21.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
     return this;
   }
 }

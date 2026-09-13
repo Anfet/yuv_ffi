@@ -7,6 +7,10 @@ import 'package:flutter/foundation.dart';
 /// Plane bytes are stored row-by-row with [rowStride] and [pixelStride].
 class YuvPlane {
   /// Underlying mutable bytes.
+  ///
+  /// Writes through this buffer cannot be intercepted, so they do not bump the
+  /// owning image's revision. Call `YuvImage.markDirty()` afterwards, otherwise
+  /// a widget may keep rendering the previous frame from the image cache.
   Uint8List get bytes => _bytes;
 
   late Uint8List _bytes;
@@ -80,6 +84,9 @@ class YuvPlane {
   ///
   /// In debug mode, asserts when computed index is out of bounds.
   /// In release mode, out-of-bounds access throws at runtime.
+  ///
+  /// A plane does not know which image owns it, so this does not bump that
+  /// image's revision. Call `YuvImage.markDirty()` after a batch of writes.
   void setPixel(int x, int y, int value) {
     final int index = _indexOf(x, y);
     assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
@@ -98,6 +105,11 @@ class YuvPlane {
   /// longer one would not fit.
   ///
   /// Throws an [ArgumentError] when [other] has a different length.
+  ///
+  /// A plane does not know which image owns it, so this does not bump that
+  /// image's revision. Call `YuvImage.markDirty()` when writing planes
+  /// directly. The backends bump the revision themselves around their own
+  /// internal use of this method.
   void assignFrom(Uint8List other) {
     if (other.length != _bytes.length) {
       throw ArgumentError.value(
