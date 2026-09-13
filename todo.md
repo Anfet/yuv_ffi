@@ -16,9 +16,9 @@
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-01, YUV-04, YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
-| [ ] | YUV-09 | Luna | P2 | BLOCKED | YUV-01, YUV-02, YUV-05…YUV-08, YUV-13, YUV-14, YUV-17 | Синхронизировать README, platform matrix и локальный analyzer workflow |
+| [ ] | YUV-09 | Luna | P2 | BLOCKED | YUV-01, YUV-02, YUV-05…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [x] | YUV-10 | Terra | P1 | DONE | — | Подготовлен независимый эталон и manifest для `test_pattern_512.png` |
-| [ ] | YUV-11 | Luna | P1 | TODO | — | Прогнать по эталону каждую публичную операцию на native backend |
+| [x] | YUV-11 | Luna | P1 | DONE | — | Проверена native matrix: 65/119 passed, 54 failures зарегистрированы отдельно |
 | [ ] | YUV-12 | Luna | P1 | BLOCKED | YUV-01 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | P1 | BLOCKED | YUV-01, YUV-03 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
@@ -28,7 +28,9 @@
 | [x] | YUV-19 | Terra | P1 | DONE | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
 | [ ] | YUV-20 | Opus | P1 | BLOCKED | YUV-01 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
 | [ ] | YUV-21 | Opus | P1 | BLOCKED | YUV-01 | Зафиксировать retry/error/lazy-init контракт IO и Web |
-| [ ] | YUV-18 | Terra | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-21 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
+| [ ] | YUV-22 | Opus | P1 | BLOCKED | YUV-04, YUV-05 + разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
+| [ ] | YUV-23 | Opus | P0 | BLOCKED | YUV-04, YUV-05 + разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
+| [ ] | YUV-18 | Terra | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
 
 ## Статусы
 
@@ -894,7 +896,7 @@ git status --short
 - Владелец: Luna
 - Приоритет: P2
 - Статус: BLOCKED
-- Зависимости: YUV-01, YUV-02, YUV-05, YUV-06, YUV-07, YUV-08, YUV-13, YUV-14, YUV-17
+- Зависимости: YUV-01, YUV-02, YUV-05, YUV-06, YUV-07, YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23
 - Scope:
   - `README.md`
   - `analysis_options.yaml`
@@ -1051,7 +1053,7 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P1
-- Статус: TODO
+- Статус: DONE
 - Зависимости: нет (YUV-10 выполнена)
 - Scope:
   - `test/reference_native_conversions_test.dart`
@@ -1100,7 +1102,13 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+- Добавлен data-driven native suite на все 119 case ID из manifest YUV-10; production-код не изменялся.
+- Проверяются dimensions/format/planes/strides, exact bytes или заранее заданные tolerance, alpha, pixels outside threshold, in-place identity, новый объект для `copy()` и отсутствие мутации read-only/source inputs.
+- Итог Windows x64: 65/119 cases passed, 54/119 failed; manifest guard прошёл отдельно. Все 54 уникальных failed case ID с expected/actual metrics сгруппированы в `failed-test-cases.md`.
+- Проверена локальная ignored DLL `D:\.projects\yuv_ffi\yuv_ffi.dll`: 135 680 bytes, SHA-256 `2093291b06f64c49f26a212b299d9fc41d405e334cb3afc97be403958240543d`, last write UTC `2026-09-13 12:27:23`. Способ её сборки из доступных данных не подтверждён, поэтому прогон не является clean-checkout/CI evidence.
+- `flutter test --no-pub test/reference_native_conversions_test.dart --reporter expanded` — ожидаемый exit 1, 67 passed / 54 failed с учётом manifest и native-availability guards.
+- Scoped analyze, format-check и `git diff --check` прошли.
+- Runtime на других native desktop OS не выполнялся: доступен только текущий Windows host.
 
 ---
 
@@ -1718,12 +1726,129 @@ git status --short
 
 ---
 
+## YUV-22 — определить и выровнять контракт effects
+
+- Владелец: Opus
+- Приоритет: P1
+- Статус: BLOCKED
+- Зависимости: YUV-04, YUV-05 и отдельное разрешение владельца на изменение native C
+- Scope:
+  - `src/yuv/{bgra8888,yuv420,nv21}/*{grayscale,blackwhite,negate}.c`
+  - соответствующие headers только при необходимости изменения ABI
+  - публичная документация semantics effects
+  - focused native/Web reference tests и повторный прогон YUV-11/YUV-12
+  - regenerated WASM при любом изменении C
+
+### Проблема
+
+YUV-11 подтвердил 6 reference failures, которые нельзя списать на stride harness:
+
+- `EFFECT-GRAYSCALE-BGRA8888`: `MAE 0.264`, `max 1`, `p99 1`, 92 416 pixels вне exact threshold — C усекает float, independent oracle округляет;
+- `EFFECT-BLACKWHITE-BGRA8888`: 1 536 граничных pixels отличаются на 255 — C использует `brightness > 128`, oracle использует documented fixture threshold `>= 128`;
+- `EFFECT-BLACKWHITE-I420` и `EFFECT-BLACKWHITE-NV21`: по 1 024 pixels с max error 255;
+- `EFFECT-NEGATE-I420` и `EFFECT-NEGATE-NV21`: `MAE 8.152`, `max/p99 134`, 17 408 pixels за threshold — инверсия Y/U/V не эквивалентна RGB negate в limited-range YUV.
+
+Публичный API называет эффекты, но не определяет rounding, threshold boundary и то, должны ли результаты разных форматов быть визуально эквивалентны. Поэтому простое изменение expected либо C без решения контракта законсервирует неоднозначность.
+
+### Зафиксированное решение
+
+1. Сначала письменно выбрать единый публичный контракт для каждого эффекта: формула и rounding grayscale, точная граница black/white, RGB-visible либо plane-native semantics negate.
+2. Применить контракт одинаково для BGRA, I420 и legacy-`nv21` UV order; alpha BGRA сохранять exact.
+3. Не ослаблять YUV-10 thresholds после просмотра actual. Если выбранный контракт намеренно отличается от oracle, изменение manifest оформить отдельным reviewed reference update с обоснованием.
+4. Обрабатывать только logical samples с учётом row/pixel stride и odd chroma geometry; padding не использовать как pixels.
+5. После C-изменений пересобрать WASM из тех же sources и проверить native/Web на одинаковых case ID.
+
+### DoD
+
+- Semantics трёх effects однозначно описаны в публичной документации и тестах.
+- Все 9 effect cases YUV-11 и соответствующие YUV-12 cases проходят принятый reference contract; шесть текущих failures переведены в `RESOLVED` с metrics повторного прогона.
+- BGRA alpha и padding не изменяются; I420/`nv21` odd/custom-stride cases не читают и не пишут вне logical samples.
+- Native и WASM собраны из одного commit; generated bindings вручную не изменялись.
+- Native C не менялся до отдельного явного разрешения владельца.
+
+### Проверка
+
+```powershell
+flutter test --no-pub test/reference_native_conversions_test.dart --plain-name "EFFECT-" --reporter expanded
+flutter test --platform chrome test/web/reference_web_conversions_test.dart --plain-name "EFFECT-" --reporter expanded
+flutter analyze lib test
+dart format --output=none --set-exit-if-changed lib test
+git diff --check
+git status --short
+```
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-23 — исправить blur memory safety и межформатную семантику
+
+- Владелец: Opus
+- Приоритет: P0
+- Статус: BLOCKED
+- Зависимости: YUV-04, YUV-05 и отдельное разрешение владельца на изменение native C
+- Scope:
+  - `src/yuv/{bgra8888,yuv420,nv21}/*{gaussblur,box_blur,mean_blur}.c`
+  - `src/yuv/utils/gauss.c` и headers при необходимости
+  - IO/Web wrappers только для безопасной передачи geometry
+  - focused native/Web tests, sanitizer/canary checks и повторный прогон YUV-11/YUV-12
+  - regenerated WASM при любом изменении C
+
+### Проблема
+
+YUV-11 подтвердил 19 blur failures: 4 Gaussian, 6 box и 9 mean. Это сочетание contract drift и конкретных дефектов реализации:
+
+- BGRA mean blur выделяет tight `width * height * 4`, но индексирует через `rowStride`; padded input может выйти за allocation.
+- BGRA mean blur заполняет `temp` только внутри rect, затем копирует весь tight frame обратно: outside-rect и alpha получают неинициализированные bytes. На reference image зафиксировано до 262 144 alpha mismatches и `max 255`.
+- Integral-image inclusion/exclusion использует координаты границы без корректного `-1`, поэтому среднее смещено даже на full-frame input.
+- YUV mean blur пишет результат в тот же source во время чтения и трактует `radius` как `radius / 2`; результат зависит от порядка обхода и расходится с BGRA semantics.
+- YUV Gaussian/box работают по planes (box фактически только по Y), тогда как общий reference contract ожидает визуально сопоставимый blur. Нужно явно выбрать и закрепить межформатную semantics, а не повышать tolerance.
+- Gaussian/odd geometry использует floor chroma dimensions в нескольких C paths; это пересекается с YUV-05 и требует повторного canary/sanitizer прогона.
+
+### Зафиксированное решение
+
+1. Устранить все OOB/uninitialized-read/write paths: allocation и addressing должны учитывать row/pixel strides, temp должен быть полностью инициализирован, outside rect и alpha должны сохраняться exact.
+2. Исправить integral image bounds и считать blur из неизменяемого source snapshot, без order-dependent in-place reads.
+3. Зафиксировать единое значение `radius`, border handling и rect coordinates для Gaussian/box/mean во всех форматах.
+4. Явно решить, является YUV blur plane-native или визуально эквивалентным BGRA; синхронизировать docs/reference только отдельным reviewed решением. Thresholds не подгонять под текущую DLL.
+5. Использовать ceil chroma geometry для odd dimensions и учитывать custom stride каждого logical sample.
+6. Проверить canaries/ASan или эквивалентный sanitizer, затем пересобрать WASM и выполнить те же cases в настоящем Web runtime.
+
+### DoD
+
+- Все 19 текущих blur failures YUV-11 проходят принятый контракт либо имеют явно одобренное изменение reference manifest.
+- Outside-rect bytes и BGRA alpha совпадают exact; padded/odd/custom-stride buffers сохраняют canaries.
+- Нет OOB, uninitialized bytes и order-dependent результата; sanitizer run приложен с exact command/toolchain.
+- Native/Web используют одинаковые case IDs, parameters и thresholds; WASM provenance связан с source commit.
+- Native C не менялся до отдельного явного разрешения владельца.
+
+### Проверка
+
+```powershell
+flutter test --no-pub test/reference_native_conversions_test.dart --plain-name "BLUR-" --reporter expanded
+flutter test --platform chrome test/web/reference_web_conversions_test.dart --plain-name "BLUR-" --reporter expanded
+flutter analyze lib test
+dart format --output=none --set-exit-if-changed lib test
+git diff --check
+git status --short
+```
+
+Отдельно записать sanitizer command, compiler/version, platform и число выполненных Gaussian/box/mean cases.
+
+### Результат
+
+Не заполнен.
+
+---
+
 ## YUV-18 — финальная приёмка и подготовка `0.2.5`
 
 - Владелец: Terra
 - Приоритет: P0 / release gate
 - Статус: BLOCKED
-- Зависимости: YUV-01…YUV-17, YUV-19…YUV-21
+- Зависимости: YUV-01…YUV-17, YUV-19…YUV-23
 - Scope:
   - интеграционное ревью всех task commits;
   - `pubspec.yaml` и верхняя запись `CHANGELOG.md`;
@@ -1752,7 +1877,7 @@ git status --short
 
 ### DoD
 
-- Все YUV-01…YUV-17 и YUV-19…YUV-21 имеют статус `DONE` и независимое verification evidence.
+- Все YUV-01…YUV-17 и YUV-19…YUV-23 имеют статус `DONE` и независимое verification evidence.
 - Полная reference matrix на `test_pattern_512.png` проходит на native и Web либо имеет явно согласованные ограничения; unresolved P0/P1 failures отсутствуют.
 - P0/P1 findings из аудита либо устранены, либо явно сняты владельцем с документированным основанием.
 - `flutter analyze` проходит из корня.
