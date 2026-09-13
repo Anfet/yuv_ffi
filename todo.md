@@ -17,9 +17,9 @@
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-01, YUV-04, YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | P2 | BLOCKED | YUV-01, YUV-02, YUV-05…YUV-08, YUV-13, YUV-14, YUV-17 | Синхронизировать README, platform matrix и локальный analyzer workflow |
-| [ ] | YUV-10 | Terra | P1 | TODO | — | Подготовить независимый эталон и manifest для `test_pattern_512.png` |
-| [ ] | YUV-11 | Luna | P1 | BLOCKED | YUV-10 | Прогнать по эталону каждую публичную операцию на native backend |
-| [ ] | YUV-12 | Luna | P1 | BLOCKED | YUV-01, YUV-10 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
+| [x] | YUV-10 | Terra | P1 | DONE | — | Подготовлен независимый эталон и manifest для `test_pattern_512.png` |
+| [ ] | YUV-11 | Luna | P1 | TODO | — | Прогнать по эталону каждую публичную операцию на native backend |
+| [ ] | YUV-12 | Luna | P1 | BLOCKED | YUV-01 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | P1 | BLOCKED | YUV-01, YUV-03 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | P1 | BLOCKED | YUV-04 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
@@ -947,7 +947,7 @@ git status --short
 
 - Владелец: Terra
 - Приоритет: P1
-- Статус: TODO
+- Статус: DONE
 - Зависимости: нет
 - Scope:
   - `test/assets/test_pattern_512.png` — только чтение, исходный файл не заменять
@@ -1033,7 +1033,17 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+- Добавлен независимый pure-Dart oracle без импортов `yuv_ffi`, FFI или WASM: BT.601 limited-range YUV 4:2:0, geometry, effects и blur.
+- Зафиксирован versioned manifest на 119 case ID и 30 артефактов общим размером 3 789 516 байт; исходный PNG, каждый артефакт и каждая plane reference защищены SHA-256.
+- Матрица включает все публичные операции из scope, tight/padded layouts, legacy UV-порядок `nv21`, odd/custom-stride размеры `1x1`, `3x5`, `127x255`, blank/deep-copy и fragmented I/O cases.
+- Эталоны для crop, rotations, effects и blur просмотрены визуально. Повторная генерация не входит в обычный test run.
+- Lossless I420↔`nv21` cases используют исходные plane hashes, а не повторный RGB round-trip.
+- Проверено:
+  - `dart run tool/reference/generate_test_pattern_references.dart --check` — byte-identical;
+  - `flutter test --no-pub test/reference_manifest_test.dart --reporter expanded` — 6/6;
+  - scoped `flutter analyze --no-pub` — без замечаний;
+  - scoped format-check и `git diff --check` — успешно.
+- SHA-256 manifest: `3560e965300ee39eab7599d508849a7b3872b8a2330075962a3f4072093f4403`.
 
 ---
 
@@ -1041,8 +1051,8 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P1
-- Статус: BLOCKED
-- Зависимости: YUV-10
+- Статус: TODO
+- Зависимости: нет (YUV-10 выполнена)
 - Scope:
   - `test/reference_native_conversions_test.dart`
   - shared test helpers из YUV-10
@@ -1099,7 +1109,7 @@ git status --short
 - Владелец: Luna
 - Приоритет: P1
 - Статус: BLOCKED
-- Зависимости: YUV-01, YUV-10
+- Зависимости: YUV-01 (YUV-10 выполнена)
 - Scope:
   - `test/web/reference_web_conversions_test.dart`
   - shared test helpers и manifest из YUV-10
