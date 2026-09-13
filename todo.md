@@ -24,7 +24,6 @@
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
 | [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | READY FOR REVIEW | — | Ограничить ffigen только используемым ABI и убрать platform CRT из bindings |
-| [ ] | YUV-27 | Terra | Claude Sonnet 5 | P3 | READY FOR REVIEW | — | Устранить подтверждённый Dart API debt без breaking changes |
 | [ ] | YUV-28 | Opus | Claude Opus 5 | P2 | BLOCKED | после YUV-18 | Сократить дублирование backend-классов после релиза `0.2.5` |
 | [ ] | YUV-29 | Luna | Claude Haiku 4.5 | P3 | BLOCKED | разрешение на C headers | Удалить неиспользуемое объявление `nv21_to_rgb` без реализации |
 | [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-02, YUV-06…YUV-09, YUV-12…YUV-15, YUV-17, YUV-20…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
@@ -2049,152 +2048,6 @@ DoD пока не выполнен.
 
 ---
 
-## YUV-27 — устранить подтверждённый Dart API debt
-
-- Владелец: Terra
-- Приоритет: P3
-- Статус: READY FOR REVIEW
-- Зависимости: нет
-- Anthropic-вариант: Claude Sonnet 5
-- Scope:
-  - `lib/src/yuv/shared/yuv_plane.dart`
-  - `lib/src/yuv/shared/exceptions.dart`
-  - `lib/src/yuv/shared/yuv_image_rotation.dart`
-  - только Dart-часть rotate в IO/Web и focused API tests
-- Опциональная задача; не блокирует YUV-18.
-
-### Проблема
-
-В Dart API остались несколько небольших, но подтверждённых долгов:
-
-- публичный getter `bytesPerPixes` содержит опечатку;
-- `NotSupportedException` не экспортируется и не используется;
-- IO содержит невозможный для enum `YuvImageRotation` assert кратности 90° и
-  опечатку `dstWidtn`, Web той же проверки не имеет;
-- `YuvImageRotation.toZero()` возвращает получателя для всех enum values, но
-  имя и документация создают ожидание преобразования. Ошибка поведения пока не
-  доказана: example может использовать его как «поворот, приводящий frame к
-  zero orientation».
-
-### Зафиксированное решение
-
-1. Добавить корректный `bytesPerPixel`, оставить `bytesPerPixes` как forwarding
-   alias с `@Deprecated`, чтобы patch update не ломал consumers.
-2. Удалить `NotSupportedException`, только если повторный поиск подтвердит ноль
-   consumers; не подменять им произвольно типы ошибок конверсий.
-3. Удалить недостижимый assert и исправить локальную опечатку `dstWidtn`, не
-   меняя rotation semantics.
-4. Для `toZero()` сначала добавить characterization test на фактическую camera
-   orientation семантику. Без проваленного evidence поведение не менять. Если
-   название признано вводящим в заблуждение — добавить корректно названный API,
-   а старый метод deprecate как forwarding alias.
-5. Не добавлять обязательные члены в `YuvImage` и не менять native C.
-
-### DoD
-
-- Старый consumer с `bytesPerPixes` продолжает компилироваться.
-- Новый consumer использует `bytesPerPixel`; оба getter возвращают
-  `pixelStride`.
-- Мёртвый exception удалён либо сохранён с найденным и записанным consumer.
-- Rotation cleanup не меняет pixels/dimensions для 0/90/180/270.
-- Семантика `toZero()` подтверждена тестом и описана без предположений.
-- `flutter analyze` и focused/полный VM suite проходят на Flutter 3.44.9.
-
-### Проверка
-
-```powershell
-flutter test test/yuv_plane_validation_test.dart test/conversions_test.dart
-flutter analyze --no-pub lib test
-Push-Location example
-flutter analyze --no-pub
-Pop-Location
-dart format --output=none --set-exit-if-changed lib test
-git diff --check
-git status --short
-```
-
-### Результат
-
-```text
-Статус: READY FOR REVIEW
-Commit: fix: paid off the confirmed Dart API debt
-Изменённые файлы:
-- lib/src/yuv/shared/yuv_plane.dart
-- lib/src/yuv/shared/exceptions.dart (удалён)
-- lib/src/yuv/impl/io/yuv_image.dart
-- test/yuv_plane_alias_test.dart (новый)
-- test/yuv_image_rotation_test.dart (новый)
-
-По решению 1 (опечатка `bytesPerPixes`):
-- Добавлен `bytesPerPixel`; `bytesPerPixes` сохранён как forwarding alias с
-  `@Deprecated`, поэтому patch update не ломает существующих потребителей.
-  Оба возвращают `pixelStride`.
-- Проверено заранее: `bytesPerPixes` не используется нигде, кроме собственного
-  объявления, поэтому deprecation не порождает новых warning.
-  (`example/lib/ext.dart` использует `bytesPerPixel` у `camera.Plane` — это
-  чужой тип, совпадение имён.)
-
-По решению 2 (мёртвый `NotSupportedException`):
-- Повторный поиск дал ноль потребителей: класс не используется в `lib/`,
-  `test/`, `example/lib`, а сам файл `exceptions.dart` нигде не импортируется и
-  не реэкспортируется из `lib/yuv_ffi.dart`. Условие решения выполнено, файл
-  удалён целиком.
-- Типы ошибок конверсий им не подменялись.
-
-По решению 3 (недостижимый assert и опечатка `dstWidtn`):
-- `assert(rotation.degrees % 90 == 0, ...)` удалён: `YuvImageRotation` — enum со
-  значениями 0/90/180/270, проверка не могла сработать. На месте assert'а
-  оставлен комментарий с объяснением.
-- `dstWidtn` -> `dstWidth`, 3 вхождения. Семантика rotate не менялась.
-- Это приводит IO к виду Web: в `yuv_web.dart` уже были `dstWidth` и не было
-  assert'а, то есть расхождение закрыто в сторону Web, а не наоборот.
-
-По решению 4 (`toZero()`):
-- Поведение НЕ менялось. Метод возвращает получателя для всех четырёх значений.
-- Добавлен characterization-тест, фиксирующий это как есть.
-- Единственный потребитель в репозитории —
-  `example/lib/widgets/impl/yuv_camera_preview_mobile.dart:96`:
-  `yuv.rotate(rotation.toZero())`, где `rotation` получен из
-  `sensorOrientation` камеры. То есть кадр поворачивается НА угол сенсора.
-  Соответствует ли это имени «to zero» — намеренно не решено: карточка требует
-  сначала доказанного провала, а его нет. Семантика описана в тесте без
-  домыслов; если дефект проявится, упадёт именно этот тест.
-
-По решению 5:
-- Обязательные члены в `YuvImage` не добавлялись; native C не изменялся.
-
-Проверки (все на Flutter 3.44.9 / Dart 3.12.2):
-- flutter test --no-pub test/yuv_image_rotation_test.dart
-  test/yuv_plane_alias_test.dart — exit 0, 12 tests passed
-- flutter analyze --no-pub lib test — exit 0, No issues found
-- cd example && flutter analyze --no-pub — exit 0, No issues found
-- flutter test --no-pub (полный VM suite) — 281 passed / 31 failed против
-  baseline 269/31 до задач YUV-26/YUV-27: +12 новых тестов, новых падений нет
-- dart format --output=none --set-exit-if-changed --line-length 150 — exit 0
-- git diff --check — exit 0
-- example/pubspec.lock не изменён
-
-Замечание по процессу:
-- В ходе работы мой собственный `git stash pop` с конфликтом откатил правки в
-  `yuv_plane.dart` и `yuv_image.dart`. Обнаружено по падению
-  `yuv_plane_alias_test.dart`, правки внесены заново и перепроверены. На
-  итоговое содержимое это не влияет, но прогоны до восстановления
-  недействительны.
-
-Остаточные риски:
-- `toZero()` остаётся семантически сомнительным: он не приводит к нулевой
-  ориентации, а возвращает исходное значение. Это зафиксировано тестом, но не
-  исправлено — нужно решение владельца или реальный дефектный кадр.
-- `@Deprecated` на `bytesPerPixes` начнёт выдавать warning у внешних
-  потребителей, которые его используют. Это намеренно и является смыслом
-  deprecation; ломающего изменения нет.
-
-Native C permission:
-- не требовалось; `src/**` и generated bindings не изменялись.
-```
-
----
-
 ## YUV-28 — сократить дублирование Dart backend-классов после `0.2.5`
 
 - Владелец: Opus
@@ -2350,7 +2203,7 @@ git status --short
 ### DoD
 
 - Все перечисленные обязательные зависимости имеют статус `DONE` и независимое
-  verification evidence. Опциональные YUV-24, YUV-26, YUV-27, YUV-29 и
+  verification evidence. Опциональные YUV-24, YUV-26, YUV-29 и
   post-release YUV-28 выпуск не блокируют.
 - Полная reference matrix на `test_pattern_512.png` проходит на native и Web либо имеет явно согласованные ограничения; unresolved P0/P1 failures отсутствуют.
 - P0/P1 findings из аудита либо устранены, либо явно сняты владельцем с документированным основанием.

@@ -22,8 +22,8 @@ YUV-17, YUV-20 и YUV-21.
 | A-03: разные empty accessors | YUV-28 | NOTE / post-release | Contract debt включён в characterization scope YUV-28 |
 | A-04: тела методов в `interface class` | — | RETRACTED | `implements` уже требует реализацию всех instance members на compile time |
 | A-05: `DataReader`/`ChangeNotifier` | YUV-07 | REJECTED | Удалить мёртвый reader/writer после миграции на codec |
-| A-05: `bytesPerPixes`, exception, rotation naming | YUV-27 | TODO / optional | Source-compatible Dart API cleanup с characterization |
-| A-06: rotation assert и `dstWidtn` | YUV-27 | TODO / optional | Механическая Dart cleanup без изменения semantics |
+| A-05: `bytesPerPixes`, exception, rotation naming | YUV-27 | DONE / archived | Source-compatible cleanup принят и перемещён в `completed-tasks.md` |
+| A-06: rotation assert и `dstWidtn` | YUV-27 | DONE / archived | Механическая cleanup принята без изменения semantics |
 | A-07: `getBytes()` backing buffer | YUV-14 | READY FOR REVIEW | Реализовано commit `3bd12bf`; нужен обязательный Web retest |
 | A-08: bindings cache | YUV-19 | DONE / archived | Принято и перемещено в `completed-tasks.md` |
 | A-08: serialization | YUV-07 | REJECTED | Streaming реализован, но format-specific geometry проверяется после чтения plane |
@@ -41,7 +41,7 @@ YUV-17, YUV-20 и YUV-21.
   permission;
 - удаление `nv21_to_rgb` из headers вынесено в YUV-29 и остаётся `BLOCKED` до
   явного разрешения;
-- optional YUV-24/YUV-26/YUV-27/YUV-29 и post-release YUV-28 исключены из
+- optional YUV-24/YUV-26/YUV-29 и post-release YUV-28 исключены из
   release dependencies YUV-18.
 
 ## Основание проверки
@@ -305,7 +305,7 @@ decoder должен завершиться `FormatException`, не запрос
 
 - YUV-24 — CMake source discovery cleanup после разрешения.
 - YUV-26 — host-independent ffigen filtering без изменения native headers.
-- YUV-27 — source-compatible Dart API cleanup.
+- YUV-27 завершена и перемещена в `completed-tasks.md`.
 - YUV-29 — удалить dead native declaration после отдельного разрешения.
 
 ### После `0.2.5`

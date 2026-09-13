@@ -16,6 +16,7 @@
 | YUV-11 | Luna | DONE |
 | YUV-16 | Opus | DONE |
 | YUV-19 | Terra | DONE |
+| YUV-27 | Terra | DONE |
 
 ---
 
@@ -1213,3 +1214,164 @@ git status --short
 - `flutter analyze --no-pub lib/src/loader/impl/loader_io.dart test/loader_io_test.dart` — no issues.
 - Format-check и `git diff --check` — passed.
 - Публичный API, initialization/retry policy, native C и generated bindings не изменялись.
+
+---
+
+## YUV-27 — устранить подтверждённый Dart API debt
+
+- Владелец: Terra
+- Приоритет: P3
+- Статус: DONE
+- Зависимости: нет
+- Anthropic-вариант: Claude Sonnet 5
+- Scope:
+  - `lib/src/yuv/shared/yuv_plane.dart`
+  - `lib/src/yuv/shared/exceptions.dart`
+  - `lib/src/yuv/shared/yuv_image_rotation.dart`
+  - только Dart-часть rotate в IO/Web и focused API tests
+- Опциональная задача; не блокирует YUV-18.
+
+### Проблема
+
+В Dart API остались несколько небольших, но подтверждённых долгов:
+
+- публичный getter `bytesPerPixes` содержит опечатку;
+- `NotSupportedException` не экспортируется и не используется;
+- IO содержит невозможный для enum `YuvImageRotation` assert кратности 90° и
+  опечатку `dstWidtn`, Web той же проверки не имеет;
+- `YuvImageRotation.toZero()` возвращает получателя для всех enum values, но
+  имя и документация создают ожидание преобразования. Ошибка поведения пока не
+  доказана: example может использовать его как «поворот, приводящий frame к
+  zero orientation».
+
+### Зафиксированное решение
+
+1. Добавить корректный `bytesPerPixel`, оставить `bytesPerPixes` как forwarding
+   alias с `@Deprecated`, чтобы patch update не ломал consumers.
+2. Удалить `NotSupportedException`, только если повторный поиск подтвердит ноль
+   consumers; не подменять им произвольно типы ошибок конверсий.
+3. Удалить недостижимый assert и исправить локальную опечатку `dstWidtn`, не
+   меняя rotation semantics.
+4. Для `toZero()` сначала добавить characterization test на фактическую camera
+   orientation семантику. Без проваленного evidence поведение не менять. Если
+   название признано вводящим в заблуждение — добавить корректно названный API,
+   а старый метод deprecate как forwarding alias.
+5. Не добавлять обязательные члены в `YuvImage` и не менять native C.
+
+### DoD
+
+- Старый consumer с `bytesPerPixes` продолжает компилироваться.
+- Новый consumer использует `bytesPerPixel`; оба getter возвращают
+  `pixelStride`.
+- Мёртвый exception удалён либо сохранён с найденным и записанным consumer.
+- Rotation cleanup не меняет pixels/dimensions для 0/90/180/270.
+- Семантика `toZero()` подтверждена тестом и описана без предположений.
+- `flutter analyze` и focused/полный VM suite проходят на Flutter 3.44.9.
+
+### Проверка
+
+```powershell
+flutter test test/yuv_plane_validation_test.dart test/conversions_test.dart
+flutter analyze --no-pub lib test
+Push-Location example
+flutter analyze --no-pub
+Pop-Location
+dart format --output=none --set-exit-if-changed lib test
+git diff --check
+git status --short
+```
+
+### Результат
+
+```text
+Статус: DONE
+Commit: `3468ae2` (`fix: paid off the confirmed Dart API debt`)
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_plane.dart
+- lib/src/yuv/shared/exceptions.dart (удалён)
+- lib/src/yuv/impl/io/yuv_image.dart
+- test/yuv_plane_alias_test.dart (новый)
+- test/yuv_image_rotation_test.dart (новый)
+
+По решению 1 (опечатка `bytesPerPixes`):
+- Добавлен `bytesPerPixel`; `bytesPerPixes` сохранён как forwarding alias с
+  `@Deprecated`, поэтому patch update не ломает существующих потребителей.
+  Оба возвращают `pixelStride`.
+- Проверено заранее: `bytesPerPixes` не используется нигде, кроме собственного
+  объявления, поэтому deprecation не порождает новых warning.
+  (`example/lib/ext.dart` использует `bytesPerPixel` у `camera.Plane` — это
+  чужой тип, совпадение имён.)
+
+По решению 2 (мёртвый `NotSupportedException`):
+- Повторный поиск дал ноль потребителей: класс не используется в `lib/`,
+  `test/`, `example/lib`, а сам файл `exceptions.dart` нигде не импортируется и
+  не реэкспортируется из `lib/yuv_ffi.dart`. Условие решения выполнено, файл
+  удалён целиком.
+- Типы ошибок конверсий им не подменялись.
+
+По решению 3 (недостижимый assert и опечатка `dstWidtn`):
+- `assert(rotation.degrees % 90 == 0, ...)` удалён: `YuvImageRotation` — enum со
+  значениями 0/90/180/270, проверка не могла сработать. На месте assert'а
+  оставлен комментарий с объяснением.
+- `dstWidtn` -> `dstWidth`, 3 вхождения. Семантика rotate не менялась.
+- Это приводит IO к виду Web: в `yuv_web.dart` уже были `dstWidth` и не было
+  assert'а, то есть расхождение закрыто в сторону Web, а не наоборот.
+
+По решению 4 (`toZero()`):
+- Поведение НЕ менялось. Метод возвращает получателя для всех четырёх значений.
+- Добавлен characterization-тест, фиксирующий это как есть.
+- Единственный потребитель в репозитории —
+  `example/lib/widgets/impl/yuv_camera_preview_mobile.dart:96`:
+  `yuv.rotate(rotation.toZero())`, где `rotation` получен из
+  `sensorOrientation` камеры. То есть кадр поворачивается НА угол сенсора.
+  Соответствует ли это имени «to zero» — намеренно не решено: карточка требует
+  сначала доказанного провала, а его нет. Семантика описана в тесте без
+  домыслов; если дефект проявится, упадёт именно этот тест.
+
+По решению 5:
+- Обязательные члены в `YuvImage` не добавлялись; native C не изменялся.
+
+Проверки (все на Flutter 3.44.9 / Dart 3.12.2):
+- flutter test --no-pub test/yuv_image_rotation_test.dart
+  test/yuv_plane_alias_test.dart — exit 0, 12 tests passed
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- cd example && flutter analyze --no-pub — exit 0, No issues found
+- flutter test --no-pub (полный VM suite) — 281 passed / 31 failed против
+  baseline 269/31 до задач YUV-26/YUV-27: +12 новых тестов, новых падений нет
+- dart format --output=none --set-exit-if-changed --line-length 150 — exit 0
+- git diff --check — exit 0
+- example/pubspec.lock не изменён
+
+Замечание по процессу:
+- В ходе работы мой собственный `git stash pop` с конфликтом откатил правки в
+  `yuv_plane.dart` и `yuv_image.dart`. Обнаружено по падению
+  `yuv_plane_alias_test.dart`, правки внесены заново и перепроверены. На
+  итоговое содержимое это не влияет, но прогоны до восстановления
+  недействительны.
+
+Остаточные риски:
+- `toZero()` остаётся семантически сомнительным: он не приводит к нулевой
+  ориентации, а возвращает исходное значение. Это зафиксировано тестом, но не
+  исправлено — нужно решение владельца или реальный дефектный кадр.
+- `@Deprecated` на `bytesPerPixes` начнёт выдавать warning у внешних
+  потребителей, которые его используют. Это намеренно и является смыслом
+  deprecation; ломающего изменения нет.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
+
+Независимая приёмка root, 2026-09-13:
+- Статус: DONE.
+- Diff `3468ae2` ограничен Dart API cleanup и focused tests; native C и
+  generated bindings не менялись.
+- `bytesPerPixel` добавлен, `bytesPerPixes` сохранён как deprecated forwarding
+  alias; внешний прежний вызов продолжает компилироваться.
+- `NotSupportedException` удалён после повторного подтверждения нулевого числа
+  consumers; rotation cleanup не меняет поведение.
+- Characterization фиксирует текущую семантику `toZero()` без недоказанного
+  изменения camera orientation.
+- На Flutter 3.44.9: relevant tests 12/12 passed; общий focused review suite
+  151/151 passed; root и example analyzer — без diagnostics.
+- `git diff --check` проходит; untracked `c-functions-audit.md` не затронут.
+---
