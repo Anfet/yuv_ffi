@@ -42,6 +42,13 @@ abstract final class YuvGeometry {
     }
   }
 
+  /// Pixel stride required by an interleaved NV chroma plane.
+  ///
+  /// The native converters address an NV chroma sample as a packed `(U, V)`
+  /// pair at `index * 2`, so any other stride would be read and written at the
+  /// wrong offsets.
+  static const int nvChromaPixelStride = 2;
+
   /// Validates a full image description before it reaches native code.
   ///
   /// [planes] must already be in format order: `[Y]` for BGRA8888, `[Y, UV]`
@@ -84,19 +91,48 @@ abstract final class YuvGeometry {
     // interleaved NV row holds a (U, V) pair per chroma sample, so its last
     // sample needs one extra byte beyond the luma-style minimum.
     if (format == YuvFileFormat.nv21) {
+      // The converters index chroma as a packed pair, so only a stride of
+      // exactly two is actually supported. Anything else is rejected here
+      // rather than silently misread (or silently ignored) by native code.
+      if (planes[1].pixelStride != nvChromaPixelStride) {
+        throw ArgumentError.value(
+          planes[1].pixelStride,
+          'uvPlane.pixelStride',
+          'Interleaved NV chroma requires a pixel stride of exactly $nvChromaPixelStride',
+        );
+      }
       validatePlane(
         plane: planes[1],
         label: 'uvPlane',
         expectedHeight: uvHeight,
         expectedWidth: uvWidth,
-        sampleBytes: 2,
+        sampleBytes: nvChromaPixelStride,
       );
       return;
     }
 
     validatePlane(plane: planes[1], label: 'uPlane', expectedHeight: uvHeight, expectedWidth: uvWidth, sampleBytes: 1);
     validatePlane(plane: planes[2], label: 'vPlane', expectedHeight: uvHeight, expectedWidth: uvWidth, sampleBytes: 1);
+
+    // I420 chroma planes are addressed with a shared uvRowStride and
+    // uvPixelStride in the native struct, so a mismatch between U and V would
+    // make one of them be walked with the other's geometry.
+    if (planes[1].rowStride != planes[2].rowStride || planes[1].pixelStride != planes[2].pixelStride) {
+      throw ArgumentError.value(
+        '${planes[2].rowStride}/${planes[2].pixelStride}',
+        'vPlane',
+        'I420 U and V planes must share the same rowStride and pixelStride '
+            '(U is ${planes[1].rowStride}/${planes[1].pixelStride})',
+      );
+    }
   }
+
+  /// Whether a BGRA plane is tightly packed for [width].
+  ///
+  /// Several native effects allocate a tight temporary buffer while addressing
+  /// the source through its row stride, so a padded plane has to be repacked
+  /// before such an operation instead of being passed through.
+  static bool isTightBgra(YuvPlane plane, int width) => plane.rowStride == width * 4 && plane.pixelStride == 4;
 
   /// Validates a single plane against its expected geometry.
   ///

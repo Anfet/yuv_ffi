@@ -1,11 +1,18 @@
 #include "../yuv.h"
 
 /**
- * Converts RGBA8888 -> NV21.
+ * Converts RGBA8888 -> NV.
  * Requirements:
- *  - NV21: Y plane + interleaved VU (V first, then U)
- *  - uvPixelStride == 2 (one VU pair per 2x2 block)
+ *  - Y plane + interleaved chroma in (U, V) order
+ *  - uvPixelStride == 2 (one chroma pair per 2x2 block)
  *  - Formulas match yuv420_from_rgba8888 (BT.601, video range)
+ *
+ * Chroma order: the public format name is `nv21`, but the established byte
+ * order of this project is U first, then V (NV12-like). Every other converter
+ * writes and reads it that way: bgra8888_to_nv21 and yuv420_i420_to_nv21 write
+ * (U, V), and nv21_to_bgra8888 and nv21_to_i420 read byte 0 as U. This
+ * function used to write (V, U), which inverted the colors of a direct
+ * RGBA -> NV conversion.
  *
  * Stride note:
  *  - By the public contract the RGBA input is tightly packed
@@ -14,7 +21,7 @@
  */
 FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst) {
     uint8_t *yPlane = dst->y;
-    uint8_t *uv     = dst->u; // interleaved VU
+    uint8_t *uv     = dst->u; // interleaved chroma, (U, V) order
     const int width        = dst->width;
     const int height       = dst->height;
     const int yRowStride   = dst->yRowStride;
@@ -76,10 +83,10 @@ FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst
                     }
                 }
 
-                // Chroma index for NV21 (one VU pair per block)
+                // Chroma index for NV (one (U, V) pair per block)
                 const int uvIndex = yuv_index(x / 2, y / 2, uvRowStride, uvPixelStride);
-                uv[uvIndex + 0] = (uint8_t)CLAMP(sumV / samples); // V
-                uv[uvIndex + 1] = (uint8_t)CLAMP(sumU / samples); // U
+                uv[uvIndex + 0] = (uint8_t)CLAMP(sumU / samples); // U
+                uv[uvIndex + 1] = (uint8_t)CLAMP(sumV / samples); // V
             }
         }
     }

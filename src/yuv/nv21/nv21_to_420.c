@@ -14,14 +14,21 @@ FFI_PLUGIN_EXPORT void nv21_to_i420(const YUVDef *src, const YUVDef *dst) {
     const int cw = (W + 1) >> 1;
     const int ch = (H + 1) >> 1;
 
-    // 1) Luma: row by row with separate source and destination strides. A
-    // single memcpy of the source buffer size would overwrite the heap when
-    // the destination stride is smaller.
-    const int yCopyBytes = (src->yRowStride < dst->yRowStride ? src->yRowStride : dst->yRowStride);
+    // 1) Luma: copy sample by sample with separate source and destination
+    // strides. A memcpy of min(rowStride) would carry padding bytes instead of
+    // logical samples whenever the two planes use different pixel strides.
+    const int srcYPixelStride = src->yPixelStride > 0 ? src->yPixelStride : 1;
+    const int dstYPixelStride = dst->yPixelStride > 0 ? dst->yPixelStride : 1;
     for (int y = 0; y < H; ++y) {
         const uint8_t *srow = src->y + (size_t)y * src->yRowStride;
         uint8_t *drow = dst->y + (size_t)y * dst->yRowStride;
-        memcpy(drow, srow, yCopyBytes);
+        if (srcYPixelStride == 1 && dstYPixelStride == 1) {
+            memcpy(drow, srow, (size_t)W);
+        } else {
+            for (int x = 0; x < W; ++x) {
+                drow[(size_t)x * dstYPixelStride] = srow[(size_t)x * srcYPixelStride];
+            }
+        }
     }
 
     // 2) Chroma: split the interleaved VU data into planar U and V.

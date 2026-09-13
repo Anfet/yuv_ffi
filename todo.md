@@ -11,8 +11,8 @@
 | [ ] | YUV-01 | Terra | P0 | READY FOR REVIEW | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
 | [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
-| [ ] | YUV-04 | Opus | P0 | REJECTED | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
-| [ ] | YUV-05 | Opus | P0 | REJECTED | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
+| [ ] | YUV-04 | Opus | P0 | READY FOR REVIEW | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
+| [ ] | YUV-05 | Opus | P0 | READY FOR REVIEW | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-01, YUV-04, YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
@@ -510,6 +510,62 @@ Native C permission:
 - Текущие проверки остаются зелёными (`20/20` focused, `71/71` full, analyzer), но перечисленные пути ими не покрыты.
 ```
 
+### Ответ на приёмку, 2026-09-13 (второй заход)
+
+```text
+Статус: READY FOR REVIEW
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_geometry.dart
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- lib/src/yuv/impl/yuv_stub.dart
+- test/yuv_geometry_rejection_test.dart (новый)
+
+По пунктам приёмки:
+
+1. P0, default-конструкторы не валидируют созданные planes — исправлено.
+   IO, Web и stub вызывают `validateImage()` после аллокации planes, а не
+   только на ветке с переданными planes. Отдельно уточнено поведение, которое
+   не является дефектом: BGRA нормализует luma stride до 4, а NV поднимает
+   chroma stride до 2, поэтому для этих форматов degenerate-значение не
+   доходит до plane. Для I420 и для NV/I420 luma значение используется как
+   есть и теперь отклоняется.
+
+2. P0, `load()` присваивает поля по мере разбора — исправлено. IO и Web
+   разбирают payload в локальные переменные, вызывают `validateImage()` для
+   кандидата и только затем публикуют состояние. Неудачная загрузка оставляет
+   объект нетронутым; это покрыто тестом с усечённым payload, который
+   сравнивает width/height/format/planes/данные до и после.
+   Транзакционный разбор формата остаётся за YUV-07.
+
+3. P0, padded BGRA доходит до `bgra8888_gaussian_blur` — исправлено.
+   Добавлен `YuvGeometry.isTightBgra` и guard `_requireTightBgraFor` в IO и
+   Web для `gaussianBlur`, `boxBlur` и `meanBlur`: padded BGRA отклоняется
+   `ArgumentError` до FFI/WASM. Проверены все три BGRA-эффекта — каждый
+   выделяет tight `width*height*4` и адресует его через `rowStride`.
+   Собственно исправление C относится к YUV-23.
+
+4. P1, `YuvImage.bgra(..., planes:)` берёт только `first` — исправлено.
+   Именованный конструктор требует ровно одну plane: пустой список и лишние
+   planes отклоняются, как в generic-конструкторе и на других backends.
+
+5. Regression cases добавлены в `test/yuv_geometry_rejection_test.dart`
+   (19 тестов вместе с chroma-набором): degenerate strides, malformed
+   loaded geometry, padded BGRA перед blur, empty/two-plane named BGRA,
+   NV packed-pair stride, парность I420 U/V.
+
+Дополнительно найдено и исправлено в ходе этого захода:
+- I420 U и V адресуются в native struct одним `uvRowStride`/`uvPixelStride`,
+  поэтому расхождение между планами теперь отклоняется.
+
+Проверки:
+- flutter test test/yuv_geometry_rejection_test.dart test/nv_chroma_order_test.dart — exit 0, 19 тестов
+- flutter test — см. общий прогон в ответе YUV-05
+- flutter analyze lib test — exit 0, "No issues found!"
+- dart format --set-exit-if-changed по изменённым файлам — exit 0
+- git diff --check — exit 0
+```
+
 ---
 
 ## YUV-05 — исправить native custom-stride и odd-size конверсии
@@ -706,6 +762,93 @@ Native C permission:
 - ASan/UBSan и runtime native↔WASM tolerance не выполнены; Chrome runner остаётся заблокирован F-007. До этих gates задача не соответствует своему DoD.
 - `1fd3a7b` переводит комментарии в 21 несвязанных C/H-файлах и является отдельным scope creep. `a224a63` ограничен conversion sources, но закрепляет неверное VU-описание.
 - Что подтверждено: focused native suite 7/7, общий VM suite 71/71, analyzer без diagnostics; canonical WASM rebuild воспроизводим побайтово, SHA-256 `AC4A898795A3E64DDAD4A3A18C9511C58AE8E9B4DBDE4414756E0404DEF40C56`.
+```
+
+### Ответ на приёмку, 2026-09-13 (второй заход)
+
+```text
+Статус: READY FOR REVIEW
+Изменённые файлы:
+- src/yuv/nv21/nv21_from_rgba8888.c
+- src/yuv/nv21/nv21_to_420.c
+- src/yuv/yuv420/yuv420_to_nv21.c
+- lib/src/yuv/impl/web/yuv_web.dart
+- lib/src/yuv/shared/yuv_geometry.dart
+- assets/wasm/yuv_ffi.wasm (пересобран)
+- test/nv_chroma_order_test.dart (новый)
+
+По пунктам приёмки:
+
+1. P0, Web `swapNv()` создаёт tight destination для padded source — исправлено.
+   Destination теперь создаётся с planes источника: Y копируется, chroma
+   получает те же height/rowStride/pixelStride. `nvXX_to_nvYY` принимает один
+   stride на оба буфера, поэтому layout обязан совпадать. Это приводит Web к
+   тому же решению, которое уже было в IO.
+
+2. P0, validator принимает произвольный NV `uvPixelStride` — исправлено.
+   `YuvGeometry` требует ровно `nvChromaPixelStride == 2` для interleaved
+   chroma. Раньше stride 3 доходил до `nv21_to_i420`/`nvXX_to_nvYY`, которые
+   читают packed offsets, а `nv21_from_rgba8888` при stride != 2 молча
+   возвращался, оставляя chroma нулевой.
+
+3. P1, I420<->NV копирует Y через `memcpy(min(rowStride))` — исправлено.
+   `yuv420_i420_to_nv21` и `nv21_to_i420` копируют Y по sample с раздельными
+   source/destination pixel strides; `memcpy` остался только для быстрого
+   пути, когда оба pixelStride равны 1.
+
+4. P1, `nv21_from_rgba8888` пишет VU вместо UV — исправлено, и это
+   подтверждено до правки C, как просил владелец.
+   Тест `test/nv_chroma_order_test.dart` на насыщенном красном показал:
+   прямой RGBA->NV давал байт 0 = 240 (V), тогда как BGRA->NV даёт 85 (U), а
+   round-trip RGBA->NV->BGRA терял красный (канал 16 вместо >180).
+   `manifest.json` независимо фиксирует контракт: "each chroma pair is U then
+   V". После правки все три содержательные проверки проходят.
+   Независимое подтверждение: reference case `INPUT-FROM-RGBA-NV21` перешёл
+   из failing в passing, 54 -> 53 провала в матрице.
+
+5. P1, odd-size тесты проверяют лишь ненулевую chroma — частично закрыто.
+   Добавлены assertions на конкретные значения U и V, на порядок байтов в
+   паре, на попадание U/V в правильные планы I420 и на сохранение цвета в
+   round-trip. Проверка padded Web swap и custom pixel strides на реальном
+   Chrome не выполнялась: runner заблокирован F-007.
+
+6. Scope `1fd3a7b`: перевод комментариев в 21 файле выполнен по отдельному
+   явному заданию владельца в той же сессии, а не как самовольное расширение
+   scope YUV-05. Владелец подтвердил, что коммит остаётся. Неверное
+   VU-описание из `a224a63` исправлено вместе с кодом.
+
+Проверки:
+- clang -shared -O3 -DDART_SHARED_LIB -Isrc -Isrc/yuv (40 sources) — exit 0
+- sh ./tool/wasm/build_wasm.sh --emcc <wrapper> --profile release — exit 0, 40 sources
+- flutter test test/nv_chroma_order_test.dart test/yuv_geometry_rejection_test.dart — exit 0, 19 тестов
+- flutter test — 165 passed / 53 failed; все 53 принадлежат reference matrix
+- flutter analyze lib test — exit 0, "No issues found!"
+- dart format --set-exit-if-changed по изменённым файлам — exit 0
+- git diff --check — exit 0
+
+Про 53 провала reference matrix:
+- Пофайловое сравнение множеств до и после моих правок: newly broken — пусто,
+  newly fixed — `INPUT-FROM-RGBA-NV21`. То есть мои изменения не внесли ни
+  одного нового провала и закрыли один.
+- Оставшиеся 53 — зарегистрированные YUV-11 падения, принадлежащие YUV-22
+  (6 effect cases), YUV-23 (19 blur cases), YUV-14/F-003 (`BYTES-GET`,
+  `STATE-COPY`, `IO-SAVE-LOAD` — выравнивающий хвост `getBytes()`) и
+  оставшейся части odd/custom-stride работы. Я их намеренно не трогал: обе
+  карточки BLOCKED и назначены отдельно, а правка здесь была бы ровно тем
+  scope creep, который отмечен в приёмке.
+
+Остаточные риски и невыполненные gates:
+- ASan/UBSan не выполнены: clang-MSVC в этом окружении не даёт sanitizer
+  runtime. OOB закрыты функциональными тестами с padded strides и canary.
+- native<->WASM numeric tolerance не проверен: Chrome runner заблокирован
+  F-007. WASM пересобран из тех же sources, но ни разу не исполнялся.
+- Пункт DoD про ASan и про runtime-сверку остаётся открытым; без CI на
+  Linux-toolchain и работающего Chrome runner закрыть его здесь нельзя.
+
+Native C permission:
+- Разрешение владельца получено ранее в этой сессии; для правки VU->UV
+  владелец дополнительно потребовал сначала подтвердить дефект тестом, что и
+  сделано в `test/nv_chroma_order_test.dart`.
 ```
 
 ---

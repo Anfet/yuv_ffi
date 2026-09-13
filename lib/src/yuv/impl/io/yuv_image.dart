@@ -65,8 +65,19 @@ class YuvImageImpl implements YuvImage {
 
     final int tightRowStride = width * 4;
     Uint8List? bytes;
-    if (planes?.isNotEmpty == true) {
-      final rawY = planes!.first;
+    if (planes != null) {
+      // BGRA carries exactly one plane. An empty list used to produce a blank
+      // image and extra planes were ignored, which disagreed with both the
+      // generic constructor and the other backends.
+      final provided = List.of(planes);
+      if (provided.length != YuvGeometry.planeCountFor(YuvFileFormat.bgra8888)) {
+        throw ArgumentError.value(
+          provided.length,
+          'planes.length',
+          'Format bgra8888 requires exactly ${YuvGeometry.planeCountFor(YuvFileFormat.bgra8888)} plane(s)',
+        );
+      }
+      final rawY = provided.first;
       YuvGeometry.validatePlane(
         plane: rawY,
         label: 'yPlane',
@@ -120,6 +131,11 @@ class YuvImageImpl implements YuvImage {
         _planes = [yplane];
         break;
     }
+
+    // Validate the geometry we just allocated as well: a caller-supplied zero
+    // or negative stride would otherwise produce a degenerate plane and still
+    // reach a backend call.
+    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: _planes);
   }
 
   @override
@@ -160,19 +176,28 @@ class YuvImageImpl implements YuvImage {
     var headerText = reader.readString();
     var header = jsonDecode(headerText);
 
-    _width = header['width'];
-    _height = header['height'];
-    _format = YuvFileFormat.values.byName(header['format']);
+    // Parse into locals and only commit once the whole payload validates, so a
+    // malformed frame cannot leave this image half-updated.
+    final int loadedWidth = header['width'] as int;
+    final int loadedHeight = header['height'] as int;
+    final YuvFileFormat loadedFormat = YuvFileFormat.values.byName(header['format'] as String);
+
     var planesCount = reader.readUint8();
-    _planes = <YuvPlane>[];
+    final loadedPlanes = <YuvPlane>[];
     for (var i = 0; i < planesCount; i++) {
       var planeHeight = reader.readUint32();
       var rowStride = reader.readUint32();
       var pixelStride = reader.readUint32();
       var planeBytes = reader.readBytes();
-      var plane = YuvPlane(planeHeight, rowStride, pixelStride, planeBytes);
-      _planes.add(plane);
+      loadedPlanes.add(YuvPlane(planeHeight, rowStride, pixelStride, planeBytes));
     }
+
+    YuvGeometry.validateImage(format: loadedFormat, width: loadedWidth, height: loadedHeight, planes: loadedPlanes);
+
+    _width = loadedWidth;
+    _height = loadedHeight;
+    _format = loadedFormat;
+    _planes = loadedPlanes;
   }
 
   @override
@@ -210,6 +235,7 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) {
+    _requireTightBgraFor('boxBlur');
     final def = YUVDefClass(this);
     final Pointer<Uint32> rectPtr;
     try {
@@ -397,8 +423,29 @@ class YuvImageImpl implements YuvImage {
     }
   }
 
+  /// Rejects a padded BGRA plane before an operation that cannot handle it.
+  ///
+  /// Several native BGRA effects allocate a tight `width * height * 4` scratch
+  /// buffer but address it through the source row stride, so a padded plane
+  /// makes them write past the allocation. Until those implementations are
+  /// fixed (YUV-23), such a layout is refused here rather than passed to FFI.
+  void _requireTightBgraFor(String operation) {
+    if (format != YuvFileFormat.bgra8888) {
+      return;
+    }
+    if (!YuvGeometry.isTightBgra(yPlane, width)) {
+      throw ArgumentError.value(
+        yPlane.rowStride,
+        'yPlane.rowStride',
+        '$operation does not support a padded BGRA plane yet; expected a tight '
+            'row stride of ${width * 4}. Repack the plane before calling it.',
+      );
+    }
+  }
+
   @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) {
+    _requireTightBgraFor('gaussianBlur');
     final def = YUVDefClass(this);
     try {
       switch (format) {
@@ -453,6 +500,7 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) {
+    _requireTightBgraFor('meanBlur');
     final def = YUVDefClass(this);
     final Pointer<Uint32> rectPtr;
     try {

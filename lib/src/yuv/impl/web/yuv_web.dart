@@ -58,6 +58,11 @@ class YuvImageImpl implements YuvImage {
         _planes = [yPlane];
         break;
     }
+
+    // Validate the geometry we just allocated as well: a caller-supplied zero
+    // or negative stride would otherwise produce a degenerate plane and still
+    // reach a backend call.
+    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: _planes);
   }
 
   static const int _bytesPerPixel = 4;
@@ -138,19 +143,29 @@ class YuvImageImpl implements YuvImage {
     await reader.done();
 
     final header = jsonDecode(reader.readString()) as Map<String, dynamic>;
-    _width = header['width'] as int;
-    _height = header['height'] as int;
-    _format = YuvFileFormat.values.byName(header['format'] as String);
+
+    // Parse into locals and only commit once the whole payload validates, so a
+    // malformed frame cannot leave this image half-updated.
+    final int loadedWidth = header['width'] as int;
+    final int loadedHeight = header['height'] as int;
+    final YuvFileFormat loadedFormat = YuvFileFormat.values.byName(header['format'] as String);
 
     final planesCount = reader.readUint8();
-    _planes = <YuvPlane>[];
+    final loadedPlanes = <YuvPlane>[];
     for (int i = 0; i < planesCount; i++) {
       final planeHeight = reader.readUint32();
       final rowStride = reader.readUint32();
       final pixelStride = reader.readUint32();
       final planeBytes = reader.readBytes();
-      _planes.add(YuvPlane(planeHeight, rowStride, pixelStride, planeBytes));
+      loadedPlanes.add(YuvPlane(planeHeight, rowStride, pixelStride, planeBytes));
     }
+
+    YuvGeometry.validateImage(format: loadedFormat, width: loadedWidth, height: loadedHeight, planes: loadedPlanes);
+
+    _width = loadedWidth;
+    _height = loadedHeight;
+    _format = loadedFormat;
+    _planes = loadedPlanes;
   }
 
   @override
@@ -165,20 +180,44 @@ class YuvImageImpl implements YuvImage {
     return this;
   }
 
+  /// Rejects a padded BGRA plane before an operation that cannot handle it.
+  ///
+  /// The WASM build shares these sources with the native backend, where several
+  /// BGRA effects allocate a tight `width * height * 4` scratch buffer but
+  /// address it through the source row stride. Until those implementations are
+  /// fixed (YUV-23), such a layout is refused here rather than passed to WASM,
+  /// so both backends reject exactly the same input.
+  void _requireTightBgraFor(String operation) {
+    if (_format != YuvFileFormat.bgra8888) {
+      return;
+    }
+    if (!YuvGeometry.isTightBgra(yPlane, _width)) {
+      throw ArgumentError.value(
+        yPlane.rowStride,
+        'yPlane.rowStride',
+        '$operation does not support a padded BGRA plane yet; expected a tight '
+            'row stride of ${_width * 4}. Repack the plane before calling it.',
+      );
+    }
+  }
+
   @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) {
+    _requireTightBgraFor('gaussianBlur');
     _callInPlaceBlur(_symbolForFormat(i420: 'yuv420_gaussblur', nv21: 'nv21_gaussian_blur', bgra: 'bgra8888_gaussian_blur'), radius, sigma);
     return this;
   }
 
   @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) {
+    _requireTightBgraFor('boxBlur');
     _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_box_blur', nv21: 'nv21_box_blur', bgra: 'bgra8888_box_blur'), radius, rect);
     return this;
   }
 
   @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) {
+    _requireTightBgraFor('meanBlur');
     _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_mean_blur', nv21: 'nv21_mean_blur', bgra: 'bgra8888_mean_blur'), radius, rect);
     return this;
   }
@@ -189,7 +228,17 @@ class YuvImageImpl implements YuvImage {
 
     final rawModule = _requireModule();
     final srcAlloc = _WasmYuvAlloc.fromImage(rawModule, source as YuvImageImpl);
-    final dst = YuvImageImpl.nv21(source.width, source.height, yPixelStride: source.y.pixelStride, uvPixelStride: source.u?.pixelStride ?? 1);
+    // nvXX_to_nvYY takes a single stride for both buffers, so the destination
+    // must have exactly the source layout. Allocating a tight destination for a
+    // padded source made the call read and write at mismatched offsets.
+    final dst = YuvImageImpl.nv21(
+      source.width,
+      source.height,
+      planes: <YuvPlane>[
+        source.yPlane.copy(),
+        YuvPlane(source.uPlane.height, source.uPlane.rowStride, source.uPlane.pixelStride),
+      ],
+    );
     final dstAlloc = _WasmYuvAlloc.fromImage(rawModule, dst);
     try {
       // nvXX_to_nvYY swaps interleaved chroma ordering in UV buffer.

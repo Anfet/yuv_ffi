@@ -51,6 +51,10 @@ class YuvImageImpl implements YuvImage {
         _planes = [yPlane];
         break;
     }
+
+    // Validate the geometry we just allocated as well: a caller-supplied zero
+    // or negative stride would otherwise produce a degenerate plane.
+    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: _planes);
   }
 
   static final YuvPlane _emptyPlane = YuvPlane(0, 0);
