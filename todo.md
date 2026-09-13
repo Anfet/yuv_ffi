@@ -11,7 +11,7 @@
 | [ ] | YUV-01 | Terra | P0 | READY FOR REVIEW | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
 | [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
-| [ ] | YUV-04 | Opus | P0 | BLOCKED | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
+| [ ] | YUV-04 | Opus | P0 | READY FOR REVIEW | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
 | [ ] | YUV-05 | Opus | P0 | BLOCKED | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
@@ -356,8 +356,8 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P0 / memory-safety blocker
-- Статус: BLOCKED
-- Зависимости: YUV-03, YUV-16
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-03, YUV-16 (принята в предыдущем commit)
 - Scope:
   - `lib/src/yuv/yuv.dart`
   - `lib/src/yuv/shared/yuv_plane.dart`
@@ -422,7 +422,82 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+```text
+Статус: READY FOR REVIEW
+Commit: YUV-04 task commit
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_geometry.dart (новый)
+- lib/src/yuv/shared/yuv_plane.dart
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- lib/src/yuv/impl/yuv_stub.dart
+- example/lib/ext.dart
+- test/yuv_plane_validation_test.dart (новый)
+
+Что сделано:
+- Добавлен shared validator `YuvGeometry`, используемый IO, Web и stub
+  backends, поэтому все три принимают и отклоняют одинаковую геометрию.
+  Проверяются: положительные width/height; точное число planes (BGRA=1, NV=2,
+  I420=3); ожидаемая высота каждой plane, включая `ceil(height / 2)` для
+  chroma; `pixelStride > 0`; минимальный `rowStride` с учётом последнего
+  sample и числа байтов на sample; точное соответствие `bytes.length` и
+  `height * rowStride`.
+- Все нарушения дают `ArgumentError` до любой native allocation или FFI-вызова.
+- `YuvPlane` приведён к задокументированному full-buffer контракту: короткий и
+  слишком длинный `bytes` больше не принимаются молча, `assignFrom()` требует
+  точную длину, отрицательная геометрия отклоняется. `assert` больше не
+  является единственной защитой FFI boundary.
+- Валидация выявила три реальных дефекта в самих конструкторах, которые
+  исправлены в этой же задаче, иначе backend не проходил бы собственную
+  проверку:
+  1. `YuvImageImpl.bgra` собирал repacked буфер через `WriteBuffer`, а
+     `done().buffer.asUint8List()` возвращает весь backing ByteBuffer (для 8x8
+     512 байт вместо 256). Заменено на буфер точного размера.
+  2. Generic `YuvImage(nv21, ...)` по умолчанию брал `uvPixelStride = 1`, хотя
+     interleaved chroma хранит пару (U, V) на sample и C пишет `drow[(i<<1)+1]`.
+     Для NV введён минимум 2 на всех трёх backends.
+  3. Generic `YuvImage(bgra8888, ...)` брал `yPixelStride = 1`, из-за чего
+     1x1 BGRA получал `rowStride = 1` вместо 4. Luma stride для BGRA теперь
+     всегда 4.
+- `example/lib/ext.dart` передавал полную высоту кадра для chroma planes и
+  сырой `p.bytes` произвольной длины. Исправлено: chroma получает
+  `ceil(height / 2)` строк, а буфер приводится к точному размеру.
+- Layout, который пока нельзя безопасно обработать до YUV-05, отклоняется до
+  FFI, а не уходит в native.
+- Native C и generated bindings в этой задаче не изменялись.
+
+Проверки:
+- flutter test test/yuv_plane_validation_test.dart --reporter expanded — exit 0, 20 тестов
+- flutter test — exit 0, 64 теста (33 на baseline, 44 после YUV-16)
+- flutter analyze lib test — exit 0, "No issues found!"
+- cd example && flutter analyze lib — exit 0, "No issues found!"
+- dart format --output=none --set-exit-if-changed <6 изменённых Dart-файлов> — exit 0
+- git diff --check — exit 0
+- git status --short — приложен ниже
+
+Ручная проверка:
+- Windows 10 19045, x64, Dart VM (flutter test), native `yuv_ffi.dll` из корня
+  репозитория. Кейс из карточки `YuvImage.i420(100, 100, planes: [YuvPlane(1, 1), ...])`
+  теперь бросает `ArgumentError` вместо прохода в native. Padded BGRA
+  `2x2 / rowStride 16 / pixelStride 4` из YUV-15 создаётся без исключения.
+  Odd-size `1x1`, `3x5`, `127x255` проходят на ceil-геометрии и отклоняются на
+  floor-геометрии.
+
+Остаточные риски:
+- Web/WASM ветка валидации выполнена тем же shared validator, но реально в
+  Chrome не исполнялась: runner остаётся заблокирован F-007. Проверено только
+  статически и через общий код.
+- `dart format` по всему `lib test` по-прежнему возвращает exit 1 из-за
+  `test/web/yuv_web_wasm_test.dart`, который не входит в scope и не
+  изменялся. `lib/src/yuv/impl/yuv_stub.dart` был неформатирован до задачи и
+  отформатирован, так как задача его редактирует.
+- Валидация намеренно строгая к `bytes.length`. Если реальный CameraImage на
+  каком-то устройстве отдаёт буфер с хвостом, его нужно обрезать на стороне
+  вызывающего, как это теперь делает `example/lib/ext.dart`.
+
+Native C permission:
+- не требовалось
+```
 
 ---
 

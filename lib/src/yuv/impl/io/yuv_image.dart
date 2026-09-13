@@ -8,6 +8,7 @@ import 'package:yuv_ffi/src/loader/data_io.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
@@ -60,32 +61,54 @@ class YuvImageImpl implements YuvImage {
       : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.bgra(this._width, this._height, {Iterable<YuvPlane>? planes}) : _format = YuvFileFormat.bgra8888 {
+    YuvGeometry.validateDimensions(_width, _height);
+
+    final int tightRowStride = width * 4;
     Uint8List? bytes;
     if (planes?.isNotEmpty == true) {
-      var rawY = planes!.first;
-      final WriteBuffer allBytes = WriteBuffer();
-      for (int y = 0; y < height; y++) {
-        allBytes.putUint8List(rawY.bytes.sublist(y * rawY.rowStride, y * rawY.rowStride + width * 4));
-      }
-      bytes = allBytes.done().buffer.asUint8List();
-    }
-    YuvPlane y = YuvPlane(height, width * 4, 4, bytes);
+      final rawY = planes!.first;
+      YuvGeometry.validatePlane(
+        plane: rawY,
+        label: 'yPlane',
+        expectedHeight: height,
+        expectedWidth: width,
+        sampleBytes: 4,
+      );
 
-    _planes = [y];
+      // Repack into tightly packed rows. A WriteBuffer's backing ByteBuffer is
+      // grown in powers of two, so its length is not the written length; build
+      // the exact-size buffer directly instead.
+      bytes = Uint8List(height * tightRowStride);
+      for (int y = 0; y < height; y++) {
+        bytes.setRange(y * tightRowStride, (y + 1) * tightRowStride, rawY.bytes, y * rawY.rowStride);
+      }
+    }
+
+    _planes = [YuvPlane(height, tightRowStride, 4, bytes)];
   }
 
   YuvImageImpl(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
+    YuvGeometry.validateDimensions(_width, _height);
+
     if (planes != null) {
-      _planes = List.of(planes.map((e) => e.copy()));
+      final copied = List.of(planes.map((e) => e.copy()));
+      YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: copied);
+      _planes = copied;
       return;
     }
 
-    final yplane = YuvPlane(height, width * yPixelStride, yPixelStride);
-    final uvWidth = (width / 2.0).ceil();
-    final uvHeight = (height / 2.0).ceil();
+    // BGRA stores four bytes per pixel, so its packed plane never uses the
+    // generic single-byte luma default.
+    final lumaPixelStride = format == YuvFileFormat.bgra8888 ? 4 : yPixelStride;
+    final yplane = YuvPlane(height, width * lumaPixelStride, lumaPixelStride);
+    final uvWidth = YuvGeometry.chromaWidth(width);
+    final uvHeight = YuvGeometry.chromaHeight(height);
     switch (format) {
       case YuvFileFormat.nv21:
-        final uvplane = YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
+        // Interleaved chroma always stores a (U, V) pair per sample, so a
+        // pixelStride below 2 cannot hold what native code writes.
+        final nvPixelStride = uvPixelStride < 2 ? 2 : uvPixelStride;
+        final uvplane = YuvPlane(uvHeight, uvWidth * nvPixelStride, nvPixelStride);
         _planes = [yplane, uvplane];
         break;
       case YuvFileFormat.i420:

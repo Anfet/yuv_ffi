@@ -36,13 +36,32 @@ class YuvPlane {
   ///
   /// If [bytes] is omitted, the plane is initialized with zeros.
   ///
-  /// Throws a [RangeError] if [bytes] has fewer than `height * rowStride`
-  /// elements.
+  /// Throws an [ArgumentError] when [height], [rowStride] or [pixelStride] is
+  /// negative, or when [bytes] does not hold exactly `height * rowStride`
+  /// elements. A short buffer is rejected rather than silently zero-padded,
+  /// because native code walks the plane by its declared geometry.
   YuvPlane(this._height, this.rowStride, [this.pixelStride = 1, Uint8List? bytes]) {
-    _bytes = Uint8List(_height * rowStride);
-    if (bytes == null) {
-      _bytes.fillRange(0, _height * rowStride, 0);
-    } else {
+    if (_height < 0) {
+      throw ArgumentError.value(_height, 'height', 'Plane height must not be negative');
+    }
+    if (rowStride < 0) {
+      throw ArgumentError.value(rowStride, 'rowStride', 'Row stride must not be negative');
+    }
+    if (pixelStride < 0) {
+      throw ArgumentError.value(pixelStride, 'pixelStride', 'Pixel stride must not be negative');
+    }
+
+    final expectedLength = _height * rowStride;
+    if (bytes != null && bytes.length != expectedLength) {
+      throw ArgumentError.value(
+        bytes.length,
+        'bytes.length',
+        'Expected exactly $expectedLength bytes (height $_height * rowStride $rowStride)',
+      );
+    }
+
+    _bytes = Uint8List(expectedLength);
+    if (bytes != null) {
       _bytes.setAll(0, bytes);
     }
   }
@@ -74,9 +93,21 @@ class YuvPlane {
 
   /// Replaces this plane content with [other].
   ///
-  /// [other] must have at least [bytes.length] bytes.
-  /// Throws a [RangeError] when [other] is shorter.
-  void assignFrom(Uint8List other) => _bytes.setAll(0, other);
+  /// [other] must hold exactly [bytes.length] bytes, so the documented full
+  /// overwrite really happens. A shorter input would leave a stale tail and a
+  /// longer one would not fit.
+  ///
+  /// Throws an [ArgumentError] when [other] has a different length.
+  void assignFrom(Uint8List other) {
+    if (other.length != _bytes.length) {
+      throw ArgumentError.value(
+        other.length,
+        'other.length',
+        'Expected exactly ${_bytes.length} bytes to fully overwrite this plane',
+      );
+    }
+    _bytes.setAll(0, other);
+  }
 
   @override
   String toString() {

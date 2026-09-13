@@ -3,23 +3,28 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show Uint8List, WriteBuffer;
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 class YuvImageImpl implements YuvImage {
   YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+      : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+      : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
-    : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
+      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
 
   YuvImageImpl(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
+    YuvGeometry.validateDimensions(_width, _height);
+
     if (planes != null) {
-      _planes = List<YuvPlane>.from(planes.map((p) => p.copy()));
+      final copied = List<YuvPlane>.from(planes.map((p) => p.copy()));
+      YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: copied);
+      _planes = copied;
       return;
     }
 
@@ -29,12 +34,15 @@ class YuvImageImpl implements YuvImage {
       _format == YuvFileFormat.bgra8888 ? 4 : yPixelStride,
     );
 
-    final uvWidth = (_width / 2.0).ceil();
-    final uvHeight = (_height / 2.0).ceil();
+    final uvWidth = YuvGeometry.chromaWidth(_width);
+    final uvHeight = YuvGeometry.chromaHeight(_height);
 
     switch (_format) {
       case YuvFileFormat.nv21:
-        _planes = [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
+        // Interleaved chroma always stores a (U, V) pair per sample, so a
+        // pixelStride below 2 cannot hold what native code writes.
+        final nvPixelStride = uvPixelStride < 2 ? 2 : uvPixelStride;
+        _planes = [yPlane, YuvPlane(uvHeight, uvWidth * nvPixelStride, nvPixelStride)];
         break;
       case YuvFileFormat.i420:
         _planes = [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride), YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
