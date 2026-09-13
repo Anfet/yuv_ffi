@@ -1296,6 +1296,19 @@ Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
 
+### Независимое ревью root 2026-09-14
+
+Статус остаётся `READY FOR REVIEW` до Web retest.
+
+Shared `YuvPlaneBytes.concat()` возвращает новый buffer точной суммарной длины
+planes и одинаково подключён в IO/Web/stub. Нативные regressions покрывают
+нечётные и padded layouts, а эталон не использует проверяемый helper. На Flutter
+3.44.9 analyzer чист и общий сфокусированный VM-набор прошёл 110/110.
+
+Блокирующих замечаний по реализации не найдено. Для `DONE` требуется перенести
+asset-dependent Web case в integration harness YUV-02 и подтвердить в Chrome
+длину и точные bytes; VM skip не является evidence.
+
 ---
 
 ## YUV-15 — поддержать валидный padded BGRA plane одинаково на IO/Web
@@ -1444,6 +1457,21 @@ Commit: fix: kept the declared layout of a padded BGRA plane
 Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
+
+### Независимое ревью root 2026-09-14
+
+Статус остаётся `READY FOR REVIEW` до Web retest.
+
+Специализированный BGRA constructor теперь использует тот же validation/deep
+copy path, что generic constructor, и сохраняет padded metadata. Обновлённые
+ожидания YUV-04 соответствуют более позднему зафиксированному контракту YUV-15;
+изменение reference harness не перегенерирует эталоны. На Flutter 3.44.9
+analyzer чист и общий сфокусированный VM-набор прошёл 110/110.
+
+Блокирующих замечаний по нативной реализации не найдено. Для `DONE` нужны
+реальные Chrome cases специализированного/generic constructors и copy variants
+через integration harness после YUV-02. Tight `toBgra8888()` остаётся отдельной
+задачей YUV-08.
 
 ---
 
@@ -2004,7 +2032,20 @@ Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
 
-Не заполнен.
+### Независимое ревью root 2026-09-14
+
+Статус остаётся `READY FOR REVIEW` до Web retest.
+
+IO loader реализует idempotent/concurrent initialization и очищает failed
+attempt перед retry; reset согласованно сбрасывает library и bindings. Web
+loader применяет тот же retry principle к `_initFuture`. Test seams остаются
+внутренними и не экспортируются через публичную библиотеку. На Flutter 3.44.9
+analyzer чист; `loader_io_test.dart` входит в прошедший набор 110/110.
+
+Блокирующих замечаний по IO реализации и структуре Web fix не найдено. Для
+`DONE` обязателен focused Chrome integration case, доказывающий single init,
+concurrent coalescing и retry после ошибки с `kIsWeb == true`; инспекция и VM
+stub этот gate не заменяют.
 
 ---
 
