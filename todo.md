@@ -9,7 +9,7 @@
 | Готово | ID | Владелец | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|
 | [ ] | YUV-01 | Terra | P0 | READY FOR REVIEW | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
-| [ ] | YUV-02 | Luna | P0 | BLOCKED | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
+| [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [ ] | YUV-03 | Luna | P1 | TODO | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
 | [ ] | YUV-04 | Opus | P0 | BLOCKED | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
 | [ ] | YUV-05 | Opus | P0 | BLOCKED | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
@@ -202,7 +202,7 @@ Native C permission:
 
 - Владелец: Luna
 - Приоритет: P0 / release blocker
-- Статус: BLOCKED
+- Статус: READY FOR REVIEW
 - Зависимости: YUV-01
 - Scope:
   - `.github/workflows/ci.yml`
@@ -241,7 +241,7 @@ README повторяет ту же неверную команду. Поэто�
 ### Проверка
 
 ```powershell
-flutter test --platform chrome test/web/web_platform_sentinel_test.dart --reporter expanded
+flutter test --platform chrome web_test/web_platform_sentinel_test.dart --reporter expanded
 flutter test --platform chrome test/web/yuv_web_wasm_test.dart
 flutter test --platform chrome test/web/wasm_parity_conversions_test.dart
 flutter test --platform chrome test/web/wasm_parity_transforms_test.dart
@@ -254,7 +254,37 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+Статус: READY FOR REVIEW
+Commit: текущий YUV-02 task commit
+Изменённые файлы:
+- `.github/workflows/ci.yml`
+- `README.md`
+- `web_test/web_platform_sentinel_test.dart`
+
+Что сделано:
+- Web job включён для автоматических `push`/`pull_request`, а не только `workflow_dispatch`.
+- Все пять обязательных Web test files, включая sentinel, запускаются через `flutter test --platform chrome`.
+- Sentinel вынесен из стандартного `test/` discovery в `web_test/`, поэтому обычный полный VM suite остаётся зелёным.
+- README использует те же реальные VM/Web runner commands.
+- WASM по-прежнему пересобирается из текущего checkout перед Web tests; наличие `.js` и `.wasm` проверяется.
+
+Проверки:
+- `flutter test --no-pub --reporter expanded` — exit 0, 30 tests passed.
+- `flutter test --no-pub web_test/web_platform_sentinel_test.dart --reporter expanded` — ожидаемый exit 1 на VM, `kIsWeb == false`; защита от ложного runner подтверждена.
+- `flutter analyze --no-pub lib test` — exit 0, no issues.
+- `dart format --output=none --set-exit-if-changed web_test/web_platform_sentinel_test.dart` — exit 0.
+- `git diff --check` — exit 0.
+
+Ручная проверка:
+- Локальный настоящий Chrome sentinel дошёл до запуска headless Chrome, но завис на `loading` более 90 секунд; F-007 остаётся `OPEN`.
+- Production-код, native C и generated bindings не менялись.
+
+Остаточные риски:
+- Без push/PR невозможно приложить обязательный успешный автоматический CI run.
+- YUV-02 и YUV-01 нельзя перевести в `DONE`, пока clean CI не исполнит sentinel и четыре Web suites либо F-007 не будет локализован и устранён.
+
+Native C permission:
+- не требовалось; задача меняет только CI, README и sentinel.
 
 ---
 

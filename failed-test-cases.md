@@ -82,7 +82,7 @@ but Type 'Function' is not a precise function type.
 
 ### Resolution
 
-- Fix commit: текущий YUV-01 task commit; hash записать при финальном retest
+- Fix commit: `fa311d9`
 - Compile evidence: `flutter build web --no-pub` из `example/` — exit 0; исходный `Function.toJS` diagnostic отсутствует
 - Retest command/result: полный Chrome suite не завершён из-за F-007
 
@@ -482,6 +482,8 @@ Runner запустил headless Chrome, но более 90 секунд не п
 ### Retest
 
 YUV-02 должен сначала воспроизвести минимальный case с verbose runner diagnostics, проверить совместимость Flutter test runner/Chrome и только затем полный `test/web`. Не менять production-код плагина, пока минимальный test без `yuv_ffi` не запускается.
+
+Постоянный sentinel после YUV-02 находится в `web_test/web_platform_sentinel_test.dart`, вне стандартного VM discovery.
 
 ### Resolution
 
