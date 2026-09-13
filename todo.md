@@ -1916,7 +1916,7 @@ git status --short
 
 ```text
 Статус: READY FOR REVIEW
-Commit: не создавался
+Commit: `450984a` (`build: narrowed ffigen to the ABI the package actually uses`)
 
 Изменённые файлы:
 - ffigen.yaml
@@ -2029,6 +2029,23 @@ present».
 Замечание к DoD: пункт «регенерация на Windows и Unix даёт эквивалентный набор
 public members» проверен только на Windows. Unix-прогон остаётся незакрытым —
 это честно отражено и в «Остаточных рисках» отчёта.
+
+### Независимое ревью root 2026-09-13
+
+Статус остаётся `READY FOR REVIEW`: implementation defect не найден, но полный
+DoD пока не выполнен.
+
+- `tool/verify_bindings_audit.dart` повторно подтвердил 40/40 используемых
+  symbols и отсутствие лишних public members; отдельно сравнены wrapper
+  signatures до/после — из прежней поверхности исчез только неиспользуемый
+  `nv21_to_rgb`.
+- `flutter analyze --no-pub lib test` на Flutter 3.44.9 — exit 0.
+- Общий focused review suite — 151/151 passed.
+- Generated-файл содержит 40 используемых functions и `YUVDef`; native
+  headers/sources не менялись.
+- Блокер приёмки: отсутствует требуемая повторная генерация на Linux/macOS с
+  машинным сравнением набора members и signatures. Windows-only evidence не
+  позволяет поставить `DONE`.
 
 ---
 
