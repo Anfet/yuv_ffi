@@ -136,4 +136,47 @@ void main() {
 
     expect(YuvWasmLoader.moduleIfInitialized, isNotNull);
   });
+
+  testWidgets('a retry after a real script-load failure succeeds', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
+
+    // Every case above replaces the initializer wholesale, which means none of
+    // them ever runs _injectScriptOnce — and that is precisely where retry was
+    // broken: a failed <script> stayed in the document, so the next attempt
+    // found the marker, skipped injection, and then failed looking for a
+    // factory no script had defined. Only the real initializer can show it.
+    YuvWasmLoader.debugReset();
+
+    await expectLater(
+      YuvWasmLoader.ensureInitialized(scriptPath: 'assets/packages/yuv_ffi/assets/wasm/does_not_exist.js'),
+      throwsA(isA<StateError>()),
+      reason: 'a missing loader script must surface as a StateError',
+    );
+    expect(YuvWasmLoader.moduleIfInitialized, isNull);
+
+    // The retry uses the real defaults. Before the fix this threw "module
+    // factory was not found", because injection had been skipped.
+    await YuvWasmLoader.ensureInitialized();
+
+    expect(YuvWasmLoader.moduleIfInitialized, isNotNull, reason: 'a retry after a failed script load must be able to succeed');
+    expect(YuvWasmLoader.debugInitCount, 2, reason: 'the failure and the retry are two genuine attempts');
+  });
+
+  testWidgets('the module works after recovering from a failed script load', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
+
+    YuvWasmLoader.debugReset();
+
+    await expectLater(
+      YuvWasmLoader.ensureInitialized(scriptPath: 'assets/packages/yuv_ffi/assets/wasm/missing_loader.js'),
+      throwsA(isA<StateError>()),
+    );
+
+    await YuvFfi.ensureInitialized();
+
+    // A recovered loader has to give a usable module, not merely a non-null
+    // one: this crosses into WASM and back.
+    final image = YuvImage.bgra(2, 2);
+    expect(image.toBgra8888(), hasLength(2 * 2 * 4));
+  });
 }

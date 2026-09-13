@@ -185,6 +185,17 @@ final class YuvWasmLoader {
     return module;
   }
 
+  /// Injects the Emscripten loader script, at most once per successful load.
+  ///
+  /// The marker attribute is what makes this idempotent, so a tag that failed to
+  /// load has to be taken back out of the document. Leaving it there would make
+  /// every later attempt find it, skip injection, and then fail looking for a
+  /// factory that no script ever defined — a retry that reports the wrong cause
+  /// and can never succeed. Only the error path removes it: a script that loaded
+  /// is exactly what the marker is meant to record.
+  ///
+  /// Concurrent callers cannot race here: [ensureInitialized] coalesces them onto
+  /// one in-flight attempt, so this runs alone.
   static Future<void> _injectScriptOnce(String scriptPath) async {
     final existing = html.document.querySelector(
       'script[data-yuv-ffi-wasm-loader="1"]',
@@ -208,6 +219,8 @@ final class YuvWasmLoader {
     });
     script.onError.listen((_) {
       if (!completer.isCompleted) {
+        // Drop the dead tag first, so the next attempt injects a fresh one.
+        script.remove();
         completer.completeError(
           StateError(
             'Failed to load WASM loader script: $scriptPath',
