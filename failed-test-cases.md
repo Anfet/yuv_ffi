@@ -617,6 +617,11 @@ Metrics use `MAE / max channel error / p99 channel error / pixels outside thresh
    - `INPUT-ODD-CUSTOM-STRIDE-BGRA8888-127X255`: expected rowStride `515`, actual `508`.
    - `INPUT-ODD-CUSTOM-STRIDE-I420-127X255`, `INPUT-ODD-CUSTOM-STRIDE-NV21-127X255`: expected Y SHA `5991e56291c3d7633107b14ec57135a1d327ecc60f59fd7677e1a2212aa8ed40`, actual `305c72b9ca7a54c806894e694f2f72a401a0fd9edc11450e8deb8dac857e87f5`.
 
+   **RESOLVED, 2026-09-13:** all nine cases pass after `3524f05`
+   (`fix: complete YUV-05 stride and odd-size safety`). The focused manifest
+   run on Flutter 3.44.9 completed 9/9 with exact expected plane geometry and
+   hashes. The historical failures above are retained as audit evidence.
+
 ### Scoped verification
 
 - `flutter analyze --no-pub test/reference_native_conversions_test.dart` — passed.
@@ -625,5 +630,6 @@ Metrics use `MAE / max channel error / p99 channel error / pixels outside thresh
 
 ### Resolution
 
-- Fix commit: not applicable; no production changes in YUV-11.
+- Fix commit for the nine odd/custom-stride cases: `3524f05`. Other groups in
+  this report remain assigned to their existing follow-up tasks.
 - Follow-up: route geometry/custom-stride failures to YUV-04/YUV-05/YUV-15, raw alignment tails to YUV-07/YUV-14, and UV conversion failures to YUV-05. Effects and blur require отдельные native implementation tasks. Re-run this exact 119-case matrix after fixes.

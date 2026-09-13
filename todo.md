@@ -12,7 +12,7 @@
 | [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
 | [x] | YUV-04 | Opus | P0 | DONE | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
-| [ ] | YUV-05 | Opus | P0 | REJECTED | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
+| [ ] | YUV-05 | Root | P0 | READY FOR REVIEW | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-01, YUV-04, YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
@@ -598,9 +598,9 @@ Generated bindings и native C в scope YUV-04 не изменялись.
 
 ## YUV-05 — исправить native custom-stride и odd-size конверсии
 
-- Владелец: Opus
+- Владелец: Root (финальное исправление после двух заходов Opus)
 - Приоритет: P0 / memory-safety blocker
-- Статус: REJECTED
+- Статус: READY FOR REVIEW
 - Зависимости: YUV-04 (принята) и разрешение владельца на изменение native C (получено)
 - Scope:
   - `src/yuv/yuv420/yuv420_from_rgba.c`
@@ -919,6 +919,72 @@ Native C permission:
 До закрытия этих пунктов YUV-22 и YUV-23 остаются BLOCKED по зависимости
 YUV-05. Разрешение владельца на native C для YUV-05 подтверждено, но оно не
 заменяет невыполненные проверки.
+```
+
+### Исправление root после второй приёмки, 2026-09-13
+
+```text
+Статус: READY FOR REVIEW
+Commit: 3524f05 fix: complete YUV-05 stride and odd-size safety
+
+Изменённые файлы:
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- src/yuv/nv21/nv21_to_420.c
+- src/yuv/yuv420/yuv420_to_nv21.c
+- test/native_stride_safety_test.dart
+- test/reference_native_conversions_test.dart
+- test/web/wasm_parity_edge_cases_test.dart
+- tool/yuv05_asan_harness.c
+- tool/yuv05_wasm_harness.cjs
+
+Что исправлено:
+- `fromRgba8888()` на IO и Web сохраняет исходную геометрию padded/custom
+  destination и padding-canary. Native destination теперь инициализируется
+  данными исходного изображения, а BGRA layout с padding преобразуется через
+  tight staging image с последующим копированием только логических BGRA
+  samples.
+- Добавлена проверка `yPixelStride = 3`: I420<->legacy-NV переносит именно
+  логические Y samples, не байты padding.
+- Для `1x1`, `3x5` и `127x255` тесты проверяют каждую chroma sample,
+  различимые U/V, установленный UV/NV12-like порядок и сохранение canary в
+  padding.
+- Web regression покрывает padded/custom-pixel I420 `fromRgba8888()` и padded
+  NV `swapNv()` с сохранением layout и перестановкой только UV pairs.
+- Комментарии двух C-конвертеров приведены к фактическому compatibility
+  contract: публичное legacy-имя `nv21` сохраняется, порядок байтов — UV.
+- Добавлены постоянные ASan и WASM runtime harness, чтобы проверки не зависели
+  от временных локальных файлов.
+
+Проверки на Flutter 3.44.9:
+- `flutter test --no-pub test/native_stride_safety_test.dart test/nv_chroma_order_test.dart --reporter expanded` — 14/14 passed.
+- `flutter test --no-pub test/reference_native_conversions_test.dart --plain-name "INPUT-ODD-CUSTOM-STRIDE"` — 9/9 passed; hashes manifest совпали для BGRA/I420/NV на всех трёх размерах.
+- полный VM suite — 177 passed / 44 failed. Все девять YUV-05 reference failures исправлены; оставшиеся 44 относятся к уже зарегистрированным YUV-14/YUV-22/YUV-23 и другим карточкам.
+- `flutter analyze --no-pub lib test` — `No issues found!`.
+- `dart format --output=none --set-exit-if-changed` по изменённым Dart-файлам — exit 0.
+- `git diff --check` — exit 0.
+
+Native sanitizer:
+- ОС: Windows 10 x64; Microsoft Visual Studio 2022 Community, MSVC toolset
+  14.44.35207 / compiler 19.44.
+- Harness собран `cl /std:c11 /O1 /Zi /fsanitize=address /MD` вместе с пятью
+  conversion sources и запущен с соответствующим MSVC ASan runtime.
+- Результат: `YUV-05 ASan harness passed: 3 sizes, 5 conversion paths.`;
+  exit 0, sanitizer diagnostics отсутствуют.
+
+WASM runtime:
+- `node --check tool/yuv05_wasm_harness.cjs` — exit 0.
+- `node tool/yuv05_wasm_harness.cjs` —
+  `YUV-05 WASM harness passed: 3 sizes, 5 conversion paths, exact YUV values.`;
+  exit 0. Проверка исполняет отслеживаемый SIMD WASM artifact и сверяет
+  exact values на `1x1`, `3x5`, `127x255`.
+- Dart Chrome runner на Flutter 3.44.9 по-прежнему зависает на `loading` даже
+  для минимального sentinel-теста. Это известный внешний F-007 gate Windows
+  runner; Web regression tests добавлены и проходят компиляцию/анализ, а
+  фактический WASM artifact проверен Node harness.
+
+Рабочее дерево после commit содержит только ранее существовавшие, не входящие
+в YUV-05 изменения: `example/pubspec.lock` и `dart-architecture-audit.md`.
 ```
 
 ---
