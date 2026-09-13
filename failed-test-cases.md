@@ -23,7 +23,7 @@
 | F-005 | BINDINGS-CACHE-001 | Native/Windows | RESOLVED | P1 | YUV-19 | Повторные обращения переиспользуют один экземпляр `YuvFfiBindings` |
 | F-006 | IMAGE-CACHE-KEY-001 | Native/Windows + Web/Chrome | RESOLVED | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
 | F-007 | CHROME-RUNNER-HANG-001 | Web/Chrome | OPEN | P0 | YUV-02 | Даже минимальный Flutter Web test зависает на стадии `loading` |
-| F-008 | WASM-LOADER-RETRY-001 | Web/Chrome | READY FOR RETEST | P1 | YUV-21 | Мёртвый `<script>` остаётся в DOM, поэтому retry загрузчика всегда падает |
+| F-008 | WASM-LOADER-RETRY-001 | Web/Chrome | RESOLVED | P1 | YUV-21 | Мёртвый `<script>` остаётся в DOM, поэтому retry загрузчика всегда падает |
 
 ## Текущее состояние reference matrix
 
@@ -664,7 +664,7 @@ YUV-21 должен выполнить оба новых case в required Chrome
 
 ### Resolution
 
-- Статус: `READY FOR RETEST`. Исправление внесено, но пока **не доказано**.
+- Статус: `RESOLVED`. Исправление подтверждено прогоном run #28.
 - Fix commit: см. commit задачи YUV-21
 - Исправление: в ветке `onError` тег удаляется (`script.remove()`) до завершения
   completer. Только в ветке ошибки: успешно загруженный скрипт — ровно то, что
@@ -681,6 +681,20 @@ YUV-21 должен выполнить оба новых case в required Chrome
   ошибки не выполнялась ни разу. Тесты исправлены отдельно
   (`debugRemoveInjectedScript()` + factory name, которого никто не определяет),
   повторный прогон требуется.
+- Повторный Web retest: run
+  [34790481198](https://github.com/Anfet/yuv_ffi/actions/runs/34790481198),
+  таргет `wasm_loader_lifecycle_test.dart` — **success**, `All tests passed.`
+  На этом таргете `TestFailure` 2 -> 0 против предыдущего прогона; ассерт
+  `throwsA(isA<StateError>())`, который падал с `Actual: <_Future<YuvModule>>`,
+  теперь проходит. Затем в том же case проходят `moduleIfInitialized != null` и
+  `debugInitCount == 2`: тег удалён, поэтому успешная вторая инициализация
+  возможна только через новую инъекцию. Второй case выполняет настоящую
+  конверсию через WASM.
+- Граница утверждения: `failRealInjection()` задаёт и несуществующий
+  `scriptPath`, и несуществующее имя factory, а `flutter drive` не печатает
+  вывод отдельных case, поэтому какая именно из двух причин дала первый
+  `StateError` — по логу не видно. Доказано восстановление после неудачной
+  попытки, которое до `script.remove()` было недостижимо по построению.
 
 ---
 

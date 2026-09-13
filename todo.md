@@ -9,15 +9,15 @@
 | Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | добавить serialization integration Web retest | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | READY FOR REVIEW | — | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06…YUV-08, YUV-13, YUV-14, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
-| [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | дополнить Web contract matrix | Убрать выравнивающий хвост из IO/Web `getBytes()` |
-| [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | REJECTED | добавить Web tight-layout case | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | проверить настоящий Web backend revision | Сделать ключ image cache корректным без breaking change в patch-релизе |
-| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | REJECTED | исправлен дефект retry; нужен Web retest | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | — | Убрать выравнивающий хвост из IO/Web `getBytes()` |
+| [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | — | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Сделать ключ image cache корректным без breaking change в patch-релизе |
+| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
@@ -224,8 +224,8 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: REJECTED
-- Зависимости: YUV-04 и YUV-02 приняты; требуется focused integration Web retest
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-04 и YUV-02 приняты; Web retest выполнен (run 34790481198)
 - Scope:
   - `lib/src/loader/data_io.dart`
   - shared serialization codec при извлечении
@@ -847,7 +847,18 @@ Native C permission:
 
 Suite зарегистрирован в required CI job.
 
-Не выполнено: Chrome-прогон. Тест нигде не исполнялся.
+### Прогон run #28: Web evidence получен
+
+Статус: `READY FOR REVIEW`.
+
+Run [34790481198](https://github.com/Anfet/yuv_ffi/actions/runs/34790481198),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/serialization_contract_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux, WASM собран в том же прогоне.
+
+Codec теперь доказан исполнением на обоих backend, а не только на VM: каждый
+case проверяет `kIsWeb == true` внутри тела. Ключевой для правки EOF case —
+trailer, пришедший отдельным чанком, — проходит в браузере.
 
 ---
 
@@ -1083,8 +1094,8 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P1
-- Статус: REJECTED
-- Зависимости: YUV-01/YUV-02/YUV-03 приняты; Web retest выполнен (run 34787051514)
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-01/YUV-02/YUV-03 приняты; Web retest выполнен (run 34790481198)
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
   - `lib/src/yuv/impl/web/yuv_web.dart`
@@ -1311,8 +1322,18 @@ required Chrome job и приложить URL. Production Dart/C менять н
 независимую копию в доксроке, но до сих пор это свойство не проверял ни один
 тест — контракт был заявлен и не закреплён.
 
-Production Dart не менялся. Не выполнено: Chrome-прогон, новые cases нигде не
-исполнялись.
+### Прогон run #28: Web evidence получен
+
+Статус: `READY FOR REVIEW`.
+
+Run [34790481198](https://github.com/Anfet/yuv_ffi/actions/runs/34790481198),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/getbytes_contract_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux.
+
+Оба пункта замечания исполнены в браузере: все четыре размера DoD, включая
+контрольный `512x512`, и независимость возвращённого буфера в обе стороны.
+Production Dart не менялся.
 
 ---
 
@@ -1320,8 +1341,8 @@ Production Dart не менялся. Не выполнено: Chrome-прого�
 
 - Владелец: Terra
 - Приоритет: P1
-- Статус: REJECTED
-- Зависимости: YUV-02/YUV-04 приняты; Web retest выполнен (run 34787051514)
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-02/YUV-04 приняты; Web retest выполнен (run 34790481198)
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`, BGRA constructor
   - `lib/src/yuv/impl/web/yuv_web.dart`, BGRA constructor
@@ -1565,7 +1586,19 @@ Padded `toBgra8888()` намеренно не проверяется: на Web �
 padding — известный открытый дефект в scope YUV-08. Утверждение о нём здесь
 роняло бы тест по причине вне этой карточки.
 
-Production Dart не менялся. Не выполнено: Chrome-прогон.
+### Прогон run #28: Web evidence получен
+
+Статус: `READY FOR REVIEW`.
+
+Run [34790481198](https://github.com/Anfet/yuv_ffi/actions/runs/34790481198),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/padded_bgra_constructor_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux.
+
+Tight-layout cases исполнены в браузере вместе с padded: оба конструктора
+согласованы на обоих layout, `copy`/`copy(blank: true)` сохраняют геометрию,
+`toBgra8888()` на tight-изображении отдаёт ровно 16 байт. Padded
+`toBgra8888()` остаётся вне карточки (YUV-08). Production Dart не менялся.
 
 ---
 
@@ -1576,8 +1609,8 @@ Production Dart не менялся. Не выполнено: Chrome-прого�
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: REJECTED
-- Зависимости: YUV-01/YUV-02 приняты; Web retest выполнен (run 34787051514); зависимости от YUV-19 нет
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-01/YUV-02 приняты; Web retest выполнен (run 34790481198); зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
   - `lib/src/yuv/yuv.dart` и IO/Web implementations для revision/identity seam
@@ -2080,7 +2113,21 @@ Cache hit проверяется через собственный `ImageCache` 
 в кэше, а после мутации — нет. Сторонняя реализация без seam осталась отдельным
 case и по-прежнему даёт always-miss.
 
-Production cache logic не менялся. Не выполнено: Chrome-прогон.
+### Прогон run #28: Web evidence получен
+
+Статус: `READY FOR REVIEW`.
+
+Run [34790481198](https://github.com/Anfet/yuv_ffi/actions/runs/34790481198),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/image_cache_key_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux.
+
+Матрица мутаторов исполнена в браузере на настоящих `YuvImage`, а не на fake:
+`fromRgba8888` (включая padded-BGRA ветку), эффекты и флипы, crop, rotate,
+конверсии форматов, `swapNv` на обоих путях, успешный и проваленный `load`.
+Отдельно подтверждено, что no-op операции revision не трогают, и что cache hit
+для нетронутого кадра виден через `ImageCache.containsKey`. Production cache
+logic не менялся.
 
 ---
 
@@ -2088,8 +2135,8 @@ Production cache logic не менялся. Не выполнено: Chrome-пр
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: REJECTED
-- Зависимости: YUV-01/YUV-02/YUV-19 приняты; исправлен дефект retry, требуется Web retest
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-01/YUV-02/YUV-19 приняты; Web retest выполнен (run 34790481198)
 - Scope:
   - `lib/src/yuv_ffi_initializer.dart`
   - `lib/src/loader/impl/loader_io.dart`
@@ -2360,6 +2407,10 @@ Fake здесь не используется сознательно: подме
 исполнялись, поэтому карточка остаётся `REJECTED`, а дефект зарегистрирован как
 F-008.
 
+> Запись выше отражает состояние на момент её написания и оставлена намеренно:
+> два раздела ниже показывают, что было дальше. Тесты, описанные здесь, при
+> первом же прогоне оказались неспособны упасть.
+
 ### Прогон run #27: оба новых теста провалились — и провалились неправильно
 
 Статус остаётся `REJECTED`. Run
@@ -2403,7 +2454,37 @@ Expected: throws <Instance of 'StateError'>
 Одного удаления тега мало: factory от прошлой успешной загрузки остаётся на
 `globalThis`, и загрузчик поднялся бы без единого скрипта.
 
-**Не выполнено:** прогон исправленных тестов.
+### Прогон run #28: исправление подтверждено
+
+Статус: `READY FOR REVIEW`.
+
+Run [34790481198](https://github.com/Anfet/yuv_ffi/actions/runs/34790481198),
+job `wasm-web-integration` — **success**. Все шесть таргетов зелёные, включая
+`wasm_loader_lifecycle_test.dart`. Chrome 152.0.7977.82 / chromedriver
+152.0.7977.82, Flutter 3.44.9, Linux, WASM собран в том же прогоне.
+
+Решающее сравнение с предыдущим прогоном:
+
+| | run #27 (`c16d71b`) | run #28 (`14f4e4a`) |
+|---|---|---|
+| `TestFailure` на этом таргете | 2 | 0 |
+| Ассерт `throwsA(isA<StateError>())` | падал: `Actual: <_Future<YuvModule>>` | проходит |
+
+То есть `StateError` теперь действительно возникает, а не проглатывается. И
+дальше в том же case отрабатывают `moduleIfInitialized != null` и
+`debugInitCount == 2`: после `debugRemoveInjectedScript()` тега в документе нет,
+поэтому успешная вторая инициализация возможна **только** через новую инъекцию.
+Второй case дополнительно выполняет настоящую конверсию через WASM.
+
+Честная граница утверждения: `failRealInjection()` задаёт одновременно и
+несуществующий `scriptPath`, и несуществующее имя factory, а `flutter drive` не
+печатает вывод отдельных case. Поэтому по логу нельзя сказать, какая из двух
+причин дала первый `StateError`, и я не утверждаю, что ветка `onError`
+выполнилась именно как ветка. Доказано другое и достаточное для карточки:
+восстановление после неудачной попытки работает end-to-end, чего до
+`script.remove()` не было по построению.
+
+F-008 переведён в `RESOLVED`.
 
 ---
 
