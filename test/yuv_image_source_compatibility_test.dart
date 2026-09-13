@@ -31,14 +31,44 @@ void main() {
     expect(image.revision, before + 1);
   });
 
-  test('an external implementation still keys the image cache correctly', () {
+  test('an external implementation is never keyed by a revision it does not report', () {
+    // A foreign class cannot prove its frame is unchanged, so it deliberately
+    // gets the pre-0.2.5 always-miss key rather than revision equality. Calling
+    // markDirty() on it still advances the tracked revision (above), but that
+    // revision is not what keys the cache for this kind of image.
     final image = _LegacyExternalImage(2, 2);
 
     final first = YuvImageProvider(image);
-    expect(YuvImageProvider(image), equals(first), reason: 'an untouched frame must reuse its key');
+    expect(YuvImageProvider(image), isNot(equals(first)), reason: 'an unreported mutation must never be assumed absent');
 
     image.markDirty();
-    expect(YuvImageProvider(image), isNot(equals(first)), reason: 'a marked frame must produce a new key');
+    expect(YuvImageProvider(image), isNot(equals(first)));
+  });
+
+  test('a legacy mutation without markDirty() never reuses the cached frame', () {
+    // The regression this guards: a class written against 0.2.4 mutates through
+    // its own standard methods and cannot call markDirty(), because that API did
+    // not exist when it was written. If revision-based equality applied to it,
+    // the provider built after the mutation would equal the one built before and
+    // the widget would serve the previous frame.
+    final image = _LegacyMutatingImage(2, 2);
+
+    final before = YuvImageProvider(image);
+    image.negate(); // mutates bytes, reports nothing
+
+    expect(
+      YuvImageProvider(image),
+      isNot(equals(before)),
+      reason: 'an implementation that cannot report mutations must never produce a reusable key',
+    );
+  });
+
+  test('an untracked image misses the cache even when it is genuinely untouched', () {
+    // The cost side of the same trade: without a mutation report there is no
+    // evidence the frame is unchanged, so every provider is a fresh key.
+    final image = _LegacyMutatingImage(2, 2);
+
+    expect(YuvImageProvider(image), isNot(equals(YuvImageProvider(image))));
   });
 
   test('two external implementations never share a revision', () {
@@ -52,6 +82,26 @@ void main() {
     expect(a.revision, 2);
     expect(b.revision, 1);
   });
+}
+
+/// A pre-0.2.5 external [YuvImage] whose standard mutators actually mutate.
+///
+/// [_LegacyExternalImage] throws from every mutator, which cannot expose a cache
+/// that trusts an unreported mutation. This one changes its bytes in place the
+/// way a real implementation would and — like any class written before the
+/// revision seam existed — tells nobody.
+class _LegacyMutatingImage extends _LegacyExternalImage {
+  _LegacyMutatingImage(super.width, super.height);
+
+  @override
+  YuvImage negate() {
+    final bytes = yPlane.bytes;
+    for (int i = 0; i < bytes.length; i++) {
+      bytes[i] = 0xFF - bytes[i];
+    }
+    // Deliberately no markDirty(): this class predates that API.
+    return this;
+  }
 }
 
 /// A minimal external [YuvImage] as it could have been written against `0.2.4`.

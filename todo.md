@@ -18,7 +18,7 @@
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | READY FOR REVIEW | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
-| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | legacy behavioral compatibility; Web retest: YUV-02 | Сделать ключ image cache корректным без breaking change в patch-релизе |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
@@ -1291,7 +1291,7 @@ checkout, поэтому на runner файла не существует и job
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: REJECTED
+- Статус: READY FOR REVIEW
 - Зависимости: implementation разблокирована принятием YUV-01; финальный реальный Chrome retest зависит от YUV-02; зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
@@ -1570,6 +1570,72 @@ Native C permission:
 Независимо подтверждено на Flutter 3.44.9: focused VM suite 29/29 и analyzer
 проходят. Реальные Chrome-прогоны остались на `+0 / loading` и были остановлены;
 Web evidence отсутствует. Native C/generated bindings не менялись.
+
+### Результат после второго ревью
+
+```text
+Статус: READY FOR REVIEW
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_revision.dart
+- lib/src/widgets/yuv_image_widget.dart
+- test/yuv_image_source_compatibility_test.dart
+- test/yuv_image_widget_test.dart
+
+По замечаниям 1, 2 и 4 (behavioral compatibility для чужой реализации):
+- Замечание принято полностью. Провайдер брал revision через
+  `YuvRevision.revisionOf()`, а тот для чужого изображения возвращает 0 из
+  `Expando`. В результате два провайдера над одним чужим изображением
+  оказывались равны при revision 0, хотя legacy-класс мутирует внутри своих
+  `negate()`/`crop()` и вызвать `markDirty()` не может — этого API не было,
+  когда его писали. Виджет мог отдать устаревший кадр. До YUV-20 такого не
+  было: без `==`/`hashCode` каждый rebuild давал новый ключ и безопасный miss.
+- Добавлен `YuvRevision.tracksOwnMutations()`. Revision-equality применяется
+  только к `YuvRevisionAware`, то есть к трём backend'ам пакета, которые
+  бампают revision изнутри каждого мутирующего метода.
+- `YuvImageProvider._revision` стал `int?`: для неотслеживаемого изображения он
+  `null`, `==` возвращает false для любой пары, `hashCode` падает обратно на
+  `identityHashCode(this)`. Это ровно прежнее поведение 0.2.4 — always-miss.
+- Размен зафиксирован явно: лишняя конверсия — цена, показ чужого кадра —
+  дефект, и в patch-релизе разменивать можно только первое.
+
+По замечанию 3 (фикстуры скрывали сценарий):
+- Признаю: скрывали оба. В `_LegacyExternalImage` все мутаторы бросали
+  `UnimplementedError`, а `_FakeBgraImage.mutateInPlace()` вызывал `markDirty()`
+  после записи байтов. Ни один тест не выполнял мутацию без сигнала, поэтому
+  дефект проходил и мою собственную проверку.
+- Добавлен `_LegacyMutatingImage extends _LegacyExternalImage`, у которого
+  `negate()` реально инвертирует байты плоскости и ничего не сообщает.
+- Тест «a legacy mutation without markDirty() never reuses the cached frame»
+  требует, чтобы провайдер после такой мутации не был равен прежнему.
+- Тест «an untracked image misses the cache even when it is genuinely untouched»
+  фиксирует и цену: без сигнала о мутации доказательств неизменности нет.
+- `_FakeBgraImage` в widget-тесте теперь объявляет `YuvRevisionAware` — он
+  изображает backend пакета, а не чужую реализацию, и conversion-counting тесты
+  проверяют именно тот путь, для которого revision-ключ и предназначен.
+- Переписан тест «an external implementation still keys the image cache
+  correctly»: он фиксировал как раз небезопасное поведение и теперь называется
+  «...is never keyed by a revision it does not report».
+
+Доказательство регресса:
+- Откат только `lib/src/widgets/yuv_image_widget.dart` на HEAD при сохранённых
+  тестах: оба новых теста падают. С правкой — 4/4 и 64/64 по четырём
+  затронутым файлам.
+
+Проверки (все на Flutter 3.44.9 / Dart 3.12.2):
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test --no-pub (полный VM suite) — 285 passed / 31 failed против
+  baseline HEAD 281 passed / 31 failed, снятого через `git stash` на том же SDK.
+  Множество падающих тестов совпадает с HEAD построчно (31 имя, все в
+  `reference_native_conversions_test.dart`); новых падений нет.
+- dart format --set-exit-if-changed --line-length 150 по изменённым файлам — exit 0
+- git diff --check — exit 0
+
+Замечание 5 (Web-совместимый cache test без `dart:io`) не закрыто: Chrome
+runner заблокирован F-007/YUV-02. Отмечено как обязательное после YUV-02.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
 
 ---
 

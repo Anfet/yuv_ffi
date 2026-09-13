@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 const String _testAssetPath = 'test/assets/test_pattern_512.png';
@@ -29,7 +30,14 @@ Future<_FakeBgraImage> _loadFakeBgraFromAsset() async {
   return _FakeBgraImage(width, height, bytes: bgra);
 }
 
-class _FakeBgraImage implements YuvImage {
+/// A counting stand-in for one of this package's own backends.
+///
+/// It implements [YuvRevisionAware], because that is what the real IO and Web
+/// images do and what makes revision-based cache keys safe: every mutation is
+/// reported from inside the mutating method. A foreign implementation, which
+/// reports nothing, is covered separately in
+/// `yuv_image_source_compatibility_test.dart`.
+class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   _FakeBgraImage(
     this.width,
     this.height, {
@@ -43,18 +51,22 @@ class _FakeBgraImage implements YuvImage {
   final Uint8List _bytes;
   final YuvPlane _plane;
 
+  int _revision = 0;
+
+  @override
+  int get internalRevision => _revision;
+
+  @override
+  void bumpInternalRevision() => _revision++;
+
   /// Number of times this frame was converted to BGRA.
   ///
   /// A cache hit must not convert again, so the count is what proves the cache
   /// key works; comparing providers alone would not.
   int conversions = 0;
 
-  /// Simulates an in-place mutation the way the real backends perform one.
-  ///
-  /// This fake deliberately does NOT implement any revision member: it stands in
-  /// for an external `implements YuvImage` written against 0.2.4, and proves
-  /// such a class still compiles and still participates in cache invalidation
-  /// through the extension API.
+  /// Simulates an in-place mutation the way the real backends perform one:
+  /// change the bytes, then report it from inside the method.
   void mutateInPlace() {
     _bytes[0] = (_bytes[0] + 1) & 0xFF;
     markDirty();

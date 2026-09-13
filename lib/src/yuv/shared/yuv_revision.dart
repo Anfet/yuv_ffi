@@ -45,6 +45,20 @@ abstract final class YuvRevision {
     return _foreignRevisions[image] ?? 0;
   }
 
+  /// Whether [image] reports every one of its own mutations.
+  ///
+  /// Only this package's backends do: they advance the revision from inside
+  /// each mutating method, so an unchanged revision genuinely means an
+  /// unchanged frame. A foreign `implements YuvImage` written before this seam
+  /// existed mutates without telling anyone, so its revision is not evidence
+  /// that the frame is untouched and must not be used to prove a cache hit.
+  ///
+  /// A foreign implementation can still opt in, by calling [YuvImageInvalidation.markDirty]
+  /// after it mutates — but nothing observed here can distinguish one that does
+  /// from one that does not, so callers that need a safe answer treat every
+  /// foreign image as potentially stale.
+  static bool tracksOwnMutations(YuvImage image) => image is YuvRevisionAware;
+
   /// Advances the revision of [image] by one.
   static void bump(YuvImage image) {
     final Object candidate = image;
