@@ -350,6 +350,23 @@ void main() {
       );
     });
 
+    test('a complete payload decodes without waiting for the stream to close', () async {
+      // A source that stays open after delivering a frame — a socket, a
+      // long-lived pipe — never signals `done`. The payload is structurally
+      // complete once the last plane is read, so decoding must finish there
+      // instead of blocking on a close that may never come.
+      final payload = await validPayload(width: 16, height: 16);
+
+      final controller = StreamController<List<int>>();
+      addTearDown(controller.close);
+      controller.add(payload); // complete and valid; the stream stays open
+
+      final draft = await YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5));
+
+      expect(draft.width, 16);
+      expect(draft.height, 16);
+    });
+
     test('mismatched I420 chroma strides are rejected without requesting the second body', () async {
       // Each plane is individually legal for an 8x8 I420 image, so no per-plane
       // check catches this: U declares a rowStride of 4 and V declares 8. Only

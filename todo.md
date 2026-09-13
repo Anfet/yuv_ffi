@@ -721,6 +721,58 @@ Native C permission:
 
 Web evidence по-прежнему отсутствует (YUV-02).
 
+### Сплошной аудит DoD 2026-09-13 (после `75b22b7`)
+
+Статус остаётся `REJECTED`. Прошёл по всем пунктам DoD и решениям сам, а не
+только по замечаниям ревьюера. Найден ещё один дефект — уже не про геометрию.
+
+**Дефект: валидный payload на незакрытом потоке зависал.**
+- `atEnd()` при `_available == 0` вызывал `_pull()` и ждал следующий чанк. Для
+  источника, который отдал кадр и остался открытым (сокет, долгоживущий pipe),
+  `done` не приходит никогда, поэтому `load()` не завершался вообще.
+- Замер до правки: структурно полный и валидный payload на открытом
+  `StreamController` — таймаут 3 s без результата.
+- Причина в решении 8: требование отклонять trailing bytes я реализовал через
+  ожидание конца потока, хотя проверять нужно только то, что уже пришло.
+- Исправление: `atEnd()` заменён на `hasBufferedBytes()` — отклоняются только
+  уже буферизованные лишние байты, ожидания `done` нет. Payload считается
+  завершённым после последней плоскости.
+- Решение 8 при этом сохранено: во всех трёх тестах на trailing bytes трейлер
+  приходит той же доставкой, что и payload, поэтому он уже в буфере и
+  отклоняется. Проверено на откате: при возврате `yuv_codec.dart` к `75b22b7`
+  новый тест падает с `TimeoutException after 0:00:05`, а тесты
+  `trailing bytes after a complete payload`, `after a payload with trailing
+  garbage` и `trailing garbage leaves the revision untouched` проходят в обоих
+  вариантах — значит правило держится не на блокирующем ожидании.
+- Добавлен тест «a complete payload decodes without waiting for the stream to
+  close».
+
+**Проверено исполнением, дефектов нет:**
+- Failed `load()` не трогает цель: bytes, dimensions, format и revision
+  остаются прежними (DoD 3 и 9).
+- Успешный `load()` двигает revision ровно на 1 (решение 10).
+- Round-trip padded-плоскости: `rowStride 16`, `pixelStride 4`, байты совпадают
+  (DoD 1).
+- Заголовок с width/height по 100000 и plane length 4e9 отклоняется по
+  `maxPlaneBytes` до аллокации (решение 6).
+- `lib/src/loader/data_io.dart` отсутствует, consumer'ов `DataReader`/
+  `DataWriter` в `lib`, `test`, `example/lib` нет (решение 9).
+- IO и Web оба идут через `YuvCodec.encode`/`decodeStream` (решение 1, DoD 4).
+
+**Оставлено осознанно:**
+- `yuv_stub.dart` сохраняет вырожденные `save`/`load` и codec не использует.
+  Scope карточки — IO/Web; stub это заглушка для платформ без backend.
+
+Проверки (Flutter 3.44.9 / Dart 3.12.2):
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test --no-pub test/yuv_serialization_test.dart — exit 0, 35 passed
+- flutter test --no-pub (полный VM suite) — 287 passed / 31 failed против
+  baseline HEAD 281 / 31; множество падающих совпадает, новых падений нет
+- dart format --set-exit-if-changed --line-length 150 — exit 0
+- git diff --check — exit 0
+
+Web evidence по-прежнему отсутствует (YUV-02).
+
 ---
 
 ## YUV-08 — вернуть tight BGRA contract на Web

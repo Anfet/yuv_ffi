@@ -289,7 +289,7 @@ abstract final class YuvCodec {
       }
     }
 
-    if (!await reader.atEnd()) {
+    if (reader.hasBufferedBytes()) {
       throw const FormatException('Malformed yuv_ffi payload: unexpected trailing byte(s)');
     }
 
@@ -397,13 +397,12 @@ class _StreamReader {
     return _take(count);
   }
 
-  /// Whether the payload ended exactly where it should have.
-  Future<bool> atEnd() async {
-    while (_available == 0) {
-      if (!await _pull()) {
-        return true;
-      }
-    }
-    return false;
-  }
+  /// Whether any byte beyond the payload has already arrived.
+  ///
+  /// Only bytes that are in hand count. Waiting for the stream to close would
+  /// hang on a source that stays open after delivering a frame — a socket, or a
+  /// long-lived pipe — even though the payload is structurally complete by then.
+  /// A trailer that arrives in the same delivery as the payload is still caught,
+  /// which is what makes a malformed file fail.
+  bool hasBufferedBytes() => _available > 0;
 }
