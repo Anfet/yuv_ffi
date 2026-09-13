@@ -222,6 +222,45 @@ abstract final class YuvCodec {
           'which does not match height $planeHeight * rowStride $rowStride',
         );
       }
+      if (pixelStride <= 0 || rowStride <= 0) {
+        throw FormatException(
+          'Malformed yuv_ffi payload: plane $i declares a non-positive stride (rowStride $rowStride, pixelStride $pixelStride)',
+        );
+      }
+
+      // The header already fixes the format and the image dimensions, so the
+      // geometry this plane must have is known now. Checking it here rejects an
+      // impossible plane on its metadata instead of first buffering up to
+      // maxPlaneBytes and building a YuvPlane only to discard it.
+      final expected = YuvGeometry.expectedPlaneMetadata(
+        format: format,
+        width: width,
+        height: height,
+        planeIndex: i,
+        pixelStride: pixelStride,
+      );
+      if (expected == null) {
+        throw FormatException('Malformed yuv_ffi payload: plane $i is not a plane of format ${format.name}');
+      }
+      if (planeHeight != expected.height) {
+        throw FormatException(
+          'Malformed yuv_ffi payload: plane $i declares $planeHeight row(s), '
+          'but ${format.name} at ${width}x$height requires ${expected.height}',
+        );
+      }
+      if (rowStride < expected.minRowStride) {
+        throw FormatException(
+          'Malformed yuv_ffi payload: plane $i declares a rowStride of $rowStride, '
+          'but ${format.name} at ${width}x$height requires at least ${expected.minRowStride} '
+          '(pixelStride $pixelStride)',
+        );
+      }
+      if (format == YuvFileFormat.nv21 && i == 1 && pixelStride != YuvGeometry.nvChromaPixelStride) {
+        throw FormatException(
+          'Malformed yuv_ffi payload: interleaved NV chroma requires a pixel stride of '
+          'exactly ${YuvGeometry.nvChromaPixelStride}, plane $i declares $pixelStride',
+        );
+      }
 
       final planeBytes = await reader.readBytes(byteLength, 'plane $i data');
       try {

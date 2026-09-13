@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | READY FOR REVIEW | CI evidence | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | ранняя geometry validation; Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | READY FOR REVIEW | Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
@@ -336,7 +336,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: REJECTED
+- Статус: READY FOR REVIEW
 - Зависимости: YUV-04 принята; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/loader/data_io.dart`
@@ -618,6 +618,63 @@ Native C permission:
 общий focused review suite 151/151, `flutter analyze --no-pub lib test` и
 `git diff --check` проходят. Atomic commit и revision-контракт для проверенных
 VM-сценариев корректны; native C/generated bindings не менялись.
+
+### Результат после второго ревью
+
+```text
+Статус: READY FOR REVIEW
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_geometry.dart
+- lib/src/yuv/shared/yuv_codec.dart
+- test/yuv_serialization_test.dart
+
+По замечаниям 1 и 2 (geometry проверяется только после readBytes):
+- Замечание принято полностью. До правки перед чтением тела плоскости
+  проверялись только `maxPlaneBytes` и `planeHeight * rowStride == byteLength`;
+  format-specific геометрия попадала в `YuvGeometry.validateImage()` уже после
+  того, как все плоскости прочитаны и созданы.
+- Добавлен `YuvGeometry.expectedPlaneMetadata()`: по format, width, height,
+  индексу плоскости и заявленному pixelStride возвращает ожидаемое число строк
+  и минимальный допустимый rowStride. Всё это выводится из заголовка, поэтому
+  доступно до чтения тела.
+- Codec вызывает её сразу после metadata плоскости и до `readBytes()`.
+  Дополнительно там же отклоняются неположительные strides и нарушение
+  `pixelStride == 2` для interleaved NV chroma.
+- Пример из замечания 1 (BGRA 1x1 с height=2, rowStride=4, byteLength=8) теперь
+  отклоняется на metadata: декодер не запрашивает тело.
+
+По замечанию 3 (тест менял только byteLength и попадал в раннюю арифметику):
+- Добавлены два теста на незакрытом `StreamController`, у которых
+  `height * rowStride == byteLength` выполняется, то есть прежняя арифметическая
+  проверка их пропускает:
+  - «geometry impossible for the header is rejected without requesting the body»
+    — BGRA 1x1, плоскость заявляет 2 строки;
+  - «a chroma plane impossible for the header is rejected without requesting the
+    body» — I420 8x8, luma отдана целиком, U-плоскость заявляет 8 строк вместо 4.
+  Тело в поток не кладётся вообще, поэтому декодер, ждущий байты, виснет.
+
+Доказательство регресса (то, чего не хватало в прошлый раз):
+- Откат только `yuv_codec.dart` + `yuv_geometry.dart` на HEAD при сохранённых
+  тестах: оба новых теста падают с
+  `TimeoutException after 0:00:05 — Future not completed`, то есть декодер
+  действительно ждёт тело. С правкой — 31/31 проходит.
+
+Проверки (все на Flutter 3.44.9 / Dart 3.12.2):
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test --no-pub (полный VM suite) — 285 passed / 31 failed против
+  baseline HEAD 281 passed / 31 failed, снятого через `git stash` на том же SDK.
+  Множество падающих тестов побайтово совпадает с HEAD (31 имя, все в
+  `reference_native_conversions_test.dart`); новых падений нет.
+- dart format --set-exit-if-changed --line-length 150 по изменённым файлам — exit 0
+- git diff --check — exit 0
+
+Замечание 4 (Web evidence) не закрыто: Chrome runner по-прежнему заблокирован
+F-007/YUV-02, `kIsWeb == true` подтвердить нельзя. Codec общий для обоих
+backend, отдельной копии парсинга на Web нет.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
 
 ---
 

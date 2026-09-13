@@ -127,6 +127,30 @@ abstract final class YuvGeometry {
     }
   }
 
+  /// Geometry a plane must declare to belong to this image, or `null` when
+  /// [planeIndex] is not a plane of [format].
+  ///
+  /// Returns the expected row count and the smallest legal row stride, both
+  /// derived from [format], [width] and [height] alone. A decoder can therefore
+  /// judge a plane from its metadata, before buffering the bytes that metadata
+  /// describes.
+  static ({int height, int minRowStride})? expectedPlaneMetadata({
+    required YuvFileFormat format,
+    required int width,
+    required int height,
+    required int planeIndex,
+    required int pixelStride,
+  }) {
+    if (planeIndex < 0 || planeIndex >= planeCountFor(format) || pixelStride <= 0) {
+      return null;
+    }
+    if (planeIndex == 0) {
+      return (height: height, minRowStride: (width - 1) * pixelStride + _lumaSampleBytes(format));
+    }
+    final sampleBytes = format == YuvFileFormat.nv21 ? nvChromaPixelStride : 1;
+    return (height: chromaHeight(height), minRowStride: (chromaWidth(width) - 1) * pixelStride + sampleBytes);
+  }
+
   /// Whether a BGRA plane is tightly packed for [width].
   ///
   /// Several native effects allocate a tight temporary buffer while addressing

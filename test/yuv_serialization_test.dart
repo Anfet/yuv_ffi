@@ -320,6 +320,72 @@ void main() {
 
       await expectLater(YuvCodec.decode(out), throwsFormatException);
     });
+
+    test('geometry impossible for the header is rejected without requesting the body', () async {
+      // Self-consistent arithmetic (height * rowStride == byteLength), so the
+      // earlier length check passes, but a 1x1 BGRA image cannot have a plane of
+      // two rows. The stream never closes and never supplies the body: a decoder
+      // that waited for those bytes would hang until the timeout instead of
+      // rejecting on the metadata it already holds.
+      final header = utf8.encode(jsonEncode(<String, Object>{'version': 1, 'format': 'bgra8888', 'width': 1, 'height': 1}));
+      final metadata = Uint8List(4 + header.length + 1 + 16);
+      final view = ByteData.view(metadata.buffer);
+      view.setUint32(0, header.length, Endian.little);
+      metadata.setRange(4, 4 + header.length, header);
+      int offset = 4 + header.length;
+      view.setUint8(offset, 1);
+      offset += 1;
+      view.setUint32(offset, 2, Endian.little); // height: one row too many
+      view.setUint32(offset + 4, 4, Endian.little); // rowStride
+      view.setUint32(offset + 8, 4, Endian.little); // pixelStride
+      view.setUint32(offset + 12, 8, Endian.little); // byteLength == 2 * 4
+
+      final controller = StreamController<List<int>>();
+      addTearDown(controller.close);
+      controller.add(metadata);
+
+      await expectLater(
+        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
+        throwsFormatException,
+      );
+    });
+
+    test('a chroma plane impossible for the header is rejected without requesting the body', () async {
+      // Same shape for a multi-plane format: the luma plane is correct, and the
+      // U plane's own arithmetic is consistent, but its row count does not match
+      // the chroma height an 8x8 I420 image requires.
+      final header = utf8.encode(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': 8, 'height': 8}));
+      final builder = BytesBuilder();
+      final head = Uint8List(4 + header.length + 1);
+      ByteData.view(head.buffer).setUint32(0, header.length, Endian.little);
+      head.setRange(4, 4 + header.length, header);
+      head[4 + header.length] = 3;
+      builder.add(head);
+
+      Uint8List planeMetadata(int height, int rowStride, int pixelStride) {
+        final out = Uint8List(16);
+        final planeView = ByteData.view(out.buffer);
+        planeView.setUint32(0, height, Endian.little);
+        planeView.setUint32(4, rowStride, Endian.little);
+        planeView.setUint32(8, pixelStride, Endian.little);
+        planeView.setUint32(12, height * rowStride, Endian.little);
+        return out;
+      }
+
+      builder
+        ..add(planeMetadata(8, 8, 1))
+        ..add(Uint8List(64)) // the luma plane, supplied in full
+        ..add(planeMetadata(8, 4, 1)); // chroma must be 4 rows, not 8
+
+      final controller = StreamController<List<int>>();
+      addTearDown(controller.close);
+      controller.add(builder.takeBytes());
+
+      await expectLater(
+        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
+        throwsFormatException,
+      );
+    });
   });
 }
 
