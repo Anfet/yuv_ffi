@@ -8,7 +8,7 @@
 
 | Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|---|
-| [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | READY FOR REVIEW | CI evidence | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
+| [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | REJECTED | обязательный integration Web gate | Сделать Web CI реальным обязательным gate с asset bundle |
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | READY FOR REVIEW | Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
@@ -97,6 +97,11 @@
     решению владельца.
 12. Карточки, явно помеченные как опциональные или post-release, не являются
     зависимостями YUV-18 и не блокируют выпуск `0.2.5`.
+13. Web runtime tests, которым нужны package assets/WASM, выполнять через
+    `flutter drive` + `integration_test` на собранном example-приложении.
+    `flutter test --platform chrome` не поднимает asset bundle и не считается
+    доказательством для таких cases. Bootstrap job обязан быть required gate;
+    `continue-on-error` допустим только для временного диагностического probe.
 
 ## Общий Definition of Done для каждой задачи
 
@@ -147,12 +152,13 @@ Native C permission:
 
 - Владелец: Luna
 - Приоритет: P0 / release blocker
-- Статус: READY FOR REVIEW
-- Зависимости: YUV-01 принята; для DONE требуется успешный автоматический CI run
+- Статус: REJECTED
+- Зависимости: YUV-01 принята; требуется обязательный integration CI run
 - Scope:
   - `.github/workflows/ci.yml`
   - `README.md`, только команды запуска Web-тестов
   - небольшой Web-runner sentinel test
+  - `example/integration_test/**` и `example/test_driver/**` для Web harness
   - `failed-test-cases.md`, запись F-007
 
 ### Проблема
@@ -167,18 +173,27 @@ README повторяет ту же неверную команду. Поэто�
 
 1. Сначала добавить/запустить минимальный Web sentinel и собрать verbose diagnostics F-007. Пока sentinel без package imports не работает, не менять production-код плагина в попытке починить runner.
 2. Проверить совместимость установленного Chrome с Flutter Web test runner и сравнить локальный результат с чистым CI runner. Если зависание только локальное, записать точную границу доказательства и не объявлять его package defect.
-3. Использовать `flutter test --platform chrome`, не `-d chrome`.
+3. Для tests, загружающих WASM assets, использовать `flutter drive` +
+   `integration_test` на собранном example-приложении. Старый
+   `flutter test --platform chrome` оставить только для asset-independent tests.
 4. Запускать Web job как минимум на `pull_request` и push в релизные/основные ветки, а не только вручную.
 5. Перед тестами пересобирать WASM из текущего C source и проверять наличие обоих артефактов.
-6. Сохранить отдельные тестовые файлы или запускать весь `test/web`; выбранный вариант должен явно исполнить все четыре набора.
+6. В YUV-02 сделать обязательным минимальный integration gate: `kIsWeb == true`,
+   загрузка WASM из asset bundle и одна реальная конверсия. Полную Web reference
+   matrix не переносить в эту карточку: её добавляет YUV-12 в тот же harness;
+   YUV-08/14/15/20/21 добавляют свои focused cases.
 7. Sentinel обязан падать вне Web и защищать от ложного VM-запуска.
 8. Обновить команды README на тот же фактический runner.
 
 ### DoD
 
-- PR не может пройти при Web compile error или падении любого Web parity test.
-- Минимальный sentinel реально исполняется в Chrome; F-007 получает `RESOLVED` либо подтверждённый local-only статус с успешным CI evidence.
-- В CI-логе видны реальные названия Web-тестов, а не четыре skip-теста.
+- PR не может пройти при Web compile error, ошибке загрузки WASM либо падении
+  обязательного integration bootstrap test.
+- Минимальный integration sentinel реально исполняется в Chrome с
+  `kIsWeb == true`, загружает WASM из asset bundle и выполняет конверсию.
+- Job не содержит `continue-on-error`; его падение делает workflow красным.
+- Старый заведомо непроходимый `wasm-web-smoke` удалён либо превращён в
+  asset-independent build check и больше не дублирует runtime gate.
 - Job запускается автоматически на PR.
 - WASM собирается из того же commit, который тестируется.
 - Команды README совпадают с CI.
@@ -186,11 +201,9 @@ README повторяет ту же неверную команду. Поэто�
 ### Проверка
 
 ```powershell
-flutter test --platform chrome test/web/web_platform_sentinel.dart --reporter expanded
-flutter test --platform chrome test/web/yuv_web_wasm_test.dart
-flutter test --platform chrome test/web/wasm_parity_conversions_test.dart
-flutter test --platform chrome test/web/wasm_parity_transforms_test.dart
-flutter test --platform chrome test/web/wasm_parity_edge_cases_test.dart
+Push-Location example
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/wasm_bootstrap_test.dart -d web-server --browser-name=chrome --headless
+Pop-Location
 git diff --check
 git status --short
 ```
@@ -303,6 +316,27 @@ VM job (`analyze-and-test-vm`) — отдельный дефект, исправ
   пока не добавлен шаг сборки `src/CMakeLists.txt` под Linux.
 - Поэтому YUV-02 не переведена в DONE, F-007 остаётся OPEN, а задачи,
   требующие фактического Web runtime, сохраняют YUV-02 как acceptance gate.
+
+### Независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+- На remote HEAD `bb93fb2` run #23 подтверждает жизнеспособность нового пути:
+  `web-integration-probe` успешно собрал WASM, поднял настоящее
+  example-приложение и выполнил bootstrap conversion в Chrome.
+- Это пока не gate: job объявлен `continue-on-error: true`. Одновременно
+  обязательный `wasm-web-smoke` продолжает запускать asset-dependent suites
+  через непригодный `flutter test --platform chrome` и падает. Workflow #23
+  завершился `failure`.
+- Решение по инструменту принято: переносить Web runtime проверки в
+  `integration_test`/`flutter drive`; временный probe превратить в required
+  job и убрать `continue-on-error`.
+- Сужение Web-матрицы не принято. Исходное требование пользователя — эталонный
+  case для каждой функции — сохраняется. YUV-12 должна перенести полную
+  reference matrix в integration harness; YUV-02 отвечает только за рабочий
+  обязательный bootstrap gate, чтобы разорвать зависимость.
+- `example-analyze-and-build` в том же run зелёный; это evidence для YUV-17,
+  но не закрывает YUV-02.
 
 ---
 
