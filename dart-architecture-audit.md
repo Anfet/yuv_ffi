@@ -27,12 +27,12 @@ YUV-07/YUV-20/YUV-26/YUV-27 отражены в актуальных стату�
 | A-06: rotation assert и `dstWidtn` | YUV-27 | DONE / archived | Механическая cleanup принята без изменения semantics |
 | A-07: `getBytes()` backing buffer | YUV-14 | READY FOR REVIEW | Реализовано commit `3bd12bf`; нужен обязательный Web retest |
 | A-08: bindings cache | YUV-19 | DONE / archived | Принято и перемещено в `completed-tasks.md` |
-| A-08: serialization | YUV-07 | REJECTED | Streaming реализован, но format-specific geometry проверяется после чтения plane |
-| A-08: image cache | YUV-20 | REJECTED | Interface break исправлен, но foreign implementations получили stale-cache regression |
+| A-08: serialization | YUV-07 | REJECTED | Geometry исправлена, но 50 ms grace делает trailing-byte policy недетерминированной |
+| A-08: image cache | YUV-20 | READY FOR REVIEW | Safe always-miss для foreign implementations восстановлен; нужен Web retest |
 | A-08: initialization | YUV-21 | READY FOR REVIEW | Реализовано commit `ad92431`; требуется Web runtime evidence |
 | A-09: локальный `_tmp_*` | — | CLOSED / local | Файл отсутствует; удаление локальных tmp не является package task |
-| A-10: revision compatibility | YUV-20 | REJECTED | Compile compatibility восстановлена; для legacy mutators нужно сохранить safe cache miss |
-| A-11: поздняя geometry validation | YUV-07 | REJECTED | Самосогласованная, но неверная metadata должна отклоняться до чтения plane body |
+| A-10: revision compatibility | YUV-20 | READY FOR REVIEW | Safe cache miss восстановлен и покрыт legacy mutator regression |
+| A-11: serialization boundary | YUV-07 | REJECTED | Timeout не может служить доказательством отсутствия trailing bytes |
 
 Дополнительная синхронизация build/tooling backlog:
 
@@ -221,10 +221,11 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
 
 - YUV-19 bindings cache — DONE, данные в `completed-tasks.md`.
 - YUV-07 shared serialization — основа реализована в `c52e13c`, streaming в
-  `ded01b0`, но задача повторно возвращена в REJECTED по A-11.
+  `ded01b0`, ранняя geometry validation исправлена, но задача возвращена в
+  REJECTED из-за timeout-эвристики на границе payload.
 - YUV-20 provider cache — functional seam реализован в `e3c235d`, interface
-  compatibility исправлена в `a6851d7`, но задача повторно возвращена в
-  REJECTED по A-10.
+  compatibility исправлена в `a6851d7`, safe always-miss для foreign images
+  восстановлен в `8b9d600`; задача ожидает Web retest.
 - YUV-21 initialization contract — READY FOR REVIEW, Web evidence зависит от
   YUV-02.
 - YUV-06 loader paths/macOS packaging — BLOCKED до разрешения на C-forwarders;
@@ -244,9 +245,9 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
 
 ---
 
-## A-10 — YUV-20 меняет cache behavior внешних `implements YuvImage`
+## A-10 — YUV-20 менял cache behavior внешних `implements YuvImage`
 
-- Статус: OPEN / implementation REJECTED
+- Статус: FIXED / READY FOR REVIEW
 - Приоритет: P1
 - Задача: расширена YUV-20
 
@@ -254,41 +255,34 @@ Commit `a6851d7` исправил исходный interface break: revision в�
 неэкспортируемый `YuvRevisionAware`, а прежний внешний `implements YuvImage`
 снова компилируется. Эта часть находки закрыта.
 
-Остался behavioral regression. До YUV-20 provider key использовал identity
-самого provider, поэтому каждый rebuild неизвестного внешнего image давал
-безопасный cache miss. Теперь foreign image получает revision из `Expando`, но
-его legacy mutators не знают о новом `markDirty()`. После in-place mutation
-identity и revision остаются прежними, и новый provider способен вернуть stale
-frame.
-
-Для `0.2.5` revision-based cache key должен использоваться только для package
-backend либо для явно opt-in внешнего revision contract. Неизвестная legacy
-реализация должна сохранить прежний safe always-miss. Compile fixture нужно
-расширить реально мутирующим стандартным методом без `markDirty()`.
+Behavioral regression исправлен commit `8b9d600`: revision-based equality
+применяется только к package backend, явно реализующим `YuvRevisionAware`.
+Неизвестные внешние реализации снова используют безопасный always-miss, как в
+`0.2.4`. Добавлены regressions с реально мутирующим legacy-методом без
+`markDirty()` и с неизменённым foreign image; VM-проверка проходит. Для DONE
+остаётся Web-compatible cache test после YUV-02.
 
 ---
 
-## A-11 — YUV-07 поздно проверяет format-specific geometry
+## A-11 — YUV-07 не имеет строгой границы payload
 
 - Статус: OPEN / implementation REJECTED
 - Приоритет: P2
 - Задача: расширена YUV-07
 
-Commit `ded01b0` убрал whole-stream collection, удалил мёртвые
-`DataReader`/`DataWriter` и добавил последовательный cursor. Предыдущее описание
-этой находки больше не актуально.
+Commit `ded01b0` убрал whole-stream collection, а `4ec2199` и `75b22b7`
+перенесли per-plane и cross-plane geometry validation до чтения body. Эта часть
+находки закрыта.
 
-Оставшийся дефект уже: перед `readBytes()` проверяются только предел длины и
-равенство `planeHeight * rowStride == byteLength`. Соответствие высоты формату,
-минимальный row stride и допустимый pixel stride проверяются общим
-`YuvGeometry.validateImage()` лишь после чтения всех bytes и создания
-`YuvPlane`. Самосогласованная, но заведомо неверная metadata способна заставить
-decoder ждать или копировать до 1 GiB перед отказом.
+Новый оставшийся дефект появился при попытке одновременно принять полный
+payload из незакрытого stream и отклонить trailing bytes. `trailerArrives()`
+ждёт следующий event только 50 ms, поэтому более поздний trailer принимается.
+Это timing-dependent нарушение строгого format contract.
 
-YUV-07 должна вычислить ожидаемую geometry каждой plane из header/format и
-отклонить несовместимые metadata до чтения body. Regression обязан использовать
-незакрытый stream: после валидной по арифметике, но неверной для формата metadata
-decoder должен завершиться `FormatException`, не запросив plane bytes.
+Для version-1 payload границей должен служить EOF: decoder ждёт завершения
+stream и отклоняет каждый дополнительный byte. Ранний отказ по невалидной
+metadata должен остаться независимым от EOF. Поддержка долгоживущего stream
+требует отдельного framed/versioned протокола, а не grace timeout.
 
 ---
 
@@ -296,8 +290,7 @@ decoder должен завершиться `FormatException`, не запрос
 
 ### До release acceptance
 
-1. Исправить замечания YUV-07 и YUV-20; вернуть их в READY FOR REVIEW только с
-   Flutter 3.44.9 evidence.
+1. Исправить замечание YUV-07; YUV-20 оставить в READY FOR REVIEW до Web retest.
 2. Независимо проверить READY FOR REVIEW задачи YUV-14, YUV-15, YUV-17,
    YUV-21; Web-зависимые не переводить в DONE до YUV-02.
 3. После явного native permission выполнить единым scope YUV-06, включая

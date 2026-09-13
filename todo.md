@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | REJECTED | обязательный integration Web gate | Сделать Web CI реальным обязательным gate с asset bundle |
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | READY FOR REVIEW | Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | исправить строгую проверку trailing bytes | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
@@ -427,7 +427,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-04 принята; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/loader/data_io.dart`
@@ -909,6 +909,34 @@ Web evidence по-прежнему отсутствует (YUV-02).
 - git diff --check — exit 0
 
 Web evidence по-прежнему отсутствует (YUV-02).
+
+### Независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+Исправления ранней geometry validation и cross-plane I420 metadata приняты по
+существу, однако текущий `trailerArrives()` нарушает решение 8 и DoD задачи.
+После полного payload decoder ждёт следующий event только `50 ms`. Любые
+trailing bytes, пришедшие позже этого окна, принимаются как корректный файл.
+Результат зависит от планировщика и скорости источника, хотя публичный контракт
+требует отклонять trailing garbage всегда.
+
+Одновременно выполнить оба неформализованных требования — завершать чтение
+валидного payload из произвольно долго открытого stream и гарантированно
+отклонять любой будущий trailer — невозможно без внешней границы frame. В
+текущем version-1 формате границей payload должен быть EOF. Требуется:
+
+1. удалить timeout/grace-эвристику;
+2. после последней plane дождаться EOF и отклонить любой дополнительный byte;
+3. сохранить ранний отказ по уже невалидной metadata без ожидания EOF;
+4. убрать тест, требующий успешного завершения полного payload на незакрытом
+   stream, либо вынести такой режим в отдельный явно framed/versioned API;
+5. добавить regression с trailer, задержанным более чем на 50 ms, который до
+   исправления принимается, а после исправления даёт `FormatException`.
+
+Независимо проверено на Flutter 3.44.9: analyzer чист, сфокусированный VM-набор
+110/110 проходит. Это подтверждает отсутствие побочных VM-регрессий, но не
+устраняет описанное нарушение формата. Web retest остаётся зависимым от YUV-02.
 
 ---
 
