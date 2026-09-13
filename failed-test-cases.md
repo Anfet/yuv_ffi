@@ -23,6 +23,7 @@
 | F-005 | BINDINGS-CACHE-001 | Native/Windows | RESOLVED | P1 | YUV-19 | Повторные обращения переиспользуют один экземпляр `YuvFfiBindings` |
 | F-006 | IMAGE-CACHE-KEY-001 | Native/Windows + Web/Chrome | RESOLVED | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
 | F-007 | CHROME-RUNNER-HANG-001 | Web/Chrome | OPEN | P0 | YUV-02 | Даже минимальный Flutter Web test зависает на стадии `loading` |
+| F-008 | WASM-LOADER-RETRY-001 | Web/Chrome | READY FOR RETEST | P1 | YUV-21 | Мёртвый `<script>` остаётся в DOM, поэтому retry загрузчика всегда падает |
 
 ## Текущее состояние reference matrix
 
@@ -603,6 +604,72 @@ Chrome/ChromeDriver 148.0.7778.179) дошла до `Waiting for connection from
 debug service on Web Server` и была остановлена без зарегистрированного test.
 Она не является ни успешным Web evidence, ни новым проявлением F-007: это
 другая execution path, которую требуется подтвердить required Linux CI run.
+
+---
+
+## F-008 — мёртвый `<script>` делает retry загрузчика невозможным
+
+- Case ID: `WASM-LOADER-RETRY-001`
+- Статус: `READY FOR RETEST`
+- Обнаружено: 2026-09-14, независимым ревью после run #26
+- Commit: `dd786c4`
+- Backend: Web / Chrome
+- Environment: Flutter 3.44.9, Dart 3.12.2
+- Source image: не требуется, дефект на уровне загрузчика
+- Operation: `YuvWasmLoader.ensureInitialized()` после неудачной загрузки скрипта
+- Fix task: YUV-21
+
+### Диагностический case
+
+```dart
+// Первая попытка: скрипта нет, браузер отдаёт onError.
+await expectLater(
+  YuvWasmLoader.ensureInitialized(scriptPath: '.../does_not_exist.js'),
+  throwsA(isA<StateError>()),
+);
+
+// Вторая попытка с правильными путями обязана подняться.
+await YuvWasmLoader.ensureInitialized();
+expect(YuvWasmLoader.moduleIfInitialized, isNotNull);
+```
+
+### Ожидалось
+
+Решение 2 карточки YUV-21: неудачная попытка не кэшируется, следующая явная
+попытка выполняется заново и может завершиться успехом.
+
+### Получено
+
+Вторая попытка падала с сообщением о ненайденном
+`createYuvFfiModule` — то есть с неверной причиной, маскирующей настоящую.
+
+Причина по исходному коду: `_injectScriptOnce()` помечает вставленный `<script>`
+атрибутом `data-yuv-ffi-wasm-loader` и выходит рано, если такой тег уже есть.
+При ошибке загрузки тег оставался в документе, поэтому следующая попытка
+пропускала инъекцию и искала factory, которого ни один скрипт не определил.
+
+### Артефакты и метрики
+
+- Web runtime result: `NOT RUN` на момент регистрации записи
+- VM result: неприменимо — дефект существует только на Web execution path
+- Почему не был обнаружен раньше: все шесть lifecycle-кейсов подменяли
+  инициализатор через `debugSetInitializer`, то есть заменяли собой весь
+  `_initialize` вместе с `_injectScriptOnce`, и ни разу не касались DOM
+
+### Retest
+
+YUV-21 должен выполнить оба новых case в required Chrome job: retry после
+реальной ошибки загрузки скрипта завершается успехом, и восстановленный модуль
+выполняет настоящую конверсию, а не просто возвращает не-null.
+
+### Resolution
+
+- Статус: `READY FOR RETEST`. Исправление внесено, Web-прогон ещё не выполнялся.
+- Fix commit: см. commit задачи YUV-21
+- Исправление: в ветке `onError` тег удаляется (`script.remove()`) до завершения
+  completer. Только в ветке ошибки: успешно загруженный скрипт — ровно то, что
+  маркер и должен фиксировать.
+- Web retest command/result: не заполнен
 
 ---
 

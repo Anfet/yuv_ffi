@@ -17,7 +17,7 @@
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | дополнить Web contract matrix | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | REJECTED | добавить Web tight-layout case | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | проверить настоящий Web backend revision | Сделать ключ image cache корректным без breaking change в patch-релизе |
-| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | REJECTED | исправить retry после script load error | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | REJECTED | исправлен дефект retry; нужен Web retest | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
@@ -824,6 +824,31 @@ Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
 
+### Ревью root 2026-09-14: добавлен browser-прогон codec
+
+Статус остаётся `REJECTED` до фактического Chrome-прогона.
+
+Замечание принято: реализация EOF признана корректной, но serialization suite
+никогда не исполнялся в браузере — доказательством служил только VM-прогон.
+
+Добавлен `example/integration_test/serialization_contract_test.dart`: round-trip
+всех трёх форматов, фрагментированный поток, padded layout, malformed payloads
+(пустой, обрезанный заголовок, обрыв внутри плоскостей, trailing bytes),
+неизменность целевого изображения после отказа, revision-контракт и ключевой
+для этой правки case — trailer, пришедший отдельным чанком, отклоняется, то есть
+границей кадра служит EOF.
+
+Осознанно не перенесены:
+- cases на незакрытом `StreamController` с таймаутом 5 s — они timing-sensitive,
+  их место в VM-наборе, где они и остаются;
+- header-level cases (битый JSON, неизвестная версия/формат, неверные типы) —
+  это чистый Dart внутри `YuvCodec` без расхождения между backend, VM-покрытия
+  достаточно.
+
+Suite зарегистрирован в required CI job.
+
+Не выполнено: Chrome-прогон. Тест нигде не исполнялся.
+
 ---
 
 ## YUV-08 — вернуть tight BGRA contract на Web
@@ -1270,6 +1295,25 @@ CI evidence подлинное: `getbytes_contract_test.dart` выполнен �
 BGRA/I420/legacy NV и Web case независимости buffer в обе стороны; повторить
 required Chrome job и приложить URL. Production Dart/C менять не требуется.
 
+### Доработка 2026-09-14
+
+Статус остаётся `REJECTED` до нового Chrome-прогона.
+
+Оба пункта замечания выполнены в `getbytes_contract_test.dart`:
+
+- добавлен контрольный `512x512` — теперь исполняются все четыре размера DoD
+  (`1x1`, `3x3`, `127x255`, `512x512`) для bgra/i420/legacy nv21;
+- добавлен case «getBytes returns an independent copy»: мутация возвращённого
+  буфера не меняет plane, мутация plane не меняет уже возвращённый буфер. Обе
+  стороны сверяются со снимком конкретного байта, а не с повторным чтением.
+
+Замечание по существу верное и неприятное: `YuvPlaneBytes.concat()` обещает
+независимую копию в доксроке, но до сих пор это свойство не проверял ни один
+тест — контракт был заявлен и не закреплён.
+
+Production Dart не менялся. Не выполнено: Chrome-прогон, новые cases нигде не
+исполнялись.
+
 ---
 
 ## YUV-15 — поддержать валидный padded BGRA plane одинаково на IO/Web
@@ -1501,6 +1545,27 @@ specialized и generic constructors, metadata, deep-copy и copy variants, по�
 specialized/generic case с `rowStride == width * 4`, exact bytes, deep-copy и
 `copy`/`copy(blank: true)` assertions; повторить required Chrome job. Production
 Dart/C и generated bindings менять не требуется.
+
+### Доработка 2026-09-14
+
+Статус остаётся `REJECTED` до нового Chrome-прогона.
+
+Замечание принято: файл строил только `rowStride: 16` и проверял исключительно
+padded-ветку. Добавлены три tight-case (`rowStride: 8`, то есть
+`width * 4` для 2x2 BGRA):
+
+- специализированный и generic конструкторы дают `rowStride 8`, `pixelStride 4`,
+  16 байт — tight сохраняется как tight;
+- `copy()` остаётся tight с тем же содержимым, `copy(blank: true)` остаётся
+  tight и полностью обнулён;
+- `toBgra8888()` на tight-изображении возвращает ровно 16 байт, совпадающих с
+  байтами плоскости.
+
+Padded `toBgra8888()` намеренно не проверяется: на Web он сейчас возвращает
+padding — известный открытый дефект в scope YUV-08. Утверждение о нём здесь
+роняло бы тест по причине вне этой карточки.
+
+Production Dart не менялся. Не выполнено: Chrome-прогон.
 
 ---
 
@@ -1988,6 +2053,35 @@ plane write + `markDirty`. Полную 34-точечную матрицу мо�
 минимальный smoke только с fake не засчитывается. Production cache logic менять
 не требуется без нового падения.
 
+### Доработка 2026-09-14
+
+Статус остаётся `REJECTED` до нового Chrome-прогона.
+
+Замечание принято целиком. `_FakePackageImage` сама реализовывала
+package-private `YuvRevisionAware` и сама звала `markDirty()`, поэтому тест
+доказывал работоспособность фикстуры, а не то, что настоящий `YuvImageImpl`
+двигает revision из каждого штатного мутатора. Такой тест остался бы зелёным,
+даже если бы Web backend перестал реализовывать seam.
+
+`image_cache_key_test.dart` переписан на настоящие `YuvImage`, поднятые через
+WASM-модуль. Добавлена data-driven матрица мутаторов по всем трём форматам с
+проверкой revision до и после: `fromRgba8888`, effect (`negate`, `grayscale`,
+`blackwhite`), geometry (`crop`, `flipHorizontally`, `rotate`), format
+conversion (`toYuvI420`, `toYuvNv21`, `toYuvBgra8888`), `swapNv`, успешный и
+проваленный `load`, прямая запись в `plane.bytes` + `markDirty`.
+
+Отдельно зафиксированы no-op: `rotate(rotation0)`, пустой `crop` и `toYuv*` в
+уже текущем формате обязаны оставить revision нетронутым — иначе кэш промахи-
+вался бы на каждой такой операции.
+
+Cache hit проверяется через собственный `ImageCache` Flutter
+(`containsKey`), потому что у настоящего изображения нет счётчика конверсий:
+провайдер, построенный заново поверх нетронутого изображения, обязан находиться
+в кэше, а после мутации — нет. Сторонняя реализация без seam осталась отдельным
+case и по-прежнему даёт always-miss.
+
+Production cache logic не менялся. Не выполнено: Chrome-прогон.
+
 ---
 
 ## YUV-21 — зафиксировать контракт инициализации IO/Web
@@ -1995,7 +2089,7 @@ plane write + `markDirty`. Полную 34-точечную матрицу мо�
 - Владелец: Opus
 - Приоритет: P1
 - Статус: REJECTED
-- Зависимости: YUV-01/YUV-02/YUV-19 приняты; Web retest выполнен (run 34787051514)
+- Зависимости: YUV-01/YUV-02/YUV-19 приняты; исправлен дефект retry, требуется Web retest
 - Scope:
   - `lib/src/yuv_ffi_initializer.dart`
   - `lib/src/loader/impl/loader_io.dart`
@@ -2225,34 +2319,47 @@ fake-инициализаторов и подтверждает, что loader �
 Замечание о том, что зелёный bootstrap доказывает лишь одну успешную
 инициализацию, закрыто: lifecycle-кейсы теперь исполняются отдельно от него.
 
+### Ревью root 2026-09-14: найден реальный дефект
 
-### Независимое ревью root 2026-09-14 после run #26
+Статус понижен в `REJECTED`. Замечание принято полностью — и оно серьёзнее
+остальных четырёх, потому что это не пробел в покрытии, а работающий дефект в
+production-коде, который мой же тест скрыл.
 
-Статус: `REJECTED`.
+**Дефект.** `_injectScriptOnce()` помечает вставленный `<script>` атрибутом
+`data-yuv-ffi-wasm-loader` и на следующем вызове выходит рано, если такой тег
+уже есть. Но при ошибке загрузки тег оставался в документе: `onError` только
+завершал completer ошибкой. Поэтому вторая попытка находила мёртвый тег,
+пропускала инъекцию и падала уже на поиске factory — с сообщением про
+отсутствующий `createYuvFfiModule` вместо настоящей причины. Retry,
+зафиксированный решением 2 карточки, на реальном пути был недостижим.
 
-Fake-initializer cases действительно исполняются в Chrome и подтверждают
-single-flight, очистку `_initFuture` и invocation counts для override seam.
-Однако seam подменяет `_initialize` целиком и обходит реальный script-loading
-path, где retry contract всё ещё нарушен.
+**Почему мои тесты его не поймали.** Все шесть lifecycle-кейсов подменяли
+инициализатор через `debugSetInitializer`, то есть заменяли собой весь
+`_initialize`, включая `_injectScriptOnce`. Fake проверял координацию futures и
+счётчики — и ни разу не коснулся DOM. Ревьюер прав дословно: fake initializer
+это скрывает.
 
-`_injectScriptOnce()` добавляет `<script data-yuv-ffi-wasm-loader="1">`, но при
-`onError` не удаляет его. После ошибки загрузки `_initFuture` очищается, однако
-следующая попытка видит оставшийся element и считает script уже загруженным;
-factory отсутствует, поэтому retry снова падает. Текущий тест с искусственной
-ошибкой не способен обнаружить этот дефект.
+**Исправление** (`lib/src/loader/impl/wasm_loader_web.dart`): в ветке `onError`
+тег удаляется (`script.remove()`) до завершения completer. Удаление только в
+ветке ошибки: успешно загруженный скрипт — ровно то, что маркер и должен
+фиксировать.
 
-Для повторного review требуется:
+**Новые тесты, которые идут через настоящий `_initialize`:**
+- «a retry after a real script-load failure succeeds» — первая попытка с
+  несуществующим `scriptPath` (браузер реально отдаёт `onError`), вторая с
+  дефолтами обязана подняться; проверяются `moduleIfInitialized` и
+  `debugInitCount == 2`;
+- «the module works after recovering from a failed script load» — после
+  восстановления выполняется настоящая конверсия через WASM, то есть модуль
+  именно рабочий, а не просто не-null.
 
-1. удалить/пометить failed script element так, чтобы следующий init действительно
-   повторял загрузку; не ломать concurrent injection;
-2. добавить Chrome integration regression: первая попытка с заведомо неверным
-   `scriptPath` падает, затем default asset path в том же процессе успешно
-   инициализирует реальный module;
-3. усилить stack assertion так, чтобы он доказывал сохранение исходного stack,
-   а не только его ненулевое наличие;
-4. повторить required Web job и приложить URL.
+Fake здесь не используется сознательно: подмена инициализатора — это ровно та
+слепая зона, из-за которой дефект дожил до ревью.
 
-IO/native paths, native C и generated bindings менять не требуется.
+**Не выполнено:** Chrome-прогон. Ни новый тест, ни исправление ещё нигде не
+исполнялись, поэтому карточка остаётся `REJECTED`, а дефект зарегистрирован как
+F-008.
+
 ---
 
 ## YUV-22 — определить и выровнять контракт effects
