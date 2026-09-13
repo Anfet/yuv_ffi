@@ -2,6 +2,22 @@
 name: YuvFfiBindings
 description: FFI bindings for native YUV code
 output: lib/src/functions/bindings/yuv_ffi_bingings.dart
+
 headers:
   entry-points:
     - 'src/yuv_ffi.h'
+
+exclude-all-by-default: true
+
+functions:
+  include:
+    - 'bgra8888_.*'
+    - 'nv21_.*'
+    - 'yuv420_.*'
+    - 'nvXX_to_nvYY'
+  exclude:
+    - 'nv21_to_rgb'
+
+structs:
+  include:
+    - YUVDef
