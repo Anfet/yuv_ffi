@@ -49,18 +49,15 @@ class _FakeBgraImage implements YuvImage {
   /// key works; comparing providers alone would not.
   int conversions = 0;
 
-  int _revision = 0;
-
-  @override
-  int get revision => _revision;
-
-  @override
-  void markDirty() => _revision++;
-
   /// Simulates an in-place mutation the way the real backends perform one.
+  ///
+  /// This fake deliberately does NOT implement any revision member: it stands in
+  /// for an external `implements YuvImage` written against 0.2.4, and proves
+  /// such a class still compiles and still participates in cache invalidation
+  /// through the extension API.
   void mutateInPlace() {
     _bytes[0] = (_bytes[0] + 1) & 0xFF;
-    _revision++;
+    markDirty();
   }
 
   @override

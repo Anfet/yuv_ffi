@@ -11,11 +11,12 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane_bytes.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 import 'defs/yuv_def.dart';
 
-class YuvImageImpl implements YuvImage {
+class YuvImageImpl implements YuvImage, YuvRevisionAware {
   List<YuvPlane> _planes = const [];
   YuvFileFormat _format;
   int _width;
@@ -23,10 +24,10 @@ class YuvImageImpl implements YuvImage {
   int _revision = 0;
 
   @override
-  int get revision => _revision;
+  int get internalRevision => _revision;
 
   @override
-  void markDirty() => _revision++;
+  void bumpInternalRevision() => _revision++;
 
   @override
   YuvFileFormat get format => _format;

@@ -12,10 +12,11 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane_bytes.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 /// Web backend implementation backed by WASM exports where available.
-class YuvImageImpl implements YuvImage {
+class YuvImageImpl implements YuvImage, YuvRevisionAware {
   YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
       : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
@@ -77,10 +78,10 @@ class YuvImageImpl implements YuvImage {
   int _revision = 0;
 
   @override
-  int get revision => _revision;
+  int get internalRevision => _revision;
 
   @override
-  void markDirty() => _revision++;
+  void bumpInternalRevision() => _revision++;
 
   @override
   YuvFileFormat get format => _format;

@@ -18,7 +18,7 @@
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | READY FOR REVIEW | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
-| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | source compatibility; Web retest: YUV-02 | Сделать ключ image cache корректным без breaking change в patch-релизе |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | source compatibility; Web retest: YUV-02 | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
@@ -1123,7 +1123,7 @@ checkout, поэтому на runner файла не существует и job
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: REJECTED
+- Статус: READY FOR REVIEW
 - Зависимости: implementation разблокирована принятием YUV-01; финальный реальный Chrome retest зависит от YUV-02; зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
@@ -1290,6 +1290,88 @@ Native C permission:
 3. Runtime Web evidence отсутствует, а локальные проверки результата записаны
    для Flutter `3.38.10`; до повторного прогона на Flutter `3.44.9` задача не
    может вернуться в `READY FOR REVIEW`.
+
+### Результат после исправления замечаний
+
+```text
+Статус: READY FOR REVIEW
+Commit: fix: moved frame revision off the public interface
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_revision.dart (новый)
+- test/yuv_image_source_compatibility_test.dart (новый)
+- lib/src/yuv/yuv.dart
+- lib/yuv_ffi.dart
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- lib/src/yuv/impl/yuv_stub.dart
+- lib/src/widgets/yuv_image_widget.dart
+- test/yuv_image_widget_test.dart
+
+По замечанию 1 (breaking change в publicном интерфейсе):
+- `revision` и `markDirty()` полностью удалены из `abstract interface class
+  YuvImage`. Проверено: `grep` по `lib/src/yuv/yuv.dart` не находит ни одного
+  упоминания.
+- Замечание принято без возражений: предыдущая реализация действительно
+  ломала внешний `implements YuvImage`, и собственный отчёт это признавал,
+  но задача всё равно была отправлена на ревью. Это была ошибка исполнителя.
+
+По замечанию 2 (куда вынести revision state):
+- Выбран первый из предложенных вариантов, без повышения версии до `0.3.0`.
+- Package-private `YuvRevisionAware` (`internalRevision` /
+  `bumpInternalRevision()`) реализуют только три backend пакета. Тип не
+  экспортируется из `lib/yuv_ffi.dart`, поэтому внешней реализации знать о нём
+  не нужно.
+- Ручная invalidation предоставлена source-compatible extension
+  `YuvImageInvalidation on YuvImage` (`revision`, `markDirty()`). Extension
+  экспортируется явно через `show YuvImageInvalidation`, иначе extension-члены
+  были бы не видны consumers.
+- Чужая реализация, не реализующая `YuvRevisionAware`, отслеживается через
+  `Expando<int>` рядом с объектом, поэтому тоже участвует в инвалидации кэша.
+- Счётчики и все 34 точки инкремента в io/web/stub не менялись: контракт
+  «ровно один раз» сохранён.
+
+По замечанию 3 (SDK и Web evidence):
+- SDK-часть закрыта: все проверки выполнены на Flutter `3.44.9` / Dart
+  `3.12.2` (`/d/.important/flutter-3.49/flutter/bin/flutter`, банер
+  подтверждает `3.44.9 • revision 6b182d2c75`).
+- Web-часть НЕ закрыта: реального Chrome-прогона по-прежнему нет, F-007/YUV-02
+  не сняты. Это заявлено прямо, а не замаскировано: принимать задачу как
+  проверенную на Web нельзя.
+
+Доказательство source compatibility:
+- Новый `test/yuv_image_source_compatibility_test.dart` содержит
+  `_LegacyExternalImage implements YuvImage`, написанный в объёме API `0.2.4` и
+  не упоминающий revision. Он компилируется и проходит 4/4.
+- Fake в widget-тесте тоже лишён revision-членов и теперь служит вторым таким
+  фикстуром.
+- Если revision-члены вернутся в интерфейс, оба файла перестанут
+  компилироваться — тест упадёт на этапе сборки.
+- Сильное косвенное подтверждение: 35 существующих обращений
+  `image.revision` / `image.markDirty()` в тестах НЕ правились и компилируются
+  как extension-вызовы.
+
+Проверки (все на Flutter 3.44.9):
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test --no-pub test/yuv_image_source_compatibility_test.dart — exit 0,
+  4 tests passed
+- flutter test --no-pub test/yuv_image_revision_test.dart
+  test/yuv_image_widget_test.dart — exit 0, 25 tests passed
+- flutter test --no-pub (полный VM suite) — 261 passed / 31 failed против
+  baseline 257 passed / 31 failed, снятого на том же 3.44.9 до правок:
+  +4 новых теста, новых падений нет
+- dart format --output=none --set-exit-if-changed --line-length 150 — exit 0
+- git diff --check — exit 0
+
+Остаточные риски:
+- `Expando` не работает на объектах, запрещающих attached properties
+  (например, на literal-строках и числах). Для `YuvImage` это неприменимо, но
+  ограничение стоит знать.
+- Web runtime evidence отсутствует до YUV-02; F-006 остаётся
+  `READY FOR RETEST`.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
 
 ---
 

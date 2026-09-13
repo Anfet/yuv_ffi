@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 /// Flutter widget that renders a [YuvImage].
@@ -65,7 +66,7 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
   final int _revision;
 
   /// Creates an image provider for [image].
-  YuvImageProvider(this.image) : _revision = image.revision;
+  YuvImageProvider(this.image) : _revision = YuvRevision.revisionOf(image);
 
   @override
   Future<YuvImageProvider> obtainKey(ImageConfiguration configuration) => SynchronousFuture(this);
