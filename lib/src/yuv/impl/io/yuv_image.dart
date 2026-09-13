@@ -389,12 +389,31 @@ class YuvImageImpl implements YuvImage {
     if (bytes.length != expectedLength) {
       throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${width}x$height');
     }
+    if (format == YuvFileFormat.bgra8888 && !YuvGeometry.isTightBgra(yPlane, width)) {
+      // The BGRA C converter addresses its destination as a tight buffer. Use
+      // a tight staging image, then copy only logical four-byte samples into
+      // the caller's layout so row/pixel padding remains untouched.
+      final tight = YuvImageImpl.bgra(width, height);
+      tight.fromRgba8888(bytes);
+      for (int row = 0; row < height; row++) {
+        for (int column = 0; column < width; column++) {
+          final source = row * tight.yPlane.rowStride + column * 4;
+          final destination = row * yPlane.rowStride + column * yPlane.pixelStride;
+          yPlane.bytes.setRange(destination, destination + 4, tight.yPlane.bytes, source);
+        }
+      }
+      return;
+    }
     final rgbaPlaneLength = bytes.length;
     final rgbaPtr = NativeAllocator.instance.allocate<Uint8>(rgbaPlaneLength);
     final YUVDefClass def;
     try {
       rgbaPtr.asTypedList(bytes.length).setRange(0, bytes.length, bytes);
-      def = YUVDefClass.template(this);
+      // Seed the native destination with the current plane contents. The C
+      // conversion writes logical samples only; copying first preserves row
+      // and pixel padding instead of replacing public plane bytes with the
+      // zeroed backing allocation.
+      def = YUVDefClass(this);
     } catch (_) {
       NativeAllocator.instance.free(rgbaPtr);
       rethrow;

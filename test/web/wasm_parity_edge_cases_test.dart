@@ -124,6 +124,63 @@ void main() {
     expect(custom.toBgra8888(), orderedEquals(baseline.toBgra8888()));
   });
 
+  test('fromRgba8888 preserves padded destination bytes', () {
+    const w = 3;
+    const h = 5;
+    final rgba = _buildRgbaPattern(w, h);
+    final y = Uint8List(h * (w * 2 + 3))..fillRange(0, h * (w * 2 + 3), 0xA5);
+    final uvW = (w + 1) ~/ 2;
+    final uvH = (h + 1) ~/ 2;
+    final u = Uint8List(uvH * (uvW * 2 + 2))..fillRange(0, uvH * (uvW * 2 + 2), 0xA5);
+    final v = Uint8List.fromList(u);
+    final image = YuvImage.i420(
+      w,
+      h,
+      planes: [
+        YuvPlane(h, w * 2 + 3, 2, y),
+        YuvPlane(uvH, uvW * 2 + 2, 2, u),
+        YuvPlane(uvH, uvW * 2 + 2, 2, v),
+      ],
+    )..fromRgba8888(rgba);
+
+    _expectPadding(image.yPlane, logicalWidth: w, sampleBytes: 1);
+    _expectPadding(image.uPlane, logicalWidth: uvW, sampleBytes: 1);
+    _expectPadding(image.vPlane, logicalWidth: uvW, sampleBytes: 1);
+  });
+
+  test('swapNv preserves padded layout and swaps only UV pairs', () {
+    const w = 5;
+    const h = 3;
+    const yStride = 9;
+    const uvStride = 9;
+    final y = Uint8List(h * yStride)..fillRange(0, h * yStride, 0xA5);
+    final uv = Uint8List(((h + 1) ~/ 2) * uvStride)..fillRange(0, ((h + 1) ~/ 2) * uvStride, 0xA5);
+    for (int row = 0; row < (h + 1) ~/ 2; row++) {
+      for (int column = 0; column < (w + 1) ~/ 2; column++) {
+        final offset = row * uvStride + column * 2;
+        uv[offset] = 40 + column;
+        uv[offset + 1] = 180 + row;
+      }
+    }
+    final image = YuvImage.nv21(
+      w,
+      h,
+      planes: [YuvPlane(h, yStride, 1, y), YuvPlane((h + 1) ~/ 2, uvStride, 2, uv)],
+    )..swapNv();
+
+    expect(image.yPlane.rowStride, yStride);
+    expect(image.uPlane.rowStride, uvStride);
+    for (int row = 0; row < (h + 1) ~/ 2; row++) {
+      for (int column = 0; column < (w + 1) ~/ 2; column++) {
+        final offset = row * uvStride + column * 2;
+        expect(image.uPlane.bytes[offset], 180 + row);
+        expect(image.uPlane.bytes[offset + 1], 40 + column);
+      }
+    }
+    _expectPadding(image.yPlane, logicalWidth: w, sampleBytes: 1);
+    _expectPadding(image.uPlane, logicalWidth: (w + 1) ~/ 2, sampleBytes: 2, expected: 0);
+  });
+
   test('crop clamps out-of-bounds rect and keeps deterministic output', () {
     const w = 9;
     const h = 7;
@@ -205,6 +262,28 @@ double _mae(Uint8List a, Uint8List b) {
     sum += (a[i] - b[i]).abs();
   }
   return sum / a.length;
+}
+
+void _expectPadding(
+  YuvPlane plane, {
+  required int logicalWidth,
+  required int sampleBytes,
+  int expected = 0xA5,
+}) {
+  for (int row = 0; row < plane.height; row++) {
+    final logicalOffsets = <int>{};
+    for (int column = 0; column < logicalWidth; column++) {
+      final start = column * plane.pixelStride;
+      for (int byte = 0; byte < sampleBytes; byte++) {
+        logicalOffsets.add(start + byte);
+      }
+    }
+    for (int offset = 0; offset < plane.rowStride; offset++) {
+      if (!logicalOffsets.contains(offset)) {
+        expect(plane.bytes[row * plane.rowStride + offset], expected);
+      }
+    }
+  }
 }
 
 YuvPlane _copyPlaneWithPadding({

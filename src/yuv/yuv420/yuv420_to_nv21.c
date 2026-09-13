@@ -1,8 +1,8 @@
 #include "../yuv.h"
 
-// I420 (Y, U, V) -> NV21 (Y + interleaved VU).
+// I420 -> the project's legacy `nv21` label (interleaved UV/NV12-like chroma).
 // dst->y  : Y plane (stride = dst->yRowStride, usually W)
-// dst->u  : VU plane (stride = dst->uvRowStride, MUST be W)
+// dst->u  : UV plane (stride = dst->uvRowStride)
 // dst->v  : unused (may be NULL)
 FFI_PLUGIN_EXPORT void yuv420_i420_to_nv21(const YUVDef *src, const YUVDef *dst) {
     const int W = src->width;
@@ -28,8 +28,7 @@ FFI_PLUGIN_EXPORT void yuv420_i420_to_nv21(const YUVDef *src, const YUVDef *dst)
         }
     }
 
-    // 2) Chroma: planar I420 U/V -> NV21 interleaved (V,U) in a row of width W.
-    // Every destination VU row must be W bytes long: a (V,U) pair per i.
+    // 2) Chroma: planar I420 U/V -> interleaved (U,V).
     for (int j = 0; j < ch; ++j) {
         const uint8_t *urow = src->u + (size_t)j * src->uvRowStride;
         const uint8_t *vrow = src->v + (size_t)j * src->uvRowStride;

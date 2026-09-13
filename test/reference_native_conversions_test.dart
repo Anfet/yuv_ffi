@@ -220,13 +220,43 @@ String _planesHash(Iterable<YuvPlane> planes) => sha256Hex(_concat(planes.map((p
 
 YuvImage _newImage(YuvFileFormat format, int width, int height, List<YuvPlane> planes, bool blank) {
   if (blank) {
-    planes = planes.map((plane) => YuvPlane(plane.height, plane.rowStride, plane.pixelStride)).toList();
+    planes = _blankLogicalSamples(format, width, planes);
   }
   return switch (format) {
+    // The named IO BGRA constructor intentionally normalizes padded input to a
+    // tight plane. The explicit-format constructor is required here because
+    // YUV-05 exercises fromRgba8888 into the custom destination layout pinned
+    // by the manifest.
+    YuvFileFormat.bgra8888 when blank => YuvImage(format, width, height, planes: planes),
     YuvFileFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes),
     YuvFileFormat.i420 => YuvImage.i420(width, height, planes: planes),
     YuvFileFormat.nv21 => YuvImage.nv21(width, height, planes: planes),
   };
+}
+
+List<YuvPlane> _blankLogicalSamples(
+  YuvFileFormat format,
+  int width,
+  List<YuvPlane> planes,
+) {
+  final chromaWidth = (width + 1) ~/ 2;
+  return List<YuvPlane>.generate(planes.length, (planeIndex) {
+    final plane = planes[planeIndex];
+    final bytes = Uint8List.fromList(plane.bytes);
+    final logicalWidth = planeIndex == 0 ? width : chromaWidth;
+    final sampleBytes = switch (format) {
+      YuvFileFormat.bgra8888 => 4,
+      YuvFileFormat.nv21 when planeIndex == 1 => 2,
+      _ => 1,
+    };
+    for (var row = 0; row < plane.height; row++) {
+      for (var column = 0; column < logicalWidth; column++) {
+        final offset = row * plane.rowStride + column * plane.pixelStride;
+        bytes.fillRange(offset, offset + sampleBytes, 0);
+      }
+    }
+    return YuvPlane(plane.height, plane.rowStride, plane.pixelStride, bytes);
+  });
 }
 
 YuvFileFormat _format(String value) => switch (value) {

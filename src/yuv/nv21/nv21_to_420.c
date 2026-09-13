@@ -1,9 +1,9 @@
 #include "../yuv.h"
 
 
-// NV21 (Y + interleaved VU) -> I420 (Y + planar U, V)
-// src->y : NV21 Y plane
-// src->u : interleaved VU (row width = W)
+// Legacy `nv21` label (Y + interleaved UV/NV12-like chroma) -> I420.
+// src->y : luma plane
+// src->u : interleaved UV (row width = 2 * ceil(W / 2))
 // src->v : unused
 // dst    : I420, where dst->u is the U plane and dst->v the V plane
 //          (both sized W/2 x H/2)
@@ -31,9 +31,9 @@ FFI_PLUGIN_EXPORT void nv21_to_i420(const YUVDef *src, const YUVDef *dst) {
         }
     }
 
-    // 2) Chroma: split the interleaved VU data into planar U and V.
+    // 2) Chroma: split the interleaved UV data into planar U and V.
     for (int j = 0; j < ch; ++j) {
-        const uint8_t *sVU = src->u + (size_t)j * src->uvRowStride; // NV21 row: V,U,V,U,... (length W)
+        const uint8_t *sUV = src->u + (size_t)j * src->uvRowStride;
         // Destination rows are addressed with the destination's own stride.
         uint8_t *dU = dst->u + (size_t)j * dst->uvRowStride;
         uint8_t *dV = dst->v + (size_t)j * dst->uvRowStride;
@@ -41,14 +41,14 @@ FFI_PLUGIN_EXPORT void nv21_to_i420(const YUVDef *src, const YUVDef *dst) {
         if (dst->uvPixelStride == 1) {
             // fast path
             for (int i = 0; i < cw; ++i) {
-                dU[i] = sVU[(i << 1) + 0]; // U
-                dV[i] = sVU[(i << 1) + 1]; // V
+                dU[i] = sUV[(i << 1) + 0]; // U
+                dV[i] = sUV[(i << 1) + 1]; // V
             }
         } else {
             // general case: the destination U/V planes have pixelStride > 1
             for (int i = 0; i < cw; ++i) {
-                dU[i * dst->uvPixelStride] = sVU[(i << 1) + 0];
-                dV[i * dst->uvPixelStride] = sVU[(i << 1) + 1];
+                dU[i * dst->uvPixelStride] = sUV[(i << 1) + 0];
+                dV[i * dst->uvPixelStride] = sUV[(i << 1) + 1];
             }
         }
     }

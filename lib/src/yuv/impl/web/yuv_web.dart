@@ -355,6 +355,21 @@ class YuvImageImpl implements YuvImage {
     if (bytes.length != expectedLength) {
       throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${_width}x$_height');
     }
+    if (_format == YuvFileFormat.bgra8888 && !YuvGeometry.isTightBgra(yPlane, _width)) {
+      // The shared BGRA C implementation writes a tight destination. Stage in
+      // that supported layout and copy only logical samples back so Web and IO
+      // preserve identical row/pixel padding.
+      final tight = YuvImageImpl.bgra(_width, _height);
+      tight.fromRgba8888(bytes);
+      for (int row = 0; row < _height; row++) {
+        for (int column = 0; column < _width; column++) {
+          final source = row * tight.yPlane.rowStride + column * _bytesPerPixel;
+          final destination = row * yPlane.rowStride + column * yPlane.pixelStride;
+          yPlane.bytes.setRange(destination, destination + _bytesPerPixel, tight.yPlane.bytes, source);
+        }
+      }
+      return;
+    }
 
     _callFromRgba(_symbolForFormat(i420: 'yuv420_from_rgba8888', nv21: 'nv21_from_rgba8888', bgra: 'bgra8888_from_rgba8888'), bytes);
   }

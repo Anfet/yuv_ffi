@@ -22,6 +22,33 @@ void main() {
   List<int> paddingTail(YuvPlane plane, int row, int activeBytes) =>
       plane.bytes.sublist(row * plane.rowStride + activeBytes, (row + 1) * plane.rowStride);
 
+  YuvPlane canaryPlane(int height, int rowStride, int pixelStride) => filledPlane(height, rowStride, pixelStride, 0xA5);
+
+  void expectPaddingUntouched(
+    YuvPlane plane, {
+    required int logicalWidth,
+    required int sampleBytes,
+  }) {
+    for (int row = 0; row < plane.height; row++) {
+      final logicalOffsets = <int>{};
+      for (int column = 0; column < logicalWidth; column++) {
+        final start = column * plane.pixelStride;
+        for (int byte = 0; byte < sampleBytes; byte++) {
+          logicalOffsets.add(start + byte);
+        }
+      }
+      for (int offset = 0; offset < plane.rowStride; offset++) {
+        if (!logicalOffsets.contains(offset)) {
+          expect(
+            plane.bytes[row * plane.rowStride + offset],
+            0xA5,
+            reason: 'padding byte $offset in row $row was modified',
+          );
+        }
+      }
+    }
+  }
+
   group('native stride and odd-size safety', () {
     test('fromRgba8888 reads tight RGBA into a padded Y plane', () {
       const width = 4;
@@ -58,6 +85,91 @@ void main() {
           expect(image.yPlane.getPixel(x, y), greaterThan(200), reason: 'luma at ($x, $y) was not written from the tight RGBA row');
         }
       }
+    });
+
+    test('fromRgba8888 preserves row and pixel padding in every format', () {
+      const width = 3;
+      const height = 5;
+      final chromaWidth = (width + 1) ~/ 2;
+      final chromaHeight = (height + 1) ~/ 2;
+      final rgba = Uint8List(width * height * 4);
+      for (int i = 0; i < rgba.length; i += 4) {
+        rgba[i] = (20 + i) & 0xFF;
+        rgba[i + 1] = (90 + i) & 0xFF;
+        rgba[i + 2] = (170 + i) & 0xFF;
+        rgba[i + 3] = 255;
+      }
+
+      final baselineBgra = YuvImage.bgra(width, height)..fromRgba8888(rgba);
+      final paddedBgra = YuvImage(
+        YuvFileFormat.bgra8888,
+        width,
+        height,
+        planes: [canaryPlane(height, width * 4 + 7, 4)],
+      )..fromRgba8888(rgba);
+      for (int row = 0; row < height; row++) {
+        for (int column = 0; column < width; column++) {
+          final expected = row * baselineBgra.yPlane.rowStride + column * 4;
+          final actual = row * paddedBgra.yPlane.rowStride + column * 4;
+          expect(
+            paddedBgra.yPlane.bytes.sublist(actual, actual + 4),
+            orderedEquals(baselineBgra.yPlane.bytes.sublist(expected, expected + 4)),
+          );
+        }
+      }
+      expectPaddingUntouched(paddedBgra.yPlane, logicalWidth: width, sampleBytes: 4);
+
+      final baselineI420 = YuvImage.i420(width, height)..fromRgba8888(rgba);
+      final paddedI420 = YuvImage.i420(
+        width,
+        height,
+        planes: [
+          canaryPlane(height, width * 2 + 3, 2),
+          canaryPlane(chromaHeight, chromaWidth * 2 + 2, 2),
+          canaryPlane(chromaHeight, chromaWidth * 2 + 2, 2),
+        ],
+      )..fromRgba8888(rgba);
+      for (int row = 0; row < height; row++) {
+        for (int column = 0; column < width; column++) {
+          expect(paddedI420.yPlane.getPixel(column, row), baselineI420.yPlane.getPixel(column, row));
+        }
+      }
+      for (int row = 0; row < chromaHeight; row++) {
+        for (int column = 0; column < chromaWidth; column++) {
+          expect(paddedI420.uPlane.getPixel(column, row), baselineI420.uPlane.getPixel(column, row));
+          expect(paddedI420.vPlane.getPixel(column, row), baselineI420.vPlane.getPixel(column, row));
+        }
+      }
+      expectPaddingUntouched(paddedI420.yPlane, logicalWidth: width, sampleBytes: 1);
+      expectPaddingUntouched(paddedI420.uPlane, logicalWidth: chromaWidth, sampleBytes: 1);
+      expectPaddingUntouched(paddedI420.vPlane, logicalWidth: chromaWidth, sampleBytes: 1);
+
+      final baselineNv = YuvImage.nv21(width, height)..fromRgba8888(rgba);
+      final paddedNv = YuvImage.nv21(
+        width,
+        height,
+        planes: [
+          canaryPlane(height, width * 2 + 3, 2),
+          canaryPlane(chromaHeight, chromaWidth * 2 + 3, 2),
+        ],
+      )..fromRgba8888(rgba);
+      for (int row = 0; row < height; row++) {
+        for (int column = 0; column < width; column++) {
+          expect(paddedNv.yPlane.getPixel(column, row), baselineNv.yPlane.getPixel(column, row));
+        }
+      }
+      for (int row = 0; row < chromaHeight; row++) {
+        for (int column = 0; column < chromaWidth; column++) {
+          final actual = row * paddedNv.uPlane.rowStride + column * 2;
+          final expected = row * baselineNv.uPlane.rowStride + column * 2;
+          expect(
+            paddedNv.uPlane.bytes.sublist(actual, actual + 2),
+            orderedEquals(baselineNv.uPlane.bytes.sublist(expected, expected + 2)),
+          );
+        }
+      }
+      expectPaddingUntouched(paddedNv.yPlane, logicalWidth: width, sampleBytes: 1);
+      expectPaddingUntouched(paddedNv.uPlane, logicalWidth: chromaWidth, sampleBytes: 2);
     });
 
     test('I420 -> NV21 does not overwrite past a narrower destination Y row', () {
@@ -110,6 +222,55 @@ void main() {
           expect(src.yPlane.getPixel(x, y), 0x44);
         }
       }
+    });
+
+    test('I420 and NV conversions copy logical luma with custom pixel stride', () {
+      const width = 5;
+      const height = 3;
+      final expected = List<int>.generate(width * height, (index) => 20 + index);
+
+      YuvPlane stridedLuma() {
+        final plane = canaryPlane(height, width * 3 + 4, 3);
+        for (int row = 0; row < height; row++) {
+          for (int column = 0; column < width; column++) {
+            plane.setPixel(column, row, expected[row * width + column]);
+          }
+        }
+        return plane;
+      }
+
+      final i420 = YuvImage.i420(
+        width,
+        height,
+        planes: [
+          stridedLuma(),
+          filledPlane(2, 3, 1, 100),
+          filledPlane(2, 3, 1, 150),
+        ],
+      )..toYuvNv21();
+      expect(
+        [
+          for (int row = 0; row < height; row++)
+            for (int column = 0; column < width; column++) i420.yPlane.getPixel(column, row)
+        ],
+        orderedEquals(expected),
+      );
+
+      final nv = YuvImage.nv21(
+        width,
+        height,
+        planes: [
+          stridedLuma(),
+          filledPlane(2, 6, 2, 128),
+        ],
+      )..toYuvI420();
+      expect(
+        [
+          for (int row = 0; row < height; row++)
+            for (int column = 0; column < width; column++) nv.yPlane.getPixel(column, row)
+        ],
+        orderedEquals(expected),
+      );
     });
 
     test('swapNv keeps padded chroma padding untouched', () {
@@ -183,6 +344,57 @@ void main() {
           reason: 'NV21 ${width}x$height left the chroma plane entirely zero',
         );
         expect(nv21.uPlane.height, (height + 1) ~/ 2);
+      }
+    });
+
+    test('every odd-edge chroma sample is written in UV order', () {
+      for (final size in const <({int width, int height})>[
+        (width: 1, height: 1),
+        (width: 3, height: 5),
+        (width: 127, height: 255),
+      ]) {
+        final rgba = Uint8List(size.width * size.height * 4);
+        for (int i = 0; i < rgba.length; i += 4) {
+          rgba[i] = 255;
+          rgba[i + 3] = 255;
+        }
+        final chromaWidth = (size.width + 1) ~/ 2;
+        final chromaHeight = (size.height + 1) ~/ 2;
+        final i420 = YuvImage.i420(
+          size.width,
+          size.height,
+          planes: [
+            canaryPlane(size.height, size.width + 3, 1),
+            canaryPlane(chromaHeight, chromaWidth + 2, 1),
+            canaryPlane(chromaHeight, chromaWidth + 2, 1),
+          ],
+        )..fromRgba8888(rgba);
+        final nv = YuvImage.nv21(
+          size.width,
+          size.height,
+          planes: [
+            canaryPlane(size.height, size.width + 3, 1),
+            canaryPlane(chromaHeight, chromaWidth * 2 + 3, 2),
+          ],
+        )..fromRgba8888(rgba);
+
+        final expectedU = i420.uPlane.getPixel(0, 0);
+        final expectedV = i420.vPlane.getPixel(0, 0);
+        expect(expectedU, isNot(expectedV), reason: 'fixture must distinguish U from V');
+        for (int row = 0; row < chromaHeight; row++) {
+          for (int column = 0; column < chromaWidth; column++) {
+            expect(i420.uPlane.getPixel(column, row), expectedU, reason: 'I420 U at ($column, $row) for $size');
+            expect(i420.vPlane.getPixel(column, row), expectedV, reason: 'I420 V at ($column, $row) for $size');
+            final offset = row * nv.uPlane.rowStride + column * 2;
+            expect(nv.uPlane.bytes[offset], expectedU, reason: 'NV U at ($column, $row) for $size');
+            expect(nv.uPlane.bytes[offset + 1], expectedV, reason: 'NV V at ($column, $row) for $size');
+          }
+        }
+        expectPaddingUntouched(i420.yPlane, logicalWidth: size.width, sampleBytes: 1);
+        expectPaddingUntouched(i420.uPlane, logicalWidth: chromaWidth, sampleBytes: 1);
+        expectPaddingUntouched(i420.vPlane, logicalWidth: chromaWidth, sampleBytes: 1);
+        expectPaddingUntouched(nv.yPlane, logicalWidth: size.width, sampleBytes: 1);
+        expectPaddingUntouched(nv.uPlane, logicalWidth: chromaWidth, sampleBytes: 2);
       }
     });
 
