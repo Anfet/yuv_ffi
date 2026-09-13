@@ -15,7 +15,7 @@
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | дополнить Web contract matrix | Убрать выравнивающий хвост из IO/Web `getBytes()` |
-| [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | — | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
+| [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | REJECTED | добавить Web tight-layout case | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
@@ -1276,7 +1276,7 @@ required Chrome job и приложить URL. Production Dart/C менять н
 
 - Владелец: Terra
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-02/YUV-04 приняты; Web retest выполнен (run 34787051514)
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`, BGRA constructor
@@ -1483,6 +1483,24 @@ Chrome 152.0.7977.82, Flutter 3.44.9, Linux, WASM собран в том же п
 специализированного и generic конструкторов на padded plane, `ArgumentError`
 вместо `RangeError`, deep copy в обе стороны, `copy(blank: true)` обнуляет всю
 32-байтовую аллокацию. F-004 переведён в `RESOLVED`.
+
+### Независимое ревью root 2026-09-14 после run #26
+
+Статус: `REJECTED`.
+
+F-004 и padded contract подтверждены настоящим Chrome run: specialized/generic
+constructors согласованы, invalid padded layout даёт `ArgumentError`, deep copy
+и blank copy проверены. Эти результаты приняты, F-004 остаётся `RESOLVED`.
+
+Не выполнен один явный пункт исходного DoD: integration target не содержит
+tight BGRA constructor/copy case. Bootstrap создаёт tight image, но не сверяет
+specialized и generic constructors, metadata, deep-copy и copy variants, поэтому
+не заменяет отсутствующий contract case.
+
+Для повторного review добавить в `padded_bgra_constructor_test.dart` tight
+specialized/generic case с `rowStride == width * 4`, exact bytes, deep-copy и
+`copy`/`copy(blank: true)` assertions; повторить required Chrome job. Production
+Dart/C и generated bindings менять не требуется.
 
 ---
 
