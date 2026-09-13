@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -106,39 +107,39 @@ void main() {
       await expectLater(YuvImage.i420(2, 2).load(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
     });
 
-    test('a header that is not JSON', () {
+    test('a header that is not JSON', () async {
       final payload = _payloadWithHeader('this is not json');
-      expect(() => YuvCodec.decode(payload), throwsFormatException);
+      await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
-    test('a header that is a JSON array rather than an object', () {
+    test('a header that is a JSON array rather than an object', () async {
       final payload = _payloadWithHeader(jsonEncode(<int>[1, 2, 3]));
-      expect(() => YuvCodec.decode(payload), throwsFormatException);
+      await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
-    test('an unsupported version', () {
+    test('an unsupported version', () async {
       final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 99, 'format': 'i420', 'width': 8, 'height': 8}));
-      expect(() => YuvCodec.decode(payload), throwsFormatException);
+      await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
-    test('a missing version', () {
+    test('a missing version', () async {
       final payload = _payloadWithHeader(jsonEncode(<String, Object>{'format': 'i420', 'width': 8, 'height': 8}));
-      expect(() => YuvCodec.decode(payload), throwsFormatException);
+      await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
-    test('an unknown format name', () {
+    test('an unknown format name', () async {
       final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 1, 'format': 'rgb565', 'width': 8, 'height': 8}));
-      expect(() => YuvCodec.decode(payload), throwsFormatException);
+      await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
-    test('dimensions of the wrong type', () {
+    test('dimensions of the wrong type', () async {
       final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': '8', 'height': 8}));
-      expect(() => YuvCodec.decode(payload), throwsFormatException);
+      await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
-    test('non-positive dimensions', () {
+    test('non-positive dimensions', () async {
       final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': 0, 'height': 8}));
-      expect(() => YuvCodec.decode(payload), throwsFormatException);
+      await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
     test('a wrong plane count for the format', () async {
@@ -146,13 +147,13 @@ void main() {
       // The plane count byte sits right after the header block.
       final headerLength = ByteData.view(payload.buffer).getUint32(0, Endian.little);
       final patched = Uint8List.fromList(payload)..[4 + headerLength] = 2;
-      expect(() => YuvCodec.decode(patched), throwsFormatException);
+      await expectLater(YuvCodec.decode(patched), throwsFormatException);
     });
 
     test('trailing bytes after a complete payload', () async {
       final payload = await validPayload();
       final withTrailer = Uint8List.fromList(<int>[...payload, 0, 0, 0]);
-      expect(() => YuvCodec.decode(withTrailer), throwsFormatException);
+      await expectLater(YuvCodec.decode(withTrailer), throwsFormatException);
     });
 
     test('a plane length that disagrees with its declared geometry', () async {
@@ -163,7 +164,7 @@ void main() {
       final patched = Uint8List.fromList(payload);
       // Claim one more row than the bytes can hold.
       ByteData.view(patched.buffer).setUint32(firstPlane, 999, Endian.little);
-      expect(() => YuvCodec.decode(patched), throwsFormatException);
+      await expectLater(YuvCodec.decode(patched), throwsFormatException);
     });
 
     test('a plane length far beyond what remains', () async {
@@ -172,7 +173,7 @@ void main() {
       final firstPlaneLength = 4 + headerLength + 1 + 12;
       final patched = Uint8List.fromList(payload);
       ByteData.view(patched.buffer).setUint32(firstPlaneLength, 0x7FFFFFFF, Endian.little);
-      expect(() => YuvCodec.decode(patched), throwsFormatException);
+      await expectLater(YuvCodec.decode(patched), throwsFormatException);
     });
   });
 
@@ -214,10 +215,10 @@ void main() {
   });
 
   group('codec safety does not depend on assert', () {
-    test('a truncated buffer is rejected by an explicit check', () {
+    test('a truncated buffer is rejected by an explicit check', () async {
       // Run the decoder directly so the result does not depend on whether
       // asserts are enabled, which is what the old reader relied on.
-      expect(() => YuvCodec.decode(Uint8List(2)), throwsFormatException);
+      await expectLater(YuvCodec.decode(Uint8List(2)), throwsFormatException);
     });
 
     test('the declared version is the one the encoder writes', () async {
@@ -226,6 +227,98 @@ void main() {
       final header = jsonDecode(utf8.decode(payload.sublist(4, 4 + headerLength))) as Map<String, dynamic>;
 
       expect(header['version'], YuvCodec.version);
+    });
+  });
+
+  group('load() and the revision contract', () {
+    test('a successful load advances the revision exactly once', () async {
+      final payload = await validPayload(width: 16, height: 16);
+      final target = YuvImage.i420(2, 2);
+      final before = target.revision;
+
+      await target.load(asStream(payload));
+
+      expect(target.revision, before + 1);
+    });
+
+    test('a fragmented successful load still advances it exactly once', () async {
+      final payload = await validPayload(width: 16, height: 16);
+      final target = YuvImage.i420(2, 2);
+      final before = target.revision;
+
+      await target.load(asFragmentedStream(payload));
+
+      expect(target.revision, before + 1);
+    });
+
+    test('a rejected payload leaves the revision untouched', () async {
+      final payload = await validPayload(width: 16, height: 16);
+      final target = YuvImage.i420(2, 2);
+      final before = target.revision;
+
+      await expectLater(target.load(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
+
+      expect(target.revision, before, reason: 'a failed load must not look like a new frame');
+    });
+
+    test('trailing garbage leaves the revision untouched', () async {
+      final payload = await validPayload(width: 16, height: 16);
+      final target = YuvImage.i420(2, 2);
+      final before = target.revision;
+
+      await expectLater(target.load(asStream(<int>[...payload, 7, 7, 7])), throwsFormatException);
+
+      expect(target.revision, before);
+    });
+  });
+
+  group('the payload is read sequentially', () {
+    test('invalid metadata is rejected without reading the declared plane', () async {
+      // The plane length word claims far more than the stream will ever supply.
+      // A sequential reader rejects it on the metadata alone; a collecting one
+      // would first try to accumulate everything.
+      final payload = await validPayload();
+      final headerLength = ByteData.view(payload.buffer).getUint32(0, Endian.little);
+      final firstPlaneLength = 4 + headerLength + 1 + 12;
+      final patched = Uint8List.fromList(payload);
+      ByteData.view(patched.buffer).setUint32(firstPlaneLength, 0x3FFFFFFF, Endian.little);
+
+      await expectLater(YuvCodec.decode(patched), throwsFormatException);
+    });
+
+    test('a never-ending stream is rejected as soon as metadata is impossible', () async {
+      // The stream deliberately never closes. A reader that waited for `done`
+      // before parsing would hang here instead of failing.
+      final payload = await validPayload();
+      final headerLength = ByteData.view(payload.buffer).getUint32(0, Endian.little);
+      final patched = Uint8List.fromList(payload)..[4 + headerLength] = 7; // impossible plane count
+
+      final controller = StreamController<List<int>>();
+      addTearDown(controller.close);
+      controller.add(patched);
+
+      await expectLater(
+        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
+        throwsFormatException,
+      );
+    });
+
+    test('an oversized plane length is refused before allocation', () async {
+      final payload = await validPayload();
+      final headerLength = ByteData.view(payload.buffer).getUint32(0, Endian.little);
+      final firstPlaneLength = 4 + headerLength + 1 + 12;
+      final patched = Uint8List.fromList(payload);
+      // Above maxPlaneBytes, so it must be refused on the metadata check.
+      ByteData.view(patched.buffer).setUint32(firstPlaneLength, 0x7FFFFFFF, Endian.little);
+
+      await expectLater(YuvCodec.decode(patched), throwsFormatException);
+    });
+
+    test('an oversized header length is refused before the JSON is parsed', () async {
+      final out = Uint8List(8);
+      ByteData.view(out.buffer).setUint32(0, 0x7FFFFFFF, Endian.little);
+
+      await expectLater(YuvCodec.decode(out), throwsFormatException);
     });
   });
 }

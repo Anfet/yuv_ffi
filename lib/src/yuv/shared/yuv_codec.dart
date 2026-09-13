@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -5,22 +6,29 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 
-/// Fully parsed image payload, before it is applied to an image.
+/// A fully read and validated payload, before it is applied to an image.
 ///
 /// Decoding produces one of these rather than writing into the target image, so
-/// a payload that turns out to be malformed halfway through cannot leave an
+/// a payload that turns out to be malformed partway through cannot leave an
 /// existing image partially overwritten.
-class YuvImageDraft {
-  YuvImageDraft({
+///
+/// The guarantee is structural: [planes] is unmodifiable, so the list cannot be
+/// swapped or resized between validation and commit. Individual [YuvPlane]
+/// objects stay mutable — that is the package's public model — but each one here
+/// was freshly built by the decoder and is not shared with any caller.
+class YuvValidatedImageDraft {
+  YuvValidatedImageDraft({
     required this.format,
     required this.width,
     required this.height,
-    required this.planes,
-  });
+    required List<YuvPlane> planes,
+  }) : planes = List<YuvPlane>.unmodifiable(planes);
 
   final YuvFileFormat format;
   final int width;
   final int height;
+
+  /// Decoded planes, in format order. Unmodifiable.
   final List<YuvPlane> planes;
 }
 
@@ -51,19 +59,17 @@ abstract final class YuvCodec {
   /// Format version written by [encode] and the only one [decode] accepts.
   static const int version = 1;
 
+  /// Largest header block accepted before the JSON is even parsed.
+  ///
+  /// The header is a handful of scalar fields, so anything larger is a corrupt
+  /// or hostile length word rather than a real payload.
+  static const int maxHeaderBytes = 64 * 1024;
+
   /// Largest plane byte length accepted from a payload.
   ///
-  /// This is not a picture-size limit: it exists so a corrupt length word
-  /// cannot make the decoder try to allocate gigabytes before the geometry
-  /// check runs. Real planes are validated against the declared geometry
-  /// immediately afterwards.
+  /// Checked against the declared geometry before a single byte is buffered, so
+  /// a corrupt length word cannot drive an allocation.
   static const int maxPlaneBytes = 1 << 30;
-
-  /// Largest whole payload accepted by [collect].
-  ///
-  /// Generous enough for any real frame this package produces, while keeping an
-  /// endless or corrupt stream from being accumulated without limit.
-  static const int maxPayloadBytes = 1 << 31;
 
   /// Encodes [format], [width], [height] and [planes] into one byte buffer.
   static Uint8List encode({
@@ -114,42 +120,41 @@ abstract final class YuvCodec {
     return out;
   }
 
-  /// Collects [stream] into one buffer for [decode].
+  /// Reads [stream] sequentially and returns a validated draft.
   ///
-  /// A chunked stream is joined here rather than in each backend, so both read
-  /// the identical bytes regardless of how the source was fragmented. The
-  /// payload is bounded by [maxPayloadBytes]: an endless or absurd stream is
-  /// rejected instead of being accumulated until the process dies.
-  static Future<Uint8List> collect(Stream<List<int>> stream) async {
-    final chunks = <List<int>>[];
-    int total = 0;
-    await for (final chunk in stream) {
-      total += chunk.length;
-      if (total > maxPayloadBytes) {
-        throw FormatException('Malformed yuv_ffi payload: exceeds the $maxPayloadBytes byte limit');
-      }
-      chunks.add(chunk);
-    }
-
-    final out = Uint8List(total);
-    int offset = 0;
-    for (final chunk in chunks) {
-      out.setRange(offset, offset + chunk.length, chunk);
-      offset += chunk.length;
-    }
-    return out;
-  }
-
-  /// Decodes [bytes] into a validated draft.
+  /// The payload is consumed in order — header, then metadata, then one plane at
+  /// a time — and never held twice: the reader keeps only the bytes it has not
+  /// consumed yet, and hands each finished plane straight to its [YuvPlane].
+  /// Metadata is fully validated before the plane it describes is buffered, so a
+  /// corrupt length or an impossible geometry is rejected without allocating for
+  /// it and without waiting for the stream to close.
   ///
   /// Throws a [FormatException] for a truncated payload, an unknown version or
   /// format, wrong field types, an implausible plane count or length, geometry
   /// the planes cannot satisfy, or unexpected trailing bytes.
-  static YuvImageDraft decode(Uint8List bytes) {
-    final cursor = _Cursor(bytes);
+  static Future<YuvValidatedImageDraft> decodeStream(Stream<List<int>> stream) async {
+    final reader = _StreamReader(stream);
+    try {
+      return await _decodeFrom(reader);
+    } finally {
+      await reader.cancel();
+    }
+  }
 
-    final headerLength = cursor.readUint32('header length');
-    final headerBytes = cursor.readBytes(headerLength, 'header');
+  /// Decodes a payload already held in memory.
+  ///
+  /// Shares every check with [decodeStream]; this is the convenience entry for
+  /// callers that genuinely have the whole buffer already.
+  static Future<YuvValidatedImageDraft> decode(Uint8List bytes) {
+    return decodeStream(Stream<List<int>>.value(bytes));
+  }
+
+  static Future<YuvValidatedImageDraft> _decodeFrom(_StreamReader reader) async {
+    final headerLength = await reader.readUint32('header length');
+    if (headerLength > maxHeaderBytes) {
+      throw FormatException('Malformed yuv_ffi payload: header declares an implausible length of $headerLength bytes');
+    }
+    final headerBytes = await reader.readBytes(headerLength, 'header');
 
     final Object? decoded;
     try {
@@ -191,7 +196,7 @@ abstract final class YuvCodec {
       throw FormatException('Malformed yuv_ffi payload: dimensions must be positive, got ${width}x$height');
     }
 
-    final planeCount = cursor.readUint8('plane count');
+    final planeCount = await reader.readUint8('plane count');
     final expectedPlaneCount = YuvGeometry.planeCountFor(format);
     if (planeCount != expectedPlaneCount) {
       throw FormatException(
@@ -201,18 +206,16 @@ abstract final class YuvCodec {
 
     final planes = <YuvPlane>[];
     for (int i = 0; i < planeCount; i++) {
-      final planeHeight = cursor.readUint32('plane $i height');
-      final rowStride = cursor.readUint32('plane $i rowStride');
-      final pixelStride = cursor.readUint32('plane $i pixelStride');
-      final byteLength = cursor.readUint32('plane $i byte length');
+      final planeHeight = await reader.readUint32('plane $i height');
+      final rowStride = await reader.readUint32('plane $i rowStride');
+      final pixelStride = await reader.readUint32('plane $i pixelStride');
+      final byteLength = await reader.readUint32('plane $i byte length');
 
+      // Everything that can be judged from metadata alone is judged here, before
+      // a single byte of this plane is buffered.
       if (byteLength > maxPlaneBytes) {
         throw FormatException('Malformed yuv_ffi payload: plane $i declares an implausible length of $byteLength bytes');
       }
-      // The declared length is checked against what is actually left before it
-      // is trusted for anything.
-      final planeBytes = cursor.readBytes(byteLength, 'plane $i data');
-
       if (planeHeight * rowStride != byteLength) {
         throw FormatException(
           'Malformed yuv_ffi payload: plane $i declares $byteLength bytes, '
@@ -220,6 +223,7 @@ abstract final class YuvCodec {
         );
       }
 
+      final planeBytes = await reader.readBytes(byteLength, 'plane $i data');
       try {
         planes.add(YuvPlane(planeHeight, rowStride, pixelStride, planeBytes));
       } on ArgumentError catch (error) {
@@ -227,8 +231,8 @@ abstract final class YuvCodec {
       }
     }
 
-    if (!cursor.atEnd) {
-      throw FormatException('Malformed yuv_ffi payload: ${cursor.remaining} unexpected trailing byte(s)');
+    if (!await reader.atEnd()) {
+      throw const FormatException('Malformed yuv_ffi payload: unexpected trailing byte(s)');
     }
 
     try {
@@ -237,53 +241,111 @@ abstract final class YuvCodec {
       throw FormatException('Malformed yuv_ffi payload: ${error.message}');
     }
 
-    return YuvImageDraft(format: format, width: width, height: height, planes: planes);
+    return YuvValidatedImageDraft(format: format, width: width, height: height, planes: planes);
   }
 }
 
-/// Reads forward through a buffer, checking what remains rather than the total.
+/// Pulls bytes from a chunked stream in order, buffering only what is pending.
 ///
-/// The previous reader compared against the whole buffer length, so a payload
-/// truncated in the middle passed every check and then read out of range.
-class _Cursor {
-  _Cursor(this._bytes) : _view = ByteData.view(_bytes.buffer, _bytes.offsetInBytes, _bytes.lengthInBytes);
+/// Consumed bytes are dropped as soon as a read completes, so the payload is
+/// never held in full alongside a second copy of itself. A read that needs more
+/// bytes than have arrived waits for the next chunk; a stream that ends first is
+/// a truncated payload.
+class _StreamReader {
+  _StreamReader(Stream<List<int>> stream) : _subscription = StreamIterator<List<int>>(stream);
 
-  final Uint8List _bytes;
-  final ByteData _view;
+  final StreamIterator<List<int>> _subscription;
+
+  /// Chunks received but not yet fully consumed.
+  final List<Uint8List> _pending = <Uint8List>[];
+
+  /// Offset into `_pending.first` of the next unread byte.
   int _offset = 0;
 
-  int get remaining => _bytes.lengthInBytes - _offset;
+  /// Unread bytes currently buffered.
+  int _available = 0;
 
-  bool get atEnd => remaining == 0;
+  bool _exhausted = false;
 
-  void _require(int count, String what) {
+  Future<void> cancel() => _subscription.cancel();
+
+  /// Pulls one more chunk. Returns false when the stream is finished.
+  Future<bool> _pull() async {
+    if (_exhausted) {
+      return false;
+    }
+    final moved = await _subscription.moveNext();
+    if (!moved) {
+      _exhausted = true;
+      return false;
+    }
+    final chunk = _subscription.current;
+    if (chunk.isEmpty) {
+      return _pull();
+    }
+    final bytes = chunk is Uint8List ? chunk : Uint8List.fromList(chunk);
+    _pending.add(bytes);
+    _available += bytes.length;
+    return true;
+  }
+
+  Future<void> _require(int count, String what) async {
     if (count < 0) {
       throw FormatException('Malformed yuv_ffi payload: negative length for $what');
     }
-    if (remaining < count) {
-      throw FormatException('Truncated yuv_ffi payload: $what needs $count byte(s), only $remaining remain');
+    while (_available < count) {
+      if (!await _pull()) {
+        throw FormatException('Truncated yuv_ffi payload: $what needs $count byte(s), only $_available remain');
+      }
     }
   }
 
-  int readUint8(String what) {
-    _require(1, what);
-    final value = _view.getUint8(_offset);
-    _offset += 1;
-    return value;
+  /// Copies [count] pending bytes out, releasing every chunk it drains.
+  Uint8List _take(int count) {
+    final out = Uint8List(count);
+    int written = 0;
+    while (written < count) {
+      final chunk = _pending.first;
+      final fromChunk = chunk.length - _offset;
+      final needed = count - written;
+      final take = fromChunk < needed ? fromChunk : needed;
+      out.setRange(written, written + take, chunk, _offset);
+      written += take;
+      _offset += take;
+      if (_offset == chunk.length) {
+        // Drop the chunk as soon as it is spent, so consumed bytes are not
+        // retained for the life of the read.
+        _pending.removeAt(0);
+        _offset = 0;
+      }
+    }
+    _available -= count;
+    return out;
   }
 
-  int readUint32(String what) {
-    _require(4, what);
-    final value = _view.getUint32(_offset, Endian.little);
-    _offset += 4;
-    return value;
+  Future<int> readUint8(String what) async {
+    await _require(1, what);
+    return _take(1)[0];
   }
 
-  Uint8List readBytes(int count, String what) {
-    _require(count, what);
-    // A copy, so the decoded image never aliases the caller's payload buffer.
-    final value = Uint8List.fromList(Uint8List.sublistView(_bytes, _offset, _offset + count));
-    _offset += count;
-    return value;
+  Future<int> readUint32(String what) async {
+    await _require(4, what);
+    final bytes = _take(4);
+    return ByteData.view(bytes.buffer, bytes.offsetInBytes, 4).getUint32(0, Endian.little);
+  }
+
+  Future<Uint8List> readBytes(int count, String what) async {
+    await _require(count, what);
+    return _take(count);
+  }
+
+  /// Whether the payload ended exactly where it should have.
+  Future<bool> atEnd() async {
+    while (_available == 0) {
+      if (!await _pull()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | READY FOR REVIEW | CI evidence | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | замечания независимого ревью; Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | READY FOR REVIEW | замечания независимого ревью; Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
@@ -337,7 +337,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: REJECTED
+- Статус: READY FOR REVIEW
 - Зависимости: YUV-04 принята; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/loader/data_io.dart`
@@ -507,6 +507,91 @@ Native C permission:
    revision, successful `load()` — увеличивать его ровно один раз.
 6. Повторная проверка обязательна на Flutter `3.44.9`; записанный прогон на
    Flutter `3.38.10` не является целевым SDK этой ветки.
+
+### Результат после исправления замечаний
+
+```text
+Статус: READY FOR REVIEW
+Commit: fix: made the save/load codec read the stream sequentially
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_codec.dart
+- lib/src/loader/data_io.dart (удалён)
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- test/yuv_serialization_test.dart
+
+По замечанию 1 (накопление stream вместо последовательного parsing):
+- `collect()` удалён полностью. Введён `_StreamReader`, который тянет чанки по
+  мере необходимости и держит только непрочитанный остаток: израсходованный
+  чанк удаляется из буфера сразу (`_pending.removeAt(0)`), второй полной копии
+  payload больше нет.
+- `decodeStream()` — новый основной вход; backend'ы вызывают именно его.
+  `decode(Uint8List)` оставлен как обёртка над тем же кодом для callers,
+  у которых буфер уже в памяти. Обе ветки проходят одни и те же проверки.
+- `maxPayloadBytes` убран: он был следствием накопления, а не защитой.
+
+По замечанию 2 (`maxPlaneBytes` проверялся слишком поздно):
+- Вся metadata плоскости проверяется ДО чтения её байтов: сначала
+  `byteLength > maxPlaneBytes`, затем `planeHeight * rowStride == byteLength`,
+  и только потом `readBytes()`.
+- Добавлен `maxHeaderBytes` (64 KiB): испорченное length-слово заголовка
+  отклоняется до парсинга JSON.
+- Покрыто тестами: «an oversized plane length is refused before allocation»,
+  «an oversized header length is refused before the JSON is parsed»,
+  «a never-ending stream is rejected as soon as metadata is impossible»
+  (stream намеренно не закрывается; читатель, ждущий `done`, здесь завис бы —
+  тест ограничен timeout 5 s).
+
+По замечанию 3 (мёртвый второй путь сериализации):
+- `lib/src/loader/data_io.dart` удалён (`git rm`). Перед удалением повторно
+  подтверждено: ни один файл в `lib/`, `test/`, `example/lib` его не
+  импортирует. Вместе с ним ушли `DataReader`/`DataWriter` и неиспользуемый
+  `ChangeNotifier`.
+
+По замечанию 4 (draft заявлен immutable, но принимал mutable list):
+- Тип переименован в `YuvValidatedImageDraft`, поле `planes` оборачивается в
+  `List.unmodifiable` в конструкторе.
+- В доксроке явно ограничена гарантия (решение 11): она структурная —
+  список нельзя подменить или изменить между validation и commit; сами
+  `YuvPlane` остаются mutable, это публичная модель пакета, но каждый объект
+  здесь создан декодером и не разделяется с caller.
+
+По замечанию 5 (revision не зафиксирован тестами):
+- Добавлена группа «load() and the revision contract», 4 теста: успешный
+  `load()` увеличивает revision ровно на 1, фрагментированный успешный — тоже
+  ровно на 1, обрезанный payload и trailing garbage оставляют revision
+  прежним.
+
+По замечанию 6 (целевой SDK):
+- Все проверки выполнены на Flutter `3.44.9` / Dart `3.12.2`
+  (`/d/.important/flutter-3.49/flutter/bin/flutter`, банер подтверждает
+  `3.44.9 • revision 6b182d2c75`). Прогонов на 3.38.10 в этом результате нет.
+
+Совместимость формата:
+- Байтовый layout не менялся. Эталонные кейсы
+  `IO-SAVE-LOAD-{BGRA8888,I420,NV21}-{SINGLE_CHUNK,FRAGMENTED}` проходят
+  byte-for-byte, включая fragmented со 137-байтовыми чанками.
+
+Проверки (все на Flutter 3.44.9):
+- flutter test --no-pub test/yuv_serialization_test.dart — exit 0,
+  31 tests passed (было 23, +8 новых)
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test --no-pub (полный VM suite) — 269 passed / 31 failed против
+  baseline 261 passed / 31 failed на том же SDK: +8 тестов, новых падений нет
+- dart format --output=none --set-exit-if-changed --line-length 150 — exit 0
+- git diff --check — exit 0
+
+Остаточные риски:
+- Web runtime evidence по-прежнему отсутствует: F-007/YUV-02 не сняты, поэтому
+  `kIsWeb == true` подтвердить нельзя. Но Web использует тот же codec, а не
+  свою копию, поэтому расхождение policy между backend структурно невозможно.
+- `yuv_stub.dart` сохраняет вырожденные `save`/`load` (запись сырых байт /
+  drain) и codec не использует: это заглушка для платформ без backend.
+  Менять её здесь не стал, чтобы не расширять scope.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
 
 ---
 

@@ -144,8 +144,8 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   Future<void> load(Stream<List<int>> stream) async {
     // Decode into a draft first: state is replaced only once the whole payload
     // has been read and validated, so a malformed frame cannot leave this image
-    // half-updated.
-    final draft = YuvCodec.decode(await YuvCodec.collect(stream));
+    // half-updated. A rejected payload therefore also leaves the revision alone.
+    final draft = await YuvCodec.decodeStream(stream);
 
     _width = draft.width;
     _height = draft.height;
