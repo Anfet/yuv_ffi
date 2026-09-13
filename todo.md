@@ -15,7 +15,7 @@
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | добавить focused integration Web case | Убрать выравнивающий хвост из IO/Web `getBytes()` |
-| [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | integration Web retest | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
+| [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | REJECTED | добавить focused integration Web case | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | integration Web retest | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | integration Web retest | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
@@ -1133,7 +1133,7 @@ Production Dart, native C и generated bindings в доработке не тр�
 
 - Владелец: Terra
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-02/YUV-04 приняты; требуется focused integration Web retest
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`, BGRA constructor
@@ -1290,6 +1290,27 @@ analyzer чист и общий сфокусированный VM-набор п�
 реальные Chrome cases специализированного/generic constructors и copy variants
 через integration harness после YUV-02. Tight `toBgra8888()` остаётся отдельной
 задачей YUV-08.
+
+### Повторное независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+После принятия YUV-02 integration harness доступен, но focused case YUV-15 в
+нём отсутствует. Bootstrap использует tight `YuvImage.bgra(2, 2)` и не проверяет
+ни один из padded constructor/copy contracts задачи.
+
+Нативная реализация и regressions приняты: специализированный и generic path
+согласованы, deep copy и сохранение padding проверены; focused VM suite на
+Flutter 3.44.9 проходит 114/114. Для повторного review требуется:
+
+1. добавить в `example/integration_test/` Web cases для specialized/generic
+   padded BGRA constructors, invalid layout и `copy`/`copy(blank: true)`;
+2. проверить metadata, deep-copy semantics и полный padded buffer;
+3. выполнить required Chrome job с `kIsWeb == true` и приложить URL;
+4. после успеха перевести F-004 из `READY FOR RETEST` в `RESOLVED`.
+
+Tight output `toBgra8888()` остаётся scope YUV-08; production fix YUV-15,
+native C и generated bindings менять не требуется.
 
 ---
 
