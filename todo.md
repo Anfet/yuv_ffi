@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | READY FOR REVIEW | CI evidence | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | TODO | Web retest: YUV-02 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | замечания независимого ревью; Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
@@ -18,14 +18,16 @@
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | READY FOR REVIEW | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
-| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | source compatibility; Web retest: YUV-02 | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
-| [ ] | YUV-25 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Починить macOS C-forwarder: в pod target не попадает ни одна реализация |
-| [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | BLOCKED | разрешение на C | Убрать объявление `nv21_to_rgb` без реализации и отфильтровать ffigen |
-| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-26 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
+| [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | TODO | — | Ограничить ffigen только используемым ABI и убрать platform CRT из bindings |
+| [ ] | YUV-27 | Terra | Claude Sonnet 5 | P3 | TODO | — | Устранить подтверждённый Dart API debt без breaking changes |
+| [ ] | YUV-28 | Opus | Claude Opus 5 | P2 | BLOCKED | после YUV-18 | Сократить дублирование backend-классов после релиза `0.2.5` |
+| [ ] | YUV-29 | Luna | Claude Haiku 4.5 | P3 | BLOCKED | разрешение на C headers | Удалить неиспользуемое объявление `nv21_to_rgb` без реализации |
+| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-02, YUV-06…YUV-09, YUV-12…YUV-15, YUV-17, YUV-20…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
 
 ## Статусы
 
@@ -90,6 +92,12 @@
 8. Не создавать tag и не выполнять push без отдельного запроса.
 9. Эталон для `test/assets/test_pattern_512.png` нельзя генерировать через тестируемый native/WASM код `yuv_ffi`: иначе одинаковая ошибка окажется и в expected, и в actual.
 10. Каждый новый провал эталонного теста регистрируется в `failed-test-cases.md`. Исправление не удаляет запись: она переводится в `RESOLVED` со ссылкой на commit и повторный прогон.
+11. Patch-релиз `0.2.5` не должен добавлять обязательные члены в публичные
+    `interface class`: это ломает внешние `implements`. Такое изменение требует
+    source-compatible seam либо повышения версии до `0.3.0` по отдельному
+    решению владельца.
+12. Карточки, явно помеченные как опциональные или post-release, не являются
+    зависимостями YUV-18 и не блокируют выпуск `0.2.5`.
 
 ## Общий Definition of Done для каждой задачи
 
@@ -264,6 +272,8 @@ Native C permission:
   - `macos/Classes/**`
   - CI native build/smoke matrix
   - platform support section README только после фактической проверки
+- Карточка YUV-25 объединена сюда: loader path, packaging и состав macOS pod
+  target имеют один release outcome и не должны расходиться по разным commits.
 
 ### Проблема
 
@@ -281,6 +291,8 @@ Linux и macOS loader открывает `native/src/build/libyuv_ffi.*`. Так
    - iOS/macOS — symbols текущего process, если library статически/динамически связана pod target.
 2. Добавить macOS source forwarding, эквивалентный полному проверенному iOS набору, либо другой корректный podspec source layout.
 3. Не дублировать одни и те же C translation units дважды.
+   Исправить некритичные двойные слэши в iOS forwarder paths только внутри того
+   же согласованного изменения, не отдельным cleanup-коммитом.
 4. Добавить clean-checkout CI:
    - Linux и Windows: build + runtime smoke;
    - macOS: build + runtime smoke;
@@ -325,13 +337,14 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-04 принята; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/loader/data_io.dart`
   - shared serialization codec при извлечении
   - IO/Web `YuvImage.load()` и `save()`
   - serialization tests
+  - согласование revision-контракта YUV-20 при успешном и неуспешном `load()`
 
 ### Проблема
 
@@ -356,6 +369,14 @@ git status --short
 6. Не доверять заявленной длине до проверки против доступных bytes и валидированной геометрии.
 7. Убрать безлимитное накопление произвольного stream: читать формат последовательно и ограничивать plane payload ожидаемым размером из metadata/geometry. Не вводить произвольный маленький global image limit без документированного решения.
 8. Определить policy для trailing bytes; предпочтительно отклонять их как malformed payload.
+9. После перехода обоих backend на shared codec удалить ставшие неиспользуемыми
+   `DataReader`/`DataWriter` и `lib/src/loader/data_io.dart`; не оставлять второй
+   путь сериализации рядом с каноническим codec.
+10. Согласовать с YUV-20: успешный `load()` увеличивает revision ровно один раз
+    после atomic commit, а любой rejected payload сохраняет прежний revision.
+11. Draft не должен допускать структурную замену списка planes между validation
+    и commit. Если полная immutable-модель невозможна из-за mutable `YuvPlane`,
+    назвать тип validated draft и явно ограничить гарантию структурой списка.
 
 ### DoD
 
@@ -364,6 +385,12 @@ git status --short
 - При любой ошибке исходный `YuvImage` остаётся byte-for-byte и metadata-wise неизменным.
 - IO и Web используют один формат и одинаковую validation policy.
 - Нет проверки безопасности, основанной только на `assert`.
+- Stream разбирается последовательно: реализация не хранит одновременно список
+  всех chunks и вторую полную копию payload; metadata/geometry проверяются до
+  выделения соответствующей plane.
+- Незакрытый stream с уже невалидной metadata отклоняется без ожидания `done`.
+- `lib/src/loader/data_io.dart` удалён, если после миграции не имеет consumers.
+- Успешный `load()` меняет revision ровно один раз; failed `load()` не меняет.
 
 ### Проверка
 
@@ -460,6 +487,26 @@ Commit: fix: hardened the save/load format
 Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
+
+### Независимое ревью 2026-09-13
+
+Статус: `REJECTED`.
+
+1. `YuvCodec.collect()` продолжает полностью накапливать stream в списке chunks,
+   затем выделяет второй буфер всего payload. Лимит `2 GiB` делает накопление
+   конечным, но не выполняет зафиксированное решение о последовательном parsing
+   и допускает многогигабайтный peak memory.
+2. `maxPlaneBytes` проверяется только после завершения `collect()`, поэтому не
+   защищает от oversized/бесконечного входа до накопления файла целиком.
+3. `DataReader`/`DataWriter` уже не имеют consumers, но оставлены в scope-файле
+   как второй мёртвый serialization path вместе с неиспользуемым
+   `ChangeNotifier`.
+4. `YuvImageDraft.planes` принимает обычный mutable list, хотя результат
+   заявляет immutable draft.
+5. Regression suite не фиксирует revision: failed `load()` должен сохранять
+   revision, successful `load()` — увеличивать его ровно один раз.
+6. Повторная проверка обязательна на Flutter `3.44.9`; записанный прогон на
+   Flutter `3.38.10` не является целевым SDK этой ветки.
 
 ---
 
@@ -1076,7 +1123,7 @@ checkout, поэтому на runner файла не существует и job
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: implementation разблокирована принятием YUV-01; финальный реальный Chrome retest зависит от YUV-02; зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
@@ -1102,13 +1149,19 @@ hashCodes equal?                false
 
 ### Зафиксированное решение
 
-1. Ввести в `YuvImage` монотонный revision counter и публичный `markDirty()` для изменений, выполненных напрямую через mutable plane API.
+1. Ввести монотонный revision counter и source-compatible способ вызвать
+   `markDirty()` для изменений через mutable plane API. Для patch-релиза не
+   добавлять обязательные члены в `YuvImage`: допустим package-private tracker,
+   extension/top-level invalidation API или другой seam, при котором прежняя
+   внешняя реализация `implements YuvImage` продолжает компилироваться.
 2. Все штатные мутирующие методы `YuvImage` увеличивают revision ровно один раз после успешного изменения bytes, format, dimensions или strides. Реальные no-op ветки revision не меняют.
 3. `YuvPlane.setPixel()`/`assignFrom()` должны либо сигнализировать owning image автоматически, либо их документация обязана требовать последующий `image.markDirty()`. Прямая запись в `plane.bytes` всегда требует `markDirty()`, поскольку `Uint8List.operator[]=` перехватить нельзя без изменения публичного типа.
 4. `YuvImageProvider` при создании сохраняет revision snapshot. Его `==` использует identity экземпляра изображения плюс snapshot; `hashCode` строится из `identityHashCode(image)` и snapshot. Нельзя читать живой revision в `hashCode` уже помещённого в cache ключа.
 5. Не использовать содержимое planes как hash-источник: полный хэш кадра на каждый rebuild недопустим по стоимости.
 6. Одинаково реализовать revision/`markDirty()` на IO и Web; не допускать расхождения widget-поведения между backend.
-7. Сохранить публичную in-place mutation model. Расширение API методами `revision`/`markDirty()` допустимо и должно быть документировано как часть cache coherency contract.
+7. Сохранить публичную in-place mutation model. Если выбран вариант с новыми
+   обязательными interface members, задача должна быть перенесена в `0.3.0` по
+   отдельному решению владельца; для `0.2.5` это недопустимо.
 8. Сохранить текущее поведение `evict` при ошибке декодирования.
 
 ### DoD
@@ -1122,6 +1175,10 @@ hashCodes equal?                false
 - Widget-тест считает фактические вызовы conversion/decode seam и доказывает cache hit без мутации и обязательный refresh после мутации. Одного сравнения provider/hashCode недостаточно.
 - Поведение одинаково на IO и в реальном Chrome.
 - Публичная mutation model не изменена.
+- Добавлен compile-time fixture с внешним `implements YuvImage`, не знающим о
+  revision seam; он продолжает компилироваться на API `0.2.5`.
+- Все проверки повторены на Flutter `3.44.9`; прогон на 3.38 не заменяет
+  целевую проверку.
 
 ### Проверка
 
@@ -1216,6 +1273,23 @@ Regression evidence:
 Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
+
+### Независимое ревью 2026-09-13
+
+Статус: `REJECTED`.
+
+1. Commit `e3c235d` добавляет `revision` и `markDirty()` непосредственно в
+   публичный `abstract interface class YuvImage`. Внешний класс с
+   `implements YuvImage`, совместимый с `0.2.4`, после patch-update перестаёт
+   компилироваться. Сам отчёт реализации подтверждает этот residual risk.
+2. Для `0.2.5` revision state следует вынести из обязательной поверхности
+   интерфейса: например, в package-private identity tracker, а ручную
+   invalidation предоставить source-compatible extension/top-level API.
+   Альтернатива — явно повысить версию релиза до `0.3.0`, но это отдельное
+   решение владельца.
+3. Runtime Web evidence отсутствует, а локальные проверки результата записаны
+   для Flutter `3.38.10`; до повторного прогона на Flutter `3.44.9` задача не
+   может вернуться в `READY FOR REVIEW`.
 
 ---
 
@@ -1555,130 +1629,50 @@ git status --short
 
 ---
 
-## YUV-25 — починить macOS C-forwarder
-
-- Владелец: Terra
-- Приоритет: P2
-- Статус: BLOCKED
-- Зависимости: отдельное явное разрешение владельца на изменение C-forwarders; пересекается с YUV-06
-- Scope:
-  - `macos/Classes/**`
-  - при необходимости `macos/yuv_ffi.podspec`
-  - macOS build/runtime smoke
-- Опциональная задача: обнаружена при разборе ffigen 2026-09-13.
-
-### Проблема
-
-`macos/Classes/yuv_ffi.c` состоит из одной директивы:
-
-```c
-#include "../../src/yuv_ffi.c"
-```
-
-`src/yuv_ffi.c` содержит только `#include "yuv_ffi.h"`, то есть исключительно объявления. Podspec собирает `Classes/**/*`, поэтому в macOS pod target не попадает **ни одна реализация** YUV/BGRA операций.
-
-Для сравнения, iOS-форвардеры подключают полный набор: `ios/Classes/yuv_ffi.c` тянет `src/yuv_ffi.c`, `yuv/utils/gauss.c` и `yuv/yuv.c`, плюс `bgra8888.c`, `nv21.c`, `yuv420.c` перечисляют по 12–13 файлов каждый.
-
-Дополнительный дефект того же корня: списки в iOS-форвардерах поддерживаются вручную и уже содержат опечатки вида `bgra8888//bgra8888_rotate.c` (двойной слэш). При добавлении нового `.c` его нужно не забыть дописать в трёх местах, иначе он молча не попадёт в Apple-сборку.
-
-Это та же корневая причина, что и в YUV-06, но YUV-06 сформулирована вокруг loader paths и packaging. Здесь scope у́же: состав исходников в pod target.
-
-### Предлагаемое решение
-
-1. Привести `macos/Classes` к проверенному iOS-набору.
-2. Предпочтительно вынести общий список в один файл-манифест, подключаемый и из iOS, и из macOS, чтобы список исходников жил в одном месте, а не в трёх.
-3. Не дублировать одни и те же translation units дважды в одном target — это даст duplicate symbol на линковке.
-4. Исправить двойные слэши в существующих iOS-форвардерах.
-5. Координировать с YUV-06, чтобы не разделить один и тот же macOS-фикс между двумя commits.
-
-### DoD
-
-- macOS pod target содержит реализации всех операций, вызываемых из Dart.
-- Все generated binding symbols резолвятся в macOS runtime.
-- Дублирующихся translation units нет; линковка проходит без duplicate symbol.
-- Runtime smoke на macOS выполняет реальную конверсию, а не только проверку загрузки.
-- В результате приложена ссылка на разрешение владельца на изменение C-forwarders.
-
-### Проверка
-
-```text
-flutter clean
-flutter pub get
-flutter build macos
-<runtime smoke command>
-git diff --check
-git status --short
-```
-
-Не анализировать содержимое `build/`; использовать только exit code.
-
-### Результат
-
-Не заполнен.
-
----
-
-## YUV-26 — убрать `nv21_to_rgb` без реализации и отфильтровать ffigen
+## YUV-26 — ограничить ffigen только используемым ABI
 
 - Владелец: Luna
 - Приоритет: P3
-- Статус: BLOCKED
-- Зависимости: отдельное явное разрешение владельца на изменение `src/**/*.h`
+- Статус: TODO
+- Зависимости: нет
+- Anthropic-вариант: Claude Haiku 4.5; при расхождении generated ABI повысить до Claude Sonnet 5
 - Scope:
-  - `src/yuv/nv21.h`
-  - `src/yuv/nv21/h/nv21_to_rgb.h`
   - `ffigen.yaml`
   - `lib/src/functions/bindings/yuv_ffi_bingings.dart` только через регенерацию
-- Опциональная задача: обнаружена при разборе ffigen 2026-09-13.
+  - audit script/test, сравнивающий используемые Dart symbols с generated bindings
+- Опциональная tooling-задача; не блокирует YUV-18.
 
 ### Проблема
 
-Две связанные части.
+`ffigen.yaml` не ограничивает declarations, достижимые из entry point.
+Generated-файл содержит около 10 770 строк, включая Windows CRT и
+platform-specific структуры, хотя Dart-код использует только узкий набор YUV
+functions и `YUVDef`. Это затрудняет review и делает результат генерации
+зависимым от host headers.
 
-**1. Объявление без определения.** `src/yuv/nv21/h/nv21_to_rgb.h` объявляет `nv21_to_rgb`, `nv21.h:7` его подключает, ffigen генерирует биндинг (`yuv_ffi_bingings.dart:9721`), но файла `nv21_to_rgb.c` не существует. Проверка `yuv_ffi.dll` подтверждает: символа в библиотеке нет. Dart-код функцию не вызывает, а `_lookup` ленивый (`late final`), поэтому сейчас это не падает — при вызове был бы `ArgumentError: Failed to lookup symbol`.
+Отсутствующий native symbol `nv21_to_rgb` отделён в YUV-29: изменение headers
+требует отдельного разрешения и не должно блокировать tooling cleanup.
 
-**2. Отсутствие фильтров в ffigen.** `ffigen.yaml` не содержит ни одного фильтра. По умолчанию ffigen включает всё, достижимое транзитивно из entry point, а `yuv.h` подключает `stdio.h`/`stdlib.h`/`string.h`/`math.h`. Результат — 10 770 строк, из которых полезны 40 функций; остальное это Windows CRT (`_wfopen`, `__security_init_cookie`, `_iobuf`, `__crt_locale_data`). Хуже того, биндинги привязаны к платформе генерации: заголовки MSVC зашиты в файл, который используется и на Android, и на iOS.
+### Зафиксированное решение
 
-Вторая часть не является дефектом рантайма: лишние `late final` не выполняются. Это вопрос размера, читаемости и переносимости generated-файла.
-
-### Предлагаемое решение
-
-1. Решить судьбу `nv21_to_rgb`: либо написать `nv21_to_rgb.c`, либо удалить заголовок и строку `nv21.h:7`. Рекомендуется удалить — функция не используется, а конверсия NV21→BGRA уже есть.
-2. Добавить в `ffigen.yaml` фильтры (ffigen 13.0.0 использует YAML-конфиг, а не программный `FfiGenerator` из ffigen 20+):
-
-```yaml
-headers:
-  entry-points:
-    - 'src/yuv_ffi.h'
-  include-directives:
-    - 'src/yuv/**'
-
-exclude-all-by-default: true
-
-functions:
-  include:
-    - 'yuv420_.*'
-    - 'nv21_.*'
-    - 'bgra8888_.*'
-    - 'nvXX_to_nvYY'
-
-structs:
-  include:
-    - 'YUVDef'
-```
-
-3. `include-directives` и `exclude-all-by-default` намеренно дублируют друг друга: первый не даёт парсеру выйти за `src/yuv/`, второй режет по именам. Вместе они защищают от регресса при добавлении нового `#include`.
-4. Регенерировать биндинги, не редактируя generated-файл вручную (общее ограничение 4).
-5. Учесть, что `freeYUVDef` в `src/yuv/yuv.c:3` объявлена без `FFI_PLUGIN_EXPORT` и не экспортируется. Под фильтр она не попадает — это корректно, но если освобождение памяти планировалось через неё, это отдельный вопрос вне scope.
+1. Сначала автоматически получить множество symbols, фактически вызываемых из
+   Dart, и сохранить результат проверки в task evidence.
+2. Настроить `headers.include-directives`, `exclude-all-by-default`,
+   `functions.include` и `structs.include` в синтаксисе установленного
+   ffigen 13.0.0.
+3. Не менять `src/**/*.c` и `src/**/*.h`; `nv21_to_rgb` допустимо исключить
+   из generated bindings как неиспользуемый symbol.
+4. Регенерировать binding только командой ffigen, ручные изменения запрещены.
+5. Сравнить до/после все symbols, реально используемые `lib/src/**`.
 
 ### DoD
 
-- В generated-файле нет символов CRT и платформо-зависимых структур.
-- Все 40 вызываемых из Dart символов присутствуют в биндингах.
-- `nv21_to_rgb` отсутствует и в заголовках, и в биндингах, либо имеет реализацию в DLL.
-- Регенерация на другой платформе даёт эквивалентный по составу файл.
-- `flutter analyze` не содержит новых diagnostics; полный VM suite не даёт новых падений.
-- Generated-файл получен только генерацией, ручных правок нет.
+- Generated-файл не содержит CRT functions и platform-dependent CRT structs.
+- Каждый symbol, вызываемый Dart-кодом, присутствует с прежней сигнатурой.
+- Регенерация на Windows и Unix даёт эквивалентный набор public members класса
+  `YuvFfiBindings`.
+- Native headers/sources не менялись.
+- Анализатор и VM suite не получают новых падений.
 
 ### Проверка
 
@@ -1691,7 +1685,197 @@ git diff --check
 git status --short
 ```
 
-В результате записать число строк generated-файла до и после, а также список символов, исчезнувших из публичного API класса `YuvFfiBindings`.
+В результате приложить число строк generated-файла до/после и машинно
+полученный список используемых Dart symbols.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-27 — устранить подтверждённый Dart API debt
+
+- Владелец: Terra
+- Приоритет: P3
+- Статус: TODO
+- Зависимости: нет
+- Anthropic-вариант: Claude Sonnet 5
+- Scope:
+  - `lib/src/yuv/shared/yuv_plane.dart`
+  - `lib/src/yuv/shared/exceptions.dart`
+  - `lib/src/yuv/shared/yuv_image_rotation.dart`
+  - только Dart-часть rotate в IO/Web и focused API tests
+- Опциональная задача; не блокирует YUV-18.
+
+### Проблема
+
+В Dart API остались несколько небольших, но подтверждённых долгов:
+
+- публичный getter `bytesPerPixes` содержит опечатку;
+- `NotSupportedException` не экспортируется и не используется;
+- IO содержит невозможный для enum `YuvImageRotation` assert кратности 90° и
+  опечатку `dstWidtn`, Web той же проверки не имеет;
+- `YuvImageRotation.toZero()` возвращает получателя для всех enum values, но
+  имя и документация создают ожидание преобразования. Ошибка поведения пока не
+  доказана: example может использовать его как «поворот, приводящий frame к
+  zero orientation».
+
+### Зафиксированное решение
+
+1. Добавить корректный `bytesPerPixel`, оставить `bytesPerPixes` как forwarding
+   alias с `@Deprecated`, чтобы patch update не ломал consumers.
+2. Удалить `NotSupportedException`, только если повторный поиск подтвердит ноль
+   consumers; не подменять им произвольно типы ошибок конверсий.
+3. Удалить недостижимый assert и исправить локальную опечатку `dstWidtn`, не
+   меняя rotation semantics.
+4. Для `toZero()` сначала добавить characterization test на фактическую camera
+   orientation семантику. Без проваленного evidence поведение не менять. Если
+   название признано вводящим в заблуждение — добавить корректно названный API,
+   а старый метод deprecate как forwarding alias.
+5. Не добавлять обязательные члены в `YuvImage` и не менять native C.
+
+### DoD
+
+- Старый consumer с `bytesPerPixes` продолжает компилироваться.
+- Новый consumer использует `bytesPerPixel`; оба getter возвращают
+  `pixelStride`.
+- Мёртвый exception удалён либо сохранён с найденным и записанным consumer.
+- Rotation cleanup не меняет pixels/dimensions для 0/90/180/270.
+- Семантика `toZero()` подтверждена тестом и описана без предположений.
+- `flutter analyze` и focused/полный VM suite проходят на Flutter 3.44.9.
+
+### Проверка
+
+```powershell
+flutter test test/yuv_plane_validation_test.dart test/conversions_test.dart
+flutter analyze --no-pub lib test
+Push-Location example
+flutter analyze --no-pub
+Pop-Location
+dart format --output=none --set-exit-if-changed lib test
+git diff --check
+git status --short
+```
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-28 — сократить дублирование Dart backend-классов после `0.2.5`
+
+- Владелец: Opus
+- Приоритет: P2 / architecture
+- Статус: BLOCKED
+- Зависимости: выполнять только после YUV-18; YUV-07 и YUV-20 должны быть DONE
+- Anthropic-вариант: Claude Opus 5
+- Scope:
+  - shared Dart state/geometry/serialization abstractions
+  - `lib/src/yuv/impl/io/yuv_image.dart`
+  - `lib/src/yuv/impl/web/yuv_web.dart`
+  - `lib/src/yuv/impl/yuv_stub.dart`
+  - parity/characterization tests
+- Post-release refactor; не блокирует YUV-18.
+
+### Проблема
+
+Три `YuvImageImpl` дублируют constructors, state, plane accessors, copy/bytes
+logic и format dispatch. Shared `YuvGeometry` и `YuvCodec` уже сократили часть
+расхождений, поэтому исходную оценку «около 700 строк» нужно пересчитать после
+закрытия YUV-07/YUV-20, а не переносить старый план механически.
+
+Пустое состояние accessor'ов формально расходится: IO бросает `RangeError`,
+Web/stub возвращают zero-length sentinel. Для валидного публично созданного
+изображения состояние практически недостижимо; shared sentinel нельзя
+содержательно изменить, потому что его buffer имеет длину 0. Это contract debt,
+а не подтверждённая corruption.
+
+### Зафиксированное решение
+
+1. Сначала снять актуальный duplication map после релиза и определить реально
+   общий слой. Не создавать `YuvImageBase` только ради наследования.
+2. Предпочесть composition для state/codec/geometry; backend-specific FFI/WASM
+   dispatch оставить в `impl/*_io.dart` и `impl/*_web.dart`.
+3. Зафиксировать единый контракт accessor'ов на недоступном/пустом состоянии и
+   покрыть его characterization tests до изменения реализации.
+4. Сохранить partial-WASM policy: общий state не означает feature parity.
+5. Не менять native C, generated bindings и публичную mutation model.
+
+### DoD
+
+- Общая логика имеет одного владельца без циклических imports.
+- IO/Web/stub сохраняют format, geometry, copy, serialization и revision
+  contracts существующих tests.
+- Удаление дублирования измерено diff/stat и не смешано с новым поведением.
+- Empty-state contract одинаков и документирован либо доказано, что состояние
+  недостижимо и sentinel удалён.
+- Native и настоящий Chrome suites не получают новых падений.
+
+### Проверка
+
+```powershell
+flutter analyze --no-pub lib test
+flutter test
+flutter test --platform chrome test/web
+dart format --output=none --set-exit-if-changed lib test
+git diff --check
+git status --short
+```
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-29 — удалить native-объявление `nv21_to_rgb` без реализации
+
+- Владелец: Luna
+- Приоритет: P3
+- Статус: BLOCKED
+- Зависимости: отдельное явное разрешение владельца на изменение `src/**/*.h`
+- Anthropic-вариант: Claude Haiku 4.5; при обнаружении ABI consumer повысить до Claude Sonnet 5
+- Scope:
+  - `src/yuv/nv21.h`
+  - `src/yuv/nv21/h/nv21_to_rgb.h`
+  - regenerated bindings только если symbol ещё входит после YUV-26
+- Опциональная native-header cleanup; не блокирует YUV-18.
+
+### Проблема
+
+Header объявляет и подключает `nv21_to_rgb`, но реализации и Dart-consumers
+нет. Lazy lookup скрывает дефект до первого вызова. Это отдельная ABI hygiene
+задача: она не должна блокировать ffigen filtering и не должна выполняться без
+разрешения на native headers.
+
+### Зафиксированное решение
+
+1. Перед изменением повторно проверить native exports и все consumers.
+2. При подтверждённом отсутствии consumer удалить declaration header и include
+   из `nv21.h`; новую C-реализацию без отдельного требования не писать.
+3. Если generated binding ещё содержит symbol, регенерировать его штатно после
+   header change; generated-файл вручную не редактировать.
+4. Не менять существующий NV21/UV compatibility contract.
+
+### DoD
+
+- В headers и generated bindings нет declaration без реализации.
+- Все реально используемые Dart symbols по-прежнему резолвятся.
+- Приложено явное разрешение владельца на изменение headers.
+- Native build/runtime smoke и анализатор проходят.
+
+### Проверка
+
+```powershell
+flutter pub run ffigen --config ffigen.yaml
+flutter analyze
+flutter test
+<native build/runtime smoke>
+git diff --check
+git status --short
+```
 
 ### Результат
 
@@ -1704,7 +1888,8 @@ git status --short
 - Владелец: Terra
 - Приоритет: P0 / release gate
 - Статус: BLOCKED
-- Зависимости: YUV-01…YUV-17, YUV-19…YUV-26
+- Зависимости: YUV-02, YUV-06, YUV-07, YUV-08, YUV-09, YUV-12, YUV-13,
+  YUV-14, YUV-15, YUV-17, YUV-20, YUV-21, YUV-22, YUV-23
 - Scope:
   - интеграционное ревью всех task commits;
   - `pubspec.yaml` и верхняя запись `CHANGELOG.md`;
@@ -1733,7 +1918,9 @@ git status --short
 
 ### DoD
 
-- Все YUV-01…YUV-17 и YUV-19…YUV-26 имеют статус `DONE` и независимое verification evidence.
+- Все перечисленные обязательные зависимости имеют статус `DONE` и независимое
+  verification evidence. Опциональные YUV-24, YUV-26, YUV-27, YUV-29 и
+  post-release YUV-28 выпуск не блокируют.
 - Полная reference matrix на `test_pattern_512.png` проходит на native и Web либо имеет явно согласованные ограничения; unresolved P0/P1 failures отсутствуют.
 - P0/P1 findings из аудита либо устранены, либо явно сняты владельцем с документированным основанием.
 - `flutter analyze` проходит из корня.
