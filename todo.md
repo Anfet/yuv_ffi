@@ -17,7 +17,7 @@
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | дополнить Web contract matrix | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | REJECTED | добавить Web tight-layout case | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | проверить настоящий Web backend revision | Сделать ключ image cache корректным без breaking change в patch-релизе |
-| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | REJECTED | исправить retry после script load error | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
@@ -1994,7 +1994,7 @@ plane write + `markDirty`. Полную 34-точечную матрицу мо�
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-01/YUV-02/YUV-19 приняты; Web retest выполнен (run 34787051514)
 - Scope:
   - `lib/src/yuv_ffi_initializer.dart`
@@ -2225,6 +2225,34 @@ fake-инициализаторов и подтверждает, что loader �
 Замечание о том, что зелёный bootstrap доказывает лишь одну успешную
 инициализацию, закрыто: lifecycle-кейсы теперь исполняются отдельно от него.
 
+
+### Независимое ревью root 2026-09-14 после run #26
+
+Статус: `REJECTED`.
+
+Fake-initializer cases действительно исполняются в Chrome и подтверждают
+single-flight, очистку `_initFuture` и invocation counts для override seam.
+Однако seam подменяет `_initialize` целиком и обходит реальный script-loading
+path, где retry contract всё ещё нарушен.
+
+`_injectScriptOnce()` добавляет `<script data-yuv-ffi-wasm-loader="1">`, но при
+`onError` не удаляет его. После ошибки загрузки `_initFuture` очищается, однако
+следующая попытка видит оставшийся element и считает script уже загруженным;
+factory отсутствует, поэтому retry снова падает. Текущий тест с искусственной
+ошибкой не способен обнаружить этот дефект.
+
+Для повторного review требуется:
+
+1. удалить/пометить failed script element так, чтобы следующий init действительно
+   повторял загрузку; не ломать concurrent injection;
+2. добавить Chrome integration regression: первая попытка с заведомо неверным
+   `scriptPath` падает, затем default asset path в том же процессе успешно
+   инициализирует реальный module;
+3. усилить stack assertion так, чтобы он доказывал сохранение исходного stack,
+   а не только его ненулевое наличие;
+4. повторить required Web job и приложить URL.
+
+IO/native paths, native C и generated bindings менять не требуется.
 ---
 
 ## YUV-22 — определить и выровнять контракт effects

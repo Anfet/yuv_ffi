@@ -29,7 +29,7 @@ YUV-07/YUV-20/YUV-26/YUV-27 отражены в актуальных стату�
 | A-08: bindings cache | YUV-19 | DONE / archived | Принято и перемещено в `completed-tasks.md` |
 | A-08: serialization | YUV-07 | REJECTED | Geometry исправлена, но 50 ms grace делает trailing-byte policy недетерминированной |
 | A-08: image cache | YUV-20 | REJECTED | Provider проверен в Chrome только на fake; настоящий Web backend revision не покрыт |
-| A-08: initialization | YUV-21 | REJECTED | IO fix принят; отсутствуют focused Web retry/concurrency cases |
+| A-08: initialization | YUV-21 | REJECTED | Fake lifecycle cases зелёные; failed script element всё ещё ломает реальный retry |
 | A-09: локальный `_tmp_*` | — | CLOSED / local | Файл отсутствует; удаление локальных tmp не является package task |
 | A-10: revision compatibility | YUV-20 | REJECTED | F-006 закрыт; Web backend mutation/revision parity ещё не доказана |
 | A-11: serialization boundary | YUV-07 | REJECTED | Timeout не может служить доказательством отсутствия trailing bytes |
