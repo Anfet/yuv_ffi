@@ -16,7 +16,7 @@
 
 | Failure ID | Case ID | Backend | Статус | Приоритет | Fix task | Кратко |
 |---|---|---|---|---|---|---|
-| F-001 | WEB-COMPILE-001 | Web/Chrome | READY FOR RETEST | P0 | YUV-01 | `Function.toJS` blocker устранён в Web build; полный Chrome suite заблокирован F-007 |
+| F-001 | WEB-COMPILE-001 | Web/Chrome | RESOLVED | P0 | YUV-01 | `Function.toJS` blocker устранён; package и example компилируются на Flutter 3.44.9 |
 | F-002 | SWAP-NV-LUMA-001 | Native/Windows | RESOLVED | P1 | YUV-03 | `swapNv()` сохраняет Y и exact-переставляет chroma pairs |
 | F-003 | GET-BYTES-LENGTH-001 | Native/Windows | OPEN | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
 | F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows | OPEN | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
@@ -40,7 +40,7 @@
 ## F-001 — Web suite не компилируется
 
 - Case ID: `WEB-COMPILE-001`
-- Статус: READY FOR RETEST
+- Статус: RESOLVED
 - Обнаружено: 2026-09-12
 - Commit: `5f52fd14540a283da91a6d80e1fc7128bba1c796`
 - Backend: Web / Chrome compiler
@@ -82,9 +82,14 @@ but Type 'Function' is not a precise function type.
 
 ### Resolution
 
-- Fix commit: `fa311d9`
-- Compile evidence: `flutter build web --no-pub` из `example/` — exit 0; исходный `Function.toJS` diagnostic отсутствует
-- Retest command/result: полный Chrome suite не завершён из-за F-007
+- Fix commits: `fa311d9`, `91ff7e9`
+- Compile evidence на Flutter 3.44.9: настоящий package-importing
+  `yuv_web_wasm_test.dart` более 60 секунд остаётся на общей browser `loading`
+  стадии F-007 без исходного `Function.toJS` diagnostic.
+- `flutter analyze --no-pub` и `flutter build web --no-pub` из `example/` —
+  exit 0 после удаления несовместимого `material_design_icons_flutter`.
+- Runtime Web suite остаётся отдельным F-007/YUV-02; это не повторное
+  проявление устранённого compiler defect F-001.
 
 ---
 
@@ -499,11 +504,18 @@ YUV-02 должен сначала воспроизвести минимальн
 
 - Fix commit: не заполнен
 - Minimal Chrome retest: локально reproduces the same `loading` hang on Windows Flutter 3.38.10; F-007 остаётся `OPEN`.
+- Flutter 3.44.9 retest, Windows x64: sentinel также оставался на `loading`
+  более 60 секунд, после чего был остановлен вручную; tests executed: 0.
 - Full `test/web` retest: не заполнен
 
 ### Диагноз и дальнейшие действия
 
-Локальное проявление F-007 локализовано как проблема Windows runner во Flutter 3.38.10: CanvasKit path формируется с несовместимыми разделителями, поэтому Chrome и Edge не находят `/canvaskit/chromium` assets и остаются на `loading`. Это не доказанный дефект плагина. Обязательный gate уже использует Linux CI runner; локально нужно обновить Flutter SDK и повторить sentinel. F-007 нельзя переводить в `RESOLVED` без успешного автоматического CI evidence.
+Локальное проявление F-007 воспроизводится и после обновления с Flutter 3.38.10
+до 3.44.9, поэтому прежняя рекомендация только обновить SDK недостаточна. Это
+по-прежнему не доказанный дефект плагина: минимальный case не импортирует
+`yuv_ffi`. Обязательный gate закреплён на Flutter 3.44.9 и использует Linux CI
+runner. F-007 нельзя переводить в `RESOLVED` без успешного автоматического CI
+evidence либо отдельного устранения Windows runner issue.
 
 ---
 

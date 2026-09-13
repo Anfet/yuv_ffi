@@ -8,26 +8,26 @@
 
 | Готово | ID | Владелец | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|
-| [ ] | YUV-01 | Terra | P0 | READY FOR REVIEW | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
-| [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
+| [x] | YUV-01 | Terra | P0 | DONE | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
+| [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | CI evidence | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
 | [x] | YUV-04 | Opus | P0 | DONE | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
 | [x] | YUV-05 | Root | P0 | DONE | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
-| [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-01, YUV-04, YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
-| [ ] | YUV-09 | Luna | P2 | BLOCKED | YUV-01, YUV-02, YUV-05…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
+| [ ] | YUV-07 | Opus | P2 | TODO | Web retest: YUV-02 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
+| [ ] | YUV-09 | Luna | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [x] | YUV-10 | Terra | P1 | DONE | — | Подготовлен независимый эталон и manifest для `test_pattern_512.png` |
 | [x] | YUV-11 | Luna | P1 | DONE | — | Проверена native matrix: 65/119 passed, 54 failures зарегистрированы отдельно |
-| [ ] | YUV-12 | Luna | P1 | BLOCKED | YUV-01 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
+| [ ] | YUV-12 | Luna | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
-| [ ] | YUV-14 | Luna | P1 | BLOCKED | YUV-01, YUV-03 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
-| [ ] | YUV-15 | Terra | P1 | BLOCKED | YUV-04 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
+| [ ] | YUV-14 | Luna | P1 | TODO | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
+| [ ] | YUV-15 | Terra | P1 | TODO | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [x] | YUV-16 | Opus | P1 | DONE | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
-| [ ] | YUV-17 | Luna | P2 | BLOCKED | YUV-01 | Добавить отдельный analyzer/build gate для package `example/` |
+| [ ] | YUV-17 | Luna | P2 | TODO | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
 | [x] | YUV-19 | Terra | P1 | DONE | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
-| [ ] | YUV-20 | Opus | P1 | BLOCKED | YUV-01 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
-| [ ] | YUV-21 | Opus | P1 | BLOCKED | YUV-01 | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-20 | Opus | P1 | TODO | Web retest: YUV-02 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
+| [ ] | YUV-21 | Opus | P1 | TODO | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-18 | Terra | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
@@ -106,7 +106,7 @@ Native C permission:
 
 - Владелец: Terra
 - Приоритет: P0 / release blocker
-- Статус: READY FOR REVIEW
+- Статус: DONE
 - Зависимости: нет
 - Scope:
   - `lib/src/web/js_util_compat.dart`
@@ -198,6 +198,25 @@ Commit: текущий YUV-01 task commit
 Native C permission:
 - не требовалось; native C и generated bindings не менялись.
 
+Независимая приёмка root, Flutter 3.44.9, 2026-09-13:
+- Статус: ACCEPTED; YUV-01 переведена в DONE.
+- Исходный `Function.toJS` diagnostic отсутствует: настоящий package-importing
+  `yuv_web_wasm_test.dart` более 60 секунд остаётся на общей browser `loading`
+  стадии F-007, не завершаясь compiler error.
+- Удалены все нетипизированные `allowInterop(Function)`; Web helpers находятся
+  под `impl/` и имеют суффикс `_web`.
+- Обнаруженный при приёмке сторонний compile blocker example устранён коммитом
+  `91ff7e9`: `material_design_icons_flutter` удалён, MDI icons заменены
+  семантическими Material/Cupertino icons.
+- `flutter analyze --no-pub lib test` — exit 0, no issues.
+- `flutter analyze --no-pub` в `example/` — exit 0, no issues.
+- `flutter build web --no-pub` в `example/` — exit 0, `Built build\\web`;
+  остались только предупреждения WASM dry-run о текущем `dart:html` partial
+  backend, не ошибка dart2js build.
+- F-007 принадлежит YUV-02 и не переоткрывает устранённый compile defect
+  YUV-01. Задачи реализации, зависевшие от Web compile gate, разблокированы;
+  их финальный настоящий Chrome retest остаётся связан с YUV-02.
+
 ---
 
 ## YUV-02 — сделать Web CI настоящим обязательным gate
@@ -205,7 +224,7 @@ Native C permission:
 - Владелец: Luna
 - Приоритет: P0 / release blocker
 - Статус: READY FOR REVIEW
-- Зависимости: YUV-01
+- Зависимости: YUV-01 принята; для DONE требуется успешный автоматический CI run
 - Scope:
   - `.github/workflows/ci.yml`
   - `README.md`, только команды запуска Web-тестов
@@ -287,6 +306,22 @@ Commit: текущий YUV-02 task commit
 
 Native C permission:
 - не требовалось; задача меняет только CI, README и sentinel.
+
+Повторная приёмка root, Flutter 3.44.9, 2026-09-13:
+- Статус остаётся READY FOR REVIEW: implementation/configuration blockers не
+  найдены, но обязательный CI evidence отсутствует.
+- Коммит `86be219` закрепил `flutter-version: '3.44.9'` в обоих CI jobs вместо
+  плавающего `channel: stable`.
+- Workflow автоматически запускается на `push` и `pull_request`, пересобирает
+  WASM до Web gate, проверяет наличие artifacts и последовательно запускает
+  sentinel плюс четыре Web suites через `--platform chrome`.
+- Локальный sentinel на Windows/Flutter 3.44.9 повторно остался на `loading`
+  более 60 секунд и был остановлен вручную; зарегистрированных tests — 0.
+- Ветка `fix/0.2.5-release-readiness` отсутствует на remote, `gh` CLI не
+  установлен; без разрешения на push/PR получить требуемый автоматический
+  Linux CI run невозможно.
+- Поэтому YUV-02 не переведена в DONE, F-007 остаётся OPEN, а задачи,
+  требующие фактического Web runtime, сохраняют YUV-02 как acceptance gate.
 
 ---
 
@@ -1090,8 +1125,8 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: BLOCKED
-- Зависимости: YUV-04
+- Статус: TODO
+- Зависимости: YUV-04 принята; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/loader/data_io.dart`
   - shared serialization codec при извлечении
@@ -1153,7 +1188,7 @@ git status --short
 - Владелец: Luna
 - Приоритет: P2
 - Статус: BLOCKED
-- Зависимости: YUV-01, YUV-04, YUV-15
+- Зависимости: YUV-15; финальный Web retest зависит от YUV-02 (YUV-01/YUV-04 приняты)
 - Scope:
   - `lib/src/yuv/impl/web/yuv_web.dart`
   - `test/web/wasm_parity_edge_cases_test.dart`
@@ -1202,7 +1237,7 @@ git status --short
 - Владелец: Luna
 - Приоритет: P2
 - Статус: BLOCKED
-- Зависимости: YUV-01, YUV-02, YUV-05, YUV-06, YUV-07, YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23
+- Зависимости: YUV-02, YUV-06, YUV-07, YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 (YUV-01/YUV-05 приняты)
 - Scope:
   - `README.md`
   - `analysis_options.yaml`
@@ -1423,7 +1458,7 @@ git status --short
 - Владелец: Luna
 - Приоритет: P1
 - Статус: BLOCKED
-- Зависимости: YUV-01 (YUV-10 выполнена)
+- Зависимости: YUV-02 (YUV-01 и YUV-10 выполнены)
 - Scope:
   - `test/web/reference_web_conversions_test.dart`
   - shared test helpers и manifest из YUV-10
@@ -1526,8 +1561,8 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P1
-- Статус: BLOCKED
-- Зависимости: YUV-01 и YUV-03, чтобы не править Web/IO implementations параллельно
+- Статус: TODO
+- Зависимости: YUV-01 и YUV-03 приняты; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
   - `lib/src/yuv/impl/web/yuv_web.dart`
@@ -1589,8 +1624,8 @@ git status --short
 
 - Владелец: Terra
 - Приоритет: P1
-- Статус: BLOCKED
-- Зависимости: YUV-04
+- Статус: TODO
+- Зависимости: YUV-04 принята; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`, BGRA constructor
   - `lib/src/yuv/impl/web/yuv_web.dart`, BGRA constructor
@@ -1778,8 +1813,8 @@ Native C permission:
 
 - Владелец: Luna
 - Приоритет: P2
-- Статус: BLOCKED
-- Зависимости: YUV-01
+- Статус: TODO
+- Зависимости: YUV-01 принята; для DONE требуется CI evidence
 - Scope:
   - `.github/workflows/ci.yml`
   - `example/analysis_options.yaml`
@@ -1898,8 +1933,8 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: BLOCKED
-- Зависимости: YUV-01 для обязательного реального Chrome retest; зависимости от YUV-19 нет
+- Статус: TODO
+- Зависимости: implementation разблокирована принятием YUV-01; финальный реальный Chrome retest зависит от YUV-02; зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
   - `lib/src/yuv/yuv.dart` и IO/Web implementations для revision/identity seam
@@ -1969,8 +2004,8 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: BLOCKED
-- Зависимости: YUV-01 и YUV-19, чтобы сначала закрыть Web compile gate и не менять `loader_io.dart` параллельно
+- Статус: TODO
+- Зависимости: YUV-01 и YUV-19 приняты; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/yuv_ffi_initializer.dart`
   - `lib/src/loader/impl/loader_io.dart`
