@@ -227,8 +227,8 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
 - YUV-20 provider cache — functional seam реализован в `e3c235d`, interface
   compatibility исправлена в `a6851d7`, safe always-miss для foreign images
   восстановлен в `8b9d600`; задача ожидает focused Web retest.
-- YUV-21 initialization contract — READY FOR REVIEW, integration harness
-  доступен после принятой YUV-02; focused case ещё не выполнен.
+- YUV-21 initialization contract — REJECTED: integration harness доступен,
+  но focused retry/concurrency case ещё не выполнен.
 - YUV-06 loader paths/macOS packaging — BLOCKED до разрешения на C-forwarders;
   бывшая отдельная YUV-25 объединена с этой карточкой.
 
@@ -291,8 +291,8 @@ metadata должен остаться независимым от EOF. Подд
 
 ### До release acceptance
 
-1. Исправить замечание YUV-07; YUV-20 оставить в READY FOR REVIEW до Web retest.
-2. Перенести focused cases YUV-14, YUV-15, YUV-20 и YUV-21 в принятый
+1. Исправить замечание YUV-07.
+2. Исправить отклонённые YUV-14/YUV-15/YUV-20/YUV-21: перенести focused cases в принятый
    integration harness и выполнить их до перевода задач в DONE. YUV-17 принята
    и архивирована.
 3. После явного native permission выполнить единым scope YUV-06, включая
