@@ -375,21 +375,25 @@ void main() {
       await expectLater(YuvCodec.decodeStream(Stream<List<int>>.fromIterable(chunks)), throwsFormatException);
     });
 
-    test('a complete payload decodes without waiting for the stream to close', () async {
-      // A source that stays open after delivering a frame — a socket, a
-      // long-lived pipe — never signals `done`. The payload is structurally
-      // complete once the last plane is read, so decoding must finish there
-      // instead of blocking on a close that may never come.
+    test('a trailer delivered long after the payload is still rejected', () async {
+      // EOF is the frame boundary, so a trailer is a trailer no matter how late
+      // it arrives. A decoder that sampled the buffer, or waited only a fixed
+      // grace period, would accept this payload purely because the extra bytes
+      // were slow — making the format contract depend on the scheduler.
       final payload = await validPayload(width: 16, height: 16);
 
       final controller = StreamController<List<int>>();
-      addTearDown(controller.close);
-      controller.add(payload); // complete and valid; the stream stays open
+      controller.add(payload);
+      // Well beyond any short grace window a previous implementation allowed.
+      Future<void>.delayed(const Duration(milliseconds: 250), () {
+        controller.add(<int>[5, 5, 5]);
+        controller.close();
+      });
 
-      final draft = await YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5));
-
-      expect(draft.width, 16);
-      expect(draft.height, 16);
+      await expectLater(
+        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
+        throwsFormatException,
+      );
     });
 
     test('mismatched I420 chroma strides are rejected without requesting the second body', () async {

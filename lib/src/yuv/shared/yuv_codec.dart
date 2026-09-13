@@ -71,14 +71,6 @@ abstract final class YuvCodec {
   /// a corrupt length word cannot drive an allocation.
   static const int maxPlaneBytes = 1 << 30;
 
-  /// How long the decoder waits for a trailing byte once the payload is complete.
-  ///
-  /// A finite source — a file, an in-memory stream — has its next chunk or its
-  /// close already queued, so it answers within one event loop turn and the wait
-  /// is not observable. The window exists only so that a source which stays open
-  /// indefinitely cannot stall a payload that is already complete and valid.
-  static const Duration trailerGrace = Duration(milliseconds: 50);
-
   /// Encodes [format], [width], [height] and [planes] into one byte buffer.
   static Uint8List encode({
     required YuvFileFormat format,
@@ -297,7 +289,11 @@ abstract final class YuvCodec {
       }
     }
 
-    if (await reader.trailerArrives(trailerGrace)) {
+    // EOF is the frame boundary. A version-1 payload carries no outer length, so
+    // the only thing that can prove nothing follows the last plane is the end of
+    // the stream itself. Waiting for it is what makes the rejection of trailing
+    // bytes a guarantee rather than a race against the scheduler.
+    if (!await reader.atEnd()) {
       throw const FormatException('Malformed yuv_ffi payload: unexpected trailing byte(s)');
     }
 
@@ -405,35 +401,27 @@ class _StreamReader {
     return _take(count);
   }
 
-  /// Whether any byte beyond the payload has already arrived.
-  bool hasBufferedBytes() => _available > 0;
-
-  /// Whether a trailing byte shows up within [grace] of the payload ending.
+  /// Whether the stream is genuinely finished, with no byte left over.
   ///
-  /// Two requirements meet here and cannot both be absolute. Trailing bytes must
-  /// be rejected, and a file delivers them in a later chunk as readily as in the
-  /// same one, so checking only what is already buffered would let a fragmented
-  /// payload smuggle a trailer past. But a source that stays open after a frame —
-  /// a socket, a long-lived pipe — never signals the end, so waiting for it
-  /// would hang on a payload that is already complete and valid.
+  /// Waits for the end of the stream rather than sampling what happens to be
+  /// buffered. A file delivers a trailer in a later chunk as readily as in the
+  /// same one, so a decoder that only inspected the current buffer would accept
+  /// or reject the same payload depending on how it was chunked and on when the
+  /// scheduler ran — the format contract would then hold only by luck.
   ///
-  /// The compromise is a bounded wait rather than an unbounded one: a stream that
-  /// has more to say gets [grace] to say it, and one that has finished, or has
-  /// simply gone quiet, lets decoding finish. A file or an in-memory stream
-  /// resolves immediately — its next chunk or its close is already queued — so
-  /// the grace window costs nothing there and no test pays for it.
-  Future<bool> trailerArrives(Duration grace) async {
+  /// The cost is that a source which never closes never finishes decoding. That
+  /// is inherent to a version-1 payload: it carries no outer frame length, so
+  /// EOF is the only boundary there is. Decoding a frame from a stream that
+  /// stays open needs a framed protocol, not a timeout guessing at one.
+  Future<bool> atEnd() async {
     if (_available > 0) {
-      return true;
-    }
-    if (_exhausted) {
       return false;
     }
-    try {
-      return await _pull().timeout(grace);
-    } on TimeoutException {
-      // Nothing further came in time: the payload stands on its own.
-      return false;
+    while (!_exhausted) {
+      if (await _pull()) {
+        return false;
+      }
     }
+    return true;
   }
 }
