@@ -142,9 +142,11 @@ void main() {
         yLength: image.yPlane.bytes.length,
       );
 
+      // YUV-07 pins this to FormatException; it was deliberately loose while
+      // the reader could still surface RangeError or TypeError instead.
       await expectLater(
         image.load(malformedPayload(format: 'i420', width: 8, height: 8, planes: const [])),
-        throwsA(isA<Object>()),
+        throwsFormatException,
       );
 
       expect(image.width, before.width, reason: 'width was mutated by a failed load');

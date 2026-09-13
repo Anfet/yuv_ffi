@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:yuv_ffi/src/loader/data_io.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_codec.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
@@ -137,50 +136,20 @@ class YuvImageImpl implements YuvImage {
 
   @override
   Future save(Sink<List<int>> sink) async {
-    var json = {'version': 1, 'format': format.name, 'width': width, 'height': height};
-
-    var writer = DataWriter(sink);
-    writer.writeString(jsonEncode(json));
-    writer.writeUint8(planes.length);
-    for (final plane in planes) {
-      writer.writeUint32(plane.height);
-      writer.writeUint32(plane.rowStride);
-      writer.writeUint32(plane.pixelStride);
-      writer.writeBytes(plane.bytes);
-    }
-    writer.write();
+    sink.add(YuvCodec.encode(format: format, width: width, height: height, planes: _planes));
   }
 
   @override
   Future<void> load(Stream<List<int>> stream) async {
-    var reader = DataReader(stream);
-    await reader.done();
+    // Decode into a draft first: state is replaced only once the whole payload
+    // has been read and validated, so a malformed frame cannot leave this image
+    // half-updated.
+    final draft = YuvCodec.decode(await YuvCodec.collect(stream));
 
-    var headerText = reader.readString();
-    var header = jsonDecode(headerText);
-
-    // Parse into locals and only commit once the whole payload validates, so a
-    // malformed frame cannot leave this image half-updated.
-    final int loadedWidth = header['width'] as int;
-    final int loadedHeight = header['height'] as int;
-    final YuvFileFormat loadedFormat = YuvFileFormat.values.byName(header['format'] as String);
-
-    var planesCount = reader.readUint8();
-    final loadedPlanes = <YuvPlane>[];
-    for (var i = 0; i < planesCount; i++) {
-      var planeHeight = reader.readUint32();
-      var rowStride = reader.readUint32();
-      var pixelStride = reader.readUint32();
-      var planeBytes = reader.readBytes();
-      loadedPlanes.add(YuvPlane(planeHeight, rowStride, pixelStride, planeBytes));
-    }
-
-    YuvGeometry.validateImage(format: loadedFormat, width: loadedWidth, height: loadedHeight, planes: loadedPlanes);
-
-    _width = loadedWidth;
-    _height = loadedHeight;
-    _format = loadedFormat;
-    _planes = loadedPlanes;
+    _width = draft.width;
+    _height = draft.height;
+    _format = draft.format;
+    _planes = draft.planes;
     _revision++;
   }
 
