@@ -2121,6 +2121,7 @@ git status --short
   - `ffigen.yaml`
   - `lib/src/functions/bindings/yuv_ffi_bingings.dart` только через регенерацию
   - audit script/test, сравнивающий используемые Dart symbols с generated bindings
+  - `.github/workflows/ci.yml`, отдельная Unix regeneration job
 - Опциональная tooling-задача; не блокирует YUV-18.
 
 ### Проблема
@@ -2145,6 +2146,13 @@ functions и `YUVDef`. Это затрудняет review и делает рез
    из generated bindings как неиспользуемый symbol.
 4. Регенерировать binding только командой ffigen, ручные изменения запрещены.
 5. Сравнить до/после все symbols, реально используемые `lib/src/**`.
+6. Добавить обязательную job `bindings-regeneration` на `ubuntu-latest`,
+   запускаемую на `push` и `pull_request`; не использовать `continue-on-error`.
+7. В job установить Flutter 3.44.9 и `libclang`, выполнить ffigen и
+   `tool/verify_bindings_audit.dart`.
+8. После Unix-регенерации потребовать чистый exact diff для `ffigen.yaml` и
+   generated bindings. `git diff --exit-code` является более сильным
+   доказательством эквивалентности имён и сигнатур, чем отдельный regex-report.
 
 ### DoD
 
@@ -2152,6 +2160,9 @@ functions и `YUVDef`. Это затрудняет review и делает рез
 - Каждый symbol, вызываемый Dart-кодом, присутствует с прежней сигнатурой.
 - Регенерация на Windows и Unix даёт эквивалентный набор public members класса
   `YuvFfiBindings`.
+- Обязательная `bindings-regeneration` job проходит на Linux и падает при любом
+  host-dependent изменении generated bindings.
+- Job выполняет audit всех 40 используемых symbols и не содержит soft-fail.
 - Native headers/sources не менялись.
 - Анализатор и VM suite не получают новых падений.
 
@@ -2159,12 +2170,26 @@ functions и `YUVDef`. Это затрудняет review и делает рез
 
 ```powershell
 flutter pub run ffigen --config ffigen.yaml
+dart run tool/verify_bindings_audit.dart
 flutter analyze
 flutter test
 dart format --output=none --set-exit-if-changed lib
 git diff --check
 git status --short
 ```
+
+Обязательная Linux CI-проверка:
+
+```sh
+flutter pub get
+flutter pub run ffigen --config ffigen.yaml
+dart run tool/verify_bindings_audit.dart
+git diff --exit-code -- ffigen.yaml lib/src/functions/bindings/yuv_ffi_bingings.dart
+```
+
+Если `ffigen` не находит shared library автоматически, job должна явно
+установить `libclang-dev`; не использовать Emscripten toolchain из Web job как
+неявный источник host-зависимости.
 
 В результате приложить число строк generated-файла до/после и машинно
 полученный список используемых Dart symbols.
