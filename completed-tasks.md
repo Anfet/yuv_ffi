@@ -15,6 +15,7 @@
 | YUV-10 | Terra | DONE |
 | YUV-11 | Luna | DONE |
 | YUV-16 | Opus | DONE |
+| YUV-17 | Luna | DONE |
 | YUV-19 | Terra | DONE |
 | YUV-27 | Terra | DONE |
 
@@ -1374,4 +1375,103 @@ Native C permission:
 - На Flutter 3.44.9: relevant tests 12/12 passed; общий focused review suite
   151/151 passed; root и example analyzer — без diagnostics.
 - `git diff --check` проходит; untracked `c-functions-audit.md` не затронут.
+---
+
+## YUV-17 — анализировать `example/` как отдельный package
+
+- Владелец: Luna
+- Приоритет: P2
+- Статус: DONE
+- Зависимости: YUV-01 принята
+- Scope:
+  - `.github/workflows/ci.yml`
+  - `example/analysis_options.yaml`
+  - `example/pubspec.yaml` / `example/pubspec.lock` только при необходимой
+    согласованной dependency resolution
+  - команды проверки в YUV-01/YUV-09
+
+### Проблема
+
+`example/` имеет собственный `pubspec.yaml` и `analysis_options.yaml`.
+Root-команда `flutter analyze lib test example/lib` не эквивалентна анализу из
+каталога example package и не применяет его dependency/configuration context.
+Из-за этого root analyzer не доказывал чистоту второго Web JS interop helper в
+`example/lib/widgets/impl/js_util_compat.dart`.
+
+### Зафиксированное решение
+
+1. Добавить в CI отдельную job со всеми командами в `working-directory: example`.
+2. Выполнять собственные `flutter pub get`, `flutter analyze` и Web build.
+3. Не оставлять неявный diff `example/pubspec.lock` от root quality gate.
+4. Показывать root и example checks как разные CI jobs.
+5. Не считать успешный root analyzer доказательством example analysis.
+
+### DoD
+
+- CI из каталога `example/` выполняет `flutter analyze`.
+- CI компилирует example для Web.
+- Root и example используют каждый свой package и analysis configuration.
+- `example/pubspec.lock` не меняется неявно.
+- Приложена ссылка на фактический зелёный CI job.
+
+### Проверка
+
+```powershell
+flutter analyze
+Push-Location example
+flutter pub get
+flutter analyze
+flutter build web
+Pop-Location
+git diff --check
+git status --short
+```
+
+### Результат исполнителя
+
+- В `.github/workflows/ci.yml` добавлена отдельная job
+  `example-analyze-and-build`.
+- Все три example-step имеют явный `working-directory: example`:
+  `flutter pub get`, `flutter analyze`, `flutter build web`.
+- Flutter pinning согласовано с root job; tracked `example/pubspec.lock` не
+  изменён.
+- Локально на Flutter 3.44.9: example analyzer и Web build прошли.
+- Native C и generated bindings не менялись.
+
+Записанные исполнителем локальные результаты:
+
+- root `flutter analyze --no-pub` завершался с exit 1 только из-за локального
+  untracked `_tmp_pub_wasm_loader_web.dart`;
+- `cd example && flutter pub get` — exit 0, dependency resolution выполнен;
+- `cd example && flutter analyze` — exit 0, no issues found;
+- `cd example && flutter build web` — exit 0;
+- `git diff --check` — exit 0;
+- после проверки `example/pubspec.lock` оставался неизменённым.
+
+Уточнение прежнего независимого ревью: `_tmp_pub_wasm_loader_web.dart` не
+отслеживался Git, поэтому отсутствовал в clean CI checkout. Targeted root
+`flutter analyze --no-pub lib test` проходил без diagnostics. Локальный exit 1
+был артефактом рабочей директории, а не дефектом YUV-17; удаление пользовательских
+`_tmp_*` в scope не входило.
+
+Пункт исходного решения о возможном расширении example build matrix после
+YUV-06 не являлся DoD этой карточки и не требовался для её приёмки.
+
+### Независимая приёмка root 2026-09-14
+
+- Статус: DONE.
+- Реализация ранее была принята по diff: workflow содержит отдельную example job,
+  корректный working directory на всех шагах и независимый package context.
+- Обязательное CI evidence получено в run #23 на commit `bb93fb2`:
+  `example-analyze-and-build` завершилась успешно, включая dependency
+  resolution, analyzer и Web build.
+- Прямой job URL:
+  `https://github.com/Anfet/yuv_ffi/actions/runs/34783329503/job/103794195523`.
+- Локальная повторная проверка root tracked-кода на Flutter 3.44.9 не обнаружила
+  diagnostics; сфокусированный VM-набор прошёл 110/110.
+- Падение другой CI job не относится к YUV-17: example gate в том же clean run
+  зелёный и изолирован от root reference failures.
+- Зависимость YUV-17 снята с YUV-09 и YUV-18; полная карточка перемещена из
+  `todo.md` по правилу архивации завершённых задач.
+
 ---

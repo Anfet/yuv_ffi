@@ -12,12 +12,11 @@
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | исправить строгую проверку trailing bytes | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
-| [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
+| [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | READY FOR REVIEW | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
 | [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
@@ -26,7 +25,7 @@
 | [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | READY FOR REVIEW | — | Ограничить ffigen только используемым ABI и убрать platform CRT из bindings |
 | [ ] | YUV-28 | Opus | Claude Opus 5 | P2 | BLOCKED | после YUV-18 | Сократить дублирование backend-классов после релиза `0.2.5` |
 | [ ] | YUV-29 | Luna | Claude Haiku 4.5 | P3 | BLOCKED | разрешение на C headers | Удалить неиспользуемое объявление `nv21_to_rgb` без реализации |
-| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-02, YUV-06…YUV-09, YUV-12…YUV-15, YUV-17, YUV-20…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
+| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-02, YUV-06…YUV-09, YUV-12…YUV-15, YUV-20…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
 
 ## Статусы
 
@@ -994,7 +993,7 @@ git status --short
 - Владелец: Luna
 - Приоритет: P2
 - Статус: BLOCKED
-- Зависимости: YUV-02, YUV-06, YUV-07, YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 (YUV-01/YUV-05 приняты)
+- Зависимости: YUV-02, YUV-06, YUV-07, YUV-08, YUV-13, YUV-14, YUV-22, YUV-23 (YUV-01/YUV-05/YUV-17 приняты)
 - Scope:
   - `README.md`
   - `analysis_options.yaml`
@@ -1430,119 +1429,6 @@ Commit: fix: kept the declared layout of a padded BGRA plane
 Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
-
----
-
-
----
-
-## YUV-17 — анализировать `example/` как отдельный package
-
-- Владелец: Luna
-- Приоритет: P2
-- Статус: READY FOR REVIEW
-- Зависимости: YUV-01 принята; для DONE требуется CI evidence
-- Scope:
-  - `.github/workflows/ci.yml`
-  - `example/analysis_options.yaml`
-  - `example/pubspec.yaml` / `example/pubspec.lock` только при необходимой согласованной dependency resolution
-  - команды проверки в YUV-01/YUV-09
-
-### Проблема
-
-`example/` имеет собственный `pubspec.yaml` и `analysis_options.yaml`. Root-команда `flutter analyze lib test example/lib` рассматривает путь из контекста root package и не является эквивалентом `flutter analyze`, запущенному внутри example package.
-
-Это особенно важно для `example/lib/widgets/impl/js_util_compat.dart`: там находится второй экземпляр Web compile blocker YUV-01. Root analyzer не является доказательством чистоты example.
-
-### Зафиксированное решение
-
-1. В CI добавить отдельные steps/job с `working-directory: example`.
-2. Внутри `example/` выполнить собственные dependency resolution, `flutter analyze` и Web build.
-3. Использовать tracked lockfile предсказуемо: если текущий SDK требует его обновления, diff должен быть осознанным и принадлежать только этой задаче; не оставлять побочный lockfile diff от root command.
-4. Root checks и example checks показывать отдельно в handoff result.
-5. Не считать успешный root `flutter analyze` доказательством example analysis.
-6. После YUV-06 расширить example build matrix подтверждёнными native desktop/mobile targets, не дублируя platform job без причины.
-
-### DoD
-
-- CI из каталога `example/` выполняет `flutter analyze`.
-- CI компилирует `example/` для Web и обнаруживает ошибки его JS interop helper.
-- Локальная инструкция содержит отдельные root/example команды.
-- Root и example analyzer используют каждый свой `analysis_options.yaml`.
-- `example/pubspec.lock` не меняется неявно во время root quality gate.
-
-### Проверка
-
-```powershell
-flutter analyze
-Push-Location example
-flutter pub get
-flutter analyze
-flutter build web
-Pop-Location
-git diff --check
-git status --short
-```
-
-Приложить ссылку на CI run, где example steps видны отдельно.
-
-### Результат
-
-```text
-Статус: READY FOR REVIEW
-Commit: не создавался
-Изменённые файлы:
-- .github/workflows/ci.yml
-
-Что сделано:
-- Добавлена отдельная CI job `example-analyze-and-build` с явной `working-directory: example`.
-- Job содержит три последовательных step: `flutter pub get`, `flutter analyze`, `flutter build web`.
-- Flutter pinning (3.44.9) через `subosito/flutter-action@v2` сохранён согласованным с root job.
-- Root и example checks показываются как отдельные job в CI, визуально различимы в workflow.
-- Наименование step (`Flutter pub get (root)` / `Flutter pub get (example)` и т.д.) явно указывает scope каждого.
-
-Проверки:
-- flutter analyze (root, --no-pub) — exit 1, есть ошибки в _tmp_pub_wasm_loader_web.dart (ожидается, не входит в scope)
-- cd example && flutter pub get — exit 0, changed 15 dependencies
-- cd example && flutter analyze — exit 0, no issues found
-- cd example && flutter build web — exit 0, built build/web successfully
-- git diff --check — exit 0, no trailing whitespace
-- git status --short — только .github/workflows/ci.yml и todo.md изменены (expected)
-- example/pubspec.lock после `git checkout -- example/pubspec.lock` — неизменён (lockfile управляется правильно)
-
-Ручная проверка:
-- Windows 10 x64, PowerShell / Git Bash, Flutter 3.44.9, все локальные команды выполнены и прошли успешно.
-- Root analysis_options.yaml исключает generated bindings, example/analysis_options.yaml с собственным include.
-- каждый пакет использует свой configuration и dependency context.
-
-Остаточные риски:
-- CI evidence (фактический запуск на runner) отсутствует, так как нет разрешения на push/PR.
-- Example web build уведомил о WASM dry run findings (dart:html unsupported), это ожидаемо и обработано.
-- Item 6 карточки (расширение matrix после YUV-06) явно OUT OF SCOPE и не реализован.
-
-Native C permission:
-- не требовалось; изменены только CI workflow и metadata.
-```
-
-#### Уточнение после независимой проверки
-
-Реализация принята по существу: YAML парсится в три job, `working-directory: example`
-стоит на всех трёх example-step, Flutter pinning согласован с root job,
-`example/pubspec.lock` не изменён. Независимо перепроверено:
-`cd example && flutter analyze --no-pub` — exit 0, «No issues found»;
-полный VM suite — 257 passed / 31 failed, без изменений.
-
-Про exit 1 у root `flutter analyze`. В отчёте он помечен как «ожидается, не
-входит в scope»; это верно, и проверка уточняет почему именно. Девять ошибок
-приходят из `_tmp_pub_wasm_loader_web.dart`, а этот файл **не отслеживается
-git** (`git ls-files --error-unmatch` не находит его). CI работает на чистом
-checkout, поэтому на runner файла не существует и job `analyze-and-test-vm`
-из-за него не покраснеет. Подтверждение: `flutter analyze --no-pub lib test`
-даёт exit 0 «No issues found», то есть весь трекаемый код чист.
-
-Следствие для приёмки: локальный exit 1 — артефакт рабочей директории, а не
-сломанный root gate. Отдельного решения владельца это не требует; удалять
-`_tmp_*` по-прежнему нельзя без подтверждения (ограничение 7).
 
 ---
 
@@ -2606,7 +2492,7 @@ git status --short
 - Приоритет: P0 / release gate
 - Статус: BLOCKED
 - Зависимости: YUV-02, YUV-06, YUV-07, YUV-08, YUV-09, YUV-12, YUV-13,
-  YUV-14, YUV-15, YUV-17, YUV-20, YUV-21, YUV-22, YUV-23
+  YUV-14, YUV-15, YUV-20, YUV-21, YUV-22, YUV-23 (YUV-17 принята)
 - Scope:
   - интеграционное ревью всех task commits;
   - `pubspec.yaml` и верхняя запись `CHANGELOG.md`;

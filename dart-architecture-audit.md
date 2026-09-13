@@ -291,8 +291,8 @@ metadata должен остаться независимым от EOF. Подд
 ### До release acceptance
 
 1. Исправить замечание YUV-07; YUV-20 оставить в READY FOR REVIEW до Web retest.
-2. Независимо проверить READY FOR REVIEW задачи YUV-14, YUV-15, YUV-17,
-   YUV-21; Web-зависимые не переводить в DONE до YUV-02.
+2. Независимо проверить READY FOR REVIEW задачи YUV-14, YUV-15 и YUV-21;
+   Web-зависимые не переводить в DONE до YUV-02. YUV-17 принята и архивирована.
 3. После явного native permission выполнить единым scope YUV-06, включая
    macOS source forwarding, затем YUV-22/YUV-23.
 4. Закрыть reference/Web/documentation dependencies и выполнить YUV-18.
