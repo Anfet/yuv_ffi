@@ -16,7 +16,7 @@
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | добавить focused integration Web case | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | REJECTED | добавить focused integration Web case | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | integration Web retest | Сделать ключ image cache корректным без breaking change в patch-релизе |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | добавить focused integration Web cache case | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | integration Web retest | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
@@ -1321,7 +1321,7 @@ native C и generated bindings менять не требуется.
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-01/YUV-02 приняты; требуется focused integration Web retest; зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
@@ -1714,6 +1714,28 @@ Regression suite теперь содержит реально мутирующи
 До `DONE` остаётся один acceptance gate из исходного DoD: выполнить
 Web-compatible cache test с `kIsWeb == true` через integration harness после
 YUV-02. Дополнительных исправлений реализации по VM-ветке не требуется.
+
+### Повторное независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+YUV-02 сняла инфраструктурный blocker, но focused Web cache test не добавлен.
+Зелёный bootstrap не создаёт `YuvImageProvider`, не выполняет Flutter image
+cache lookup и не проверяет rebuild после mutation, поэтому Web DoD YUV-20 им
+не покрывается.
+
+Исправление `8b9d600` и VM regressions приняты; текущий focused suite на Flutter
+3.44.9 проходит 114/114. Для повторного review требуется только Web acceptance:
+
+1. добавить Web-compatible integration/widget test без `dart:io`;
+2. доказать reuse неизменённого package image и cache miss после package
+   mutation/revision bump;
+3. доказать safe always-miss стороннего legacy image после mutation без
+   `markDirty()`;
+4. выполнить required Chrome job с `kIsWeb == true` и приложить URL.
+
+Публичный API, production cache logic, native C и generated bindings повторно
+менять не требуется.
 
 ---
 

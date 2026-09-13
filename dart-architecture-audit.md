@@ -28,10 +28,10 @@ YUV-07/YUV-20/YUV-26/YUV-27 отражены в актуальных стату�
 | A-07: `getBytes()` backing buffer | YUV-14 | REJECTED | Fix принят на VM; отсутствует focused integration Web case |
 | A-08: bindings cache | YUV-19 | DONE / archived | Принято и перемещено в `completed-tasks.md` |
 | A-08: serialization | YUV-07 | REJECTED | Geometry исправлена, но 50 ms grace делает trailing-byte policy недетерминированной |
-| A-08: image cache | YUV-20 | READY FOR REVIEW | Safe always-miss для foreign implementations восстановлен; нужен Web retest |
+| A-08: image cache | YUV-20 | REJECTED | Safe always-miss восстановлен; отсутствует focused integration Web cache case |
 | A-08: initialization | YUV-21 | READY FOR REVIEW | Реализовано commit `ad92431`; требуется Web runtime evidence |
 | A-09: локальный `_tmp_*` | — | CLOSED / local | Файл отсутствует; удаление локальных tmp не является package task |
-| A-10: revision compatibility | YUV-20 | READY FOR REVIEW | Safe cache miss восстановлен и покрыт legacy mutator regression |
+| A-10: revision compatibility | YUV-20 | REJECTED | VM fix принят; обязательный Web cache case ещё не выполнен |
 | A-11: serialization boundary | YUV-07 | REJECTED | Timeout не может служить доказательством отсутствия trailing bytes |
 
 Дополнительная синхронизация build/tooling backlog:
@@ -248,7 +248,7 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
 
 ## A-10 — YUV-20 менял cache behavior внешних `implements YuvImage`
 
-- Статус: FIXED / READY FOR REVIEW
+- Статус: FIXED / task REJECTED pending Web acceptance
 - Приоритет: P1
 - Задача: расширена YUV-20
 
