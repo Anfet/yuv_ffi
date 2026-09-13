@@ -3,7 +3,8 @@
 Первичный аудит Dart-слоя выполнен 2026-09-13 на ветке
 `fix/0.2.5-release-readiness`, commit `1fd3a7b`. Документ синхронизирован с
 `todo.md` и повторно сверен на commit `bfa85d7` после реализации YUV-07,
-YUV-17, YUV-20 и YUV-21.
+YUV-17, YUV-20 и YUV-21. Повторные реализации `ded01b0`/`a6851d7` и ревью
+YUV-07/YUV-20/YUV-26/YUV-27 отражены в актуальных статусах ниже.
 
 Область: Dart-классы и архитектура package. Native C и WASM build internals не
 входят в этот аудит. Найденные native/build вопросы зарегистрированы в
@@ -21,7 +22,7 @@ YUV-17, YUV-20 и YUV-21.
 | A-02: backend duplication | YUV-28 | BLOCKED / post-release | Пересчитать duplication после `0.2.5`, затем выделять только подтверждённый shared layer |
 | A-03: разные empty accessors | YUV-28 | NOTE / post-release | Contract debt включён в characterization scope YUV-28 |
 | A-04: тела методов в `interface class` | — | RETRACTED | `implements` уже требует реализацию всех instance members на compile time |
-| A-05: `DataReader`/`ChangeNotifier` | YUV-07 | REJECTED | Удалить мёртвый reader/writer после миграции на codec |
+| A-05: `DataReader`/`ChangeNotifier` | YUV-07 | DONE / task still rejected | Мёртвый reader/writer удалён в `ded01b0`; оставшийся blocker относится к A-11 |
 | A-05: `bytesPerPixes`, exception, rotation naming | YUV-27 | DONE / archived | Source-compatible cleanup принят и перемещён в `completed-tasks.md` |
 | A-06: rotation assert и `dstWidtn` | YUV-27 | DONE / archived | Механическая cleanup принята без изменения semantics |
 | A-07: `getBytes()` backing buffer | YUV-14 | READY FOR REVIEW | Реализовано commit `3bd12bf`; нужен обязательный Web retest |
@@ -67,8 +68,10 @@ bfa85d7  ci: analyzed and built the example as its own package
 
 Статусы выше основаны на diff/code review этих commits и записанном evidence в
 `todo.md`. Они не подменяют обязательный clean CI/Web run. В частности,
-результаты YUV-07/YUV-20/YUV-21 были записаны для Flutter 3.38.10, тогда как
-целевая версия ветки — Flutter 3.44.9.
+первичные результаты YUV-07/YUV-20/YUV-21 были записаны для Flutter 3.38.10.
+Повторные реализации YUV-07/YUV-20 и текущее root-review проверены на Flutter
+3.44.9; пользователь также отдельно разрешил использовать Flutter 3.38.
+Обязательное Web runtime evidence всё ещё отсутствует.
 
 ---
 
@@ -157,7 +160,7 @@ Dart требует от `implements YuvImage` реализовать все ins
 
 ## A-05 — подтверждённый Dart API debt
 
-- Статус: PARTIALLY OPEN
+- Статус: DONE; карточка YUV-07 остаётся REJECTED по независимой A-11
 - Задачи: YUV-07 и YUV-27
 
 ### Подтверждено
@@ -184,12 +187,12 @@ frame к zero orientation. Семантическое изменение без 
 
 ## A-06 — rotation validation drift
 
-- Статус: LOW-RISK CLEANUP
-- Задача: YUV-27
+- Статус: DONE
+- Задача: YUV-27, archived
 
 Невалидный угол недостижим через текущий enum API. Release-mode safety defect
-не подтверждён. YUV-27 удаляет redundant assert и исправляет имя локальной
-переменной, сохраняя результаты 0/90/180/270 без изменений.
+не подтверждён. Commit `3468ae2` удалил redundant assert и исправил имя
+локальной переменной, сохранив результаты 0/90/180/270 без изменений.
 
 ---
 
