@@ -18,7 +18,7 @@ FFI_PLUGIN_EXPORT void bgra8888_gaussian_blur(
     float *kernel = (float *) malloc((2 * radius + 1) * sizeof(float));
     generate_gaussian_kernel(kernel, radius, sigma);
 
-    // --- Горизонтальное размытие ---
+    // --- Horizontal blur ---
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             for (int c = 0; c < 4; ++c) {
@@ -35,7 +35,7 @@ FFI_PLUGIN_EXPORT void bgra8888_gaussian_blur(
         }
     }
 
-    // --- Вертикальное размытие ---
+    // --- Vertical blur ---
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             for (int c = 0; c < 4; ++c) {

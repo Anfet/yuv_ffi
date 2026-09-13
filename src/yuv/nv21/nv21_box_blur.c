@@ -22,7 +22,7 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
     uint8_t *temp = (uint8_t *) malloc(height * rowStride);
     if (!temp) return;
 
-    // --- Горизонтальный проход (Y) ---
+    // --- Horizontal pass (Y) ---
     for (int y = 0; y < height; ++y) {
         const uint8_t *row    = src->y + y * rowStride;
         uint8_t *temp_row     = temp   + y * rowStride;
@@ -42,7 +42,7 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
         }
     }
 
-    // --- Вертикальный проход (Y) ---
+    // --- Vertical pass (Y) ---
     for (int x = 0; x < width; ++x) {
         int sum = 0;
         for (int dy = -radius; dy <= radius; ++dy) {
@@ -79,7 +79,7 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
     uint8_t *u_plane = (uint8_t *) malloc(uv_width * uv_height);
     uint8_t *v_plane = (uint8_t *) malloc(uv_width * uv_height);
 
-    // Распаковка
+    // Unpack
     for (int y = 0; y < uv_height; ++y) {
         const uint8_t *row = src->u + y * src->uvRowStride;
         for (int x = 0; x < uv_width; ++x) {
@@ -88,9 +88,10 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
         }
     }
 
-    // Размытие U и V так же, как Y (с box blur)
-    // ⚠️ Упрощённо: без rect, т.к. в NV21 UV соответствует 2×2 блокам Y
-    // Если нужен rect и на UV — придётся аккуратно учитывать even coords.
+    // Blur U and V the same way as Y (box blur)
+    // Note: simplified, without rect, since in NV21 one UV sample covers a
+    // 2x2 block of Y. Applying rect to UV as well would require careful
+    // handling of even coordinates.
     for (int y = 0; y < uv_height; ++y) {
         for (int x = 0; x < uv_width; ++x) {
             int sumU = 0, sumV = 0, count = 0;
@@ -108,7 +109,7 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
         }
     }
 
-    // Сборка обратно в interleaved VU
+    // Pack back into interleaved VU
     for (int y = 0; y < uv_height; ++y) {
         uint8_t *row = src->u + y * src->uvRowStride;
         for (int x = 0; x < uv_width; ++x) {

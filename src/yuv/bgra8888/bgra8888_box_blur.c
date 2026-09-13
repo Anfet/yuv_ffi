@@ -23,7 +23,7 @@ FFI_PLUGIN_EXPORT void bgra8888_box_blur(
     uint8_t *temp = (uint8_t *) malloc(height * stride);
     if (!temp) return;
 
-    // --- Горизонтальный проход ---
+    // --- Horizontal pass ---
     for (int y = 0; y < height; ++y) {
         const uint8_t *row = src->y + y * stride;
         uint8_t *temp_row  = temp + y * stride;
@@ -46,7 +46,7 @@ FFI_PLUGIN_EXPORT void bgra8888_box_blur(
         }
     }
 
-    // --- Вертикальный проход ---
+    // --- Vertical pass ---
     for (int x = 0; x < width; ++x) {
         for (int c = 0; c < bpp; ++c) {
             int sum = 0;
@@ -61,7 +61,7 @@ FFI_PLUGIN_EXPORT void bgra8888_box_blur(
 
                 if (x < (int)left || x >= (int)right ||
                     y < (int)top  || y >= (int)bottom) {
-                    dst[idx] = original; // оставляем как есть
+                    dst[idx] = original; // leave as is
                 } else {
                     dst[idx] = (uint8_t)(sum / (2 * radius + 1));
                 }

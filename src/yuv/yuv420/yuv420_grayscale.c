@@ -10,7 +10,7 @@ FFI_PLUGIN_EXPORT void yuv420_grayscale(
     int uv_height = height / 2;
     int uv_plane_size = uv_height * src->uvRowStride;
 
-    // Заполняем U и V 128 (нейтральный цвет)
+    // Fill U and V with 128 (neutral color)
     memset(uDst, 128, uv_plane_size);
     memset(vDst, 128, uv_plane_size);
 }

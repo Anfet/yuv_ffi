@@ -6,13 +6,13 @@ FFI_PLUGIN_EXPORT void nv21_negate(
     int y_plane_size = src->height * src->yRowStride;
     int uv_plane_size = (src->height / 2) * src->uvRowStride;
 
-    // Инвертируем яркость
+    // Invert the luma
     for (int i = 0; i < y_plane_size; ++i) {
         src->y[i] = 255 - src->y[i];
     }
 
-    // Инвертируем цвет (симметрично вокруг 128)
+    // Invert the color (symmetrically around 128)
     for (int i = 0; i < uv_plane_size; ++i) {
-        src->u[i] = 256 - src->u[i]; // или (255 - (u_src[i] - 128)) + 128
+        src->u[i] = 256 - src->u[i]; // or (255 - (u_src[i] - 128)) + 128
     }
 }

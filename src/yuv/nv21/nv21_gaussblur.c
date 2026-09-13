@@ -1,8 +1,8 @@
 #include "../yuv.h"
 
-// --- Гауссовый блюр NV21 ---
+// --- Gaussian blur for NV21 ---
 // src->y = Y plane
-// src->u = interleaved VU plane (NV21), src->v не используется
+// src->u = interleaved VU plane (NV21), src->v unused
 FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
         const YUVDef *src,
         int radius,
@@ -35,7 +35,7 @@ FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
     uint8_t *u_plane = (uint8_t *) malloc(uv_width * uv_height);
     uint8_t *v_plane = (uint8_t *) malloc(uv_width * uv_height);
 
-    // Распаковка VU → отдельные U и V
+    // Unpack VU into separate U and V planes
     for (int y = 0; y < uv_height; ++y) {
         const uint8_t *row = vu_src + y * uv_row_stride;
         for (int x = 0; x < uv_width; ++x) {
@@ -44,7 +44,7 @@ FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
         }
     }
 
-    // Размытие U и V по отдельности
+    // Blur U and V separately
     gaussian_blur_plane_strided(
             u_plane, u_plane,
             uv_width, uv_height,
@@ -58,7 +58,7 @@ FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
             radius, sigma
     );
 
-    // Сборка обратно в interleaved VU
+    // Pack back into interleaved VU
     for (int y = 0; y < uv_height; ++y) {
         uint8_t *row = vu_dst + y * uv_row_stride;
         for (int x = 0; x < uv_width; ++x) {

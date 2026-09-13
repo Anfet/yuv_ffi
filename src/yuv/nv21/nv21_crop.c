@@ -1,8 +1,8 @@
 #include "../yuv.h"
 
-// Кроп NV21 (Y + interleaved VU) в прямоугольник.
-// src->y = Y plane, src->u = interleaved VU, src->v не используется
-// dst->y = Y plane, dst->u = interleaved VU, dst->v не используется
+// Crops NV21 (Y + interleaved VU) to a rectangle.
+// src->y = Y plane, src->u = interleaved VU, src->v unused
+// dst->y = Y plane, dst->u = interleaved VU, dst->v unused
 FFI_PLUGIN_EXPORT void nv21_crop_rect(
         const YUVDef *src,
         const YUVDef *dst,
@@ -14,7 +14,7 @@ FFI_PLUGIN_EXPORT void nv21_crop_rect(
     const int y_row_stride  = src->yRowStride;
     const int y_pixel_stride = src->yPixelStride;
     const int uv_row_stride = src->uvRowStride;
-    const int uv_pixel_stride = src->uvPixelStride; // обычно = 2 (VU пара)
+    const int uv_pixel_stride = src->uvPixelStride; // usually 2 (a VU pair)
 
     uint8_t *y_src = src->y;
     uint8_t *vu_src = src->u; // interleaved VU
@@ -30,9 +30,9 @@ FFI_PLUGIN_EXPORT void nv21_crop_rect(
     }
 
     // ---- VU plane ----
-    // NV21 = 4:2:0 → каждая строка UV соответствует 2 строкам Y
-    int uv_crop_width  = crop_width  / 2; // число сэмплов VU
-    int uv_crop_height = crop_height / 2; // число строк UV
+    // NV21 = 4:2:0, so one UV row corresponds to two Y rows
+    int uv_crop_width  = crop_width  / 2; // number of VU samples
+    int uv_crop_height = crop_height / 2; // number of UV rows
     int crop_uv_x = left / 2;
     int crop_uv_y = top  / 2;
 

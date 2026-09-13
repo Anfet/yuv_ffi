@@ -42,11 +42,11 @@ FFI_PLUGIN_EXPORT void yuv420_box_blur(
         }
     }
 
-    // Вертикальный проход (ускоренный)
+    // Vertical pass (accelerated)
     for (int x = 0; x < width; ++x) {
         int sum = 0;
 
-        // начальная сумма на первом пикселе
+        // initial sum at the first pixel
         for (int dy = -radius; dy <= radius; ++dy) {
             int yy = MIN(height - 1, MAX(0, dy));
             sum += temp[yy * rowStride + x * pixelStride];
@@ -62,7 +62,7 @@ FFI_PLUGIN_EXPORT void yuv420_box_blur(
                 dst[dstIndex] = (uint8_t)(sum / (2 * radius + 1));
             }
 
-            // подготавливаем сумму для следующего y
+            // prepare the sum for the next y
             if (y + 1 < height) {
                 int y_add = MIN(height - 1, y + radius + 1);
                 int y_sub = MAX(0, y - radius);

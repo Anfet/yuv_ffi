@@ -16,7 +16,7 @@ FFI_PLUGIN_EXPORT void nv21_mean_blur(
     int right  = rect ? rect[2] : width;
     int bottom = rect ? rect[3] : height;
 
-    // --- Y-плоскость ---
+    // --- Y plane ---
     uint8_t *tempY = (uint8_t*) malloc(width * height);
     memcpy(tempY, yData, width * height);
 
@@ -41,7 +41,7 @@ FFI_PLUGIN_EXPORT void nv21_mean_blur(
 
     free(tempY);
 
-    // --- UV-плоскость ---
+    // --- UV plane ---
     int uvWidth = width / 2;
     int uvHeight = height / 2;
     uint8_t *tempVU = (uint8_t*) malloc(uvWidth * uvHeight * 2);

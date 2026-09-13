@@ -11,12 +11,12 @@ FFI_PLUGIN_EXPORT void yuv420_blackwhite(const YUVDef *src) {
     int y_plane_size = height * yRowStride;
     int uv_plane_size = height / 2 * uvRowStride;
 
-    // Бинаризуем яркость: 0 или 255
+    // Threshold the luma: 0 or 255
     for (int i = 0; i < y_plane_size; ++i) {
         ySrc[i] = ySrc[i] >= 127 ? 255 : 0;
     }
 
-    // Цвет убираем — делаем нейтральный серый
+    // Drop the color: make it neutral gray
     memset(uDst, 128, uv_plane_size);
     memset(vDst, 128, uv_plane_size);
 }

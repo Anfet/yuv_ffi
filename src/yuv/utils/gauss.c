@@ -16,7 +16,7 @@ void generate_gaussian_kernel(float *kernel, int radius, float sigma) {
 }
 
 
-// Применение 1D гаусса по линии
+// Applies a 1D gaussian along a line
 void apply_1d_gaussian(
         const uint8_t *src, uint8_t *dst, int length,
         const float *kernel, int radius
@@ -35,7 +35,7 @@ void apply_1d_gaussian(
     }
 }
 
-// Размытие Y/U/V плоскости с учетом rowStride и pixelStride
+// Blurs a Y/U/V plane honouring rowStride and pixelStride
 void gaussian_blur_plane_strided(
         const uint8_t *src, uint8_t *dst,
         int width, int height,
@@ -47,10 +47,10 @@ void gaussian_blur_plane_strided(
     float *kernel = (float *) malloc((2 * radius + 1) * sizeof(float));
     generate_gaussian_kernel(kernel, radius, sigma);
 
-    // Временный буфер: нормализованные байты, без stride
+    // Temporary buffer: normalized bytes, without stride
     uint8_t *tmp = (uint8_t *) malloc(width * height);
 
-    // --- Горизонтальное размытие ---
+    // --- Horizontal blur ---
     for (int y = 0; y < height; ++y) {
         uint8_t* line_in = (uint8_t*)malloc(width);
         if (!line_in) return;
@@ -73,7 +73,7 @@ void gaussian_blur_plane_strided(
         free(line_out);
     }
 
-    // --- Вертикальное размытие ---
+    // --- Vertical blur ---
     for (int x = 0; x < width; ++x) {
         uint8_t* col_in = (uint8_t*)malloc(height);
         if (!col_in) return;
