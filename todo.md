@@ -9,7 +9,7 @@
 | Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | READY FOR REVIEW | требуется Web retest | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | добавить serialization integration Web retest | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06…YUV-08, YUV-13, YUV-14, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
@@ -224,7 +224,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-04 и YUV-02 приняты; требуется focused integration Web retest
 - Scope:
   - `lib/src/loader/data_io.dart`
@@ -374,6 +374,27 @@ Commit: fix: hardened the save/load format
 Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
+
+### Независимое ревью root 2026-09-14 после `c802673`
+
+Статус: `REJECTED`.
+
+EOF fix принят: timeout/grace удалён, поздний trailer стабильно отклоняется, а
+ранний отказ по невалидной metadata сохранён. На Flutter 3.44.9 analyzer чист,
+общий focused VM suite проходит 151/151, включая serialization cases.
+
+Оставшийся DoD не выполнен: required Chrome run #26 исполняет bootstrap и
+focused suites YUV-14/YUV-15/YUV-20/YUV-21, но serialization target YUV-07 в
+CI-массив не добавлен. Поэтому IO/Web format parity всё ещё подтверждена только
+структурой shared codec, а не реальным Web runtime.
+
+Для повторного review требуется Web-compatible integration target без
+`dart:io`, покрывающий минимум round-trip всех трёх форматов, fragmented input,
+truncated payload, поздний trailer, atomic failed load и revision contract.
+Target должен проверять `kIsWeb == true`, выполняться required Chrome job без
+skip/`continue-on-error`; приложить URL и число исполненных cases.
+
+Production codec, native C и generated bindings повторно менять не требуется.
 
 ### Независимое ревью 2026-09-13
 
