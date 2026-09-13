@@ -1213,4 +1213,3 @@ git status --short
 - `flutter analyze --no-pub lib/src/loader/impl/loader_io.dart test/loader_io_test.dart` — no issues.
 - Format-check и `git diff --check` — passed.
 - Публичный API, initialization/retry policy, native C и generated bindings не изменялись.
-
