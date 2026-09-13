@@ -145,6 +145,7 @@ jobs:
             integration_test/getbytes_contract_test.dart
             integration_test/padded_bgra_constructor_test.dart
             integration_test/image_cache_key_test.dart
+            integration_test/serialization_contract_test.dart
             integration_test/wasm_loader_lifecycle_test.dart
           )
 

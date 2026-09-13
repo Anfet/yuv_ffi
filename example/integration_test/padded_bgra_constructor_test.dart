@@ -83,4 +83,51 @@ void main() {
     expect(blank.yPlane.bytes.length, 32);
     expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
   });
+
+  testWidgets('specialized and generic constructors agree on a tight plane', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
+
+    final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 8)]);
+    final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 8)]);
+
+    for (final image in <YuvImage>[specialized, generic]) {
+      expect(image.yPlane.rowStride, 8);
+      expect(image.yPlane.pixelStride, 4);
+      expect(image.yPlane.bytes.length, 16);
+    }
+  });
+
+  testWidgets('copy keeps tight metadata and byte content, blank copy zeros the whole allocation', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
+
+    final source = plane(2, 8);
+    for (int i = 0; i < source.bytes.length; i++) {
+      source.bytes[i] = i + 1;
+    }
+    final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+
+    final copied = image.copy();
+    expect(copied.yPlane.rowStride, 8);
+    expect(copied.yPlane.bytes.length, 16);
+    expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
+
+    final blank = image.copy(blank: true);
+    expect(blank.yPlane.rowStride, 8);
+    expect(blank.yPlane.bytes.length, 16);
+    expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
+  });
+
+  testWidgets('toBgra8888 on a tight image returns exactly the plane content', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
+
+    final source = plane(2, 8);
+    for (int i = 0; i < source.bytes.length; i++) {
+      source.bytes[i] = i + 1;
+    }
+    final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+
+    final bytes = image.toBgra8888();
+    expect(bytes.length, 16);
+    expect(bytes, orderedEquals(source.bytes));
+  });
 }

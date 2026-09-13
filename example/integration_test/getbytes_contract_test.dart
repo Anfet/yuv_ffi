@@ -19,7 +19,9 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('getBytes returns exactly the concatenated plane bytes for 1x1, 3x3 and 127x255', (tester) async {
+  testWidgets('getBytes returns exactly the concatenated plane bytes for 1x1, 3x3, 127x255 and 512x512', (
+    tester,
+  ) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     await YuvFfi.ensureInitialized();
@@ -28,6 +30,7 @@ void main() {
       (w: 1, h: 1),
       (w: 3, h: 3),
       (w: 127, h: 255),
+      (w: 512, h: 512),
     ];
 
     for (final size in sizes) {
@@ -79,6 +82,38 @@ void main() {
 
     expect(expectedLength, 25);
     expect(image.getBytes(), hasLength(25));
+  });
+
+  testWidgets('getBytes returns an independent copy, decoupled from the plane bytes in both directions', (
+    tester,
+  ) async {
+    expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
+
+    await YuvFfi.ensureInitialized();
+
+    final image = YuvImage.i420(4, 4);
+    _fillPlanesWithPattern(image);
+
+    final firstPlaneOriginalByte = image.planes[0].bytes[0];
+    final returned = image.getBytes();
+    final returnedOriginalByte = returned[0];
+
+    // Mutating the returned buffer must not affect the image's plane bytes.
+    returned[0] = (returnedOriginalByte + 1) & 0xFF;
+    expect(
+      image.planes[0].bytes[0],
+      firstPlaneOriginalByte,
+      reason: 'mutating the buffer returned by getBytes() must not affect the image plane bytes',
+    );
+
+    // Mutating a plane byte after the call must not affect the already-returned buffer.
+    final returnedByteBeforePlaneMutation = returned[0];
+    image.planes[0].bytes[0] = (firstPlaneOriginalByte + 2) & 0xFF;
+    expect(
+      returned[0],
+      returnedByteBeforePlaneMutation,
+      reason: 'mutating a plane byte after getBytes() must not affect the previously returned buffer',
+    );
   });
 }
 
