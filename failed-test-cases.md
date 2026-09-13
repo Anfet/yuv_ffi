@@ -18,10 +18,10 @@
 |---|---|---|---|---|---|---|
 | F-001 | WEB-COMPILE-001 | Web/Chrome | RESOLVED | P0 | YUV-01 | `Function.toJS` blocker устранён; package и example компилируются на Flutter 3.44.9 |
 | F-002 | SWAP-NV-LUMA-001 | Native/Windows | RESOLVED | P1 | YUV-03 | `swapNv()` сохраняет Y и exact-переставляет chroma pairs |
-| F-003 | GET-BYTES-LENGTH-001 | Native/Windows | READY FOR RETEST | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
-| F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows | READY FOR RETEST | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
+| F-003 | GET-BYTES-LENGTH-001 | Native/Windows + Web/Chrome | RESOLVED | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
+| F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows + Web/Chrome | RESOLVED | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
 | F-005 | BINDINGS-CACHE-001 | Native/Windows | RESOLVED | P1 | YUV-19 | Повторные обращения переиспользуют один экземпляр `YuvFfiBindings` |
-| F-006 | IMAGE-CACHE-KEY-001 | Native/Windows | READY FOR RETEST | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
+| F-006 | IMAGE-CACHE-KEY-001 | Native/Windows + Web/Chrome | RESOLVED | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
 | F-007 | CHROME-RUNNER-HANG-001 | Web/Chrome | OPEN | P0 | YUV-02 | Даже минимальный Flutter Web test зависает на стадии `loading` |
 
 ## Текущее состояние reference matrix
@@ -233,9 +233,8 @@ YUV-14 должен добавить постоянные regression cases дл�
 
 ### Resolution
 
-- Статус: `READY FOR RETEST`. Native сторона исправлена и покрыта постоянными
-  regression cases; `RESOLVED` требует настоящего Chrome прогона, который
-  остаётся заблокированным F-007/YUV-02.
+- Статус: `RESOLVED`. Native сторона исправлена и покрыта постоянными regression
+  cases; Web подтверждён реальным прогоном в Chrome.
 - Fix commit: см. commit задачи YUV-14 (`fix: removed the getBytes alignment tail`)
 - Исправление: все три backend (`io`, `web`, `yuv_stub`) вызывают общий
   `YuvPlaneBytes.concat()`, выделяющий ровно `sum(plane.bytes.length)` байт,
@@ -246,9 +245,14 @@ YUV-14 должен добавить постоянные regression cases дл�
 - Regression доказан: те же 10 cases на неисправленном
   `lib/src/yuv/impl/io/yuv_image.dart` дают 1 passed / 9 failed, включая
   исходный F-003 case `Expected: length of <25> / Actual: length of <32>`.
-- Web retest command/result: `NOT RUN`, до устранения F-007/YUV-02. Контрактные
-  cases добавлены в `test/web/wasm_parity_edge_cases_test.dart` и выполнятся,
-  как только Chrome runner заработает.
+- Web retest command/result: выполнен. Run
+  [34787051514](https://github.com/Anfet/yuv_ffi/actions/runs/34787051514),
+  job `wasm-web-integration`, таргет
+  `example/integration_test/getbytes_contract_test.dart` — `All tests passed.`
+  Chrome 152.0.7977.82 / chromedriver 152.0.7977.82, Flutter 3.44.9, Linux.
+  WASM собран из исходников в том же прогоне. Каждый case проверяет
+  `kIsWeb == true` внутри тела, expected строится прямой конкатенацией
+  `plane.bytes`, а не вызовом `getBytes()` другого backend.
 - Full `test_pattern_512.png` case result: не заполнен
 
 ---
@@ -331,9 +335,8 @@ generic:    rowStride=16, bytes=32   // backend contracts расходились
 
 ### Resolution
 
-- Статус: `READY FOR RETEST`. Native сторона исправлена и покрыта постоянными
-  regression cases; `RESOLVED` требует настоящего Chrome прогона, который
-  остаётся заблокированным F-007/YUV-02.
+- Статус: `RESOLVED`. Native сторона исправлена и покрыта постоянными regression
+  cases; Web подтверждён реальным прогоном в Chrome.
 - Fix commit: см. commit задачи YUV-15 (`fix: kept the declared layout of a padded BGRA plane`)
 - Исправление: `YuvImageImpl.bgra` теперь делегирует generic-конструктору, поэтому
   оба entry point используют один validator и одну deep-copy семантику. `copy()`
@@ -346,8 +349,14 @@ generic:    rowStride=16, bytes=32   // backend contracts расходились
   сравнивается padded-к-padded (`raw length=1056768/1056768`, mae=0.000) против
   собственного `rawPlaneReference` манифеста (`rowStride: 2064`). Эталонные
   значения не перегенерировались.
-- Web retest command/result: `NOT RUN`, до устранения F-007/YUV-02. Контрактные
-  cases добавлены в `test/web/wasm_parity_edge_cases_test.dart`.
+- Web retest command/result: выполнен. Run
+  [34787051514](https://github.com/Anfet/yuv_ffi/actions/runs/34787051514),
+  job `wasm-web-integration`, таргет
+  `example/integration_test/padded_bgra_constructor_test.dart` —
+  `All tests passed.` Chrome 152.0.7977.82, Flutter 3.44.9, Linux. Покрыты
+  согласие специализированного и generic конструкторов на padded plane,
+  `ArgumentError` вместо `RangeError` для невалидного layout, deep copy в обе
+  стороны и `copy(blank: true)`, обнуляющий всю аллокацию.
 
 ---
 
@@ -474,9 +483,8 @@ YUV-20 должен доказать оба сценария счётчиком 
 
 ### Resolution
 
-- Статус: `READY FOR RETEST`. Native сторона исправлена и покрыта постоянными
-  regression cases; `RESOLVED` требует настоящего Chrome прогона, который
-  остаётся заблокированным F-007/YUV-02.
+- Статус: `RESOLVED`. Native сторона исправлена и покрыта постоянными regression
+  cases; Web подтверждён реальным прогоном в Chrome.
 - Fix commit: см. commit задачи YUV-20 (`fix: keyed the image cache by frame revision`)
 - Исправление: в `YuvImage` добавлены `revision` и `markDirty()`.
   `YuvImageProvider` сохраняет revision snapshot при создании, а его
@@ -494,8 +502,14 @@ YUV-20 должен доказать оба сценария счётчиком 
 - Regression доказан: при откате только `lib/src/widgets/yuv_image_widget.dart`
   три cache-case падают, включая решающий «an unchanged frame is converted once
   across rebuilds».
-- Web retest command/result: `NOT RUN`, до устранения F-007/YUV-02. Revision и
-  `markDirty()` реализованы в web backend симметрично.
+- Web retest command/result: выполнен. Run
+  [34787051514](https://github.com/Anfet/yuv_ffi/actions/runs/34787051514),
+  job `wasm-web-integration`, таргет
+  `example/integration_test/image_cache_key_test.dart` — `All tests passed.`
+  Chrome 152.0.7977.82, Flutter 3.44.9, Linux. Тест считает фактические вызовы
+  `toBgra8888()`, а не сравнивает provider: подтверждены cache hit для
+  неизменённого package image, miss после `mutateInPlace()` и safe always-miss
+  для стороннего legacy image, мутирующего без `markDirty()`.
 - Full `test_pattern_512.png` case result: не заполнен
 
 ---

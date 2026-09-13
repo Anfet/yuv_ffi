@@ -14,10 +14,10 @@
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06…YUV-08, YUV-13, YUV-14, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
-| [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | добавить focused integration Web case | Убрать выравнивающий хвост из IO/Web `getBytes()` |
-| [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | REJECTED | добавить focused integration Web case | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | добавить focused integration Web cache case | Сделать ключ image cache корректным без breaking change в patch-релизе |
-| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | REJECTED | добавить focused integration Web init case | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | — | Убрать выравнивающий хвост из IO/Web `getBytes()` |
+| [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | — | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Сделать ключ image cache корректным без breaking change в patch-релизе |
+| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
@@ -1037,8 +1037,8 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P1
-- Статус: REJECTED
-- Зависимости: YUV-01/YUV-02/YUV-03 приняты; требуется focused integration Web retest
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-01/YUV-02/YUV-03 приняты; Web retest выполнен (run 34787051514)
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
   - `lib/src/yuv/impl/web/yuv_web.dart`
@@ -1210,10 +1210,25 @@ skip-ветки нет.
 CI-джоб `wasm-web-integration` расширен: вместо одного bootstrap-таргета он
 теперь гонит все пять suites и падает, если падает любой (пункт 3).
 
-Не выполнено: фактический Chrome-прогон. Локально chromedriver отсутствует,
-поэтому URL приложить нельзя. До зелёного required job карточка не может стать
-`READY FOR REVIEW`, а F-003 остаётся `READY FOR RETEST` — переводить его в
-`RESOLVED` сейчас было бы утверждением без доказательства.
+### Web evidence получен 2026-09-14
+
+Статус: `READY FOR REVIEW`.
+
+Run [34787051514](https://github.com/Anfet/yuv_ffi/actions/runs/34787051514),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/getbytes_contract_test.dart` — `All tests passed.`
+
+- Chrome 152.0.7977.82 / chromedriver 152.0.7977.82 (пара согласована, печатается
+  в лог отдельным шагом)
+- Flutter 3.44.9, Linux, чистый checkout
+- WASM собран из исходников emsdk в том же прогоне, а не взят готовым
+- `kIsWeb == true` проверяется внутри тела каждого case, skip-ветки нет
+- Ошибок и исключений в браузерном логе нет
+
+Джоба required, `continue-on-error` отсутствует, и она падает, если падает любой
+из пяти таргетов. F-003 переведён в `RESOLVED`.
+
+Пункт 3 замечания выполнен, пункт 4 — тоже.
 
 ---
 
@@ -1221,8 +1236,8 @@ CI-джоб `wasm-web-integration` расширен: вместо одного b
 
 - Владелец: Terra
 - Приоритет: P1
-- Статус: REJECTED
-- Зависимости: YUV-02/YUV-04 приняты; требуется focused integration Web retest
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-02/YUV-04 приняты; Web retest выполнен (run 34787051514)
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`, BGRA constructor
   - `lib/src/yuv/impl/web/yuv_web.dart`, BGRA constructor
@@ -1415,8 +1430,19 @@ tight. `kIsWeb == true` проверяется внутри тела каждо�
 
 Tight `toBgra8888()` намеренно не проверяется: это scope YUV-08.
 
-Не выполнено: фактический Chrome-прогон (локально нет chromedriver), поэтому URL
-приложить нельзя. F-004 остаётся `READY FOR RETEST`.
+### Web evidence получен 2026-09-14
+
+Статус: `READY FOR REVIEW`.
+
+Run [34787051514](https://github.com/Anfet/yuv_ffi/actions/runs/34787051514),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/padded_bgra_constructor_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux, WASM собран в том же прогоне.
+
+Все четыре case исполнены в браузере с `kIsWeb == true`: согласие
+специализированного и generic конструкторов на padded plane, `ArgumentError`
+вместо `RangeError`, deep copy в обе стороны, `copy(blank: true)` обнуляет всю
+32-байтовую аллокацию. F-004 переведён в `RESOLVED`.
 
 ---
 
@@ -1427,8 +1453,8 @@ Tight `toBgra8888()` намеренно не проверяется: это scop
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: REJECTED
-- Зависимости: YUV-01/YUV-02 приняты; требуется focused integration Web retest; зависимости от YUV-19 нет
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-01/YUV-02 приняты; Web retest выполнен (run 34787051514); зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
   - `lib/src/yuv/yuv.dart` и IO/Web implementations для revision/identity seam
@@ -1868,8 +1894,19 @@ cache lookup и не проверяет rebuild после mutation, поэто�
 же нетронутым экземпляром не равны, а после мутации без `markDirty()` кадр
 конвертируется заново. Кэш чистится в `setUp`, поэтому порядок не влияет.
 
-Не выполнено: фактический Chrome-прогон (локально нет chromedriver). F-006
-остаётся `READY FOR RETEST`.
+### Web evidence получен 2026-09-14
+
+Статус: `READY FOR REVIEW`.
+
+Run [34787051514](https://github.com/Anfet/yuv_ffi/actions/runs/34787051514),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/image_cache_key_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux.
+
+Исполнены в браузере все три случая, и проверяется именно счётчик конверсий, а
+не равенство provider: reuse неизменённого package image, miss после
+`mutateInPlace()`, safe always-miss для стороннего legacy image, мутирующего без
+`markDirty()`. F-006 переведён в `RESOLVED`.
 
 ---
 
@@ -1877,8 +1914,8 @@ cache lookup и не проверяет rebuild после mutation, поэто�
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: REJECTED
-- Зависимости: YUV-01/YUV-02/YUV-19 приняты; требуется focused integration Web retest
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-01/YUV-02/YUV-19 приняты; Web retest выполнен (run 34787051514)
 - Scope:
   - `lib/src/yuv_ffi_initializer.dart`
   - `lib/src/loader/impl/loader_io.dart`
@@ -2090,7 +2127,23 @@ stack trace переживают проброс. `tearDown(YuvWasmLoader.debugRe
 что harness действительно поднимает WASM-бандл и что fake-инициализаторы выше не
 оставили loader сломанным.
 
-Не выполнено: фактический Chrome-прогон (локально нет chromedriver).
+### Web evidence получен 2026-09-14
+
+Статус: `READY FOR REVIEW`.
+
+Run [34787051514](https://github.com/Anfet/yuv_ffi/actions/runs/34787051514),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/wasm_loader_lifecycle_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux.
+
+Фактические invocation counts исполнены в браузере, а не заданы на бумаге:
+три последовательных вызова -> `debugInitCount == 1`; четыре параллельных ->
+`debugInitCount == 1`; ошибка и повтор -> `attempts == 2`, `debugInitCount == 2`.
+Последний case поднимает реальный asset-загруженный модуль после
+fake-инициализаторов и подтверждает, что loader остался рабочим.
+
+Замечание о том, что зелёный bootstrap доказывает лишь одну успешную
+инициализацию, закрыто: lifecycle-кейсы теперь исполняются отдельно от него.
 
 ---
 
