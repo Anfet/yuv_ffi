@@ -64,7 +64,7 @@ jobs:
         shell: bash
         run: |
           required=(
-            web_test/web_platform_sentinel_test.dart
+            test/web/web_platform_sentinel.dart
             test/web/yuv_web_wasm_test.dart
             test/web/wasm_parity_conversions_test.dart
             test/web/wasm_parity_transforms_test.dart

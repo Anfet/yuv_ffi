@@ -181,7 +181,7 @@ flutter test
 Web tests (browser runner):
 
 ```sh
-flutter test --platform chrome web_test/web_platform_sentinel_test.dart
+flutter test --platform chrome test/web/web_platform_sentinel.dart
 flutter test --platform chrome test/web/yuv_web_wasm_test.dart
 flutter test --platform chrome test/web/wasm_parity_conversions_test.dart
 flutter test --platform chrome test/web/wasm_parity_transforms_test.dart

@@ -459,12 +459,12 @@ void main() {
 }
 ```
 
-Case намеренно не импортирует `yuv_ffi`, не вызывает `YuvFfi.ensureInitialized()` и не загружает WASM. Временный test file удалён после воспроизведения.
+Case намеренно не импортирует `yuv_ffi`, не вызывает `YuvFfi.ensureInitialized()` и не загружает WASM. Постоянный sentinel не оканчивается на `_test.dart`, чтобы не попадать в обычный VM discovery.
 
 ### Команда
 
 ```powershell
-flutter test --no-pub --platform chrome test/web/_chrome_runner_smoke_test.dart --reporter expanded
+flutter test --no-pub --platform chrome test/web/web_platform_sentinel.dart --reporter expanded
 ```
 
 ### Ожидалось
@@ -476,7 +476,7 @@ flutter test --no-pub --platform chrome test/web/_chrome_runner_smoke_test.dart 
 Runner запустил headless Chrome, но более 90 секунд не продвинулся дальше:
 
 ```text
-00:00 +0: loading D:/.projects/yuv_ffi/test/web/_chrome_runner_smoke_test.dart
+00:00 +0: loading D:/.projects/yuv_ffi/test/web/web_platform_sentinel.dart
 ```
 
 Процесс остановлен вручную, exit `1`. Полный `test/web` проявляет то же поведение на первом test file. При этом `flutter build web --no-pub` для example успешно завершился, поэтому F-007 отделён от исходного compile blocker F-001.
@@ -493,13 +493,17 @@ Runner запустил headless Chrome, но более 90 секунд не п
 
 YUV-02 должен сначала воспроизвести минимальный case с verbose runner diagnostics, проверить совместимость Flutter test runner/Chrome и только затем полный `test/web`. Не менять production-код плагина, пока минимальный test без `yuv_ffi` не запускается.
 
-Постоянный sentinel после YUV-02 находится в `web_test/web_platform_sentinel_test.dart`, вне стандартного VM discovery.
+Постоянный sentinel после YUV-02 находится в `test/web/web_platform_sentinel.dart`. Он не оканчивается на `_test.dart`, поэтому не попадает в стандартный VM discovery, но поддерживает explicit запуск через `flutter test --platform chrome <path>`.
 
 ### Resolution
 
 - Fix commit: не заполнен
-- Minimal Chrome retest: не заполнен
+- Minimal Chrome retest: локально reproduces the same `loading` hang on Windows Flutter 3.38.10; F-007 остаётся `OPEN`.
 - Full `test/web` retest: не заполнен
+
+### Диагноз и дальнейшие действия
+
+Локальное проявление F-007 локализовано как проблема Windows runner во Flutter 3.38.10: CanvasKit path формируется с несовместимыми разделителями, поэтому Chrome и Edge не находят `/canvaskit/chromium` assets и остаются на `loading`. Это не доказанный дефект плагина. Обязательный gate уже использует Linux CI runner; локально нужно обновить Flutter SDK и повторить sentinel. F-007 нельзя переводить в `RESOLVED` без успешного автоматического CI evidence.
 
 ---
 

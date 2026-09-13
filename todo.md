@@ -241,7 +241,7 @@ README повторяет ту же неверную команду. Поэто�
 ### Проверка
 
 ```powershell
-flutter test --platform chrome web_test/web_platform_sentinel_test.dart --reporter expanded
+flutter test --platform chrome test/web/web_platform_sentinel.dart --reporter expanded
 flutter test --platform chrome test/web/yuv_web_wasm_test.dart
 flutter test --platform chrome test/web/wasm_parity_conversions_test.dart
 flutter test --platform chrome test/web/wasm_parity_transforms_test.dart
@@ -259,28 +259,28 @@ Commit: текущий YUV-02 task commit
 Изменённые файлы:
 - `.github/workflows/ci.yml`
 - `README.md`
-- `web_test/web_platform_sentinel_test.dart`
+- `test/web/web_platform_sentinel.dart`
 
 Что сделано:
 - Web job включён для автоматических `push`/`pull_request`, а не только `workflow_dispatch`.
 - Все пять обязательных Web test files, включая sentinel, запускаются через `flutter test --platform chrome`.
-- Sentinel вынесен из стандартного `test/` discovery в `web_test/`, поэтому обычный полный VM suite остаётся зелёным.
+- Sentinel размещён под `test/`, но без суффикса `_test.dart`: explicit `flutter test --platform chrome test/web/web_platform_sentinel.dart` поддерживается, а обычный VM discovery его не подхватывает.
 - README использует те же реальные VM/Web runner commands.
 - WASM по-прежнему пересобирается из текущего checkout перед Web tests; наличие `.js` и `.wasm` проверяется.
 
 Проверки:
-- `flutter test --no-pub --reporter expanded` — exit 0, 30 tests passed.
-- `flutter test --no-pub web_test/web_platform_sentinel_test.dart --reporter expanded` — ожидаемый exit 1 на VM, `kIsWeb == false`; защита от ложного runner подтверждена.
-- `flutter analyze --no-pub lib test` — exit 0, no issues.
-- `dart format --output=none --set-exit-if-changed web_test/web_platform_sentinel_test.dart` — exit 0.
+- `flutter test --no-pub --reporter expanded` — exit 1 из-за независимого незакоммиченного `test/reference_native_conversions_test.dart` (YUV-10); базовые тесты до него проходят, sentinel автоматически не подхвачен.
+- `flutter test --no-pub test/web/web_platform_sentinel.dart --reporter expanded` — exit 1 ожидаемо, `kIsWeb == false`; защита от ложного runner подтверждена.
+- `flutter analyze --no-pub test/web/web_platform_sentinel.dart` — exit 0, no issues.
+- `dart format --output=none --set-exit-if-changed test/web/web_platform_sentinel.dart` — exit 0.
 - `git diff --check` — exit 0.
 
 Ручная проверка:
-- Локальный настоящий Chrome sentinel дошёл до запуска headless Chrome, но завис на `loading` более 90 секунд; F-007 остаётся `OPEN`.
+- Локальный настоящий Chrome sentinel стартует через explicit path, но зависает на `loading` более 90 секунд; F-007 остаётся `OPEN`. Проявление локализовано в Windows runner Flutter 3.38.10: CanvasKit path формируется с несовместимыми разделителями, и Chrome/Edge не находят `/canvaskit/chromium` assets. Обязательный gate уже использует Linux runner; локально нужно обновить Flutter SDK и повторить проверку.
 - Production-код, native C и generated bindings не менялись.
 
 Остаточные риски:
-- Без push/PR невозможно приложить обязательный успешный автоматический CI run.
+- Без push/PR невозможно приложить обязательный успешный автоматический CI run; F-007 не считается resolved без этого CI evidence.
 - YUV-02 и YUV-01 нельзя перевести в `DONE`, пока clean CI не исполнит sentinel и четыре Web suites либо F-007 не будет локализован и устранён.
 
 Native C permission:
