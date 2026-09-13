@@ -19,10 +19,13 @@ bool kYuvCameraPreviewFlipAndroid = true;
 
 Widget buildYuvCameraPreview({
   Key? key,
-  required CameraController cameraController,
+  CameraController? cameraController,
   YuvImage Function(YuvImage image)? transform,
 }) {
   if (Platform.isAndroid || Platform.isIOS) {
+    if (cameraController == null) {
+      throw ArgumentError('CameraController is required on mobile platforms');
+    }
     return _YuvCameraPreviewMobile(
       key: key,
       cameraController: cameraController,
@@ -33,7 +36,6 @@ Widget buildYuvCameraPreview({
   if (Platform.isFuchsia || Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
     return _YuvCameraPreviewDesktop(
       key: key,
-      cameraController: cameraController,
       transform: transform,
     );
   }

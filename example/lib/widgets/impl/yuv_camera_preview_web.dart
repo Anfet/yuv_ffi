@@ -11,9 +11,12 @@ import 'js_util_compat.dart' as js_util;
 
 Widget buildYuvCameraPreview({
   Key? key,
-  required CameraController cameraController,
+  CameraController? cameraController,
   YuvImage Function(YuvImage image)? transform,
 }) {
+  if (cameraController == null) {
+    throw ArgumentError('CameraController is required on web platform');
+  }
   return _YuvCameraPreviewWeb(
     key: key,
     cameraController: cameraController,

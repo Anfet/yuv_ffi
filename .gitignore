@@ -30,3 +30,4 @@ build/
 .zshrc
 yuv_ffi.dll
 .vscode/
+_tmp**

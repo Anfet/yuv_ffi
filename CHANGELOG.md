@@ -12,8 +12,10 @@
   - `lib/src/loader/impl/wasm_loader_web.dart`
   - `lib/src/yuv/impl/web/yuv_web.dart`
 - Updated `example/` Web camera preview to use the same compatibility approach.
-- Updated `ffi` dependency constraint to `^2.2.0`.
 - Improved pub.dev analyzer compatibility for current stable SDK/runtime used by pub points checks.
+- Fixed desktop (`Windows`/`Linux`) example camera startup by skipping `camera` plugin initialization (`availableCameras()`), preventing `MissingPluginException` on platforms without camera plugin implementation.
+- Updated example camera preview wiring to support desktop WebRTC-only flow without requiring `CameraController`.
+- Kept `CameraController` required for mobile/web preview paths and added explicit argument validation in platform-specific preview builders.
 
 ## 0.2.3
 
