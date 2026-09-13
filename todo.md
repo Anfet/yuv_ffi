@@ -12,7 +12,7 @@
 | [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
 | [ ] | YUV-04 | Opus | P0 | REJECTED | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
-| [ ] | YUV-05 | Opus | P0 | READY FOR REVIEW | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
+| [ ] | YUV-05 | Opus | P0 | REJECTED | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-01, YUV-04, YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
@@ -514,7 +514,7 @@ Native C permission:
 
 - Владелец: Opus
 - Приоритет: P0 / memory-safety blocker
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-04 (принята) и разрешение владельца на изменение native C (получено)
 - Scope:
   - `src/yuv/yuv420/yuv420_from_rgba.c`
@@ -693,6 +693,17 @@ Native C permission:
 - Разрешение владельца получено в этой сессии: «разрешаю, требуется добавить
   тест кейс(ы) для проверки». Тесты добавлены в
   `test/native_stride_safety_test.dart` (7 кейсов).
+
+Независимая приёмка root, 2026-09-13:
+- Статус: REJECTED; задача возвращена Opus на исправление.
+- P0: Web `swapNv()` создаёт tight destination, но передаёт `nvXX_to_nvYY` stride padded source и копирует padded Y целиком в tight WASM allocation. Нужен destination с идентичным layout либо ABI с раздельными strides.
+- P0: validator принимает произвольный положительный NV `uvPixelStride`, тогда как `nv21_to_i420` и `nvXX_to_nvYY` читают packed offsets, а `nv21_from_rgba8888` молча прекращает работу при stride, отличном от 2. Layout требуется полноценно поддержать или отклонять до backend call.
+- P1: I420↔NV копирует Y через `memcpy(min(rowStride))`; при различающихся `yPixelStride` это переносит padding вместо логических samples. Нужна sample-wise копия с отдельными source/destination strides.
+- P1: `nv21_from_rgba8888` пишет VU, хотя установленный compatibility contract и остальные конвертеры используют UV. Прямой RGBA→NV и I420/BGRA→NV сейчас дают разный порядок chroma.
+- P1: odd-size tests проверяют лишь наличие ненулевого chroma и отсутствие исключения. Нужны assertions для каждой крайней chroma sample, custom pixel strides, padded Web swap и насыщенных цветов, различающих U/V.
+- ASan/UBSan и runtime native↔WASM tolerance не выполнены; Chrome runner остаётся заблокирован F-007. До этих gates задача не соответствует своему DoD.
+- `1fd3a7b` переводит комментарии в 21 несвязанных C/H-файлах и является отдельным scope creep. `a224a63` ограничен conversion sources, но закрепляет неверное VU-описание.
+- Что подтверждено: focused native suite 7/7, общий VM suite 71/71, analyzer без diagnostics; canonical WASM rebuild воспроизводим побайтово, SHA-256 `AC4A898795A3E64DDAD4A3A18C9511C58AE8E9B4DBDE4414756E0404DEF40C56`.
 ```
 
 ---
