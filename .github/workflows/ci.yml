@@ -24,6 +24,18 @@ jobs:
       - name: Analyze (root)
         run: flutter analyze
 
+      # The FFI loader and the reference matrix both open
+      # native/src/build/libyuv_ffi.so by that exact relative path, so the
+      # library has to be built there rather than wherever CMake would default
+      # to. Without it every native case skips and the guard that exists to
+      # catch a fully-skipped run fails the job.
+      - name: Build native library
+        shell: bash
+        run: |
+          cmake -S src -B native/src/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build native/src/build --config Release
+          test -f native/src/build/libyuv_ffi.so
+
       - name: Unit tests
         run: flutter test
 
