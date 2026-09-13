@@ -1927,6 +1927,26 @@ Native C permission:
 opt-in контракт для внешних реализаций — отдельный additive API, вне scope
 patch-релиза.
 
+### Независимое ревью root 2026-09-14
+
+Статус остаётся `READY FOR REVIEW` до Web retest.
+
+Повторная реализация `8b9d600` исправляет блокирующее замечание предыдущего
+ревью. Revision-based key используется только для package backend с
+`YuvRevisionAware`. Для сторонней реализации provider сохраняет прежний
+safe always-miss: две разные instance provider не становятся равны ни до, ни
+после legacy mutation без `markDirty()`. `hashCode` не читает живой revision,
+поэтому уже помещённый в `ImageCache` ключ не меняется.
+
+Regression suite теперь содержит реально мутирующий legacy fixture и отдельно
+фиксирует цену совместимости — повторную конверсию неизменённого foreign image.
+Независимо на Flutter 3.44.9 прошли analyzer и общий сфокусированный VM-набор
+110/110. Native C и generated bindings не затронуты.
+
+До `DONE` остаётся один acceptance gate из исходного DoD: выполнить
+Web-compatible cache test с `kIsWeb == true` через integration harness после
+YUV-02. Дополнительных исправлений реализации по VM-ветке не требуется.
+
 ---
 
 ## YUV-21 — зафиксировать контракт инициализации IO/Web
