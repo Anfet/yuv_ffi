@@ -23,7 +23,7 @@
 | [ ] | YUV-13 | Terra | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | P1 | BLOCKED | YUV-01, YUV-03 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | P1 | BLOCKED | YUV-04 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [ ] | YUV-16 | Opus | P1 | READY FOR REVIEW | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
+| [x] | YUV-16 | Opus | P1 | DONE | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
 | [ ] | YUV-17 | Luna | P2 | BLOCKED | YUV-01 | Добавить отдельный analyzer/build gate для package `example/` |
 | [ ] | YUV-19 | Terra | P1 | TODO | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
 | [ ] | YUV-20 | Opus | P1 | BLOCKED | YUV-01 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
@@ -1311,7 +1311,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P1; prerequisite для бросающей валидации YUV-04 (P0), поэтому не ниже P1
-- Статус: READY FOR REVIEW
+- Статус: DONE
 - Зависимости: нет; YUV-03 завершена
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
@@ -1418,6 +1418,14 @@ Commit: YUV-16 task commit
 
 Native C permission:
 - не требовалось
+
+Независимая приёмка root, 2026-09-13:
+- Статус: DONE.
+- Read-only review модели Terra, high: блокирующих дефектов не найдено.
+- `flutter test --no-pub test/native_allocation_safety_test.dart --reporter expanded` — 11/11 passed.
+- `flutter test --no-pub --reporter expanded` — 71/71 passed на текущем checkout.
+- `flutter analyze --no-pub lib test` — no issues.
+- Native C и generated bindings в YUV-16 не изменялись.
 ```
 
 ---
