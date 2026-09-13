@@ -17,7 +17,7 @@
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | добавить focused integration Web case | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | REJECTED | добавить focused integration Web case | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | добавить focused integration Web cache case | Сделать ключ image cache корректным без breaking change в patch-релизе |
-| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | integration Web retest | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | REJECTED | добавить focused integration Web init case | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
@@ -1743,7 +1743,7 @@ cache lookup и не проверяет rebuild после mutation, поэто�
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-01/YUV-02/YUV-19 приняты; требуется focused integration Web retest
 - Scope:
   - `lib/src/yuv_ffi_initializer.dart`
@@ -1907,6 +1907,28 @@ analyzer чист; `loader_io_test.dart` входит в прошедший на
 `DONE` обязателен focused Chrome integration case, доказывающий single init,
 concurrent coalescing и retry после ошибки с `kIsWeb == true`; инспекция и VM
 stub этот gate не заменяют.
+
+### Повторное независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+После принятия YUV-02 реальный Web harness доступен, но bootstrap доказывает
+только одну успешную инициализацию. Он не вызывает concurrent callers, не
+инъецирует первую ошибку и не проверяет, что failed `_initFuture` очищается
+перед retry. Обязательный Web lifecycle DoD YUV-21 остаётся невыполненным.
+
+IO implementation и tests приняты; `loader_io_test.dart` входит в прошедший на
+Flutter 3.44.9 focused suite 114/114. Для повторного review требуется:
+
+1. перенести Web lifecycle cases в `example/integration_test/` или другой
+   реально исполняемый browser harness;
+2. подтвердить single successful init, concurrent coalescing и retry после
+   первой ошибки с точными invocation counts;
+3. обеспечить reset в `tearDown`, чтобы cases не зависели от порядка;
+4. выполнить required Chrome job с `kIsWeb == true` и приложить URL.
+
+Loader production logic, публичный API, native paths/C и generated bindings
+повторно менять не требуется без нового воспроизведённого дефекта.
 
 ---
 
