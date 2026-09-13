@@ -560,7 +560,8 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   YuvImage rotate(YuvImageRotation rotation) {
-    assert(rotation.degrees % 90 == 0, 'Can rotate only to 0, 90, 180, 270 degrees');
+    // No multiple-of-90 assert: YuvImageRotation is an enum whose only values
+    // are 0, 90, 180 and 270, so the check could never fail. Web never had it.
     final int degrees = (rotation.degrees < 0 ? 360 - rotation.degrees.abs() : rotation.degrees) % 360;
 
     if (degrees == 0) {
@@ -568,12 +569,12 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     }
 
     final srcDef = YUVDefClass(this);
-    final dstWidtn = (rotation.swapSize ? height : width).toInt();
+    final dstWidth = (rotation.swapSize ? height : width).toInt();
     final dstHeight = (rotation.swapSize ? width : height).toInt();
     final YuvImageImpl dstImage;
     final YUVDefClass dstDef;
     try {
-      dstImage = YuvImageImpl(format, dstWidtn, dstHeight, yPixelStride: yPlane.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
+      dstImage = YuvImageImpl(format, dstWidth, dstHeight, yPixelStride: yPlane.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
       dstDef = YUVDefClass(dstImage);
     } catch (_) {
       srcDef.dispose();
@@ -597,7 +598,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
           dstImage.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           break;
       }
-      _width = dstWidtn;
+      _width = dstWidth;
       _height = dstHeight;
       _planes = dstImage.planes;
     } finally {

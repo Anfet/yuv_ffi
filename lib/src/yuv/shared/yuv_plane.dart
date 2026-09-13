@@ -25,6 +25,13 @@ class YuvPlane {
   final int pixelStride;
 
   /// Alias for [pixelStride].
+  int get bytesPerPixel => pixelStride;
+
+  /// Alias for [pixelStride].
+  ///
+  /// The name is a typo kept as a forwarding alias so a patch update does not
+  /// break existing callers. Use [bytesPerPixel].
+  @Deprecated('Use bytesPerPixel instead. This misspelled alias will be removed in a future major release.')
   int get bytesPerPixes => pixelStride;
 
   final int _height;
