@@ -23,7 +23,7 @@
 | [ ] | YUV-13 | Terra | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | P1 | BLOCKED | YUV-01, YUV-03 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | P1 | BLOCKED | YUV-04 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [ ] | YUV-16 | Opus | P1 | TODO | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
+| [ ] | YUV-16 | Opus | P1 | READY FOR REVIEW | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
 | [ ] | YUV-17 | Luna | P2 | BLOCKED | YUV-01 | Добавить отдельный analyzer/build gate для package `example/` |
 | [ ] | YUV-19 | Terra | P1 | TODO | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
 | [ ] | YUV-20 | Opus | P1 | BLOCKED | YUV-01 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
@@ -1118,7 +1118,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P1; prerequisite для бросающей валидации YUV-04 (P0), поэтому не ниже P1
-- Статус: TODO
+- Статус: READY FOR REVIEW
 - Зависимости: нет; YUV-03 завершена
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
@@ -1177,7 +1177,55 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+```text
+Статус: READY FOR REVIEW
+Commit: YUV-16 task commit
+Изменённые файлы:
+- lib/src/yuv/impl/io/defs/native_allocator.dart (новый)
+- lib/src/yuv/impl/io/defs/yuv_def.dart
+- lib/src/yuv/impl/io/yuv_image.dart
+- test/native_allocation_safety_test.dart (новый)
+
+Что сделано:
+- Введён `NativeAllocator` seam поверх `calloc` с production-реализацией
+  `CallocNativeAllocator` и test-only `InstrumentedNativeAllocator`, который
+  считает outstanding allocations и детерминированно бросает на N-й аллокации.
+- `YUVDefClass._` сделан транзакционным: struct и Y/U/V освобождаются в обратном
+  порядке, если любая последующая allocation бросит; исходное исключение
+  пробрасывается через `rethrow` без подмены.
+- `YUVDefClass` factory освобождает def, если copy-in планов бросит.
+- Закрыты все семь путей из таблицы карточки: `crop`, `rotate`, `swapNv`,
+  `toBgra8888`, `toYuvI420`, `toYuvNv21`, `fromRgba8888` — первый ресурс теперь
+  освобождается, если создание второго def/назначения бросает.
+- `boxBlur`/`meanBlur` `rectPtr` и буферы `toBgra8888`/`fromRgba8888` переведены
+  с прямого `calloc` на allocator seam, иначе счётчики не сходились бы.
+- Native C и generated bindings не изменялись.
+
+Проверки:
+- flutter test test/native_allocation_safety_test.dart --reporter expanded — exit 0, 11 тестов
+- flutter test — exit 0, 44 теста (было 33 до задачи)
+- flutter analyze lib test — exit 0, "No issues found!"
+- dart format --output=none --set-exit-if-changed <4 изменённых файла> — exit 0, 0 changed
+- git diff --check — exit 0
+- git status --short — приложен ниже
+
+Ручная проверка:
+- Windows 10 19045, x64, Dart VM (flutter test), native `yuv_ffi.dll` из корня
+  репозитория. Инжекция сбоя на каждой N-й аллокации в каждом методе показала
+  нулевой outstanding count; success path проходит без double-free (повторный
+  free бросает `StateError` в инструментированном allocator).
+
+Остаточные риски:
+- `dart format` по всему `lib test` возвращает exit 1 из-за двух ранее
+  существующих файлов (`lib/src/yuv/impl/yuv_stub.dart`,
+  `test/web/yuv_web_wasm_test.dart`). Они не входят в scope YUV-16 и не
+  изменялись; исправление отложено, чтобы не смешивать задачи (правило 6).
+- Web backend не покрыт этим seam: WASM `_malloc`/`_free` пути остаются как
+  были, отдельная задача.
+
+Native C permission:
+- не требовалось
+```
 
 ---
 

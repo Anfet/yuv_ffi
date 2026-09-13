@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:ui' as ui;
 
-import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
 import 'package:yuv_ffi/src/loader/data_io.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
+import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
@@ -188,13 +188,19 @@ class YuvImageImpl implements YuvImage {
   @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) {
     final def = YUVDefClass(this);
-    final Pointer<Uint32> rectPtr = rect == null ? nullptr : calloc<Uint32>(4);
-    if (rect != null) {
-      rectPtr.asTypedList(4)
-        ..[0] = rect.left.toInt()
-        ..[1] = rect.top.toInt()
-        ..[2] = rect.right.toInt()
-        ..[3] = rect.bottom.toInt();
+    final Pointer<Uint32> rectPtr;
+    try {
+      rectPtr = rect == null ? nullptr : NativeAllocator.instance.allocate<Uint32>(4 * sizeOf<Uint32>());
+      if (rect != null) {
+        rectPtr.asTypedList(4)
+          ..[0] = rect.left.toInt()
+          ..[1] = rect.top.toInt()
+          ..[2] = rect.right.toInt()
+          ..[3] = rect.bottom.toInt();
+      }
+    } catch (_) {
+      def.dispose();
+      rethrow;
     }
     try {
       switch (format) {
@@ -214,7 +220,7 @@ class YuvImageImpl implements YuvImage {
       }
     } finally {
       if (rectPtr != nullptr) {
-        calloc.free(rectPtr);
+        NativeAllocator.instance.free(rectPtr);
       }
       def.dispose();
     }
@@ -235,7 +241,13 @@ class YuvImageImpl implements YuvImage {
 
     final YuvImage dst = YuvImageImpl(format, cropWidth, cropHeight, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
     final srcDef = YUVDefClass(this);
-    final dstDef = YUVDefClass(dst);
+    final YUVDefClass dstDef;
+    try {
+      dstDef = YUVDefClass(dst);
+    } catch (_) {
+      srcDef.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.i420:
@@ -329,9 +341,15 @@ class YuvImageImpl implements YuvImage {
       throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${width}x$height');
     }
     final rgbaPlaneLength = bytes.length;
-    final rgbaPtr = calloc.allocate<Uint8>(rgbaPlaneLength);
-    rgbaPtr.asTypedList(bytes.length).setRange(0, bytes.length, bytes);
-    final def = YUVDefClass.template(this);
+    final rgbaPtr = NativeAllocator.instance.allocate<Uint8>(rgbaPlaneLength);
+    final YUVDefClass def;
+    try {
+      rgbaPtr.asTypedList(bytes.length).setRange(0, bytes.length, bytes);
+      def = YUVDefClass.template(this);
+    } catch (_) {
+      NativeAllocator.instance.free(rgbaPtr);
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.i420:
@@ -352,7 +370,7 @@ class YuvImageImpl implements YuvImage {
       }
     } finally {
       def.dispose();
-      calloc.free(rgbaPtr);
+      NativeAllocator.instance.free(rgbaPtr);
     }
   }
 
@@ -413,13 +431,19 @@ class YuvImageImpl implements YuvImage {
   @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) {
     final def = YUVDefClass(this);
-    final Pointer<Uint32> rectPtr = rect == null ? nullptr : calloc<Uint32>(4);
-    if (rect != null) {
-      rectPtr.asTypedList(4)
-        ..[0] = rect.left.toInt()
-        ..[1] = rect.top.toInt()
-        ..[2] = rect.right.toInt()
-        ..[3] = rect.bottom.toInt();
+    final Pointer<Uint32> rectPtr;
+    try {
+      rectPtr = rect == null ? nullptr : NativeAllocator.instance.allocate<Uint32>(4 * sizeOf<Uint32>());
+      if (rect != null) {
+        rectPtr.asTypedList(4)
+          ..[0] = rect.left.toInt()
+          ..[1] = rect.top.toInt()
+          ..[2] = rect.right.toInt()
+          ..[3] = rect.bottom.toInt();
+      }
+    } catch (_) {
+      def.dispose();
+      rethrow;
     }
     try {
       switch (format) {
@@ -440,7 +464,7 @@ class YuvImageImpl implements YuvImage {
       }
     } finally {
       if (rectPtr != nullptr) {
-        calloc.free(rectPtr);
+        NativeAllocator.instance.free(rectPtr);
       }
       def.dispose();
     }
@@ -489,8 +513,15 @@ class YuvImageImpl implements YuvImage {
     final srcDef = YUVDefClass(this);
     final dstWidtn = (rotation.swapSize ? height : width).toInt();
     final dstHeight = (rotation.swapSize ? width : height).toInt();
-    final dstImage = YuvImageImpl(format, dstWidtn, dstHeight, yPixelStride: yPlane.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
-    final dstDef = YUVDefClass(dstImage);
+    final YuvImageImpl dstImage;
+    final YUVDefClass dstDef;
+    try {
+      dstImage = YuvImageImpl(format, dstWidtn, dstHeight, yPixelStride: yPlane.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
+      dstDef = YUVDefClass(dstImage);
+    } catch (_) {
+      srcDef.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.i420:
@@ -525,22 +556,29 @@ class YuvImageImpl implements YuvImage {
     final nvXX = format == YuvFileFormat.nv21 ? this : toYuvNv21();
 
     final def = YUVDefClass(nvXX);
-    // Keep both destination strides compatible with the source. The native
-    // helper accepts one chroma stride for both buffers and only writes active
-    // chroma pairs, so a tight destination is not safe for padded input.
-    final YuvImage nvYY = YuvImageImpl.nv21(
-      width,
-      height,
-      planes: [
-        nvXX.yPlane,
-        YuvPlane(
-          nvXX.uPlane.height,
-          nvXX.uPlane.rowStride,
-          nvXX.uPlane.pixelStride,
-        ),
-      ],
-    );
-    final defYY = YUVDefClass(nvYY);
+    final YuvImage nvYY;
+    final YUVDefClass defYY;
+    try {
+      // Keep both destination strides compatible with the source. The native
+      // helper accepts one chroma stride for both buffers and only writes active
+      // chroma pairs, so a tight destination is not safe for padded input.
+      nvYY = YuvImageImpl.nv21(
+        width,
+        height,
+        planes: [
+          nvXX.yPlane,
+          YuvPlane(
+            nvXX.uPlane.height,
+            nvXX.uPlane.rowStride,
+            nvXX.uPlane.pixelStride,
+          ),
+        ],
+      );
+      defYY = YUVDefClass(nvYY);
+    } catch (_) {
+      def.dispose();
+      rethrow;
+    }
     try {
       ffiBingings.nvXX_to_nvYY(def.pointer.ref.u, defYY.pointer.ref.u, nvXX.width, nvYY.height, nvXX.uPlane.rowStride);
 
@@ -561,7 +599,13 @@ class YuvImageImpl implements YuvImage {
   Uint8List toBgra8888() {
     final def = YUVDefClass(this);
     final bgraPlaneLength = width * height * 4;
-    final bgraPlane = calloc.allocate<Uint8>(bgraPlaneLength);
+    final Pointer<Uint8> bgraPlane;
+    try {
+      bgraPlane = NativeAllocator.instance.allocate<Uint8>(bgraPlaneLength);
+    } catch (_) {
+      def.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.nv21:
@@ -586,7 +630,7 @@ class YuvImageImpl implements YuvImage {
           return packed;
       }
     } finally {
-      calloc.free(bgraPlane);
+      NativeAllocator.instance.free(bgraPlane);
       def.dispose();
     }
   }
@@ -620,8 +664,15 @@ class YuvImageImpl implements YuvImage {
     }
 
     final def = YUVDefClass(this);
-    YuvImage i420 = YuvImageImpl.i420(width, height);
-    final def420 = YUVDefClass(i420);
+    final YuvImage i420;
+    final YUVDefClass def420;
+    try {
+      i420 = YuvImageImpl.i420(width, height);
+      def420 = YUVDefClass(i420);
+    } catch (_) {
+      def.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.nv21:
@@ -655,8 +706,15 @@ class YuvImageImpl implements YuvImage {
     }
 
     final def = YUVDefClass(this);
-    YuvImage n21 = YuvImageImpl.nv21(width, height);
-    final def21 = YUVDefClass(n21);
+    final YuvImage n21;
+    final YUVDefClass def21;
+    try {
+      n21 = YuvImageImpl.nv21(width, height);
+      def21 = YUVDefClass(n21);
+    } catch (_) {
+      def.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.i420:
