@@ -14,7 +14,7 @@
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06…YUV-08, YUV-13, YUV-14, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
-| [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | integration Web retest | Убрать выравнивающий хвост из IO/Web `getBytes()` |
+| [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | добавить focused integration Web case | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | integration Web retest | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | integration Web retest | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | integration Web retest | Зафиксировать retry/error/lazy-init контракт IO и Web |
@@ -969,7 +969,7 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-01/YUV-02/YUV-03 приняты; требуется focused integration Web retest
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
@@ -1106,6 +1106,26 @@ planes и одинаково подключён в IO/Web/stub. Нативные
 Блокирующих замечаний по реализации не найдено. Для `DONE` требуется перенести
 asset-dependent Web case в integration harness YUV-02 и подтвердить в Chrome
 длину и точные bytes; VM skip не является evidence.
+
+### Повторное независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+После принятия YUV-02 внешний blocker снят, но focused case YUV-14 в
+`example/integration_test/` не добавлен. Зелёный bootstrap проверяет conversions,
+но не вызывает `getBytes()` и потому не может обнаружить возвращение alignment
+tail. Исходный DoD о реальном Chrome выполнении всё ещё не закрыт.
+
+Production fix и VM regressions приняты: на Flutter 3.44.9 общий focused suite
+114/114 проходит. Для повторного review требуется только Web acceptance:
+
+1. перенести cases `1x1`, `3x3`, `127x255` и padded layout в integration
+   harness без использования проверяемого helper для expected bytes;
+2. явно проверить `kIsWeb == true`, точную длину и byte-for-byte concatenation;
+3. выполнить required Chrome job без skip/`continue-on-error` и приложить URL;
+4. после успеха перевести F-003 из `READY FOR RETEST` в `RESOLVED`.
+
+Production Dart, native C и generated bindings в доработке не требуются.
 
 ---
 
