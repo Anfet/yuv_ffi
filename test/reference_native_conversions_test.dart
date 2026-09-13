@@ -223,11 +223,9 @@ YuvImage _newImage(YuvFileFormat format, int width, int height, List<YuvPlane> p
     planes = _blankLogicalSamples(format, width, planes);
   }
   return switch (format) {
-    // The named IO BGRA constructor intentionally normalizes padded input to a
-    // tight plane. The explicit-format constructor is required here because
-    // YUV-05 exercises fromRgba8888 into the custom destination layout pinned
-    // by the manifest.
-    YuvFileFormat.bgra8888 when blank => YuvImage(format, width, height, planes: planes),
+    // Since YUV-15 the named BGRA constructor preserves the declared layout
+    // just like the explicit-format one, so both blank and populated cases can
+    // go through it.
     YuvFileFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes),
     YuvFileFormat.i420 => YuvImage.i420(width, height, planes: planes),
     YuvFileFormat.nv21 => YuvImage.nv21(width, height, planes: planes),
@@ -347,7 +345,12 @@ void _assertCase(Map<String, dynamic> entry, _CaseResult result, Map<String, Rgb
 
   final artifact = expected['artifact'] as String;
   final expectedFrame = expectedImages[artifact];
-  final compareVisual = expectedFrame != null && (expected['format'] == 'bgra8888' || entry['comparison'] != 'exact');
+  // A getBytes case asserts the raw concatenated plane layout, not a rendered
+  // frame, so it is checked only by the raw branch below. Without this guard a
+  // padded BGRA case would be compared against the tight artifact purely
+  // because its expected format happens to be named bgra8888 — which is why
+  // the padded I420/NV21 siblings were already exempt.
+  final compareVisual = expectedFrame != null && operation != 'getBytes' && (expected['format'] == 'bgra8888' || entry['comparison'] != 'exact');
   if (compareVisual) {
     final expectedBytes = operation == 'toImage' ? expectedFrame.bytes : expectedFrame.toBgra();
     final actual = result.imageBytes ?? result.outputBytes;
@@ -414,7 +417,11 @@ Uint8List _rgbaToBgra(Uint8List rgba) {
 
 Uint8List parametersForRaw(Map<String, dynamic> entry) {
   final input = entry['input'] as Map<String, dynamic>;
-  final layout = input['format'] == 'bgra8888' ? 'tight' : input['layout'] as String;
+  // Every format now keeps the declared layout. BGRA used to be forced to
+  // 'tight' here because the named constructor repacked padded input at
+  // construction time; YUV-15 makes it preserve the caller's stride, so the
+  // expectation is built from the same layout the case actually declares.
+  final layout = input['layout'] as String;
   final planes = _planesFor(_format(input['format'] as String), _rawSourceFrame(entry), layout);
   if (entry['operation'] == 'copy' && (entry['parameters'] as Map<String, dynamic>)['blank'] == true) {
     return Uint8List(planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length));

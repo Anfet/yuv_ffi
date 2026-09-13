@@ -19,7 +19,7 @@
 | F-001 | WEB-COMPILE-001 | Web/Chrome | RESOLVED | P0 | YUV-01 | `Function.toJS` blocker устранён; package и example компилируются на Flutter 3.44.9 |
 | F-002 | SWAP-NV-LUMA-001 | Native/Windows | RESOLVED | P1 | YUV-03 | `swapNv()` сохраняет Y и exact-переставляет chroma pairs |
 | F-003 | GET-BYTES-LENGTH-001 | Native/Windows | READY FOR RETEST | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
-| F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows | OPEN | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
+| F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows | READY FOR RETEST | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
 | F-005 | BINDINGS-CACHE-001 | Native/Windows | RESOLVED | P1 | YUV-19 | Повторные обращения переиспользуют один экземпляр `YuvFfiBindings` |
 | F-006 | IMAGE-CACHE-KEY-001 | Native/Windows | OPEN | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
 | F-007 | CHROME-RUNNER-HANG-001 | Web/Chrome | OPEN | P0 | YUV-02 | Даже минимальный Flutter Web test зависает на стадии `loading` |
@@ -313,12 +313,41 @@ RangeError (end): Invalid value: Not in inclusive range 0..16: 32
 
 YUV-15 должен добавить постоянные Native/Web tests для tight и padded BGRA planes. Валидный padding должен приниматься одинаково, а действительно невалидная геометрия — отклоняться на границе API предсказуемым `ArgumentError`, без внутреннего `RangeError`.
 
+### Изменение симптома до исправления
+
+На момент YUV-15 исходный `RangeError` уже не воспроизводился: после принятой YUV-04
+конструктор перестал падать, но вместо этого **молча понижал** валидную padded plane
+до tight:
+
+```text
+YuvImage.bgra(2, 2, planes: [YuvPlane(2, 16, 4)])
+до YUV-15:  rowStride=8,  bytes=16   // padding отброшен без предупреждения
+generic:    rowStride=16, bytes=32   // backend contracts расходились
+```
+
+Тихая потеря declared layout хуже исключения, поэтому запись остаётся валидной:
+дефект тот же (конструктор не уважает валидный padded layout), изменилось только
+его проявление.
+
 ### Resolution
 
-- Fix commit: не заполнен
-- Native retest command/result: не заполнен
-- Web retest command/result: не заполнен
-- Full `test_pattern_512.png` case result: не заполнен
+- Статус: `READY FOR RETEST`. Native сторона исправлена и покрыта постоянными
+  regression cases; `RESOLVED` требует настоящего Chrome прогона, который
+  остаётся заблокированным F-007/YUV-02.
+- Fix commit: см. commit задачи YUV-15 (`fix: kept the declared layout of a padded BGRA plane`)
+- Исправление: `YuvImageImpl.bgra` теперь делегирует generic-конструктору, поэтому
+  оба entry point используют один validator и одну deep-copy семантику. `copy()`
+  во всех трёх backend сохраняет declared geometry, а `copy(blank: true)`
+  обнуляет всю выделенную plane вместо схлопывания padding до tight.
+- Native retest command/result:
+  `flutter test test/conversions_test.dart --plain-name "padded BGRA"` — exit 0,
+  6 tests passed (Windows 10 x64 / AMD64, Flutter 3.38.10).
+- Full `test_pattern_512.png` case result: `BYTES-GET-BGRA8888-PADDED` теперь
+  сравнивается padded-к-padded (`raw length=1056768/1056768`, mae=0.000) против
+  собственного `rawPlaneReference` манифеста (`rowStride: 2064`). Эталонные
+  значения не перегенерировались.
+- Web retest command/result: `NOT RUN`, до устранения F-007/YUV-02. Контрактные
+  cases добавлены в `test/web/wasm_parity_edge_cases_test.dart`.
 
 ---
 

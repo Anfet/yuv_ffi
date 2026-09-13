@@ -633,6 +633,70 @@ void main() {
     expect(bgra.toBgra8888().length, _w * _h * 4);
   }, skip: !_nativeAvailable);
 
+  // Like the getBytes group below, these cases only allocate planes in Dart and
+  // must run without a native library.
+  group('padded BGRA constructor contract', () {
+    /// Builds a plane whose buffer exactly matches its declared geometry.
+    YuvPlane plane(int height, int rowStride, [int pixelStride = 4]) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
+
+    test('F-004 diagnostic case: a valid padded plane is accepted', () {
+      expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]), returnsNormally);
+    });
+
+    test('specialized and generic constructors agree on a padded plane', () {
+      final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]);
+      final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)]);
+
+      for (final image in <YuvImage>[specialized, generic]) {
+        expect(image.yPlane.rowStride, 16);
+        expect(image.yPlane.pixelStride, 4);
+        expect(image.yPlane.bytes.length, 32);
+      }
+    });
+
+    test('a tight plane is still kept tight', () {
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 8)]);
+      expect(image.yPlane.rowStride, 8);
+      expect(image.yPlane.bytes.length, 16);
+    });
+
+    test('the constructor deep-copies instead of aliasing the caller plane', () {
+      final source = plane(2, 16);
+      source.bytes[0] = 42;
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+
+      source.bytes[0] = 200;
+      expect(image.yPlane.bytes[0], 42, reason: 'the image must not alias the caller buffer');
+    });
+
+    test('copy keeps padded metadata and blank copy zeros the whole allocation', () {
+      final source = plane(2, 16);
+      for (int i = 0; i < source.bytes.length; i++) {
+        source.bytes[i] = i + 1;
+      }
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+
+      final copied = image.copy();
+      expect(copied.yPlane.rowStride, 16);
+      expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
+
+      final blank = image.copy(blank: true);
+      expect(blank.yPlane.rowStride, 16, reason: 'a blank copy must not silently drop the padding');
+      expect(blank.yPlane.bytes.length, 32);
+      expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
+    });
+
+    test('an invalid padded layout throws ArgumentError, not a RangeError', () {
+      // A row that cannot hold width * 4 bytes is genuinely invalid, and both
+      // entry points must reject it through the shared validator.
+      expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
+      expect(
+        () => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]),
+        throwsArgumentError,
+      );
+    });
+  });
+
   // These cases only allocate planes in Dart, so they must run without a native
   // library. Guarding them with `skip: !_nativeAvailable` would let the F-003
   // regression pass unnoticed on a machine with no built binary.

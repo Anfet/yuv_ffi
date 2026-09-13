@@ -61,43 +61,16 @@ class YuvImageImpl implements YuvImage {
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
       : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImageImpl.bgra(this._width, this._height, {Iterable<YuvPlane>? planes}) : _format = YuvFileFormat.bgra8888 {
-    YuvGeometry.validateDimensions(_width, _height);
-
-    final int tightRowStride = width * 4;
-    Uint8List? bytes;
-    if (planes != null) {
-      // BGRA carries exactly one plane. An empty list used to produce a blank
-      // image and extra planes were ignored, which disagreed with both the
-      // generic constructor and the other backends.
-      final provided = List.of(planes);
-      if (provided.length != YuvGeometry.planeCountFor(YuvFileFormat.bgra8888)) {
-        throw ArgumentError.value(
-          provided.length,
-          'planes.length',
-          'Format bgra8888 requires exactly ${YuvGeometry.planeCountFor(YuvFileFormat.bgra8888)} plane(s)',
-        );
-      }
-      final rawY = provided.first;
-      YuvGeometry.validatePlane(
-        plane: rawY,
-        label: 'yPlane',
-        expectedHeight: height,
-        expectedWidth: width,
-        sampleBytes: 4,
-      );
-
-      // Repack into tightly packed rows. A WriteBuffer's backing ByteBuffer is
-      // grown in powers of two, so its length is not the written length; build
-      // the exact-size buffer directly instead.
-      bytes = Uint8List(height * tightRowStride);
-      for (int y = 0; y < height; y++) {
-        bytes.setRange(y * tightRowStride, (y + 1) * tightRowStride, rawY.bytes, y * rawY.rowStride);
-      }
-    }
-
-    _planes = [YuvPlane(height, tightRowStride, 4, bytes)];
-  }
+  /// Creates a BGRA image, optionally adopting a caller-supplied plane.
+  ///
+  /// A valid padded plane keeps its `rowStride` and `pixelStride`: the plane is
+  /// deep-copied as given rather than repacked at construction time. Producing
+  /// a tight buffer is the job of [toBgra8888], not a reason to discard the
+  /// caller's layout. This matches the generic
+  /// `YuvImage(YuvFileFormat.bgra8888, ...)` constructor, so both entry points
+  /// share one validation and copy contract.
+  YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
+      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: planes);
 
   YuvImageImpl(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
     YuvGeometry.validateDimensions(_width, _height);
@@ -144,7 +117,16 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage copy({bool blank = false}) =>
-      YuvImageImpl(format, width, height, planes: blank ? null : _planes, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
+      YuvImageImpl(format, width, height, planes: _copiedPlanes(blank: blank), yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
+
+  /// Planes for [copy].
+  ///
+  /// A blank copy keeps every plane's declared geometry and zeroes the whole
+  /// allocation, so padded metadata survives. Passing `null` instead would fall
+  /// back to the allocating path, which rebuilds tight planes and silently
+  /// drops the padding.
+  List<YuvPlane> _copiedPlanes({required bool blank}) =>
+      [for (final plane in _planes) blank ? YuvPlane(plane.height, plane.rowStride, plane.pixelStride) : plane.copy()];
 
   @override
   Future save(Sink<List<int>> sink) async {

@@ -95,10 +95,13 @@ void main() {
       expect(() => YuvImage.bgra(8, 8, planes: [filled(8, 32, 4), filled(4, 8, 2)]), throwsArgumentError);
     });
 
-    test('exactly one plane is accepted and repacked tightly', () {
+    test('exactly one plane is accepted and keeps its declared layout', () {
+      // YUV-15 supersedes the earlier YUV-04 behaviour: a valid padded plane is
+      // deep-copied as declared instead of being repacked tightly at
+      // construction time. toBgra8888() is what produces a tight buffer.
       final image = YuvImage.bgra(8, 8, planes: [filled(8, 32 + 16, 4)]);
       expect(image.planes.length, 1);
-      expect(image.yPlane.rowStride, 8 * 4);
+      expect(image.yPlane.rowStride, 32 + 16);
     });
 
     test('omitting planes still allocates a blank image', () {

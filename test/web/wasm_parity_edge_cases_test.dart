@@ -230,6 +230,49 @@ void main() {
     }
   });
 
+  group('padded BGRA constructor contract', () {
+    YuvPlane plane(int height, int rowStride, [int pixelStride = 4]) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
+
+    test('F-004 diagnostic case: a valid padded plane is accepted', () {
+      expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]), returnsNormally);
+    });
+
+    test('specialized and generic constructors agree on a padded plane', () {
+      final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]);
+      final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)]);
+
+      for (final image in <YuvImage>[specialized, generic]) {
+        expect(image.yPlane.rowStride, 16);
+        expect(image.yPlane.pixelStride, 4);
+        expect(image.yPlane.bytes.length, 32);
+      }
+    });
+
+    test('copy keeps padded metadata and blank copy zeros the whole allocation', () {
+      final source = plane(2, 16);
+      for (int i = 0; i < source.bytes.length; i++) {
+        source.bytes[i] = i + 1;
+      }
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+
+      final copied = image.copy();
+      expect(copied.yPlane.rowStride, 16);
+      expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
+
+      final blank = image.copy(blank: true);
+      expect(blank.yPlane.rowStride, 16);
+      expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
+    });
+
+    test('an invalid padded layout throws ArgumentError, not a RangeError', () {
+      expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
+      expect(
+        () => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]),
+        throwsArgumentError,
+      );
+    });
+  });
+
   group('getBytes contract', () {
     const sizes = <({int w, int h})>[
       (w: 1, h: 1),

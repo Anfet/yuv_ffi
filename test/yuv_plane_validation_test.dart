@@ -113,11 +113,15 @@ void main() {
       expect(YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [plane(8, 32, 4)]).planes.length, 1);
     });
 
-    test('YuvImage.bgra repacks a padded plane into an exact tight buffer', () {
-      // The repacked plane must hold exactly width * 4 * height bytes.
+    test('YuvImage.bgra keeps a valid padded plane instead of repacking it', () {
+      // YUV-15 supersedes the earlier YUV-04 behaviour here: the constructor
+      // used to repack a padded plane into a tight buffer, which destroyed the
+      // caller's layout. Producing a tight buffer is the job of toBgra8888();
+      // the constructor deep-copies the plane exactly as declared.
       final image = YuvImage.bgra(8, 8, planes: [plane(8, 32 + 16, 4)]);
-      expect(image.yPlane.bytes.length, 8 * 8 * 4);
-      expect(image.yPlane.rowStride, 8 * 4);
+      expect(image.yPlane.rowStride, 32 + 16);
+      expect(image.yPlane.pixelStride, 4);
+      expect(image.yPlane.bytes.length, 8 * (32 + 16));
     });
 
     test('accepts a valid padded BGRA plane without an obscure RangeError', () {

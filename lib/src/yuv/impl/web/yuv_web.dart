@@ -113,7 +113,16 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage copy({bool blank = false}) =>
-      YuvImageImpl(_format, _width, _height, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1, planes: blank ? null : _planes);
+      YuvImageImpl(_format, _width, _height, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1, planes: _copiedPlanes(blank: blank));
+
+  /// Planes for [copy].
+  ///
+  /// A blank copy keeps every plane's declared geometry and zeroes the whole
+  /// allocation, so padded metadata survives. Passing `null` instead would fall
+  /// back to the allocating path, which rebuilds tight planes and silently
+  /// drops the padding.
+  List<YuvPlane> _copiedPlanes({required bool blank}) =>
+      [for (final plane in _planes) blank ? YuvPlane(plane.height, plane.rowStride, plane.pixelStride) : plane.copy()];
 
   @override
   Future<void> save(Sink<List<int>> sink) async {
