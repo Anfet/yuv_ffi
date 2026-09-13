@@ -614,12 +614,37 @@ Commit: YUV-05 task commit
 
 Проверки:
 - clang -shared -O2 -DDART_SHARED_LIB -Isrc -Isrc/yuv -o yuv_ffi.dll $(find src -name "*.c") — exit 0
+- sh ./tool/wasm/build_wasm.sh --emcc <wrapper> --profile release — exit 0, 40 sources
 - flutter test test/native_stride_safety_test.dart --reporter expanded — exit 0, 7 тестов
 - flutter test — exit 0, 71 тест (64 после YUV-04)
 - flutter analyze lib test — exit 0, "No issues found!"
 - dart format --output=none --set-exit-if-changed test/native_stride_safety_test.dart — exit 0
 - git diff --check — exit 0
 - git status --short — приложен ниже
+
+Пересборка WASM:
+- Владелец указал расположение emcc: `D:\.important\emsdk\upstream\emscripten\emcc.bat`
+  (emscripten 5.0.1). Прямой вызов работает, но `build_wasm.sh` проверяет
+  наличие компилятора через `command -v`, а у `emcc.bat` не выставлен
+  executable-бит, поэтому и `--emcc <путь>`, и fallback на `emcc.bat` из PATH
+  отклонялись. У `emcc.py` executable-бит есть, но его shebang
+  `#!/usr/bin/env python3` попадает на заглушку Microsoft Store вместо
+  интерпретатора emsdk.
+- Решение без правки скрипта: временный исполняемый wrapper во временном
+  каталоге, вызывающий `<emsdk>/python/3.13.3_64bit/python <emsdk>/upstream/emscripten/emcc.py "$@"`,
+  и передача его в штатный флаг `--emcc`. Сам `tool/wasm/build_wasm.sh` не
+  изменялся: он вне scope YUV-05.
+- Результат: `assets/wasm/yuv_ffi.wasm` пересобран из исправленного C,
+  32655 -> 33303 байт, md5 6ccda36faabfa42dbac7843fb8040bd8 ->
+  acf0754f08fd6fa42e05739708496a88. `assets/wasm/yuv_ffi.js` побайтово не
+  изменился, что ожидаемо: список экспортов и флаги те же, изменился только
+  скомпилированный код.
+- Проверка ABI: export-таблица обоих модулей разобрана напрямую из бинарника,
+  47 экспортов в обоих, множества идентичны. При `-O3` emscripten минифицирует
+  имена экспортов (`A`, `B`, `b`, ...), поэтому поиск читаемых имён в `.wasm`
+  ничего не даёт ни в новой, ни в старой сборке; читаемые имена объявлены в JS
+  glue, где присутствуют все требуемые функции, включая `_nvXX_to_nvYY`.
+- Предыдущие артефакты сохранены в %TEMP%/wasm_backup/.
 
 Ручная проверка:
 - ОС Windows 10 19045, архитектура x64, компилятор clang 16.0.4
@@ -640,15 +665,20 @@ Commit: YUV-05 task commit
   функциональными тестами с padded strides и canary-областями. Полноценный
   sanitizer-прогон остаётся за CI на Linux-toolchain и не может считаться
   выполненным этой задачей.
-- `assets/wasm/yuv_ffi.js` и `.wasm` НЕ пересобраны: `emcc` на машине
-  отсутствует. Артефакты остаются от предыдущего C commit и потому не
-  соответствуют текущим исходникам. Пункт DoD про пересборку WASM и про
-  numeric tolerance между native и WASM не выполнен и должен быть закрыт
-  отдельно на машине с emscripten.
-- Web-параллель правок не проверялась в Chrome: runner остаётся заблокирован
-  F-007.
+- WASM-артефакты пересобраны из текущего C (см. раздел «Пересборка WASM»), но
+  ни разу не исполнялись: Chrome runner остаётся заблокирован F-007. Поэтому
+  пункт DoD про numeric tolerance между native и WASM НЕ закрыт — сравнение
+  результатов требует реального прогона Web-тестов.
+- Web-параллель правок не проверялась в Chrome по той же причине. Соответствие
+  артефактов исходникам подтверждено только фактом пересборки и разбором
+  export-таблицы, а не поведением.
 - Размеры 1x1, 3x5, 127x255 проверены на native. На Web не проверялись по
   причинам выше.
+- Пересборка выполнена на Windows через wrapper вокруг `emcc.py`. На CI/другой
+  машине штатный `sh ./tool/wasm/build_wasm.sh` сработает только если `emcc`
+  (или `emcc.bat`/`emcc.cmd`) реально разрешается через `command -v`. Если это
+  окажется системной проблемой, чинить нужно `tool/wasm/build_wasm.sh`
+  отдельной задачей.
 
 Native C permission:
 - Разрешение владельца получено в этой сессии: «разрешаю, требуется добавить
