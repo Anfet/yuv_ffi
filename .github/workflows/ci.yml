@@ -135,11 +135,24 @@ jobs:
         with:
           flutter-version: '3.44.9'
 
+      # Both must come from the same install, or the driver refuses the session:
+      # the stable channel briefly shipped chromedriver 153 against Chrome 152,
+      # which failed with "This version of ChromeDriver only supports Chrome
+      # version 153". Pinning one version keeps the pair consistent.
       - name: Setup Chrome and matching chromedriver
         uses: browser-actions/setup-chrome@v1
+        id: chrome
         with:
-          chrome-version: stable
+          chrome-version: '152'
           install-chromedriver: true
+          install-dependencies: true
+
+      - name: Report the browser/driver pair
+        shell: bash
+        run: |
+          echo "chrome:       ${{ steps.chrome.outputs.chrome-version }}"
+          echo "chromedriver: ${{ steps.chrome.outputs.chromedriver-version }}"
+          "${{ steps.chrome.outputs.chromedriver-path }}" --version
 
       - name: Install Emscripten SDK
         shell: bash
