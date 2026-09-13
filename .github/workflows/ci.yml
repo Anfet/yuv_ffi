@@ -117,3 +117,62 @@ jobs:
             echo "Running web test: $f"
             xvfb-run -a flutter test --platform chrome --no-pub "$f" --reporter expanded
           done
+
+  # Probe for YUV-02. The gate above cannot load the WASM assets, because the
+  # `flutter test --platform chrome` server serves no asset bundle. This runs one
+  # bootstrap test against a real app, where the bundle exists. It is allowed to
+  # fail without failing the workflow: its only job right now is to answer
+  # whether porting the four web suites here is worth doing.
+  web-integration-probe:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Setup Chrome and matching chromedriver
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-chromedriver: true
+
+      - name: Install Emscripten SDK
+        shell: bash
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
+          "$HOME/emsdk/emsdk" install latest
+          "$HOME/emsdk/emsdk" activate latest
+
+      - name: Build WASM artifacts
+        shell: bash
+        run: |
+          source "$HOME/emsdk/emsdk_env.sh"
+          emcc -v
+          sh ./tool/wasm/build_wasm.sh --profile release
+          test -f assets/wasm/yuv_ffi.js
+          test -f assets/wasm/yuv_ffi.wasm
+
+      - name: Enable Flutter web
+        run: flutter config --enable-web
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: WASM bootstrap probe
+        working-directory: example
+        shell: bash
+        run: |
+          chromedriver --port=4444 &
+          sleep 5
+          xvfb-run -a flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/wasm_bootstrap_test.dart \
+            -d web-server \
+            --browser-name=chrome \
+            --headless

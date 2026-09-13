@@ -25,6 +25,12 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Web parity runs here rather than under `flutter test --platform chrome`:
+  # that runner serves no asset bundle, so the WASM loader's asset path 404s.
+  # integration_test drives a real built app, where the bundle exists.
+  integration_test:
+    sdk: flutter
+
   flutter_lints: ^5.0.0
 
 flutter:
