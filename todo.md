@@ -6,31 +6,31 @@
 
 ## Общий чеклист
 
-| Готово | ID | Владелец | Приоритет | Статус | Зависит от | Краткое описание |
-|---|---|---|---|---|---|---|
-| [x] | YUV-01 | Terra | P0 | DONE | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
-| [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | CI evidence | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
-| [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
-| [x] | YUV-04 | Opus | P0 | DONE | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
-| [x] | YUV-05 | Root | P0 | DONE | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
-| [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | P2 | TODO | Web retest: YUV-02 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
-| [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
-| [ ] | YUV-09 | Luna | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
-| [x] | YUV-10 | Terra | P1 | DONE | — | Подготовлен независимый эталон и manifest для `test_pattern_512.png` |
-| [x] | YUV-11 | Luna | P1 | DONE | — | Проверена native matrix: 65/119 passed, 54 failures зарегистрированы отдельно |
-| [ ] | YUV-12 | Luna | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
-| [ ] | YUV-13 | Terra | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
-| [ ] | YUV-14 | Luna | P1 | TODO | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
-| [ ] | YUV-15 | Terra | P1 | TODO | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [x] | YUV-16 | Opus | P1 | DONE | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
-| [ ] | YUV-17 | Luna | P2 | TODO | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
-| [x] | YUV-19 | Terra | P1 | DONE | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
-| [ ] | YUV-20 | Opus | P1 | TODO | Web retest: YUV-02 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
-| [ ] | YUV-21 | Opus | P1 | TODO | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
-| [ ] | YUV-22 | Opus | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
-| [ ] | YUV-23 | Opus | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
-| [ ] | YUV-18 | Terra | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
+| Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
+|---|---|---|---|---|---|---|---|
+| [x] | YUV-01 | Terra | Claude Sonnet 5 | P0 | DONE | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
+| [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | READY FOR REVIEW | CI evidence | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
+| [x] | YUV-03 | Luna | Claude Sonnet 5 | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
+| [x] | YUV-04 | Opus | Claude Opus 5 | P0 | DONE | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
+| [x] | YUV-05 | Root | Claude Opus 5 | P0 | DONE | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
+| [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | TODO | Web retest: YUV-02 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
+| [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
+| [x] | YUV-10 | Terra | Claude Sonnet 5 | P1 | DONE | — | Подготовлен независимый эталон и manifest для `test_pattern_512.png` |
+| [x] | YUV-11 | Luna | Claude Sonnet 5 | P1 | DONE | — | Проверена native matrix: 65/119 passed, 54 failures зарегистрированы отдельно |
+| [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
+| [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
+| [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | TODO | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
+| [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | TODO | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
+| [x] | YUV-16 | Opus | Claude Opus 5 | P1 | DONE | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
+| [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | TODO | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
+| [x] | YUV-19 | Terra | Claude Sonnet 5 | P1 | DONE | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | TODO | Web retest: YUV-02 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
+| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | TODO | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
+| [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
+| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
 
 ## Статусы
 
@@ -42,6 +42,36 @@
 - `REJECTED` — реализация возвращена с конкретным списком замечаний; после исправлений снова `READY FOR REVIEW`.
 
 Модель не ставит своей задаче `DONE`. После реализации она меняет статус на `READY FOR REVIEW` и заполняет секцию «Результат». Статус `DONE` выставляется только после независимой проверки.
+
+После каждого принятого `DONE` в том же tracker update необходимо пересчитать
+доступность всех незавершённых карточек:
+
+1. Если все обязательные зависимости выполнены и нужные разрешения получены,
+   изменить `BLOCKED` на `TODO`.
+2. Если снята только часть блокеров, оставить `BLOCKED` и удалить из колонки
+   «Зависит от» уже выполненные зависимости.
+3. Пометка `Web retest: YUV-02` не запрещает начать изолированную реализацию со
+   статусом `TODO`, но запрещает переводить её в `DONE` без фактического Web
+   runtime evidence.
+4. После изменения доступности синхронно обновить и строку общего чеклиста, и
+   секцию конкретной задачи.
+
+### Выбор моделей
+
+- Колонка «Владелец» сохраняет фактического или назначенного исполнителя;
+  «Anthropic-вариант» — допустимая альтернатива для реализации, исправления
+  после ревью или независимой проверки.
+- Claude Opus 5 (`claude-opus-5`) использовать для memory safety, native C,
+  сложных lifecycle и cross-backend API contracts.
+- Claude Sonnet 5 (`claude-sonnet-5`) использовать для ограниченных Dart/Web
+  изменений, тестовых матриц, CI и документации с несколькими связанными
+  проверками.
+- Claude Haiku 4.5 (`claude-haiku-4-5-20251001`) использовать только для узких
+  механических задач с полностью определённым diff и DoD; при неоднозначности
+  повышать до Claude Sonnet 5.
+- Для воспроизводимого API-запуска закреплять точный model ID, а не полагаться
+  на плавающий alias. Актуальность семейства проверена 2026-09-13 по
+  [Anthropic model status](https://docs.anthropic.com/en/docs/about-claude/model-deprecations).
 
 ## Общие решения и ограничения
 
