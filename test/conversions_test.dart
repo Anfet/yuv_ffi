@@ -258,6 +258,178 @@ void main() {
     expect(restored.uPlane.bytes, orderedEquals(original));
   }, skip: !_nativeAvailable);
 
+  test('swapNv preserves Y and reverses every chroma pair exactly', () {
+    const width = 4;
+    const height = 4;
+    final originalY = Uint8List.fromList([
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+    ]);
+    final originalChroma = Uint8List.fromList([
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+    ]);
+    final image = YuvImage.nv21(
+      width,
+      height,
+      planes: [
+        YuvPlane(height, width, 1, originalY),
+        YuvPlane(height ~/ 2, width, 2, originalChroma),
+      ],
+    );
+
+    final swapped = image.swapNv();
+
+    expect(identical(swapped, image), isTrue);
+    expect(swapped.format, YuvFileFormat.nv21);
+    expect(swapped.width, width);
+    expect(swapped.height, height);
+    expect(swapped.yPlane.bytes, orderedEquals(originalY));
+    expect(
+      swapped.uPlane.bytes,
+      orderedEquals(<int>[2, 1, 4, 3, 6, 5, 8, 7]),
+    );
+
+    final restored = swapped.swapNv();
+    expect(restored.yPlane.bytes, orderedEquals(originalY));
+    expect(restored.uPlane.bytes, orderedEquals(originalChroma));
+  }, skip: !_nativeAvailable);
+
+  test('swapNv preserves Y after conversion from I420', () {
+    const width = 4;
+    const height = 4;
+    final originalY = Uint8List.fromList([
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+    ]);
+    final image = YuvImage.i420(
+      width,
+      height,
+      planes: [
+        YuvPlane(height, width, 1, originalY),
+        YuvPlane(height ~/ 2, width ~/ 2, 1, Uint8List.fromList([1, 3, 5, 7])),
+        YuvPlane(height ~/ 2, width ~/ 2, 1, Uint8List.fromList([2, 4, 6, 8])),
+      ],
+    );
+
+    image.swapNv();
+
+    expect(image.format, YuvFileFormat.nv21);
+    expect(image.width, width);
+    expect(image.height, height);
+    expect(image.yPlane.bytes, orderedEquals(originalY));
+    expect(image.uPlane.bytes, orderedEquals(<int>[2, 1, 4, 3, 6, 5, 8, 7]));
+  }, skip: !_nativeAvailable);
+
+  test('swapNv preserves padded Y layout after one and two swaps', () {
+    const width = 4;
+    const height = 4;
+    const yRowStride = 6;
+    const uvRowStride = 6;
+    final originalY = Uint8List.fromList([
+      10,
+      11,
+      12,
+      13,
+      90,
+      91,
+      14,
+      15,
+      16,
+      17,
+      92,
+      93,
+      18,
+      19,
+      20,
+      21,
+      94,
+      95,
+      22,
+      23,
+      24,
+      25,
+      96,
+      97,
+    ]);
+    final originalChroma = Uint8List.fromList([
+      1,
+      2,
+      3,
+      4,
+      80,
+      81,
+      5,
+      6,
+      7,
+      8,
+      82,
+      83,
+    ]);
+    final image = YuvImage.nv21(
+      width,
+      height,
+      planes: [
+        YuvPlane(height, yRowStride, 1, originalY),
+        YuvPlane(height ~/ 2, uvRowStride, 2, originalChroma),
+      ],
+    );
+    final sourceYPlane = image.yPlane;
+    final sourceChromaPlane = image.uPlane;
+
+    image.swapNv();
+
+    expect(identical(image.yPlane, sourceYPlane), isFalse);
+    expect(identical(image.yPlane.bytes, sourceYPlane.bytes), isFalse);
+    expect(identical(image.uPlane, sourceChromaPlane), isFalse);
+    expect(identical(image.uPlane.bytes, sourceChromaPlane.bytes), isFalse);
+    expect(image.yPlane.rowStride, yRowStride);
+    expect(image.yPlane.bytes, orderedEquals(originalY));
+    expect(image.uPlane.rowStride, uvRowStride);
+    expect(image.uPlane.bytes.sublist(0, 4), orderedEquals(<int>[2, 1, 4, 3]));
+    expect(image.uPlane.bytes.sublist(uvRowStride, uvRowStride + 4), orderedEquals(<int>[6, 5, 8, 7]));
+
+    image.swapNv();
+
+    expect(image.yPlane.bytes, orderedEquals(originalY));
+    expect(image.uPlane.bytes.sublist(0, 4), orderedEquals(<int>[1, 2, 3, 4]));
+    expect(image.uPlane.bytes.sublist(uvRowStride, uvRowStride + 4), orderedEquals(<int>[5, 6, 7, 8]));
+  }, skip: !_nativeAvailable);
+
   test('flipHorizontally on BGRA is exact', () {
     final image = YuvImage.bgra(_w, _h);
     image.fromRgba8888(rgba);

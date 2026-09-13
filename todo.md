@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|
 | [ ] | YUV-01 | Terra | P0 | READY FOR REVIEW | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
 | [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
-| [ ] | YUV-03 | Luna | P1 | TODO | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
+| [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
 | [ ] | YUV-04 | Opus | P0 | BLOCKED | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
 | [ ] | YUV-05 | Opus | P0 | BLOCKED | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
@@ -23,7 +23,7 @@
 | [ ] | YUV-13 | Terra | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | P1 | BLOCKED | YUV-01, YUV-03 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | P1 | BLOCKED | YUV-04 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [ ] | YUV-16 | Opus | P1 | BLOCKED | YUV-03 | Обеспечить exception-safe освобождение всех последовательных native allocations |
+| [ ] | YUV-16 | Opus | P1 | TODO | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
 | [ ] | YUV-17 | Luna | P2 | BLOCKED | YUV-01 | Добавить отдельный analyzer/build gate для package `example/` |
 | [ ] | YUV-19 | Terra | P1 | TODO | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
 | [ ] | YUV-20 | Opus | P1 | BLOCKED | YUV-01 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
@@ -292,7 +292,7 @@ Native C permission:
 
 - Владелец: Luna
 - Приоритет: P1
-- Статус: TODO
+- Статус: DONE
 - Зависимости: нет
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
@@ -339,7 +339,16 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+- Исправление принято после независимого ревью решения Luna.
+- `swapNv()` создаёт destination с layout исходных Y/UV planes, переносит Y одной deep copy через generic constructor и отдаёт native helper только перестановку chroma.
+- Повторное полнокадровое копирование результата удалено; метод остаётся in-place и возвращает исходный объект.
+- Добавлены exact regression cases для первого и второго swap, пути I420 -> NV21 и padded Y/UV layout; отдельно проверено отсутствие alias с исходными planes.
+- `flutter test --no-pub test/conversions_test.dart --plain-name "swapNv" --reporter expanded` — 4/4 passed.
+- `flutter test --no-pub --reporter expanded` — 33/33 passed.
+- `flutter analyze --no-pub lib test` — no issues.
+- `dart format --output=none --set-exit-if-changed lib/src/yuv/impl/io/yuv_image.dart test/conversions_test.dart` — passed после применения formatter.
+- `git diff --check` — passed.
+- Native C и generated bindings не изменялись. Web/Chrome не запускался: YUV-03 относится к native backend, а Chrome runner остаётся заблокирован F-007.
 
 ---
 
@@ -1109,8 +1118,8 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P1; prerequisite для бросающей валидации YUV-04 (P0), поэтому не ниже P1
-- Статус: BLOCKED
-- Зависимости: YUV-03, чтобы не менять IO implementation параллельно
+- Статус: TODO
+- Зависимости: нет; YUV-03 завершена
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
   - `lib/src/yuv/impl/io/defs/yuv_def.dart`

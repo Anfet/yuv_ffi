@@ -17,7 +17,7 @@
 | Failure ID | Case ID | Backend | Статус | Приоритет | Fix task | Кратко |
 |---|---|---|---|---|---|---|
 | F-001 | WEB-COMPILE-001 | Web/Chrome | READY FOR RETEST | P0 | YUV-01 | `Function.toJS` blocker устранён в Web build; полный Chrome suite заблокирован F-007 |
-| F-002 | SWAP-NV-LUMA-001 | Native/Windows | OPEN | P1 | YUV-03 | Один `swapNv()` заменяет Y-плоскость нулями |
+| F-002 | SWAP-NV-LUMA-001 | Native/Windows | RESOLVED | P1 | YUV-03 | `swapNv()` сохраняет Y и exact-переставляет chroma pairs |
 | F-003 | GET-BYTES-LENGTH-001 | Native/Windows | OPEN | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
 | F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows | OPEN | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
 | F-005 | BINDINGS-CACHE-001 | Native/Windows | OPEN | P1 | YUV-19 | Кэш `YuvFfiBindings` не заполняется, каждый вызов заново резолвит символы |
@@ -91,7 +91,7 @@ but Type 'Function' is not a precise function type.
 ## F-002 — native `swapNv()` уничтожает luma
 
 - Case ID: `SWAP-NV-LUMA-001`
-- Статус: OPEN
+- Статус: RESOLVED
 - Обнаружено: 2026-09-12
 - Commit: `5f52fd14540a283da91a6d80e1fc7128bba1c796`
 - Backend: Native / Windows x64
@@ -143,7 +143,7 @@ Which: at location [0] is <0> instead of <235>
 
 ### Retest
 
-YUV-03 должен добавить постоянный regression test. YUV-11 должен повторить проверку на `test/assets/test_pattern_512.png` и сравнить:
+YUV-03 добавила постоянные regression tests. YUV-11 должна повторить проверку на `test/assets/test_pattern_512.png` и сравнить:
 
 - Y после первого swap — exact;
 - каждую chroma-пару после первого swap — exact reverse;
@@ -152,7 +152,14 @@ YUV-03 должен добавить постоянный regression test. YUV-1
 
 ### Resolution
 
-- Fix commit: не заполнен
+- Исправлено: 2026-09-13
+- Fix commit: текущий commit YUV-03
+- Реализация сохраняет Y одной deep copy, создаёт отдельный UV destination с исходным stride layout и переносит обратно готовые planes без повторного копирования.
+- `flutter test --no-pub test/conversions_test.dart --plain-name "swapNv" --reporter expanded` — 4/4 passed.
+- `flutter test --no-pub --reporter expanded` — 33/33 passed.
+- Проверены exact Y после одного/двух swap, exact reverse chroma pairs, I420 conversion path, in-place identity и padded Y/UV layout.
+- `flutter analyze --no-pub lib test`, format-check и `git diff --check` — passed.
+- Native C и generated bindings не изменялись.
 - Retest command/result: не заполнен
 - Full `test_pattern_512.png` case result: не заполнен
 

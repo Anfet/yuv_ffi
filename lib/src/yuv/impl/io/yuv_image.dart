@@ -54,10 +54,10 @@ class YuvImageImpl implements YuvImage {
   ui.Size get size => ui.Size(width.toDouble(), height.toDouble());
 
   YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+      : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+      : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.bgra(this._width, this._height, {Iterable<YuvPlane>? planes}) : _format = YuvFileFormat.bgra8888 {
     Uint8List? bytes;
@@ -525,12 +525,25 @@ class YuvImageImpl implements YuvImage {
     final nvXX = format == YuvFileFormat.nv21 ? this : toYuvNv21();
 
     final def = YUVDefClass(nvXX);
-    final YuvImage nvYY = YuvImageImpl.nv21(width, height);
+    // Keep both destination strides compatible with the source. The native
+    // helper accepts one chroma stride for both buffers and only writes active
+    // chroma pairs, so a tight destination is not safe for padded input.
+    final YuvImage nvYY = YuvImageImpl.nv21(
+      width,
+      height,
+      planes: [
+        nvXX.yPlane,
+        YuvPlane(
+          nvXX.uPlane.height,
+          nvXX.uPlane.rowStride,
+          nvXX.uPlane.pixelStride,
+        ),
+      ],
+    );
     final defYY = YUVDefClass(nvYY);
     try {
       ffiBingings.nvXX_to_nvYY(def.pointer.ref.u, defYY.pointer.ref.u, nvXX.width, nvYY.height, nvXX.uPlane.rowStride);
 
-      nvYY.yPlane.assignFromPtr(defYY.pointer.ref.y);
       nvYY.uPlane.assignFromPtr(defYY.pointer.ref.u);
     } finally {
       def.dispose();
@@ -540,7 +553,7 @@ class YuvImageImpl implements YuvImage {
     _format = nvYY.format;
     _width = nvYY.width;
     _height = nvYY.height;
-    _planes = nvYY.planes.map((p) => p.copy()).toList(growable: false);
+    _planes = nvYY.planes;
     return this;
   }
 
