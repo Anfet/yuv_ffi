@@ -25,7 +25,7 @@ YUV-07/YUV-20/YUV-26/YUV-27 отражены в актуальных стату�
 | A-05: `DataReader`/`ChangeNotifier` | YUV-07 | DONE / task still rejected | Мёртвый reader/writer удалён в `ded01b0`; оставшийся blocker относится к A-11 |
 | A-05: `bytesPerPixes`, exception, rotation naming | YUV-27 | DONE / archived | Source-compatible cleanup принят и перемещён в `completed-tasks.md` |
 | A-06: rotation assert и `dstWidtn` | YUV-27 | DONE / archived | Механическая cleanup принята без изменения semantics |
-| A-07: `getBytes()` backing buffer | YUV-14 | REJECTED | Fix принят на VM; отсутствует focused integration Web case |
+| A-07: `getBytes()` backing buffer | YUV-14 | REJECTED | F-003 закрыт в Chrome; Web matrix пропускает 512x512 и copy independence |
 | A-08: bindings cache | YUV-19 | DONE / archived | Принято и перемещено в `completed-tasks.md` |
 | A-08: serialization | YUV-07 | REJECTED | Geometry исправлена, но 50 ms grace делает trailing-byte policy недетерминированной |
 | A-08: image cache | YUV-20 | REJECTED | Safe always-miss восстановлен; отсутствует focused integration Web cache case |
