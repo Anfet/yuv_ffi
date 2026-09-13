@@ -18,14 +18,37 @@ jobs:
         with:
           flutter-version: '3.44.9'
 
-      - name: Flutter pub get
+      - name: Flutter pub get (root)
         run: flutter pub get
 
-      - name: Analyze
+      - name: Analyze (root)
         run: flutter analyze
 
       - name: Unit tests
         run: flutter test
+
+  example-analyze-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: Analyze (example)
+        working-directory: example
+        run: flutter analyze
+
+      - name: Build Web (example)
+        working-directory: example
+        run: flutter build web
 
   wasm-web-smoke:
     runs-on: ubuntu-latest

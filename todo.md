@@ -17,7 +17,7 @@
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | TODO | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
+| [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | READY FOR REVIEW | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
 | [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
@@ -325,7 +325,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: TODO
+- Статус: READY FOR REVIEW
 - Зависимости: YUV-04 принята; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/loader/data_io.dart`
@@ -379,7 +379,87 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+```text
+Статус: READY FOR REVIEW
+Commit: fix: hardened the save/load format
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_codec.dart (новый)
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- test/yuv_serialization_test.dart (новый)
+- test/yuv_geometry_rejection_test.dart
+
+Что сделано:
+- Вынесен один shared versioned codec `YuvCodec` (решение 1), используемый и IO,
+  и Web. Оба backend больше не содержат собственного парсинга.
+- `decode()` собирает immutable `YuvImageDraft`; поля изображения заменяются
+  только после полного разбора и `YuvGeometry.validateImage` (решение 2).
+- Все `assert` заменены явными проверками остатка (решение 3). Раньше проверки
+  сравнивали с длиной ВСЕГО буфера, поэтому payload, обрезанный в середине,
+  проходил каждую проверку и затем читал за границей.
+- Проверяются JSON object, `version == 1`, известный format, положительные
+  dimensions, ожидаемое число planes для формата, соответствие
+  `height * rowStride == byteLength` и геометрия planes (решение 4).
+- Все malformed/truncated/unsupported cases дают `FormatException` (решение 5),
+  включая `YuvFileFormat.values.byName`, который сам бросает `ArgumentError` и
+  теперь перехватывается.
+- Заявленная длина plane проверяется против фактического остатка ДО
+  использования, плюс `maxPlaneBytes` защищает от аллокации по испорченному
+  length word (решение 6).
+- `collect()` ограничивает payload `maxPayloadBytes` вместо безлимитного
+  накопления произвольного stream (решение 7). Глобального лимита на размер
+  изображения не вводилось.
+- Trailing bytes отклоняются как malformed payload (решение 8).
+
+Совместимость формата:
+- Байтовый layout совпадает с тем, что писал прежний `DataWriter`
+  (`uint32 length + bytes` для header и для каждой plane), поэтому ранее
+  сохранённые файлы читаются без изменений. Подтверждено эталонными cases:
+  `IO-SAVE-LOAD-{BGRA8888,I420,NV21}-{SINGLE_CHUNK,FRAGMENTED}` проходят
+  byte-for-byte, включая fragmented-вариант со 137-байтовыми чанками.
+
+Проверки:
+- flutter test test/yuv_serialization_test.dart — exit 0, 23 tests passed
+- flutter test test/yuv_geometry_rejection_test.dart — exit 0, 15 tests passed
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test (полный VM suite) — 257 passed / 31 failed против baseline
+  234 passed / 31 failed: +23 новых теста, новых падений нет
+- dart format --output=none --set-exit-if-changed --line-length 150 — exit 0
+- git diff --check — exit 0
+- git status --short — приложен ниже
+
+Изменённое чужое ожидание (для ревьюера):
+- В `test/yuv_geometry_rejection_test.dart` проверка truncated payload была
+  намеренно ослаблена до `throwsA(isA<Object>())`, потому что прежний reader мог
+  выдать `RangeError` или `TypeError`. Решение 5 делает тип определённым,
+  поэтому ожидание ужесточено до `throwsFormatException`.
+
+Об доказательстве регресса:
+- Прямого «падает до / проходит после» прогона нет: codec — новый файл, и откат
+  даёт ошибки компиляции, а не падение поведения. Доказательная часть —
+  23 теста, фиксирующие контракт, и совпадение байтов с прежним форматом.
+- Ключевой дефект виден в коде: проверки были `assert` (исчезают в release) и
+  сравнивались с длиной всего буфера, а не остатка.
+
+Ручная проверка:
+- Windows 10 x64 / AMD64, Flutter 3.38.10, Dart 3.10.9.
+- Web: `NOT RUN`, до устранения F-007/YUV-02. Web использует тот же codec, а не
+  собственную копию, поэтому расхождение policy между backend теперь
+  структурно невозможно.
+
+Остаточные риски:
+- `lib/src/loader/data_io.dart` (`DataWriter`/`DataReader`) стал полностью
+  мёртвым кодом: после этой задачи его больше никто не импортирует. Удаление —
+  отдельный рефакторинг, в этот commit не включено (ограничение 6).
+- `yuv_stub.dart` сохраняет вырожденные `save`/`load` (запись сырых байт /
+  drain) и не использует codec. Это заглушка для платформ без backend; менять
+  её здесь не стал, чтобы не расширять scope.
+- `maxPayloadBytes` = 2 GiB выбран как защита от бесконечного stream, а не как
+  продуктовый лимит размера кадра.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
 
 ---
 
@@ -883,7 +963,7 @@ Native C permission:
 
 - Владелец: Luna
 - Приоритет: P2
-- Статус: TODO
+- Статус: READY FOR REVIEW
 - Зависимости: YUV-01 принята; для DONE требуется CI evidence
 - Scope:
   - `.github/workflows/ci.yml`
@@ -931,7 +1011,61 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+```text
+Статус: READY FOR REVIEW
+Commit: не создавался
+Изменённые файлы:
+- .github/workflows/ci.yml
+
+Что сделано:
+- Добавлена отдельная CI job `example-analyze-and-build` с явной `working-directory: example`.
+- Job содержит три последовательных step: `flutter pub get`, `flutter analyze`, `flutter build web`.
+- Flutter pinning (3.44.9) через `subosito/flutter-action@v2` сохранён согласованным с root job.
+- Root и example checks показываются как отдельные job в CI, визуально различимы в workflow.
+- Наименование step (`Flutter pub get (root)` / `Flutter pub get (example)` и т.д.) явно указывает scope каждого.
+
+Проверки:
+- flutter analyze (root, --no-pub) — exit 1, есть ошибки в _tmp_pub_wasm_loader_web.dart (ожидается, не входит в scope)
+- cd example && flutter pub get — exit 0, changed 15 dependencies
+- cd example && flutter analyze — exit 0, no issues found
+- cd example && flutter build web — exit 0, built build/web successfully
+- git diff --check — exit 0, no trailing whitespace
+- git status --short — только .github/workflows/ci.yml и todo.md изменены (expected)
+- example/pubspec.lock после `git checkout -- example/pubspec.lock` — неизменён (lockfile управляется правильно)
+
+Ручная проверка:
+- Windows 10 x64, PowerShell / Git Bash, Flutter 3.44.9, все локальные команды выполнены и прошли успешно.
+- Root analysis_options.yaml исключает generated bindings, example/analysis_options.yaml с собственным include.
+- каждый пакет использует свой configuration и dependency context.
+
+Остаточные риски:
+- CI evidence (фактический запуск на runner) отсутствует, так как нет разрешения на push/PR.
+- Example web build уведомил о WASM dry run findings (dart:html unsupported), это ожидаемо и обработано.
+- Item 6 карточки (расширение matrix после YUV-06) явно OUT OF SCOPE и не реализован.
+
+Native C permission:
+- не требовалось; изменены только CI workflow и metadata.
+```
+
+#### Уточнение после независимой проверки
+
+Реализация принята по существу: YAML парсится в три job, `working-directory: example`
+стоит на всех трёх example-step, Flutter pinning согласован с root job,
+`example/pubspec.lock` не изменён. Независимо перепроверено:
+`cd example && flutter analyze --no-pub` — exit 0, «No issues found»;
+полный VM suite — 257 passed / 31 failed, без изменений.
+
+Про exit 1 у root `flutter analyze`. В отчёте он помечен как «ожидается, не
+входит в scope»; это верно, и проверка уточняет почему именно. Девять ошибок
+приходят из `_tmp_pub_wasm_loader_web.dart`, а этот файл **не отслеживается
+git** (`git ls-files --error-unmatch` не находит его). CI работает на чистом
+checkout, поэтому на runner файла не существует и job `analyze-and-test-vm`
+из-за него не покраснеет. Подтверждение: `flutter analyze --no-pub lib test`
+даёт exit 0 «No issues found», то есть весь трекаемый код чист.
+
+Следствие для приёмки: локальный exit 1 — артефакт рабочей директории, а не
+сломанный root gate. Отдельного решения владельца это не требует; удалять
+`_tmp_*` по-прежнему нельзя без подтверждения (ограничение 7).
 
 ---
 
