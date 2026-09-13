@@ -16,7 +16,7 @@
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | REJECTED | дополнить Web contract matrix | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | REJECTED | добавить Web tight-layout case | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
-| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Сделать ключ image cache корректным без breaking change в patch-релизе |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | проверить настоящий Web backend revision | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
@@ -1511,7 +1511,7 @@ Dart/C и generated bindings менять не требуется.
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-01/YUV-02 приняты; Web retest выполнен (run 34787051514); зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
@@ -1965,6 +1965,28 @@ Chrome 152.0.7977.82, Flutter 3.44.9, Linux.
 не равенство provider: reuse неизменённого package image, miss после
 `mutateInPlace()`, safe always-miss для стороннего legacy image, мутирующего без
 `markDirty()`. F-006 переведён в `RESOLVED`.
+
+### Независимое ревью root 2026-09-14 после run #26
+
+Статус: `REJECTED`.
+
+Chrome run и conversion counters подтверждают логику `YuvImageProvider` для
+контролируемых fixtures; legacy safe always-miss также доказан. F-006 может
+оставаться `RESOLVED`.
+
+Но `_FakePackageImage` сама реализует package-private `YuvRevisionAware` и сама
+вызывает `markDirty()`. Тест останется зелёным, если настоящий Web
+`YuvImageImpl` перестанет реализовывать seam или один из его штатных mutators
+забудет bump revision. Поэтому утверждение «поведение одинаково на IO и в
+реальном Chrome» и DoD о revision всех штатных операций не доказаны Web
+backend'ом.
+
+Для повторного review добавить cases с настоящими `YuvImage.bgra/i420/nv21` в
+Chrome: сравнить provider/revision до и после `fromRgba8888`, effect, geometry
+operation, format conversion, `swapNv`, успешного/failed `load`, no-op и прямой
+plane write + `markDirty`. Полную 34-точечную матрицу можно сделать data-driven;
+минимальный smoke только с fake не засчитывается. Production cache logic менять
+не требуется без нового падения.
 
 ---
 
