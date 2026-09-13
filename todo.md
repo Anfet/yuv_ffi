@@ -18,7 +18,7 @@
 | [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | READY FOR REVIEW | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
-| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | source compatibility; Web retest: YUV-02 | Сделать ключ image cache корректным без breaking change в patch-релизе |
+| [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | REJECTED | legacy behavioral compatibility; Web retest: YUV-02 | Сделать ключ image cache корректным без breaking change в patch-релизе |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
@@ -1235,7 +1235,7 @@ checkout, поэтому на runner файла не существует и job
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: implementation разблокирована принятием YUV-01; финальный реальный Chrome retest зависит от YUV-02; зависимости от YUV-19 нет
 - Scope:
   - `lib/src/widgets/yuv_image_widget.dart`
@@ -1484,6 +1484,36 @@ Commit: fix: moved frame revision off the public interface
 Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
+
+### Повторное независимое ревью 2026-09-13
+
+Статус: `REJECTED`.
+
+1. Compile-time совместимость внешнего `implements YuvImage` восстановлена, но
+   behavioral compatibility нарушена. До YUV-20 `YuvImageProvider` не имел
+   собственного `==`/`hashCode`: каждый rebuild создавал identity-уникальный
+   provider key, поэтому неизвестная внешняя реализация безопасно получала
+   cache miss.
+2. После `a6851d7` foreign image получает revision `0` из `Expando`, а ключи
+   сравниваются по identity image и revision. Legacy-реализация может менять
+   bytes внутри существующих `negate()`/`crop()`/других mutators, но не знает о
+   новом extension-методе `markDirty()`. Новый provider остаётся равен старому
+   и способен вернуть устаревший кадр.
+3. Source-compatibility fixture скрывает этот сценарий: mutators в нём бросают
+   `UnimplementedError`, а invalidation тестируется только явным новым
+   `markDirty()`.
+4. Для patch-релиза revision-based equality следует применять только к
+   package backend, реализующим `YuvRevisionAware`. Для неизвестного внешнего
+   `YuvImage` нужно сохранить прежний identity provider key / safe always-miss.
+   Необязательный публичный revision contract для opt-in внешних реализаций
+   допустим отдельным additive API.
+5. Добавить legacy fixture с реально мутирующим стандартным методом без
+   `markDirty()` и доказать, что после mutation старый кадр не переиспользуется.
+   После YUV-02 нужен Web-compatible cache test без `dart:io`.
+
+Независимо подтверждено на Flutter 3.44.9: focused VM suite 29/29 и analyzer
+проходят. Реальные Chrome-прогоны остались на `+0 / loading` и были остановлены;
+Web evidence отсутствует. Native C/generated bindings не менялись.
 
 ---
 

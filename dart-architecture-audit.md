@@ -27,10 +27,10 @@ YUV-17, YUV-20 и YUV-21.
 | A-07: `getBytes()` backing buffer | YUV-14 | READY FOR REVIEW | Реализовано commit `3bd12bf`; нужен обязательный Web retest |
 | A-08: bindings cache | YUV-19 | DONE / archived | Принято и перемещено в `completed-tasks.md` |
 | A-08: serialization | YUV-07 | REJECTED | Streaming реализован, но format-specific geometry проверяется после чтения plane |
-| A-08: image cache | YUV-20 | REJECTED | Поведение исправлено, но patch-релиз получил breaking interface change |
+| A-08: image cache | YUV-20 | REJECTED | Interface break исправлен, но foreign implementations получили stale-cache regression |
 | A-08: initialization | YUV-21 | READY FOR REVIEW | Реализовано commit `ad92431`; требуется Web runtime evidence |
 | A-09: локальный `_tmp_*` | — | CLOSED / local | Файл отсутствует; удаление локальных tmp не является package task |
-| A-10: breaking revision API | YUV-20 | REJECTED | Нужен source-compatible revision seam либо релиз `0.3.0` |
+| A-10: revision compatibility | YUV-20 | REJECTED | Compile compatibility восстановлена; для legacy mutators нужно сохранить safe cache miss |
 | A-11: поздняя geometry validation | YUV-07 | REJECTED | Самосогласованная, но неверная metadata должна отклоняться до чтения plane body |
 
 Дополнительная синхронизация build/tooling backlog:
@@ -219,8 +219,9 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
 - YUV-19 bindings cache — DONE, данные в `completed-tasks.md`.
 - YUV-07 shared serialization — основа реализована в `c52e13c`, streaming в
   `ded01b0`, но задача повторно возвращена в REJECTED по A-11.
-- YUV-20 provider cache — functional seam реализован в `e3c235d`, но задача
-  возвращена в REJECTED по A-10.
+- YUV-20 provider cache — functional seam реализован в `e3c235d`, interface
+  compatibility исправлена в `a6851d7`, но задача повторно возвращена в
+  REJECTED по A-10.
 - YUV-21 initialization contract — READY FOR REVIEW, Web evidence зависит от
   YUV-02.
 - YUV-06 loader paths/macOS packaging — BLOCKED до разрешения на C-forwarders;
@@ -240,22 +241,27 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
 
 ---
 
-## A-10 — YUV-20 ломает внешние `implements YuvImage`
+## A-10 — YUV-20 меняет cache behavior внешних `implements YuvImage`
 
 - Статус: OPEN / implementation REJECTED
 - Приоритет: P1
 - Задача: расширена YUV-20
 
-Commit `e3c235d` добавил `revision` и `markDirty()` как обязательные members
-публичного `abstract interface class YuvImage`. Любая внешняя реализация,
-компилировавшаяся с `0.2.4`, требует исходных изменений после patch update.
-Это source-breaking change, что прямо признано в результате исполнителя.
+Commit `a6851d7` исправил исходный interface break: revision вынесен в
+неэкспортируемый `YuvRevisionAware`, а прежний внешний `implements YuvImage`
+снова компилируется. Эта часть находки закрыта.
 
-Для `0.2.5` revision storage должен быть вынесен из обязательной interface
-surface: например, в package-private identity tracker с source-compatible
-extension/top-level invalidation API. Альтернатива — отдельное решение о версии
-`0.3.0`. YUV-20 дополнена compile-time fixture для прежнего внешнего
-`implements YuvImage` и обязательным прогоном Flutter 3.44.9.
+Остался behavioral regression. До YUV-20 provider key использовал identity
+самого provider, поэтому каждый rebuild неизвестного внешнего image давал
+безопасный cache miss. Теперь foreign image получает revision из `Expando`, но
+его legacy mutators не знают о новом `markDirty()`. После in-place mutation
+identity и revision остаются прежними, и новый provider способен вернуть stale
+frame.
+
+Для `0.2.5` revision-based cache key должен использоваться только для package
+backend либо для явно opt-in внешнего revision contract. Неизвестная legacy
+реализация должна сохранить прежний safe always-miss. Compile fixture нужно
+расширить реально мутирующим стандартным методом без `markDirty()`.
 
 ---
 
