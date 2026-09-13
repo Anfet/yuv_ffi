@@ -7,24 +7,27 @@
 FFI_PLUGIN_EXPORT void yuv420_i420_to_nv21(const YUVDef *src, const YUVDef *dst) {
     const int W = src->width;
     const int H = src->height;
-    const int cw = W >> 1;   // chroma width
-    const int ch = H >> 1;   // chroma height
+    // Нечётные размеры: chroma округляется вверх, как и при аллокации в Dart.
+    const int cw = (W + 1) >> 1;   // chroma width
+    const int ch = (H + 1) >> 1;   // chroma height
 
+    // 1) Luma: копируем построчно с раздельными stride источника и назначения.
+    // Один memcpy на весь буфер источника переписал бы heap, если у
+    // назначения stride меньше.
+    const int yCopyBytes = (src->yRowStride < dst->yRowStride ? src->yRowStride : dst->yRowStride);
+    for (int y = 0; y < H; ++y) {
+        const uint8_t *srow = src->y + (size_t)y * src->yRowStride;
+        uint8_t *drow = dst->y + (size_t)y * dst->yRowStride;
+        memcpy(drow, srow, yCopyBytes);
+    }
 
-    memcpy(dst->y, src->y, src->height * src->yRowStride);
-//    for (int y = 0; y < H; ++y) {
-//        const uint8_t *srow = src->y + y * src->yRowStride;
-//        uint8_t *drow = dst->y + y * dst->yRowStride;
-//
-//        memcpy(drow, srow, dst->yRowStride);
-//    }
     // 2) Chroma: I420 планарные U/V -> NV21 интерлив (V,U) в строке шириной W.
     // Каждая строка dst VU должна иметь длину W байт: (V,U) пары на каждый i.
     for (int j = 0; j < ch; ++j) {
-        const uint8_t *urow = src->u + j * src->uvRowStride;
-        const uint8_t *vrow = src->v + j * src->uvRowStride;
+        const uint8_t *urow = src->u + (size_t)j * src->uvRowStride;
+        const uint8_t *vrow = src->v + (size_t)j * src->uvRowStride;
 
-        uint8_t *drow = dst->u + j * dst->uvRowStride;
+        uint8_t *drow = dst->u + (size_t)j * dst->uvRowStride;
 
         // общий случай с произвольным pixelStride у U/V
         for (int i = 0; i < cw; ++i) {

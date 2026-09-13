@@ -12,7 +12,7 @@
 | [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
 | [ ] | YUV-04 | Opus | P0 | READY FOR REVIEW | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
-| [ ] | YUV-05 | Opus | P0 | BLOCKED | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
+| [ ] | YUV-05 | Opus | P0 | READY FOR REVIEW | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-01, YUV-04, YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
@@ -505,8 +505,8 @@ Native C permission:
 
 - Владелец: Opus
 - Приоритет: P0 / memory-safety blocker
-- Статус: BLOCKED
-- Зависимости: YUV-04 и отдельное явное разрешение владельца на изменение native C
+- Статус: READY FOR REVIEW
+- Зависимости: YUV-04 (принята) и разрешение владельца на изменение native C (получено)
 - Scope:
   - `src/yuv/yuv420/yuv420_from_rgba.c`
   - `src/yuv/nv21/nv21_from_rgba8888.c`
@@ -566,7 +566,95 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+```text
+Статус: READY FOR REVIEW
+Commit: YUV-05 task commit
+Изменённые файлы:
+- src/yuv/yuv420/yuv420_from_rgba.c
+- src/yuv/nv21/nv21_from_rgba8888.c
+- src/yuv/yuv420/yuv420_to_nv21.c
+- src/yuv/nv21/nv21_to_420.c
+- src/yuv/nv21/nv21_to_nv12.c
+- test/native_stride_safety_test.dart (новый)
+
+Что сделано:
+- Tight RGBA indexing. `yuv420_from_rgba8888` и `nv21_from_rgba8888` вычисляли
+  адрес строки RGBA через `yRowStride` назначения. При padded Y это чтение за
+  границей входного буфера, который по публичному контракту плотно упакован.
+  Введён `rgbaRowStride = width * 4`, независимый от stride назначения. В
+  `yuv420_from_rgba.c` две ветки расходились между собой (строка 17 против
+  строки 37), теперь обе используют tight stride.
+- Построчное копирование Y. `yuv420_i420_to_nv21` и `nv21_to_i420` делали
+  `memcpy(dst->y, src->y, src->height * src->yRowStride)` в назначение с
+  собственным, возможно меньшим stride, что переписывало heap. Заменено на
+  копирование по строкам с раздельными source/destination strides и длиной
+  `min(srcRowStride, dstRowStride)`.
+- Destination strides для chroma. `nv21_to_i420` адресовал целевые U/V через
+  `src->uvRowStride`; теперь используется `dst->uvRowStride`.
+- Ceil-размеры chroma. `yuv420_i420_to_nv21`, `nv21_to_i420` и `nvXX_to_nvYY`
+  использовали `width >> 1` / `height >> 1`, из-за чего крайние строка и
+  колонка нечётного кадра оставались неинициализированными. Везде перешли на
+  `(x + 1) >> 1`, что совпадает с ceil-аллокацией в Dart.
+- Edge-блоки chroma. `yuv420_from_rgba8888` и `nv21_from_rgba8888` делили сумму
+  блока 2x2 на четыре даже когда реальных пикселей было меньше, что затемняло
+  край нечётного кадра. Теперь делитель равен фактическому числу сэмплов.
+- `nvXX_to_nvYY` получил защиту от короткого stride (обрабатывается столько
+  пар, сколько реально помещается в строку) и ceil-размеры.
+
+Решение по ABI:
+- Сигнатура `nvXX_to_nvYY(srcVU, dstUV, width, height, stride)` намеренно
+  сохранена. Карточка разрешает либо раздельные strides, либо безопасную
+  гарантию со стороны wrapper. Функция входит в `EXPORTED_FUNCTIONS` в
+  `tool/wasm/build_wasm.sh`, поэтому смена сигнатуры потребовала бы синхронной
+  пересборки WASM, а emscripten на этой машине отсутствует. Разошедшиеся
+  native и Web ABI были бы хуже, чем текущий контракт. Dart-обёртки уже
+  выделяют назначение со stride источника, требование задокументировано в
+  комментарии к функции. ABI не менялся, поэтому headers и generated bindings
+  не трогались и ffigen не запускался.
+
+Проверки:
+- clang -shared -O2 -DDART_SHARED_LIB -Isrc -Isrc/yuv -o yuv_ffi.dll $(find src -name "*.c") — exit 0
+- flutter test test/native_stride_safety_test.dart --reporter expanded — exit 0, 7 тестов
+- flutter test — exit 0, 71 тест (64 после YUV-04)
+- flutter analyze lib test — exit 0, "No issues found!"
+- dart format --output=none --set-exit-if-changed test/native_stride_safety_test.dart — exit 0
+- git diff --check — exit 0
+- git status --short — приложен ниже
+
+Ручная проверка:
+- ОС Windows 10 19045, архитектура x64, компилятор clang 16.0.4
+  (x86_64-pc-windows-msvc, /c/Program Files/LLVM/bin/clang).
+- Источник библиотеки: локально пересобранный `yuv_ffi.dll` в корне репозитория.
+  Файл в `.gitignore:31` и не отслеживается git, поэтому в commit не входит; на
+  CI и в чистом checkout библиотека собирается из `src/` через CMake.
+- Чтобы отделить эффект правок от ошибки команды сборки, сначала собран
+  baseline из немодифицированных исходников: полный suite прошёл (64 теста,
+  exit 0). Затем собран fixed DLL. MD5 подтверждают, что тесты исполнялись
+  именно на исправленной сборке: baseline 5201d90183d3c17dda28f7d3aaed7e11,
+  fixed и текущий рабочий файл 6c809a98a2269c6d9cb1c588d5d3db99.
+- Оригинальный DLL сохранён в %TEMP%/yuv_ffi.dll.backup и не удалялся.
+
+Остаточные риски:
+- ASan/UBSan прогон не выполнялся: MSVC-таргет clang в этом окружении не
+  предоставляет готовый sanitizer runtime. Вместо него OOB-регрессии закрыты
+  функциональными тестами с padded strides и canary-областями. Полноценный
+  sanitizer-прогон остаётся за CI на Linux-toolchain и не может считаться
+  выполненным этой задачей.
+- `assets/wasm/yuv_ffi.js` и `.wasm` НЕ пересобраны: `emcc` на машине
+  отсутствует. Артефакты остаются от предыдущего C commit и потому не
+  соответствуют текущим исходникам. Пункт DoD про пересборку WASM и про
+  numeric tolerance между native и WASM не выполнен и должен быть закрыт
+  отдельно на машине с emscripten.
+- Web-параллель правок не проверялась в Chrome: runner остаётся заблокирован
+  F-007.
+- Размеры 1x1, 3x5, 127x255 проверены на native. На Web не проверялись по
+  причинам выше.
+
+Native C permission:
+- Разрешение владельца получено в этой сессии: «разрешаю, требуется добавить
+  тест кейс(ы) для проверки». Тесты добавлены в
+  `test/native_stride_safety_test.dart` (7 кейсов).
+```
 
 ---
 

@@ -8,8 +8,9 @@
  *  - Формулы совпадают с yuv420_from_rgba8888 (BT.601, видео диапазон)
  *
  * ВНИМАНИЕ к stride:
- *  - Здесь, как и в твоей исходной функции, stride для RGBA берётся как (yRowStride * 4).
- *    Если у RGBA есть свой отличный stride, лучше протащить отдельный параметр.
+ *  - RGBA-вход по публичному контракту плотно упакован (width * height * 4),
+ *    поэтому его row stride равен width * 4 и не зависит от yRowStride
+ *    назначения, который может быть padded.
  */
 FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst) {
     uint8_t *yPlane = dst->y;
@@ -24,12 +25,14 @@ FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst
     // (необязательно) защитимся от странного описателя:
     if (uvPixelStride != 2) return;
 
+    // Плотно упакованный RGBA-вход: строка равна width * 4.
+    const int rgbaRowStride = width * 4;
+
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             // Индекс в Y-плоскости
             const int yIndex = yuv_index(x, y, yRowStride, yPixelStride);
-            // ВАЖНО: как и в твоём примере, используем yRowStride как "ширину" для RGBA
-            const int rgbaIndex = (y * yRowStride + x) * 4;
+            const int rgbaIndex = y * rgbaRowStride + x * 4;
 
             const int r = rgba[rgbaIndex + 0];
             const int g = rgba[rgbaIndex + 1];
@@ -46,12 +49,16 @@ FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst
                 const int x0 = x;
                 const int y0 = y;
 
-                // Собираем 2x2 блок; делаем так же, как в исходнике: с границами и делением на 4
+                // Собираем 2x2 блок с учётом границ и делим на фактическое
+                // количество пикселей, чтобы крайний блок нечётного размера
+                // не усреднялся по четырём несуществующим сэмплам.
+                int samples = 0;
+
                 for (int dy = 0; dy < 2; ++dy) {
                     const int yy = y0 + dy;
                     if (yy >= height) continue;
 
-                    const uint8_t *row = rgba + yy * yRowStride * 4;
+                    const uint8_t *row = rgba + yy * rgbaRowStride;
 
                     for (int dx = 0; dx < 2; ++dx) {
                         const int xx = x0 + dx;
@@ -65,13 +72,14 @@ FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst
                         // U и V из RGBA
                         sumU += ((-38 * rr - 74 * gg + 112 * bb + 128) >> 8) + 128;
                         sumV += ((112 * rr - 94 * gg - 18 * bb + 128) >> 8) + 128;
+                        ++samples;
                     }
                 }
 
                 // Индекс хромы для NV21 (VU-пара на каждый блок)
                 const int uvIndex = yuv_index(x / 2, y / 2, uvRowStride, uvPixelStride);
-                uv[uvIndex + 0] = (uint8_t)CLAMP(sumV / 4); // V
-                uv[uvIndex + 1] = (uint8_t)CLAMP(sumU / 4); // U
+                uv[uvIndex + 0] = (uint8_t)CLAMP(sumV / samples); // V
+                uv[uvIndex + 1] = (uint8_t)CLAMP(sumU / samples); // U
             }
         }
     }

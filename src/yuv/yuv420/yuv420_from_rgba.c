@@ -11,10 +11,15 @@ FFI_PLUGIN_EXPORT void yuv420_from_rgba8888(const uint8_t *rgba, const YUVDef *s
     const int uvRowStride = src->uvRowStride;
     const int uvPixelStride = src->uvPixelStride;
 
+    // The public contract requires a tightly packed RGBA input of
+    // width * height * 4 bytes, so its row stride is width * 4 and must not be
+    // derived from the destination Y stride, which may be padded.
+    const int rgbaRowStride = width * 4;
+
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int yIndex = yuv_index(x, y, yRowStride, yPixelStride);
-            int rgbaIndex = (y * yRowStride + x) * 4;
+            int rgbaIndex = y * rgbaRowStride + x * 4;
 
             int r = rgba[rgbaIndex + 0];
             int g = rgba[rgbaIndex + 1];
@@ -30,11 +35,16 @@ FFI_PLUGIN_EXPORT void yuv420_from_rgba8888(const uint8_t *rgba, const YUVDef *s
                 const int x0 = x;
                 const int y0 = y;
 
+                // Count the pixels that actually exist, so an edge block of an
+                // odd-sized image is averaged over its real sample count
+                // instead of always dividing by four.
+                int samples = 0;
+
                 for (int dy = 0; dy < 2; ++dy) {
                     const int yy = y0 + dy;
                     if (yy >= height) continue;
 
-                    const uint8_t *row = rgba + yy * width * 4;
+                    const uint8_t *row = rgba + yy * rgbaRowStride;
 
                     for (int dx = 0; dx < 2; ++dx) {
                         const int xx = x0 + dx;
@@ -47,12 +57,13 @@ FFI_PLUGIN_EXPORT void yuv420_from_rgba8888(const uint8_t *rgba, const YUVDef *s
 
                         sumU += ((-38 * r - 74 * g + 112 * b + 128) >> 8) + 128;
                         sumV += ((112 * r - 94 * g - 18 * b + 128) >> 8) + 128;
+                        ++samples;
                     }
                 }
 
                 const int uvIndex = yuv_index(x / 2, y / 2, uvRowStride, uvPixelStride);
-                uPlane[uvIndex] = CLAMP(sumU / 4);
-                vPlane[uvIndex] = CLAMP(sumV / 4);
+                uPlane[uvIndex] = CLAMP(sumU / samples);
+                vPlane[uvIndex] = CLAMP(sumV / samples);
             }
         }
     }
