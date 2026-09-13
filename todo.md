@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-02 | Luna | Claude Sonnet 5 | P0 | READY FOR REVIEW | CI evidence | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | READY FOR REVIEW | Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | cross-plane geometry; Web retest: YUV-02 | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15; Web retest: YUV-02 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-02, YUV-06…YUV-08, YUV-13, YUV-14, YUV-17, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
@@ -336,7 +336,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-04 принята; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/loader/data_io.dart`
@@ -675,6 +675,51 @@ backend, отдельной копии парсинга на Web нет.
 Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
+
+### Самостоятельное ревью исполнителя 2026-09-13 (после `4ec2199`)
+
+Статус понижен обратно в `REJECTED`: в уже закоммиченной правке нашёлся
+невыполненный пункт того же DoD.
+
+1. Cross-plane правило I420 по-прежнему проверялось только в
+   `YuvGeometry.validateImage()`, то есть после чтения тел обеих chroma-плоскостей.
+   `expectedPlaneMetadata()` смотрит на одну плоскость за раз и увидеть
+   несовпадение U и V не может по построению.
+2. Воспроизведено: 8x8 I420, luma и U отданы целиком, V заявляет `rowStride 8`
+   против `rowStride 4` у U. Каждая плоскость по отдельности легальна, поэтому
+   ни одна per-plane проверка не срабатывает. Поток тело V не отдаёт и не
+   закрывается — декодер зависал до таймаута вместо отказа по metadata.
+3. Это ровно тот же класс дефекта, за который карточку отклонил ревьюер:
+   «geometry проверяется после allocation». Первая правка закрыла его только для
+   per-plane случая, а cross-plane я тогда не рассмотрел.
+
+Исправление:
+- В цикле декодера запоминается пара strides первой chroma-плоскости, вторая
+  обязана её повторить; несовпадение отклоняется до `readBytes()`.
+- Добавлен тест «mismatched I420 chroma strides are rejected without requesting
+  the second body» на незакрытом потоке.
+- Откат только `yuv_codec.dart` при сохранённом тесте: падение с
+  `TimeoutException after 0:00:05`. С правкой — 34/34.
+
+Проверено и признано корректным (правка не требуется):
+- Ветка `expected == null` недостижима: `planeCount` уже сверен с
+  `planeCountFor(format)` до цикла, а `pixelStride <= 0` отклоняется строкой
+  выше. Оставлена как дешёвая защита, но покрытием не считается — заявлять её
+  как проверенную нельзя.
+- Явная проверка `pixelStride == 2` для NV chroma НЕ избыточна: `minRowStride`
+  ограничивает только `rowStride`, поэтому `pixelStride = 1` с широким
+  `rowStride` прошёл бы мимо неё.
+- `YuvGeometry.validateImage()` намеренно оставлен в конце как defence in depth.
+
+Проверки (Flutter 3.44.9 / Dart 3.12.2):
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test --no-pub test/yuv_serialization_test.dart — exit 0, 34 passed
+- flutter test --no-pub (полный VM suite) — 286 passed / 31 failed против
+  baseline HEAD 281 / 31; множество падающих совпадает, новых падений нет
+- dart format --set-exit-if-changed --line-length 150 — exit 0
+- git diff --check — exit 0
+
+Web evidence по-прежнему отсутствует (YUV-02).
 
 ---
 
@@ -1636,6 +1681,34 @@ runner заблокирован F-007/YUV-02. Отмечено как обяза
 Native C permission:
 - не требовалось; `src/**` и generated bindings не изменялись.
 ```
+
+### Самостоятельное ревью исполнителя 2026-09-13 (после `8b9d600`)
+
+Статус не меняется: дефектов не найдено, повышать его я не вправе.
+
+Проверена гипотеза о retention (была основным подозрением):
+- Для неотслеживаемого изображения `==` всегда false, поэтому каждый rebuild
+  создаёт новый ключ. Замер: 5 rebuild'ов дают `conversions=5`,
+  `liveImageCount=5` — пять удерживаемых декодированных `ui.Image`.
+- Проверено, действительно ли это привнесено мной. Прогон того же замера на
+  провайдере из `e3c235d~1` (то есть до того, как YUV-20 вообще трогал этот
+  файл, чистый 0.2.4 без `==`/`hashCode`): `liveImageCount=5`, идентично.
+- Вывод: поведение пре-существующее, утверждение «exactly the 0.2.4 behaviour»
+  в commit message корректно. Правка не требуется. Для отслеживаемого
+  изображения — `liveImageCount=1`, кэш работает как задумано.
+
+Проверен контракт `==`/`hashCode` для ветки с `null`-снимком:
+- рефлексивность держится на `identical(this, other)` до проверки на `null`;
+- симметричность: обе стороны дают false;
+- `hashCode` уникален на провайдер и согласован с «никогда не равны»;
+- живой revision в `hashCode` не читается ни в одной из веток, поэтому ключ,
+  уже лежащий в `ImageCache`, свой hashCode не меняет.
+
+Отмечено без правки: `revision`/`markDirty()` для чужой реализации остались
+рабочими (счётчик в `Expando` инкрементируется), но на ключ кэша больше не
+влияют. Это осознанный размен, зафиксированный в доксроке расширения; вводить
+opt-in контракт для внешних реализаций — отдельный additive API, вне scope
+patch-релиза.
 
 ---
 

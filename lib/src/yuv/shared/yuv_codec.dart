@@ -205,6 +205,11 @@ abstract final class YuvCodec {
     }
 
     final planes = <YuvPlane>[];
+    // I420 addresses both chroma planes through one shared stride pair, so the
+    // second must repeat the first. Remembering it here keeps that cross-plane
+    // rule checkable from metadata, before the second body is buffered.
+    int? chromaRowStride;
+    int? chromaPixelStride;
     for (int i = 0; i < planeCount; i++) {
       final planeHeight = await reader.readUint32('plane $i height');
       final rowStride = await reader.readUint32('plane $i rowStride');
@@ -260,6 +265,20 @@ abstract final class YuvCodec {
           'Malformed yuv_ffi payload: interleaved NV chroma requires a pixel stride of '
           'exactly ${YuvGeometry.nvChromaPixelStride}, plane $i declares $pixelStride',
         );
+      }
+      if (format == YuvFileFormat.i420 && i > 0) {
+        // Native code walks both I420 chroma planes with one shared stride pair,
+        // so a mismatch would make one of them be read with the other's
+        // geometry. The first chroma plane fixes the pair the second must repeat.
+        if (chromaRowStride == null) {
+          chromaRowStride = rowStride;
+          chromaPixelStride = pixelStride;
+        } else if (rowStride != chromaRowStride || pixelStride != chromaPixelStride) {
+          throw FormatException(
+            'Malformed yuv_ffi payload: I420 U and V planes must share the same rowStride and pixelStride, '
+            'plane $i declares $rowStride/$pixelStride against $chromaRowStride/$chromaPixelStride',
+          );
+        }
       }
 
       final planeBytes = await reader.readBytes(byteLength, 'plane $i data');

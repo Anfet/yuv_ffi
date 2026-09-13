@@ -350,6 +350,46 @@ void main() {
       );
     });
 
+    test('mismatched I420 chroma strides are rejected without requesting the second body', () async {
+      // Each plane is individually legal for an 8x8 I420 image, so no per-plane
+      // check catches this: U declares a rowStride of 4 and V declares 8. Only
+      // the cross-plane rule rejects it, and it has to do so from V's metadata —
+      // the V body is never supplied and the stream never closes.
+      final header = utf8.encode(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': 8, 'height': 8}));
+      final builder = BytesBuilder();
+      final head = Uint8List(4 + header.length + 1);
+      ByteData.view(head.buffer).setUint32(0, header.length, Endian.little);
+      head.setRange(4, 4 + header.length, header);
+      head[4 + header.length] = 3;
+      builder.add(head);
+
+      Uint8List planeMetadata(int height, int rowStride, int pixelStride) {
+        final out = Uint8List(16);
+        final planeView = ByteData.view(out.buffer);
+        planeView.setUint32(0, height, Endian.little);
+        planeView.setUint32(4, rowStride, Endian.little);
+        planeView.setUint32(8, pixelStride, Endian.little);
+        planeView.setUint32(12, height * rowStride, Endian.little);
+        return out;
+      }
+
+      builder
+        ..add(planeMetadata(8, 8, 1))
+        ..add(Uint8List(64)) // luma, in full
+        ..add(planeMetadata(4, 4, 1))
+        ..add(Uint8List(16)) // U, in full
+        ..add(planeMetadata(4, 8, 1)); // V: legal alone, but does not match U
+
+      final controller = StreamController<List<int>>();
+      addTearDown(controller.close);
+      controller.add(builder.takeBytes());
+
+      await expectLater(
+        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
+        throwsFormatException,
+      );
+    });
+
     test('a chroma plane impossible for the header is rejected without requesting the body', () async {
       // Same shape for a multi-plane format: the luma plane is correct, and the
       // U plane's own arithmetic is consistent, but its row count does not match
