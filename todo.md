@@ -9,7 +9,7 @@
 | Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | REJECTED | исправить строгую проверку trailing bytes | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
+| [ ] | YUV-07 | Opus | Claude Opus 5 | P2 | READY FOR REVIEW | требуется Web retest | Сделать сериализацию потоковой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06…YUV-08, YUV-13, YUV-14, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
@@ -224,7 +224,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P2
-- Статус: REJECTED
+- Статус: READY FOR REVIEW
 - Зависимости: YUV-04 и YUV-02 приняты; требуется focused integration Web retest
 - Scope:
   - `lib/src/loader/data_io.dart`
@@ -735,6 +735,74 @@ trailing bytes, пришедшие позже этого окна, приним�
 110/110 проходит. Это подтверждает отсутствие побочных VM-регрессий, но не
 устраняет описанное нарушение формата. Web retest остаётся зависимым от YUV-02.
 
+### Результат после ревью root 2026-09-14
+
+```text
+Статус: READY FOR REVIEW
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_codec.dart
+- test/yuv_serialization_test.dart
+
+Замечание принято целиком, все пять пунктов выполнены.
+
+Сначала по существу спора. `trailerGrace` я защищал дважды, и оба раза
+неправильно. Окно в 50 ms — эвристика на месте гарантии: она делала приём или
+отклонение одного и того же payload зависимым от того, как поток нарезан на
+чанки и когда отработал планировщик. Публичный контракт обещает отклонять
+trailing garbage всегда, а не обычно. Тот же вывод независимо зафиксирован в
+`dart-architecture-audit.md` (A-11).
+
+По пунктам 1 и 2 (убрать grace, ждать EOF):
+- `trailerGrace` и `trailerArrives()` удалены. Введён `atEnd()`, который
+  дочитывает поток до настоящего конца и сообщает о любом лишнем байте.
+- EOF — единственная граница кадра, которая есть у version-1 payload: внешней
+  длины формат не несёт, поэтому доказать «после последней плоскости ничего
+  нет» может только конец потока.
+
+По пункту 3 (ранний отказ по metadata не должен зависеть от EOF):
+- Не затронут. Вся ранняя валидация — per-plane geometry, cross-plane I420
+  strides, `maxPlaneBytes`, `maxHeaderBytes` — работает до `readBytes()` и до
+  `atEnd()`. Подтверждено тестами на незакрытых потоках, которые по-прежнему
+  отклоняются немедленно: «geometry impossible for the header…», «mismatched
+  I420 chroma strides…», «a never-ending stream is rejected as soon as metadata
+  is impossible».
+
+По пункту 4 (убрать тест на успешное завершение из незакрытого потока):
+- Тест «a complete payload decodes without waiting for the stream to close»
+  удалён. Он кодировал ровно то требование, которое ревью отменяет. Это мой
+  тест, и удаление — честное следствие: поддержка долгоживущего потока требует
+  framed/versioned API, а не таймаута, изображающего его.
+
+По пункту 5 (regression с задержанным trailer):
+- Добавлен «a trailer delivered long after the payload is still rejected»:
+  payload, затем пауза 250 ms — вчетверо больше прежнего окна — затем 3 лишних
+  байта и close.
+- Доказательство регресса: `git stash push` только `yuv_codec.dart` при
+  сохранённом тесте даёт `+0 -1` — старый codec молча принимает такой payload.
+  С правкой — проходит.
+
+Проверки (Flutter 3.44.9 / Dart 3.12.2):
+- flutter test --no-pub test/yuv_serialization_test.dart — exit 0, 37 passed
+  (было 37: один тест удалён по пункту 4, один добавлен по пункту 5)
+- flutter test --no-pub (полный VM suite) — 289 passed / 31 failed, ровно
+  baseline HEAD; множество падающих совпадает, новых падений нет
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- dart format --set-exit-if-changed --line-length 150 — exit 0
+- git diff --check — exit 0
+
+Осознанная цена правки:
+- Поток, который не закрывается, теперь не завершает декодирование. Это не
+  побочный эффект, а прямое следствие того, что у version-1 payload нет иной
+  границы. Для файлов, in-memory потоков и любого источника, который закрывает
+  поток после кадра, поведение не меняется.
+
+Web evidence: отсутствует. Codec общий для IO и Web, отдельной копии парсинга
+на Web нет, но фактического прогона с `kIsWeb == true` для этой карточки нет.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
+
 ---
 
 ## YUV-08 — вернуть tight BGRA contract на Web
@@ -1127,6 +1195,26 @@ Production fix и VM regressions приняты: на Flutter 3.44.9 общий 
 
 Production Dart, native C и generated bindings в доработке не требуются.
 
+### Перенос focused case 2026-09-14
+
+Статус остаётся `REJECTED`: тест написан, но не исполнен.
+
+Добавлен `example/integration_test/getbytes_contract_test.dart` — пункты 1 и 2
+замечания. Покрывает `1x1`, `3x3`, `127x255` для bgra/i420/nv21 плюс padded
+BGRA-плоскость (`rowStride 16`) и диагностический case F-003 (i420 `3x3` = ровно
+25 байт). Expected строится локальной прямой конкатенацией `plane.bytes`, а не
+вызовом `getBytes()` другого backend, поэтому общий дефект не спрячется с обеих
+сторон сравнения. `kIsWeb == true` проверяется внутри тела каждого теста;
+skip-ветки нет.
+
+CI-джоб `wasm-web-integration` расширен: вместо одного bootstrap-таргета он
+теперь гонит все пять suites и падает, если падает любой (пункт 3).
+
+Не выполнено: фактический Chrome-прогон. Локально chromedriver отсутствует,
+поэтому URL приложить нельзя. До зелёного required job карточка не может стать
+`READY FOR REVIEW`, а F-003 остаётся `READY FOR RETEST` — переводить его в
+`RESOLVED` сейчас было бы утверждением без доказательства.
+
 ---
 
 ## YUV-15 — поддержать валидный padded BGRA plane одинаково на IO/Web
@@ -1311,6 +1399,24 @@ Flutter 3.44.9 проходит 114/114. Для повторного review тр
 
 Tight output `toBgra8888()` остаётся scope YUV-08; production fix YUV-15,
 native C и generated bindings менять не требуется.
+
+### Перенос focused case 2026-09-14
+
+Статус остаётся `REJECTED`: тест написан, но не исполнен.
+
+Добавлен `example/integration_test/padded_bgra_constructor_test.dart` — пункты 1
+и 2 замечания. Четыре case: согласие специализированного и generic
+конструкторов на padded plane (`rowStride 16`, `pixelStride 4`, 32 байта);
+невалидный layout даёт `ArgumentError`, а не `RangeError`, для обоих
+конструкторов; deep copy проверяется в обе стороны — мутация исходной plane не
+протекает в изображение и наоборот; `copy()` сохраняет padded metadata и байты,
+`copy(blank: true)` обнуляет всю 32-байтовую аллокацию, а не схлопывает её до
+tight. `kIsWeb == true` проверяется внутри тела каждого теста.
+
+Tight `toBgra8888()` намеренно не проверяется: это scope YUV-08.
+
+Не выполнено: фактический Chrome-прогон (локально нет chromedriver), поэтому URL
+приложить нельзя. F-004 остаётся `READY FOR RETEST`.
 
 ---
 
@@ -1737,6 +1843,34 @@ cache lookup и не проверяет rebuild после mutation, поэто�
 Публичный API, production cache logic, native C и generated bindings повторно
 менять не требуется.
 
+### Перенос focused case 2026-09-14
+
+Статус остаётся `REJECTED`: тест написан, но не исполнен.
+
+Добавлен `example/integration_test/image_cache_key_test.dart` — пункты 1, 2 и 3
+замечания. `dart:io` в файле нет: байты кадра генерируются синтетически, а не
+читаются с диска, поэтому фикстуры работают в браузере.
+
+Два fixture, как того требует замечание:
+- `_FakePackageImage implements YuvImage, YuvRevisionAware` — сообщает о своих
+  мутациях изнутри `mutateInPlace()`;
+- `_FakeForeignImage implements YuvImage` — мутирует байты и `markDirty()` не
+  зовёт никогда.
+
+Оба считают фактические вызовы `toBgra8888()`. Проверяется именно счётчик, а не
+равенство provider: сравнение ключей прошло бы и в случае, когда виджет
+переконвертирует кадр на каждый build, а DoD прямо называет такое доказательство
+недостаточным.
+
+Три case: неизменённый package image переиспользует кадр (счётчик не растёт,
+провайдеры равны и hashCode равны); после `mutateInPlace()` ключ меняется и
+счётчик растёт; foreign image даёт always-miss — два провайдера над одним и тем
+же нетронутым экземпляром не равны, а после мутации без `markDirty()` кадр
+конвертируется заново. Кэш чистится в `setUp`, поэтому порядок не влияет.
+
+Не выполнено: фактический Chrome-прогон (локально нет chromedriver). F-006
+остаётся `READY FOR RETEST`.
+
 ---
 
 ## YUV-21 — зафиксировать контракт инициализации IO/Web
@@ -1929,6 +2063,34 @@ Flutter 3.44.9 focused suite 114/114. Для повторного review тре�
 
 Loader production logic, публичный API, native paths/C и generated bindings
 повторно менять не требуется без нового воспроизведённого дефекта.
+
+### Перенос focused case 2026-09-14
+
+Статус остаётся `REJECTED`: тест написан, но не исполнен.
+
+Добавлен `example/integration_test/wasm_loader_lifecycle_test.dart` — пункты 1,
+2 и 3 замечания. Перенесены все cases из
+`test/web/wasm_loader_initialization_test.dart`, которые на VM уходили в
+skip-ветку.
+
+Фактические invocation counts, которых требует замечание:
+- три последовательных `ensureInitialized()` -> `debugInitCount == 1`;
+- четыре параллельных через `Future.wait` -> `debugInitCount == 1`;
+- первая попытка бросает, вторая успешна -> `attempts == 2` и
+  `debugInitCount == 2`.
+
+Плюс: после ошибки `moduleIfInitialized` остаётся `null`, исходный тип ошибки и
+stack trace переживают проброс. `tearDown(YuvWasmLoader.debugReset)` зарегистрирован
+глобально, и каждый case дополнительно вызывает `debugReset()` в начале — иначе
+реальная инициализация из соседнего suite в том же app run исказила бы счётчики
+(пункт 3).
+
+Последний case намеренно возвращает реальность: `debugReset()`, затем настоящий
+`YuvFfi.ensureInitialized()` против asset-загруженного модуля. Он доказывает,
+что harness действительно поднимает WASM-бандл и что fake-инициализаторы выше не
+оставили loader сломанным.
+
+Не выполнено: фактический Chrome-прогон (локально нет chromedriver).
 
 ---
 

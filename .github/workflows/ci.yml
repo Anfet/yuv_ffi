@@ -118,10 +118,16 @@ jobs:
         working-directory: example
         run: flutter pub get
 
-      - name: Required WASM bootstrap gate
+      # Every asset-dependent Web acceptance case runs here. `flutter drive`
+      # takes one target at a time, so the suites are driven in a loop rather
+      # than as a directory; an unset `set -e` would let a failing target pass
+      # the job, so each exit status is checked explicitly.
+      - name: Required Web integration gate
         working-directory: example
         shell: bash
         run: |
+          set -euo pipefail
+
           chromedriver --port=4444 > /tmp/chromedriver.log 2>&1 &
           chromedriver_pid=$!
           trap 'cat /tmp/chromedriver.log; kill "$chromedriver_pid"' EXIT
@@ -134,9 +140,33 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:4444/status > /dev/null
 
-          xvfb-run -a flutter drive \
-            --driver=test_driver/integration_test.dart \
-            --target=integration_test/wasm_bootstrap_test.dart \
-            -d web-server \
-            --browser-name=chrome \
-            --headless
+          targets=(
+            integration_test/wasm_bootstrap_test.dart
+            integration_test/getbytes_contract_test.dart
+            integration_test/padded_bgra_constructor_test.dart
+            integration_test/image_cache_key_test.dart
+            integration_test/wasm_loader_lifecycle_test.dart
+          )
+
+          failed=()
+          for target in "${targets[@]}"; do
+            echo "::group::$target"
+            if xvfb-run -a flutter drive \
+              --driver=test_driver/integration_test.dart \
+              --target="$target" \
+              -d web-server \
+              --browser-name=chrome \
+              --headless; then
+              echo "PASS $target"
+            else
+              echo "FAIL $target"
+              failed+=("$target")
+            fi
+            echo "::endgroup::"
+          done
+
+          if [ ${#failed[@]} -ne 0 ]; then
+            echo "Failed Web integration targets:"
+            printf '  %s\n' "${failed[@]}"
+            exit 1
+          fi
