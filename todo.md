@@ -244,6 +244,34 @@ Native C permission:
 - Ветка `fix/0.2.5-release-readiness` отсутствует на remote, `gh` CLI не
   установлен; без разрешения на push/PR получить требуемый автоматический
   Linux CI run невозможно.
+
+Уточнение 2026-09-13 (измерено, заменяет догадки выше):
+- Утверждение «ветка отсутствует на remote, поэтому CI run невозможен» было
+  верно лишь наполовину. `origin` настроен
+  (`https://github.com/Anfet/yuv_ffi.git`), workflow триггерится на
+  `push: branches: ["**"]`, а job `wasm-web-smoke` на `ubuntu-latest` собирает
+  WASM через emsdk и гоняет все пять Web-файлов под
+  `xvfb-run flutter test --platform chrome`. Для push `gh` CLI не нужен.
+  С разрешения владельца ветка запушена; CI evidence ожидается из Actions.
+- F-007 охарактеризован неверно по трём пунктам:
+  1. Это не зависание на `loading`. Прогон падает детерминированно после
+     фиксированного browser timeout ~183 s с
+     `Failed to load ...: Connection closed before test suite loaded`.
+  2. Причина «CanvasKit path с несовместимыми разделителями» не подтверждается:
+     verbose-лог показывает, что Chromium стартует штатно и DevTools
+     цепляется (`DevTools listening on ws://127.0.0.1:...`), после чего
+     harness внутри страницы просто не отвечает manager websocket.
+  3. Это не специфично для Chrome: Edge через `CHROME_EXECUTABLE` даёт ровно ту
+     же ошибку. Запущенного Chrome в системе при этом нет (`tasklist` пуст),
+     сам Chrome headless работает (`--dump-dom` возвращает DOM, exit 0).
+- Контрольный эксперимент отделяет Flutter от окружения: чистый пакет с
+  `dart test --platform chrome` на этой же машине и том же Dart 3.12.2 проходит
+  («All tests passed!»). То есть браузер, websocket и browser-test
+  инфраструктура исправны; ломается именно `flutter test --platform chrome`
+  (компиляция идёт через `--target=dartdevc`, ~14.5 s).
+- Вывод: F-007 остаётся `OPEN` как дефект локального Windows-окружения,
+  но его прежнее описание использовать нельзя — оно указывает на несуществующую
+  причину. Обязательный gate в любом случае Linux-овый.
 - Поэтому YUV-02 не переведена в DONE, F-007 остаётся OPEN, а задачи,
   требующие фактического Web runtime, сохраняют YUV-02 как acceptance gate.
 
