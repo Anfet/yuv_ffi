@@ -229,6 +229,64 @@ void main() {
       expect(image.toBgra8888().length, 10 * 7 * 4);
     }
   });
+
+  group('getBytes contract', () {
+    const sizes = <({int w, int h})>[
+      (w: 1, h: 1),
+      (w: 3, h: 3),
+      (w: 127, h: 255),
+      (w: 512, h: 512),
+    ];
+
+    for (final size in sizes) {
+      test('returns exactly the summed plane length for ${size.w}x${size.h}', () {
+        for (final image in _imagesForEachFormat(size.w, size.h)) {
+          final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
+
+          expect(
+            image.getBytes(),
+            hasLength(expectedLength),
+            reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail',
+          );
+        }
+      });
+
+      test('equals a direct concatenation for ${size.w}x${size.h}', () {
+        for (final image in _imagesForEachFormat(size.w, size.h)) {
+          _fillPlanesWithPattern(image);
+
+          expect(
+            image.getBytes(),
+            orderedEquals(_concatPlanesDirectly(image)),
+            reason: '${image.format.name} ${size.w}x${size.h} must concatenate planes in format order',
+          );
+        }
+      });
+    }
+
+    test('returns an independent copy in both directions', () {
+      final image = YuvImage.i420(4, 4);
+      _fillPlanesWithPattern(image);
+
+      final snapshot = image.getBytes();
+      final planeByteBefore = image.yPlane.bytes[0];
+
+      snapshot[0] = snapshot[0] ^ 0xFF;
+      expect(image.yPlane.bytes[0], planeByteBefore);
+
+      final snapshotByteBefore = snapshot[1];
+      image.yPlane.bytes[1] = image.yPlane.bytes[1] ^ 0xFF;
+      expect(snapshot[1], snapshotByteBefore);
+    });
+
+    test('F-003 diagnostic case: i420 3x3 has no alignment tail', () {
+      final image = YuvImage.i420(3, 3);
+      final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
+
+      expect(expectedLength, 25);
+      expect(image.getBytes(), hasLength(expectedLength));
+    });
+  });
 }
 
 Uint8List _buildRgbaPattern(int width, int height) {
@@ -317,6 +375,38 @@ YuvPlane _copyUvInterleavedPlaneWithPadding({
     dst.setRange(dstStart, dstStart + logicalRowBytes, source.bytes, srcStart);
   }
   return YuvPlane(logicalHeight, dstRowStride, dstPixelStride, dst);
+}
+
+/// Builds one image per public format, so a contract case covers BGRA, I420 and
+/// the legacy `nv21` name without repeating itself.
+///
+/// The legacy `nv21` name keeps its current NV12-like UV byte order; these
+/// cases only concatenate planes and never reinterpret chroma.
+List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[
+      YuvImage.bgra(w, h),
+      YuvImage.i420(w, h),
+      YuvImage.nv21(w, h),
+    ];
+
+/// Writes a per-plane pattern so a misordered or truncated concatenation cannot
+/// coincidentally match an all-zero buffer.
+void _fillPlanesWithPattern(YuvImage image) {
+  for (int i = 0; i < image.planes.length; i++) {
+    final bytes = image.planes[i].bytes;
+    for (int j = 0; j < bytes.length; j++) {
+      bytes[j] = ((i + 1) * 37 + j) & 0xFF;
+    }
+  }
+}
+
+/// Expected value built by direct concatenation rather than by the native
+/// backend, so a shared defect cannot hide in both sides of the comparison.
+Uint8List _concatPlanesDirectly(YuvImage image) {
+  final out = <int>[];
+  for (final plane in image.planes) {
+    out.addAll(plane.bytes);
+  }
+  return Uint8List.fromList(out);
 }
 
 Uint8List _cropBgra(

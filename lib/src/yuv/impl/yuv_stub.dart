@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart' show Uint8List, WriteBuffer;
+import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane_bytes.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 class YuvImageImpl implements YuvImage {
@@ -98,13 +99,7 @@ class YuvImageImpl implements YuvImage {
   ui.Size get size => ui.Size(_width.toDouble(), _height.toDouble());
 
   @override
-  Uint8List getBytes() {
-    final all = WriteBuffer();
-    for (final plane in _planes) {
-      all.putUint8List(plane.bytes);
-    }
-    return all.done().buffer.asUint8List();
-  }
+  Uint8List getBytes() => YuvPlaneBytes.concat(_planes);
 
   @override
   YuvImage copy({bool blank = false}) =>

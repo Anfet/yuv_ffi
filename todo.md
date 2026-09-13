@@ -21,7 +21,7 @@
 | [x] | YUV-11 | Luna | Claude Sonnet 5 | P1 | DONE | — | Проверена native matrix: 65/119 passed, 54 failures зарегистрированы отдельно |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-02 | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
-| [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | TODO | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
+| [ ] | YUV-14 | Luna | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Убрать выравнивающий хвост из IO/Web `getBytes()` |
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | TODO | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [x] | YUV-16 | Opus | Claude Opus 5 | P1 | DONE | — | Обеспечить exception-safe освобождение всех последовательных native allocations |
 | [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | TODO | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
@@ -1591,7 +1591,7 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P1
-- Статус: TODO
+- Статус: READY FOR REVIEW
 - Зависимости: YUV-01 и YUV-03 приняты; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/yuv/impl/io/yuv_image.dart`
@@ -1646,7 +1646,75 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+```text
+Статус: READY FOR REVIEW
+Commit: fix: removed the getBytes alignment tail
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_plane_bytes.dart (новый)
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- lib/src/yuv/impl/yuv_stub.dart
+- test/conversions_test.dart
+- test/web/wasm_parity_edge_cases_test.dart
+- failed-test-cases.md
+
+Что сделано:
+- Добавлен platform-agnostic helper `YuvPlaneBytes.concat()`, который заранее
+  выделяет `Uint8List(totalLength)` и последовательно копирует каждую plane по
+  offset. Это решение 2 из карточки.
+- Все три backend (`io`, `web` и `yuv_stub`) используют один helper вместо
+  `WriteBuffer.done().buffer.asUint8List()`, поэтому alignment-хвост больше не
+  попадает в публичный API. Неиспользуемый импорт `WriteBuffer` удалён из web и
+  stub.
+- Порядок конкатенации не менялся: BGRA/Y, I420 Y-U-V, legacy `nv21` Y-UV.
+  Публичный NV21/UV compatibility contract не затронут.
+- Contract tests добавлены симметрично в IO и Web suite. Expected строится
+  локальной прямой конкатенацией (`_concatPlanesDirectly`), а не другим
+  backend, поэтому общий дефект не может спрятаться с обеих сторон сравнения.
+- Cases намеренно не помечены `skip: !_nativeAvailable`: они только выделяют
+  planes в Dart, и skip-ветка снова скрыла бы регресс на машине без собранной
+  библиотеки.
+
+Проверки:
+- flutter test test/conversions_test.dart --plain-name "getBytes" — exit 0,
+  10 tests passed
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test (полный VM suite) — 199 passed / 32 failed против baseline
+  177 passed / 44 failed на этой же машине; 12 ранее падавших cases стали
+  проходить, новых падений нет
+- flutter test test/reference_native_conversions_test.dart — все 14 `BYTES-GET`
+  reference cases проходят (было 0 из 14)
+- dart format --output=none --set-exit-if-changed --line-length 150 lib test —
+  изменённые этой задачей файлы проходят. Остаётся pre-existing drift в
+  `test/web/yuv_web_wasm_test.dart`: файл не входит в scope, не изменялся, и
+  тот же exit 1 воспроизводится на чистом дереве до этой задачи. Намеренно не
+  исправлен, чтобы не смешивать чужое форматирование с этим commit.
+- git diff --check — exit 0
+- git status --short — приложен ниже
+
+Regression evidence:
+- Те же 10 cases на неисправленном `lib/src/yuv/impl/io/yuv_image.dart`
+  (через `git stash` только этого файла) дают 1 passed / 9 failed и
+  воспроизводят исходный F-003: `Expected: length of <25> / Actual: <32>`.
+
+Ручная проверка:
+- Windows 10 x64 / AMD64, Flutter 3.38.10, Dart 3.10.9, native backend из
+  локального `yuv_ffi.dll`.
+- Web: `NOT RUN`. Chrome runner остаётся заблокирован F-007/YUV-02, поэтому
+  `kIsWeb == true` подтвердить нельзя. Web-cases добавлены и выполнятся при
+  первом рабочем прогоне.
+
+Остаточные риски:
+- Web-сторона проверена только инспекцией исходного кода: backend использует
+  тот же helper, но runtime evidence отсутствует до YUV-02. Поэтому F-003
+  переведён в `READY FOR RETEST`, а не в `RESOLVED`, и задача не может стать
+  `DONE` без фактического Chrome прогона.
+- Padded planes из DoD покрыты только текущими конструкторами; padded BGRA
+  case станет полноценным после YUV-15.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
 
 ---
 

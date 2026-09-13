@@ -18,7 +18,7 @@
 |---|---|---|---|---|---|---|
 | F-001 | WEB-COMPILE-001 | Web/Chrome | RESOLVED | P0 | YUV-01 | `Function.toJS` blocker устранён; package и example компилируются на Flutter 3.44.9 |
 | F-002 | SWAP-NV-LUMA-001 | Native/Windows | RESOLVED | P1 | YUV-03 | `swapNv()` сохраняет Y и exact-переставляет chroma pairs |
-| F-003 | GET-BYTES-LENGTH-001 | Native/Windows | OPEN | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
+| F-003 | GET-BYTES-LENGTH-001 | Native/Windows | READY FOR RETEST | P1 | YUV-14 | `getBytes()` возвращает backing buffer с 7 лишними байтами для I420 `3x3` |
 | F-004 | BGRA-PADDED-CONSTRUCTOR-001 | Native/Windows | OPEN | P1 | YUV-15 | Валидная padded BGRA-плоскость вызывает внутренний `RangeError` |
 | F-005 | BINDINGS-CACHE-001 | Native/Windows | RESOLVED | P1 | YUV-19 | Повторные обращения переиспользуют один экземпляр `YuvFfiBindings` |
 | F-006 | IMAGE-CACHE-KEY-001 | Native/Windows | OPEN | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
@@ -233,9 +233,22 @@ YUV-14 должен добавить постоянные regression cases дл�
 
 ### Resolution
 
-- Fix commit: не заполнен
-- Native retest command/result: не заполнен
-- Web retest command/result: не заполнен
+- Статус: `READY FOR RETEST`. Native сторона исправлена и покрыта постоянными
+  regression cases; `RESOLVED` требует настоящего Chrome прогона, который
+  остаётся заблокированным F-007/YUV-02.
+- Fix commit: см. commit задачи YUV-14 (`fix: removed the getBytes alignment tail`)
+- Исправление: все три backend (`io`, `web`, `yuv_stub`) вызывают общий
+  `YuvPlaneBytes.concat()`, выделяющий ровно `sum(plane.bytes.length)` байт,
+  вместо `WriteBuffer.done().buffer.asUint8List()`.
+- Native retest command/result:
+  `flutter test test/conversions_test.dart --plain-name "getBytes"` — exit 0,
+  10 tests passed (Windows 10 x64 / AMD64, Flutter 3.38.10).
+- Regression доказан: те же 10 cases на неисправленном
+  `lib/src/yuv/impl/io/yuv_image.dart` дают 1 passed / 9 failed, включая
+  исходный F-003 case `Expected: length of <25> / Actual: length of <32>`.
+- Web retest command/result: `NOT RUN`, до устранения F-007/YUV-02. Контрактные
+  cases добавлены в `test/web/wasm_parity_edge_cases_test.dart` и выполнятся,
+  как только Chrome runner заработает.
 - Full `test_pattern_512.png` case result: не заполнен
 
 ---

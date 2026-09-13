@@ -11,6 +11,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane_bytes.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 import 'defs/yuv_def.dart';
@@ -139,14 +140,7 @@ class YuvImageImpl implements YuvImage {
   }
 
   @override
-  Uint8List getBytes() {
-    final WriteBuffer allBytes = WriteBuffer();
-    for (final plane in planes) {
-      allBytes.putUint8List(plane.bytes);
-    }
-    final bytes = allBytes.done().buffer.asUint8List();
-    return bytes;
-  }
+  Uint8List getBytes() => YuvPlaneBytes.concat(_planes);
 
   @override
   YuvImage copy({bool blank = false}) =>
