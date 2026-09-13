@@ -947,7 +947,8 @@ trailing bytes, пришедшие позже этого окна, приним�
 - Зависимости: YUV-15; финальный Web retest зависит от YUV-02 (YUV-01/YUV-04 приняты)
 - Scope:
   - `lib/src/yuv/impl/web/yuv_web.dart`
-  - `test/web/wasm_parity_edge_cases_test.dart`
+  - `example/integration_test/wasm_parity_edge_cases_test.dart`
+  - `test/web/wasm_parity_edge_cases_test.dart` только для тестов без asset bundle
   - при необходимости shared row-repack helper
 
 ### Проблема
@@ -960,7 +961,8 @@ Web edge tests покрывают padded I420/NV, но не padded BGRA.
 
 1. Повторить native semantics: при tight rowStride вернуть copy, при padding построчно скопировать только `width * 4` bytes.
 2. Не менять исходную plane и не возвращать view на mutable backing buffer.
-3. Добавить Web test с различимыми padding bytes, проверяющий и длину, и точный порядок pixels.
+3. Добавить integration Web test с различимыми padding bytes, проверяющий и
+   длину, и точный порядок pixels в реально собранном example-приложении.
 4. Добавить widget-level regression либо доказать существующим тестом, что repacked buffer декодируется.
 
 ### DoD
@@ -968,12 +970,15 @@ Web edge tests покрывают padded I420/NV, но не padded BGRA.
 - Web `toBgra8888()` всегда возвращает ровно `width * height * 4` bytes.
 - Padding не попадает в результат.
 - Native/Web padded BGRA semantics совпадают.
-- Реальный Chrome test проходит; VM skip не засчитывается.
+- Реальный Chrome integration test проходит с `kIsWeb == true`; VM skip и
+  `continue-on-error` не засчитываются.
 
 ### Проверка
 
 ```powershell
-flutter test --platform chrome test/web/wasm_parity_edge_cases_test.dart
+Push-Location example
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/wasm_parity_edge_cases_test.dart -d chrome
+Pop-Location
 flutter test test/conversions_test.dart --plain-name "padded BGRA"
 flutter test test/yuv_image_widget_test.dart
 flutter analyze lib test
@@ -1055,7 +1060,8 @@ git status --short
 - Статус: BLOCKED
 - Зависимости: YUV-02 (YUV-01 и YUV-10 выполнены)
 - Scope:
-  - `test/web/reference_web_conversions_test.dart`
+  - `example/integration_test/reference_web_conversions_test.dart`
+  - `test/web/reference_web_conversions_test.dart` только если suite не требует asset bundle
   - shared test helpers и manifest из YUV-10
   - `failed-test-cases.md`, только регистрация фактических падений
   - WASM artifacts только пересобрать, не исправлять production C/Web code
@@ -1067,7 +1073,9 @@ git status --short
 ### Зафиксированное решение
 
 1. Пересобрать WASM из текущего source перед прогоном.
-2. Запустить ту же data-driven manifest matrix, что и YUV-11, через настоящий `--platform chrome`.
+2. Перенести ту же data-driven manifest matrix, что и YUV-11, в
+   `example/integration_test/` и выполнить её через `flutter drive` в Chrome,
+   чтобы тест получал реальный Flutter asset bundle и WASM runtime.
 3. Использовать те же expected artifacts и thresholds, что native. Не создавать Web-specific expected images.
 4. Проверять metadata, planes, in-place contract и exact/tolerance metrics так же, как в native suite.
 5. Добавить явный Web environment assertion, чтобы case suite не мог пройти на VM.
@@ -1076,7 +1084,8 @@ git status --short
 
 ### DoD
 
-- Все строки обязательной матрицы реально исполняются с `kIsWeb == true`.
+- Все строки полной обязательной матрицы реально исполняются с `kIsWeb == true`
+  через integration harness. Сокращать матрицу до smoke-набора нельзя.
 - Native и Web используют одинаковые case IDs, input SHA и expected artifacts.
 - В результате записано фактическое число executed/passed/failed cases; skip не засчитывается как executed.
 - Все падения полностью отражены в `failed-test-cases.md`.
@@ -1086,9 +1095,13 @@ git status --short
 ### Проверка
 
 ```powershell
-flutter test --platform chrome test/web/reference_web_conversions_test.dart --reporter expanded
-flutter test --platform chrome test/web
+Push-Location example
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/reference_web_conversions_test.dart -d chrome
+Pop-Location
 flutter analyze test
+Push-Location example
+flutter analyze
+Pop-Location
 dart format --output=none --set-exit-if-changed test
 git diff --check
 git status --short
@@ -1139,7 +1152,9 @@ git status --short
 
 ```powershell
 flutter test test/reference_native_conversions_test.dart --reporter expanded
-flutter test --platform chrome test/web/reference_web_conversions_test.dart --reporter expanded
+Push-Location example
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/reference_web_conversions_test.dart -d chrome
+Pop-Location
 git diff --check
 git status --short
 ```
