@@ -664,12 +664,23 @@ YUV-21 должен выполнить оба новых case в required Chrome
 
 ### Resolution
 
-- Статус: `READY FOR RETEST`. Исправление внесено, Web-прогон ещё не выполнялся.
+- Статус: `READY FOR RETEST`. Исправление внесено, но пока **не доказано**.
 - Fix commit: см. commit задачи YUV-21
 - Исправление: в ветке `onError` тег удаляется (`script.remove()`) до завершения
   completer. Только в ветке ошибки: успешно загруженный скрипт — ровно то, что
   маркер и должен фиксировать.
-- Web retest command/result: не заполнен
+- Web retest command/result: run
+  [34789878937](https://github.com/Anfet/yuv_ffi/actions/runs/34789878937),
+  таргет `wasm_loader_lifecycle_test.dart` — **failure**, оба новых case:
+  `Expected: throws <StateError> / Actual: <_Future<YuvModule>>`.
+  Попытка с несуществующим `scriptPath` не упала: к этому моменту предыдущий
+  case уже загрузил настоящий модуль, поэтому в документе оставался валидный
+  тег, а на `globalThis` — рабочий `createYuvFfiModule`. `_injectScriptOnce()`
+  выходил рано, подложный путь не запрашивался, factory находился.
+- Следствие: прогон **не подтверждает и не опровергает** исправление — ветка
+  ошибки не выполнялась ни разу. Тесты исправлены отдельно
+  (`debugRemoveInjectedScript()` + factory name, которого никто не определяет),
+  повторный прогон требуется.
 
 ---
 

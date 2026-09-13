@@ -40,6 +40,9 @@ final class YuvWasmLoader {
     debugInitCount = 0;
   }
 
+  /// Accepted and ignored: there is no document to inject into here.
+  static void debugRemoveInjectedScript() {}
+
   static Future<YuvModule> ensureInitialized({
     String scriptPath = '',
     String wasmPath = '',

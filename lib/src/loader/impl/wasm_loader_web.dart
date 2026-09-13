@@ -85,6 +85,19 @@ final class YuvWasmLoader {
     debugInitCount = 0;
   }
 
+  /// Removes the injected loader script, if one is present.
+  ///
+  /// [debugReset] deliberately leaves the document alone: it clears this
+  /// class's own cached handles, and a script that already loaded is still
+  /// legitimately there. A test that wants to observe injection itself — the
+  /// failure path especially — needs the page returned to its pre-injection
+  /// state, which only this can do.
+  ///
+  /// Not exported publicly, like the rest of the debug surface.
+  static void debugRemoveInjectedScript() {
+    html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]')?.remove();
+  }
+
   /// Returns initialized module if available in current process, otherwise null.
   static YuvModule? get moduleIfInitialized => _module;
 

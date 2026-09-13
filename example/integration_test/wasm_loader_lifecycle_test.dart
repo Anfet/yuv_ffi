@@ -137,25 +137,43 @@ void main() {
     expect(YuvWasmLoader.moduleIfInitialized, isNotNull);
   });
 
+  // The two cases below drive the real initializer, because the defect they
+  // cover lives in _injectScriptOnce and every case above replaces that whole
+  // code path with a fake.
+  //
+  // Getting a genuine first failure takes more than a bad script path. By this
+  // point a previous case has already loaded the module for real, so the
+  // document still holds a valid loader <script> and globalThis still holds the
+  // factory it defined. With either of those left in place the loader succeeds
+  // and never reaches an error path at all — which is exactly how the first
+  // version of these cases passed a bad path and still got a module back.
+  //
+  // So the page is returned to its pre-injection state first, and the attempt
+  // also asks for a factory name nothing defines: injection then really runs,
+  // really 404s, and really fires onError.
+  Future<void> failRealInjection() async {
+    YuvWasmLoader.debugReset();
+    YuvWasmLoader.debugRemoveInjectedScript();
+
+    await expectLater(
+      YuvWasmLoader.ensureInitialized(
+        scriptPath: 'assets/packages/yuv_ffi/assets/wasm/does_not_exist.js',
+        moduleFactoryName: 'createYuvFfiModuleThatIsNeverDefined',
+      ),
+      throwsA(isA<StateError>()),
+      reason: 'a loader script that cannot be fetched must surface as a StateError',
+    );
+    expect(YuvWasmLoader.moduleIfInitialized, isNull, reason: 'a failed attempt must not leave a module behind');
+  }
+
   testWidgets('a retry after a real script-load failure succeeds', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    // Every case above replaces the initializer wholesale, which means none of
-    // them ever runs _injectScriptOnce — and that is precisely where retry was
-    // broken: a failed <script> stayed in the document, so the next attempt
-    // found the marker, skipped injection, and then failed looking for a
-    // factory no script had defined. Only the real initializer can show it.
-    YuvWasmLoader.debugReset();
+    await failRealInjection();
 
-    await expectLater(
-      YuvWasmLoader.ensureInitialized(scriptPath: 'assets/packages/yuv_ffi/assets/wasm/does_not_exist.js'),
-      throwsA(isA<StateError>()),
-      reason: 'a missing loader script must surface as a StateError',
-    );
-    expect(YuvWasmLoader.moduleIfInitialized, isNull);
-
-    // The retry uses the real defaults. Before the fix this threw "module
-    // factory was not found", because injection had been skipped.
+    // The retry uses the real defaults. Before the fix the dead <script> was
+    // still in the document, so injection was skipped and this threw
+    // "module factory was not found" — the wrong cause, and unrecoverable.
     await YuvWasmLoader.ensureInitialized();
 
     expect(YuvWasmLoader.moduleIfInitialized, isNotNull, reason: 'a retry after a failed script load must be able to succeed');
@@ -165,12 +183,7 @@ void main() {
   testWidgets('the module works after recovering from a failed script load', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    YuvWasmLoader.debugReset();
-
-    await expectLater(
-      YuvWasmLoader.ensureInitialized(scriptPath: 'assets/packages/yuv_ffi/assets/wasm/missing_loader.js'),
-      throwsA(isA<StateError>()),
-    );
+    await failRealInjection();
 
     await YuvFfi.ensureInitialized();
 
