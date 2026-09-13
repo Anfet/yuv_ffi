@@ -11,7 +11,7 @@
 | [ ] | YUV-01 | Terra | P0 | READY FOR REVIEW | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
 | [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
-| [ ] | YUV-04 | Opus | P0 | READY FOR REVIEW | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
+| [ ] | YUV-04 | Opus | P0 | REJECTED | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
 | [ ] | YUV-05 | Opus | P0 | READY FOR REVIEW | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
@@ -356,7 +356,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P0 / memory-safety blocker
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
 - Зависимости: YUV-03, YUV-16 (принята в предыдущем commit)
 - Scope:
   - `lib/src/yuv/yuv.dart`
@@ -497,6 +497,15 @@ Commit: YUV-04 task commit
 
 Native C permission:
 - не требовалось
+
+Независимая приёмка root, 2026-09-13:
+- Статус: REJECTED; задача возвращена Opus на исправление.
+- P0: default-конструкторы IO/Web/stub не вызывают `validateImage()` после создания planes. `YuvImage.i420(8, 8, yPixelStride: 0)` и I420 с `uvPixelStride: 0` остаются допустимыми и могут дойти до backend call.
+- P0: IO/Web `load()` присваивают header и planes напрямую, не проверяют итоговую геометрию и оставляют объект частично изменённым при ошибке. Нужна общая валидация кандидата до commit состояния; транзакционный форматный parsing остаётся частью YUV-07.
+- P0: generic padded BGRA принимается validator, но `bgra8888_gaussian_blur` выделяет tight temporary buffer и индексирует его исходным padded `rowStride`, что создаёт OOB. До отдельного исправления C такой layout требуется репаковать или отклонять до FFI/WASM.
+- P1: IO `YuvImage.bgra(..., planes:)` берёт только `first`: пустой список создаёт blank image, лишние planes игнорируются. Web/stub требуют ровно одну plane. Нужен одинаковый exact-plane-count контракт.
+- Добавить regression cases для default zero strides, malformed loaded geometry, generic padded BGRA перед опасной операцией, empty/two-plane named BGRA и parity IO/Web/stub.
+- Текущие проверки остаются зелёными (`20/20` focused, `71/71` full, analyzer), но перечисленные пути ими не покрыты.
 ```
 
 ---
