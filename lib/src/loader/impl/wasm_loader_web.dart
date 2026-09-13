@@ -53,23 +53,83 @@ final class YuvWasmLoader {
   static Future<YuvModule>? _initFuture;
   static YuvModule? _module;
 
+  /// Number of times initialization actually started.
+  ///
+  /// A shared in-flight attempt counts once, which is what proves concurrent
+  /// callers do not each start their own initialization.
+  static int debugInitCount = 0;
+
+  static Future<YuvModule> Function({
+    required String scriptPath,
+    required String wasmPath,
+    required String moduleFactoryName,
+  })? _initializerOverride;
+
+  /// Replaces the initializer so tests can count attempts and fail
+  /// deterministically without a real module. Not exported publicly.
+  static void debugSetInitializer(
+    Future<YuvModule> Function({
+      required String scriptPath,
+      required String wasmPath,
+      required String moduleFactoryName,
+    })? initializer,
+  ) {
+    _initializerOverride = initializer;
+  }
+
+  /// Drops every cached initialization handle and the counter together.
+  static void debugReset() {
+    _initializerOverride = null;
+    _initFuture = null;
+    _module = null;
+    debugInitCount = 0;
+  }
+
   /// Returns initialized module if available in current process, otherwise null.
   static YuvModule? get moduleIfInitialized => _module;
 
-  /// Ensures the WASM runtime is initialized exactly once.
+  /// Ensures the WASM runtime is initialized.
   ///
-  /// Safe to call many times; all callers share the same in-flight/completed
-  /// initialization future.
+  /// Concurrent callers share one in-flight attempt, and a successful result is
+  /// cached for the life of the process.
+  ///
+  /// A failed attempt is not cached: the future is cleared so the next explicit
+  /// call starts a genuinely new attempt. On failure [moduleIfInitialized]
+  /// stays `null`, so a partially initialized module is never observable.
+  ///
+  /// Unlike the native backend, Web has no lazy fallback: this must be awaited
+  /// before any image operation. Configuration and runtime failures throw
+  /// [StateError]; any other error propagates unchanged with its original stack
+  /// trace.
   static Future<YuvModule> ensureInitialized({
     String scriptPath = defaultScriptPath,
     String wasmPath = defaultWasmPath,
     String moduleFactoryName = defaultFactoryName,
   }) {
-    return _initFuture ??= _initialize(
+    final inFlight = _initFuture;
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    debugInitCount++;
+    final initializer = _initializerOverride ?? _initialize;
+    late final Future<YuvModule> attempt;
+    attempt = initializer(
       scriptPath: scriptPath,
       wasmPath: wasmPath,
       moduleFactoryName: moduleFactoryName,
-    );
+    ).onError<Object>((error, stackTrace) {
+      // Clear only if this attempt is still the current one. A later call may
+      // already have replaced it, and dropping that newer future would make
+      // concurrent callers wait on an attempt nobody owns any more.
+      if (identical(_initFuture, attempt)) {
+        _initFuture = null;
+      }
+      _module = null;
+      Error.throwWithStackTrace(error, stackTrace);
+    });
+    _initFuture = attempt;
+    return attempt;
   }
 
   static Future<YuvModule> _initialize({

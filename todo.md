@@ -19,7 +19,7 @@
 | [ ] | YUV-15 | Terra | Claude Sonnet 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать BGRA-конструкторы согласованными и безопасными для padded plane |
 | [ ] | YUV-17 | Luna | Claude Haiku 4.5 | P2 | TODO | CI evidence | Добавить отдельный analyzer/build gate для package `example/` |
 | [ ] | YUV-20 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
-| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | TODO | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
@@ -1089,7 +1089,7 @@ Native C permission:
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: TODO
+- Статус: READY FOR REVIEW
 - Зависимости: YUV-01 и YUV-19 приняты; финальный Web retest зависит от YUV-02
 - Scope:
   - `lib/src/yuv_ffi_initializer.dart`
@@ -1147,6 +1147,97 @@ git status --short
 В результате отдельно записать число фактических opener/initializer invocations для success, concurrent и retry cases. Для Web подтвердить `kIsWeb == true`.
 
 ### Результат
+
+```text
+Статус: READY FOR REVIEW
+Commit: fix: pinned the IO and Web initialization contract
+Изменённые файлы:
+- lib/src/loader/impl/loader_io.dart
+- lib/src/loader/impl/wasm_loader_web.dart
+- lib/src/loader/impl/wasm_loader_io.dart
+- lib/src/yuv_ffi_initializer.dart
+- test/loader_io_test.dart
+- test/web/wasm_loader_initialization_test.dart (новый)
+
+Что сделано:
+- Web: failed `_initFuture` больше не кэшируется навсегда. Future очищается в
+  `onError`, и только если он всё ещё текущий (`identical`), поэтому более
+  новую попытку, которую уже ждут другие callers, нельзя случайно сбросить
+  (решение 3). `_module` после ошибки остаётся `null`.
+- IO: `_openYuvLibrary()` больше не присваивает `_library` изнутри — присваивание
+  происходит один раз после успешного open. Кэш bindings сбрасывается вместе с
+  library, поэтому bindings не могут пережить библиотеку, из которой собраны.
+  Пустой кэш после ошибки — это и есть механизм retry (решение 2).
+- Сохранено ленивое открытие в IO getter (решение 1); различие «IO
+  рекомендуется / Web обязателен» теперь прямо описано в публичной доксроке,
+  а не подразумевается.
+- Ошибки больше не описаны как всегда `StateError` (решение 5). Задокументированы
+  фактические категории: Web configuration/runtime — `StateError`, неподдержанная
+  native платформа — `UnsupportedError`, ошибка открытия библиотеки — исходная
+  platform/FFI ошибка. Стек сохраняется через `Error.throwWithStackTrace`.
+- Добавлены непубличные test seams с счётчиками (решения 6 и 7): opener для IO,
+  initializer для Web, плюс reset, очищающий library, bindings, module, future и
+  счётчик согласованно. Seam лежит в `lib/src/loader/**`, который не входит в
+  `lib/yuv_ffi.dart`, поэтому из публичного API пакета он недоступен.
+- Non-web WASM stub получил зеркальную поверхность (`YuvModule(Object)`,
+  `debugInitCount`, `debugSetInitializer`, `debugReset`), иначе тест, который
+  анализатор резолвит на VM-таргете, не компилировался бы. Это прямо заявленный
+  контракт файла: «intentionally provides the same surface as the web loader».
+- Native paths и packaging не трогались — остаются за YUV-06 (решение 8).
+
+Фактические invocation counts:
+- IO success: 3 вызова `ensureInitialized()` -> `debugOpenCount == 1`
+- IO concurrent: 4 параллельных вызова -> `debugOpenCount == 1`
+- IO retry: первый open бросает, второй успешен -> attempts == 2,
+  `debugOpenCount == 2`
+- Web success: 3 вызова -> `debugInitCount == 1`
+- Web concurrent: 4 параллельных вызова -> `debugInitCount == 1`
+- Web retry: первая попытка бросает, вторая успешна -> attempts == 2,
+  `debugInitCount == 2`
+  (Web-числа заданы тестами и исполнятся при первом рабочем Chrome runner.)
+
+Проверки:
+- flutter test test/loader_io_test.dart --reporter expanded — exit 0,
+  7 tests passed
+- flutter test test/web/wasm_loader_initialization_test.dart — exit 0, на VM
+  берётся `!kIsWeb` ветка (1 skip-тест); реальный прогон заблокирован
+  F-007/YUV-02
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test (полный VM suite) — 234 passed / 31 failed против baseline
+  227 passed / 31 failed: +7 новых тестов, новых падений нет
+- dart format --output=none --set-exit-if-changed --line-length 150 — exit 0
+- git diff --check — exit 0
+- git status --short — приложен ниже
+
+Об доказательстве регресса (важно для ревью):
+- В отличие от YUV-14 и YUV-20, здесь НЕТ честного «падает до / проходит после»
+  прогона. Откат loader даёт 20 ошибок компиляции (нет seam), а это
+  доказывает новизну seam, а не наличие дефекта.
+- Дефект Web подтверждается чтением кода: `_initFuture ??= _initialize(...)`
+  кэширует и успешную, и проваленную попытку, поэтому повторная инициализация
+  в том же процессе была невозможна. Исполнить этот сценарий нельзя до
+  появления Chrome runner, поэтому считать Web-часть проверенной нельзя.
+- IO-дефекты (двойное присваивание `_library`, невычищаемый кэш bindings) были
+  латентными: они не приводили к падению теста на текущих путях, а создавали
+  условия для рассинхрона. Тесты фиксируют контракт на будущее.
+
+Ручная проверка:
+- Windows 10 x64 / AMD64, Flutter 3.38.10, Dart 3.10.9.
+- Web: `NOT RUN`, `kIsWeb == true` подтвердить нельзя до YUV-02.
+
+Остаточные риски:
+- Web-контракт проверен только инспекцией и тестами, которые ещё не
+  исполнялись в браузере. До YUV-02 задача не может стать `DONE`.
+- `debugInitCount`/`debugOpenCount` — изменяемые статические поля. Они не
+  экспортируются публично, но тесты, использующие их, обязаны вызывать reset в
+  `tearDown`, иначе порядок тестов повлияет на счётчики.
+- README не менялся: он показывает `await YuvFfi.ensureInitialized()` при
+  старте, что остаётся верным при новом контракте. Синхронизация документации —
+  зона YUV-09.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
 
 Не заполнен.
 
