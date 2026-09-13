@@ -71,6 +71,14 @@ abstract final class YuvCodec {
   /// a corrupt length word cannot drive an allocation.
   static const int maxPlaneBytes = 1 << 30;
 
+  /// How long the decoder waits for a trailing byte once the payload is complete.
+  ///
+  /// A finite source — a file, an in-memory stream — has its next chunk or its
+  /// close already queued, so it answers within one event loop turn and the wait
+  /// is not observable. The window exists only so that a source which stays open
+  /// indefinitely cannot stall a payload that is already complete and valid.
+  static const Duration trailerGrace = Duration(milliseconds: 50);
+
   /// Encodes [format], [width], [height] and [planes] into one byte buffer.
   static Uint8List encode({
     required YuvFileFormat format,
@@ -289,7 +297,7 @@ abstract final class YuvCodec {
       }
     }
 
-    if (reader.hasBufferedBytes()) {
+    if (await reader.trailerArrives(trailerGrace)) {
       throw const FormatException('Malformed yuv_ffi payload: unexpected trailing byte(s)');
     }
 
@@ -398,11 +406,34 @@ class _StreamReader {
   }
 
   /// Whether any byte beyond the payload has already arrived.
-  ///
-  /// Only bytes that are in hand count. Waiting for the stream to close would
-  /// hang on a source that stays open after delivering a frame — a socket, or a
-  /// long-lived pipe — even though the payload is structurally complete by then.
-  /// A trailer that arrives in the same delivery as the payload is still caught,
-  /// which is what makes a malformed file fail.
   bool hasBufferedBytes() => _available > 0;
+
+  /// Whether a trailing byte shows up within [grace] of the payload ending.
+  ///
+  /// Two requirements meet here and cannot both be absolute. Trailing bytes must
+  /// be rejected, and a file delivers them in a later chunk as readily as in the
+  /// same one, so checking only what is already buffered would let a fragmented
+  /// payload smuggle a trailer past. But a source that stays open after a frame —
+  /// a socket, a long-lived pipe — never signals the end, so waiting for it
+  /// would hang on a payload that is already complete and valid.
+  ///
+  /// The compromise is a bounded wait rather than an unbounded one: a stream that
+  /// has more to say gets [grace] to say it, and one that has finished, or has
+  /// simply gone quiet, lets decoding finish. A file or an in-memory stream
+  /// resolves immediately — its next chunk or its close is already queued — so
+  /// the grace window costs nothing there and no test pays for it.
+  Future<bool> trailerArrives(Duration grace) async {
+    if (_available > 0) {
+      return true;
+    }
+    if (_exhausted) {
+      return false;
+    }
+    try {
+      return await _pull().timeout(grace);
+    } on TimeoutException {
+      // Nothing further came in time: the payload stands on its own.
+      return false;
+    }
+  }
 }

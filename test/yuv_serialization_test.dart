@@ -350,6 +350,31 @@ void main() {
       );
     });
 
+    test('trailing bytes delivered in a later chunk are still rejected', () async {
+      // A file read in chunks puts a trailer in its own delivery, so checking
+      // only what happens to be buffered when the payload ends would miss it.
+      final payload = await validPayload(width: 16, height: 16);
+
+      await expectLater(
+        YuvCodec.decodeStream(Stream<List<int>>.fromIterable(<List<int>>[
+          payload,
+          <int>[9, 9, 9]
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('a trailer after a fragmented payload is rejected', () async {
+      final payload = await validPayload(width: 16, height: 16);
+      final chunks = <List<int>>[];
+      for (int i = 0; i < payload.length; i += 137) {
+        chunks.add(payload.sublist(i, i + 137 > payload.length ? payload.length : i + 137));
+      }
+      chunks.add(<int>[7, 7, 7]);
+
+      await expectLater(YuvCodec.decodeStream(Stream<List<int>>.fromIterable(chunks)), throwsFormatException);
+    });
+
     test('a complete payload decodes without waiting for the stream to close', () async {
       // A source that stays open after delivering a frame — a socket, a
       // long-lived pipe — never signals `done`. The payload is structurally
