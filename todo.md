@@ -272,6 +272,35 @@ Native C permission:
 - Вывод: F-007 остаётся `OPEN` как дефект локального Windows-окружения,
   но его прежнее описание использовать нельзя — оно указывает на несуществующую
   причину. Обязательный gate в любом случае Linux-овый.
+
+Реальная причина F-007 установлена 2026-09-13 по логам CI (run #18):
+- Web gate падает с `Bad state: Failed to load WASM loader script:
+  assets/packages/yuv_ffi/assets/wasm/yuv_ffi.js` в `setUpAll`.
+- Измерено напрямую: test-сервер `flutter test --platform chrome` отдаёт
+  `/static/index.html` → 200, но `/assets/packages/yuv_ffi/assets/wasm/yuv_ffi.js`
+  → **404** и `/assets/AssetManifest.json` → **404**. Harness не поднимает asset
+  bundle вообще.
+- Значит это ограничение test runner'а, а НЕ дефект пакета: `assets: -
+  assets/wasm/` в `pubspec.yaml` объявлен корректно, оба артефакта на месте
+  (`yuv_ffi.js` 13579 B, `yuv_ffi.wasm` 39809 B). Загрузчик инжектит
+  `<script src=...>`, который под harness'ем резолвиться не может ни на Windows,
+  ни на Linux — что и подтвердил идентичный отказ на ubuntu CI.
+- Следствие: `test/web/*` в текущем виде не могут проходить через
+  `flutter test --platform chrome` в принципе. Нужен либо build-based Web gate
+  (`flutter build web` + браузерный прогон), либо инжект артефактов в harness,
+  либо guard на недоступность модуля. Это меняет DoD YUV-02 и требует решения
+  владельца.
+
+VM job (`analyze-and-test-vm`) — отдельный дефект, исправлен:
+- `142 passed, 103 failed, 75 skipped` на CI объяснялись тем, что
+  `markTestSkipped()` не прерывает тело теста: все 119 reference-кейсов всё
+  равно шли в native-вызов и падали.
+- Воспроизведено локально скрытием `yuv_ffi.dll`: было `-103`, стало `~119`.
+  С библиотекой — `+90 -31`, без изменений.
+- Остаётся один намеренный failure: guard «native library required by the
+  backend is available». Ни один CI job не собирает нативную библиотеку
+  (`cmake`/`gcc` в `ci.yml` отсутствуют), поэтому VM gate не станет зелёным,
+  пока не добавлен шаг сборки `src/CMakeLists.txt` под Linux.
 - Поэтому YUV-02 не переведена в DONE, F-007 остаётся OPEN, а задачи,
   требующие фактического Web runtime, сохраняют YUV-02 как acceptance gate.
 
