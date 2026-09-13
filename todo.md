@@ -22,7 +22,10 @@
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | TODO | Web retest: YUV-02 | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
-| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
+| [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
+| [ ] | YUV-25 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Починить macOS C-forwarder: в pod target не попадает ни одна реализация |
+| [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | BLOCKED | разрешение на C | Убрать объявление `nv21_to_rgb` без реализации и отфильтровать ffigen |
+| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-26 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
 
 ## Статусы
 
@@ -1190,12 +1193,217 @@ git status --short
 
 ---
 
+## YUV-24 — устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt`
+
+- Владелец: Terra
+- Приоритет: P2
+- Статус: BLOCKED
+- Зависимости: отдельное явное разрешение владельца на изменение native build files
+- Scope:
+  - `src/CMakeLists.txt`
+  - повторный native build/runtime smoke на затронутых платформах
+- Опциональная задача: обнаружена при разборе ffigen 2026-09-13, в аудит `0.2.4` не входила.
+
+### Проблема
+
+Файл перечисляет исходники тремя пересекающимися способами:
+
+```cmake
+set_property(GLOBAL PROPERTY CMAKE_CONFIGURE_DEPENDS "yuv/*.c")
+file(GLOB_RECURSE SOURCES "yuv/*.c" "yuv_ffi.c" "**/*.c")
+add_library(yuv_ffi SHARED ${SOURCES} "yuv_ffi.c")
+```
+
+1. `yuv/*.c` рекурсивно даёт 39 файлов, `**/*.c` даёт те же 39, а `yuv_ffi.c` перечислен и в глобе, и явным аргументом `add_library`. Сейчас CMake дедуплицирует список, поэтому сборка не падает, но это конструкция, поведение которой различается между генераторами и версиями CMake.
+2. `CMAKE_CONFIGURE_DEPENDS` задан как `GLOBAL` property. Такого глобального свойства не существует — оно действует только на уровне директории. Фактически re-glob при добавлении файлов не настроен: новый `.c` не попадает в сборку, пока вручную не удалить CMake cache. Это наиболее вероятная причина наблюдавшегося «файлы не попадают в DLL».
+
+Проверено на собранном `yuv_ffi.dll` (144 КБ, 2026-09-13 16:04): 39 из 40 вызываемых Dart символов присутствуют, то есть сборка не «обрезана» полностью, но механизм обновления списка исходников не работает.
+
+### Предлагаемое решение
+
+1. Заменить три шаблона одним `file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.c")` и убрать повторное указание `yuv_ffi.c` в `add_library`.
+2. Удалить нерабочую строку `set_property(GLOBAL PROPERTY CMAKE_CONFIGURE_DEPENDS ...)`.
+3. Не менять флаги оптимизации, platform linking и `target_include_directories` — они вне scope.
+4. Альтернатива к обсуждению: заменить glob явным списком исходников. Это надёжнее для воспроизводимости, но требует ручной поддержки при добавлении файлов.
+
+### DoD
+
+- Список исходников задан одним способом, без дублей.
+- Добавление нового `.c` в `src/yuv/**` попадает в сборку без ручной очистки CMake cache.
+- Состав экспортов DLL до и после изменения совпадает.
+- Native runtime smoke проходит на затронутых платформах.
+- Native C sources (`*.c`, `*.h`) не изменялись; изменён только build file.
+
+### Проверка
+
+```powershell
+flutter clean
+flutter pub get
+flutter test
+<native build command для платформы>
+<runtime smoke command>
+git diff --check
+git status --short
+```
+
+Отдельно: до и после изменения сравнить список экспортируемых символов DLL (`dumpbin /exports` из Visual Studio либо `nm -D` на Unix) и приложить фактическую команду.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-25 — починить macOS C-forwarder
+
+- Владелец: Terra
+- Приоритет: P2
+- Статус: BLOCKED
+- Зависимости: отдельное явное разрешение владельца на изменение C-forwarders; пересекается с YUV-06
+- Scope:
+  - `macos/Classes/**`
+  - при необходимости `macos/yuv_ffi.podspec`
+  - macOS build/runtime smoke
+- Опциональная задача: обнаружена при разборе ffigen 2026-09-13.
+
+### Проблема
+
+`macos/Classes/yuv_ffi.c` состоит из одной директивы:
+
+```c
+#include "../../src/yuv_ffi.c"
+```
+
+`src/yuv_ffi.c` содержит только `#include "yuv_ffi.h"`, то есть исключительно объявления. Podspec собирает `Classes/**/*`, поэтому в macOS pod target не попадает **ни одна реализация** YUV/BGRA операций.
+
+Для сравнения, iOS-форвардеры подключают полный набор: `ios/Classes/yuv_ffi.c` тянет `src/yuv_ffi.c`, `yuv/utils/gauss.c` и `yuv/yuv.c`, плюс `bgra8888.c`, `nv21.c`, `yuv420.c` перечисляют по 12–13 файлов каждый.
+
+Дополнительный дефект того же корня: списки в iOS-форвардерах поддерживаются вручную и уже содержат опечатки вида `bgra8888//bgra8888_rotate.c` (двойной слэш). При добавлении нового `.c` его нужно не забыть дописать в трёх местах, иначе он молча не попадёт в Apple-сборку.
+
+Это та же корневая причина, что и в YUV-06, но YUV-06 сформулирована вокруг loader paths и packaging. Здесь scope у́же: состав исходников в pod target.
+
+### Предлагаемое решение
+
+1. Привести `macos/Classes` к проверенному iOS-набору.
+2. Предпочтительно вынести общий список в один файл-манифест, подключаемый и из iOS, и из macOS, чтобы список исходников жил в одном месте, а не в трёх.
+3. Не дублировать одни и те же translation units дважды в одном target — это даст duplicate symbol на линковке.
+4. Исправить двойные слэши в существующих iOS-форвардерах.
+5. Координировать с YUV-06, чтобы не разделить один и тот же macOS-фикс между двумя commits.
+
+### DoD
+
+- macOS pod target содержит реализации всех операций, вызываемых из Dart.
+- Все generated binding symbols резолвятся в macOS runtime.
+- Дублирующихся translation units нет; линковка проходит без duplicate symbol.
+- Runtime smoke на macOS выполняет реальную конверсию, а не только проверку загрузки.
+- В результате приложена ссылка на разрешение владельца на изменение C-forwarders.
+
+### Проверка
+
+```text
+flutter clean
+flutter pub get
+flutter build macos
+<runtime smoke command>
+git diff --check
+git status --short
+```
+
+Не анализировать содержимое `build/`; использовать только exit code.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-26 — убрать `nv21_to_rgb` без реализации и отфильтровать ffigen
+
+- Владелец: Luna
+- Приоритет: P3
+- Статус: BLOCKED
+- Зависимости: отдельное явное разрешение владельца на изменение `src/**/*.h`
+- Scope:
+  - `src/yuv/nv21.h`
+  - `src/yuv/nv21/h/nv21_to_rgb.h`
+  - `ffigen.yaml`
+  - `lib/src/functions/bindings/yuv_ffi_bingings.dart` только через регенерацию
+- Опциональная задача: обнаружена при разборе ffigen 2026-09-13.
+
+### Проблема
+
+Две связанные части.
+
+**1. Объявление без определения.** `src/yuv/nv21/h/nv21_to_rgb.h` объявляет `nv21_to_rgb`, `nv21.h:7` его подключает, ffigen генерирует биндинг (`yuv_ffi_bingings.dart:9721`), но файла `nv21_to_rgb.c` не существует. Проверка `yuv_ffi.dll` подтверждает: символа в библиотеке нет. Dart-код функцию не вызывает, а `_lookup` ленивый (`late final`), поэтому сейчас это не падает — при вызове был бы `ArgumentError: Failed to lookup symbol`.
+
+**2. Отсутствие фильтров в ffigen.** `ffigen.yaml` не содержит ни одного фильтра. По умолчанию ffigen включает всё, достижимое транзитивно из entry point, а `yuv.h` подключает `stdio.h`/`stdlib.h`/`string.h`/`math.h`. Результат — 10 770 строк, из которых полезны 40 функций; остальное это Windows CRT (`_wfopen`, `__security_init_cookie`, `_iobuf`, `__crt_locale_data`). Хуже того, биндинги привязаны к платформе генерации: заголовки MSVC зашиты в файл, который используется и на Android, и на iOS.
+
+Вторая часть не является дефектом рантайма: лишние `late final` не выполняются. Это вопрос размера, читаемости и переносимости generated-файла.
+
+### Предлагаемое решение
+
+1. Решить судьбу `nv21_to_rgb`: либо написать `nv21_to_rgb.c`, либо удалить заголовок и строку `nv21.h:7`. Рекомендуется удалить — функция не используется, а конверсия NV21→BGRA уже есть.
+2. Добавить в `ffigen.yaml` фильтры (ffigen 13.0.0 использует YAML-конфиг, а не программный `FfiGenerator` из ffigen 20+):
+
+```yaml
+headers:
+  entry-points:
+    - 'src/yuv_ffi.h'
+  include-directives:
+    - 'src/yuv/**'
+
+exclude-all-by-default: true
+
+functions:
+  include:
+    - 'yuv420_.*'
+    - 'nv21_.*'
+    - 'bgra8888_.*'
+    - 'nvXX_to_nvYY'
+
+structs:
+  include:
+    - 'YUVDef'
+```
+
+3. `include-directives` и `exclude-all-by-default` намеренно дублируют друг друга: первый не даёт парсеру выйти за `src/yuv/`, второй режет по именам. Вместе они защищают от регресса при добавлении нового `#include`.
+4. Регенерировать биндинги, не редактируя generated-файл вручную (общее ограничение 4).
+5. Учесть, что `freeYUVDef` в `src/yuv/yuv.c:3` объявлена без `FFI_PLUGIN_EXPORT` и не экспортируется. Под фильтр она не попадает — это корректно, но если освобождение памяти планировалось через неё, это отдельный вопрос вне scope.
+
+### DoD
+
+- В generated-файле нет символов CRT и платформо-зависимых структур.
+- Все 40 вызываемых из Dart символов присутствуют в биндингах.
+- `nv21_to_rgb` отсутствует и в заголовках, и в биндингах, либо имеет реализацию в DLL.
+- Регенерация на другой платформе даёт эквивалентный по составу файл.
+- `flutter analyze` не содержит новых diagnostics; полный VM suite не даёт новых падений.
+- Generated-файл получен только генерацией, ручных правок нет.
+
+### Проверка
+
+```powershell
+flutter pub run ffigen --config ffigen.yaml
+flutter analyze
+flutter test
+dart format --output=none --set-exit-if-changed lib
+git diff --check
+git status --short
+```
+
+В результате записать число строк generated-файла до и после, а также список символов, исчезнувших из публичного API класса `YuvFfiBindings`.
+
+### Результат
+
+Не заполнен.
+
+---
+
 ## YUV-18 — финальная приёмка и подготовка `0.2.5`
 
 - Владелец: Terra
 - Приоритет: P0 / release gate
 - Статус: BLOCKED
-- Зависимости: YUV-01…YUV-17, YUV-19…YUV-23
+- Зависимости: YUV-01…YUV-17, YUV-19…YUV-26
 - Scope:
   - интеграционное ревью всех task commits;
   - `pubspec.yaml` и верхняя запись `CHANGELOG.md`;
@@ -1224,7 +1432,7 @@ git status --short
 
 ### DoD
 
-- Все YUV-01…YUV-17 и YUV-19…YUV-23 имеют статус `DONE` и независимое verification evidence.
+- Все YUV-01…YUV-17 и YUV-19…YUV-26 имеют статус `DONE` и независимое verification evidence.
 - Полная reference matrix на `test_pattern_512.png` проходит на native и Web либо имеет явно согласованные ограничения; unresolved P0/P1 failures отсутствуют.
 - P0/P1 findings из аудита либо устранены, либо явно сняты владельцем с документированным основанием.
 - `flutter analyze` проходит из корня.
