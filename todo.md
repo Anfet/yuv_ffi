@@ -11,8 +11,8 @@
 | [ ] | YUV-01 | Terra | P0 | READY FOR REVIEW | — | Починить компиляцию Web JS interop и привести platform-specific helper к структуре проекта |
 | [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
-| [ ] | YUV-04 | Opus | P0 | READY FOR REVIEW | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
-| [ ] | YUV-05 | Opus | P0 | READY FOR REVIEW | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
+| [x] | YUV-04 | Opus | P0 | DONE | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
+| [ ] | YUV-05 | Opus | P0 | REJECTED | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-01, YUV-04, YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
@@ -358,7 +358,7 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P0 / memory-safety blocker
-- Статус: REJECTED
+- Статус: DONE
 - Зависимости: YUV-03, YUV-16 (принята в предыдущем commit)
 - Scope:
   - `lib/src/yuv/yuv.dart`
@@ -564,6 +564,34 @@ Native C permission:
 - flutter analyze lib test — exit 0, "No issues found!"
 - dart format --set-exit-if-changed по изменённым файлам — exit 0
 - git diff --check — exit 0
+```
+
+### Независимая приёмка root, 2026-09-13 (второй заход)
+
+```text
+Статус: DONE.
+
+Принятые исправления:
+- default constructors IO/Web/stub валидируют созданные planes;
+- IO/Web `load()` собирают и валидируют локальный кандидат до изменения
+  состояния объекта;
+- padded BGRA отклоняется до небезопасных blur-вызовов;
+- named IO BGRA требует ровно одну plane;
+- NV допускает только поддерживаемый packed-pair `uvPixelStride == 2`, а
+  I420 U/V обязаны иметь одинаковые strides.
+
+Независимые проверки:
+- `flutter test --no-pub test/yuv_geometry_rejection_test.dart
+  test/nv_chroma_order_test.dart --reporter expanded` — exit 0, 19/19;
+- `flutter test --no-pub test/yuv_plane_validation_test.dart
+  test/native_stride_safety_test.dart test/conversions_test.dart
+  --reporter expanded` — exit 0, 52/52;
+- `flutter analyze --no-pub lib test` — exit 0, `No issues found!`;
+- `git diff --check 6b6534e..HEAD` — exit 0.
+
+Web runtime остаётся общим F-007/YUV-01 gate, но YUV-04 использует один shared
+validator на IO и Web, а прежние небезопасные Web paths закрыты до WASM call.
+Generated bindings и native C в scope YUV-04 не изменялись.
 ```
 
 ---
@@ -849,6 +877,48 @@ Native C permission:
 - Разрешение владельца получено ранее в этой сессии; для правки VU->UV
   владелец дополнительно потребовал сначала подтвердить дефект тестом, что и
   сделано в `test/nv_chroma_order_test.dart`.
+```
+
+### Независимая приёмка root, 2026-09-13 (второй заход)
+
+```text
+Статус: REJECTED; YUV-05 не соответствует собственному DoD.
+
+Что подтверждено:
+- прежние P0-дефекты Web `swapNv()` и произвольного NV `uvPixelStride`
+  исправлены;
+- I420<->NV копирует logical Y samples с раздельными pixel strides;
+- direct RGBA->legacy-nv21 теперь сохраняет установленный UV/NV12-like
+  порядок;
+- focused suites проходят: 19/19 новых и 52/52 смежных тестов;
+- analyzer и diff check чистые, WASM artifact обновлён.
+
+Блокеры повторной приёмки:
+- P0: полный эталонный прогон завершился `165 passed / 53 failed`. В числе
+  оставшихся — шесть I420/NV cases
+  `INPUT-ODD-CUSTOM-STRIDE-{I420,NV21}-{1X1,3X5,127X255}`, чья manifest
+  purpose прямо указывает YUV-05. `fromRgba8888()` создаёт native destination
+  через `YUVDefClass.template`, поэтому padding исходных padded planes
+  заменяется нулями вместо сохранения canary bytes. Карточка требует
+  корректную работу с padded destination и детерминированную сверку этих
+  размеров; переносить эти cases в YUV-22/23 нельзя.
+- P1: новые focused tests не проверяют custom `yPixelStride > 1`, каждую
+  крайнюю chroma sample для `3x5`/`127x255` и Web padded `swapNv()`, хотя это
+  было отдельным замечанием предыдущей приёмки.
+- P0 gate: ASan/UBSan не запускался. На машине при этом обнаружен установленный
+  runtime LLVM 16 (`clang_rt.asan_dynamic-x86_64.dll/.lib`), поэтому заявление
+  об отсутствии sanitizer runtime требует повторной проверки и точной команды.
+- P0 gate: WASM ни разу не исполнялся; native<->WASM numeric tolerance и
+  размеры `1x1`, `3x5`, `127x255` на Web не подтверждены. Это прямо отмечено
+  самим исполнителем как незакрытый DoD.
+- P2: верхние комментарии `nv21_to_420.c` и `yuv420_to_nv21.c` всё ещё
+  описывают VU/NV21, хотя код и принятый compatibility contract используют
+  UV/NV12-like order. Комментарии должны однозначно отражать установленный
+  контракт.
+
+До закрытия этих пунктов YUV-22 и YUV-23 остаются BLOCKED по зависимости
+YUV-05. Разрешение владельца на native C для YUV-05 подтверждено, но оно не
+заменяет невыполненные проверки.
 ```
 
 ---
