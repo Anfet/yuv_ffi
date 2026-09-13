@@ -12,7 +12,7 @@
 | [ ] | YUV-02 | Luna | P0 | READY FOR REVIEW | YUV-01 | Сделать Web CI реальным обязательным gate, а не VM-запуском со skip |
 | [x] | YUV-03 | Luna | P1 | DONE | — | Исправить потерю Y-плоскости в native `swapNv()` и закрыть регресс тестами |
 | [x] | YUV-04 | Opus | P0 | DONE | YUV-03, YUV-16 | Валидировать геометрию и planes до любого FFI-вызова |
-| [ ] | YUV-05 | Root | P0 | READY FOR REVIEW | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
+| [x] | YUV-05 | Root | P0 | DONE | YUV-04 + разрешение на C | Исправить native stride/odd-size безопасность конверсий и обновить WASM |
 | [ ] | YUV-06 | Terra | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-07 | Opus | P2 | BLOCKED | YUV-04 | Сделать сериализацию проверяемой, транзакционной и одинаковой на IO/Web |
 | [ ] | YUV-08 | Luna | P2 | BLOCKED | YUV-01, YUV-04, YUV-15 | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
@@ -28,8 +28,8 @@
 | [x] | YUV-19 | Terra | P1 | DONE | — | Починить кэш экземпляра `YuvFfiBindings` в native loader |
 | [ ] | YUV-20 | Opus | P1 | BLOCKED | YUV-01 | Сделать ключ image cache корректным для мутабельного `YuvImage` |
 | [ ] | YUV-21 | Opus | P1 | BLOCKED | YUV-01 | Зафиксировать retry/error/lazy-init контракт IO и Web |
-| [ ] | YUV-22 | Opus | P1 | BLOCKED | YUV-04, YUV-05 + разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
-| [ ] | YUV-23 | Opus | P0 | BLOCKED | YUV-04, YUV-05 + разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
+| [ ] | YUV-22 | Opus | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
+| [ ] | YUV-23 | Opus | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-18 | Terra | P0 | BLOCKED | YUV-01…YUV-17, YUV-19…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
 
 ## Статусы
@@ -600,7 +600,7 @@ Generated bindings и native C в scope YUV-04 не изменялись.
 
 - Владелец: Root (финальное исправление после двух заходов Opus)
 - Приоритет: P0 / memory-safety blocker
-- Статус: READY FOR REVIEW
+- Статус: DONE
 - Зависимости: YUV-04 (принята) и разрешение владельца на изменение native C (получено)
 - Scope:
   - `src/yuv/yuv420/yuv420_from_rgba.c`
@@ -985,6 +985,33 @@ WASM runtime:
 
 Рабочее дерево после commit содержит только ранее существовавшие, не входящие
 в YUV-05 изменения: `example/pubspec.lock` и `dart-architecture-audit.md`.
+```
+
+### Независимая приёмка Sol-high, 2026-09-13
+
+```text
+Статус: ACCEPTED; YUV-05 переведена в DONE.
+
+Независимо подтверждены:
+- Flutter 3.44.9 focused suite — 14/14 passed;
+- `INPUT-ODD-CUSTOM-STRIDE` — 9/9 passed с точным совпадением manifest hashes;
+- MSVC ASan harness — exit 0, diagnostics отсутствуют;
+- Node runtime harness исполнил tracked SIMD WASM — exit 0, exact YUV values;
+- чистая сборка Emscripten 5.0.1 побайтово совпала с tracked JS/WASM;
+- analyzer, format check и `git diff --check 72c3f0d..HEAD` — exit 0.
+
+Проверкой кода подтверждены IO/Web tight BGRA staging, сохранение padded/custom
+destination, layout-safe Web `swapNv()`, sample-wise Y copy при различных
+pixel strides, полный odd-edge chroma coverage и установленный UV/NV12-like
+порядок legacy `nv21`.
+
+F-007 остаётся ограничением локального Windows Chrome runner, но не блокером
+YUV-05: фактический tracked WASM artifact исполнен Node harness, Dart Web
+wrappers покрыты тестами и статическим анализом.
+
+Зависимость YUV-05 для YUV-22 и YUV-23 выполнена и снята. Обе карточки всё ещё
+BLOCKED только до отдельного явного разрешения владельца на их собственные
+изменения native C; разрешение на YUV-05 автоматически не переносится.
 ```
 
 ---
@@ -2010,7 +2037,7 @@ git status --short
 - Владелец: Opus
 - Приоритет: P1
 - Статус: BLOCKED
-- Зависимости: YUV-04, YUV-05 и отдельное разрешение владельца на изменение native C
+- Зависимости: отдельное разрешение владельца на изменение native C (YUV-04 и YUV-05 приняты)
 - Scope:
   - `src/yuv/{bgra8888,yuv420,nv21}/*{grayscale,blackwhite,negate}.c`
   - соответствующие headers только при необходимости изменения ABI
@@ -2067,7 +2094,7 @@ git status --short
 - Владелец: Opus
 - Приоритет: P0
 - Статус: BLOCKED
-- Зависимости: YUV-04, YUV-05 и отдельное разрешение владельца на изменение native C
+- Зависимости: отдельное разрешение владельца на изменение native C (YUV-04 и YUV-05 приняты)
 - Scope:
   - `src/yuv/{bgra8888,yuv420,nv21}/*{gaussblur,box_blur,mean_blur}.c`
   - `src/yuv/utils/gauss.c` и headers при необходимости
