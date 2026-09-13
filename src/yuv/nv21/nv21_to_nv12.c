@@ -1,26 +1,26 @@
 #include "../yuv.h"
 
 
-// Меняет местами порядок интерлива chroma: (V,U) <-> (U,V).
+// Swaps the interleaved chroma order: (V,U) <-> (U,V).
 //
-// srcVU / dstUV : интерливные chroma-плоскости
-// width, height : размеры кадра в пикселях (не chroma)
-// stride        : общий row stride обеих плоскостей
+// srcVU / dstUV : interleaved chroma planes
+// width, height : frame size in pixels (not chroma size)
+// stride        : shared row stride of both planes
 //
-// ВНИМАНИЕ к ABI: один stride описывает сразу source и destination, поэтому
-// вызывающая сторона обязана передавать две плоскости с одинаковым layout.
-// Обёртки в Dart выделяют назначение с stride источника именно поэтому.
-// Сигнатура сохранена намеренно: её изменение потребовало бы синхронной
-// пересборки WASM-экспортов, а тулчейн emscripten доступен не везде.
+// ABI note: a single stride describes both the source and the destination, so
+// the caller must pass two planes with an identical layout. This is why the
+// Dart wrappers allocate the destination with the stride of the source. The
+// signature is kept deliberately: changing it would require rebuilding the
+// WASM exports in lockstep, and the emscripten toolchain is not available
+// everywhere.
 FFI_PLUGIN_EXPORT void nvXX_to_nvYY(uint8_t *srcVU, uint8_t *dstUV, int width, int height, int stride) {
-    // Нечётные размеры: chroma округляется вверх, как и при аллокации в Dart,
-    // иначе крайние строка и колонка остались бы неинициализированными.
+    // Odd sizes: chroma is rounded up, matching the ceil allocation on the Dart
+    // side. Otherwise the trailing row and column would stay uninitialized.
     const int uvWidth = (width + 1) / 2;
     const int uvHeight = (height + 1) / 2;
 
-    // Последняя пара занимает два байта, поэтому строка должна вмещать
-    // uvWidth * 2 байт; при более коротком stride обрабатываем столько пар,
-    // сколько реально помещается.
+    // The last pair occupies two bytes, so a row must hold uvWidth * 2 bytes.
+    // With a shorter stride, process only as many pairs as actually fit.
     int pairsPerRow = uvWidth;
     if (stride > 0 && stride / 2 < pairsPerRow) {
         pairsPerRow = stride / 2;

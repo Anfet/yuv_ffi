@@ -1,16 +1,16 @@
 #include "../yuv.h"
 
 /**
- * Конвертирует RGBA8888 -> NV21.
- * Требования:
- *  - NV21: Y-плоскость + интерлив VU (именно V затем U)
- *  - uvPixelStride == 2 (для пары VU на каждый 2x2-блок)
- *  - Формулы совпадают с yuv420_from_rgba8888 (BT.601, видео диапазон)
+ * Converts RGBA8888 -> NV21.
+ * Requirements:
+ *  - NV21: Y plane + interleaved VU (V first, then U)
+ *  - uvPixelStride == 2 (one VU pair per 2x2 block)
+ *  - Formulas match yuv420_from_rgba8888 (BT.601, video range)
  *
- * ВНИМАНИЕ к stride:
- *  - RGBA-вход по публичному контракту плотно упакован (width * height * 4),
- *    поэтому его row stride равен width * 4 и не зависит от yRowStride
- *    назначения, который может быть padded.
+ * Stride note:
+ *  - By the public contract the RGBA input is tightly packed
+ *    (width * height * 4), so its row stride is width * 4 and does not depend
+ *    on the destination yRowStride, which may be padded.
  */
 FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst) {
     uint8_t *yPlane = dst->y;
@@ -20,17 +20,17 @@ FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst
     const int yRowStride   = dst->yRowStride;
     const int yPixelStride = dst->yPixelStride;
     const int uvRowStride  = dst->uvRowStride;
-    const int uvPixelStride= dst->uvPixelStride; // ожидаем 2
+    const int uvPixelStride= dst->uvPixelStride; // expected to be 2
 
-    // (необязательно) защитимся от странного описателя:
+    // (optional) guard against an odd descriptor:
     if (uvPixelStride != 2) return;
 
-    // Плотно упакованный RGBA-вход: строка равна width * 4.
+    // Tightly packed RGBA input: a row is width * 4 bytes.
     const int rgbaRowStride = width * 4;
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            // Индекс в Y-плоскости
+            // Index inside the Y plane
             const int yIndex = yuv_index(x, y, yRowStride, yPixelStride);
             const int rgbaIndex = y * rgbaRowStride + x * 4;
 
@@ -38,20 +38,20 @@ FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst
             const int g = rgba[rgbaIndex + 1];
             const int b = rgba[rgbaIndex + 2];
 
-            // Те же коэффициенты (BT.601, видео-диапазон)
+            // Same coefficients (BT.601, video range)
             const int yValue = CLAMP(((66 * r + 129 * g + 25 * b + 128) >> 8) + 16);
             yPlane[yIndex] = (uint8_t)yValue;
 
-            // Хрому пишем раз в 2x2
+            // Chroma is written once per 2x2 block
             if ((x % 2 == 0) && (y % 2 == 0)) {
                 int sumU = 0, sumV = 0;
 
                 const int x0 = x;
                 const int y0 = y;
 
-                // Собираем 2x2 блок с учётом границ и делим на фактическое
-                // количество пикселей, чтобы крайний блок нечётного размера
-                // не усреднялся по четырём несуществующим сэмплам.
+                // Gather the 2x2 block within bounds and divide by the actual
+                // pixel count, so an edge block of an odd-sized frame is not
+                // averaged over four non-existent samples.
                 int samples = 0;
 
                 for (int dy = 0; dy < 2; ++dy) {
@@ -69,14 +69,14 @@ FFI_PLUGIN_EXPORT void nv21_from_rgba8888(const uint8_t *rgba, const YUVDef *dst
                         const int gg = p[1];
                         const int bb = p[2];
 
-                        // U и V из RGBA
+                        // U and V from RGBA
                         sumU += ((-38 * rr - 74 * gg + 112 * bb + 128) >> 8) + 128;
                         sumV += ((112 * rr - 94 * gg - 18 * bb + 128) >> 8) + 128;
                         ++samples;
                     }
                 }
 
-                // Индекс хромы для NV21 (VU-пара на каждый блок)
+                // Chroma index for NV21 (one VU pair per block)
                 const int uvIndex = yuv_index(x / 2, y / 2, uvRowStride, uvPixelStride);
                 uv[uvIndex + 0] = (uint8_t)CLAMP(sumV / samples); // V
                 uv[uvIndex + 1] = (uint8_t)CLAMP(sumU / samples); // U
