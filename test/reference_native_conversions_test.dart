@@ -76,11 +76,39 @@ void main() {
   }
 }
 
+/// Locates the native library for provenance reporting only.
+///
+/// This used to hardcode `native/src/build/libyuv_ffi.*`, the CMake build tree.
+/// Since YUV-06 the loader opens the library by its installed name, so the
+/// build output no longer has to sit in that directory — and a probe pinned to
+/// it reported `exists=false` and skipped all 119 cases while the library was
+/// perfectly loadable. The search order below mirrors where a real install puts
+/// the file: the loader's own search path first, then the legacy build tree so
+/// an existing local checkout keeps working.
 File? _nativeLibraryFile() {
-  if (Platform.isWindows) return File('yuv_ffi.dll');
-  if (Platform.isLinux) return File('native/src/build/libyuv_ffi.so');
-  if (Platform.isMacOS) return File('native/src/build/libyuv_ffi.dylib');
-  return null;
+  if (Platform.isWindows) return _firstExisting(<String>['yuv_ffi.dll']);
+  final String name = Platform.isLinux
+      ? 'libyuv_ffi.so'
+      : Platform.isMacOS
+          ? 'libyuv_ffi.dylib'
+          : '';
+  if (name.isEmpty) return null;
+
+  final searchPath = Platform.environment[Platform.isMacOS ? 'DYLD_LIBRARY_PATH' : 'LD_LIBRARY_PATH'] ?? '';
+  return _firstExisting(<String>[
+    for (final dir in searchPath.split(Platform.isWindows ? ';' : ':').where((d) => d.isNotEmpty)) '$dir/$name',
+    'native/src/build/$name',
+  ]);
+}
+
+/// First path that exists, or the first candidate so the log still names what
+/// was looked for when nothing was found.
+File? _firstExisting(List<String> candidates) {
+  for (final path in candidates) {
+    final file = File(path);
+    if (file.existsSync()) return file;
+  }
+  return candidates.isEmpty ? null : File(candidates.first);
 }
 
 List<Map<String, dynamic>> _casesFromManifest() {

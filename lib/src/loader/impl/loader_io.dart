@@ -99,8 +99,20 @@ ffi.DynamicLibrary _openIfNeeded() {
 /// - iOS/macOS link the sources into the pod target, so the symbols are already
 ///   in the running process and there is no separate file to open.
 ffi.DynamicLibrary _openYuvLibrary() {
-  if (Platform.isMacOS || Platform.isIOS) {
+  if (Platform.isIOS) {
     return ffi.DynamicLibrary.process();
+  }
+  if (Platform.isMacOS) {
+    // In a real macOS app the sources are linked into the pod target, so the
+    // symbols are already in the process. A plain Dart VM — `flutter test`, a
+    // command-line host — links nothing, and `process()` there resolves to a
+    // handle whose first symbol lookup throws "symbol not found". Falling back
+    // to the installed dylib keeps both hosts working.
+    final fromProcess = ffi.DynamicLibrary.process();
+    if (fromProcess.providesSymbol('yuv420_from_rgba8888')) {
+      return fromProcess;
+    }
+    return ffi.DynamicLibrary.open('libyuv_ffi.dylib');
   }
   if (Platform.isLinux || Platform.isAndroid) {
     return ffi.DynamicLibrary.open('libyuv_ffi.so');
