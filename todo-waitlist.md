@@ -7,30 +7,30 @@
 
 ## Чеклист waitlist
 
-| Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
-|---|---|---|---|---|---|---|---|
-| [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | Linux/macOS app-runtime environment; Android/iOS build evidence | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-40 | Завершить полную Web/WASM reference matrix |
-| [ ] | YUV-40 | Terra | Claude Sonnet 5 | P1 | DISCOVERED | одобрение инженера | Изолировать и диагностировать обрыв Web/WASM matrix на `FORMAT-TO-NV21-BGRA-TIGHT` |
-| [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06, YUV-08, YUV-13, YUV-22, YUV-23, YUV-30, YUV-32 | Синхронизировать README, platform matrix и analyzer workflow |
-| [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Сверить покрытие и оформить проваленные test cases |
-| [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | YUV-30, YUV-33 | Выровнять effects contract, addressing и odd chroma |
-| [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | YUV-30, YUV-33 | Исправить blur safety, параметры и межформатный контракт |
-| [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 / optional | TODO | выбор ревьюера | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
-| [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | DELAYED | Unix regeneration evidence | Ограничить ffigen ABI и убрать platform CRT |
-| [ ] | YUV-28 | Opus | Claude Opus 5 | P2 | BLOCKED | после YUV-18 | Сократить дубли backend-классов после релиза |
-| [ ] | YUV-29 | Luna | Claude Haiku 4.5 | P3 / optional | TODO | выбор ревьюера | Удалить неиспользуемое объявление `nv21_to_rgb` без реализации |
-| [ ] | YUV-30 | Root | Claude Opus 5 | P0 | DISCOVERED | решение владельца по 5 контрактам | Зафиксировать effects/blur/ROI policy |
-| [ ] | YUV-31 | Opus | Claude Opus 5 | P0 | BLOCKED | YUV-30, YUV-33 | Сделать rotate/crop/flip stride-safe на odd 4:2:0 |
-| [ ] | YUV-32 | Opus | Claude Opus 5 | P1 | BLOCKED | YUV-30, YUV-33 | Унифицировать RGBA/BGRA→YUV contract |
-| [ ] | YUV-33 | Opus | Claude Opus 5 | P0 | BLOCKED | YUV-30 | Ввести checked native boundary primitives |
-| [ ] | YUV-34 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-22, YUV-23, YUV-31…YUV-33 | Добавить ASan/UBSan native safety gate |
-| [ ] | YUV-35 | Terra | Claude Sonnet 5 | P2 | BLOCKED | YUV-29 | Синхронизировать C ownership/mutation declarations |
-| [ ] | YUV-36 | Opus | Claude Opus 5 | P2 | BLOCKED | после `0.2.5`, YUV-33 | Спроектировать status-returning native ABI |
-| [ ] | YUV-37 | Terra | Claude Sonnet 5 | OPT | BLOCKED | после YUV-23 | Оптимизировать blur scratch и сложность |
-| [ ] | YUV-38 | Terra | Claude Sonnet 5 | OPT | BLOCKED | после YUV-32 | Оптимизировать block conversion |
-| [ ] | YUV-39 | Terra | Claude Sonnet 5 | P2 / optional | TODO | выбор ревьюера | Исследовать проверенные stride-aware implementations |
-| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-06, YUV-08, YUV-09, YUV-12, YUV-13, YUV-22, YUV-23, YUV-30…YUV-34 | Финальная приёмка `0.2.5` |
+| ID | Владелец / модель | Статус | Зависит от | Что должен получить инженер |
+|---|---|---|---|---|
+| YUV-06 | Terra / Claude Opus 5 | BLOCKED | Linux/macOS app-runtime среда; Android/iOS build evidence | Плагин загружает native library из установленного пакета на Linux/macOS, а CI подтверждает desktop runtime и mobile builds |
+| YUV-12 | Luna / Claude Sonnet 5 | BLOCKED | YUV-40 | Полный результат 119-case Web/WASM matrix на реальном Chrome с учётом каждого падения |
+| YUV-40 | Terra / Claude Sonnet 5 | DISCOVERED | одобрение инженера | Доказанная причина обрыва `FORMAT-TO-NV21-BGRA-TIGHT` и узкая follow-up задача без изменения production-кода |
+| YUV-09 | Luna / Claude Sonnet 5 | BLOCKED | YUV-06, YUV-08, YUV-13, YUV-22, YUV-23, YUV-30, YUV-32 | README, platform matrix, release notes и analysis gates соответствуют реально принятому поведению |
+| YUV-13 | Terra / Claude Sonnet 5 | BLOCKED | YUV-11, YUV-12 | Сопоставление native/Web 119-case matrix с раздельными общими и Web-specific failure cases |
+| YUV-22 | Opus / Claude Opus 5 | BLOCKED | YUV-30, YUV-33 | Effects имеют единый документированный contract для addressing, odd chroma и всех форматов |
+| YUV-23 | Opus / Claude Opus 5 | BLOCKED | YUV-30, YUV-33 | Blur работает memory-safe, принимает согласованные параметры и одинаково ведёт себя в BGRA/I420/NV21 |
+| YUV-24 | Terra / Claude Sonnet 5 | TODO | выбор ревьюера | CMake не дублирует исходники и корректно пересобирает библиотеку после добавления C-файла |
+| YUV-26 | Luna / Claude Haiku 4.5 | DELAYED | Unix regeneration evidence | ffigen генерирует только используемый ABI без platform CRT declarations |
+| YUV-28 | Opus / Claude Opus 5 | BLOCKED | после YUV-18 | После release устранено подтверждённое дублирование Dart backend-классов без изменения публичного поведения |
+| YUV-29 | Luna / Claude Haiku 4.5 | TODO | выбор ревьюера | Header не объявляет несуществующую `nv21_to_rgb`, а public ABI и bindings остаются согласованными |
+| YUV-30 | Root / Claude Opus 5 | DISCOVERED | решение владельца по 5 контрактам | Согласованные владельцем contracts effects, blur и ROI, по которым можно безопасно реализовывать C-задачи |
+| YUV-31 | Opus / Claude Opus 5 | BLOCKED | YUV-30, YUV-33 | rotate/crop/flip корректно обрабатывают row/pixel stride и нечётную 4:2:0 геометрию |
+| YUV-32 | Opus / Claude Opus 5 | BLOCKED | YUV-30, YUV-33 | Преобразования RGBA/BGRA→YUV используют единые channel order, stride и chroma semantics |
+| YUV-33 | Opus / Claude Opus 5 | BLOCKED | YUV-30 | Native boundary проверяет descriptors, индексы и allocations до unsafe C-операций |
+| YUV-34 | Terra / Claude Sonnet 5 | BLOCKED | YUV-22, YUV-23, YUV-31…YUV-33 | CI ловит native memory errors через ASan/UBSan на затронутых regression cases |
+| YUV-35 | Terra / Claude Sonnet 5 | BLOCKED | YUV-29 | C API явно описывает ownership и mutation для каждого buffer argument |
+| YUV-36 | Opus / Claude Opus 5 | BLOCKED | после `0.2.5`, YUV-33 | Спроектирован совместимый status-returning ABI для контролируемой передачи C-ошибок в Dart |
+| YUV-37 | Terra / Claude Sonnet 5 | BLOCKED | после YUV-23 | Blur уменьшает scratch allocation и сложность без изменения принятого результата |
+| YUV-38 | Terra / Claude Sonnet 5 | BLOCKED | после YUV-32 | Block conversion оптимизирована после фиксации семантики без потери stride correctness |
+| YUV-39 | Terra / Claude Sonnet 5 | TODO | выбор ревьюера | Исследование выбирает внешние stride-aware reference implementations и критерии их безопасного применения |
+| YUV-18 | Terra / Claude Sonnet 5 | BLOCKED | YUV-06, YUV-08, YUV-09, YUV-12, YUV-13, YUV-22, YUV-23, YUV-30…YUV-34 | Releasable `0.2.5`: зависимости приняты, P0/P1 failures закрыты, clean matrix и publish dry-run проходят |
 
 ## Правила waitlist
 
@@ -52,10 +52,9 @@
 
 ---
 
-## YUV-09 — синхронизировать документацию и локальные quality gates
+## YUV-09 — P2 — синхронизировать документацию и локальные quality gates
 
-- Владелец: Luna
-- Приоритет: P2
+- Владелец / модель: Luna / Claude Sonnet 5
 - Статус: BLOCKED
 - Зависимости: YUV-06, YUV-08, YUV-13, YUV-22, YUV-23, YUV-30, YUV-32 (YUV-01/YUV-02/YUV-05/YUV-07/YUV-14/YUV-17 приняты)
 - Scope:
@@ -116,10 +115,9 @@ git status --short
 
 ---
 
-## YUV-13 — сверить покрытие и оформить проваленные test cases
+## YUV-13 — P1 — сверить покрытие и оформить проваленные test cases
 
-- Владелец: Terra
-- Приоритет: P1
+- Владелец / модель: Terra / Claude Sonnet 5
 - Статус: BLOCKED
 - Зависимости: YUV-11, YUV-12
 - Scope:
@@ -134,7 +132,7 @@ git status --short
 ### Зафиксированное решение
 
 1. Сопоставить manifest с фактически выполненными native/Web case IDs.
-2. Для каждого missing case вернуть YUV-11 или YUV-12 в `REJECTED`.
+2. Для каждого missing case вернуть YUV-11 или YUV-12 в `CHANGES REQUESTED`.
 3. Для каждого failed case создать или обновить отдельную запись в `failed-test-cases.md`.
 4. Не объединять падения с разной root cause в одну запись. Один case на двух backends допускает общий failure ID только при доказанной общей причине; backend evidence всё равно записывается отдельно.
 5. Каждую запись связать с существующей fix-задачей. Для нового дефекта добавить в `todo.md` отдельную узкую карточку Terra/Luna с dependencies и DoD.
@@ -172,10 +170,9 @@ git status --short
 
 ---
 
-## YUV-22 — определить и выровнять контракт effects
+## YUV-22 — P1 — определить и выровнять контракт effects
 
-- Владелец: Opus
-- Приоритет: P1
+- Владелец / модель: Opus / Claude Opus 5
 - Статус: BLOCKED
 - Зависимости: YUV-30, YUV-33 (YUV-04 и YUV-05 приняты; разрешение владельца на native C получено 2026-09-14)
 - Scope:
@@ -252,10 +249,9 @@ git status --short
 
 ---
 
-## YUV-23 — исправить blur memory safety и межформатную семантику
+## YUV-23 — P0 — исправить blur memory safety и межформатную семантику
 
-- Владелец: Opus
-- Приоритет: P0
+- Владелец / модель: Opus / Claude Opus 5
 - Статус: BLOCKED
 - Зависимости: YUV-30, YUV-33 (YUV-04 и YUV-05 приняты; разрешение владельца на native C получено 2026-09-14)
 - Scope:
@@ -339,10 +335,9 @@ git status --short
 
 ---
 
-## YUV-24 — устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt`
+## YUV-24 — P2 — устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt`
 
-- Владелец: Terra
-- Приоритет: P2
+- Владелец / модель: Terra / Claude Sonnet 5
 - Статус: TODO
 - Зависимости: нет; разрешение владельца на native build files получено 2026-09-14.
 - Scope:
@@ -406,13 +401,11 @@ git status --short
 
 ---
 
-## YUV-26 — ограничить ffigen только используемым ABI
+## YUV-26 — P3 — ограничить ffigen только используемым ABI
 
-- Владелец: Luna
-- Приоритет: P3
+- Владелец / модель: Luna / Claude Haiku 4.5; при расхождении generated ABI повысить до Claude Sonnet 5
 - Статус: DELAYED
 - Зависимости: нет
-- Anthropic-вариант: Claude Haiku 4.5; при расхождении generated ABI повысить до Claude Sonnet 5
 - Scope:
   - `ffigen.yaml`
   - `lib/src/functions/bindings/yuv_ffi_bingings.dart` только через регенерацию
@@ -627,7 +620,7 @@ DoD пока не выполнен.
 
 ### Повторное независимое ревью root 2026-09-14
 
-Статус: `REJECTED`.
+Статус: `CHANGES REQUESTED`.
 
 Предыдущее замечание не устранено: текущие GitHub Actions jobs не запускают
 ffigen и не сравнивают generated ABI, поэтому зелёные run #24/#25 не являются
@@ -653,13 +646,11 @@ Native headers/sources менять не требуется. Generated bindings 
 
 ---
 
-## YUV-28 — сократить дублирование Dart backend-классов после `0.2.5`
+## YUV-28 — P2 / architecture — сократить дублирование Dart backend-классов после `0.2.5`
 
-- Владелец: Opus
-- Приоритет: P2 / architecture
+- Владелец / модель: Opus / Claude Opus 5
 - Статус: BLOCKED
 - Зависимости: выполнять только после YUV-18; YUV-07 и YUV-20 должны быть DONE
-- Anthropic-вариант: Claude Opus 5
 - Scope:
   - shared Dart state/geometry/serialization abstractions
   - `lib/src/yuv/impl/io/yuv_image.dart`
@@ -723,13 +714,11 @@ git status --short
 
 ---
 
-## YUV-29 — удалить native-объявление `nv21_to_rgb` без реализации
+## YUV-29 — P3 — удалить native-объявление `nv21_to_rgb` без реализации
 
-- Владелец: Luna
-- Приоритет: P3
+- Владелец / модель: Luna / Claude Haiku 4.5; при обнаружении ABI consumer повысить до Claude Sonnet 5
 - Статус: TODO
 - Зависимости: нет; разрешение владельца на native headers получено 2026-09-14.
-- Anthropic-вариант: Claude Haiku 4.5; при обнаружении ABI consumer повысить до Claude Sonnet 5
 - Scope:
   - `src/yuv/nv21.h`
   - `src/yuv/nv21/h/nv21_to_rgb.h`
@@ -778,12 +767,10 @@ git status --short
 
 ---
 
-## YUV-30 — зафиксировать native effects/blur/ROI contract
+## YUV-30 — P0 / architecture gate — зафиксировать native effects/blur/ROI contract
 
-- Владелец: Root (Architect/Reviewer)
-- Anthropic-вариант: Claude Opus 5
+- Владелец / модель: Root (Architect/Reviewer) / Claude Opus 5
 - Ожидаемое reasoning: High
-- Приоритет: P0 / architecture gate
 - Статус: DISCOVERED
 - Зависимости: решение владельца по пяти публичным контрактам
 - Scope:
@@ -852,12 +839,10 @@ RGB-visible результат. Публичная документация эт
 
 ---
 
-## YUV-31 — исправить stride/odd safety в rotate, crop и flip
+## YUV-31 — P0 — исправить stride/odd safety в rotate, crop и flip
 
-- Владелец: Opus
-- Anthropic-вариант: Claude Opus 5
+- Владелец / модель: Opus / Claude Opus 5
 - Ожидаемое reasoning: Medium
-- Приоритет: P0
 - Статус: BLOCKED
 - Зависимости: YUV-30, YUV-33 (разрешение владельца на native C получено 2026-09-14)
 - Scope:
@@ -926,12 +911,10 @@ destination indices; crop `3x3` записал лишь один из четыр
 
 ---
 
-## YUV-32 — унифицировать RGBA/BGRA → YUV conversion contract
+## YUV-32 — P1 — унифицировать RGBA/BGRA → YUV conversion contract
 
-- Владелец: Opus
-- Anthropic-вариант: Claude Opus 5
+- Владелец / модель: Opus / Claude Opus 5
 - Ожидаемое reasoning: Medium
-- Приоритет: P1
 - Статус: BLOCKED
 - Зависимости: YUV-30, YUV-33 (разрешение владельца на native C получено 2026-09-14)
 - Scope:
@@ -986,12 +969,10 @@ symbol остаётся tight-only без объявленного precondition.
 
 ---
 
-## YUV-33 — ввести checked native descriptor/index/allocation primitives
+## YUV-33 — P0 / foundation — ввести checked native descriptor/index/allocation primitives
 
-- Владелец: Opus
-- Anthropic-вариант: Claude Opus 5
+- Владелец / модель: Opus / Claude Opus 5
 - Ожидаемое reasoning: Medium
-- Приоритет: P0 / foundation
 - Статус: BLOCKED
 - Зависимости: YUV-30 (разрешение владельца на native C получено 2026-09-14)
 - Scope:
@@ -1052,12 +1033,10 @@ positive geometry/strides, required pointers, format-specific sample sizes ил�
 
 ---
 
-## YUV-34 — добавить native ASan/UBSan safety gate
+## YUV-34 — P1 / release gate — добавить native ASan/UBSan safety gate
 
-- Владелец: Terra
-- Anthropic-вариант: Claude Sonnet 5
+- Владелец / модель: Terra / Claude Sonnet 5
 - Ожидаемое reasoning: Medium
-- Приоритет: P1 / release gate
 - Статус: BLOCKED
 - Зависимости: YUV-22, YUV-23, YUV-31, YUV-32, YUV-33
 - Scope:
@@ -1104,12 +1083,10 @@ Flutter reference tests обнаруживают неправильные pixels
 
 ---
 
-## YUV-35 — синхронизировать C API ownership, mutation и комментарии
+## YUV-35 — P2 / optional cleanup — синхронизировать C API ownership, mutation и комментарии
 
-- Владелец: Terra
-- Anthropic-вариант: Claude Sonnet 5
+- Владелец / модель: Terra / Claude Sonnet 5
 - Ожидаемое reasoning: Low
-- Приоритет: P2 / optional cleanup
 - Статус: BLOCKED
 - Зависимости: YUV-29 (разрешение владельца на native headers получено 2026-09-14)
 - Не блокирует YUV-18.
@@ -1160,12 +1137,10 @@ Flutter reference tests обнаруживают неправильные pixels
 
 ---
 
-## YUV-36 — спроектировать status-returning native ABI
+## YUV-36 — P2 / post-release — спроектировать status-returning native ABI
 
-- Владелец: Opus
-- Anthropic-вариант: Claude Opus 5
+- Владелец / модель: Opus / Claude Opus 5
 - Ожидаемое reasoning: Medium
-- Приоритет: P2 / post-release
 - Статус: BLOCKED
 - Зависимости: после `0.2.5`, YUV-33 и решение YUV-30
 - Не блокирует YUV-18.
@@ -1206,12 +1181,10 @@ Dart не может отличить success от atomic no-op и увелич�
 
 ---
 
-## YUV-37 — оптимизировать blur scratch и алгоритмическую сложность
+## YUV-37 — OPT / post-release — оптимизировать blur scratch и алгоритмическую сложность
 
-- Владелец: Terra
-- Anthropic-вариант: Claude Sonnet 5
+- Владелец / модель: Terra / Claude Sonnet 5
 - Ожидаемое reasoning: Medium
-- Приоритет: OPT / post-release
 - Статус: BLOCKED
 - Зависимости: после YUV-23
 - Не блокирует YUV-18.
@@ -1247,12 +1220,10 @@ flip allocation устранит YUV-31 как safety fix и сюда не вх�
 
 ---
 
-## YUV-38 — оптимизировать block conversion после YUV-32
+## YUV-38 — OPT / post-release — оптимизировать block conversion после YUV-32
 
-- Владелец: Terra
-- Anthropic-вариант: Claude Sonnet 5
+- Владелец / модель: Terra / Claude Sonnet 5
 - Ожидаемое reasoning: Low
-- Приоритет: OPT / post-release
 - Статус: BLOCKED
 - Зависимости: после YUV-32
 - Не блокирует YUV-18.
@@ -1286,12 +1257,10 @@ rounding, strides и legacy `(U,V)` order byte-for-byte.
 
 ---
 
-## YUV-39 — исследовать проверенные stride-aware реализации native primitives
+## YUV-39 — P2 / optional research — исследовать проверенные stride-aware реализации native primitives
 
-- Владелец: Terra
-- Anthropic-вариант: Claude Sonnet 5
+- Владелец / модель: Terra / Claude Sonnet 5
 - Ожидаемое reasoning: Medium
-- Приоритет: P2 / optional research
 - Статус: TODO
 - Зависимости: нет
 - Не блокирует YUV-18 и текущий refactoring batch.
@@ -1396,10 +1365,9 @@ effects/ROI contract, исследование описывает вариант
 
 ---
 
-## YUV-06 — восстановить Linux/macOS packaging и runtime loading
+## YUV-06 — P1 — восстановить Linux/macOS packaging и runtime loading
 
-- Владелец: Terra
-- Приоритет: P1
+- Владелец / модель: Terra / Claude Opus 5
 - Статус: BLOCKED
 - Зависимости: Linux/macOS app-runtime environment; Android/iOS build evidence.
 - Scope:
@@ -1550,7 +1518,7 @@ smoke-case. Провенанс подтверждает, что матрица �
 
 ### Независимое ревью root 2026-09-14
 
-Статус: `REJECTED`, количество отклонений: 1. Архитектурное решение остаётся
+Статус на момент ревью: `CHANGES REQUESTED`, количество обязательных доработок: 2. Архитектурное решение остаётся
 валидным; Linux installed-name path и macOS source composition выглядят
 корректно, а CI действительно показывает успешные `linux-native-smoke` и
 `macos-native-smoke` для commit `7a0a644`.
@@ -1577,10 +1545,9 @@ DoD пока не доказан по двум обязательным путя
 
 ---
 
-## YUV-12 — проверить все преобразования на Web/WASM backend
+## YUV-12 — P1 — проверить все преобразования на Web/WASM backend
 
-- Владелец: Luna
-- Приоритет: P1
+- Владелец / модель: Luna / Claude Sonnet 5
 - Статус: BLOCKED
 - Зависимости: YUV-40 (YUV-01, YUV-02 и YUV-10 приняты)
 - Scope:
@@ -1796,11 +1763,9 @@ FORMAT-TO-I420-BGRA-TIGHT  FORMAT-TO-I420-NV21-TIGHT
 
 ---
 
-## YUV-40 — диагностировать некатчабельный обрыв Web/WASM matrix
+## YUV-40 — P1 — диагностировать некатчабельный обрыв Web/WASM matrix
 
-- Владелец: Terra
-- Anthropic-вариант: Claude Sonnet 5
-- Приоритет: P1
+- Владелец / модель: Terra / Claude Sonnet 5
 - Статус: DISCOVERED
 - Зависимости: одобрение инженера
 - Блокирует: YUV-12; через неё YUV-13 и YUV-18
@@ -1857,10 +1822,9 @@ git status --short
 ```
 
 ---
-## YUV-18 — финальная приёмка и подготовка `0.2.5`
+## YUV-18 — P0 / release gate — финальная приёмка и подготовка `0.2.5`
 
-- Владелец: Terra
-- Приоритет: P0 / release gate
+- Владелец / модель: Terra / Claude Sonnet 5
 - Статус: BLOCKED
 - Зависимости: YUV-06, YUV-08, YUV-09, YUV-12, YUV-13,
   YUV-22, YUV-23, YUV-30, YUV-31, YUV-32, YUV-33, YUV-34

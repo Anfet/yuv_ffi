@@ -1,16 +1,16 @@
 # yuv_ffi: текущая очередь работ
 
 Здесь находятся только задачи, которые инженер утвердил и которые можно взять
-сейчас: `TODO`, `IN PROGRESS`, `READY FOR REVIEW` и `REJECTED`, если исправления
-по ревью должны быть выполнены в текущем batch. Заблокированные,
+сейчас: `TODO`, `IN PROGRESS`, `READY FOR REVIEW` и `CHANGES REQUESTED`, если
+по ревью нужна доработка в текущем batch. Заблокированные,
 отложенные, discovery и optional/post-release карточки вместе с полным описанием
 находятся в [todo-waitlist.md](todo-waitlist.md).
 
 ## Общий чеклист
 
-| Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
-|---|---|---|---|---|---|---|---|
-| [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | REJECTED | isolated commit; required CI target; comment fix | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
+| ID | Владелец / модель | Статус | Зависит от | Что должен получить инженер |
+|---|---|---|---|---|
+| YUV-08 | Luna / Claude Sonnet 5 | CHANGES REQUESTED | отдельный commit; required CI target; исправление комментария | Web `toBgra8888()` возвращает tight BGRA без padding; regression выполняется в required Chrome CI |
 
 ## Правила очереди
 
@@ -29,8 +29,9 @@
   секция задачи.
 - `TODO` — задача одобрена и доступна; `IN PROGRESS` — один исполнитель начал
   работу; `READY FOR REVIEW` — реализация и evidence готовы к независимой
-  проверке; `REJECTED` — ревьюер вернул задачу с конкретными исправлениями в
-  рамках текущего batch. Исполнитель не ставит `DONE`.
+  проверке; `CHANGES REQUESTED` — задача **не отклонена и не закрыта**:
+  ревьюер перечислил обязательные доработки, после которых её снова отдают в
+  review. Исполнитель не ставит `DONE`.
 - Любое изменение native C/header требует заранее записанного контракта и
   regression/characterization test cases: они обязаны воспроизводить прежнее
   неверное поведение либо проверять затронутый native path и подтверждать
@@ -54,11 +55,10 @@
 
 ---
 
-## YUV-08 — вернуть tight BGRA contract на Web
+## YUV-08 — P2 — вернуть tight BGRA contract на Web
 
-- Владелец: Luna
-- Приоритет: P2
-- Статус: REJECTED
+- Владелец / модель: Luna / Claude Sonnet 5
+- Статус: CHANGES REQUESTED
 - Зависимости: нет (YUV-01/YUV-02/YUV-04/YUV-15 приняты; integration harness доступен)
 - Scope:
   - `lib/src/yuv/impl/web/yuv_web.dart`
@@ -154,7 +154,7 @@ padded/tight BGRA на Web. Остальные BGRA-операции по-пре
 
 ### Независимое ревью root 2026-09-14
 
-Статус: `REJECTED`, количество отклонений: 1. Поведение исправления подтверждено
+Статус: `CHANGES REQUESTED`, количество обязательных доработок: 3. Поведение исправления подтверждено
 независимым Chrome-прогоном на Flutter 3.38.10: 4/4 tests passed, включая
 padded exact bytes, tight bytes и copy independence. `flutter analyze --no-pub
 lib example/integration_test/wasm_parity_edge_cases_test.dart` также прошёл.
