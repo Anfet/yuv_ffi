@@ -174,7 +174,7 @@ YUV-03 добавила постоянные regression tests. YUV-11 должн
 ## F-003 — `getBytes()` возвращает выровненный хвост
 
 - Case ID: `GET-BYTES-LENGTH-001`
-- Статус: OPEN
+- Статус: RESOLVED
 - Обнаружено: 2026-09-13
 - Commit: `5f52fd14540a283da91a6d80e1fc7128bba1c796`
 - Backend: Native / Windows x64; Web имеет тот же дефект по инспекции исходного кода, runtime-retest заблокирован F-001

@@ -20,6 +20,7 @@
 | YUV-19 | Terra | DONE |
 | YUV-27 | Terra | DONE |
 | YUV-07 | Opus | DONE |
+| YUV-14 | Luna | DONE |
 
 ---
 
@@ -2370,5 +2371,263 @@ trailer, пришедший отдельным чанком, — проходи�
   форматов, fragmented input, malformed/truncated/trailing payload, atomic
   failed load и revision semantics.
 - Implementation commit: `c802673`; Web acceptance tests: `47e7d1f`.
+
+---
+
+---
+
+## YUV-14 — убрать мусорный хвост из `getBytes()`
+
+- Владелец: Luna
+- Приоритет: P1
+- Статус: DONE
+- Зависимости: YUV-01/YUV-02/YUV-03 приняты; Web retest выполнен (run 34790481198)
+- Scope:
+  - `lib/src/yuv/impl/io/yuv_image.dart`
+  - `lib/src/yuv/impl/web/yuv_web.dart`
+  - shared helper для concatenation при необходимости
+  - `test/conversions_test.dart`
+  - `test/web/wasm_parity_edge_cases_test.dart`
+  - reference matrix YUV-10…YUV-13
+  - `failed-test-cases.md`, запись F-003
+
+### Проблема
+
+Оба backend собирают planes через `WriteBuffer`, после чего возвращают `allBytes.done().buffer.asUint8List()`. `WriteBuffer` может иметь выровненный backing buffer больше фактического `ByteData` view. Поэтому публичный API возвращает нулевой хвост, не принадлежащий ни одной plane.
+
+Подтверждённый case:
+
+```text
+YuvImage.i420(3, 3)
+sum(plane.bytes.length) = 25
+getBytes().length       = 32
+```
+
+IO и Web одинаково ошибочны, поэтому сравнение backend друг с другом не обнаруживает дефект. Нарушена документация «all planes concatenated into a single byte buffer».
+
+### Зафиксированное решение
+
+1. Возвращать ровно сумму `plane.bytes.length`, без alignment/padding backing buffer.
+2. Предпочтительно вынести platform-agnostic helper, который заранее выделяет `Uint8List(totalLength)` и последовательно копирует каждую plane через offset. Альтернатива с `ByteData` допустима только со срезом по `offsetInBytes` и `lengthInBytes`.
+3. Возвращаемый buffer должен быть независимой копией: его изменение не меняет planes, изменение planes после вызова не меняет уже полученный buffer.
+4. Порядок concatenation остаётся format order: BGRA/Y, I420 Y-U-V, legacy `nv21` Y-UV.
+5. Не исправлять результат добавлением special-case только для нечётных dimensions.
+
+### DoD
+
+- Для `1x1`, `3x3`, `127x255` и `512x512` длина результата равна точной сумме длин planes.
+- Результат byte-for-byte равен ручной последовательной конкатенации.
+- Нет хвоста после последнего байта последней plane.
+- Проверены BGRA, I420 и legacy `nv21`, включая padded planes после YUV-15.
+- IO и Web проходят один и тот же contract test, но expected строится прямой конкатенацией, а не другим backend.
+- F-003 переведён в `RESOLVED` только после native и настоящего Chrome retest.
+
+### Проверка
+
+```powershell
+flutter test test/conversions_test.dart --plain-name "getBytes"
+flutter test --platform chrome test/web/wasm_parity_edge_cases_test.dart --plain-name "getBytes"
+flutter analyze lib test
+dart format --output=none --set-exit-if-changed lib test
+git diff --check
+git status --short
+```
+
+### Результат
+
+```text
+Статус: READY FOR REVIEW
+Commit: fix: removed the getBytes alignment tail
+Изменённые файлы:
+- lib/src/yuv/shared/yuv_plane_bytes.dart (новый)
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- lib/src/yuv/impl/yuv_stub.dart
+- test/conversions_test.dart
+- test/web/wasm_parity_edge_cases_test.dart
+- failed-test-cases.md
+
+Что сделано:
+- Добавлен platform-agnostic helper `YuvPlaneBytes.concat()`, который заранее
+  выделяет `Uint8List(totalLength)` и последовательно копирует каждую plane по
+  offset. Это решение 2 из карточки.
+- Все три backend (`io`, `web` и `yuv_stub`) используют один helper вместо
+  `WriteBuffer.done().buffer.asUint8List()`, поэтому alignment-хвост больше не
+  попадает в публичный API. Неиспользуемый импорт `WriteBuffer` удалён из web и
+  stub.
+- Порядок конкатенации не менялся: BGRA/Y, I420 Y-U-V, legacy `nv21` Y-UV.
+  Публичный NV21/UV compatibility contract не затронут.
+- Contract tests добавлены симметрично в IO и Web suite. Expected строится
+  локальной прямой конкатенацией (`_concatPlanesDirectly`), а не другим
+  backend, поэтому общий дефект не может спрятаться с обеих сторон сравнения.
+- Cases намеренно не помечены `skip: !_nativeAvailable`: они только выделяют
+  planes в Dart, и skip-ветка снова скрыла бы регресс на машине без собранной
+  библиотеки.
+
+Проверки:
+- flutter test test/conversions_test.dart --plain-name "getBytes" — exit 0,
+  10 tests passed
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test (полный VM suite) — 199 passed / 32 failed против baseline
+  177 passed / 44 failed на этой же машине; 12 ранее падавших cases стали
+  проходить, новых падений нет
+- flutter test test/reference_native_conversions_test.dart — все 14 `BYTES-GET`
+  reference cases проходят (было 0 из 14)
+- dart format --output=none --set-exit-if-changed --line-length 150 lib test —
+  изменённые этой задачей файлы проходят. Остаётся pre-existing drift в
+  `test/web/yuv_web_wasm_test.dart`: файл не входит в scope, не изменялся, и
+  тот же exit 1 воспроизводится на чистом дереве до этой задачи. Намеренно не
+  исправлен, чтобы не смешивать чужое форматирование с этим commit.
+- git diff --check — exit 0
+- git status --short — приложен ниже
+
+Regression evidence:
+- Те же 10 cases на неисправленном `lib/src/yuv/impl/io/yuv_image.dart`
+  (через `git stash` только этого файла) дают 1 passed / 9 failed и
+  воспроизводят исходный F-003: `Expected: length of <25> / Actual: <32>`.
+
+Ручная проверка:
+- Windows 10 x64 / AMD64, Flutter 3.38.10, Dart 3.10.9, native backend из
+  локального `yuv_ffi.dll`.
+- Web: `NOT RUN`. Chrome runner остаётся заблокирован F-007/YUV-02, поэтому
+  `kIsWeb == true` подтвердить нельзя. Web-cases добавлены и выполнятся при
+  первом рабочем прогоне.
+
+Остаточные риски:
+- Web-сторона проверена только инспекцией исходного кода: backend использует
+  тот же helper, но runtime evidence отсутствует до YUV-02. Поэтому F-003
+  переведён в `READY FOR RETEST`, а не в `RESOLVED`, и задача не может стать
+  `DONE` без фактического Chrome прогона.
+- Padded planes из DoD покрыты только текущими конструкторами; padded BGRA
+  case станет полноценным после YUV-15.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
+
+### Независимое ревью root 2026-09-14
+
+Статус остаётся `READY FOR REVIEW` до Web retest.
+
+Shared `YuvPlaneBytes.concat()` возвращает новый buffer точной суммарной длины
+planes и одинаково подключён в IO/Web/stub. Нативные regressions покрывают
+нечётные и padded layouts, а эталон не использует проверяемый helper. На Flutter
+3.44.9 analyzer чист и общий сфокусированный VM-набор прошёл 110/110.
+
+Блокирующих замечаний по реализации не найдено. Для `DONE` требуется перенести
+asset-dependent Web case в integration harness YUV-02 и подтвердить в Chrome
+длину и точные bytes; VM skip не является evidence.
+
+### Повторное независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+После принятия YUV-02 внешний blocker снят, но focused case YUV-14 в
+`example/integration_test/` не добавлен. Зелёный bootstrap проверяет conversions,
+но не вызывает `getBytes()` и потому не может обнаружить возвращение alignment
+tail. Исходный DoD о реальном Chrome выполнении всё ещё не закрыт.
+
+Production fix и VM regressions приняты: на Flutter 3.44.9 общий focused suite
+114/114 проходит. Для повторного review требуется только Web acceptance:
+
+1. перенести cases `1x1`, `3x3`, `127x255` и padded layout в integration
+   harness без использования проверяемого helper для expected bytes;
+2. явно проверить `kIsWeb == true`, точную длину и byte-for-byte concatenation;
+3. выполнить required Chrome job без skip/`continue-on-error` и приложить URL;
+4. после успеха перевести F-003 из `READY FOR RETEST` в `RESOLVED`.
+
+Production Dart, native C и generated bindings в доработке не требуются.
+
+### Перенос focused case 2026-09-14
+
+Статус остаётся `REJECTED`: тест написан, но не исполнен.
+
+Добавлен `example/integration_test/getbytes_contract_test.dart` — пункты 1 и 2
+замечания. Покрывает `1x1`, `3x3`, `127x255` для bgra/i420/nv21 плюс padded
+BGRA-плоскость (`rowStride 16`) и диагностический case F-003 (i420 `3x3` = ровно
+25 байт). Expected строится локальной прямой конкатенацией `plane.bytes`, а не
+вызовом `getBytes()` другого backend, поэтому общий дефект не спрячется с обеих
+сторон сравнения. `kIsWeb == true` проверяется внутри тела каждого теста;
+skip-ветки нет.
+
+CI-джоб `wasm-web-integration` расширен: вместо одного bootstrap-таргета он
+теперь гонит все пять suites и падает, если падает любой (пункт 3).
+
+### Web evidence получен 2026-09-14
+
+Статус: `READY FOR REVIEW`.
+
+Run [34787051514](https://github.com/Anfet/yuv_ffi/actions/runs/34787051514),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/getbytes_contract_test.dart` — `All tests passed.`
+
+- Chrome 152.0.7977.82 / chromedriver 152.0.7977.82 (пара согласована, печатается
+  в лог отдельным шагом)
+- Flutter 3.44.9, Linux, чистый checkout
+- WASM собран из исходников emsdk в том же прогоне, а не взят готовым
+- `kIsWeb == true` проверяется внутри тела каждого case, skip-ветки нет
+- Ошибок и исключений в браузерном логе нет
+
+Джоба required, `continue-on-error` отсутствует, и она падает, если падает любой
+из пяти таргетов. F-003 переведён в `RESOLVED`.
+
+Пункт 3 замечания выполнен, пункт 4 — тоже.
+
+### Независимое ревью root 2026-09-14 после run #26
+
+Статус: `REJECTED`.
+
+CI evidence подлинное: `getbytes_contract_test.dart` выполнен в Chrome 152 на
+свежем WASM и проверяет `kIsWeb == true`; диагностический F-003 `3x3` можно
+считать `RESOLVED`. Production fix и выполненные cases корректны.
+
+Однако полный DoD карточки не закрыт. Новый Web target проверяет размеры
+`1x1`, `3x3`, `127x255` и padded BGRA, но пропускает обязательный `512x512`.
+Также он не проверяет независимость результата: mutation возвращённого buffer
+не должна менять planes, а последующая mutation plane не должна менять ранее
+полученный buffer. Эти assertions есть только в VM suite, хотя DoD требует
+одинаковый IO/Web contract test.
+
+Для повторного review добавить в существующий integration target `512x512` для
+BGRA/I420/legacy NV и Web case независимости buffer в обе стороны; повторить
+required Chrome job и приложить URL. Production Dart/C менять не требуется.
+
+### Доработка 2026-09-14
+
+Статус остаётся `REJECTED` до нового Chrome-прогона.
+
+Оба пункта замечания выполнены в `getbytes_contract_test.dart`:
+
+- добавлен контрольный `512x512` — теперь исполняются все четыре размера DoD
+  (`1x1`, `3x3`, `127x255`, `512x512`) для bgra/i420/legacy nv21;
+- добавлен case «getBytes returns an independent copy»: мутация возвращённого
+  буфера не меняет plane, мутация plane не меняет уже возвращённый буфер. Обе
+  стороны сверяются со снимком конкретного байта, а не с повторным чтением.
+
+Замечание по существу верное и неприятное: `YuvPlaneBytes.concat()` обещает
+независимую копию в доксроке, но до сих пор это свойство не проверял ни один
+тест — контракт был заявлен и не закреплён.
+
+### Прогон run #28: Web evidence получен
+
+Статус: `READY FOR REVIEW`.
+
+Run [34790481198](https://github.com/Anfet/yuv_ffi/actions/runs/34790481198),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/getbytes_contract_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux.
+
+Оба пункта замечания исполнены в браузере: все четыре размера DoD, включая
+контрольный `512x512`, и независимость возвращённого буфера в обе стороны.
+Production Dart не менялся.
+
+### Независимая приёмка root 2026-09-14
+
+- Статус: ACCEPTED; YUV-14 переведена в DONE.
+- Shared exact-concatenation implementation ранее принята; локальный focused
+  suite на Flutter 3.44.9 прошёл 145/145.
+- Run #28 подтвердил Web contract для BGRA/I420/legacy nv21 на `1x1`, `3x3`,
+  `127x255`, `512x512`, padded layout и независимость результата в обе стороны.
+- Implementation и VM tests приняты ранее; финальные Web cases: `47e7d1f`.
 
 ---
