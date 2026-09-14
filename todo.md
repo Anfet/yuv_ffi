@@ -10,17 +10,26 @@
 |---|---|---|---|---|---|---|---|
 | [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
 | [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | TODO | — | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
-| [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06, YUV-08, YUV-13, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
+| [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06, YUV-08, YUV-13, YUV-22, YUV-23, YUV-30, YUV-32 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
 | [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | REJECTED | доказать удаление failed DOM script без reuse старой factory | Зафиксировать retry/error/lazy-init контракт IO и Web |
-| [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
-| [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
+| [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | YUV-30, YUV-33, разрешение на C | Зафиксировать RGB-visible effects contract, logical-sample addressing и odd chroma |
+| [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | YUV-30, YUV-33, разрешение на C | Исправить blur memory safety, параметры, snapshot semantics и межформатный контракт |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
-| [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | REJECTED | добавить Unix regeneration evidence | Ограничить ffigen только используемым ABI и убрать platform CRT из bindings |
+| [ ] | YUV-26 | Luna | Claude Haiku 4.5 | P3 | DELAYED | добавить Unix regeneration evidence | Ограничить ffigen только используемым ABI и убрать platform CRT из bindings |
 | [ ] | YUV-28 | Opus | Claude Opus 5 | P2 | BLOCKED | после YUV-18 | Сократить дублирование backend-классов после релиза `0.2.5` |
 | [ ] | YUV-29 | Luna | Claude Haiku 4.5 | P3 | BLOCKED | разрешение на C headers | Удалить неиспользуемое объявление `nv21_to_rgb` без реализации |
-| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-06, YUV-08, YUV-09, YUV-12, YUV-13, YUV-21…YUV-23 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
+| [ ] | YUV-30 | Root | Claude Opus 5 | P0 | DISCOVERED | решение владельца по 5 контрактам | Зафиксировать blur/effects/ROI/parameter policy до изменения native C |
+| [ ] | YUV-31 | Opus | Claude Opus 5 | P0 | BLOCKED | YUV-30, YUV-33, разрешение на C | Сделать rotate/crop/flip stride-safe и корректными на odd 4:2:0 geometry |
+| [ ] | YUV-32 | Opus | Claude Opus 5 | P1 | BLOCKED | YUV-30, YUV-33, разрешение на C | Унифицировать RGBA/BGRA→YUV matrix, range, rounding и 2×2 chroma reduction |
+| [ ] | YUV-33 | Opus | Claude Opus 5 | P0 | BLOCKED | YUV-30, разрешение на C | Ввести checked descriptor/index/allocation primitives для native boundary |
+| [ ] | YUV-34 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-22, YUV-23, YUV-31…YUV-33 | Добавить ASan/UBSan canary harness и required native safety gate |
+| [ ] | YUV-35 | Terra | Claude Sonnet 5 | P2 | BLOCKED | YUV-29, разрешение на C headers | Синхронизировать C ownership/mutation declarations, UV-комментарии и logging macros |
+| [ ] | YUV-36 | Opus | Claude Opus 5 | P2 | BLOCKED | после `0.2.5`, YUV-33 | Спроектировать status-returning native ABI без breaking change текущих symbols |
+| [ ] | YUV-37 | Terra | Claude Sonnet 5 | OPT | BLOCKED | после YUV-23 | Уменьшить allocations и сложность blur после фиксации результата |
+| [ ] | YUV-38 | Terra | Claude Sonnet 5 | OPT | BLOCKED | после YUV-32 | Оптимизировать 2×2 chroma conversion без изменения reference output |
+| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-06, YUV-08, YUV-09, YUV-12, YUV-13, YUV-21…YUV-23, YUV-30…YUV-34 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
 
 ## Статусы
 
@@ -31,6 +40,7 @@
 в том же tracker update, что и смену статуса.
 
 - `TODO` — задача изолирована, её зависимости выполнены и модель может взять её в работу.
+- `DISCOVERED` — проблема подтверждена, но для исполнимого Architect Decision требуется решение владельца.
 - `IN PROGRESS` — модель начала работу; одновременно у задачи один исполнитель.
 - `BLOCKED` — не выполнена зависимость или отсутствует обязательное разрешение.
 - `READY FOR REVIEW` — реализация закончена, модель приложила результат и проверки; требуется независимое ревью.
@@ -79,7 +89,7 @@
 2. Web остаётся частичным WASM backend. Исправление компиляции и тестов не означает автоматическую feature parity с native.
 3. Нельзя читать, анализировать или включать в scope любые `build/` директории.
 4. Нельзя вручную редактировать `lib/src/functions/bindings/yuv_ffi_bingings.dart`. При изменении ABI обновить header/`ffigen.yaml` и выполнить генерацию.
-5. Любое изменение файлов `src/**/*.c`, `src/**/*.h` или platform C-forwarders запрещено до отдельного явного разрешения владельца. До него YUV-05 и C-часть YUV-06 остаются `BLOCKED`.
+5. Любое изменение файлов `src/**/*.c`, `src/**/*.h` или platform C-forwarders запрещено до отдельного явного разрешения владельца. До него YUV-06, YUV-22, YUV-23, YUV-29 и YUV-31…YUV-35 остаются `BLOCKED`.
 6. Не совмещать соседний рефакторинг с исправлением дефекта. Каждый commit должен содержать только одну задачу.
 7. Не удалять локальные `_tmp_*` файлы без отдельного подтверждения владельца.
 8. Не создавать tag и не выполнять push без отдельного запроса.
@@ -275,7 +285,7 @@ git status --short
 - Владелец: Luna
 - Приоритет: P2
 - Статус: BLOCKED
-- Зависимости: YUV-06, YUV-08, YUV-13, YUV-22, YUV-23 (YUV-01/YUV-02/YUV-05/YUV-07/YUV-14/YUV-17 приняты)
+- Зависимости: YUV-06, YUV-08, YUV-13, YUV-22, YUV-23, YUV-30, YUV-32 (YUV-01/YUV-02/YUV-05/YUV-07/YUV-14/YUV-17 приняты)
 - Scope:
   - `README.md`
   - `analysis_options.yaml`
@@ -836,7 +846,7 @@ generated bindings менять не требуется.
 - Владелец: Opus
 - Приоритет: P1
 - Статус: BLOCKED
-- Зависимости: отдельное разрешение владельца на изменение native C (YUV-04 и YUV-05 приняты)
+- Зависимости: YUV-30, YUV-33 и отдельное разрешение владельца на изменение native C (YUV-04 и YUV-05 приняты)
 - Scope:
   - `src/yuv/{bgra8888,yuv420,nv21}/*{grayscale,blackwhite,negate}.c`
   - соответствующие headers только при необходимости изменения ABI
@@ -855,13 +865,32 @@ YUV-11 подтвердил 6 reference failures, которые нельзя с
 
 Публичный API называет эффекты, но не определяет rounding, threshold boundary и то, должны ли результаты разных форматов быть визуально эквивалентны. Поэтому простое изменение expected либо C без решения контракта законсервирует неоднозначность.
 
+Повторная проверка C-аудита подтвердила дополнительные достигаемые дефекты:
+
+- I420/NV используют `height / 2` и теряют последнюю chroma-строку на нечётной
+  высоте, хотя Dart-модель выделяет `ceil(height / 2)`;
+- I420/NV blackwhite и negate проходят полные `rowStride`-диапазоны, а
+  grayscale делает `memset` по строке, поэтому padding/gap bytes меняются как
+  pixels;
+- BGRA blackwhite/negate адресуют `x * 4`, а grayscale использует
+  `yPixelStride`, то есть один и тот же допустимый descriptor трактуется
+  неодинаково;
+- probe I420 grayscale `3x3` обработал только одну из двух chroma-строк;
+  padded I420 blackwhite заменил canary padding `[33,44]` на `[0,0]`.
+
 ### Зафиксированное решение
 
-1. Сначала письменно выбрать единый публичный контракт для каждого эффекта: формула и rounding grayscale, точная граница black/white, RGB-visible либо plane-native semantics negate.
-2. Применить контракт одинаково для BGRA, I420 и legacy-`nv21` UV order; alpha BGRA сохранять exact.
-3. Не ослаблять YUV-10 thresholds после просмотра actual. Если выбранный контракт намеренно отличается от oracle, изменение manifest оформить отдельным reviewed reference update с обоснованием.
-4. Обрабатывать только logical samples с учётом row/pixel stride и odd chroma geometry; padding не использовать как pixels.
-5. После C-изменений пересобрать WASM из тех же sources и проверить native/Web на одинаковых case ID.
+1. Реализовать выбранный в YUV-30 публичный контракт без локального выбора
+   исполнителя. До решения владельца task остаётся `BLOCKED`.
+2. Базовый рекомендуемый вариант для YUV-30 — RGB-visible parity с независимым
+   oracle YUV-10: одинаковый видимый результат для BGRA/I420/legacy-`nv21`,
+   threshold `>= 128`, согласованное rounding и BT.601 limited encode/decode.
+3. Применить контракт одинаково для BGRA, I420 и legacy-`nv21` UV order; alpha BGRA сохранять exact.
+4. Не ослаблять YUV-10 thresholds после просмотра actual. Если выбранный контракт намеренно отличается от oracle, изменение manifest оформить отдельным reviewed reference update с обоснованием.
+5. Обрабатывать только logical samples с учётом row/pixel stride и odd chroma geometry; padding не использовать как pixels.
+6. Использовать shared checked helpers YUV-33; не размножать локальные формулы
+   ceil/index/size по девяти функциям.
+7. После C-изменений пересобрать WASM из тех же sources и проверить native/Web на одинаковых case ID.
 
 ### DoD
 
@@ -893,7 +922,7 @@ git status --short
 - Владелец: Opus
 - Приоритет: P0
 - Статус: BLOCKED
-- Зависимости: отдельное разрешение владельца на изменение native C (YUV-04 и YUV-05 приняты)
+- Зависимости: YUV-30, YUV-33 и отдельное разрешение владельца на изменение native C (YUV-04 и YUV-05 приняты)
 - Scope:
   - `src/yuv/{bgra8888,yuv420,nv21}/*{gaussblur,box_blur,mean_blur}.c`
   - `src/yuv/utils/gauss.c` и headers при необходимости
@@ -912,14 +941,37 @@ YUV-11 подтвердил 19 blur failures: 4 Gaussian, 6 box и 9 mean. Эт�
 - YUV Gaussian/box работают по planes (box фактически только по Y), тогда как общий reference contract ожидает визуально сопоставимый blur. Нужно явно выбрать и закрепить межформатную semantics, а не повышать tolerance.
 - Gaussian/odd geometry использует floor chroma dimensions в нескольких C paths; это пересекается с YUV-05 и требует повторного canary/sanitizer прогона.
 
+Повторная проверка C-аудита подтвердила, что scope шире reference drift:
+
+- `bgra8888_mean_blur` копирует весь tight `temp`, хотя заполняет только rect;
+  outside rect получает неинициализированные bytes, alpha также уничтожается;
+- SAT использует неверные границы и `int32_t`, который переполняется уже до
+  полного DCI 4K кадра;
+- отрицательные `radius`, `sigma == 0` и unchecked `2 * radius + 1` достигают
+  division-by-zero либо опасных allocation sizes;
+- BGRA Gaussian выделяет `width * height * 4`, но индексирует temp через source
+  `rowStride`; NV/I420 blur содержит unchecked multi-allocation paths;
+- I420 mean и NV box читают уже записанный результат, поэтому итог зависит от
+  направления обхода; probes дали `170/198` вместо snapshot-эталона `127`;
+- NV mean использует tight snapshot и игнорирует descriptor strides.
+
+Текущий IO-wrapper уже отсекает padded BGRA для трёх blur methods. Это снижает
+достижимость C-09 через публичный Dart API, но не исправляет экспортируемый
+descriptor-based C ABI и не закрывает остальные tight/parameter defects.
+
 ### Зафиксированное решение
 
-1. Устранить все OOB/uninitialized-read/write paths: allocation и addressing должны учитывать row/pixel strides, temp должен быть полностью инициализирован, outside rect и alpha должны сохраняться exact.
-2. Исправить integral image bounds и считать blur из неизменяемого source snapshot, без order-dependent in-place reads.
-3. Зафиксировать единое значение `radius`, border handling и rect coordinates для Gaussian/box/mean во всех форматах.
-4. Явно решить, является YUV blur plane-native или визуально эквивалентным BGRA; синхронизировать docs/reference только отдельным reviewed решением. Thresholds не подгонять под текущую DLL.
+1. Реализовать выбранные в YUV-30 radius/sigma/ROI/blur semantics без
+   самостоятельного переопределения контракта исполнителем.
+2. Устранить все OOB/uninitialized-read/write paths: allocation и addressing должны учитывать row/pixel strides, temp должен быть полностью инициализирован, outside rect и alpha должны сохраняться exact.
+3. Исправить integral image bounds и использовать 64-bit accumulation либо
+   иной доказуемо overflow-safe algorithm. Считать blur из неизменяемого source snapshot, без order-dependent in-place reads.
+4. Использовать shared checked size/index/descriptor helpers YUV-33 и
+   preallocate весь scratch до первой записи; при OOM текущие void-symbols
+   обязаны оставить image неизменным.
 5. Использовать ceil chroma geometry для odd dimensions и учитывать custom stride каждого logical sample.
-6. Проверить canaries/ASan или эквивалентный sanitizer, затем пересобрать WASM и выполнить те же cases в настоящем Web runtime.
+6. Синхронизировать docs/reference только по решению YUV-30. Thresholds не подгонять под текущую DLL.
+7. Проверить canaries/ASan или эквивалентный sanitizer, затем пересобрать WASM и выполнить те же cases в настоящем Web runtime.
 
 ### DoD
 
@@ -1013,7 +1065,7 @@ git status --short
 
 - Владелец: Luna
 - Приоритет: P3
-- Статус: REJECTED
+- Статус: DELAYED
 - Зависимости: нет
 - Anthropic-вариант: Claude Haiku 4.5; при расхождении generated ABI повысить до Claude Sonnet 5
 - Scope:
@@ -1371,13 +1423,482 @@ git status --short
 
 ---
 
+## YUV-30 — зафиксировать native effects/blur/ROI contract
+
+- Владелец: Root (Architect/Reviewer)
+- Anthropic-вариант: Claude Opus 5
+- Ожидаемое reasoning: High
+- Приоритет: P0 / architecture gate
+- Статус: DISCOVERED
+- Зависимости: решение владельца по пяти публичным контрактам
+- Scope:
+  - публичные docs для `grayscale`, `blackwhite`, `negate`, `gaussianBlur`,
+    `boxBlur`, `meanBlur`;
+  - semantics `rect`, `radius`, `sigma`, border, alpha и padding;
+  - решение о failure ABI для patch `0.2.5` и будущего minor release;
+  - обновление Architect Decision/зависимостей YUV-22, YUV-23, YUV-31…YUV-36.
+- Non-goal: реализация Dart/C, изменение manifest или thresholds.
+
+### Проблема
+
+Проверенный C-аудит подтвердил конфликтующие фактические контракты. Blur
+размывает разные planes/channels в BGRA, I420 и legacy-`nv21`; mean использует
+`radius / 2`, остальные реализации — `2 * radius + 1`; rect ограничивает только
+часть planes; YUV negate является raw-plane transform, а reference oracle ждёт
+RGB-visible результат. Публичная документация этих различий не определяет.
+
+Без решения владельца исполнитель вынужден сам выбирать публичное поведение,
+что запрещено orchestration protocol и делает YUV-22/YUV-23 неготовыми.
+
+### Требуется решение владельца
+
+1. Effects: RGB-visible parity между форматами либо format-specific plane-native
+   semantics. Рекомендация архитектора: RGB-visible parity для grayscale,
+   blackwhite и negate, согласованная с independent oracle YUV-10.
+2. Blur: RGB-visible parity либо deterministic plane-native convolution.
+   Рекомендация архитектора: plane-native blur одинаковым kernel/radius/border
+   по всем logical color planes, BGRA alpha не менять. Для subsampled chroma
+   строгая visible boundary невозможна без format conversion: один chroma
+   sample разделяют до четырёх luma pixels.
+3. `rect`: crop-style `floor(left/top)`, `ceil(right/bottom)`, clamp к кадру и
+   no-op для пустого результата либо `ArgumentError`. Рекомендация: clamp/no-op.
+   Для 4:2:0 отдельно выбрать: менять все chroma samples, чьи 2×2 footprints
+   пересекают ROI, либо не менять boundary chroma. Рекомендация: intersecting
+   blocks с явным предупреждением, что RGB pixels у границы делят chroma.
+4. Параметры: `radius == 0` как no-op, отрицательный radius и non-positive
+   `sigma` как `ArgumentError`; требуется выбрать документируемую верхнюю
+   границу radius. Рекомендация safety-cap: `radius <= 256`.
+5. Allocation failure в `0.2.5`: сохранить void ABI и гарантировать atomic
+   no-op либо вводить новые status-returning symbols сейчас. Рекомендация:
+   сохранить ABI в patch, новые status symbols вынести в YUV-36/`0.3.0`.
+
+### Architect Decision
+
+До ответа владельца не зафиксирован. Исполнителям запрещено начинать зависящие
+задачи или выбирать один из вариантов самостоятельно.
+
+### DoD
+
+- [ ] Зафиксированы ответы по всем пяти пунктам без неоднозначных слов.
+- [ ] Определены exact formula/rounding/threshold и видимые результаты effects.
+- [ ] Определены planes/channels, radius, border и ROI mapping каждого blur.
+- [ ] Определено поведение invalid/empty/outside/fractional rect и параметров.
+- [ ] Решено, что остаётся в `0.2.5`, а что требует нового ABI/minor release.
+- [ ] YUV-22, YUV-23, YUV-31…YUV-36 синхронизированы с решением.
+- [ ] Runtime-код и native sources в этой задаче не изменены.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-31 — исправить stride/odd safety в rotate, crop и flip
+
+- Владелец: Opus
+- Anthropic-вариант: Claude Opus 5
+- Ожидаемое reasoning: Medium
+- Приоритет: P0
+- Статус: BLOCKED
+- Зависимости: YUV-30, YUV-33 и отдельное разрешение владельца на изменение native C
+- Scope:
+  - `src/yuv/{bgra8888,yuv420,nv21}/*{rotate,crop,flip}.c`;
+  - IO wrappers только для безопасной нормализации/ошибок;
+  - focused native/Web transform tests, canary и sanitizer cases;
+  - regenerated WASM из того же commit.
+
+### Проблема
+
+Выводы C-аудита подтверждены исходниками:
+
+- I420/NV rotate использует `dstWidth` вместо `dst->yRowStride`, source pixel
+  stride вместо destination stride и floor `dst->width / 2` для chroma;
+- BGRA rotate игнорирует оба rowStride и копирует `src->yPixelStride` bytes в
+  destination, что допускает OOB при custom stride;
+- crop вычисляет destination rows как tight и копирует `logicalWidth *
+  pixelStride`, то есть принимает gap/padding за sample bytes; chroma crop
+  использует floor и теряет trailing samples на odd geometry;
+- horizontal flip переставляет `pixelStride` bytes вместо sample size
+  `1/2/4`, BGRA игнорирует rowStride;
+- flip имеет multi-allocation leaks и vertical path может завершиться после
+  частичной mutation при OOM.
+
+Неподдерживаемый raw `rotationDegrees` недостижим через публичный Dart enum, но
+остаётся defensive-boundary дефектом экспортируемых C symbols. Stride/crop/flip
+дефекты через публичные custom planes достижимы.
+
+Probe I420 rotate 180° с `yPixelStride=2,rowStride=3` подтвердил collision
+destination indices; crop `3x3` записал лишь один из четырёх chroma samples.
+
+### Architect Decision
+
+1. Адресовать source и destination только их собственными row/pixel strides.
+2. Размер logical sample фиксирован форматом: 1 byte Y/planar U/V, 2 bytes
+   interleaved UV, 4 bytes BGRA; padding никогда не копировать как pixel data.
+3. Использовать ceil chroma geometry из YUV-33. Mapping odd crop origin следует
+   точному ROI/chroma policy, принятому YUV-30.
+4. `rotate` принимает только enum-derived 0/90/180/270; C boundary defensive
+   отклоняет иные degrees и несовместимую destination geometry без записи.
+5. Horizontal flip использует scalar/fixed sample swap без heap allocation.
+   Vertical flip выделяет scratch один раз до первой записи; OOM — atomic no-op.
+6. Не менять установленный legacy `nv21` `(U,V)` byte order.
+
+### DoD
+
+- [ ] Tight и минимально padded layouts проходят rotate/crop/flip для трёх форматов.
+- [ ] Проверены `1x1`, `1xN`, `Nx1`, odd/even и все rotation values.
+- [ ] Source/destination padding и canaries не читаются/не меняются как samples.
+- [ ] Odd chroma не теряет trailing row/column; crop phase соответствует YUV-30.
+- [ ] Allocation failure до vertical flip оставляет bytes неизменными; текущий
+      false-positive revision bump явно зафиксирован как ограничение void ABI
+      до YUV-36.
+- [ ] ASan/UBSan harness YUV-34 не сообщает OOB/UB/leaks.
+- [ ] Native и real WASM cases используют одинаковые fixtures.
+- [ ] Native C изменяется только после отдельного разрешения.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-32 — унифицировать RGBA/BGRA → YUV conversion contract
+
+- Владелец: Opus
+- Anthropic-вариант: Claude Opus 5
+- Ожидаемое reasoning: Medium
+- Приоритет: P1
+- Статус: BLOCKED
+- Зависимости: YUV-30, YUV-33 и отдельное разрешение владельца на изменение native C
+- Scope:
+  - `src/yuv/bgra8888/bgra8888_{from_rgba,to_i420,to_nv21}.c`;
+  - shared color conversion helpers;
+  - corresponding native/Web reference tests and regenerated WASM;
+  - public conversion docs when coefficients/range become contractual.
+
+### Проблема
+
+`yuv420_from_rgba8888` и `nv21_from_rgba8888` используют BT.601 limited range и
+average реального 2×2 блока. BGRA→I420/NV применяет другую full-range matrix и
+берёт chroma только из top-left pixel. Один и тот же RGBA/BGRA кадр поэтому даёт
+разные YUV bytes; probe получил Y `[82,41,41,41]` против `[76,28,28,28]` и UV
+`[202,142]` против `[85,255]`.
+
+Отдельно `bgra8888_from_rgba8888` пишет tight index `(y*width+x)*4` и игнорирует
+destination descriptor. Dart сейчас смягчает это staging-копией, но exported C
+symbol остаётся tight-only без объявленного precondition.
+
+### Architect Decision
+
+1. Канальный порядок input не меняет color matrix/range/rounding: canonical
+   contract — BT.601 limited/video range, уже используемый RGBA→YUV paths.
+2. U/V считать average всех реально существующих pixels в 2×2 block; odd edge
+   делить на actual sample count.
+3. Legacy `nv21` хранит установленный `(U,V)` order.
+4. Использовать common fixed-point helpers и shared checked geometry YUV-33.
+5. `bgra8888_from_rgba8888` обязан использовать destination row/pixel strides;
+   input RGBA остаётся tight согласно публичному Dart contract.
+6. Manifest не подгонять под current DLL; любое осознанное изменение oracle —
+   отдельный reviewed reference update.
+
+### DoD
+
+- [ ] RGBA и эквивалентный BGRA input дают одинаковые Y/U/V logical samples.
+- [ ] Tight/padded и odd/even cases сохраняют descriptor geometry и canaries.
+- [ ] 2×2 chroma reducer и odd edges сверены с independent oracle.
+- [ ] Native и WASM проходят одинаковые conversion case IDs/thresholds.
+- [ ] Документация явно называет matrix/range/rounding и legacy UV order.
+- [ ] Generated bindings не редактировались вручную.
+- [ ] Native C изменяется только после отдельного разрешения.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-33 — ввести checked native descriptor/index/allocation primitives
+
+- Владелец: Opus
+- Anthropic-вариант: Claude Opus 5
+- Ожидаемое reasoning: Medium
+- Приоритет: P0 / foundation
+- Статус: BLOCKED
+- Зависимости: YUV-30 и отдельное разрешение владельца на изменение native C
+- Scope:
+  - `src/yuv/yuv.h`, `src/yuv/utils/h/yuv_utils.h` и новый узкий shared helper при необходимости;
+  - C-only unit harness для descriptor, ceil chroma и checked arithmetic;
+  - adoption contract для YUV-22, YUV-23, YUV-31 и YUV-32.
+- Non-goal: массовая миграция всех operations в одном foundation commit.
+
+### Проблема
+
+`yuv_index` и allocation expressions вычисляются в signed `int`; `width *
+height * 4`, `2 * radius + 1` и `y * rowStride + x * pixelStride` могут
+переполниться до conversion в `size_t`. C functions не имеют общей проверки
+positive geometry/strides, required pointers, format-specific sample sizes или
+совместимости source/destination descriptors.
+
+`YUVDef` не содержит фактических buffer lengths. Поэтому C boundary может
+доказать только минимально необходимый span и арифметическую корректность, но не
+может проверить, сколько памяти caller действительно выделил. Это ограничение
+нельзя скрывать обещанием полной buffer validation.
+
+### Architect Decision
+
+1. Заменить macro-indexing на checked `size_t` helpers для multiplication,
+   addition, plane span и sample offset; overflow возвращает failure до доступа
+   к памяти.
+2. Добавить format/operation-specific descriptor validation: positive geometry,
+   non-null required planes, positive strides, `rowStride >= minimum span`,
+   supported pixel stride/sample size и compatible destination dimensions.
+3. Один shared ceil helper `(value / 2) + (value % 2)` без overflow формулы
+   `(value + 1) / 2`.
+4. Helpers не читают pointers и тестируются на boundary values без выделения
+   многогигабайтных frames.
+5. Существующие exported void symbols в `0.2.5` не менять без решения YUV-30;
+   status-returning ABI вынесен в YUV-36.
+6. Каждый operation consumer обязан завершаться до первой mutation при failed
+   validation/allocation и иметь единый cleanup path.
+
+### DoD
+
+- [ ] Checked add/multiply/index/span helpers покрыты overflow-boundary tests.
+- [ ] Descriptor validator покрывает null pointers, zero/negative dimensions,
+      undersized stride, unsupported pixel stride и incompatible destination.
+- [ ] Tests не требуют реальной огромной allocation.
+- [ ] Ни один helper не обещает проверить неизвестную фактическую buffer length.
+- [ ] Adoption points перечислены по task/file; массовый unrelated rewrite отсутствует.
+- [ ] Clang strict warnings и sanitizer unit harness проходят.
+- [ ] Native C изменяется только после отдельного разрешения.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-34 — добавить native ASan/UBSan safety gate
+
+- Владелец: Terra
+- Anthropic-вариант: Claude Sonnet 5
+- Ожидаемое reasoning: Medium
+- Приоритет: P1 / release gate
+- Статус: BLOCKED
+- Зависимости: YUV-22, YUV-23, YUV-31, YUV-32, YUV-33
+- Scope:
+  - C test harness outside `build/`;
+  - GitHub Actions Ubuntu job with Clang ASan/UBSan/LSan where supported;
+  - canary, invalid-parameter and allocation-failure cases;
+  - documented compiler/version/commands and source commit.
+
+### Проблема
+
+Flutter reference tests обнаруживают неправильные pixels, но не доказывают
+отсутствие OOB, use of uninitialized memory, integer UB или leaks внутри C.
+Аудит опирался на one-off Clang/probe runs; постоянного required gate нет.
+
+### Architect Decision
+
+1. Добавить отдельный native C harness, который напрямую вызывает exported
+   operations на tight/padded/odd descriptors с prefix/suffix/row canaries.
+2. Required Ubuntu CI job собирает текущие `src/yuv` с `clang` и
+   `-fsanitize=address,undefined`; leak detection включается там, где стабильно
+   поддерживается runner.
+3. Cases включают invalid rect/radius/sigma/geometry, overflow arithmetic,
+   allocation-failure injection и atomic no-op.
+4. Job не использует checked-in binaries, не читает `build/`, не имеет
+   `continue-on-error` и печатает число исполненных cases.
+5. Web parity остаётся в integration harness; sanitizer job её не заменяет.
+
+### DoD
+
+- [ ] Harness детерминирован и хранится вне исключённых каталогов.
+- [ ] ASan/UBSan job required и падает на sanitizer report/non-zero exit.
+- [ ] Покрыты все regression probes C-01…C-09 и H-01/H-02, релевантные памяти.
+- [ ] Allocation injection доказывает cleanup и отсутствие partial commit.
+- [ ] В tracker записаны run URL, toolchain versions, case count и provenance.
+- [ ] Existing Flutter analyzer/tests не регрессировали.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-35 — синхронизировать C API ownership, mutation и комментарии
+
+- Владелец: Terra
+- Anthropic-вариант: Claude Sonnet 5
+- Ожидаемое reasoning: Low
+- Приоритет: P2 / optional cleanup
+- Статус: BLOCKED
+- Зависимости: YUV-29 и отдельное разрешение владельца на изменение native headers
+- Не блокирует YUV-18.
+- Scope:
+  - C headers и matching definitions;
+  - `src/yuv/yuv.c`, NV comments и `src/yuv/utils/h/log.h`;
+  - ffigen regeneration only if declarations change.
+
+### Проблема
+
+- NV comments говорят VU, хотя установленный compatibility contract — `(U,V)`.
+- In-place functions принимают `const YUVDef *src`, хотя меняют pointee planes;
+  const относится к struct, но создаёт ложное впечатление immutable operation.
+- Non-Android logging объявляет `debug/warn/error`, Android — `LOGD/LOGW/LOGE`.
+- `freeYUVDef` определена, но не объявлена/не экспортируется и не имеет consumer;
+  Dart уже владеет struct/planes и освобождает их через `YUVDefClass.dispose()`.
+- Missing `nv21_to_rgb` declaration/definition mismatch остаётся отдельной YUV-29.
+
+### Architect Decision
+
+1. Исправить только документационную/сигнатурную правду без изменения runtime
+   semantics: legacy `nv21` comments называют interleaved `(U,V)`.
+2. In-place definitions/headers принимают `YUVDef *image`; read-only source и
+   writable destination различаются именами и const-correctness.
+3. Унифицировать macros как `LOGI/LOGD/LOGW/LOGE` на всех платформах.
+4. Если повторный consumer search пуст, удалить `freeYUVDef` как dead code;
+   не экспортировать второй ownership path рядом с Dart allocator.
+5. Не объединять с YUV-29 и не редактировать generated bindings вручную.
+
+### DoD
+
+- [ ] Headers и definitions совпадают; strict C compile не даёт const mismatch.
+- [ ] NV comments нигде не заявляют VU для текущего `(U,V)` contract.
+- [ ] Logging macro surface одинакова на Android/non-Android.
+- [ ] `freeYUVDef` либо удалена после доказанного отсутствия consumers, либо
+      задача возвращена архитектору с найденным ownership requirement.
+- [ ] ABI symbols/runtime output не изменились.
+- [ ] Native C/header изменения выполнены только после разрешения.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-36 — спроектировать status-returning native ABI
+
+- Владелец: Opus
+- Anthropic-вариант: Claude Opus 5
+- Ожидаемое reasoning: Medium
+- Приоритет: P2 / post-release
+- Статус: BLOCKED
+- Зависимости: после `0.2.5`, YUV-33 и решение YUV-30
+- Не блокирует YUV-18.
+
+### Проблема
+
+Все 40 exported operations возвращают `void`. При invalid descriptor или OOM
+Dart не может отличить success от atomic no-op и увеличивает revision как после
+успеха. Изменение return type существующего symbol небезопасно для patch ABI.
+
+### Architect Decision
+
+1. Для `0.2.5` сохранить существующие symbols/signatures и требовать safe
+   atomic no-op на C failure.
+2. Для следующего minor спроектировать additive `*_v2`/единый status contract,
+   не менять значение существующего symbol на месте.
+3. Status enum различает success, invalid argument, unsupported layout,
+   overflow и allocation failure; Dart переводит его в документированные
+   exceptions и не меняет revision при failure.
+4. Ownership buffer lengths/descriptor versioning рассмотреть явно, поскольку
+   текущий `YUVDef` не несёт allocation lengths.
+
+### DoD
+
+- [ ] Есть reviewed ABI proposal с compatibility/migration table.
+- [ ] Старые symbols продолжают работать на поддерживаемом happy path.
+- [ ] v2 status и Dart exception mapping покрыты tests.
+- [ ] Failed operation не меняет bytes/metadata/revision.
+- [ ] Headers/ffigen обновляются штатно только в реализации отдельного minor.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-37 — оптимизировать blur scratch и алгоритмическую сложность
+
+- Владелец: Terra
+- Anthropic-вариант: Claude Sonnet 5
+- Ожидаемое reasoning: Medium
+- Приоритет: OPT / post-release
+- Статус: BLOCKED
+- Зависимости: после YUV-23
+- Не блокирует YUV-18.
+
+### Проблема
+
+Gaussian helper делает O(width+height) heap allocations на plane и строит один
+kernel до трёх раз за публичный вызов. NV box chroma и mean paths используют
+O(W*H*r²), хотя Y path уже содержит separable sliding-window подход. Vertical
+flip allocation устранит YUV-31 как safety fix и сюда не входит.
+
+### Architect Decision
+
+После фиксации reference output переиспользовать один kernel и bounded scratch,
+перевести 1/2/4-byte samples на общий stride-aware separable primitive. Любая
+оптимизация обязана сохранить exact/tolerance output YUV-23 и border/ROI policy.
+
+### DoD
+
+- [ ] Allocation count не зависит от width+height.
+- [ ] Box/mean complexity не хуже O(W*H) для fixed channel count.
+- [ ] Benchmark фиксирует before/after time и peak allocations.
+- [ ] Native/Web reference output и sanitizer suite остаются зелёными.
+- [ ] Оптимизация не смешана с correctness commit YUV-23.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-38 — оптимизировать block conversion после YUV-32
+
+- Владелец: Terra
+- Anthropic-вариант: Claude Sonnet 5
+- Ожидаемое reasoning: Low
+- Приоритет: OPT / post-release
+- Статус: BLOCKED
+- Зависимости: после YUV-32
+- Не блокирует YUV-18.
+
+### Проблема
+
+BGRA→I420/NV сейчас вычисляет U/V для каждого pixel, хотя пишет chroma один раз
+на 2×2 block. После YUV-32 четыре Y и одна averaged UV pair могут считаться
+block-wise общим helper без выбрасывания 75% chroma arithmetic.
+
+### Architect Decision
+
+Оптимизировать только после принятого YUV-32 oracle. Обрабатывать 2×2 blocks с
+actual sample count на odd edges; сохранить BT.601 limited coefficients,
+rounding, strides и legacy `(U,V)` order byte-for-byte.
+
+### DoD
+
+- [ ] Native/Web output совпадает с принятым YUV-32 reference.
+- [ ] Odd/padded cases и canaries остаются зелёными.
+- [ ] Benchmark показывает эффект без изменения публичного API.
+- [ ] Optimization commit не меняет manifest/thresholds.
+
+### Результат
+
+Не заполнен.
+
+---
+
 ## YUV-18 — финальная приёмка и подготовка `0.2.5`
 
 - Владелец: Terra
 - Приоритет: P0 / release gate
 - Статус: BLOCKED
 - Зависимости: YUV-06, YUV-08, YUV-09, YUV-12, YUV-13,
-  YUV-21, YUV-22, YUV-23 (YUV-02/YUV-07/YUV-14/YUV-15/YUV-17/YUV-20 приняты)
+  YUV-21, YUV-22, YUV-23, YUV-30, YUV-31, YUV-32, YUV-33, YUV-34
+  (YUV-02/YUV-07/YUV-14/YUV-15/YUV-17/YUV-20 приняты)
 - Scope:
   - интеграционное ревью всех task commits;
   - `pubspec.yaml` и верхняя запись `CHANGELOG.md`;
