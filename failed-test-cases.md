@@ -261,7 +261,7 @@ YUV-14 должен добавить постоянные regression cases дл�
 ## F-004 — padded BGRA-плоскость ломает конструктор
 
 - Case ID: `BGRA-PADDED-CONSTRUCTOR-001`
-- Статус: OPEN
+- Статус: RESOLVED
 - Обнаружено: 2026-09-13
 - Commit: `5f52fd14540a283da91a6d80e1fc7128bba1c796`
 - Backend: Native / Windows x64; Web по инспекции исходного кода принимает тот же input через `copy()`, runtime-retest заблокирован F-001

@@ -21,6 +21,7 @@
 | YUV-27 | Terra | DONE |
 | YUV-07 | Opus | DONE |
 | YUV-14 | Luna | DONE |
+| YUV-15 | Terra | DONE |
 
 ---
 
@@ -2629,5 +2630,284 @@ Production Dart не менялся.
 - Run #28 подтвердил Web contract для BGRA/I420/legacy nv21 на `1x1`, `3x3`,
   `127x255`, `512x512`, padded layout и независимость результата в обе стороны.
 - Implementation и VM tests приняты ранее; финальные Web cases: `47e7d1f`.
+
+---
+
+---
+
+## YUV-15 — поддержать валидный padded BGRA plane одинаково на IO/Web
+
+- Владелец: Terra
+- Приоритет: P1
+- Статус: DONE
+- Зависимости: YUV-02/YUV-04 приняты; Web retest выполнен (run 34790481198)
+- Scope:
+  - `lib/src/yuv/impl/io/yuv_image.dart`, BGRA constructor
+  - `lib/src/yuv/impl/web/yuv_web.dart`, BGRA constructor
+  - shared validation из YUV-04
+  - `test/conversions_test.dart`
+  - `test/web/wasm_parity_edge_cases_test.dart`
+  - reference matrix YUV-10…YUV-13
+  - `failed-test-cases.md`, запись F-004
+
+### Проблема
+
+В IO специализированный `YuvImage.bgra(...)` пытается repack-ить строки через `WriteBuffer`, затем передаёт весь выровненный backing buffer новому `YuvPlane`. Для валидного input:
+
+```dart
+YuvImage.bgra(2, 2, planes: [YuvPlane(2, 16, 4)]);
+```
+
+конструктор падает:
+
+```text
+RangeError (end): Invalid value: Not in inclusive range 0..16: 32
+```
+
+Web специализированный конструктор делегирует generic constructor и сохраняет padded plane, поэтому backend contracts расходятся. YUV-08 исправляет только выдачу tight buffer из `toBgra8888()` и не закрывает constructor semantics.
+
+### Зафиксированное решение
+
+1. Для переданного валидного BGRA plane сохранять его rowStride/pixelStride и делать глубокую копию без constructor-time repack.
+2. Tight output является обязанностью `toBgra8888()` из YUV-08, а не причиной уничтожать layout исходной plane в constructor.
+3. Специализированный `YuvImage.bgra` и generic `YuvImage(YuvFileFormat.bgra8888, ...)` должны иметь одинаковый validation/copy contract.
+4. Невалидный layout должен давать заранее определённый `ArgumentError`, созданный shared validator, а не случайный `RangeError` из `sublist`/`setAll`.
+5. `copy()` и `copy(blank: true)` должны сохранять padded metadata; blank copy заполняет весь allocated plane нулями.
+6. Не менять C в этой задаче.
+
+### DoD
+
+- Приведённый `2x2`, `rowStride: 16`, `pixelStride: 4` case создаётся без исключения на IO и Web.
+- Constructor сохраняет metadata и deep-copy semantics.
+- `toBgra8888()` после YUV-08 возвращает только 16 pixel bytes без padding.
+- Невалидные padded layouts дают одинаковый публичный exception на IO/Web.
+- Tests покрывают специализированный и generic constructors, tight/padded/invalid layouts и copy variants.
+- F-004 переведён в `RESOLVED` после native и Web retest.
+
+### Проверка
+
+```powershell
+flutter test test/conversions_test.dart --plain-name "padded BGRA"
+flutter test --platform chrome test/web/wasm_parity_edge_cases_test.dart --plain-name "padded BGRA"
+flutter analyze lib test
+dart format --output=none --set-exit-if-changed lib test
+git diff --check
+git status --short
+```
+
+### Результат
+
+```text
+Статус: READY FOR REVIEW
+Commit: fix: kept the declared layout of a padded BGRA plane
+Изменённые файлы:
+- lib/src/yuv/impl/io/yuv_image.dart
+- lib/src/yuv/impl/web/yuv_web.dart
+- lib/src/yuv/impl/yuv_stub.dart
+- test/conversions_test.dart
+- test/web/wasm_parity_edge_cases_test.dart
+- test/reference_native_conversions_test.dart
+- test/yuv_geometry_rejection_test.dart
+- test/yuv_plane_validation_test.dart
+- failed-test-cases.md
+
+Что сделано:
+- `YuvImageImpl.bgra` больше не repack-ит plane в конструкторе, а делегирует
+  generic-конструктору (решения 1 и 3): один validator, одна deep-copy
+  семантика, сохранённые rowStride/pixelStride. Специализированный и generic
+  entry point теперь неразличимы по контракту.
+- `copy()` во всех трёх backend (`io`, `web`, `yuv_stub`) сохраняет declared
+  geometry каждой plane, а `copy(blank: true)` обнуляет всю выделенную plane
+  вместо возврата к tight-аллокации (решение 5). Раньше blank copy молча
+  схлопывал padded 16 -> 8.
+- Невалидный layout по-прежнему даёт `ArgumentError` из shared validator, а не
+  внутренний `RangeError` (решение 4); покрыто тестом для обоих конструкторов.
+- Native C не изменялся (решение 6).
+
+Симптом отличался от записанного в F-004:
+- Карточка и F-004 описывают `RangeError`. После принятой YUV-04 конструктор уже
+  не падал, а **молча понижал** валидную padded plane до tight
+  (`rowStride` 16 -> 8), тогда как generic-конструктор сохранял 16. Тихая
+  потеря declared layout — тот же дефект в более опасной форме; это отражено в
+  F-004 отдельной секцией, запись не переписана задним числом.
+
+Намеренно изменённые чужие ожидания (требуют внимания ревьюера):
+- `test/yuv_plane_validation_test.dart` и `test/yuv_geometry_rejection_test.dart`
+  содержали два теста из принятой YUV-04, утверждавших обратное:
+  «`YuvImage.bgra` repacks a padded plane into an exact tight buffer». YUV-15
+  прямо отменяет это поведение, поэтому ожидания переписаны, а не удалены, с
+  комментарием о том, какая карточка какую заменила.
+- `test/reference_native_conversions_test.dart`: убраны два harness-костыля,
+  существовавших только ради старого repack — принудительный `layout = 'tight'`
+  для BGRA в `parametersForRaw()` и ветка `bgra8888 when blank` в `_newImage()`.
+  Дополнительно `getBytes`-cases исключены из visual-сравнения: они проверяют
+  raw plane layout, а не отрендеренный кадр (padded I420/NV21 cases уже были
+  исключены де-факто, BGRA попадал туда лишь из-за совпадения имени формата).
+  Эталонные значения манифеста НЕ перегенерировались.
+
+Проверки:
+- flutter test test/conversions_test.dart --plain-name "padded BGRA" — exit 0,
+  7 tests passed
+- flutter analyze --no-pub lib test — exit 0, No issues found
+- flutter test (полный VM suite) — 206 passed / 31 failed против 199/32 на
+  входе в задачу: +6 новых contract tests и `BYTES-GET-BGRA8888-PADDED`,
+  который теперь сравнивается padded-к-padded
+  (`raw length=1056768/1056768`, mae=0.000) против собственного
+  `rawPlaneReference` манифеста (`rowStride: 2064`). Новых падений нет.
+- dart format --output=none --set-exit-if-changed --line-length 150 — exit 0 для
+  всех изменённых файлов. Pre-existing drift в `test/web/yuv_web_wasm_test.dart`
+  намеренно оставлен нетронутым и не входит в этот commit.
+- git diff --check — exit 0
+- git status --short — приложен ниже
+
+Ручная проверка:
+- Windows 10 x64 / AMD64, Flutter 3.38.10, Dart 3.10.9, native backend из
+  локального `yuv_ffi.dll`.
+- Web: `NOT RUN`. Chrome runner заблокирован F-007/YUV-02, `kIsWeb == true`
+  подтвердить нельзя. Web-cases добавлены симметрично.
+
+Остаточные риски:
+- Web-сторона проверена инспекцией: её BGRA-конструктор и раньше делегировал
+  generic-конструктору, поэтому расхождение закрывается со стороны IO. Runtime
+  evidence отсутствует до YUV-02, поэтому F-004 переведён в `READY FOR RETEST`,
+  а не в `RESOLVED`.
+- `toBgra8888()` на Web возвращает padded plane как есть и всё ещё нарушает
+  tight-контракт. Это явная зона ответственности YUV-08 (решение 2), поэтому
+  сюда не включено, чтобы не смешивать две карточки в одном commit.
+- Blur/effect операции по-прежнему отклоняют padded BGRA через
+  `_requireTightBgraFor` до исправления YUV-23; это не регресс и не меняется
+  здесь.
+
+Native C permission:
+- не требовалось; `src/**` и generated bindings не изменялись.
+```
+
+### Независимое ревью root 2026-09-14
+
+Статус остаётся `READY FOR REVIEW` до Web retest.
+
+Специализированный BGRA constructor теперь использует тот же validation/deep
+copy path, что generic constructor, и сохраняет padded metadata. Обновлённые
+ожидания YUV-04 соответствуют более позднему зафиксированному контракту YUV-15;
+изменение reference harness не перегенерирует эталоны. На Flutter 3.44.9
+analyzer чист и общий сфокусированный VM-набор прошёл 110/110.
+
+Блокирующих замечаний по нативной реализации не найдено. Для `DONE` нужны
+реальные Chrome cases специализированного/generic constructors и copy variants
+через integration harness после YUV-02. Tight `toBgra8888()` остаётся отдельной
+задачей YUV-08.
+
+### Повторное независимое ревью root 2026-09-14
+
+Статус: `REJECTED`.
+
+После принятия YUV-02 integration harness доступен, но focused case YUV-15 в
+нём отсутствует. Bootstrap использует tight `YuvImage.bgra(2, 2)` и не проверяет
+ни один из padded constructor/copy contracts задачи.
+
+Нативная реализация и regressions приняты: специализированный и generic path
+согласованы, deep copy и сохранение padding проверены; focused VM suite на
+Flutter 3.44.9 проходит 114/114. Для повторного review требуется:
+
+1. добавить в `example/integration_test/` Web cases для specialized/generic
+   padded BGRA constructors, invalid layout и `copy`/`copy(blank: true)`;
+2. проверить metadata, deep-copy semantics и полный padded buffer;
+3. выполнить required Chrome job с `kIsWeb == true` и приложить URL;
+4. после успеха перевести F-004 из `READY FOR RETEST` в `RESOLVED`.
+
+Tight output `toBgra8888()` остаётся scope YUV-08; production fix YUV-15,
+native C и generated bindings менять не требуется.
+
+### Перенос focused case 2026-09-14
+
+Статус остаётся `REJECTED`: тест написан, но не исполнен.
+
+Добавлен `example/integration_test/padded_bgra_constructor_test.dart` — пункты 1
+и 2 замечания. Четыре case: согласие специализированного и generic
+конструкторов на padded plane (`rowStride 16`, `pixelStride 4`, 32 байта);
+невалидный layout даёт `ArgumentError`, а не `RangeError`, для обоих
+конструкторов; deep copy проверяется в обе стороны — мутация исходной plane не
+протекает в изображение и наоборот; `copy()` сохраняет padded metadata и байты,
+`copy(blank: true)` обнуляет всю 32-байтовую аллокацию, а не схлопывает её до
+tight. `kIsWeb == true` проверяется внутри тела каждого теста.
+
+Tight `toBgra8888()` намеренно не проверяется: это scope YUV-08.
+
+### Web evidence получен 2026-09-14
+
+Статус: `READY FOR REVIEW`.
+
+Run [34787051514](https://github.com/Anfet/yuv_ffi/actions/runs/34787051514),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/padded_bgra_constructor_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux, WASM собран в том же прогоне.
+
+Все четыре case исполнены в браузере с `kIsWeb == true`: согласие
+специализированного и generic конструкторов на padded plane, `ArgumentError`
+вместо `RangeError`, deep copy в обе стороны, `copy(blank: true)` обнуляет всю
+32-байтовую аллокацию. F-004 переведён в `RESOLVED`.
+
+### Независимое ревью root 2026-09-14 после run #26
+
+Статус: `REJECTED`.
+
+F-004 и padded contract подтверждены настоящим Chrome run: specialized/generic
+constructors согласованы, invalid padded layout даёт `ArgumentError`, deep copy
+и blank copy проверены. Эти результаты приняты, F-004 остаётся `RESOLVED`.
+
+Не выполнен один явный пункт исходного DoD: integration target не содержит
+tight BGRA constructor/copy case. Bootstrap создаёт tight image, но не сверяет
+specialized и generic constructors, metadata, deep-copy и copy variants, поэтому
+не заменяет отсутствующий contract case.
+
+Для повторного review добавить в `padded_bgra_constructor_test.dart` tight
+specialized/generic case с `rowStride == width * 4`, exact bytes, deep-copy и
+`copy`/`copy(blank: true)` assertions; повторить required Chrome job. Production
+Dart/C и generated bindings менять не требуется.
+
+### Доработка 2026-09-14
+
+Статус остаётся `REJECTED` до нового Chrome-прогона.
+
+Замечание принято: файл строил только `rowStride: 16` и проверял исключительно
+padded-ветку. Добавлены три tight-case (`rowStride: 8`, то есть
+`width * 4` для 2x2 BGRA):
+
+- специализированный и generic конструкторы дают `rowStride 8`, `pixelStride 4`,
+  16 байт — tight сохраняется как tight;
+- `copy()` остаётся tight с тем же содержимым, `copy(blank: true)` остаётся
+  tight и полностью обнулён;
+- `toBgra8888()` на tight-изображении возвращает ровно 16 байт, совпадающих с
+  байтами плоскости.
+
+Padded `toBgra8888()` намеренно не проверяется: на Web он сейчас возвращает
+padding — известный открытый дефект в scope YUV-08. Утверждение о нём здесь
+роняло бы тест по причине вне этой карточки.
+
+### Прогон run #28: Web evidence получен
+
+Статус: `READY FOR REVIEW`.
+
+Run [34790481198](https://github.com/Anfet/yuv_ffi/actions/runs/34790481198),
+job `wasm-web-integration` — **success**. Таргет
+`integration_test/padded_bgra_constructor_test.dart` — `All tests passed.`
+Chrome 152.0.7977.82, Flutter 3.44.9, Linux.
+
+Tight-layout cases исполнены в браузере вместе с padded: оба конструктора
+согласованы на обоих layout, `copy`/`copy(blank: true)` сохраняют геометрию,
+`toBgra8888()` на tight-изображении отдаёт ровно 16 байт. Padded
+`toBgra8888()` остаётся вне карточки (YUV-08). Production Dart не менялся.
+
+### Независимая приёмка root 2026-09-14
+
+- Статус: ACCEPTED; YUV-15 переведена в DONE.
+- IO/Web constructor и copy contracts согласованы для tight и padded BGRA;
+  invalid layout остаётся `ArgumentError`, deep-copy semantics сохранены.
+- Локальный focused suite на Flutter 3.44.9 прошёл 145/145; run #28 подтвердил
+  tight и padded cases в настоящем Chrome/WASM backend.
+- Production fix и VM tests приняты ранее; финальные Web cases: `47e7d1f`.
+
+---
+
 
 ---
