@@ -10,9 +10,9 @@ YUV-07/YUV-20/YUV-26/YUV-27 отражены в актуальных стату�
 входят в этот аудит. Найденные native/build вопросы зарегистрированы в
 `todo.md` отдельно и подчиняются approval policy из `AGENTS.md`.
 
-Этот файл хранит выводы и их обоснование. Исполняемый backlog, модели, DoD и
-результаты находятся только в `todo.md`; воспроизведённые runtime/reference
-падения — в `failed-test-cases.md`.
+Этот файл хранит выводы и их обоснование. Текущий backlog находится в
+`todo.md`, заблокированный и optional backlog — в `todo-waitlist.md`;
+воспроизведённые runtime/reference падения — в `failed-test-cases.md`.
 
 ## Актуальное соответствие `todo.md`
 
@@ -29,7 +29,7 @@ YUV-07/YUV-20/YUV-26/YUV-27 отражены в актуальных стату�
 | A-08: bindings cache | YUV-19 | DONE | Принято; evidence сохранён в Git history |
 | A-08: serialization | YUV-07 | REJECTED | Geometry исправлена, но 50 ms grace делает trailing-byte policy недетерминированной |
 | A-08: image cache | YUV-20 | REJECTED | Provider проверен в Chrome только на fake; настоящий Web backend revision не покрыт |
-| A-08: initialization | YUV-21 | REJECTED | Fake lifecycle cases зелёные; failed script element всё ещё ломает реальный retry |
+| A-08: initialization | YUV-21 | DONE | Принято после прямой DOM-проверки удаления failed script в required Chrome job |
 | A-09: локальный `_tmp_*` | — | CLOSED / local | Файл отсутствует; удаление локальных tmp не является package task |
 | A-10: revision compatibility | YUV-20 | REJECTED | F-006 закрыт; Web backend mutation/revision parity ещё не доказана |
 | A-11: serialization boundary | YUV-07 | REJECTED | Timeout не может служить доказательством отсутствия trailing bytes |
@@ -72,7 +72,8 @@ bfa85d7  ci: analyzed and built the example as its own package
 Повторные реализации YUV-07/YUV-20 и текущее root-review проверены на Flutter
 3.44.9; пользователь также отдельно разрешил использовать Flutter 3.38.
 YUV-02 принята после успешного required Chrome integration gate в CI run #24;
-focused Web evidence для YUV-14/YUV-15/YUV-20/YUV-21 ещё требуется.
+focused Web evidence для YUV-14/YUV-15/YUV-20 ещё требуется; YUV-21 принято
+после успешного required Chrome integration run.
 
 ---
 
@@ -227,10 +228,12 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
 - YUV-20 provider cache — functional seam реализован в `e3c235d`, interface
   compatibility исправлена в `a6851d7`, safe always-miss для foreign images
   восстановлен в `8b9d600`; задача ожидает focused Web retest.
-- YUV-21 initialization contract — REJECTED: integration harness доступен,
-  но focused retry/concurrency case ещё не выполнен.
-- YUV-06 loader paths/macOS packaging — TODO: разрешение на C-forwarders
-  получено, обязательны regression/smoke cases;
+- YUV-21 initialization contract — DONE: прямой DOM assertion после `onError`
+  принят по успешному required Chrome integration run; evidence остаётся в Git
+  history.
+- YUV-06 loader paths/macOS packaging — BLOCKED в waitlist: разрешение на
+  C-forwarders получено, но Windows-машина не даёт выполнить обязательный
+  Linux/macOS app-runtime retest;
   бывшая отдельная YUV-25 объединена с этой карточкой.
 
 ---
@@ -293,11 +296,11 @@ metadata должен остаться независимым от EOF. Подд
 ### До release acceptance
 
 1. Исправить замечание YUV-07.
-2. Исправить отклонённые YUV-14/YUV-15/YUV-20/YUV-21: перенести focused cases в принятый
-   integration harness и выполнить их до перевода задач в DONE. YUV-17 принята
-   и архивирована.
-3. После явного native permission выполнить единым scope YUV-06, включая
-   macOS source forwarding, затем YUV-22/YUV-23.
+2. Исправить отклонённые YUV-14/YUV-15/YUV-20: перенести focused cases в
+   принятый integration harness и выполнить их до принятия. YUV-17 и YUV-21
+   приняты; evidence сохранено в Git history.
+3. YUV-06 оставить в waitlist до доступности Linux/macOS app-runtime среды;
+   затем выполнить её retest и перейти к YUV-22/YUV-23.
 4. Закрыть reference/Web/documentation dependencies и выполнить YUV-18.
 
 ### Опционально, не блокирует `0.2.5`

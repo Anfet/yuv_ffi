@@ -1,7 +1,8 @@
 # yuv_ffi: текущая очередь работ
 
 Здесь находятся только задачи, которые инженер утвердил и которые можно взять
-сейчас: `TODO`, `IN PROGRESS` и `READY FOR REVIEW`. Заблокированные,
+сейчас: `TODO`, `IN PROGRESS`, `READY FOR REVIEW` и `REJECTED`, если исправления
+по ревью должны быть выполнены в текущем batch. Заблокированные,
 отложенные, discovery и optional/post-release карточки вместе с полным описанием
 находятся в [todo-waitlist.md](todo-waitlist.md).
 
@@ -9,9 +10,7 @@
 
 | Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|---|
-| [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | TODO | — | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
-| [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | TODO | — | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
-| [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
+| [ ] | YUV-08 | Luna | Claude Sonnet 5 | P2 | REJECTED | isolated commit; required CI target; comment fix | Восстановить Web parity для padded BGRA и публичного tight-buffer контракта |
 
 ## Правила очереди
 
@@ -30,7 +29,8 @@
   секция задачи.
 - `TODO` — задача одобрена и доступна; `IN PROGRESS` — один исполнитель начал
   работу; `READY FOR REVIEW` — реализация и evidence готовы к независимой
-  проверке. Исполнитель не ставит `DONE`.
+  проверке; `REJECTED` — ревьюер вернул задачу с конкретными исправлениями в
+  рамках текущего batch. Исполнитель не ставит `DONE`.
 - Любое изменение native C/header требует заранее записанного контракта и
   regression/characterization test cases: они обязаны воспроизводить прежнее
   неверное поведение либо проверять затронутый native path и подтверждать
@@ -54,89 +54,11 @@
 
 ---
 
-## YUV-06 — восстановить Linux/macOS packaging и runtime loading
-
-- Владелец: Terra
-- Приоритет: P1
-- Статус: TODO
-- Зависимости: нет; разрешение владельца на native C получено 2026-09-14.
-- Scope:
-  - `lib/src/loader/impl/loader_io.dart`
-  - `linux/CMakeLists.txt`
-  - `macos/yuv_ffi.podspec`
-  - `macos/Classes/**`
-  - CI native build/smoke matrix
-  - platform support section README только после фактической проверки
-- Карточка YUV-25 объединена сюда: loader path, packaging и состав macOS pod
-  target имеют один release outcome и не должны расходиться по разным commits.
-
-### Проблема
-
-Linux и macOS loader открывает `native/src/build/libyuv_ffi.*`. Такого runtime path нет в публикуемом package/application bundle. На Linux CMake уже объявляет bundled target, который должен загружаться по имени установленной библиотеки. На Apple symbols должны находиться в process либо в корректно упакованном framework/library.
-
-У macOS есть только один forwarder `macos/Classes/yuv_ffi.c`, подключающий агрегатор `src/yuv_ffi.c`, который сам содержит только include header. Реализации YUV/BGRA операций в macOS pod target не включены.
-
-Текущий успешный Windows `flutter test` зависит от локального игнорируемого `yuv_ffi.dll`; это не clean-checkout доказательство.
-
-### Зафиксированное решение
-
-1. Использовать platform loading contract:
-   - Android/Linux — установленное имя `libyuv_ffi.so`;
-   - Windows — `yuv_ffi.dll`;
-   - iOS/macOS — symbols текущего process, если library статически/динамически связана pod target.
-2. Добавить macOS source forwarding, эквивалентный полному проверенному iOS набору, либо другой корректный podspec source layout.
-3. Не дублировать одни и те же C translation units дважды.
-   Исправить некритичные двойные слэши в iOS forwarder paths только внутри того
-   же согласованного изменения, не отдельным cleanup-коммитом.
-4. Добавить clean-checkout CI:
-   - Linux и Windows: build + runtime smoke;
-   - macOS: build + runtime smoke;
-   - Android/iOS: как минимум plugin/example build, runtime — если инфраструктура позволяет.
-5. Smoke должен вызвать `YuvFfi.ensureInitialized()` и одну реальную BGRA/YUV операцию, а не только проверить существование файла.
-6. Не использовать и не публиковать локальный root `yuv_ffi.dll` как обходной путь.
-
-### DoD
-
-- Linux и macOS example/минимальный host собираются из clean checkout.
-- `ensureInitialized()` на Linux/macOS не обращается к `native/src/build/...`.
-- Все используемые generated binding symbols находятся в runtime library/process.
-- Smoke conversion успешно выполняется на Windows, Linux и macOS.
-- Mobile build checks проходят.
-- CI не зависит от локальных бинарников разработчика.
-- Добавлен regression/smoke case, подтверждающий загрузку и реальную BGRA/YUV-операцию на каждом изменённом native path; он должен быть воспроизводимо красным до исправления packaging/layout.
-
-### Проверка
-
-Приложить фактические команды каждой ОС. Минимальный набор:
-
-```text
-flutter clean
-flutter pub get
-flutter analyze
-flutter test
-flutter build <platform>
-<runtime smoke command>
-git diff --check
-git status --short
-```
-
-Не извлекать и не анализировать содержимое `build/`; использовать только exit code команд сборки/запуска.
-
-### Результат
-
-Не заполнен.
-
----
-
----
-
----
-
 ## YUV-08 — вернуть tight BGRA contract на Web
 
 - Владелец: Luna
 - Приоритет: P2
-- Статус: TODO
+- Статус: REJECTED
 - Зависимости: нет (YUV-01/YUV-02/YUV-04/YUV-15 приняты; integration harness доступен)
 - Scope:
   - `lib/src/yuv/impl/web/yuv_web.dart`
@@ -182,76 +104,71 @@ git status --short
 
 ### Результат
 
-Не заполнен.
+Web `toBgra8888()` для `bgra8888` больше не возвращает плоскость целиком: при
+`rowStride != width * 4` строится tight-копия построчно, как в native
+(`lib/src/yuv/impl/io/yuv_image.dart`). Условие сравнивает только `rowStride`,
+как native; `YuvGeometry.isTightBgra` намеренно не используется — он
+дополнительно требует `pixelStride == 4`, из-за чего tight-плоскость с
+нестандартным pixelStride ушла бы в repack-ветку, которая копирует строки
+целиком и pixelStride всё равно не учитывает.
 
----
+Изменены:
 
----
+- `lib/src/yuv/impl/web/yuv_web.dart`
+- `example/integration_test/wasm_parity_edge_cases_test.dart` (новый)
 
----
+Evidence — реальный Chrome, `kIsWeb == true`:
 
-## YUV-12 — проверить все преобразования на Web/WASM backend
-
-- Владелец: Luna
-- Приоритет: P1
-- Статус: TODO
-- Зависимости: нет (YUV-01, YUV-02 и YUV-10 выполнены)
-- Scope:
-  - `example/integration_test/reference_web_conversions_test.dart`
-  - `test/web/reference_web_conversions_test.dart` только если suite не требует asset bundle
-  - shared test helpers и manifest из YUV-10
-  - `failed-test-cases.md`, только регистрация фактических падений
-  - WASM artifacts только пересобрать, не исправлять production C/Web code
-
-### Проблема
-
-Текущие Web tests используют маленькие synthetic patterns и smoke assertions. Команда `-d chrome` запускала их на VM со skip. Нет доказательства, что каждая операция обрабатывает реальный `512x512` asset так же, как независимый эталон.
-
-### Зафиксированное решение
-
-1. Пересобрать WASM из текущего source перед прогоном.
-2. Перенести ту же data-driven manifest matrix, что и YUV-11, в
-   `example/integration_test/` и выполнить её через `flutter drive` в Chrome,
-   чтобы тест получал реальный Flutter asset bundle и WASM runtime.
-3. Использовать те же expected artifacts и thresholds, что native. Не создавать Web-specific expected images.
-4. Проверять metadata, planes, in-place contract и exact/tolerance metrics так же, как в native suite.
-5. Добавить явный Web environment assertion, чтобы case suite не мог пройти на VM.
-6. Каждый failed case зарегистрировать в `failed-test-cases.md` с браузером, Flutter/Dart version, WASM source commit и metrics.
-7. Не исправлять production behavior и не повышать tolerance в рамках этой задачи.
-
-### DoD
-
-- Все строки полной обязательной матрицы реально исполняются с `kIsWeb == true`
-  через integration harness. Сокращать матрицу до smoke-набора нельзя.
-- Native и Web используют одинаковые case IDs, input SHA и expected artifacts.
-- В результате записано фактическое число executed/passed/failed cases; skip не засчитывается как executed.
-- Все падения полностью отражены в `failed-test-cases.md`.
-- WASM artifacts однозначно связаны с тестируемым source commit.
-- Если suite не зелёный, задача может перейти в `READY FOR REVIEW` только при полном failure log.
-
-### Проверка
-
-```powershell
-Push-Location example
-flutter drive --driver=test_driver/integration_test.dart --target=integration_test/reference_web_conversions_test.dart -d chrome
-Pop-Location
-flutter analyze test
-Push-Location example
-flutter analyze
-Pop-Location
-dart format --output=none --set-exit-if-changed test
-git diff --check
-git status --short
+```text
+cd example
+flutter drive --driver=test_driver/integration_test.dart \
+  --target=integration_test/wasm_parity_edge_cases_test.dart -d chrome
+00:00 +0: (setUpAll)
+00:00 +1: toBgra8888 repacks a padded BGRA plane into exactly width*height*4 tight bytes
+00:00 +2: toBgra8888 on a tight BGRA plane (rowStride == width*4) returns the tight bytes unchanged
+00:00 +3: (tearDownAll)
+00:00 +4: All tests passed!
 ```
 
-Перед командами выполнить `tool/wasm/build_wasm.sh` в поддерживаемом shell и записать exact command/exit code.
+Негативный контроль: фикс убран (`git stash`), прогон повторён на багованном
+коде — падает именно padded-кейс, tight-кейс продолжает проходить, то есть тест
+различает фикс и его откат, а не проходит безусловно:
 
-### Результат
+```text
+00:00 +1: toBgra8888 repacks a padded BGRA plane ... [E]
+  Expected: <60>
+    Actual: <108>
+  toBgra8888 must always return exactly width*height*4 bytes
+  wasm_parity_edge_cases_test.dart 48:5
+00:00 +3 -1: Some tests failed.
+```
 
-Не заполнен.
+`60 = 5*3*4` (tight), `108 = 3*(5*4+16)` (padded) — в результат протекал padding.
 
----
+`flutter analyze lib` — No issues found. `dart format --set-exit-if-changed`
+для `lib` и обоих web-тестов — 0 changed.
 
----
+Границы утверждения: доказан контракт длины и точного порядка байт для
+padded/tight BGRA на Web. Остальные BGRA-операции по-прежнему отклоняют padded
+плоскость через `_requireTightBgraFor` (YUV-23), это здесь не менялось.
+
+### Независимое ревью root 2026-09-14
+
+Статус: `REJECTED`, количество отклонений: 1. Поведение исправления подтверждено
+независимым Chrome-прогоном на Flutter 3.38.10: 4/4 tests passed, включая
+padded exact bytes, tight bytes и copy independence. `flutter analyze --no-pub
+lib example/integration_test/wasm_parity_edge_cases_test.dart` также прошёл.
+
+До повторного review требуется:
+
+1. оформить YUV-08 отдельным commit; сейчас production-файл и regression test
+   лежат в рабочем дереве вместе с незавершённой YUV-12;
+2. добавить `integration_test/wasm_parity_edge_cases_test.dart` в массив
+   `targets` required `wasm-web-integration`, чтобы regression выполнялся после
+   принятия, а не только в локальном разовом прогоне;
+3. исправить комментарий в `toBgra8888()`: при `rowStride == width * 4` и
+   `pixelStride != 4` `YuvGeometry.isTightBgra` выбрал бы repack, тогда как
+   текущий код и native выбирают return-copy. Сейчас комментарий утверждает
+   обратное. Поведение и установленный parity contract менять не требуется.
 
 ---

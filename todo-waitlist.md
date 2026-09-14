@@ -9,6 +9,9 @@
 
 | Готово | ID | Владелец | Anthropic-вариант | Приоритет | Статус | Зависит от | Краткое описание |
 |---|---|---|---|---|---|---|---|
+| [ ] | YUV-06 | Terra | Claude Opus 5 | P1 | BLOCKED | Linux/macOS app-runtime environment; Android/iOS build evidence | Восстановить загрузку и упаковку native-библиотеки на Linux/macOS |
+| [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | BLOCKED | YUV-40 | Завершить полную Web/WASM reference matrix |
+| [ ] | YUV-40 | Terra | Claude Sonnet 5 | P1 | DISCOVERED | одобрение инженера | Изолировать и диагностировать обрыв Web/WASM matrix на `FORMAT-TO-NV21-BGRA-TIGHT` |
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06, YUV-08, YUV-13, YUV-22, YUV-23, YUV-30, YUV-32 | Синхронизировать README, platform matrix и analyzer workflow |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Сверить покрытие и оформить проваленные test cases |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | YUV-30, YUV-33 | Выровнять effects contract, addressing и odd chroma |
@@ -27,7 +30,7 @@
 | [ ] | YUV-37 | Terra | Claude Sonnet 5 | OPT | BLOCKED | после YUV-23 | Оптимизировать blur scratch и сложность |
 | [ ] | YUV-38 | Terra | Claude Sonnet 5 | OPT | BLOCKED | после YUV-32 | Оптимизировать block conversion |
 | [ ] | YUV-39 | Terra | Claude Sonnet 5 | P2 / optional | TODO | выбор ревьюера | Исследовать проверенные stride-aware implementations |
-| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-06, YUV-08, YUV-09, YUV-12, YUV-13, YUV-21…YUV-23, YUV-30…YUV-34 | Финальная приёмка `0.2.5` |
+| [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-06, YUV-08, YUV-09, YUV-12, YUV-13, YUV-22, YUV-23, YUV-30…YUV-34 | Финальная приёмка `0.2.5` |
 
 ## Правила waitlist
 
@@ -1393,13 +1396,474 @@ effects/ROI contract, исследование описывает вариант
 
 ---
 
+## YUV-06 — восстановить Linux/macOS packaging и runtime loading
+
+- Владелец: Terra
+- Приоритет: P1
+- Статус: BLOCKED
+- Зависимости: Linux/macOS app-runtime environment; Android/iOS build evidence.
+- Scope:
+  - `lib/src/loader/impl/loader_io.dart`
+  - `linux/CMakeLists.txt`
+  - `macos/yuv_ffi.podspec`
+  - `macos/Classes/**`
+  - CI native build/smoke matrix
+  - platform support section README только после фактической проверки
+- Карточка YUV-25 объединена сюда: loader path, packaging и состав macOS pod
+  target имеют один release outcome и не должны расходиться по разным commits.
+
+### Решение архитектора 2026-09-14
+
+Карточка отложена по решению инженера: доступная машина работает под Windows,
+поэтому обязательный Linux/macOS app-runtime retest локально сейчас недоступен.
+Успешные CI smoke jobs сохраняются как evidence, но не закрывают замечания
+независимого ревью. Возвращать YUV-06 в `todo.md` только при наличии подходящей
+Linux/macOS среды либо согласованного CI app-runtime сценария; повторно
+одобрять текущий batch не требуется.
+### Проблема
+
+Linux и macOS loader открывает `native/src/build/libyuv_ffi.*`. Такого runtime path нет в публикуемом package/application bundle. На Linux CMake уже объявляет bundled target, который должен загружаться по имени установленной библиотеки. На Apple symbols должны находиться в process либо в корректно упакованном framework/library.
+
+У macOS есть только один forwarder `macos/Classes/yuv_ffi.c`, подключающий агрегатор `src/yuv_ffi.c`, который сам содержит только include header. Реализации YUV/BGRA операций в macOS pod target не включены.
+
+Текущий успешный Windows `flutter test` зависит от локального игнорируемого `yuv_ffi.dll`; это не clean-checkout доказательство.
+
+### Зафиксированное решение
+
+1. Использовать platform loading contract:
+   - Android/Linux — установленное имя `libyuv_ffi.so`;
+   - Windows — `yuv_ffi.dll`;
+   - iOS/macOS — symbols текущего process, если library статически/динамически связана pod target.
+2. Добавить macOS source forwarding, эквивалентный полному проверенному iOS набору, либо другой корректный podspec source layout.
+3. Не дублировать одни и те же C translation units дважды.
+   Исправить некритичные двойные слэши в iOS forwarder paths только внутри того
+   же согласованного изменения, не отдельным cleanup-коммитом.
+4. Добавить clean-checkout CI:
+   - Linux и Windows: build + runtime smoke;
+   - macOS: build + runtime smoke;
+   - Android/iOS: как минимум plugin/example build, runtime — если инфраструктура позволяет.
+5. Smoke должен вызвать `YuvFfi.ensureInitialized()` и одну реальную BGRA/YUV операцию, а не только проверить существование файла.
+6. Не использовать и не публиковать локальный root `yuv_ffi.dll` как обходной путь.
+
+### DoD
+
+- Linux и macOS example/минимальный host собираются из clean checkout.
+- `ensureInitialized()` на Linux/macOS не обращается к `native/src/build/...`.
+- Все используемые generated binding symbols находятся в runtime library/process.
+- Smoke conversion успешно выполняется на Windows, Linux и macOS.
+- Mobile build checks проходят.
+- CI не зависит от локальных бинарников разработчика.
+- Добавлен regression/smoke case, подтверждающий загрузку и реальную BGRA/YUV-операцию на каждом изменённом native path; он должен быть воспроизводимо красным до исправления packaging/layout.
+
+### Проверка
+
+Приложить фактические команды каждой ОС. Минимальный набор:
+
+```text
+flutter clean
+flutter pub get
+flutter analyze
+flutter test
+flutter build <platform>
+<runtime smoke command>
+git diff --check
+git status --short
+```
+
+Не извлекать и не анализировать содержимое `build/`; использовать только exit code команд сборки/запуска.
+
+### Результат
+
+Evidence собран в CI: локальная машина — Windows, ни Linux, ни macOS на ней нет.
+
+#### Что изменено
+
+- `lib/src/loader/impl/loader_io.dart` — загрузчик больше не открывает
+  `native/src/build/libyuv_ffi.{so,dylib}`. Это путь дерева сборки CMake,
+  которого нет ни в опубликованном пакете, ни в бандле приложения, поэтому
+  любой потребитель вне этого репозитория падал на первом FFI-вызове. Linux
+  грузит установленное имя `libyuv_ffi.so` (как Android уже делал), iOS берёт
+  символы процесса.
+- macOS: `DynamicLibrary.process()` верен для приложения, где исходники
+  слинкованы в pod target, но `flutter test` — голая Dart VM, туда не линкуется
+  ничего. Загрузчик проверяет `providesSymbol` и при отсутствии символов
+  открывает установленную dylib, поэтому работают оба хоста.
+- `macos/Classes/**` — pod target содержал один форвардер к агрегатору, в
+  котором только include заголовка, то есть **ни одной реализации операций для
+  macOS не собиралось**. Добавлены четыре форвардера по образцу iOS. Проверено
+  программно: набор include идентичен iOS, каждая translation unit включена
+  ровно один раз.
+- `test/native_packaging_smoke_test.dart` — новый smoke, который **отказывается
+  пропускаться**. Остальные native-сьюты глушат ошибку открытия и делают skip:
+  прогон, где всё пропущено, в логе неотличим от прогона, где всё прошло —
+  именно так сломанная упаковка оставалась зелёной. Этот вызывает
+  `ensureInitialized()`, реальную конвертацию и in-place эффект.
+- `test/reference_native_conversions_test.dart` — проба библиотеки отвязана от
+  жёсткого `native/src/build/`; ищет по пути загрузчика с откатом на legacy.
+  Scope расширен по согласованию с владельцем.
+- `.github/workflows/ci.yml` — новые джобы `linux-native-smoke` и
+  `macos-native-smoke`; старая джоба переведена на штатный путь.
+
+#### Evidence
+
+Прогон [34839218249](https://github.com/Anfet/yuv_ffi/actions/runs/34839218249),
+commit `7a0a644`:
+
+```text
+linux-native-smoke:        success
+macos-native-smoke:        success
+example-analyze-and-build: success
+wasm-web-integration:      success
+analyze-and-test-vm:       failure  (31 pre-existing, см. ниже)
+```
+
+Linux smoke: `YUV-06 packaging smoke passed on linux (3.12.2)`, `All tests
+passed!`. macOS smoke зелёный после исправления контракта загрузчика.
+
+#### Регрессия, внесённая и исправленная в процессе
+
+Первая попытка (`fb66c6f`) перенесла сборку из `native/src/build/`, но
+эталонный сьют проверял файл по этому пути и стал пропускать все 119 кейсов:
+было 289 passed / 31 failed, стало 201 / 1 / 119 skipped. Выглядело как
+«починилось 30 тестов» — на деле 119 перестали исполняться. Исправлено в
+`7a0a644`.
+
+После исправления: **290 passed / 31 failed / 0 skipped**. Состав падений
+сверен поимённо с базовым прогоном
+[34824271019](https://github.com/Anfet/yuv_ffi/actions/runs/34824271019) —
+`diff` пустой, **IDENTICAL FAILURE SETS**. Прирост +1 к passed — это новый
+smoke-case. Провенанс подтверждает, что матрица реально исполнялась:
+`library=/home/runner/work/_temp/native-build/libyuv_ffi.so, exists=true`.
+
+#### Границы утверждения
+
+- `analyze-and-test-vm` остаётся красной: те же 31 падение, что и до карточки.
+  Это дефекты blur/effect/format-конверсий, к packaging отношения не имеющие,
+  и YUV-06 их не чинила.
+- Desktop-сборки собирают `example` со скаффолдингом `flutter create` на лету:
+  в `example/` нет папок `linux/` и `macos/`, сгенерированные раннеры в
+  репозиторий не добавлялись.
+- Android/iOS runtime не проверялся — только контракт загрузчика. В CI для них
+  джоб нет.
+- Локально проверено на Windows: smoke зелёный, проба эталонного сьюта
+  по-прежнему находит `yuv_ffi.dll`.
+
+### Независимое ревью root 2026-09-14
+
+Статус: `REJECTED`, количество отклонений: 1. Архитектурное решение остаётся
+валидным; Linux installed-name path и macOS source composition выглядят
+корректно, а CI действительно показывает успешные `linux-native-smoke` и
+`macos-native-smoke` для commit `7a0a644`.
+
+DoD пока не доказан по двум обязательным путям:
+
+1. macOS `Packaging smoke` выполняется из plain Dart VM и открывает отдельно
+   собранную CMake `libyuv_ffi.dylib` через `DYLD_LIBRARY_PATH`. Это не проверяет
+   заявленный app path `DynamicLibrary.process()` и не доказывает, что symbols
+   из `macos/Classes/*.c` доступны и не выкинуты линкером в CocoaPods host.
+   Нужен macOS integration/runtime smoke через собранное example-приложение,
+   вызывающий `ensureInitialized()` и реальную conversion/effect operation.
+2. В зафиксированном решении и DoD требуются mobile build checks, но workflow не
+   содержит Android build и iOS build без codesign. Добавить оба либо отдельно
+   согласовать изменение DoD с инженером; отсутствие runtime на mobile допустимо,
+   отсутствие build evidence — нет.
+
+После исправлений приложить новый CI URL и isolated follow-up commit. Набор из
+31 известных conversion/effect failures не относится к отклонению YUV-06.
+
+---
+
+---
+
+---
+
+## YUV-12 — проверить все преобразования на Web/WASM backend
+
+- Владелец: Luna
+- Приоритет: P1
+- Статус: BLOCKED
+- Зависимости: YUV-40 (YUV-01, YUV-02 и YUV-10 приняты)
+- Scope:
+  - `example/integration_test/reference_web_conversions_test.dart`
+  - `test/web/reference_web_conversions_test.dart` только если suite не требует asset bundle
+  - shared test helpers и manifest из YUV-10
+  - `failed-test-cases.md`, только регистрация фактических падений
+  - WASM artifacts только пересобрать, не исправлять production C/Web code
+
+### Проблема
+
+Текущие Web tests используют маленькие synthetic patterns и smoke assertions. Команда `-d chrome` запускала их на VM со skip. Нет доказательства, что каждая операция обрабатывает реальный `512x512` asset так же, как независимый эталон.
+
+### Зафиксированное решение
+
+1. Пересобрать WASM из текущего source перед прогоном.
+2. Перенести ту же data-driven manifest matrix, что и YUV-11, в
+   `example/integration_test/` и выполнить её через `flutter drive` в Chrome,
+   чтобы тест получал реальный Flutter asset bundle и WASM runtime.
+3. Использовать те же expected artifacts и thresholds, что native. Не создавать Web-specific expected images.
+4. Проверять metadata, planes, in-place contract и exact/tolerance metrics так же, как в native suite.
+5. Добавить явный Web environment assertion, чтобы case suite не мог пройти на VM.
+6. Каждый failed case зарегистрировать в `failed-test-cases.md` с браузером, Flutter/Dart version, WASM source commit и metrics.
+7. Не исправлять production behavior и не повышать tolerance в рамках этой задачи.
+
+### DoD
+
+- Все строки полной обязательной матрицы реально исполняются с `kIsWeb == true`
+  через integration harness. Сокращать матрицу до smoke-набора нельзя.
+- Native и Web используют одинаковые case IDs, input SHA и expected artifacts.
+- В результате записано фактическое число executed/passed/failed cases; skip не засчитывается как executed.
+- Все падения полностью отражены в `failed-test-cases.md`.
+- WASM artifacts однозначно связаны с тестируемым source commit.
+- Если suite не зелёный, задача может перейти в `READY FOR REVIEW` только при полном failure log.
+
+### Проверка
+
+```powershell
+Push-Location example
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/reference_web_conversions_test.dart -d chrome
+Pop-Location
+flutter analyze test
+Push-Location example
+flutter analyze
+Pop-Location
+dart format --output=none --set-exit-if-changed test
+git diff --check
+git status --short
+```
+
+Перед командами выполнить `tool/wasm/build_wasm.sh` в поддерживаемом shell и записать exact command/exit code.
+
+### Решение архитектора 2026-09-14
+
+- `RESOLUTION NEEDED` не вводится: карточка имеет статус `BLOCKED` и перенесена
+  в waitlist.
+- F-010 выделен в YUV-40: это изолированная диагностика обрыва на
+  `FORMAT-TO-NV21-BGRA-TIGHT`, без production-исправлений и изменения допусков.
+- F-009 направлен в YUV-13 для классификации общих native/Web и Web-specific
+  расхождений. До полного Web-прогона отдельная fix-карточка не создаётся.
+- После принятия YUV-40 исполнитель возобновляет тот же прогон 119 cases и
+  завершает исходный DoD YUV-12. Расширять scope YUV-12 до исправления backend
+  или native C не разрешено.
+
+### Результат
+
+Задача **не выполнена**: полный прогон матрицы не получен. Статус —
+`BLOCKED`: исполнитель упёрся в F-010 вне Scope карточки. Дальше — фактические
+данные частичного прогона, они не закрывают DoD.
+
+#### Что сделано
+
+- Матрица портирована в `example/integration_test/reference_web_conversions_test.dart`
+  (119 cases, те же case IDs, expected artifacts и tolerances, что в native).
+- Оракул `test_pattern_reference.dart` скопирован в
+  `example/integration_test/helpers/reference/`. Копия, а не cross-package import:
+  DDC не резолвит относительный импорт за пределы пакета. Код совпадает —
+  sha256 без комментариев идентичен оригиналу, удалённых/изменённых строк нет.
+- Фикстуры скопированы в `example/assets/reference/` (~1.7 МБ: manifest,
+  source PNG, 24 PNG-артефакта), скрипт регенерации —
+  `example/tool/copy_reference_fixtures.sh`. Сырые `.bin`/`.yuv` не копировались:
+  с диска они не читаются, ожидаемые сырые байты пересчитывает `parametersForRaw()`.
+- В `example/pubspec.yaml` добавлены `crypto`, `image` и секция `assets:`
+  (расширение Scope согласовано с Архитектором).
+- WASM пересобран: `bash ./tool/wasm/build_wasm.sh`, exit 0,
+  `git status --short assets/wasm/` пустой — закоммиченные артефакты
+  соответствуют текущим C-исходникам.
+
+#### Прогон 1 — недействителен
+
+`main()` был объявлен `async`, и `test()` вызывались после `await`. Результат:
+
+```text
+00:00 +1: All tests passed!
+DartError: Bad state: Can't call test() once tests have begun running.
+reference_web_conversions_test.dart 82:3
+```
+
+Исполнено 0/119. Строка «All tests passed!» относилась к единственному
+зарегистрированному тесту и была ложной. Регистрация переписана на синхронную:
+`void main()` + один `testWidgets` с циклом по всем cases и per-case `debugPrint`.
+
+#### Прогон 2 — частичный
+
+```text
+cd example
+flutter drive --driver=test_driver/integration_test.dart \
+  --target=integration_test/reference_web_conversions_test.dart -d chrome
+YUV-12 web provenance: kIsWeb=true, cases=119
+```
+
+Environment: Flutter 3.38.10, Dart 3.10.9, Chrome 153.0.8010.37, Windows x64.
+WASM: `yuv_ffi.wasm` sha256 `61b6c52d9aca319ed575cf403729d8684fa8ea5cc99f4d36abc638523e495569`,
+последний commit по C-исходникам `3524f05`, HEAD `2ae1dc3`.
+
+**executed 19 / 119, passed 7, failed 12, не исполнено 100.**
+
+Passed (все BGRA + два `fromRgba8888`):
+
+```text
+CONSTRUCT-BGRA8888-TIGHT       CONSTRUCT-BGRA8888-PADDED
+INPUT-FROM-RGBA-BGRA8888       OUTPUT-TO-BGRA-BGRA8888-TIGHT
+OUTPUT-TO-BGRA-BGRA8888-PADDED INPUT-FROM-RGBA-I420
+INPUT-FROM-RGBA-NV21
+```
+
+Failed (все — I420/NV21):
+
+```text
+CONSTRUCT-I420-TIGHT       CONSTRUCT-I420-PADDED
+OUTPUT-TO-BGRA-I420-TIGHT  OUTPUT-TO-BGRA-I420-PADDED
+CONSTRUCT-NV21-TIGHT       CONSTRUCT-NV21-PADDED
+OUTPUT-TO-BGRA-NV21-TIGHT  OUTPUT-TO-BGRA-NV21-PADDED
+FORMAT-TO-BGRA-I420        FORMAT-TO-BGRA-NV21
+FORMAT-TO-I420-BGRA-TIGHT  FORMAT-TO-I420-NV21-TIGHT
+```
+
+Характер падений (F-009):
+
+- `CONSTRUCT-I420-TIGHT` и `CONSTRUCT-NV21-*` падают на `_assertPlaneReference`
+  по sha256 плоскости, то есть расхождение возникает уже при конструировании,
+  до какой-либо операции.
+- Метрики вне допуска: `OUTPUT-TO-BGRA-I420-TIGHT` и `FORMAT-TO-BGRA-I420` —
+  `mae=44.469 max=255 p99=255 outside=101888` при пороге `yuvRoundTrip`
+  (`mae<=18`, `max<=160`); `FORMAT-TO-I420-BGRA-TIGHT` — `mae=10.233 max=144`.
+- `FORMAT-TO-I420-NV21-TIGHT` — геометрия: `Expected: <256>, Actual: <512>`.
+
+Все пять BGRA-кейсов, включая padded, прошли с `mae=0.000 max=0` — Web/BGRA
+совпадает с эталоном побайтово.
+
+#### Обрыв прогона (F-010)
+
+После 19-го case (`FORMAT-TO-I420-NV21-TIGHT`) 20-й — `FORMAT-TO-NV21-BGRA-TIGHT` —
+не напечатал ни PASS, ни FAIL. Цикл ловит все исключения через
+`catch (error, stackTrace)`, поэтому молчание означает, что исполнение
+прервалось некатчабельно (WASM trap либо `Error`, убивающий isolate), а не
+провал assertion. Строки `YUV-12 summary` в логе нет, счётчик остался `+0`.
+В логе нет ни timeout, ни pending timer, ни потери соединения.
+
+Прогон завершился сам: `Application finished.` и `EXIT=1`. Ранее я ошибочно
+сообщил, что драйвер завис — это неверно, зависания во втором прогоне не было.
+
+#### Чего не хватает для DoD
+
+- 100 cases из 119 не исполнены; пока не устранён обрыв (F-010), полный
+  failure log недостижим.
+- Согласно правилу карточки, `READY FOR REVIEW` возможен только при полном
+  failure log, поэтому в review карточка не отдаётся.
+- Production behavior и tolerances не трогал, как требует карточка.
+
+#### Запрос исполнителя и ответы архитектора
+
+Исполнитель не может двигаться дальше в пределах Scope карточки. Решения:
+
+1. **F-010 (обрыв) — чья задача?** Причина обрыва, вероятно, в production-коде
+   Web-бэкенда или в WASM, а карточка прямо запрещает чинить production в своих
+   рамках. Нужна отдельная карточка на диагностику `FORMAT-TO-NV21-BGRA-TIGHT`
+   либо явное расширение Scope YUV-12.
+   **Ответ:** отдельная диагностическая карточка YUV-40 в waitlist; Scope
+   YUV-12 не расширять.
+2. **F-009 (расхождение I420/NV21) — куда направить?** Часть падений может
+   дублировать известные native-дефекты (native-прогон той же матрицы: 65/119).
+   Разделение native/Web — это YUV-13, но она идёт после YUV-12, а YUV-12
+   заблокирована. Нужно решение о порядке.
+   **Ответ:** зарегистрировать F-009 за YUV-13, но не начинать классификацию до
+   завершения полного Web-прогона YUV-12.
+3. ~~**`example/pubspec.lock`.**~~ **Закрыто 2026-09-14, решение владельца.**
+   Причина просадки установлена: локальный Flutter 3.38.10 против CI 3.44.9.
+   Файл переписывал не человек, а сам тулчейн — `flutter analyze`, `test` и
+   `drive` неявно зовут `pub get`, и каждый вызов возвращал
+   `characters` 1.4.1→1.4.0, `matcher` 0.12.19→0.12.17,
+   `material_color_utilities` 0.13.0→0.11.1, `meta` 1.18.0→1.17.0,
+   `test_api` 0.7.11→0.7.7, floor `>=3.10.0-0`→`>=3.8.0-0`.
+
+   Ручная склейка (версии HEAD + четыре добавления) не выжила: первый же
+   `pub get` её снёс. Проверено, что на 3.38 проект полностью работоспособен —
+   `flutter analyze lib test` чистый, 49 тестов в трёх сьютах проходят, — то
+   есть поднимать `sdk` в `pubspec.yaml` не требуется и публичный контракт
+   пакета не трогается.
+
+   Итог: commit `95a8517` (лок под 3.44.9) отменён в `6db12b3`. В репозитории
+   лежит лок, который локальная среда воспроизводит сама; после отката
+   повторный `flutter analyze` оставил файл чистым. На CI это не влияет: все
+   джобы зовут обычный `flutter pub get` без `--enforce-lockfile`, и `example`
+   не публикуется, поэтому закоммиченный лок там ничего не фиксирует.
+4. **Статус `RESOLUTION NEEDED`** отсутствует в списке статусов очереди
+   (секция «Правила очереди») и в `failed-test-cases.md`.
+   **Ответ:** новый статус не вводить; карточка переведена в `BLOCKED`.
+
+---
+
+---
+
+---
+
+## YUV-40 — диагностировать некатчабельный обрыв Web/WASM matrix
+
+- Владелец: Terra
+- Anthropic-вариант: Claude Sonnet 5
+- Приоритет: P1
+- Статус: DISCOVERED
+- Зависимости: одобрение инженера
+- Блокирует: YUV-12; через неё YUV-13 и YUV-18
+- Scope:
+  - `example/integration_test/reference_web_conversions_test.dart`
+  - минимальный отдельный Chrome integration target для одного failing case
+  - test-only markers/logging и сбор browser console evidence
+  - `failed-test-cases.md`, только уточнение F-010
+  - production Dart, C, WASM artifacts и tolerances не изменять
+
+### Проблема
+
+Полная Web reference matrix прерывается на 20-м case
+`FORMAT-TO-NV21-BGRA-TIGHT`: case не печатает PASS/FAIL, per-case `catch`
+не срабатывает, итоговая summary отсутствует, а следующие 100 cases не
+исполняются. По текущему логу нельзя отличить ошибку test harness, потерю
+isolate, WASM trap и повреждение памяти.
+
+### Зафиксированный план диагностики
+
+1. Вынести failing case в минимальный самостоятельный Chrome integration
+   target и поставить различимые маркеры до/после каждого вызова.
+2. Добавить соседний control case, подтверждающий работоспособность того же
+   harness и загрузчика WASM.
+3. Захватить stdout драйвера и browser console/JS/WASM error; записать точный
+   exit code и последнюю достигнутую границу.
+4. Воспроизвести на основном Flutter 3.44.9; Flutter 3.38 допустим только как
+   дополнительная проверка совместимости.
+5. Классифицировать первопричину и сформировать отдельную implementation task.
+   В рамках YUV-40 не менять production behavior, native C/WASM и thresholds.
+
+### DoD
+
+- Изолированный case воспроизводит либо опровергает F-010 независимо от остальных
+  118 cases.
+- Control case проходит в том же окружении.
+- Есть точный лог границы обрыва и однозначная классификация слоя отказа либо
+  перечень оставшихся гипотез с доказательством каждой проверки.
+- Сформулирована минимальная follow-up карточка с regression test requirement;
+  production-код не изменён.
+- После принятия диагностики YUV-12 можно вернуть в `todo.md` для полного
+  прогона, но это не означает автоматического разрешения implementation task.
+
+### Проверка
+
+```powershell
+Push-Location example
+flutter drive --driver=test_driver/integration_test.dart --target=<isolated-target> -d chrome
+Pop-Location
+flutter analyze example/integration_test
+# Захват browser console согласно выбранному harness
+git diff --check
+git status --short
+```
+
+---
 ## YUV-18 — финальная приёмка и подготовка `0.2.5`
 
 - Владелец: Terra
 - Приоритет: P0 / release gate
 - Статус: BLOCKED
 - Зависимости: YUV-06, YUV-08, YUV-09, YUV-12, YUV-13,
-  YUV-21, YUV-22, YUV-23, YUV-30, YUV-31, YUV-32, YUV-33, YUV-34
+  YUV-22, YUV-23, YUV-30, YUV-31, YUV-32, YUV-33, YUV-34
   (YUV-02/YUV-07/YUV-14/YUV-15/YUV-17/YUV-20 приняты)
 - Scope:
   - интеграционное ревью всех task commits;

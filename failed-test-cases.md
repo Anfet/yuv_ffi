@@ -1,6 +1,7 @@
 # yuv_ffi: проваленные test cases
 
-Этот файл — единый журнал фактически воспроизведённых падений. План исправлений и владельцы задач находятся в `todo.md`.
+Этот файл — единый журнал фактически воспроизведённых падений. План исправлений
+и владельцы задач находятся в `todo.md` либо `todo-waitlist.md`.
 
 После независимого принятия fix-задачи ревьюер удаляет связанную запись целиком:
 строку сводки и полную секцию, если она есть. Журнал содержит только актуальные
@@ -18,8 +19,8 @@ Git history.
 
 | Failure ID | Case ID | Backend | Статус | Приоритет | Fix task | Кратко |
 |---|---|---|---|---|---|---|
-| F-007 | CHROME-RUNNER-HANG-001 | Web/Chrome | OPEN | P0 | YUV-02 | Даже минимальный Flutter Web test зависает на стадии `loading` |
-| F-008 | WASM-LOADER-RETRY-001 | Web/Chrome | READY FOR RETEST | P1 | YUV-21 | Мёртвый `<script>` остаётся в DOM, поэтому retry загрузчика всегда падает |
+| F-009 | WEB-PLANAR-REFERENCE-001 | Web/WASM Chrome | OPEN | P1 | YUV-13 | I420/NV21 расходятся с эталоном на Web; BGRA совпадает |
+| F-010 | WEB-MATRIX-ABORT-001 | Web/WASM Chrome | OPEN | P1 | YUV-40 | Прогон матрицы обрывается без сообщения на 20-м case, 100/119 не исполнены |
 
 ## Текущее состояние reference matrix
 
@@ -27,206 +28,127 @@ Git history.
 - Source SHA-256: `a48d5d2959a4d86f3f036fd704acc3726a12aaa66de825f738b3fa8b7e5f631a`, подтверждён YUV-10.
 - Manifest: `test/reference/test_pattern_512/manifest.json`, 119 cases, SHA-256 `3560e965300ee39eab7599d508849a7b3872b8a2330075962a3f4072093f4403`.
 - Native reference run: Windows x64, 65/119 passed, 54/119 failed; полный список ниже в секции YUV-11.
-- Web reference run: `NOT RUN` — выполнит YUV-12.
+- Web reference run: частичный, 2026-09-14. Исполнено 19/119, passed 7, failed 12,
+  остальные 100 не исполнены из-за обрыва (F-010). Полного Web-прогона пока нет.
 - Последняя сверка полноты: native matrix сверена YUV-11; общую native/Web сверку выполнит YUV-13 после YUV-12.
 
 Пока YUV-10…YUV-13 не выполнены, отсутствие asset-specific записей ниже не означает отсутствие дефектов.
 
 ---
 
-## F-007 — минимальный Chrome test зависает на `loading`
+## F-009 — Web/WASM расходится с эталоном на I420 и NV21
 
-- Case ID: `CHROME-RUNNER-HANG-001`
+- Case ID: `WEB-PLANAR-REFERENCE-001`
 - Статус: OPEN
-- Обнаружено: 2026-09-13
-- Commit: `f6d403c` + рабочий YUV-01 candidate
-- Backend: Web / Chrome на Windows x64
-- Environment: Flutter 3.38.10, Dart 3.10.9, headless Chrome 148
-- Source image: не требуется
-- Operation: запуск минимального `flutter_test` через Chrome platform runner
-- Fix task: YUV-02
+- Обнаружено: 2026-09-14
+- Commit: `2ae1dc3` (HEAD), последний commit по C-исходникам `3524f05`
+- Backend: Web / WASM, Chrome 153.0.8010.37 на Windows x64
+- Environment: Flutter 3.38.10, Dart 3.10.9
+- WASM: `assets/wasm/yuv_ffi.wasm` sha256
+  `61b6c52d9aca319ed575cf403729d8684fa8ea5cc99f4d36abc638523e495569`;
+  `yuv_ffi.js` sha256 `96576b243c3407fbb934a523a149fede8fbb0894491b3b3c702ee3921b8331a3`.
+  Пересобран `bash ./tool/wasm/build_wasm.sh` (exit 0), diff артефактов пустой.
+- Source image: `test/assets/test_pattern_512.png`, sha256
+  `a48d5d2959a4d86f3f036fd704acc3726a12aaa66de825f738b3fa8b7e5f631a`
+- Suite: `example/integration_test/reference_web_conversions_test.dart`
+- Fix task: YUV-13 (классификация; отдельный fix task только после полной сверки)
 
-### Диагностический case
-
-```dart
-import 'package:flutter/foundation.dart';
-import 'package:flutter_test/flutter_test.dart';
-
-void main() {
-  test('Chrome runner executes a minimal Flutter test', () {
-    expect(kIsWeb, isTrue);
-  });
-}
-```
-
-Case намеренно не импортирует `yuv_ffi`, не вызывает `YuvFfi.ensureInitialized()` и не загружает WASM. Постоянный sentinel не оканчивается на `_test.dart`, чтобы не попадать в обычный VM discovery.
-
-### Команда
+### Воспроизведение
 
 ```powershell
-flutter test --no-pub --platform chrome test/web/web_platform_sentinel.dart --reporter expanded
+Push-Location example
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/reference_web_conversions_test.dart -d chrome
+Pop-Location
 ```
 
-### Ожидалось
+Провенанс прогона: `YUV-12 web provenance: kIsWeb=true, cases=119`.
 
-Один минимальный test регистрируется, выполняется в Chrome и завершается с exit `0`.
+### Факт
 
-### Получено
+Исполнено 19/119 (обрыв — см. F-010), из них passed 7, failed 12.
+Все 12 падений — I420/NV21. Все 5 BGRA-кейсов прошли с `mae=0.000 max=0`,
+включая padded, то есть Web/BGRA совпадает с эталоном побайтово.
 
-Runner запустил headless Chrome, но более 90 секунд не продвинулся дальше:
+Failed case IDs:
 
 ```text
-00:00 +0: loading D:/.projects/yuv_ffi/test/web/web_platform_sentinel.dart
+CONSTRUCT-I420-TIGHT       CONSTRUCT-I420-PADDED
+OUTPUT-TO-BGRA-I420-TIGHT  OUTPUT-TO-BGRA-I420-PADDED
+CONSTRUCT-NV21-TIGHT       CONSTRUCT-NV21-PADDED
+OUTPUT-TO-BGRA-NV21-TIGHT  OUTPUT-TO-BGRA-NV21-PADDED
+FORMAT-TO-BGRA-I420        FORMAT-TO-BGRA-NV21
+FORMAT-TO-I420-BGRA-TIGHT  FORMAT-TO-I420-NV21-TIGHT
 ```
 
-Процесс остановлен вручную, exit `1`. Полный `test/web` проявляет то же поведение на первом test file. При этом `flutter build web --no-pub` для example успешно завершился, поэтому F-007 отделён от исходного compile blocker F-001.
+Три различимые группы:
 
-### Артефакты и метрики
+1. **Расхождение при конструировании.** `CONSTRUCT-I420-TIGHT` падает в
+   `_assertPlaneReference` по sha256 плоскости:
+   expected `e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2`,
+   actual `bda27b969a63634a0a6125bdcadfa453f1d0c8efe3495747ed1b3d68fda73462`,
+   differ at offset 0. Никакая операция ещё не выполнялась — расходится сама
+   раскладка планарных плоскостей.
+2. **Метрики вне допуска `yuvRoundTrip`** (`mae<=18`, `max<=160`):
+   - `OUTPUT-TO-BGRA-I420-TIGHT`: `mae=44.469 max=255 p99=255 outside=101888 alpha=0`
+   - `FORMAT-TO-BGRA-I420`: `mae=44.469 max=255 p99=255 outside=101888 alpha=0`
+   - `FORMAT-TO-I420-BGRA-TIGHT`: `mae=10.233 max=144 p99=144 outside=17408 alpha=0`
+3. **Геометрия.** `FORMAT-TO-I420-NV21-TIGHT`: `Expected: <256>, Actual: <512>`
+   в `_assertPlaneReference`.
 
-- Зарегистрированных/выполненных tests: `0`
-- Время без прогресса: `>90 s`
-- Импортов package/WASM в контрольном case: `0`
-- Headless Chrome process: создан runner-ом
-- Оставшиеся диагностические процессы и временный test file: удалены после прогона
+### Границы утверждения
 
-### Retest
+Сравнение native/Web не проводилось: это задача YUV-13. Native-прогон той же
+матрицы (Windows x64) дал 65/119 passed, поэтому часть этих падений может
+совпадать с уже известными native-дефектами, а часть быть Web-специфичной.
+Без полного Web-прогона (блокирует F-010) разделить их нельзя.
 
-YUV-02 должен сначала воспроизвести минимальный case с verbose runner diagnostics, проверить совместимость Flutter test runner/Chrome и только затем полный `test/web`. Не менять production-код плагина, пока минимальный test без `yuv_ffi` не запускается.
-
-Постоянный sentinel после YUV-02 находится в `test/web/web_platform_sentinel.dart`. Он не оканчивается на `_test.dart`, поэтому не попадает в стандартный VM discovery, но поддерживает explicit запуск через `flutter test --platform chrome <path>`.
-
-### Resolution
-
-- Fix commit: не заполнен
-- Minimal Chrome retest: локально reproduces the same `loading` hang on Windows Flutter 3.38.10; F-007 остаётся `OPEN`.
-- Flutter 3.44.9 retest, Windows x64: sentinel также оставался на `loading`
-  более 60 секунд, после чего был остановлен вручную; tests executed: 0.
-- Full `test/web` retest: не заполнен
-
-### Диагноз и дальнейшие действия
-
-Локальное проявление F-007 воспроизводится и после обновления с Flutter 3.38.10
-до 3.44.9, поэтому прежняя рекомендация только обновить SDK недостаточна. Это
-по-прежнему не доказанный дефект плагина: минимальный case не импортирует
-`yuv_ffi`. Обязательный gate закреплён на Flutter 3.44.9 и использует Linux CI
-runner. F-007 нельзя переводить в `RESOLVED` без успешного автоматического CI
-evidence либо отдельного устранения Windows runner issue.
-
-Asset-dependent Web runtime checks больше не используют этот runner: YUV-02
-переводит обязательный bootstrap в `example/integration_test` + `flutter
-drive`, где существует bundle package assets. Сам F-007 остаётся `OPEN`, пока
-не будет отдельно воспроизведён и устранён Flutter `flutter test --platform
-chrome` runner issue; это не должно блокировать integration gate.
-
-Локальная попытка `flutter drive` 2026-09-14 (Windows 10 x64, Flutter 3.44.9,
-Chrome/ChromeDriver 148.0.7778.179) дошла до `Waiting for connection from
-debug service on Web Server` и была остановлена без зарегистрированного test.
-Она не является ни успешным Web evidence, ни новым проявлением F-007: это
-другая execution path, которую требуется подтвердить required Linux CI run.
+Production behavior и tolerances в рамках YUV-12 не менялись.
 
 ---
 
-## F-008 — мёртвый `<script>` делает retry загрузчика невозможным
+## F-010 — прогон Web-матрицы обрывается без сообщения на 20-м case
 
-- Case ID: `WASM-LOADER-RETRY-001`
-- Статус: `READY FOR RETEST`
-- Обнаружено: 2026-09-14, независимым ревью после run #26
-- Commit: `dd786c4`
-- Backend: Web / Chrome
-- Environment: Flutter 3.44.9, Dart 3.12.2
-- Source image: не требуется, дефект на уровне загрузчика
-- Operation: `YuvWasmLoader.ensureInitialized()` после неудачной загрузки скрипта
-- Fix task: YUV-21
+- Case ID: `WEB-MATRIX-ABORT-001`
+- Статус: OPEN
+- Обнаружено: 2026-09-14
+- Commit: `2ae1dc3` (HEAD)
+- Backend: Web / WASM, Chrome 153.0.8010.37 на Windows x64
+- Environment: Flutter 3.38.10, Dart 3.10.9
+- Suite: `example/integration_test/reference_web_conversions_test.dart`
+- Fix task: YUV-40 (изолированная диагностика; не production fix)
 
-### Диагностический case
+### Факт
 
-```dart
-// Первая попытка: скрипта нет, браузер отдаёт onError.
-await expectLater(
-  YuvWasmLoader.ensureInitialized(scriptPath: '.../does_not_exist.js'),
-  throwsA(isA<StateError>()),
-);
+Цикл по 119 cases печатает результат каждого case через `debugPrint` и ловит
+все исключения через `catch (error, stackTrace)`. После 19-го case
+(`FORMAT-TO-I420-NV21-TIGHT`, зафиксирован как FAILED) 20-й case
+`FORMAT-TO-NV21-BGRA-TIGHT` не напечатал **ни PASS, ни FAIL**, и исполнение
+прекратилось. Оставшиеся 100 cases не исполнены.
 
-// Вторая попытка с правильными путями обязана подняться.
-await YuvWasmLoader.ensureInitialized();
-expect(YuvWasmLoader.moduleIfInitialized, isNotNull);
-```
+Признаки:
 
-### Ожидалось
+- строки `YUV-12 summary ... executed=... passed=... failed=...` в логе нет —
+  цикл не дошёл до конца;
+- счётчик runner остался `+0`, финального `All tests passed` / `Some tests
+  failed` нет;
+- в логе нет ни timeout, ни pending timer, ни потери соединения с debug service;
+- прогон завершился сам: `Application finished.`, затем `EXIT=1`.
 
-Решение 2 карточки YUV-21: неудачная попытка не кэшируется, следующая явная
-попытка выполняется заново и может завершиться успехом.
+### Гипотеза
 
-### Получено
+Так как per-case `catch` перехватывает любое `Object`, отсутствие записи
+означает, что исполнение прервано некатчабельно для этого блока: WASM trap либо
+`Error`, убивающий isolate. Для подтверждения нужен прицельный прогон только
+`FORMAT-TO-NV21-BGRA-TIGHT` с захватом консоли браузера.
 
-Вторая попытка падала с сообщением о ненайденном
-`createYuvFfiModule` — то есть с неверной причиной, маскирующей настоящую.
+### Влияние
 
-Причина по исходному коду: `_injectScriptOnce()` помечает вставленный `<script>`
-атрибутом `data-yuv-ffi-wasm-loader` и выходит рано, если такой тег уже есть.
-При ошибке загрузки тег оставался в документе, поэтому следующая попытка
-пропускала инъекцию и искала factory, которого ни один скрипт не определил.
-
-### Артефакты и метрики
-
-- Web runtime result: `NOT RUN` на момент регистрации записи
-- VM result: неприменимо — дефект существует только на Web execution path
-- Почему не был обнаружен раньше: все шесть lifecycle-кейсов подменяли
-  инициализатор через `debugSetInitializer`, то есть заменяли собой весь
-  `_initialize` вместе с `_injectScriptOnce`, и ни разу не касались DOM
-
-### Retest
-
-YUV-21 должен выполнить оба новых case в required Chrome job: retry после
-реальной ошибки загрузки скрипта завершается успехом, и восстановленный модуль
-выполняет настоящую конверсию, а не просто возвращает не-null.
-
-### Resolution
-
-- Статус: `READY FOR RETEST`. Run #28 зелёный, но regression не изолирует
-  удаление failed DOM tag от reuse ранее загруженной default factory.
-- Fix commit: см. commit задачи YUV-21
-- Исправление: в ветке `onError` тег удаляется (`script.remove()`) до завершения
-  completer. Только в ветке ошибки: успешно загруженный скрипт — ровно то, что
-  маркер и должен фиксировать.
-- Web retest command/result: run
-  [34789878937](https://github.com/Anfet/yuv_ffi/actions/runs/34789878937),
-  таргет `wasm_loader_lifecycle_test.dart` — **failure**, оба новых case:
-  `Expected: throws <StateError> / Actual: <_Future<YuvModule>>`.
-  Попытка с несуществующим `scriptPath` не упала: к этому моменту предыдущий
-  case уже загрузил настоящий модуль, поэтому в документе оставался валидный
-  тег, а на `globalThis` — рабочий `createYuvFfiModule`. `_injectScriptOnce()`
-  выходил рано, подложный путь не запрашивался, factory находился.
-- Следствие: прогон **не подтверждает и не опровергает** исправление — ветка
-  ошибки не выполнялась ни разу. Тесты исправлены отдельно
-  (`debugRemoveInjectedScript()` + factory name, которого никто не определяет),
-  повторный прогон требуется.
-- Повторный Web retest: run
-  [34790481198](https://github.com/Anfet/yuv_ffi/actions/runs/34790481198),
-  таргет `wasm_loader_lifecycle_test.dart` — **success**, `All tests passed.`
-  На этом таргете `TestFailure` 2 -> 0 против предыдущего прогона; ассерт
-  `throwsA(isA<StateError>())`, который падал с `Actual: <_Future<YuvModule>>`,
-  теперь проходит. Затем в том же case проходят `moduleIfInitialized != null` и
-  `debugInitCount == 2`: тег удалён, поэтому успешная вторая инициализация
-  возможна только через новую инъекцию. Второй case выполняет настоящую
-  конверсию через WASM.
-- Граница утверждения: `failRealInjection()` задаёт и несуществующий
-  `scriptPath`, и несуществующее имя factory, а `flutter drive` не печатает
-  вывод отдельных case, поэтому какая именно из двух причин дала первый
-  `StateError` — по логу не видно. Доказано восстановление после неудачной
-  попытки, которое до `script.remove()` было недостижимо по построению.
-- Поправка независимого ревью после run #28: последнее утверждение неверно.
-  Default `createYuvFfiModule` остаётся в `globalThis` после предыдущего
-  успешного case, поэтому retry с default factory может пройти без повторной
-  инъекции даже при оставшемся failed tag. Нужен отдельный assertion отсутствия
-  marker tag после `onError` либо второй failed-path probe, доказывающий новую
-  инъекцию.
+Блокирует DoD YUV-12: полный failure log недостижим, 100/119 cases не имеют
+результата. До устранения нельзя ни закрыть YUV-12, ни выполнить сверку
+native/Web (YUV-13).
 
 ---
 
-## Шаблон новой записи
-
-```text
 ## F-XXX — <краткое название>
 
 - Case ID: <ID из reference manifest или infrastructure ID>
