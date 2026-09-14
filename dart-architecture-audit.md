@@ -23,10 +23,10 @@ YUV-07/YUV-20/YUV-26/YUV-27 отражены в актуальных стату�
 | A-03: разные empty accessors | YUV-28 | NOTE / post-release | Contract debt включён в characterization scope YUV-28 |
 | A-04: тела методов в `interface class` | — | RETRACTED | `implements` уже требует реализацию всех instance members на compile time |
 | A-05: `DataReader`/`ChangeNotifier` | YUV-07 | DONE / task still rejected | Мёртвый reader/writer удалён в `ded01b0`; оставшийся blocker относится к A-11 |
-| A-05: `bytesPerPixes`, exception, rotation naming | YUV-27 | DONE / archived | Source-compatible cleanup принят и перемещён в `completed-tasks.md` |
+| A-05: `bytesPerPixes`, exception, rotation naming | YUV-27 | DONE | Source-compatible cleanup принят; evidence сохранён в Git history |
 | A-06: rotation assert и `dstWidtn` | YUV-27 | DONE / archived | Механическая cleanup принята без изменения semantics |
 | A-07: `getBytes()` backing buffer | YUV-14 | REJECTED | F-003 закрыт в Chrome; Web matrix пропускает 512x512 и copy independence |
-| A-08: bindings cache | YUV-19 | DONE / archived | Принято и перемещено в `completed-tasks.md` |
+| A-08: bindings cache | YUV-19 | DONE | Принято; evidence сохранён в Git history |
 | A-08: serialization | YUV-07 | REJECTED | Geometry исправлена, но 50 ms grace делает trailing-byte policy недетерминированной |
 | A-08: image cache | YUV-20 | REJECTED | Provider проверен в Chrome только на fake; настоящий Web backend revision не покрыт |
 | A-08: initialization | YUV-21 | REJECTED | Fake lifecycle cases зелёные; failed script element всё ещё ломает реальный retry |
@@ -40,8 +40,8 @@ YUV-07/YUV-20/YUV-26/YUV-27 отражены в актуальных стату�
   packaging/runtime outcome;
 - YUV-26 оставлена только для ffigen filters и больше не требует native-header
   permission;
-- удаление `nv21_to_rgb` из headers вынесено в YUV-29 и остаётся `BLOCKED` до
-  явного разрешения;
+- удаление `nv21_to_rgb` из headers вынесено в optional YUV-29; разрешение на
+  headers получено, но выбор задачи остаётся за ревьюером;
 - optional YUV-24/YUV-26/YUV-29 и post-release YUV-28 исключены из
   release dependencies YUV-18.
 
@@ -220,7 +220,7 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
 
 ## A-08 — сверка ранее зарегистрированных задач
 
-- YUV-19 bindings cache — DONE, данные в `completed-tasks.md`.
+- YUV-19 bindings cache — DONE; evidence находится в Git history.
 - YUV-07 shared serialization — основа реализована в `c52e13c`, streaming в
   `ded01b0`, ранняя geometry validation исправлена, но задача возвращена в
   REJECTED из-за timeout-эвристики на границе payload.
@@ -229,7 +229,8 @@ i420 63x47:   sumPlanes=6033   getBytes=11844
   восстановлен в `8b9d600`; задача ожидает focused Web retest.
 - YUV-21 initialization contract — REJECTED: integration harness доступен,
   но focused retry/concurrency case ещё не выполнен.
-- YUV-06 loader paths/macOS packaging — BLOCKED до разрешения на C-forwarders;
+- YUV-06 loader paths/macOS packaging — TODO: разрешение на C-forwarders
+  получено, обязательны regression/smoke cases;
   бывшая отдельная YUV-25 объединена с этой карточкой.
 
 ---
@@ -301,11 +302,13 @@ metadata должен остаться независимым от EOF. Подд
 
 ### Опционально, не блокирует `0.2.5`
 
-- YUV-24 — CMake source discovery cleanup после разрешения.
+- YUV-24 — optional CMake source discovery cleanup в waitlist; разрешение
+  получено, обязательны native smoke cases.
 - YUV-26 — REJECTED до Unix regeneration/signature evidence; native headers
   менять не требуется.
-- YUV-27 завершена и перемещена в `completed-tasks.md`.
-- YUV-29 — удалить dead native declaration после отдельного разрешения.
+- YUV-27 завершена; evidence находится в Git history.
+- YUV-29 — optional dead native declaration cleanup в waitlist; разрешение
+  получено, обязательны API/native characterization cases.
 
 ### После `0.2.5`
 
