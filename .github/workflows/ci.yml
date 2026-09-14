@@ -24,20 +24,105 @@ jobs:
       - name: Analyze (root)
         run: flutter analyze
 
-      # The FFI loader and the reference matrix both open
-      # native/src/build/libyuv_ffi.so by that exact relative path, so the
-      # library has to be built there rather than wherever CMake would default
-      # to. Without it every native case skips and the guard that exists to
-      # catch a fully-skipped run fails the job.
+      # Since YUV-06 the loader opens the library by its installed name, so the
+      # build output is placed on the dynamic loader's search path instead of
+      # the old native/src/build/ build-tree path. Building into a throwaway
+      # directory and exporting LD_LIBRARY_PATH is what a real consumer's
+      # install looks like; keeping the old in-tree path would have hidden a
+      # packaging regression behind a green job.
       - name: Build native library
         shell: bash
         run: |
-          cmake -S src -B native/src/build -DCMAKE_BUILD_TYPE=Release
-          cmake --build native/src/build --config Release
-          test -f native/src/build/libyuv_ffi.so
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.so"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
 
       - name: Unit tests
         run: flutter test
+
+  # YUV-06: proves the package is loadable the way a real consumer loads it.
+  # Both jobs build from a clean checkout, install the library the way the
+  # platform expects, and run a smoke suite that refuses to skip when the
+  # library is missing — a skipped native run and a passing one used to look
+  # identical in the log, which is how broken Linux/macOS packaging stayed
+  # green.
+  linux-native-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      # Installed name on the loader search path, never the CMake build tree:
+      # native/src/build/libyuv_ffi.so does not exist in a published package.
+      - name: Build and install native library
+        shell: bash
+        run: |
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.so"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
+
+      - name: Packaging smoke
+        run: flutter test test/native_packaging_smoke_test.dart --reporter expanded
+
+      - name: Build example (linux desktop)
+        working-directory: example
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev
+          flutter config --enable-linux-desktop
+          flutter pub get
+          flutter build linux --release
+
+  macos-native-smoke:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      # On Apple platforms the sources are linked into the pod target, so the
+      # symbols live in the running process and there is no file to open. The
+      # dylib built here is what `flutter test` (a plain VM process, not an app
+      # bundle) resolves through DYLD_LIBRARY_PATH.
+      - name: Build and install native library
+        shell: bash
+        run: |
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.dylib"
+          echo "DYLD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
+
+      - name: Packaging smoke
+        run: flutter test test/native_packaging_smoke_test.dart --reporter expanded
+
+      # Builds the macOS example through CocoaPods, which is what actually
+      # compiles macos/Classes/*.c. Before YUV-06 the pod target contained only
+      # a forwarder to a header, so no operation symbol was ever built here.
+      - name: Build example (macos desktop)
+        working-directory: example
+        shell: bash
+        run: |
+          flutter config --enable-macos-desktop
+          flutter pub get
+          flutter build macos --release
 
   example-analyze-and-build:
     runs-on: ubuntu-latest

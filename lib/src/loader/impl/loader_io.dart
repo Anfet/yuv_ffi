@@ -85,21 +85,28 @@ ffi.DynamicLibrary _openIfNeeded() {
   return opened;
 }
 
+/// Opens the library by its installed name, never by a build-tree path.
+///
+/// `native/src/build/libyuv_ffi.*` used to be hardcoded for Linux and macOS.
+/// That directory is an artifact of building the CMake target in place: it does
+/// not exist in a published package or in an application bundle, so any consumer
+/// outside this repository failed at the first FFI call.
+///
+/// The contract per platform:
+/// - Android/Linux load the installed shared object by name, so the dynamic
+///   loader resolves it through the app's library search path;
+/// - Windows loads `yuv_ffi.dll` the same way;
+/// - iOS/macOS link the sources into the pod target, so the symbols are already
+///   in the running process and there is no separate file to open.
 ffi.DynamicLibrary _openYuvLibrary() {
-  if (Platform.isMacOS) {
-    return ffi.DynamicLibrary.open('native/src/build/libyuv_ffi.dylib');
+  if (Platform.isMacOS || Platform.isIOS) {
+    return ffi.DynamicLibrary.process();
   }
-  if (Platform.isLinux) {
-    return ffi.DynamicLibrary.open('native/src/build/libyuv_ffi.so');
+  if (Platform.isLinux || Platform.isAndroid) {
+    return ffi.DynamicLibrary.open('libyuv_ffi.so');
   }
   if (Platform.isWindows) {
     return ffi.DynamicLibrary.open('yuv_ffi.dll');
-  }
-  if (Platform.isAndroid) {
-    return ffi.DynamicLibrary.open('libyuv_ffi.so');
-  }
-  if (Platform.isIOS) {
-    return ffi.DynamicLibrary.process();
   }
   throw UnsupportedError('Unsupported platform');
 }
