@@ -23,7 +23,7 @@
 | F-005 | BINDINGS-CACHE-001 | Native/Windows | RESOLVED | P1 | YUV-19 | Повторные обращения переиспользуют один экземпляр `YuvFfiBindings` |
 | F-006 | IMAGE-CACHE-KEY-001 | Native/Windows + Web/Chrome | RESOLVED | P1 | YUV-20 | Два provider одного неизменённого кадра образуют разные cache keys |
 | F-007 | CHROME-RUNNER-HANG-001 | Web/Chrome | OPEN | P0 | YUV-02 | Даже минимальный Flutter Web test зависает на стадии `loading` |
-| F-008 | WASM-LOADER-RETRY-001 | Web/Chrome | RESOLVED | P1 | YUV-21 | Мёртвый `<script>` остаётся в DOM, поэтому retry загрузчика всегда падает |
+| F-008 | WASM-LOADER-RETRY-001 | Web/Chrome | READY FOR RETEST | P1 | YUV-21 | Мёртвый `<script>` остаётся в DOM, поэтому retry загрузчика всегда падает |
 
 ## Текущее состояние reference matrix
 
@@ -664,7 +664,8 @@ YUV-21 должен выполнить оба новых case в required Chrome
 
 ### Resolution
 
-- Статус: `RESOLVED`. Исправление подтверждено прогоном run #28.
+- Статус: `READY FOR RETEST`. Run #28 зелёный, но regression не изолирует
+  удаление failed DOM tag от reuse ранее загруженной default factory.
 - Fix commit: см. commit задачи YUV-21
 - Исправление: в ветке `onError` тег удаляется (`script.remove()`) до завершения
   completer. Только в ветке ошибки: успешно загруженный скрипт — ровно то, что
@@ -695,6 +696,12 @@ YUV-21 должен выполнить оба новых case в required Chrome
   вывод отдельных case, поэтому какая именно из двух причин дала первый
   `StateError` — по логу не видно. Доказано восстановление после неудачной
   попытки, которое до `script.remove()` было недостижимо по построению.
+- Поправка независимого ревью после run #28: последнее утверждение неверно.
+  Default `createYuvFfiModule` остаётся в `globalThis` после предыдущего
+  успешного case, поэтому retry с default factory может пройти без повторной
+  инъекции даже при оставшемся failed tag. Нужен отдельный assertion отсутствия
+  marker tag после `onError` либо второй failed-path probe, доказывающий новую
+  инъекцию.
 
 ---
 

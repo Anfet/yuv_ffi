@@ -13,7 +13,7 @@
 | [ ] | YUV-09 | Luna | Claude Sonnet 5 | P2 | BLOCKED | YUV-06, YUV-08, YUV-13, YUV-22, YUV-23 | Синхронизировать README, platform matrix и локальный analyzer workflow |
 | [ ] | YUV-12 | Luna | Claude Sonnet 5 | P1 | TODO | — | Прогнать ту же матрицу по эталону на реальном Web/WASM backend |
 | [ ] | YUV-13 | Terra | Claude Sonnet 5 | P1 | BLOCKED | YUV-11, YUV-12 | Проверить полноту матрицы и оформить все падения в `failed-test-cases.md` |
-| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | READY FOR REVIEW | — | Зафиксировать retry/error/lazy-init контракт IO и Web |
+| [ ] | YUV-21 | Opus | Claude Opus 5 | P1 | REJECTED | доказать удаление failed DOM script без reuse старой factory | Зафиксировать retry/error/lazy-init контракт IO и Web |
 | [ ] | YUV-22 | Opus | Claude Opus 5 | P1 | BLOCKED | разрешение на C | Зафиксировать единый контракт effects и устранить 6 reference-расхождений |
 | [ ] | YUV-23 | Opus | Claude Opus 5 | P0 | BLOCKED | разрешение на C | Исправить memory safety и parity blur-реализаций по 19 reference failures |
 | [ ] | YUV-24 | Terra | Claude Sonnet 5 | P2 | BLOCKED | разрешение на C | Устранить дубли и восстановить пересборку glob в `src/CMakeLists.txt` |
@@ -448,7 +448,8 @@ git status --short
 
 - Владелец: Opus
 - Приоритет: P1
-- Статус: READY FOR REVIEW
+- Статус: REJECTED
+- Количество отклонений: 3
 - Зависимости: YUV-01/YUV-02/YUV-19 приняты; Web retest выполнен (run 34790481198)
 - Scope:
   - `lib/src/yuv_ffi_initializer.dart`
@@ -798,6 +799,35 @@ job `wasm-web-integration` — **success**. Все шесть таргетов �
 `script.remove()` не было по построению.
 
 F-008 переведён в `RESOLVED`.
+
+### Независимое ревью root 2026-09-14 после run #28
+
+Статус: `REJECTED`.
+
+Production fix `script.remove()` выглядит корректно, а run #28 действительно
+исполняет browser target. Однако новый regression по-прежнему не доказывает
+исправленный defect. Перед `failRealInjection()` уже выполнялся успешный real
+initialization: `debugRemoveInjectedScript()` удаляет DOM tag, но намеренно не
+удаляет `createYuvFfiModule` из `globalThis`.
+
+Первая попытка использует другое, несуществующее имя factory и поэтому падает.
+Вторая попытка возвращается к default factory, которая осталась в `globalThis`
+от предыдущего case. Следовательно, retry способен успешно создать модуль даже
+если вернуть старое поведение и оставить failed `<script>` в DOM: повторная
+инъекция для успеха не обязательна. Утверждение результата «успешная вторая
+инициализация возможна только через новую инъекцию» фактически неверно.
+
+Для повторного review нужен assertion, который падает без `script.remove()`:
+
+1. после реального script-load failure напрямую подтвердить отсутствие
+   `script[data-yuv-ffi-wasm-loader="1"]` через узкий непубличный DOM seam; или
+2. выполнить вторую попытку с другим несуществующим script/factory и проверить,
+   что ошибка относится именно ко второму path — старый failed tag не должен
+   заставлять `_injectScriptOnce()` выйти раньше.
+
+После этого сохранить end-to-end recovery case, снова выполнить required
+Chrome job и приложить URL. IO implementation, production fix, native C и
+generated bindings менять не требуется.
 
 ---
 
