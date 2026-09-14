@@ -29,6 +29,7 @@
 | [ ] | YUV-36 | Opus | Claude Opus 5 | P2 | BLOCKED | после `0.2.5`, YUV-33 | Спроектировать status-returning native ABI без breaking change текущих symbols |
 | [ ] | YUV-37 | Terra | Claude Sonnet 5 | OPT | BLOCKED | после YUV-23 | Уменьшить allocations и сложность blur после фиксации результата |
 | [ ] | YUV-38 | Terra | Claude Sonnet 5 | OPT | BLOCKED | после YUV-32 | Оптимизировать 2×2 chroma conversion без изменения reference output |
+| [ ] | YUV-39 | Terra | Claude Sonnet 5 | P2 / optional | TODO | — | Исследовать проверенные stride-aware библиотеки и стратегию reuse/adapt для native primitives |
 | [ ] | YUV-18 | Terra | Claude Sonnet 5 | P0 | BLOCKED | YUV-06, YUV-08, YUV-09, YUV-12, YUV-13, YUV-21…YUV-23, YUV-30…YUV-34 | Провести финальную кроссплатформенную приёмку и подготовить `0.2.5` |
 
 ## Статусы
@@ -1884,6 +1885,111 @@ rounding, strides и legacy `(U,V)` order byte-for-byte.
 - [ ] Odd/padded cases и canaries остаются зелёными.
 - [ ] Benchmark показывает эффект без изменения публичного API.
 - [ ] Optimization commit не меняет manifest/thresholds.
+
+### Результат
+
+Не заполнен.
+
+---
+
+## YUV-39 — исследовать проверенные stride-aware реализации native primitives
+
+- Владелец: Terra
+- Anthropic-вариант: Claude Sonnet 5
+- Ожидаемое reasoning: Medium
+- Приоритет: P2 / optional research
+- Статус: TODO
+- Зависимости: нет
+- Не блокирует YUV-18 и текущий refactoring batch.
+- Scope: исследование и рекомендации; production-код, native C, headers,
+  bindings, manifests и зависимости не изменять.
+
+### Проблема
+
+Текущие conversion/manipulation primitives написаны локально, и аудит уже
+обнаружил ошибки вокруг row stride, odd 4:2:0 geometry, chroma addressing,
+цветовой матрицы и сложности алгоритмов. Для значительной части операций есть
+зрелые реализации, но «подключить библиотеку» не является автоматическим
+решением: API может поддерживать только row stride, а не произвольный pixel
+stride; отличаться по matrix/range/rounding, ROI/border/alpha semantics;
+увеличивать binary/WASM size или создавать лицензионные обязательства.
+
+### Architect Decision
+
+Провести отдельное make/buy/adapt исследование до дальнейшей ручной оптимизации.
+Основной кандидат для conversion/rotate/scale — официальный
+[libyuv](https://chromium.googlesource.com/libyuv/libyuv/); для независимого
+сравнения conversion/scaling —
+[FFmpeg libswscale](https://ffmpeg.org/libswscale.html). Для blur, border и
+filter semantics использовать
+[OpenCV imgproc](https://docs.opencv.org/4.x/d4/d86/group__imgproc__filter.html)
+как reference-кандидат, не предполагая включение тяжёлой зависимости в plugin.
+
+Для каждой текущей функции зафиксировать один из исходов:
+
+1. безопасно вызвать upstream API напрямую;
+2. адаптировать известный алгоритм с проверенной лицензией и собственным
+   stride-aware boundary;
+3. сохранить локальную реализацию, но сверять её с независимым oracle;
+4. кандидат не подходит — с конкретной технической причиной.
+
+Решение не должно менять установленный legacy `nv21` `(U,V)` contract и не
+подменяет YUV-30: если upstream semantics расходятся с ещё не выбранным
+effects/ROI contract, исследование описывает варианты, а не выбирает публичное
+поведение вместо владельца.
+
+### Scope исследования
+
+1. Составить inventory всех exported conversion/manipulation functions и
+   сопоставить им точные upstream APIs/algorithms, а не общую ссылку на проект.
+2. Раздельно проверить поддержку:
+   - положительного и отрицательного row stride;
+   - произвольного pixel stride или необходимость предварительного repack;
+   - independent strides каждой Y/U/V/UV/RGBA/BGRA plane;
+   - odd width/height и trailing chroma sample;
+   - in-place/overlap, ROI origin, border, alpha и failure semantics;
+   - BT.601/BT.709, full/limited range, rounding и UV/VU order.
+3. Для direct dependency и selective vendoring оценить C/C++ ABI, поддерживаемые
+   CPU/SIMD fallbacks, Android/iOS/macOS/Windows/Linux и WASM/Emscripten,
+   toolchain/CMake impact, итоговый размер артефактов и стоимость обновлений.
+4. Проверить upstream license и NOTICE/source-distribution obligations по
+   первичному источнику; код из случайных snippets и несовместимых лицензий не
+   переносить.
+5. Отделить correctness/safety от performance: сначала доказать эквивалентность
+   на oracle cases YUV-11/YUV-12 и sanitizer cases YUV-34, затем оценивать
+   throughput/allocations. Не использовать текущую реализацию как единственный
+   эталон.
+
+### DoD
+
+- [ ] Создан `native-primitives-research.md` с таблицей «текущая функция →
+      кандидат → stride/geometry/color/ROI support → license → platform/size
+      cost → рекомендация».
+- [ ] Для каждого кандидата указаны точная версия/commit, upstream API и ссылка
+      на первичную документацию или исходник.
+- [ ] Row stride и pixel stride оценены отдельно; отсутствие поддержки pixel
+      stride не записано как полная stride-awareness.
+- [ ] Для conversion есть независимые expected vectors на odd/padded cases и
+      явно описаны допустимые tolerance/rounding differences.
+- [ ] Для rotate/crop/flip и blur/effects описаны overlap, ROI, border и alpha
+      semantics, включая расхождения с решениями YUV-30/YUV-31/YUV-23.
+- [ ] Измерены либо обоснованно оценены binary/WASM size, performance и
+      integration/maintenance cost; неподтверждённые ожидания помечены как
+      hypotheses.
+- [ ] Итоговая рекомендация дана отдельно по каждой группе функций; нет общего
+      решения «заменить всё одной библиотекой» без доказательств.
+- [ ] Любые implementation-карточки предлагаются отдельно и остаются
+      `DISCOVERED` до решения владельца и явного разрешения на native C.
+- [ ] В рамках YUV-39 не изменены production-код, native C/headers, generated
+      bindings, build manifests и package dependencies.
+
+### Проверка
+
+- `git diff --check`
+- `git status --short`
+- ручная сверка всех ссылок, лицензий и заявленных API с upstream primary
+  sources;
+- проверка, что YUV-39 отсутствует в зависимостях YUV-18.
 
 ### Результат
 
