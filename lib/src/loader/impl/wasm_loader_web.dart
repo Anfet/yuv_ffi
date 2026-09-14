@@ -98,6 +98,13 @@ final class YuvWasmLoader {
     html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]')?.remove();
   }
 
+  /// Whether an injected loader script is currently in the document.
+  ///
+  /// Exists so a test can assert the failure path really dropped the dead tag;
+  /// the marker attribute is what makes injection idempotent, so its absence
+  /// is the only direct evidence that a retry will inject again.
+  static bool get debugHasInjectedScript => html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]') != null;
+
   /// Returns initialized module if available in current process, otherwise null.
   static YuvModule? get moduleIfInitialized => _module;
 

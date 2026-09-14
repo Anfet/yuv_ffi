@@ -151,6 +151,15 @@ void main() {
   // So the page is returned to its pre-injection state first, and the attempt
   // also asks for a factory name nothing defines: injection then really runs,
   // really 404s, and really fires onError.
+  //
+  // A later retry succeeding is not by itself proof that the dead tag was
+  // dropped: the default factory name (`createYuvFfiModule`) still sits on
+  // globalThis from the earlier successful case in this same file, so even if
+  // the dead <script> were left in the document, `_injectScriptOnce` would
+  // exit early on the marker check and the factory lookup would still find
+  // that leftover global and succeed anyway — for the wrong reason. Only
+  // asserting the marker tag's absence right after the failure, before any
+  // retry runs, actually pins down that the failure path removed it.
   Future<void> failRealInjection() async {
     YuvWasmLoader.debugReset();
     YuvWasmLoader.debugRemoveInjectedScript();
@@ -164,6 +173,11 @@ void main() {
       reason: 'a loader script that cannot be fetched must surface as a StateError',
     );
     expect(YuvWasmLoader.moduleIfInitialized, isNull, reason: 'a failed attempt must not leave a module behind');
+    expect(
+      YuvWasmLoader.debugHasInjectedScript,
+      isFalse,
+      reason: 'the failed script tag must be gone, or the next attempt would skip injection entirely',
+    );
   }
 
   testWidgets('a retry after a real script-load failure succeeds', (tester) async {

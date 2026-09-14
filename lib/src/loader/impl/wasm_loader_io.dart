@@ -43,6 +43,9 @@ final class YuvWasmLoader {
   /// Accepted and ignored: there is no document to inject into here.
   static void debugRemoveInjectedScript() {}
 
+  /// Always false: there is no document to inject into here.
+  static bool get debugHasInjectedScript => false;
+
   static Future<YuvModule> ensureInitialized({
     String scriptPath = '',
     String wasmPath = '',
