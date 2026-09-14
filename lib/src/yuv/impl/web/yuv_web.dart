@@ -407,7 +407,31 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   @override
   Uint8List toBgra8888() {
     if (_format == YuvFileFormat.bgra8888) {
-      return Uint8List.fromList(yPlane.bytes);
+      // Mirrors the native reference (lib/src/yuv/impl/io/yuv_image.dart
+      // toBgra8888): the public contract requires exactly width*height*4
+      // tightly packed bytes. Native decides purely on rowStride, so this
+      // compares rowStride too rather than reusing `YuvGeometry.isTightBgra`,
+      // which also demands pixelStride == 4. A plane with rowStride ==
+      // width*4 but a non-4 pixelStride makes that helper report "not tight",
+      // which would send it down the repack path, while native — and this
+      // code — return the bytes as they are. Keeping the native condition is
+      // what keeps both backends byte-identical.
+      final expectedRowStride = _width * 4;
+      if (yPlane.rowStride == expectedRowStride) {
+        return Uint8List.fromList(yPlane.bytes);
+      }
+
+      // Repack BGRA rows when the source plane has padding bytes per row.
+      // Always builds a fresh, tightly packed copy: never a view onto the
+      // mutable backing buffer, and the source plane is left untouched.
+      final bgraPlaneLength = _width * _height * 4;
+      final packed = Uint8List(bgraPlaneLength);
+      for (int y = 0; y < _height; y++) {
+        final srcStart = y * yPlane.rowStride;
+        final dstStart = y * expectedRowStride;
+        packed.setRange(dstStart, dstStart + expectedRowStride, yPlane.bytes, srcStart);
+      }
+      return packed;
     }
     return _callToBgra(_symbolForFormat(i420: 'yuv420_to_bgra8888', nv21: 'nv21_to_bgra8888', bgra: 'unused'));
   }
