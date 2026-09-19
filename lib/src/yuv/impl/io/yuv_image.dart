@@ -211,6 +211,8 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_box_blur(def.pointer, radius, rectPtr);
           yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
           break;
         case YuvFileFormat.nv21:
           ffiBingings.nv21_box_blur(def.pointer, radius, rectPtr);
@@ -505,6 +507,8 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
         case YuvFileFormat.i420:
           ffiBingings.yuv420_mean_blur(def.pointer, radius, rectPtr);
           yPlane.assignFromPtr(def.pointer.ref.y);
+          uPlane.assignFromPtr(def.pointer.ref.u);
+          vPlane.assignFromPtr(def.pointer.ref.v);
           break;
 
         case YuvFileFormat.nv21:

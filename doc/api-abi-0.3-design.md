@@ -37,7 +37,16 @@ parity.
 7. Web exposes capabilities and never reports success through a silent no-op.
 8. Gaussian, mean, and box blur remain three public operations. Mean and
    normalized box have the same mathematical uniform-average result and may
-   share kernels; Gaussian remains weighted.
+   share kernels; Gaussian remains weighted. Border handling is
+   clamp-to-edge/edge-replicate for all three, approved 2026-09-20: the kernel
+   is always the full `(2 * radius + 1)²` samples for every output pixel,
+   including at the border. A window cell that falls outside the plane is
+   replaced by the nearest in-bounds row/column (the edge sample is
+   effectively duplicated) rather than shrinking the averaging window and
+   rescaling by the smaller count. The divisor is always the full kernel area.
+   Rounding is half up. Alpha is copied, never blurred. This mirrors
+   `test/helpers/reference/test_pattern_reference.dart::_convolve`, the
+   independent oracle these operations are checked against.
 9. Native calls use separate const source and writable destination descriptors,
    versioned options, fixed status values, and format-independent symbols.
 

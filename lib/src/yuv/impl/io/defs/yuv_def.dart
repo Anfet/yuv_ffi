@@ -8,6 +8,7 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// must be disposed to avoid memory leaks
 class YUVDefClass {
   late final Pointer<YUVDef> pointer;
+  bool _disposed = false;
 
   /// Allocates the struct and its plane buffers transactionally: if any
   /// allocation throws, every pointer created earlier in this constructor is
@@ -49,8 +50,6 @@ class YUVDefClass {
     pointer = struct;
   }
 
-  factory YUVDefClass.template(YuvImage image) => YUVDefClass._(image);
-
   factory YUVDefClass(YuvImage image) {
     final def = YUVDefClass._(image);
     try {
@@ -65,10 +64,19 @@ class YUVDefClass {
   }
 
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     final allocator = NativeAllocator.instance;
     allocator.free(pointer.ref.y);
-    if (pointer.ref.u != nullptr) allocator.free(pointer.ref.u);
-    if (pointer.ref.v != nullptr) allocator.free(pointer.ref.v);
+    pointer.ref.y = nullptr;
+    if (pointer.ref.u != nullptr) {
+      allocator.free(pointer.ref.u);
+      pointer.ref.u = nullptr;
+    }
+    if (pointer.ref.v != nullptr) {
+      allocator.free(pointer.ref.v);
+      pointer.ref.v = nullptr;
+    }
     allocator.free(pointer);
   }
 }

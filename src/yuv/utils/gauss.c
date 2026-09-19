@@ -25,13 +25,20 @@ void apply_1d_gaussian(
         float sum = 0.0f;
         float weight = 0.0f;
         for (int k = -radius; k <= radius; ++k) {
+            // Clamp-to-edge: every kernel tap still contributes, re-reading the
+            // nearest in-bounds sample instead of being dropped, matching the
+            // mandated 0.3.0 border contract.
             int idx = i + k;
             if (idx < 0) idx = 0;
             if (idx >= length) idx = length - 1;
             sum += kernel[k + radius] * src[idx];
             weight += kernel[k + radius];
         }
-        dst[i] = (uint8_t)(sum / weight);
+        // Round to nearest instead of truncating. generate_gaussian_kernel
+        // normalizes the kernel to sum to 1, so `weight` is always that same
+        // total regardless of clamping; dividing by it explicitly guards
+        // against float drift instead of assuming weight == 1.0f.
+        dst[i] = (uint8_t)(sum / weight + 0.5f);
     }
 }
 
@@ -45,19 +52,23 @@ void gaussian_blur_plane_strided(
         float sigma
 ) {
     float *kernel = (float *) malloc((2 * radius + 1) * sizeof(float));
+    // One row/column buffer pair, reused across every line and column instead
+    // of a fresh malloc/free per iteration: fewer allocations, and no path
+    // that can `return` early mid-loop while other buffers are still held.
+    uint8_t *line_in = (uint8_t *) malloc((size_t) (width > height ? width : height));
+    uint8_t *line_out = (uint8_t *) malloc((size_t) (width > height ? width : height));
+    uint8_t *tmp = (uint8_t *) malloc((size_t) width * height);
+    if (!kernel || !line_in || !line_out || !tmp) {
+        free(kernel);
+        free(line_in);
+        free(line_out);
+        free(tmp);
+        return;
+    }
     generate_gaussian_kernel(kernel, radius, sigma);
-
-    // Temporary buffer: normalized bytes, without stride
-    uint8_t *tmp = (uint8_t *) malloc(width * height);
 
     // --- Horizontal blur ---
     for (int y = 0; y < height; ++y) {
-        uint8_t* line_in = (uint8_t*)malloc(width);
-        if (!line_in) return;
-        uint8_t* line_out = (uint8_t*)malloc(width);
-        if (!line_out) return;
-
-
         const uint8_t *row_ptr = src + y * row_stride;
 
         for (int x = 0; x < width; ++x) {
@@ -69,31 +80,23 @@ void gaussian_blur_plane_strided(
         for (int x = 0; x < width; ++x) {
             tmp[y * width + x] = line_out[x];
         }
-        free(line_in);
-        free(line_out);
     }
 
     // --- Vertical blur ---
     for (int x = 0; x < width; ++x) {
-        uint8_t* col_in = (uint8_t*)malloc(height);
-        if (!col_in) return;
-        uint8_t* col_out = (uint8_t*)malloc(height);
-        if (!col_out) return;
-
-
         for (int y = 0; y < height; ++y) {
-            col_in[y] = tmp[y * width + x];
+            line_in[y] = tmp[y * width + x];
         }
 
-        apply_1d_gaussian(col_in, col_out, height, kernel, radius);
+        apply_1d_gaussian(line_in, line_out, height, kernel, radius);
 
         for (int y = 0; y < height; ++y) {
-            dst[y * row_stride + x * pixel_stride] = col_out[y];
+            dst[y * row_stride + x * pixel_stride] = line_out[y];
         }
-        free(col_in);
-        free(col_out);
     }
 
     free(kernel);
+    free(line_in);
+    free(line_out);
     free(tmp);
 }

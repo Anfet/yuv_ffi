@@ -37,8 +37,10 @@ FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
     );
 
     // --- Chroma plane ((U, V) interleaved) ---
-    const int uv_width = width / 2;
-    const int uv_height = height / 2;
+    // Chroma dimensions round up on odd luma sizes, matching
+    // YuvGeometry.chromaWidth/chromaHeight on the Dart side.
+    const int uv_width = (width + 1) / 2;
+    const int uv_height = (height + 1) / 2;
 
     uint8_t *u_plane = (uint8_t *) malloc(uv_width * uv_height);
     uint8_t *v_plane = (uint8_t *) malloc(uv_width * uv_height);

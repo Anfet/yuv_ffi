@@ -25,7 +25,7 @@ From pub.dev:
 
 ```yaml
 dependencies:
-  yuv_ffi: ^0.1.2
+  yuv_ffi: ^0.3.0
 ```
 
 Or from Git:
@@ -47,10 +47,9 @@ await YuvFfi.ensureInitialized();
 final image = YuvImage.i420(1280, 720);
 image.fromRgba8888(rgbaBytes); // rgbaBytes.length must be width * height * 4
 
-final preview = image
-    .rotate(YuvImageRotation.rotation90)
-    .grayscale()
-    .toBgra8888();
+image.rotate(YuvImageRotation.rotation90);
+image.grayscale();
+final preview = image.toBgra8888();
 ```
 
 ## Public API (Dart)

@@ -1,5 +1,107 @@
 #include "../yuv.h"
 
+/*
+ * Inclusive sum over the rectangle [x1, x2] x [y1, y2] of a summed-area table
+ * whose rows are `width` entries wide. Mirrors
+ * src/yuv/bgra8888/bgra8888_mean_blur.c::yuv_sat_rect.
+ */
+static int32_t yuv_sat_rect(const int32_t *sat, int width, int x1, int y1, int x2, int y2) {
+    int32_t sum = sat[y2 * width + x2];
+    if (y1 > 0) sum -= sat[(y1 - 1) * width + x2];
+    if (x1 > 0) sum -= sat[y2 * width + (x1 - 1)];
+    if (x1 > 0 && y1 > 0) sum += sat[(y1 - 1) * width + (x1 - 1)];
+    return sum;
+}
+
+/*
+ * Box blur over a single-channel plane read through `stride`, via a 2D
+ * summed-area table. `src` and `dst` may be the same buffer: every read goes
+ * through the SAT built from `src` up front, and `dst` is only written from a
+ * separate `temp` snapshot at the end.
+ *
+ * Kernel is always the full `2 * radius + 1` squared with clamp-to-edge
+ * replication at the border (the mandated 0.3.0 blur contract) — see
+ * src/yuv/bgra8888/bgra8888_mean_blur.c for the weighted-rectangle
+ * decomposition this reuses.
+ */
+static void yuv_box_blur_channel(
+        const uint8_t *src,
+        uint8_t *dst,
+        int width,
+        int height,
+        int stride,
+        int radius,
+        int left,
+        int top,
+        int right,
+        int bottom
+) {
+    int32_t *sat = (int32_t *) calloc((size_t) width * height, sizeof(int32_t));
+    uint8_t *temp = (uint8_t *) malloc((size_t) width * height);
+    if (!sat || !temp) {
+        free(sat);
+        free(temp);
+        return;
+    }
+    for (int y = 0; y < height; ++y) {
+        memcpy(temp + y * width, src + y * stride, (size_t) width);
+    }
+
+    for (int y = 0; y < height; ++y) {
+        int32_t rowSum = 0;
+        for (int x = 0; x < width; ++x) {
+            rowSum += temp[y * width + x];
+            const int satIdx = y * width + x;
+            sat[satIdx] = rowSum + (y > 0 ? sat[(y - 1) * width + x] : 0);
+        }
+    }
+
+    const int kernel = 2 * radius + 1;
+    const int area = kernel * kernel;
+    const int half = area / 2;
+
+    for (int y = top; y < bottom; ++y) {
+        const int y1 = (y - radius < 0) ? 0 : y - radius;
+        const int y2 = (y + radius >= height) ? height - 1 : y + radius;
+        const int padTop = y1 - (y - radius);
+        const int padBottom = (y + radius) - y2;
+
+        for (int x = left; x < right; ++x) {
+            const int x1 = (x - radius < 0) ? 0 : x - radius;
+            const int x2 = (x + radius >= width) ? width - 1 : x + radius;
+            const int padLeft = x1 - (x - radius);
+            const int padRight = (x + radius) - x2;
+
+            int32_t sum = 0;
+            const struct { int x1, y1, x2, y2, weight; } parts[] = {
+                { x1, y1, x2, y2, 1 },
+                { x1, y1, x2, y1, padTop },
+                { x1, y2, x2, y2, padBottom },
+                { x1, y1, x1, y2, padLeft },
+                { x2, y1, x2, y2, padRight },
+                { x1, y1, x1, y1, padTop * padLeft },
+                { x2, y1, x2, y1, padTop * padRight },
+                { x1, y2, x1, y2, padBottom * padLeft },
+                { x2, y2, x2, y2, padBottom * padRight },
+            };
+            for (size_t i = 0; i < sizeof(parts) / sizeof(parts[0]); ++i) {
+                const int weight = parts[i].weight;
+                if (weight == 0) continue;
+                sum += weight * yuv_sat_rect(sat, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
+            }
+
+            temp[y * width + x] = (uint8_t)((sum + half) / area);
+        }
+    }
+
+    for (int y = 0; y < height; ++y) {
+        memcpy(dst + y * stride, temp + y * width, (size_t) width);
+    }
+
+    free(sat);
+    free(temp);
+}
+
 FFI_PLUGIN_EXPORT void nv21_box_blur(
         YUVDef *image,
         int radius,
@@ -7,70 +109,29 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
 ) {
     const int width  = image->width;
     const int height = image->height;
-    const int rowStride   = image->yRowStride;
-    const int pixelStride = image->yPixelStride;
-    uint8_t *dst = image->y;
 
-    uint32_t left = 0, top = 0, right = width, bottom = height;
+    int left = 0, top = 0, right = width, bottom = height;
     if (rect) {
-        left   = rect[0];
-        top    = rect[1];
-        right  = rect[2];
-        bottom = rect[3];
+        left   = (int) rect[0];
+        top    = (int) rect[1];
+        right  = (int) rect[2];
+        bottom = (int) rect[3];
+    }
+    if (left < 0) left = 0;
+    if (top < 0) top = 0;
+    if (right > width) right = width;
+    if (bottom > height) bottom = height;
+
+    if (left >= right || top >= bottom) {
+        // Empty ROI: nothing to blur.
+        return;
     }
 
-    uint8_t *temp = (uint8_t *) malloc(height * rowStride);
-    if (!temp) return;
-
-    // --- Horizontal pass (Y) ---
-    for (int y = 0; y < height; ++y) {
-        const uint8_t *row    = image->y + y * rowStride;
-        uint8_t *temp_row     = temp   + y * rowStride;
-
-        int sum = 0;
-        for (int dx = -radius; dx <= radius; ++dx) {
-            int x = MIN(width - 1, MAX(0, dx));
-            sum += row[x * pixelStride];
-        }
-        temp_row[0 * pixelStride] = (uint8_t)(sum / (2 * radius + 1));
-
-        for (int x = 1; x < width; ++x) {
-            int x_add    = MIN(width - 1, x + radius);
-            int x_remove = MAX(0, x - radius - 1);
-            sum += row[x_add * pixelStride] - row[x_remove * pixelStride];
-            temp_row[x * pixelStride] = (uint8_t)(sum / (2 * radius + 1));
-        }
-    }
-
-    // --- Vertical pass (Y) ---
-    for (int x = 0; x < width; ++x) {
-        int sum = 0;
-        for (int dy = -radius; dy <= radius; ++dy) {
-            int yy = MIN(height - 1, MAX(0, dy));
-            sum += temp[yy * rowStride + x * pixelStride];
-        }
-
-        for (int y = 0; y < height; ++y) {
-            int dstIndex = yuv_index(x, y, rowStride, pixelStride);
-            uint8_t original = image->y[dstIndex];
-
-            if (x < (int)left || x >= (int)right ||
-                y < (int)top  || y >= (int)bottom) {
-                dst[dstIndex] = original;
-            } else {
-                dst[dstIndex] = (uint8_t)(sum / (2 * radius + 1));
-            }
-
-            if (y + 1 < height) {
-                int y_add = MIN(height - 1, y + radius + 1);
-                int y_sub = MAX(0, y - radius);
-                sum += temp[y_add * rowStride + x * pixelStride];
-                sum -= temp[y_sub * rowStride + x * pixelStride];
-            }
-        }
-    }
-
-    free(temp);
+    // --- Y plane ---
+    // yuv_box_blur_channel walks its plane with a plain row stride (no pixel
+    // stride), which matches every native call site: Y always arrives tight
+    // per row in this legacy YUVDef ABI.
+    yuv_box_blur_channel(image->y, image->y, width, height, image->yRowStride, radius, left, top, right, bottom);
 
     // --- Chroma ((U, V) interleaved) ---
     //
@@ -78,15 +139,33 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
     // historical and do NOT reflect the actual byte order — byte 0 of each
     // pair is U, not V. Unpack and repack use the same (mis)naming
     // symmetrically, so the output is correct; renaming only one of the two
-    // loops would silently swap chroma. Deferred until the currently red blur
-    // reference cases are restored.
-    const int uv_width  = width  / 2;
-    const int uv_height = height / 2;
+    // loops would silently swap chroma.
+    //
+    // Chroma dimensions round up on odd luma sizes, matching
+    // YuvGeometry.chromaWidth/chromaHeight on the Dart side.
+    const int uv_width  = (width + 1) / 2;
+    const int uv_height = (height + 1) / 2;
 
-    uint8_t *u_plane = (uint8_t *) malloc(uv_width * uv_height);
-    uint8_t *v_plane = (uint8_t *) malloc(uv_width * uv_height);
+    // Chroma ROI is the luma ROI's footprint at half resolution, rounded
+    // outward so a luma-odd edge is still covered.
+    const int uvLeft = left / 2;
+    const int uvTop = top / 2;
+    const int uvRight = MIN(uv_width, (right + 1) / 2);
+    const int uvBottom = MIN(uv_height, (bottom + 1) / 2);
+    if (uvLeft >= uvRight || uvTop >= uvBottom) {
+        return;
+    }
 
-    // Unpack
+    uint8_t *u_plane = (uint8_t *) malloc((size_t) uv_width * uv_height);
+    uint8_t *v_plane = (uint8_t *) malloc((size_t) uv_width * uv_height);
+    if (!u_plane || !v_plane) {
+        free(u_plane);
+        free(v_plane);
+        return;
+    }
+
+    // Unpack into two tight, deinterleaved planes so the shared box-blur
+    // helper can walk them like any other single-channel plane.
     for (int y = 0; y < uv_height; ++y) {
         const uint8_t *row = image->u + y * image->uvRowStride;
         for (int x = 0; x < uv_width; ++x) {
@@ -95,28 +174,10 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
         }
     }
 
-    // Blur both chroma planes the same way as Y (box blur).
-    // Note: simplified, without rect, since one chroma sample covers a 2x2
-    // block of Y. Applying rect to chroma as well would require careful
-    // handling of even coordinates.
-    for (int y = 0; y < uv_height; ++y) {
-        for (int x = 0; x < uv_width; ++x) {
-            int sumU = 0, sumV = 0, count = 0;
-            for (int dy = -radius; dy <= radius; ++dy) {
-                int yy = MIN(uv_height - 1, MAX(0, y + dy));
-                for (int dx = -radius; dx <= radius; ++dx) {
-                    int xx = MIN(uv_width - 1, MAX(0, x + dx));
-                    sumU += u_plane[yy * uv_width + xx];
-                    sumV += v_plane[yy * uv_width + xx];
-                    count++;
-                }
-            }
-            u_plane[y * uv_width + x] = (uint8_t)(sumU / count);
-            v_plane[y * uv_width + x] = (uint8_t)(sumV / count);
-        }
-    }
+    yuv_box_blur_channel(u_plane, u_plane, uv_width, uv_height, uv_width, radius, uvLeft, uvTop, uvRight, uvBottom);
+    yuv_box_blur_channel(v_plane, v_plane, uv_width, uv_height, uv_width, radius, uvLeft, uvTop, uvRight, uvBottom);
 
-    // Pack back into the interleaved chroma plane, mirroring the unpack above
+    // Pack back into the interleaved chroma plane, mirroring the unpack above.
     for (int y = 0; y < uv_height; ++y) {
         uint8_t *row = image->u + y * image->uvRowStride;
         for (int x = 0; x < uv_width; ++x) {

@@ -25,12 +25,12 @@
 - Narrowed `ffigen` to the ABI the package actually uses and switched the native build to an explicit source list.
 - Enabled optimization for native builds and SIMD for the WASM artifacts, and rebuilt those artifacts from the fixed C sources.
 - Added a Web reference conversion matrix and an independent `test_pattern_512` reference, and made the reference matrix skip honestly when no native library is present.
-- Documented the approved public Dart API and native C ABI contract for `0.3.0` in `docs/api-abi-0.3-design.md`.
+- Documented the approved public Dart API and native C ABI contract for `0.3.0` in `doc/api-abi-0.3-design.md`.
 
 ### Notes
 
 - Web remains a partial WASM backend and is not at feature parity with the native backends.
-- The versioned status-returning native ABI described in `docs/api-abi-0.3-design.md` is designed and approved, but not yet implemented; the operations still expose the pre-`0.3` entry points.
+- The versioned status-returning native ABI described in `doc/api-abi-0.3-design.md` is designed and approved, but not yet implemented; the operations still expose the pre-`0.3` entry points.
 
 ## 0.2.4
 
