@@ -1,24 +1,33 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:ui' as ui;
 
-import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
-import 'package:yuv_ffi/src/loader/data_io.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
+import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_codec.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane_bytes.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 import 'defs/yuv_def.dart';
 
-class YuvImageImpl implements YuvImage {
+class YuvImageImpl implements YuvImage, YuvRevisionAware {
   List<YuvPlane> _planes = const [];
   YuvFileFormat _format;
   int _width;
   int _height;
+  int _revision = 0;
+
+  @override
+  int get internalRevision => _revision;
+
+  @override
+  void bumpInternalRevision() => _revision++;
 
   @override
   YuvFileFormat get format => _format;
@@ -59,33 +68,39 @@ class YuvImageImpl implements YuvImage {
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
       : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImageImpl.bgra(this._width, this._height, {Iterable<YuvPlane>? planes}) : _format = YuvFileFormat.bgra8888 {
-    Uint8List? bytes;
-    if (planes?.isNotEmpty == true) {
-      var rawY = planes!.first;
-      final WriteBuffer allBytes = WriteBuffer();
-      for (int y = 0; y < height; y++) {
-        allBytes.putUint8List(rawY.bytes.sublist(y * rawY.rowStride, y * rawY.rowStride + width * 4));
-      }
-      bytes = allBytes.done().buffer.asUint8List();
-    }
-    YuvPlane y = YuvPlane(height, width * 4, 4, bytes);
-
-    _planes = [y];
-  }
+  /// Creates a BGRA image, optionally adopting a caller-supplied plane.
+  ///
+  /// A valid padded plane keeps its `rowStride` and `pixelStride`: the plane is
+  /// deep-copied as given rather than repacked at construction time. Producing
+  /// a tight buffer is the job of [toBgra8888], not a reason to discard the
+  /// caller's layout. This matches the generic
+  /// `YuvImage(YuvFileFormat.bgra8888, ...)` constructor, so both entry points
+  /// share one validation and copy contract.
+  YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
+      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: planes);
 
   YuvImageImpl(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
+    YuvGeometry.validateDimensions(_width, _height);
+
     if (planes != null) {
-      _planes = List.of(planes.map((e) => e.copy()));
+      final copied = List.of(planes.map((e) => e.copy()));
+      YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: copied);
+      _planes = copied;
       return;
     }
 
-    final yplane = YuvPlane(height, width * yPixelStride, yPixelStride);
-    final uvWidth = (width / 2.0).ceil();
-    final uvHeight = (height / 2.0).ceil();
+    // BGRA stores four bytes per pixel, so its packed plane never uses the
+    // generic single-byte luma default.
+    final lumaPixelStride = format == YuvFileFormat.bgra8888 ? 4 : yPixelStride;
+    final yplane = YuvPlane(height, width * lumaPixelStride, lumaPixelStride);
+    final uvWidth = YuvGeometry.chromaWidth(width);
+    final uvHeight = YuvGeometry.chromaHeight(height);
     switch (format) {
       case YuvFileFormat.nv21:
-        final uvplane = YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride);
+        // Interleaved chroma always stores a (U, V) pair per sample, so a
+        // pixelStride below 2 cannot hold what native code writes.
+        final nvPixelStride = uvPixelStride < 2 ? 2 : uvPixelStride;
+        final uvplane = YuvPlane(uvHeight, uvWidth * nvPixelStride, nvPixelStride);
         _planes = [yplane, uvplane];
         break;
       case YuvFileFormat.i420:
@@ -97,64 +112,46 @@ class YuvImageImpl implements YuvImage {
         _planes = [yplane];
         break;
     }
+
+    // Validate the geometry we just allocated as well: a caller-supplied zero
+    // or negative stride would otherwise produce a degenerate plane and still
+    // reach a backend call.
+    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: _planes);
   }
 
   @override
-  Uint8List getBytes() {
-    final WriteBuffer allBytes = WriteBuffer();
-    for (final plane in planes) {
-      allBytes.putUint8List(plane.bytes);
-    }
-    final bytes = allBytes.done().buffer.asUint8List();
-    return bytes;
-  }
+  Uint8List getBytes() => YuvPlaneBytes.concat(_planes);
 
   @override
   YuvImage copy({bool blank = false}) =>
-      YuvImageImpl(format, width, height, planes: blank ? null : _planes, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
+      YuvImageImpl(format, width, height, planes: _copiedPlanes(blank: blank), yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
+
+  /// Planes for [copy].
+  ///
+  /// A blank copy keeps every plane's declared geometry and zeroes the whole
+  /// allocation, so padded metadata survives. Passing `null` instead would fall
+  /// back to the allocating path, which rebuilds tight planes and silently
+  /// drops the padding.
+  List<YuvPlane> _copiedPlanes({required bool blank}) =>
+      [for (final plane in _planes) blank ? YuvPlane(plane.height, plane.rowStride, plane.pixelStride) : plane.copy()];
 
   @override
   Future save(Sink<List<int>> sink) async {
-    var json = {
-      'version': 1,
-      'format': format.name,
-      'width': width,
-      'height': height,
-    };
-
-    var writer = DataWriter(sink);
-    writer.writeString(jsonEncode(json));
-    writer.writeUint8(planes.length);
-    for (final plane in planes) {
-      writer.writeUint32(plane.height);
-      writer.writeUint32(plane.rowStride);
-      writer.writeUint32(plane.pixelStride);
-      writer.writeBytes(plane.bytes);
-    }
-    writer.write();
+    sink.add(YuvCodec.encode(format: format, width: width, height: height, planes: _planes));
   }
 
   @override
   Future<void> load(Stream<List<int>> stream) async {
-    var reader = DataReader(stream);
-    await reader.done();
+    // Decode into a draft first: state is replaced only once the whole payload
+    // has been read and validated, so a malformed frame cannot leave this image
+    // half-updated. A rejected payload therefore also leaves the revision alone.
+    final draft = await YuvCodec.decodeStream(stream);
 
-    var headerText = reader.readString();
-    var header = jsonDecode(headerText);
-
-    _width = header['width'];
-    _height = header['height'];
-    _format = YuvFileFormat.values.byName(header['format']);
-    var planesCount = reader.readUint8();
-    _planes = <YuvPlane>[];
-    for (var i = 0; i < planesCount; i++) {
-      var planeHeight = reader.readUint32();
-      var rowStride = reader.readUint32();
-      var pixelStride = reader.readUint32();
-      var planeBytes = reader.readBytes();
-      var plane = YuvPlane(planeHeight, rowStride, pixelStride, planeBytes);
-      _planes.add(plane);
-    }
+    _width = draft.width;
+    _height = draft.height;
+    _format = draft.format;
+    _planes = draft.planes;
+    _revision++;
   }
 
   @override
@@ -187,19 +184,27 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
   @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) {
+    _requireTightBgraFor('boxBlur');
     final def = YUVDefClass(this);
-    final Pointer<Uint32> rectPtr = rect == null ? nullptr : calloc<Uint32>(4);
-    if (rect != null) {
-      rectPtr.asTypedList(4)
-        ..[0] = rect.left.toInt()
-        ..[1] = rect.top.toInt()
-        ..[2] = rect.right.toInt()
-        ..[3] = rect.bottom.toInt();
+    final Pointer<Uint32> rectPtr;
+    try {
+      rectPtr = rect == null ? nullptr : NativeAllocator.instance.allocate<Uint32>(4 * sizeOf<Uint32>());
+      if (rect != null) {
+        rectPtr.asTypedList(4)
+          ..[0] = rect.left.toInt()
+          ..[1] = rect.top.toInt()
+          ..[2] = rect.right.toInt()
+          ..[3] = rect.bottom.toInt();
+      }
+    } catch (_) {
+      def.dispose();
+      rethrow;
     }
     try {
       switch (format) {
@@ -219,10 +224,11 @@ class YuvImageImpl implements YuvImage {
       }
     } finally {
       if (rectPtr != nullptr) {
-        calloc.free(rectPtr);
+        NativeAllocator.instance.free(rectPtr);
       }
       def.dispose();
     }
+    _revision++;
     return this;
   }
 
@@ -238,52 +244,31 @@ class YuvImageImpl implements YuvImage {
       return this;
     }
 
-    final YuvImage dst = YuvImageImpl(
-      format,
-      cropWidth,
-      cropHeight,
-      yPixelStride: y.pixelStride,
-      uvPixelStride: u?.pixelStride ?? 1,
-    );
+    final YuvImage dst = YuvImageImpl(format, cropWidth, cropHeight, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
     final srcDef = YUVDefClass(this);
-    final dstDef = YUVDefClass(dst);
+    final YUVDefClass dstDef;
+    try {
+      dstDef = YUVDefClass(dst);
+    } catch (_) {
+      srcDef.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.i420:
-          ffiBingings.yuv420_crop_rect(
-            srcDef.pointer,
-            dstDef.pointer,
-            left,
-            top,
-            cropWidth,
-            cropHeight,
-          );
+          ffiBingings.yuv420_crop_rect(srcDef.pointer, dstDef.pointer, left, top, cropWidth, cropHeight);
           dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
           dst.vPlane.assignFromPtr(dstDef.pointer.ref.v);
 
           break;
         case YuvFileFormat.nv21:
-          ffiBingings.nv21_crop_rect(
-            srcDef.pointer,
-            dstDef.pointer,
-            left,
-            top,
-            cropWidth,
-            cropHeight,
-          );
+          ffiBingings.nv21_crop_rect(srcDef.pointer, dstDef.pointer, left, top, cropWidth, cropHeight);
           dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           dst.uPlane.assignFromPtr(dstDef.pointer.ref.u);
           break;
         case YuvFileFormat.bgra8888:
-          ffiBingings.bgra8888_crop_rect(
-            srcDef.pointer,
-            dstDef.pointer,
-            left,
-            top,
-            cropWidth,
-            cropHeight,
-          );
+          ffiBingings.bgra8888_crop_rect(srcDef.pointer, dstDef.pointer, left, top, cropWidth, cropHeight);
           dst.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           break;
       }
@@ -296,6 +281,7 @@ class YuvImageImpl implements YuvImage {
       dstDef.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -324,6 +310,7 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -351,6 +338,7 @@ class YuvImageImpl implements YuvImage {
     } finally {
       def.dispose();
     }
+    _revision++;
     return this;
   }
 
@@ -358,16 +346,40 @@ class YuvImageImpl implements YuvImage {
   void fromRgba8888(Uint8List bytes) {
     final expectedLength = width * height * 4;
     if (bytes.length != expectedLength) {
-      throw ArgumentError.value(
-        bytes.length,
-        'bytes.length',
-        'Expected $expectedLength bytes for RGBA8888 frame ${width}x$height',
-      );
+      throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${width}x$height');
+    }
+    if (format == YuvFileFormat.bgra8888 && !YuvGeometry.isTightBgra(yPlane, width)) {
+      // The BGRA C converter addresses its destination as a tight buffer. Use
+      // a tight staging image, then copy only logical four-byte samples into
+      // the caller's layout so row/pixel padding remains untouched.
+      final tight = YuvImageImpl.bgra(width, height);
+      tight.fromRgba8888(bytes);
+      for (int row = 0; row < height; row++) {
+        for (int column = 0; column < width; column++) {
+          final source = row * tight.yPlane.rowStride + column * 4;
+          final destination = row * yPlane.rowStride + column * yPlane.pixelStride;
+          yPlane.bytes.setRange(destination, destination + 4, tight.yPlane.bytes, source);
+        }
+      }
+      // This branch writes the planes directly and returns early, so it has to
+      // bump the revision itself.
+      _revision++;
+      return;
     }
     final rgbaPlaneLength = bytes.length;
-    final rgbaPtr = calloc.allocate<Uint8>(rgbaPlaneLength);
-    rgbaPtr.asTypedList(bytes.length).setRange(0, bytes.length, bytes);
-    final def = YUVDefClass.template(this);
+    final rgbaPtr = NativeAllocator.instance.allocate<Uint8>(rgbaPlaneLength);
+    final YUVDefClass def;
+    try {
+      rgbaPtr.asTypedList(bytes.length).setRange(0, bytes.length, bytes);
+      // Seed the native destination with the current plane contents. The C
+      // conversion writes logical samples only; copying first preserves row
+      // and pixel padding instead of replacing public plane bytes with the
+      // zeroed backing allocation.
+      def = YUVDefClass(this);
+    } catch (_) {
+      NativeAllocator.instance.free(rgbaPtr);
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.i420:
@@ -388,12 +400,34 @@ class YuvImageImpl implements YuvImage {
       }
     } finally {
       def.dispose();
-      calloc.free(rgbaPtr);
+      NativeAllocator.instance.free(rgbaPtr);
+    }
+    _revision++;
+  }
+
+  /// Rejects a padded BGRA plane before an operation that cannot handle it.
+  ///
+  /// Several native BGRA effects allocate a tight `width * height * 4` scratch
+  /// buffer but address it through the source row stride, so a padded plane
+  /// makes them write past the allocation. Until those implementations are
+  /// fixed (YUV-23), such a layout is refused here rather than passed to FFI.
+  void _requireTightBgraFor(String operation) {
+    if (format != YuvFileFormat.bgra8888) {
+      return;
+    }
+    if (!YuvGeometry.isTightBgra(yPlane, width)) {
+      throw ArgumentError.value(
+        yPlane.rowStride,
+        'yPlane.rowStride',
+        '$operation does not support a padded BGRA plane yet; expected a tight '
+            'row stride of ${width * 4}. Repack the plane before calling it.',
+      );
     }
   }
 
   @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) {
+    _requireTightBgraFor('gaussianBlur');
     final def = YUVDefClass(this);
     try {
       switch (format) {
@@ -417,6 +451,7 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -443,19 +478,27 @@ class YuvImageImpl implements YuvImage {
     } finally {
       def.dispose();
     }
+    _revision++;
     return this;
   }
 
   @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) {
+    _requireTightBgraFor('meanBlur');
     final def = YUVDefClass(this);
-    final Pointer<Uint32> rectPtr = rect == null ? nullptr : calloc<Uint32>(4);
-    if (rect != null) {
-      rectPtr.asTypedList(4)
-        ..[0] = rect.left.toInt()
-        ..[1] = rect.top.toInt()
-        ..[2] = rect.right.toInt()
-        ..[3] = rect.bottom.toInt();
+    final Pointer<Uint32> rectPtr;
+    try {
+      rectPtr = rect == null ? nullptr : NativeAllocator.instance.allocate<Uint32>(4 * sizeOf<Uint32>());
+      if (rect != null) {
+        rectPtr.asTypedList(4)
+          ..[0] = rect.left.toInt()
+          ..[1] = rect.top.toInt()
+          ..[2] = rect.right.toInt()
+          ..[3] = rect.bottom.toInt();
+      }
+    } catch (_) {
+      def.dispose();
+      rethrow;
     }
     try {
       switch (format) {
@@ -476,11 +519,12 @@ class YuvImageImpl implements YuvImage {
       }
     } finally {
       if (rectPtr != nullptr) {
-        calloc.free(rectPtr);
+        NativeAllocator.instance.free(rectPtr);
       }
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
@@ -510,12 +554,14 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
     }
 
+    _revision++;
     return this;
   }
 
   @override
   YuvImage rotate(YuvImageRotation rotation) {
-    assert(rotation.degrees % 90 == 0, 'Can rotate only to 0, 90, 180, 270 degrees');
+    // No multiple-of-90 assert: YuvImageRotation is an enum whose only values
+    // are 0, 90, 180 and 270, so the check could never fail. Web never had it.
     final int degrees = (rotation.degrees < 0 ? 360 - rotation.degrees.abs() : rotation.degrees) % 360;
 
     if (degrees == 0) {
@@ -523,10 +569,17 @@ class YuvImageImpl implements YuvImage {
     }
 
     final srcDef = YUVDefClass(this);
-    final dstWidtn = (rotation.swapSize ? height : width).toInt();
+    final dstWidth = (rotation.swapSize ? height : width).toInt();
     final dstHeight = (rotation.swapSize ? width : height).toInt();
-    final dstImage = YuvImageImpl(format, dstWidtn, dstHeight, yPixelStride: yPlane.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
-    final dstDef = YUVDefClass(dstImage);
+    final YuvImageImpl dstImage;
+    final YUVDefClass dstDef;
+    try {
+      dstImage = YuvImageImpl(format, dstWidth, dstHeight, yPixelStride: yPlane.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
+      dstDef = YUVDefClass(dstImage);
+    } catch (_) {
+      srcDef.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.i420:
@@ -545,7 +598,7 @@ class YuvImageImpl implements YuvImage {
           dstImage.yPlane.assignFromPtr(dstDef.pointer.ref.y);
           break;
       }
-      _width = dstWidtn;
+      _width = dstWidth;
       _height = dstHeight;
       _planes = dstImage.planes;
     } finally {
@@ -553,34 +606,70 @@ class YuvImageImpl implements YuvImage {
       dstDef.dispose();
     }
 
+    _revision++;
     return this;
   }
 
   @override
   YuvImage swapNv() {
-    var nvXX = format == YuvFileFormat.nv21 ? this : toYuvNv21();
+    // A conversion to NV21 bumps the revision on its own. Snapshot it here so
+    // one public swapNv() advances the counter exactly once, whatever path it
+    // took to get there.
+    final revisionBefore = _revision;
+    final nvXX = format == YuvFileFormat.nv21 ? this : toYuvNv21();
 
     final def = YUVDefClass(nvXX);
-    YuvImage nvYY = YuvImageImpl.nv21(width, height);
-    final defYY = YUVDefClass(nvYY);
+    final YuvImage nvYY;
+    final YUVDefClass defYY;
+    try {
+      // Keep both destination strides compatible with the source. The native
+      // helper accepts one chroma stride for both buffers and only writes active
+      // chroma pairs, so a tight destination is not safe for padded input.
+      nvYY = YuvImageImpl.nv21(
+        width,
+        height,
+        planes: [
+          nvXX.yPlane,
+          YuvPlane(
+            nvXX.uPlane.height,
+            nvXX.uPlane.rowStride,
+            nvXX.uPlane.pixelStride,
+          ),
+        ],
+      );
+      defYY = YUVDefClass(nvYY);
+    } catch (_) {
+      def.dispose();
+      rethrow;
+    }
     try {
       ffiBingings.nvXX_to_nvYY(def.pointer.ref.u, defYY.pointer.ref.u, nvXX.width, nvYY.height, nvXX.uPlane.rowStride);
 
-      nvYY.yPlane.assignFromPtr(defYY.pointer.ref.y);
       nvYY.uPlane.assignFromPtr(defYY.pointer.ref.u);
     } finally {
       def.dispose();
       defYY.dispose();
     }
 
-    return nvYY;
+    _format = nvYY.format;
+    _width = nvYY.width;
+    _height = nvYY.height;
+    _planes = nvYY.planes;
+    _revision = revisionBefore + 1;
+    return this;
   }
 
   @override
   Uint8List toBgra8888() {
     final def = YUVDefClass(this);
     final bgraPlaneLength = width * height * 4;
-    final bgraPlane = calloc.allocate<Uint8>(bgraPlaneLength);
+    final Pointer<Uint8> bgraPlane;
+    try {
+      bgraPlane = NativeAllocator.instance.allocate<Uint8>(bgraPlaneLength);
+    } catch (_) {
+      def.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.nv21:
@@ -605,7 +694,7 @@ class YuvImageImpl implements YuvImage {
           return packed;
       }
     } finally {
-      calloc.free(bgraPlane);
+      NativeAllocator.instance.free(bgraPlane);
       def.dispose();
     }
   }
@@ -623,9 +712,14 @@ class YuvImageImpl implements YuvImage {
       return this;
     }
 
-    var bytes = toBgra8888();
-    var image = YuvImageImpl(YuvFileFormat.bgra8888, width, height, planes: [YuvPlane(height, width * 4, 4, bytes)], yPixelStride: 4);
-    return image;
+    final bytes = toBgra8888();
+    final image = YuvImageImpl(YuvFileFormat.bgra8888, width, height, planes: [YuvPlane(height, width * 4, 4, bytes)], yPixelStride: 4);
+    _format = image.format;
+    _width = image.width;
+    _height = image.height;
+    _planes = image.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
+    return this;
   }
 
   @override
@@ -635,8 +729,15 @@ class YuvImageImpl implements YuvImage {
     }
 
     final def = YUVDefClass(this);
-    YuvImage i420 = YuvImageImpl.i420(width, height);
-    final def420 = YUVDefClass(i420);
+    final YuvImage i420;
+    final YUVDefClass def420;
+    try {
+      i420 = YuvImageImpl.i420(width, height);
+      def420 = YUVDefClass(i420);
+    } catch (_) {
+      def.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.nv21:
@@ -656,7 +757,12 @@ class YuvImageImpl implements YuvImage {
       def.dispose();
       def420.dispose();
     }
-    return i420;
+    _format = i420.format;
+    _width = i420.width;
+    _height = i420.height;
+    _planes = i420.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
+    return this;
   }
 
   @override
@@ -666,8 +772,15 @@ class YuvImageImpl implements YuvImage {
     }
 
     final def = YUVDefClass(this);
-    YuvImage n21 = YuvImageImpl.nv21(width, height);
-    final def21 = YUVDefClass(n21);
+    final YuvImage n21;
+    final YUVDefClass def21;
+    try {
+      n21 = YuvImageImpl.nv21(width, height);
+      def21 = YUVDefClass(n21);
+    } catch (_) {
+      def.dispose();
+      rethrow;
+    }
     try {
       switch (format) {
         case YuvFileFormat.i420:
@@ -687,7 +800,12 @@ class YuvImageImpl implements YuvImage {
       def21.dispose();
     }
 
-    return n21;
+    _format = n21.format;
+    _width = n21.width;
+    _height = n21.height;
+    _planes = n21.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
+    return this;
   }
 }
 

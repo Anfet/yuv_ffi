@@ -1,24 +1,32 @@
 #include "../yuv.h"
 
-// --- Гауссовый блюр NV21 ---
-// src->y = Y plane
-// src->u = interleaved VU plane (NV21), src->v не используется
+// --- Gaussian blur for the legacy `nv21` format ---
+// image->y = Y plane
+// image->u = interleaved chroma plane in (U, V) order, image->v unused
+//
+// NOTE ON LOCAL NAMES: the vu_*/v_plane/u_plane identifiers below are
+// historical and do NOT reflect the actual byte order — byte 0 of each pair
+// is U, not V. They are left untouched deliberately: unpack and repack use
+// the same (mis)naming symmetrically, so the output is correct, and renaming
+// only one of the two loops would silently swap chroma. The blur reference
+// cases that would catch such a mistake are currently red, so the rename is
+// deferred until they are restored.
 FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         float sigma
 ) {
-    const int width = src->width;
-    const int height = src->height;
+    const int width = image->width;
+    const int height = image->height;
 
-    uint8_t *y_src = src->y;
-    uint8_t *y_dst = src->y;
-    uint8_t *vu_src = src->u;
-    uint8_t *vu_dst = src->u;
+    uint8_t *y_src = image->y;
+    uint8_t *y_dst = image->y;
+    uint8_t *vu_src = image->u;
+    uint8_t *vu_dst = image->u;
 
-    const int y_row_stride = src->yRowStride;
-    const int y_pixel_stride = src->yPixelStride;
-    const int uv_row_stride = src->uvRowStride;
+    const int y_row_stride = image->yRowStride;
+    const int y_pixel_stride = image->yPixelStride;
+    const int uv_row_stride = image->uvRowStride;
 
     // --- Y plane ---
     gaussian_blur_plane_strided(
@@ -28,14 +36,15 @@ FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
             radius, sigma
     );
 
-    // --- UV plane (VU interleaved) ---
+    // --- Chroma plane ((U, V) interleaved) ---
     const int uv_width = width / 2;
     const int uv_height = height / 2;
 
     uint8_t *u_plane = (uint8_t *) malloc(uv_width * uv_height);
     uint8_t *v_plane = (uint8_t *) malloc(uv_width * uv_height);
 
-    // Распаковка VU → отдельные U и V
+    // Unpack the interleaved chroma into two separate planes.
+    // (Local names are historical — see the note at the top of this file.)
     for (int y = 0; y < uv_height; ++y) {
         const uint8_t *row = vu_src + y * uv_row_stride;
         for (int x = 0; x < uv_width; ++x) {
@@ -44,7 +53,7 @@ FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
         }
     }
 
-    // Размытие U и V по отдельности
+    // Blur U and V separately
     gaussian_blur_plane_strided(
             u_plane, u_plane,
             uv_width, uv_height,
@@ -58,7 +67,7 @@ FFI_PLUGIN_EXPORT void nv21_gaussian_blur(
             radius, sigma
     );
 
-    // Сборка обратно в interleaved VU
+    // Pack back into the interleaved chroma plane, mirroring the unpack above
     for (int y = 0; y < uv_height; ++y) {
         uint8_t *row = vu_dst + y * uv_row_stride;
         for (int x = 0; x < uv_width; ++x) {

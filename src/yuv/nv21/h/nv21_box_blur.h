@@ -3,8 +3,9 @@
 
 #include "../../yuv.h"
 
+// In-place: mutates the planes of `image`.
 FFI_PLUGIN_EXPORT void nv21_box_blur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         const uint32_t *rect
 );

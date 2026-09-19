@@ -1,16 +1,16 @@
 #include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void yuv420_mean_blur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         const uint32_t *rect
 ) {
-    uint8_t *y_src = src->y;
+    uint8_t *y_src = image->y;
 
-    const int height = src->height;
-    const int width = src->width;
-    const int rowStride = src->yRowStride;
-    const int pixelStride = src->yPixelStride;
+    const int height = image->height;
+    const int width = image->width;
+    const int rowStride = image->yRowStride;
+    const int pixelStride = image->yPixelStride;
 
     const int k = radius / 2;
 

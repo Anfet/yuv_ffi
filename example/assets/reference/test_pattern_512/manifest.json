@@ -1,0 +1,5577 @@
+{
+  "schemaVersion": 1,
+  "fixture": "test_pattern_512",
+  "generator": {
+    "path": "tool/reference/generate_test_pattern_references.dart",
+    "independence": "pure Dart; no package:yuv_ffi, FFI, native symbols, or WASM imports",
+    "updatePolicy": "Fixtures change only through an explicit generator run and manifest/artifact diff review."
+  },
+  "source": {
+    "path": "test/assets/test_pattern_512.png",
+    "sha256": "a48d5d2959a4d86f3f036fd704acc3726a12aaa66de825f738b3fa8b7e5f631a",
+    "decoded": {
+      "width": 512,
+      "height": 512,
+      "pixelFormat": "RGBA8888",
+      "colorSpaceAssumption": "PNG samples are interpreted as sRGB, straight alpha; encoded reference PNGs retain the decoded 8-bit RGBA samples."
+    }
+  },
+  "compatibility": {
+    "nv21": "The public legacy nv21 label is intentionally UV/NV12-like: each chroma pair is U then V. Do not silently change this order based on the label.",
+    "yuvConversion": "BT.601 limited-range 4:2:0 reference; chroma is the integer average of each 2x2 source block."
+  },
+  "tolerances": {
+    "exact": {
+      "mae": 0,
+      "maxChannelError": 0,
+      "percentile99ChannelError": 0,
+      "rationale": "Metadata, raw construction/serialization bytes, channel reorder, plane-only transforms, and exact RGB transforms are integer-preserving."
+    },
+    "yuvRoundTrip": {
+      "mae": 18,
+      "maxChannelError": 96,
+      "percentile99ChannelError": 48,
+      "rationale": "4:2:0 chroma subsampling is lossy; bounds are fixed before backend execution and allow edge-local chroma error while rejecting broad color drift."
+    },
+    "nv21RoundTrip": {
+      "mae": 50,
+      "maxChannelError": 160,
+      "percentile99ChannelError": 96,
+      "rationale": "Legacy UV compatibility paths have historically used a wider conversion envelope; this is predeclared, not tuned from a backend run."
+    },
+    "blur": {
+      "mae": 4,
+      "maxChannelError": 24,
+      "percentile99ChannelError": 12,
+      "rationale": "Independent kernels use clamp-to-edge borders and rounded samples. Small fixed integer-kernel implementation differences are allowed, alpha remains exact."
+    }
+  },
+  "artifacts": {
+    "original.png": {
+      "path": "artifacts/original.png",
+      "sha256": "25c03ffc623b69e017315fd686256f31c3b1278928600b435c062117034bbc4d",
+      "byteLength": 3151
+    },
+    "i420_decoded.png": {
+      "path": "artifacts/i420_decoded.png",
+      "sha256": "34ec833578c0a8382e166dbbc303b39085b03c78141b6bab9e4da03406e4fd9a",
+      "byteLength": 3663
+    },
+    "nv21_uv_decoded.png": {
+      "path": "artifacts/nv21_uv_decoded.png",
+      "sha256": "34ec833578c0a8382e166dbbc303b39085b03c78141b6bab9e4da03406e4fd9a",
+      "byteLength": 3663
+    },
+    "swap_nv_once.png": {
+      "path": "artifacts/swap_nv_once.png",
+      "sha256": "6cd76765e1bc8ca874e11dcf003756604a49a96e3e7b913fba6ad07662522a19",
+      "byteLength": 3698
+    },
+    "crop_inner.png": {
+      "path": "artifacts/crop_inner.png",
+      "sha256": "46af97a0be8b8afcf0b22916883788d3d5250f03cef969b29377739dce7d91a8",
+      "byteLength": 1158
+    },
+    "crop_1x1.png": {
+      "path": "artifacts/crop_1x1.png",
+      "sha256": "2e82814e16ffc27e58df3a74d7b5f9cf5ba79fdd688bfe322540a97739a266dc",
+      "byteLength": 70
+    },
+    "crop_3x5.png": {
+      "path": "artifacts/crop_3x5.png",
+      "sha256": "a33b10149d56b549a199deb73cda39ee6544178a8b1b920cdb8e1c3b99e09d98",
+      "byteLength": 81
+    },
+    "crop_127x255.png": {
+      "path": "artifacts/crop_127x255.png",
+      "sha256": "1e187094636aa9bff0d9eacd837ab2db3e622a47a83f2bbbcc68034f095bd4ee",
+      "byteLength": 660
+    },
+    "rotate_90.png": {
+      "path": "artifacts/rotate_90.png",
+      "sha256": "e3563e44ebaad31999a4c4e4a45e130aaf5124b138d4b4dc1d9617708d864252",
+      "byteLength": 3294
+    },
+    "rotate_180.png": {
+      "path": "artifacts/rotate_180.png",
+      "sha256": "0432526d6a0582694e722a1bbb283c170462a30516f3c67619c3ec7f4f59bf06",
+      "byteLength": 2757
+    },
+    "rotate_270.png": {
+      "path": "artifacts/rotate_270.png",
+      "sha256": "c60b4831b6a8b084cdfc2937d10ee50c08a3ec951aa96a70968da7a86127bdba",
+      "byteLength": 2643
+    },
+    "flip_horizontal.png": {
+      "path": "artifacts/flip_horizontal.png",
+      "sha256": "d9c23480456fea62d3cf1908812a09be99382f5a29f2c88d6f3e595e8cfd9bff",
+      "byteLength": 2703
+    },
+    "flip_vertical.png": {
+      "path": "artifacts/flip_vertical.png",
+      "sha256": "5010d8f64624064d5b7681df95a72c7070d29ba88c18d6bfdcf7de19210bd869",
+      "byteLength": 3220
+    },
+    "grayscale.png": {
+      "path": "artifacts/grayscale.png",
+      "sha256": "d759aebac4d3f9da1ed3199f80a3297d9661e69f2753f5869987265a54cd5281",
+      "byteLength": 2835
+    },
+    "blackwhite.png": {
+      "path": "artifacts/blackwhite.png",
+      "sha256": "146b06a23841bdc2c77773f4ec66d16b78efc518af690bed8169af9434a05e9b",
+      "byteLength": 2572
+    },
+    "negate.png": {
+      "path": "artifacts/negate.png",
+      "sha256": "adf28cf7f07554c7d2b5ca94a5ba24b946746b77dc74a94268225580ccbe33e3",
+      "byteLength": 3148
+    },
+    "gaussian_default.png": {
+      "path": "artifacts/gaussian_default.png",
+      "sha256": "d4d03ec7afc29a81c51e0fb8b4aab1f34ba2ff3c0e49b7b1f6fe319d9076fdf0",
+      "byteLength": 9006
+    },
+    "gaussian_r3_s2.png": {
+      "path": "artifacts/gaussian_r3_s2.png",
+      "sha256": "51adc0211732bc245dea2e27c3180d507ba19bbdcc12ff79ad7e5ed7994b557a",
+      "byteLength": 11545
+    },
+    "box_default.png": {
+      "path": "artifacts/box_default.png",
+      "sha256": "a70421081601f8dde58e96f0f1fd35e39f93bed743566cae32946b5e96888e1c",
+      "byteLength": 14831
+    },
+    "box_full.png": {
+      "path": "artifacts/box_full.png",
+      "sha256": "92f99ba62a904292679db0bd4abd6b9ca90a812efbfb72cddb47d6ec44a07ef2",
+      "byteLength": 11194
+    },
+    "box_rect.png": {
+      "path": "artifacts/box_rect.png",
+      "sha256": "eaebc6d52366fe15ee91ab94e9e14d12501a6e2fea8dd25877c7593f44af0218",
+      "byteLength": 7179
+    },
+    "mean_default.png": {
+      "path": "artifacts/mean_default.png",
+      "sha256": "d7b0e201d793175b096b51d2c7858e5ecece8d5995bc96ffe4332ce6db6974ae",
+      "byteLength": 8056
+    },
+    "mean_full.png": {
+      "path": "artifacts/mean_full.png",
+      "sha256": "92f99ba62a904292679db0bd4abd6b9ca90a812efbfb72cddb47d6ec44a07ef2",
+      "byteLength": 11194
+    },
+    "mean_rect.png": {
+      "path": "artifacts/mean_rect.png",
+      "sha256": "eaebc6d52366fe15ee91ab94e9e14d12501a6e2fea8dd25877c7593f44af0218",
+      "byteLength": 7179
+    },
+    "source_bgra8888.bin": {
+      "path": "artifacts/source_bgra8888.bin",
+      "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242",
+      "byteLength": 1048576
+    },
+    "source_i420.yuv": {
+      "path": "artifacts/source_i420.yuv",
+      "sha256": "3965183afc6a619769f7d038c916b0768db75ef4a38127f377653a99fe08f23c",
+      "byteLength": 393216
+    },
+    "source_nv21_uv.yuv": {
+      "path": "artifacts/source_nv21_uv.yuv",
+      "sha256": "6d63794c377c5c50eedf08747b413a67ceb4ff9e309d3a30a1f3624a7e97f69c",
+      "byteLength": 393216
+    },
+    "blank_bgra8888.bin": {
+      "path": "artifacts/blank_bgra8888.bin",
+      "sha256": "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58",
+      "byteLength": 1048576
+    },
+    "blank_i420.yuv": {
+      "path": "artifacts/blank_i420.yuv",
+      "sha256": "a6619f482fee91a315f76cdcd8705d39b6ce11077c435ccc696142e130c27762",
+      "byteLength": 393216
+    },
+    "blank_nv21_uv.yuv": {
+      "path": "artifacts/blank_nv21_uv.yuv",
+      "sha256": "a6619f482fee91a315f76cdcd8705d39b6ce11077c435ccc696142e130c27762",
+      "byteLength": 393216
+    }
+  },
+  "formatReference": {
+    "bgra8888": {
+      "layout": "tight",
+      "planes": [
+        {
+          "height": 512,
+          "rowStride": 2048,
+          "pixelStride": 4,
+          "byteLength": 1048576,
+          "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+        }
+      ]
+    },
+    "bgra8888-padded": {
+      "layout": "padded",
+      "planes": [
+        {
+          "height": 512,
+          "rowStride": 2064,
+          "pixelStride": 4,
+          "byteLength": 1056768,
+          "sha256": "47767cac0f0185940c741073dbe29fe2f350e496e85b953d5837b3a76a3325b2"
+        }
+      ]
+    },
+    "i420": {
+      "layout": "tight",
+      "planes": [
+        {
+          "height": 512,
+          "rowStride": 512,
+          "pixelStride": 1,
+          "byteLength": 262144,
+          "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+        },
+        {
+          "height": 256,
+          "rowStride": 256,
+          "pixelStride": 1,
+          "byteLength": 65536,
+          "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+        },
+        {
+          "height": 256,
+          "rowStride": 256,
+          "pixelStride": 1,
+          "byteLength": 65536,
+          "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+        }
+      ]
+    },
+    "i420-padded": {
+      "layout": "padded",
+      "planes": [
+        {
+          "height": 512,
+          "rowStride": 520,
+          "pixelStride": 1,
+          "byteLength": 266240,
+          "sha256": "a99a3ba9f30471c21b0d612850029dacb3250079611541dc44da8c76d35b09bb"
+        },
+        {
+          "height": 256,
+          "rowStride": 260,
+          "pixelStride": 1,
+          "byteLength": 66560,
+          "sha256": "25b957fb6f46d970e64a07a1d4571d8f3ef173c9d1499e1ee6c1c63114f7b61f"
+        },
+        {
+          "height": 256,
+          "rowStride": 260,
+          "pixelStride": 1,
+          "byteLength": 66560,
+          "sha256": "e11ddcd0e0d364c67a2ed20f0712a700442b62b568edf6c83ae3aa202258f7d4"
+        }
+      ]
+    },
+    "nv21": {
+      "layout": "tight",
+      "planes": [
+        {
+          "height": 512,
+          "rowStride": 512,
+          "pixelStride": 1,
+          "byteLength": 262144,
+          "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+        },
+        {
+          "height": 256,
+          "rowStride": 512,
+          "pixelStride": 2,
+          "byteLength": 131072,
+          "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+        }
+      ]
+    },
+    "nv21-padded": {
+      "layout": "padded",
+      "planes": [
+        {
+          "height": 512,
+          "rowStride": 520,
+          "pixelStride": 1,
+          "byteLength": 266240,
+          "sha256": "a99a3ba9f30471c21b0d612850029dacb3250079611541dc44da8c76d35b09bb"
+        },
+        {
+          "height": 256,
+          "rowStride": 520,
+          "pixelStride": 2,
+          "byteLength": 133120,
+          "sha256": "1ef463a4c027591fa8110fcc69eeec34d384217d830c154de367878b518a43c5"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "CONSTRUCT-BGRA8888-TIGHT",
+      "group": "Construction",
+      "operation": "YuvImage.bgra",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "CONSTRUCT-BGRA8888-PADDED",
+      "group": "Construction",
+      "operation": "YuvImage.bgra",
+      "input": {
+        "format": "bgra8888",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "padded",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2064,
+              "pixelStride": 4,
+              "byteLength": 1056768,
+              "sha256": "47767cac0f0185940c741073dbe29fe2f350e496e85b953d5837b3a76a3325b2"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-FROM-RGBA-BGRA8888",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "source_bgra8888.bin",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "OUTPUT-TO-BGRA-BGRA8888-TIGHT",
+      "group": "Output",
+      "operation": "toBgra8888",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "source_bgra8888.bin",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "OUTPUT-TO-BGRA-BGRA8888-PADDED",
+      "group": "Output",
+      "operation": "toBgra8888",
+      "input": {
+        "format": "bgra8888",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "source_bgra8888.bin",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "CONSTRUCT-I420-TIGHT",
+      "group": "Construction",
+      "operation": "YuvImage.i420",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "CONSTRUCT-I420-PADDED",
+      "group": "Construction",
+      "operation": "YuvImage.i420",
+      "input": {
+        "format": "i420",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "padded",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 520,
+              "pixelStride": 1,
+              "byteLength": 266240,
+              "sha256": "a99a3ba9f30471c21b0d612850029dacb3250079611541dc44da8c76d35b09bb"
+            },
+            {
+              "height": 256,
+              "rowStride": 260,
+              "pixelStride": 1,
+              "byteLength": 66560,
+              "sha256": "25b957fb6f46d970e64a07a1d4571d8f3ef173c9d1499e1ee6c1c63114f7b61f"
+            },
+            {
+              "height": 256,
+              "rowStride": 260,
+              "pixelStride": 1,
+              "byteLength": 66560,
+              "sha256": "e11ddcd0e0d364c67a2ed20f0712a700442b62b568edf6c83ae3aa202258f7d4"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-FROM-RGBA-I420",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "i420_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "OUTPUT-TO-BGRA-I420-TIGHT",
+      "group": "Output",
+      "operation": "toBgra8888",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "i420_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "cbe160320911efaf1c9f45cb4757665e4e2571ec99a42f90e37c2bdcedd4f20e"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "OUTPUT-TO-BGRA-I420-PADDED",
+      "group": "Output",
+      "operation": "toBgra8888",
+      "input": {
+        "format": "i420",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "i420_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "cbe160320911efaf1c9f45cb4757665e4e2571ec99a42f90e37c2bdcedd4f20e"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "CONSTRUCT-NV21-TIGHT",
+      "group": "Construction",
+      "operation": "YuvImage.nv21",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "CONSTRUCT-NV21-PADDED",
+      "group": "Construction",
+      "operation": "YuvImage.nv21",
+      "input": {
+        "format": "nv21",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "padded",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 520,
+              "pixelStride": 1,
+              "byteLength": 266240,
+              "sha256": "a99a3ba9f30471c21b0d612850029dacb3250079611541dc44da8c76d35b09bb"
+            },
+            {
+              "height": 256,
+              "rowStride": 520,
+              "pixelStride": 2,
+              "byteLength": 133120,
+              "sha256": "1ef463a4c027591fa8110fcc69eeec34d384217d830c154de367878b518a43c5"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-FROM-RGBA-NV21",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "nv21_uv_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "nv21RoundTrip"
+    },
+    {
+      "id": "OUTPUT-TO-BGRA-NV21-TIGHT",
+      "group": "Output",
+      "operation": "toBgra8888",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "nv21_uv_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "cbe160320911efaf1c9f45cb4757665e4e2571ec99a42f90e37c2bdcedd4f20e"
+            }
+          ]
+        }
+      },
+      "comparison": "nv21RoundTrip"
+    },
+    {
+      "id": "OUTPUT-TO-BGRA-NV21-PADDED",
+      "group": "Output",
+      "operation": "toBgra8888",
+      "input": {
+        "format": "nv21",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "nv21_uv_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "cbe160320911efaf1c9f45cb4757665e4e2571ec99a42f90e37c2bdcedd4f20e"
+            }
+          ]
+        }
+      },
+      "comparison": "nv21RoundTrip"
+    },
+    {
+      "id": "FORMAT-TO-BGRA-I420",
+      "group": "Format",
+      "operation": "toYuvBgra8888",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "i420_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "cbe160320911efaf1c9f45cb4757665e4e2571ec99a42f90e37c2bdcedd4f20e"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "FORMAT-TO-BGRA-NV21",
+      "group": "Format",
+      "operation": "toYuvBgra8888",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "nv21_uv_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "cbe160320911efaf1c9f45cb4757665e4e2571ec99a42f90e37c2bdcedd4f20e"
+            }
+          ]
+        }
+      },
+      "comparison": "nv21RoundTrip"
+    },
+    {
+      "id": "FORMAT-TO-I420-BGRA-TIGHT",
+      "group": "Format",
+      "operation": "toYuvI420",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "i420_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "FORMAT-TO-I420-NV21-TIGHT",
+      "group": "Format",
+      "operation": "toYuvI420",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "i420_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "FORMAT-TO-NV21-BGRA-TIGHT",
+      "group": "Format",
+      "operation": "toYuvNv21",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "nv21_uv_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "nv21RoundTrip"
+    },
+    {
+      "id": "FORMAT-TO-NV21-I420-TIGHT",
+      "group": "Format",
+      "operation": "toYuvNv21",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "nv21_uv_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "FORMAT-TO-I420-BGRA-PADDED",
+      "group": "Format",
+      "operation": "toYuvI420",
+      "input": {
+        "format": "bgra8888",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "i420_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "FORMAT-TO-I420-NV21-PADDED",
+      "group": "Format",
+      "operation": "toYuvI420",
+      "input": {
+        "format": "nv21",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "i420_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "FORMAT-TO-NV21-BGRA-PADDED",
+      "group": "Format",
+      "operation": "toYuvNv21",
+      "input": {
+        "format": "bgra8888",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "nv21_uv_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "nv21RoundTrip"
+    },
+    {
+      "id": "FORMAT-TO-NV21-I420-PADDED",
+      "group": "Format",
+      "operation": "toYuvNv21",
+      "input": {
+        "format": "i420",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "nv21_uv_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "CHROMA-SWAP-NV21-1",
+      "group": "Chroma",
+      "operation": "swapNv",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "swaps": 1
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "swap_nv_once.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "5d16a73bd6b98270c750751125e45ca1ff85029931911398dedb873f195f25bb"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "CHROMA-SWAP-NV21-2",
+      "group": "Chroma",
+      "operation": "swapNv",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "swaps": 2
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "CHROMA-SWAP-I420-1",
+      "group": "Chroma",
+      "operation": "swapNv",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "swaps": 1
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "swap_nv_once.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "5d16a73bd6b98270c750751125e45ca1ff85029931911398dedb873f195f25bb"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "CHROMA-SWAP-I420-2",
+      "group": "Chroma",
+      "operation": "swapNv",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "swaps": 2
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-CROP-BGRA8888-INNER",
+      "group": "Geometry",
+      "operation": "crop",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "left": 64,
+        "top": 96,
+        "width": 256,
+        "height": 320
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 256,
+          "height": 320
+        },
+        "artifact": "crop_inner.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 320,
+              "rowStride": 1024,
+              "pixelStride": 4,
+              "byteLength": 327680,
+              "sha256": "fd31a9e333372cd8de9d1994e816fd13bb1111a3add443e43788f6ec18a8ba21"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-CROP-BGRA8888-CLAMPED",
+      "group": "Geometry",
+      "operation": "crop",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "left": -50,
+        "top": -10,
+        "width": 9999,
+        "height": 9999
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-CROP-BGRA8888-EMPTY",
+      "group": "Geometry",
+      "operation": "crop",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "left": 100,
+        "top": 100,
+        "width": -20,
+        "height": 10
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-BGRA8888-0",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 0
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-BGRA8888-90",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 90
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "rotate_90.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "e2b205c8757807315bb31bc2c93bb1cca812d79590299693c91f94274a24202e"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-BGRA8888-180",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 180
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "rotate_180.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "b455ea72ad97b84b368f1404e9ee56869712f903bb9d285e46b0823a55a36c98"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-BGRA8888-270",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 270
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "rotate_270.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "35118a0d9ebef94af09bac95f779629ace381dcb10be2497d68fb412af023fe6"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-FLIP-H-BGRA8888",
+      "group": "Geometry",
+      "operation": "flipHorizontally",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "flip_horizontal.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "22f1728260d867bf575c197fe1d03174ff68e72d13e6684e5e7add92a59d2e24"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-FLIP-V-BGRA8888",
+      "group": "Geometry",
+      "operation": "flipVertically",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "flip_vertical.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "3cc7937e549c40e6a673d76f73bda34fa12a050406975900e6384ef62f3ec14c"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-CROP-I420-INNER",
+      "group": "Geometry",
+      "operation": "crop",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "left": 64,
+        "top": 96,
+        "width": 256,
+        "height": 320
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 256,
+          "height": 320
+        },
+        "artifact": "crop_inner.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 320,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 81920,
+              "sha256": "a90ee0c9b902eb5b2685f22dae3840dd1af54831af9b4557fabb6c14d7b11e30"
+            },
+            {
+              "height": 160,
+              "rowStride": 128,
+              "pixelStride": 1,
+              "byteLength": 20480,
+              "sha256": "bd3484b41796e0fc007c0411653f194e7b8f2aafae13d6db53a946a0157258ef"
+            },
+            {
+              "height": 160,
+              "rowStride": 128,
+              "pixelStride": 1,
+              "byteLength": 20480,
+              "sha256": "043ffdaf7af2a2f9f11f773246532eaedcc01913c3f5cee185c32bbad9acf3a6"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-CROP-I420-CLAMPED",
+      "group": "Geometry",
+      "operation": "crop",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "left": -50,
+        "top": -10,
+        "width": 9999,
+        "height": 9999
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-CROP-I420-EMPTY",
+      "group": "Geometry",
+      "operation": "crop",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "left": 100,
+        "top": 100,
+        "width": -20,
+        "height": 10
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-I420-0",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 0
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-I420-90",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 90
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "rotate_90.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "3d980656fcd2e6e36fe0a009771f4ded872ded3c3cb57c225c117d1605be5d85"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "d0d220aa1e156f730a921f3e284be73017a85c2ebee159b68f8001547bc17840"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "69b172ee244ef559fa27a2194ca77e97a687b4bccb647519fe28a8b3e207c596"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-I420-180",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 180
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "rotate_180.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2a2034363ad70849f5599b579d6141a6327401bf0dcc4cdc1a1c79957bff8a80"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "860cc2470a9e89a954226493e1c67ed95720be7e8a0a0530de69dbd20b61a0cd"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "47ac2d1ca3559e5d5e927b0738366d75b586fc2e638cbc5781c27444a5927699"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-I420-270",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 270
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "rotate_270.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "9c75b392a8c5da783a47d7ed6d2482571a70d2b28acc98b039382215a47630a8"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "a66eaa85a3ad4d75f7f4b90def2545c9c7cc06ad530c92b6b904fb1dda0f63bb"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "82b184b4d58aa08a20594cd6a9495e65210034f3a8227805b8d5e452d68de5c7"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-FLIP-H-I420",
+      "group": "Geometry",
+      "operation": "flipHorizontally",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "flip_horizontal.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "5622f077b7600ea7b44cda98be9395b1369eab5f693d3e256520ed39b6db7002"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "68d0f25ca2ae18286031b300b8e5e4e90b7929cda3ad77e8ac43f02324716ad7"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "d1bcb5eff69ff4ec14adce3aa1c3db8d34d4dd45c359f1ef254d82901b0b9259"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-FLIP-V-I420",
+      "group": "Geometry",
+      "operation": "flipVertically",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "flip_vertical.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "b27a7ffdeb45297ec30d2da828e0f5dcf58cec19dfd2e59dd373bddd53c55cf7"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "21e42b17dac080dcc1d71766013b139b6543b1b424daba0eb6c19a69c64438d2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "48d3df5b2b6e5b742b8c305813bc22824ba1f4b53a934cb98a3dbdb97158ee4f"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-CROP-NV21-INNER",
+      "group": "Geometry",
+      "operation": "crop",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "left": 64,
+        "top": 96,
+        "width": 256,
+        "height": 320
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 256,
+          "height": 320
+        },
+        "artifact": "crop_inner.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 320,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 81920,
+              "sha256": "a90ee0c9b902eb5b2685f22dae3840dd1af54831af9b4557fabb6c14d7b11e30"
+            },
+            {
+              "height": 160,
+              "rowStride": 256,
+              "pixelStride": 2,
+              "byteLength": 40960,
+              "sha256": "d3e02b0b97f1e30fa78643b71eb92b70a39aca4686d152814d0a0f16eb9bd1ed"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-CROP-NV21-CLAMPED",
+      "group": "Geometry",
+      "operation": "crop",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "left": -50,
+        "top": -10,
+        "width": 9999,
+        "height": 9999
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-CROP-NV21-EMPTY",
+      "group": "Geometry",
+      "operation": "crop",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "left": 100,
+        "top": 100,
+        "width": -20,
+        "height": 10
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-NV21-0",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 0
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-NV21-90",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 90
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "rotate_90.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "3d980656fcd2e6e36fe0a009771f4ded872ded3c3cb57c225c117d1605be5d85"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "7ddb4a25d04d434ac5d0df7c3c9339002560813bb8ac54212a9c7a6522b5cb0c"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-NV21-180",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 180
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "rotate_180.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2a2034363ad70849f5599b579d6141a6327401bf0dcc4cdc1a1c79957bff8a80"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "4c0573548d2958960b174d6f1224897b18533f3042399be80e05fffabc9641a7"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-ROTATE-NV21-270",
+      "group": "Geometry",
+      "operation": "rotate",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "degreesClockwise": 270
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "rotate_270.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "9c75b392a8c5da783a47d7ed6d2482571a70d2b28acc98b039382215a47630a8"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "39a7dcac0b2cdddf2711806d846c7fd8e1ce83aed5f5579bc915437464b7957c"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-FLIP-H-NV21",
+      "group": "Geometry",
+      "operation": "flipHorizontally",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "flip_horizontal.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "5622f077b7600ea7b44cda98be9395b1369eab5f693d3e256520ed39b6db7002"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "a8feedeb8ed939cbcef93a49e77758e3da9d414c4d1f95c5771188337c02f10b"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "GEOMETRY-FLIP-V-NV21",
+      "group": "Geometry",
+      "operation": "flipVertically",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "flip_vertical.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "b27a7ffdeb45297ec30d2da828e0f5dcf58cec19dfd2e59dd373bddd53c55cf7"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "740f287c54c9f17315b8ae7301f94863a69f380c3d15099f874c2d7e7e62becd"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "EFFECT-GRAYSCALE-BGRA8888",
+      "group": "Effect",
+      "operation": "grayscale",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "grayscale.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "5ae8dc014417f5075183220212d02a7bf1406f25d83d845f36e18ad75cade165"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "EFFECT-GRAYSCALE-I420",
+      "group": "Effect",
+      "operation": "grayscale",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "grayscale.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "df5a1b310010e3f3910e1e313e51876c9e38b1b04c06156bf32b3908d8b8b1fd"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "086317bd0c9bcd77537c8a6cfe66f8e7dd84ded162673903b29f9b3f5e5ea244"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "086317bd0c9bcd77537c8a6cfe66f8e7dd84ded162673903b29f9b3f5e5ea244"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "EFFECT-GRAYSCALE-NV21",
+      "group": "Effect",
+      "operation": "grayscale",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "grayscale.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "df5a1b310010e3f3910e1e313e51876c9e38b1b04c06156bf32b3908d8b8b1fd"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "ea0ff9062ca1e37bfd7021c878bfea32caaca9f4ecd77153300fe55f427debe9"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "EFFECT-BLACKWHITE-BGRA8888",
+      "group": "Effect",
+      "operation": "blackwhite",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "blackwhite.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "b1fba7fcc0cd58f3864f317913c2000ac5efcad72a9b58f55d0fda1f34426710"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "EFFECT-BLACKWHITE-I420",
+      "group": "Effect",
+      "operation": "blackwhite",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "blackwhite.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "6b97005144a4cd07b71930945a61516b11c947a5fb822e904890300db142f412"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "086317bd0c9bcd77537c8a6cfe66f8e7dd84ded162673903b29f9b3f5e5ea244"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "086317bd0c9bcd77537c8a6cfe66f8e7dd84ded162673903b29f9b3f5e5ea244"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "EFFECT-BLACKWHITE-NV21",
+      "group": "Effect",
+      "operation": "blackwhite",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "blackwhite.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "6b97005144a4cd07b71930945a61516b11c947a5fb822e904890300db142f412"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "ea0ff9062ca1e37bfd7021c878bfea32caaca9f4ecd77153300fe55f427debe9"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "EFFECT-NEGATE-BGRA8888",
+      "group": "Effect",
+      "operation": "negate",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "negate.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "cf072cc254b9847083f336b732b0a4fac352ce3ffb562d36c79cc0b1bde6f2c8"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "EFFECT-NEGATE-I420",
+      "group": "Effect",
+      "operation": "negate",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "negate.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "10eb2718a4f681f9b1ced580b0ddcaab435ffdaef7b4504699f061ec020078aa"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "8dcfff751fd9cf59a68156c5a39f8268b68496598892aaf95cb99f7e76127dce"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "212b59e36834554edc98523ea4ffff8196e6c7c9a40cd522d297d846d185ea66"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "EFFECT-NEGATE-NV21",
+      "group": "Effect",
+      "operation": "negate",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "negate.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "10eb2718a4f681f9b1ced580b0ddcaab435ffdaef7b4504699f061ec020078aa"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "14afe5c01dc4620f1a836025394bd2d71b6d391cdfe5556337e3477a7be2d3b2"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "BLUR-GAUSSIANBLUR-BGRA8888-GAUSSIAN_DEFAULT",
+      "group": "Blur",
+      "operation": "gaussianBlur",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 2,
+        "sigma": 2
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "gaussian_default.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "54b28be5ced08a85e2adf2ceb159ba6e7d1e518732962135352c72919b2af119"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-GAUSSIANBLUR-I420-GAUSSIAN_DEFAULT",
+      "group": "Blur",
+      "operation": "gaussianBlur",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 2,
+        "sigma": 2
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "gaussian_default.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2a47964f4c27512cb5b8f9f6dffffd3f97349c3437247bc609003c7967bec8fa"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "09eb528fd6f199d84269d81d72245c03c938db029f91c21f161f2995b2c5f519"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "56d579b7b5bf56c52c9ffc7cdfed0abb6774b5afee99c4a9f09d1915ce54f07c"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-GAUSSIANBLUR-NV21-GAUSSIAN_DEFAULT",
+      "group": "Blur",
+      "operation": "gaussianBlur",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 2,
+        "sigma": 2
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "gaussian_default.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2a47964f4c27512cb5b8f9f6dffffd3f97349c3437247bc609003c7967bec8fa"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "40601a30bc6c2ea406b4e8fa8986f3f263ce362366622e97dcda123d0b418aa8"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-GAUSSIANBLUR-BGRA8888-GAUSSIAN_R3_S2",
+      "group": "Blur",
+      "operation": "gaussianBlur",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 3,
+        "sigma": 2
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "gaussian_r3_s2.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "6861d2389b69d8d5e0522de454df53db677a4a07643ea864891b28a63f7a9db0"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-GAUSSIANBLUR-I420-GAUSSIAN_R3_S2",
+      "group": "Blur",
+      "operation": "gaussianBlur",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 3,
+        "sigma": 2
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "gaussian_r3_s2.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "07619cfe65ed33369a557e24bae3043919f3c7697790425ab98ee6d01abe4050"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "2981815234dca49d3fd51cf438ad7ef395ac3dc828c2d490607e6321756f68e6"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "cbb75f3e46d354be94337bccc0885be12a220e2f42714e62dd7dba0e876413bf"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-GAUSSIANBLUR-NV21-GAUSSIAN_R3_S2",
+      "group": "Blur",
+      "operation": "gaussianBlur",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 3,
+        "sigma": 2
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "gaussian_r3_s2.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "07619cfe65ed33369a557e24bae3043919f3c7697790425ab98ee6d01abe4050"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "07cd549fd7714c69e194690bdb6a9c274f0e03a7d5092bc8de8251ed5bceb21e"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-BOXBLUR-BGRA8888-BOX_DEFAULT",
+      "group": "Blur",
+      "operation": "boxBlur",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 10
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "box_default.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "e04bb61f1c66b3062972460c01f7a9495371ccd363919f047c857c8085ad809a"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-BOXBLUR-I420-BOX_DEFAULT",
+      "group": "Blur",
+      "operation": "boxBlur",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 10
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "box_default.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "eb7be3ad4d267dde4f72b8e5dec9e0dc5cd7d8de6f05bd550b2fefa789991d3e"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "392921ea2e067b07b773e63ac7c181d2aa5e605d8506bd008a99891d35fc388a"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "b7558743357d04b00298edb57f8f5ef8ead42ba80268815ea4e0fbda5b517fc9"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-BOXBLUR-NV21-BOX_DEFAULT",
+      "group": "Blur",
+      "operation": "boxBlur",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 10
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "box_default.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "eb7be3ad4d267dde4f72b8e5dec9e0dc5cd7d8de6f05bd550b2fefa789991d3e"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "63c931646208aeada7331814c156a2d688083284ddb83a106ab0e7a8425f1c97"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-BOXBLUR-BGRA8888-BOX_FULL",
+      "group": "Blur",
+      "operation": "boxBlur",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "box_full.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "7e33384b99ec97e750b4908974e25a1a802d3a7cc3defde22ab1435a7ffef1f6"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-BOXBLUR-I420-BOX_FULL",
+      "group": "Blur",
+      "operation": "boxBlur",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "box_full.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "296ef633333793b8f09d91a0428ac259cfcfd7059b53b4f29be0b522e20ffde9"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "1a05db0c6a6616d87bd47a202b282478a08429104b1d9d7eb23fbd7d16fb594b"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e5e24f5f62842e4381b04946e673f439c24ab40533beb29307889eb1311b0112"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-BOXBLUR-NV21-BOX_FULL",
+      "group": "Blur",
+      "operation": "boxBlur",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "box_full.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "296ef633333793b8f09d91a0428ac259cfcfd7059b53b4f29be0b522e20ffde9"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "9a6edce42d39caddab8bd2fc117c0479ae0789c2a0b38e3aff9f66662b9d0103"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-BOXBLUR-BGRA8888-BOX_RECT",
+      "group": "Blur",
+      "operation": "boxBlur",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5,
+        "rect": {
+          "left": 32,
+          "top": 32,
+          "width": 256,
+          "height": 256
+        }
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "box_rect.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "2852294a46f4f474cbf6a7d1c74ddeba641682efd4f70280d3d5c91119c90e95"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-BOXBLUR-I420-BOX_RECT",
+      "group": "Blur",
+      "operation": "boxBlur",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5,
+        "rect": {
+          "left": 32,
+          "top": 32,
+          "width": 256,
+          "height": 256
+        }
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "box_rect.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "c37a529ce767076879da6cdbe519b778701d627e8084beffd64ca612d870962c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e15ba15dc5028452a5c98b154f12bd9bc66c3814a212ae5c97e38fdf0a0a2d26"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "513a2bf527c1333e1dfaea3d3aec219fb0662018384d4f1bc8a70c36f0560749"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-BOXBLUR-NV21-BOX_RECT",
+      "group": "Blur",
+      "operation": "boxBlur",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5,
+        "rect": {
+          "left": 32,
+          "top": 32,
+          "width": 256,
+          "height": 256
+        }
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "box_rect.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "c37a529ce767076879da6cdbe519b778701d627e8084beffd64ca612d870962c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "459469767ffa80672348a2e038033380c474be88d741a26dd605598369892aac"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-MEANBLUR-BGRA8888-MEAN_DEFAULT",
+      "group": "Blur",
+      "operation": "meanBlur",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 2
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "mean_default.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "a51b24dba7cd7250af8300554ea36a39f1f313569a8185f936564a3584a714f0"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-MEANBLUR-I420-MEAN_DEFAULT",
+      "group": "Blur",
+      "operation": "meanBlur",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 2
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "mean_default.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "5465c00d998e5f96b44d0da2e4985c22a234f0682fe69d45dff659143086dabd"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "52d9c3ccaeb7f32d09eff0d8687ff61b2be13935ea876e441409d0d90087bfb0"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "beac5048820b72cad4714ebc8ffdff8b3eafdefac70fc82fc8f59d576bc04314"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-MEANBLUR-NV21-MEAN_DEFAULT",
+      "group": "Blur",
+      "operation": "meanBlur",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 2
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "mean_default.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "5465c00d998e5f96b44d0da2e4985c22a234f0682fe69d45dff659143086dabd"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "816cbb00a2d5a02bce89527405420975e576ed2289290b1d8611c08e49c598db"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-MEANBLUR-BGRA8888-MEAN_FULL",
+      "group": "Blur",
+      "operation": "meanBlur",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "mean_full.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "7e33384b99ec97e750b4908974e25a1a802d3a7cc3defde22ab1435a7ffef1f6"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-MEANBLUR-I420-MEAN_FULL",
+      "group": "Blur",
+      "operation": "meanBlur",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "mean_full.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "296ef633333793b8f09d91a0428ac259cfcfd7059b53b4f29be0b522e20ffde9"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "1a05db0c6a6616d87bd47a202b282478a08429104b1d9d7eb23fbd7d16fb594b"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e5e24f5f62842e4381b04946e673f439c24ab40533beb29307889eb1311b0112"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-MEANBLUR-NV21-MEAN_FULL",
+      "group": "Blur",
+      "operation": "meanBlur",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "mean_full.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "296ef633333793b8f09d91a0428ac259cfcfd7059b53b4f29be0b522e20ffde9"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "9a6edce42d39caddab8bd2fc117c0479ae0789c2a0b38e3aff9f66662b9d0103"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-MEANBLUR-BGRA8888-MEAN_RECT",
+      "group": "Blur",
+      "operation": "meanBlur",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5,
+        "rect": {
+          "left": 32,
+          "top": 32,
+          "width": 256,
+          "height": 256
+        }
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "mean_rect.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "2852294a46f4f474cbf6a7d1c74ddeba641682efd4f70280d3d5c91119c90e95"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-MEANBLUR-I420-MEAN_RECT",
+      "group": "Blur",
+      "operation": "meanBlur",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5,
+        "rect": {
+          "left": 32,
+          "top": 32,
+          "width": 256,
+          "height": 256
+        }
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "mean_rect.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "c37a529ce767076879da6cdbe519b778701d627e8084beffd64ca612d870962c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e15ba15dc5028452a5c98b154f12bd9bc66c3814a212ae5c97e38fdf0a0a2d26"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "513a2bf527c1333e1dfaea3d3aec219fb0662018384d4f1bc8a70c36f0560749"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "BLUR-MEANBLUR-NV21-MEAN_RECT",
+      "group": "Blur",
+      "operation": "meanBlur",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "radius": 5,
+        "rect": {
+          "left": 32,
+          "top": 32,
+          "width": 256,
+          "height": 256
+        }
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "mean_rect.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "c37a529ce767076879da6cdbe519b778701d627e8084beffd64ca612d870962c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "459469767ffa80672348a2e038033380c474be88d741a26dd605598369892aac"
+            }
+          ]
+        }
+      },
+      "comparison": "blur"
+    },
+    {
+      "id": "STATE-COPY-BGRA8888-NORMAL",
+      "group": "State",
+      "operation": "copy",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "blank": false
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "STATE-COPY-BGRA8888-BLANK",
+      "group": "State",
+      "operation": "copy",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "blank": true
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "blank_bgra8888.bin",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
+            }
+          ],
+          "isZeroFilled": true
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "BYTES-GET-BGRA8888-TIGHT",
+      "group": "Bytes",
+      "operation": "getBytes",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "BYTES-GET-BGRA8888-PADDED",
+      "group": "Bytes",
+      "operation": "getBytes",
+      "input": {
+        "format": "bgra8888",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "padded",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2064,
+              "pixelStride": 4,
+              "byteLength": 1056768,
+              "sha256": "47767cac0f0185940c741073dbe29fe2f350e496e85b953d5837b3a76a3325b2"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "IO-SAVE-LOAD-BGRA8888-SINGLE_CHUNK",
+      "group": "I/O",
+      "operation": "save/load",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "stream": "single_chunk"
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "IO-SAVE-LOAD-BGRA8888-FRAGMENTED",
+      "group": "I/O",
+      "operation": "save/load",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "stream": "fragmented"
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "FLUTTER-TO-IMAGE-BGRA8888",
+      "group": "Flutter",
+      "operation": "toImage",
+      "input": {
+        "format": "bgra8888",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 2048,
+              "pixelStride": 4,
+              "byteLength": 1048576,
+              "sha256": "1a14d1508e406c40e82a359dd31d77aad7ec1cd9f2efece0d4175d6961e8c242"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "STATE-COPY-I420-NORMAL",
+      "group": "State",
+      "operation": "copy",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "blank": false
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "STATE-COPY-I420-BLANK",
+      "group": "State",
+      "operation": "copy",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "blank": true
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "blank_i420.yuv",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "8a39d2abd3999ab73c34db2476849cddf303ce389b35826850f9a700589b4a90"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "de2f256064a0af797747c2b97505dc0b9f3df0de4f489eac731c23ae9ca9cc31"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "de2f256064a0af797747c2b97505dc0b9f3df0de4f489eac731c23ae9ca9cc31"
+            }
+          ],
+          "isZeroFilled": true
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "BYTES-GET-I420-TIGHT",
+      "group": "Bytes",
+      "operation": "getBytes",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "BYTES-GET-I420-PADDED",
+      "group": "Bytes",
+      "operation": "getBytes",
+      "input": {
+        "format": "i420",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "padded",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 520,
+              "pixelStride": 1,
+              "byteLength": 266240,
+              "sha256": "a99a3ba9f30471c21b0d612850029dacb3250079611541dc44da8c76d35b09bb"
+            },
+            {
+              "height": 256,
+              "rowStride": 260,
+              "pixelStride": 1,
+              "byteLength": 66560,
+              "sha256": "25b957fb6f46d970e64a07a1d4571d8f3ef173c9d1499e1ee6c1c63114f7b61f"
+            },
+            {
+              "height": 256,
+              "rowStride": 260,
+              "pixelStride": 1,
+              "byteLength": 66560,
+              "sha256": "e11ddcd0e0d364c67a2ed20f0712a700442b62b568edf6c83ae3aa202258f7d4"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "IO-SAVE-LOAD-I420-SINGLE_CHUNK",
+      "group": "I/O",
+      "operation": "save/load",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "stream": "single_chunk"
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "IO-SAVE-LOAD-I420-FRAGMENTED",
+      "group": "I/O",
+      "operation": "save/load",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "stream": "fragmented"
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "e2b4a0192095db1c5f96b4bfc524c22d283181d3921b07409dc58db99fe3c5e2"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "6aa932194318cb796bef80f795291a3e7c39318e8b8bf2767dc1c51252e5fb46"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "FLUTTER-TO-IMAGE-I420",
+      "group": "Flutter",
+      "operation": "toImage",
+      "input": {
+        "format": "i420",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "i420_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "bf0d320b24eabd13c40b46b540033ca1f3afcc2cc8e7136d32c4cda29526a509"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "f741d4f3d5086e9c710a42ff69e6ec61a4bd4b9b80c350be1899e742501f0977"
+            },
+            {
+              "height": 256,
+              "rowStride": 256,
+              "pixelStride": 1,
+              "byteLength": 65536,
+              "sha256": "4b41f3e298f15e3abac998dbcd0191e6434e2e457f2bce018347fe7a51452d76"
+            }
+          ]
+        }
+      },
+      "comparison": "yuvRoundTrip"
+    },
+    {
+      "id": "STATE-COPY-NV21-NORMAL",
+      "group": "State",
+      "operation": "copy",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "blank": false
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "STATE-COPY-NV21-BLANK",
+      "group": "State",
+      "operation": "copy",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "blank": true
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "blank_nv21_uv.yuv",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "8a39d2abd3999ab73c34db2476849cddf303ce389b35826850f9a700589b4a90"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "fa43239bcee7b97ca62f007cc68487560a39e19f74f3dde7486db3f98df8e471"
+            }
+          ],
+          "isZeroFilled": true
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "BYTES-GET-NV21-TIGHT",
+      "group": "Bytes",
+      "operation": "getBytes",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "BYTES-GET-NV21-PADDED",
+      "group": "Bytes",
+      "operation": "getBytes",
+      "input": {
+        "format": "nv21",
+        "layout": "padded",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "padded",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 520,
+              "pixelStride": 1,
+              "byteLength": 266240,
+              "sha256": "a99a3ba9f30471c21b0d612850029dacb3250079611541dc44da8c76d35b09bb"
+            },
+            {
+              "height": 256,
+              "rowStride": 520,
+              "pixelStride": 2,
+              "byteLength": 133120,
+              "sha256": "1ef463a4c027591fa8110fcc69eeec34d384217d830c154de367878b518a43c5"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "IO-SAVE-LOAD-NV21-SINGLE_CHUNK",
+      "group": "I/O",
+      "operation": "save/load",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "stream": "single_chunk"
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "IO-SAVE-LOAD-NV21-FRAGMENTED",
+      "group": "I/O",
+      "operation": "save/load",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {
+        "stream": "fragmented"
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "original.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "2626991b3545829a1195b7baa05676b93015888dc0425b762298052100827b6c"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "47582b6986bbda5f4450a5417dc358c2057c9c06fbe77e448fd02f8f4f5423ba"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "FLUTTER-TO-IMAGE-NV21",
+      "group": "Flutter",
+      "operation": "toImage",
+      "input": {
+        "format": "nv21",
+        "layout": "tight",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        }
+      },
+      "parameters": {},
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 512,
+          "height": 512
+        },
+        "artifact": "nv21_uv_decoded.png",
+        "rawPlaneReference": {
+          "layout": "tight",
+          "planes": [
+            {
+              "height": 512,
+              "rowStride": 512,
+              "pixelStride": 1,
+              "byteLength": 262144,
+              "sha256": "bf0d320b24eabd13c40b46b540033ca1f3afcc2cc8e7136d32c4cda29526a509"
+            },
+            {
+              "height": 256,
+              "rowStride": 512,
+              "pixelStride": 2,
+              "byteLength": 131072,
+              "sha256": "6374b8b744eae8baaf2e8eb914d79d77bd64a536d52998c9c81896aef72636b6"
+            }
+          ]
+        }
+      },
+      "comparison": "nv21RoundTrip"
+    },
+    {
+      "id": "INPUT-ODD-CUSTOM-STRIDE-BGRA8888-1X1",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "bgra8888",
+        "layout": "customStride",
+        "dimensions": {
+          "width": 1,
+          "height": 1
+        }
+      },
+      "parameters": {
+        "sourceCrop": {
+          "left": 0,
+          "top": 0,
+          "width": 1,
+          "height": 1
+        },
+        "purpose": "YUV-05 odd-size tight-RGBA to custom-stride destination reference"
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 1,
+          "height": 1
+        },
+        "artifact": "crop_1x1.png",
+        "rawPlaneReference": {
+          "layout": "customStride",
+          "planes": [
+            {
+              "height": 1,
+              "rowStride": 11,
+              "pixelStride": 4,
+              "byteLength": 11,
+              "sha256": "8d630c0dfd070135c02ce17f8b5a0ad27eb98ae015dcd02a0845fd3155702844"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-ODD-CUSTOM-STRIDE-I420-1X1",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "i420",
+        "layout": "customStride",
+        "dimensions": {
+          "width": 1,
+          "height": 1
+        }
+      },
+      "parameters": {
+        "sourceCrop": {
+          "left": 0,
+          "top": 0,
+          "width": 1,
+          "height": 1
+        },
+        "purpose": "YUV-05 odd-size tight-RGBA to custom-stride destination reference"
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 1,
+          "height": 1
+        },
+        "artifact": "crop_1x1.png",
+        "rawPlaneReference": {
+          "layout": "customStride",
+          "planes": [
+            {
+              "height": 1,
+              "rowStride": 4,
+              "pixelStride": 1,
+              "byteLength": 4,
+              "sha256": "f1f374e0288da16df068374c68ed27e1650a1fbc91c371f619a51c4a4a59713f"
+            },
+            {
+              "height": 1,
+              "rowStride": 3,
+              "pixelStride": 1,
+              "byteLength": 3,
+              "sha256": "1fe5b774f1454cf37ef61d9b09648cfcb376c033a6f88f108ae8877e12036daf"
+            },
+            {
+              "height": 1,
+              "rowStride": 3,
+              "pixelStride": 1,
+              "byteLength": 3,
+              "sha256": "1fe5b774f1454cf37ef61d9b09648cfcb376c033a6f88f108ae8877e12036daf"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-ODD-CUSTOM-STRIDE-NV21-1X1",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "nv21",
+        "layout": "customStride",
+        "dimensions": {
+          "width": 1,
+          "height": 1
+        }
+      },
+      "parameters": {
+        "sourceCrop": {
+          "left": 0,
+          "top": 0,
+          "width": 1,
+          "height": 1
+        },
+        "purpose": "YUV-05 odd-size tight-RGBA to custom-stride destination reference"
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 1,
+          "height": 1
+        },
+        "artifact": "crop_1x1.png",
+        "rawPlaneReference": {
+          "layout": "customStride",
+          "planes": [
+            {
+              "height": 1,
+              "rowStride": 4,
+              "pixelStride": 1,
+              "byteLength": 4,
+              "sha256": "f1f374e0288da16df068374c68ed27e1650a1fbc91c371f619a51c4a4a59713f"
+            },
+            {
+              "height": 1,
+              "rowStride": 5,
+              "pixelStride": 2,
+              "byteLength": 5,
+              "sha256": "e378a0a53924fd7d90397f7b2ce9c9ae27a17a79ca10086d8f80a6564a4be486"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-ODD-CUSTOM-STRIDE-BGRA8888-3X5",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "bgra8888",
+        "layout": "customStride",
+        "dimensions": {
+          "width": 3,
+          "height": 5
+        }
+      },
+      "parameters": {
+        "sourceCrop": {
+          "left": 0,
+          "top": 0,
+          "width": 3,
+          "height": 5
+        },
+        "purpose": "YUV-05 odd-size tight-RGBA to custom-stride destination reference"
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 3,
+          "height": 5
+        },
+        "artifact": "crop_3x5.png",
+        "rawPlaneReference": {
+          "layout": "customStride",
+          "planes": [
+            {
+              "height": 5,
+              "rowStride": 19,
+              "pixelStride": 4,
+              "byteLength": 95,
+              "sha256": "ae7600792718e0aa57b2532190afdb53692c75d0f8bbf38e50d3276f3f7a796e"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-ODD-CUSTOM-STRIDE-I420-3X5",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "i420",
+        "layout": "customStride",
+        "dimensions": {
+          "width": 3,
+          "height": 5
+        }
+      },
+      "parameters": {
+        "sourceCrop": {
+          "left": 0,
+          "top": 0,
+          "width": 3,
+          "height": 5
+        },
+        "purpose": "YUV-05 odd-size tight-RGBA to custom-stride destination reference"
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 3,
+          "height": 5
+        },
+        "artifact": "crop_3x5.png",
+        "rawPlaneReference": {
+          "layout": "customStride",
+          "planes": [
+            {
+              "height": 5,
+              "rowStride": 6,
+              "pixelStride": 1,
+              "byteLength": 30,
+              "sha256": "30b85dcb472bb9a0063f493daccc48163a6cce0824c8560111bb4bc34331a609"
+            },
+            {
+              "height": 3,
+              "rowStride": 4,
+              "pixelStride": 1,
+              "byteLength": 12,
+              "sha256": "900253e4ae0c95efb40bedb49333e6c948953c59c7dc3126797c9fdca21afd95"
+            },
+            {
+              "height": 3,
+              "rowStride": 4,
+              "pixelStride": 1,
+              "byteLength": 12,
+              "sha256": "900253e4ae0c95efb40bedb49333e6c948953c59c7dc3126797c9fdca21afd95"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-ODD-CUSTOM-STRIDE-NV21-3X5",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "nv21",
+        "layout": "customStride",
+        "dimensions": {
+          "width": 3,
+          "height": 5
+        }
+      },
+      "parameters": {
+        "sourceCrop": {
+          "left": 0,
+          "top": 0,
+          "width": 3,
+          "height": 5
+        },
+        "purpose": "YUV-05 odd-size tight-RGBA to custom-stride destination reference"
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 3,
+          "height": 5
+        },
+        "artifact": "crop_3x5.png",
+        "rawPlaneReference": {
+          "layout": "customStride",
+          "planes": [
+            {
+              "height": 5,
+              "rowStride": 6,
+              "pixelStride": 1,
+              "byteLength": 30,
+              "sha256": "30b85dcb472bb9a0063f493daccc48163a6cce0824c8560111bb4bc34331a609"
+            },
+            {
+              "height": 3,
+              "rowStride": 7,
+              "pixelStride": 2,
+              "byteLength": 21,
+              "sha256": "987c654d270d14be84939aa94865d2aa3ff098d72cdc5bd8a44110f82a78c6ff"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-ODD-CUSTOM-STRIDE-BGRA8888-127X255",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "bgra8888",
+        "layout": "customStride",
+        "dimensions": {
+          "width": 127,
+          "height": 255
+        }
+      },
+      "parameters": {
+        "sourceCrop": {
+          "left": 0,
+          "top": 0,
+          "width": 127,
+          "height": 255
+        },
+        "purpose": "YUV-05 odd-size tight-RGBA to custom-stride destination reference"
+      },
+      "expected": {
+        "format": "bgra8888",
+        "dimensions": {
+          "width": 127,
+          "height": 255
+        },
+        "artifact": "crop_127x255.png",
+        "rawPlaneReference": {
+          "layout": "customStride",
+          "planes": [
+            {
+              "height": 255,
+              "rowStride": 515,
+              "pixelStride": 4,
+              "byteLength": 131325,
+              "sha256": "8c5913d6d1b5d690b9d00bc7aa9a4f6580f4a839a790320be82243d857dbe5de"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-ODD-CUSTOM-STRIDE-I420-127X255",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "i420",
+        "layout": "customStride",
+        "dimensions": {
+          "width": 127,
+          "height": 255
+        }
+      },
+      "parameters": {
+        "sourceCrop": {
+          "left": 0,
+          "top": 0,
+          "width": 127,
+          "height": 255
+        },
+        "purpose": "YUV-05 odd-size tight-RGBA to custom-stride destination reference"
+      },
+      "expected": {
+        "format": "i420",
+        "dimensions": {
+          "width": 127,
+          "height": 255
+        },
+        "artifact": "crop_127x255.png",
+        "rawPlaneReference": {
+          "layout": "customStride",
+          "planes": [
+            {
+              "height": 255,
+              "rowStride": 130,
+              "pixelStride": 1,
+              "byteLength": 33150,
+              "sha256": "5991e56291c3d7633107b14ec57135a1d327ecc60f59fd7677e1a2212aa8ed40"
+            },
+            {
+              "height": 128,
+              "rowStride": 66,
+              "pixelStride": 1,
+              "byteLength": 8448,
+              "sha256": "580e7dff6e0a27d78cefa7f46bcbb19da1c761cd818726b407a1927dec1a5b5d"
+            },
+            {
+              "height": 128,
+              "rowStride": 66,
+              "pixelStride": 1,
+              "byteLength": 8448,
+              "sha256": "580e7dff6e0a27d78cefa7f46bcbb19da1c761cd818726b407a1927dec1a5b5d"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    },
+    {
+      "id": "INPUT-ODD-CUSTOM-STRIDE-NV21-127X255",
+      "group": "Input",
+      "operation": "fromRgba8888",
+      "input": {
+        "format": "nv21",
+        "layout": "customStride",
+        "dimensions": {
+          "width": 127,
+          "height": 255
+        }
+      },
+      "parameters": {
+        "sourceCrop": {
+          "left": 0,
+          "top": 0,
+          "width": 127,
+          "height": 255
+        },
+        "purpose": "YUV-05 odd-size tight-RGBA to custom-stride destination reference"
+      },
+      "expected": {
+        "format": "nv21",
+        "dimensions": {
+          "width": 127,
+          "height": 255
+        },
+        "artifact": "crop_127x255.png",
+        "rawPlaneReference": {
+          "layout": "customStride",
+          "planes": [
+            {
+              "height": 255,
+              "rowStride": 130,
+              "pixelStride": 1,
+              "byteLength": 33150,
+              "sha256": "5991e56291c3d7633107b14ec57135a1d327ecc60f59fd7677e1a2212aa8ed40"
+            },
+            {
+              "height": 128,
+              "rowStride": 131,
+              "pixelStride": 2,
+              "byteLength": 16768,
+              "sha256": "22baccc49e37bbdf76be0b58629b73af264a1819b7e642cc6b5a831b1d79b3a3"
+            }
+          ]
+        }
+      },
+      "comparison": "exact"
+    }
+  ],
+  "coverage": {
+    "requiredMatrixRows": 18,
+    "caseCount": 119,
+    "formats": [
+      "bgra8888",
+      "i420",
+      "nv21"
+    ],
+    "visualReviewSet": [
+      "original.png",
+      "crop_inner.png",
+      "rotate_90.png",
+      "rotate_180.png",
+      "rotate_270.png",
+      "grayscale.png",
+      "blackwhite.png",
+      "negate.png",
+      "gaussian_default.png",
+      "box_default.png",
+      "mean_default.png"
+    ]
+  }
+}

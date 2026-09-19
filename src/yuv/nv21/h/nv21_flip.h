@@ -3,12 +3,14 @@
 
 #include "../../yuv.h"
 
+// In-place: mutates the planes of `image`.
 FFI_PLUGIN_EXPORT void nv21_flip_horizontally(
-        const YUVDef *src
+        YUVDef *image
 );
 
+// In-place: mutates the planes of `image`.
 FFI_PLUGIN_EXPORT void nv21_flip_vertically(
-        const YUVDef *src
+        YUVDef *image
 );
 
 #endif

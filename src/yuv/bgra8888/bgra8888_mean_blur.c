@@ -1,14 +1,14 @@
 #include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void bgra8888_mean_blur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         const uint32_t *rect
 ) {
-    uint8_t *data = src->y;
-    const int width = src->width;
-    const int height = src->height;
-    const int rowStride = src->yRowStride;   // width * 4
+    uint8_t *data = image->y;
+    const int width = image->width;
+    const int height = image->height;
+    const int rowStride = image->yRowStride;   // width * 4
     const int bytesPerPixel = 4;
 
     int left   = rect ? rect[0] : 0;
@@ -16,7 +16,7 @@ FFI_PLUGIN_EXPORT void bgra8888_mean_blur(
     int right  = rect ? rect[2] : width;
     int bottom = rect ? rect[3] : height;
 
-    // Интегральные изображения (int для переполнения)
+    // Integral images (int to avoid overflow)
     int32_t *satB = (int32_t*) calloc(width * height, sizeof(int32_t));
     int32_t *satG = (int32_t*) calloc(width * height, sizeof(int32_t));
     int32_t *satR = (int32_t*) calloc(width * height, sizeof(int32_t));
@@ -27,7 +27,7 @@ FFI_PLUGIN_EXPORT void bgra8888_mean_blur(
         return;
     }
 
-    // Построение summed area table
+    // Building the summed area table
     for (int y = 0; y < height; ++y) {
         int32_t rowB = 0, rowG = 0, rowR = 0, rowA = 0;
         for (int x = 0; x < width; ++x) {
@@ -47,7 +47,7 @@ FFI_PLUGIN_EXPORT void bgra8888_mean_blur(
         }
     }
 
-    // Размытие
+    // Blur
     uint8_t *temp = (uint8_t*) malloc(width * height * bytesPerPixel);
     if (!temp) {
         free(satB); free(satG); free(satR); free(satA);

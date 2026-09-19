@@ -1,22 +1,28 @@
 #include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void nv21_mean_blur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         const uint32_t *rect
 ) {
-    uint8_t *yData = src->y;
-    uint8_t *vuData = src->u;  // NV21: interleaved VU (V,U,V,U,...)
+    uint8_t *yData = image->y;
+    // Interleaved chroma in (U, V) order: U at byte 0, V at byte 1.
+    // NOTE ON LOCAL NAMES: vuData and the sumV/sumU pair below are historical
+    // and do NOT reflect that order. They are used symmetrically when reading
+    // and writing, so the output is correct; renaming only one side would
+    // silently swap chroma. Deferred until the currently red blur reference
+    // cases are restored.
+    uint8_t *vuData = image->u;
 
-    const int width = src->width;
-    const int height = src->height;
+    const int width = image->width;
+    const int height = image->height;
 
     int left   = rect ? rect[0] : 0;
     int top    = rect ? rect[1] : 0;
     int right  = rect ? rect[2] : width;
     int bottom = rect ? rect[3] : height;
 
-    // --- Y-плоскость ---
+    // --- Y plane ---
     uint8_t *tempY = (uint8_t*) malloc(width * height);
     memcpy(tempY, yData, width * height);
 
@@ -41,7 +47,7 @@ FFI_PLUGIN_EXPORT void nv21_mean_blur(
 
     free(tempY);
 
-    // --- UV-плоскость ---
+    // --- Chroma plane ---
     int uvWidth = width / 2;
     int uvHeight = height / 2;
     uint8_t *tempVU = (uint8_t*) malloc(uvWidth * uvHeight * 2);

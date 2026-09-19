@@ -3,8 +3,9 @@
 
 #include "../../yuv.h"
 
+// In-place: mutates the planes of `image`.
 FFI_PLUGIN_EXPORT void yuv420_gaussblur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         int sigma
 );

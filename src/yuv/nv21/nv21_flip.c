@@ -1,41 +1,41 @@
 #include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void nv21_flip_horizontally(
-        const YUVDef *src
+        YUVDef *image
 ) {
 
-    uint8_t* yTemp = (uint8_t*)malloc(src->yPixelStride);
+    uint8_t* yTemp = (uint8_t*)malloc(image->yPixelStride);
     if (!yTemp) return;
-    uint8_t* uTemp = (uint8_t*)malloc(src->uvPixelStride);
+    uint8_t* uTemp = (uint8_t*)malloc(image->uvPixelStride);
     if (!uTemp) return;
-    const int flipWidth = src->width / 2;
-    for (int y = 0; y < src->height; ++y) {
+    const int flipWidth = image->width / 2;
+    for (int y = 0; y < image->height; ++y) {
         for (int x = 0; x < flipWidth; ++x) {
-            int sx = src->width - 1 - x;
+            int sx = image->width - 1 - x;
             int sy = y;
             int dx = x;
             int dy = y;
 
-            const int srcYIndex = yuv_index(sx, sy, src->yRowStride, src->yPixelStride);
-            const int dstYIndex = yuv_index(dx, dy, src->yRowStride, src->yPixelStride);
+            const int srcYIndex = yuv_index(sx, sy, image->yRowStride, image->yPixelStride);
+            const int dstYIndex = yuv_index(dx, dy, image->yRowStride, image->yPixelStride);
 
-            if (src->yPixelStride == 1) {
-                uint8_t temp = src->y[dstYIndex];
-                src->y[dstYIndex] = src->y[srcYIndex];
-                src->y[srcYIndex] = temp;
+            if (image->yPixelStride == 1) {
+                uint8_t temp = image->y[dstYIndex];
+                image->y[dstYIndex] = image->y[srcYIndex];
+                image->y[srcYIndex] = temp;
             } else {
-                memcpy(yTemp, src->y + dstYIndex, src->yPixelStride);
-                memcpy(src->y + dstYIndex, src->y + srcYIndex, src->yPixelStride);
-                memcpy(src->y + srcYIndex, yTemp, src->yPixelStride);
+                memcpy(yTemp, image->y + dstYIndex, image->yPixelStride);
+                memcpy(image->y + dstYIndex, image->y + srcYIndex, image->yPixelStride);
+                memcpy(image->y + srcYIndex, yTemp, image->yPixelStride);
             }
 
             if (x % 2 == 0 && y % 2 == 0) {
-                int srcUvIndex = yuv_index(sx / 2, sy / 2, src->uvRowStride, src->uvPixelStride);
-                int dstUvIndex = yuv_index(dx / 2, dy / 2, src->uvRowStride, src->uvPixelStride);
+                int srcUvIndex = yuv_index(sx / 2, sy / 2, image->uvRowStride, image->uvPixelStride);
+                int dstUvIndex = yuv_index(dx / 2, dy / 2, image->uvRowStride, image->uvPixelStride);
 
-                memcpy(uTemp, src->u + dstUvIndex, src->uvPixelStride);
-                memcpy(src->u + dstUvIndex, src->u + srcUvIndex, src->uvPixelStride);
-                memcpy(src->u + srcUvIndex, uTemp, src->uvPixelStride);
+                memcpy(uTemp, image->u + dstUvIndex, image->uvPixelStride);
+                memcpy(image->u + dstUvIndex, image->u + srcUvIndex, image->uvPixelStride);
+                memcpy(image->u + srcUvIndex, uTemp, image->uvPixelStride);
             }
         }
     }
@@ -44,19 +44,19 @@ FFI_PLUGIN_EXPORT void nv21_flip_horizontally(
 }
 
 FFI_PLUGIN_EXPORT void nv21_flip_vertically(
-        const YUVDef *src
+        YUVDef *image
 ) {
 
-    const int flipHeight = src->height / 2;
+    const int flipHeight = image->height / 2;
     for (int y = 0; y < flipHeight; ++y) {
-        uint8_t *srcYIndex = src->y + yuv_index(0, y, src->yRowStride, src->yPixelStride);
-        uint8_t *dstYIndex = src->y + yuv_index(0, src->height - y - 1, src->yRowStride, src->yPixelStride);
-        swap_bytes(srcYIndex, dstYIndex, src->yRowStride);
+        uint8_t *srcYIndex = image->y + yuv_index(0, y, image->yRowStride, image->yPixelStride);
+        uint8_t *dstYIndex = image->y + yuv_index(0, image->height - y - 1, image->yRowStride, image->yPixelStride);
+        swap_bytes(srcYIndex, dstYIndex, image->yRowStride);
 
         if (y % 2 == 0) {
-            int srcUvIndex = yuv_index(0, y / 2, src->uvRowStride, src->uvPixelStride);
-            int dstUvIndex = yuv_index(0, (src->height - y - 1) / 2, src->uvRowStride, src->uvPixelStride);
-            swap_bytes(src->u + dstUvIndex, src->u + srcUvIndex, src->uvRowStride);
+            int srcUvIndex = yuv_index(0, y / 2, image->uvRowStride, image->uvPixelStride);
+            int dstUvIndex = yuv_index(0, (image->height - y - 1) / 2, image->uvRowStride, image->uvPixelStride);
+            swap_bytes(image->u + dstUvIndex, image->u + srcUvIndex, image->uvRowStride);
         }
     }
 }

@@ -3,9 +3,10 @@
 
 #include "../../yuv.h"
 
+// Reads `src`, writes the rotated result into `dst`.
 FFI_PLUGIN_EXPORT void nv21_rotate(
         const YUVDef *src,
-        const YUVDef *dst,
+        YUVDef *dst,
         int rotationDegrees
 );
 

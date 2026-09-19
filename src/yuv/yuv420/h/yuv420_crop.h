@@ -3,10 +3,12 @@
 
 #include "../../yuv.h"
 
+// Reads `src`, writes the cropped result into `dst`.
 FFI_PLUGIN_EXPORT void yuv420_crop_rect(
         const YUVDef *src,
-        const YUVDef *dst,
-        const int left,  int top, int crop_width, int crop_height
+        YUVDef *dst,
+        const int left, const int top,
+        const int crop_width, const int crop_height
 );
 
 #endif

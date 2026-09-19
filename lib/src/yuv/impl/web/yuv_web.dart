@@ -1,74 +1,38 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart' show WriteBuffer;
-import 'package:js/js_util.dart' as js_util;
 import 'package:yuv_ffi/src/loader/wasm_loader.dart';
-import 'package:yuv_ffi/src/loader/data_io.dart';
+import 'package:yuv_ffi/src/web/impl/js_util_compat_web.dart' as js_util;
+import 'package:yuv_ffi/src/yuv/shared/yuv_codec.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane_bytes.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 /// Web backend implementation backed by WASM exports where available.
-class YuvImageImpl implements YuvImage {
-  YuvImageImpl.i420(
-    int width,
-    int height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 2,
-    Iterable<YuvPlane>? planes,
-  }) : this(
-          YuvFileFormat.i420,
-          width,
-          height,
-          yPixelStride: yPixelStride,
-          uvPixelStride: uvPixelStride,
-          planes: planes,
-        );
+class YuvImageImpl implements YuvImage, YuvRevisionAware {
+  YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+      : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImageImpl.nv21(
-    int width,
-    int height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 2,
-    Iterable<YuvPlane>? planes,
-  }) : this(
-          YuvFileFormat.nv21,
-          width,
-          height,
-          yPixelStride: yPixelStride,
-          uvPixelStride: uvPixelStride,
-          planes: planes,
-        );
+  YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+      : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
-  YuvImageImpl.bgra(
-    int width,
-    int height, {
-    Iterable<YuvPlane>? planes,
-  }) : this(
-          YuvFileFormat.bgra8888,
-          width,
-          height,
-          yPixelStride: 4,
-          uvPixelStride: 1,
-          planes: planes,
-        );
+  YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
+      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
 
-  YuvImageImpl(
-    this._format,
-    this._width,
-    this._height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 1,
-    Iterable<YuvPlane>? planes,
-  }) {
+  YuvImageImpl(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
+    YuvGeometry.validateDimensions(_width, _height);
+
     if (planes != null) {
-      _planes = List<YuvPlane>.from(planes.map((p) => p.copy()));
+      final copied = List<YuvPlane>.from(planes.map((p) => p.copy()));
+      YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: copied);
+      _planes = copied;
       return;
     }
 
@@ -77,27 +41,28 @@ class YuvImageImpl implements YuvImage {
       _format == YuvFileFormat.bgra8888 ? _width * 4 : _width * yPixelStride,
       _format == YuvFileFormat.bgra8888 ? 4 : yPixelStride,
     );
-    final uvWidth = (_width / 2.0).ceil();
-    final uvHeight = (_height / 2.0).ceil();
+    final uvWidth = YuvGeometry.chromaWidth(_width);
+    final uvHeight = YuvGeometry.chromaHeight(_height);
 
     switch (_format) {
       case YuvFileFormat.nv21:
-        _planes = [
-          yPlane,
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-        ];
+        // Interleaved chroma always stores a (U, V) pair per sample, so a
+        // pixelStride below 2 cannot hold what native code writes.
+        final nvPixelStride = uvPixelStride < 2 ? 2 : uvPixelStride;
+        _planes = [yPlane, YuvPlane(uvHeight, uvWidth * nvPixelStride, nvPixelStride)];
         break;
       case YuvFileFormat.i420:
-        _planes = [
-          yPlane,
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-        ];
+        _planes = [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride), YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
         break;
       case YuvFileFormat.bgra8888:
         _planes = [yPlane];
         break;
     }
+
+    // Validate the geometry we just allocated as well: a caller-supplied zero
+    // or negative stride would otherwise produce a degenerate plane and still
+    // reach a backend call.
+    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: _planes);
   }
 
   static const int _bytesPerPixel = 4;
@@ -109,6 +74,14 @@ class YuvImageImpl implements YuvImage {
   int _width;
   int _height;
   List<YuvPlane> _planes = const [];
+
+  int _revision = 0;
+
+  @override
+  int get internalRevision => _revision;
+
+  @override
+  void bumpInternalRevision() => _revision++;
 
   @override
   YuvFileFormat get format => _format;
@@ -144,64 +117,38 @@ class YuvImageImpl implements YuvImage {
   ui.Size get size => ui.Size(_width.toDouble(), _height.toDouble());
 
   @override
-  Uint8List getBytes() {
-    final all = WriteBuffer();
-    for (final plane in _planes) {
-      all.putUint8List(plane.bytes);
-    }
-    return all.done().buffer.asUint8List();
-  }
+  Uint8List getBytes() => YuvPlaneBytes.concat(_planes);
 
   @override
-  YuvImage copy({bool blank = false}) => YuvImageImpl(
-        _format,
-        _width,
-        _height,
-        yPixelStride: y.pixelStride,
-        uvPixelStride: u?.pixelStride ?? 1,
-        planes: blank ? null : _planes,
-      );
+  YuvImage copy({bool blank = false}) =>
+      YuvImageImpl(_format, _width, _height, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1, planes: _copiedPlanes(blank: blank));
+
+  /// Planes for [copy].
+  ///
+  /// A blank copy keeps every plane's declared geometry and zeroes the whole
+  /// allocation, so padded metadata survives. Passing `null` instead would fall
+  /// back to the allocating path, which rebuilds tight planes and silently
+  /// drops the padding.
+  List<YuvPlane> _copiedPlanes({required bool blank}) =>
+      [for (final plane in _planes) blank ? YuvPlane(plane.height, plane.rowStride, plane.pixelStride) : plane.copy()];
 
   @override
   Future<void> save(Sink<List<int>> sink) async {
-    final json = {
-      'version': 1,
-      'format': format.name,
-      'width': width,
-      'height': height,
-    };
-
-    final writer = DataWriter(sink);
-    writer.writeString(jsonEncode(json));
-    writer.writeUint8(planes.length);
-    for (final plane in planes) {
-      writer.writeUint32(plane.height);
-      writer.writeUint32(plane.rowStride);
-      writer.writeUint32(plane.pixelStride);
-      writer.writeBytes(plane.bytes);
-    }
-    writer.write();
+    sink.add(YuvCodec.encode(format: format, width: _width, height: _height, planes: _planes));
   }
 
   @override
   Future<void> load(Stream<List<int>> stream) async {
-    final reader = DataReader(stream);
-    await reader.done();
+    // Decode into a draft first: state is replaced only once the whole payload
+    // has been read and validated, so a malformed frame cannot leave this image
+    // half-updated. A rejected payload therefore also leaves the revision alone.
+    final draft = await YuvCodec.decodeStream(stream);
 
-    final header = jsonDecode(reader.readString()) as Map<String, dynamic>;
-    _width = header['width'] as int;
-    _height = header['height'] as int;
-    _format = YuvFileFormat.values.byName(header['format'] as String);
-
-    final planesCount = reader.readUint8();
-    _planes = <YuvPlane>[];
-    for (int i = 0; i < planesCount; i++) {
-      final planeHeight = reader.readUint32();
-      final rowStride = reader.readUint32();
-      final pixelStride = reader.readUint32();
-      final planeBytes = reader.readBytes();
-      _planes.add(YuvPlane(planeHeight, rowStride, pixelStride, planeBytes));
-    }
+    _width = draft.width;
+    _height = draft.height;
+    _format = draft.format;
+    _planes = draft.planes;
+    _revision++;
   }
 
   @override
@@ -212,91 +159,95 @@ class YuvImageImpl implements YuvImage {
 
   @override
   YuvImage blackwhite() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_blackwhite',
-      nv21: 'nv21_blackwhite',
-      bgra: 'bgra8888_blackwhite',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_blackwhite', nv21: 'nv21_blackwhite', bgra: 'bgra8888_blackwhite'));
+    _revision++;
     return this;
+  }
+
+  /// Rejects a padded BGRA plane before an operation that cannot handle it.
+  ///
+  /// The WASM build shares these sources with the native backend, where several
+  /// BGRA effects allocate a tight `width * height * 4` scratch buffer but
+  /// address it through the source row stride. Until those implementations are
+  /// fixed (YUV-23), such a layout is refused here rather than passed to WASM,
+  /// so both backends reject exactly the same input.
+  void _requireTightBgraFor(String operation) {
+    if (_format != YuvFileFormat.bgra8888) {
+      return;
+    }
+    if (!YuvGeometry.isTightBgra(yPlane, _width)) {
+      throw ArgumentError.value(
+        yPlane.rowStride,
+        'yPlane.rowStride',
+        '$operation does not support a padded BGRA plane yet; expected a tight '
+            'row stride of ${_width * 4}. Repack the plane before calling it.',
+      );
+    }
   }
 
   @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) {
-    _callInPlaceBlur(
-      _symbolForFormat(
-        i420: 'yuv420_gaussblur',
-        nv21: 'nv21_gaussian_blur',
-        bgra: 'bgra8888_gaussian_blur',
-      ),
-      radius,
-      sigma,
-    );
+    _requireTightBgraFor('gaussianBlur');
+    _callInPlaceBlur(_symbolForFormat(i420: 'yuv420_gaussblur', nv21: 'nv21_gaussian_blur', bgra: 'bgra8888_gaussian_blur'), radius, sigma);
+    _revision++;
     return this;
   }
 
   @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) {
-    _callInPlaceBlurWithRect(
-      _symbolForFormat(
-        i420: 'yuv420_box_blur',
-        nv21: 'nv21_box_blur',
-        bgra: 'bgra8888_box_blur',
-      ),
-      radius,
-      rect,
-    );
+    _requireTightBgraFor('boxBlur');
+    _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_box_blur', nv21: 'nv21_box_blur', bgra: 'bgra8888_box_blur'), radius, rect);
+    _revision++;
     return this;
   }
 
   @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) {
-    _callInPlaceBlurWithRect(
-      _symbolForFormat(
-        i420: 'yuv420_mean_blur',
-        nv21: 'nv21_mean_blur',
-        bgra: 'bgra8888_mean_blur',
-      ),
-      radius,
-      rect,
-    );
+    _requireTightBgraFor('meanBlur');
+    _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_mean_blur', nv21: 'nv21_mean_blur', bgra: 'bgra8888_mean_blur'), radius, rect);
+    _revision++;
     return this;
   }
 
   @override
   YuvImage swapNv() {
+    // A conversion to NV21 bumps the revision on its own. Snapshot it here so
+    // one public swapNv() advances the counter exactly once, whatever path it
+    // took to get there.
+    final revisionBefore = _revision;
     final source = _format == YuvFileFormat.nv21 ? this : toYuvNv21();
 
     final rawModule = _requireModule();
     final srcAlloc = _WasmYuvAlloc.fromImage(rawModule, source as YuvImageImpl);
+    // nvXX_to_nvYY takes a single stride for both buffers, so the destination
+    // must have exactly the source layout. Allocating a tight destination for a
+    // padded source made the call read and write at mismatched offsets.
     final dst = YuvImageImpl.nv21(
       source.width,
       source.height,
-      yPixelStride: source.y.pixelStride,
-      uvPixelStride: source.u?.pixelStride ?? 1,
+      planes: <YuvPlane>[
+        source.yPlane.copy(),
+        YuvPlane(source.uPlane.height, source.uPlane.rowStride, source.uPlane.pixelStride),
+      ],
     );
     final dstAlloc = _WasmYuvAlloc.fromImage(rawModule, dst);
     try {
       // nvXX_to_nvYY swaps interleaved chroma ordering in UV buffer.
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          'nvXX_to_nvYY',
-          'void',
-          <String>['number', 'number', 'number', 'number', 'number'],
-          <Object?>[
-            srcAlloc.uPtr,
-            dstAlloc.uPtr,
-            source.width,
-            source.height,
-            source.uPlane.rowStride,
-          ],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        'nvXX_to_nvYY',
+        'void',
+        <String>['number', 'number', 'number', 'number', 'number'],
+        <Object?>[srcAlloc.uPtr, dstAlloc.uPtr, source.width, source.height, source.uPlane.rowStride],
+      ]);
       // Y plane is unchanged; copy it directly.
       _heapWrite(rawModule, dstAlloc.yPtr, source.yPlane.bytes);
       dstAlloc.copyBack();
-      return dst;
+      _format = dst.format;
+      _width = dst.width;
+      _height = dst.height;
+      _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+      _revision = revisionBefore + 1;
+      return this;
     } finally {
       srcAlloc.dispose();
       dstAlloc.dispose();
@@ -315,7 +266,12 @@ class YuvImageImpl implements YuvImage {
       YuvFileFormat.nv21 => throw StateError('unreachable'),
     };
     _callFormatConversion(symbol: symbol, dst: dst);
-    return dst;
+    _format = dst.format;
+    _width = dst.width;
+    _height = dst.height;
+    _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
+    return this;
   }
 
   @override
@@ -330,7 +286,12 @@ class YuvImageImpl implements YuvImage {
       YuvFileFormat.i420 => throw StateError('unreachable'),
     };
     _callFormatConversion(symbol: symbol, dst: dst);
-    return dst;
+    _format = dst.format;
+    _width = dst.width;
+    _height = dst.height;
+    _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
+    return this;
   }
 
   @override
@@ -339,11 +300,13 @@ class YuvImageImpl implements YuvImage {
       return this;
     }
     final bytes = toBgra8888();
-    return YuvImageImpl.bgra(
-      _width,
-      _height,
-      planes: [YuvPlane(_height, _width * _bytesPerPixel, _bytesPerPixel, bytes)],
-    );
+    final dst = YuvImageImpl.bgra(_width, _height, planes: [YuvPlane(_height, _width * _bytesPerPixel, _bytesPerPixel, bytes)]);
+    _format = dst.format;
+    _width = dst.width;
+    _height = dst.height;
+    _planes = dst.planes.map((p) => p.copy()).toList(growable: false);
+    _revision++;
+    return this;
   }
 
   @override
@@ -358,11 +321,7 @@ class YuvImageImpl implements YuvImage {
       return this;
     }
 
-    final symbol = _symbolForFormat(
-      i420: 'yuv420_crop_rect',
-      nv21: 'nv21_crop_rect',
-      bgra: 'bgra8888_crop_rect',
-    );
+    final symbol = _symbolForFormat(i420: 'yuv420_crop_rect', nv21: 'nv21_crop_rect', bgra: 'bgra8888_crop_rect');
     _callSrcDst(
       symbol: symbol,
       dstWidth: cropWidth,
@@ -370,26 +329,21 @@ class YuvImageImpl implements YuvImage {
       extraArgTypes: const <String>['number', 'number', 'number', 'number'],
       extraArgs: <Object?>[left, top, cropWidth, cropHeight],
     );
+    _revision++;
     return this;
   }
 
   @override
   YuvImage flipHorizontally() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_flip_horizontally',
-      nv21: 'nv21_flip_horizontally',
-      bgra: 'bgra8888_flip_horizontally',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_flip_horizontally', nv21: 'nv21_flip_horizontally', bgra: 'bgra8888_flip_horizontally'));
+    _revision++;
     return this;
   }
 
   @override
   YuvImage flipVertically() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_flip_vertically',
-      nv21: 'nv21_flip_vertically',
-      bgra: 'bgra8888_flip_vertically',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_flip_vertically', nv21: 'nv21_flip_vertically', bgra: 'bgra8888_flip_vertically'));
+    _revision++;
     return this;
   }
 
@@ -397,40 +351,42 @@ class YuvImageImpl implements YuvImage {
   void fromRgba8888(Uint8List bytes) {
     final expectedLength = _width * _height * _bytesPerPixel;
     if (bytes.length != expectedLength) {
-      throw ArgumentError.value(
-        bytes.length,
-        'bytes.length',
-        'Expected $expectedLength bytes for RGBA8888 frame ${_width}x$_height',
-      );
+      throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${_width}x$_height');
+    }
+    if (_format == YuvFileFormat.bgra8888 && !YuvGeometry.isTightBgra(yPlane, _width)) {
+      // The shared BGRA C implementation writes a tight destination. Stage in
+      // that supported layout and copy only logical samples back so Web and IO
+      // preserve identical row/pixel padding.
+      final tight = YuvImageImpl.bgra(_width, _height);
+      tight.fromRgba8888(bytes);
+      for (int row = 0; row < _height; row++) {
+        for (int column = 0; column < _width; column++) {
+          final source = row * tight.yPlane.rowStride + column * _bytesPerPixel;
+          final destination = row * yPlane.rowStride + column * yPlane.pixelStride;
+          yPlane.bytes.setRange(destination, destination + _bytesPerPixel, tight.yPlane.bytes, source);
+        }
+      }
+      // This branch writes the planes directly and returns early, so it has to
+      // bump the revision itself.
+      _revision++;
+      return;
     }
 
-    _callFromRgba(
-      _symbolForFormat(
-        i420: 'yuv420_from_rgba8888',
-        nv21: 'nv21_from_rgba8888',
-        bgra: 'bgra8888_from_rgba8888',
-      ),
-      bytes,
-    );
+    _callFromRgba(_symbolForFormat(i420: 'yuv420_from_rgba8888', nv21: 'nv21_from_rgba8888', bgra: 'bgra8888_from_rgba8888'), bytes);
+    _revision++;
   }
 
   @override
   YuvImage grayscale() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_grayscale',
-      nv21: 'nv21_grayscale',
-      bgra: 'bgra8888_grayscale',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_grayscale', nv21: 'nv21_grayscale', bgra: 'bgra8888_grayscale'));
+    _revision++;
     return this;
   }
 
   @override
   YuvImage negate() {
-    _callInPlaceUnary(_symbolForFormat(
-      i420: 'yuv420_negate',
-      nv21: 'nv21_negate',
-      bgra: 'bgra8888_negate',
-    ));
+    _callInPlaceUnary(_symbolForFormat(i420: 'yuv420_negate', nv21: 'nv21_negate', bgra: 'bgra8888_negate'));
+    _revision++;
     return this;
   }
 
@@ -442,53 +398,52 @@ class YuvImageImpl implements YuvImage {
     }
     final dstWidth = rotation.swapSize ? _height : _width;
     final dstHeight = rotation.swapSize ? _width : _height;
-    final symbol = _symbolForFormat(
-      i420: 'yuv420_rotate',
-      nv21: 'nv21_rotate',
-      bgra: 'bgra8888_rotate',
-    );
-    _callSrcDst(
-      symbol: symbol,
-      dstWidth: dstWidth,
-      dstHeight: dstHeight,
-      extraArgTypes: const <String>['number'],
-      extraArgs: <Object?>[degrees],
-    );
+    final symbol = _symbolForFormat(i420: 'yuv420_rotate', nv21: 'nv21_rotate', bgra: 'bgra8888_rotate');
+    _callSrcDst(symbol: symbol, dstWidth: dstWidth, dstHeight: dstHeight, extraArgTypes: const <String>['number'], extraArgs: <Object?>[degrees]);
+    _revision++;
     return this;
   }
 
   @override
   Uint8List toBgra8888() {
     if (_format == YuvFileFormat.bgra8888) {
-      return Uint8List.fromList(yPlane.bytes);
+      // Mirrors the native reference (lib/src/yuv/impl/io/yuv_image.dart
+      // toBgra8888): the public contract requires exactly width*height*4
+      // tightly packed bytes. Native decides purely on rowStride, so this
+      // compares rowStride too rather than reusing `YuvGeometry.isTightBgra`,
+      // which also demands pixelStride == 4. A plane with rowStride ==
+      // width*4 but a non-4 pixelStride makes that helper report "not tight",
+      // which would send it down the repack path, while native — and this
+      // code — return the bytes as they are. Keeping the native condition is
+      // what keeps both backends byte-identical.
+      final expectedRowStride = _width * 4;
+      if (yPlane.rowStride == expectedRowStride) {
+        return Uint8List.fromList(yPlane.bytes);
+      }
+
+      // Repack BGRA rows when the source plane has padding bytes per row.
+      // Always builds a fresh, tightly packed copy: never a view onto the
+      // mutable backing buffer, and the source plane is left untouched.
+      final bgraPlaneLength = _width * _height * 4;
+      final packed = Uint8List(bgraPlaneLength);
+      for (int y = 0; y < _height; y++) {
+        final srcStart = y * yPlane.rowStride;
+        final dstStart = y * expectedRowStride;
+        packed.setRange(dstStart, dstStart + expectedRowStride, yPlane.bytes, srcStart);
+      }
+      return packed;
     }
-    return _callToBgra(
-      _symbolForFormat(
-        i420: 'yuv420_to_bgra8888',
-        nv21: 'nv21_to_bgra8888',
-        bgra: 'unused',
-      ),
-    );
+    return _callToBgra(_symbolForFormat(i420: 'yuv420_to_bgra8888', nv21: 'nv21_to_bgra8888', bgra: 'unused'));
   }
 
   @override
   Future<ui.Image> toImage() {
     final completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(
-      toBgra8888(),
-      _width,
-      _height,
-      ui.PixelFormat.bgra8888,
-      completer.complete,
-    );
+    ui.decodeImageFromPixels(toBgra8888(), _width, _height, ui.PixelFormat.bgra8888, completer.complete);
     return completer.future;
   }
 
-  String _symbolForFormat({
-    required String i420,
-    required String nv21,
-    required String bgra,
-  }) {
+  String _symbolForFormat({required String i420, required String nv21, required String bgra}) {
     return switch (_format) {
       YuvFileFormat.i420 => i420,
       YuvFileFormat.nv21 => nv21,
@@ -500,16 +455,12 @@ class YuvImageImpl implements YuvImage {
     final rawModule = _requireModule();
     final alloc = _WasmYuvAlloc.fromImage(rawModule, this);
     try {
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number'],
-          <Object?>[alloc.defPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number'],
+        <Object?>[alloc.defPtr],
+      ]);
       alloc.copyBack();
     } finally {
       alloc.dispose();
@@ -520,16 +471,12 @@ class YuvImageImpl implements YuvImage {
     final rawModule = _requireModule();
     final alloc = _WasmYuvAlloc.fromImage(rawModule, this);
     try {
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number', 'number'],
-          <Object?>[alloc.defPtr, radius, sigma],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number', 'number'],
+        <Object?>[alloc.defPtr, radius, sigma],
+      ]);
       alloc.copyBack();
     } finally {
       alloc.dispose();
@@ -549,16 +496,12 @@ class YuvImageImpl implements YuvImage {
         final bottom = rect.bottom.toInt();
         _writeInt32Values(rawModule, rectPtr, <int>[left, top, right, bottom]);
       }
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number', 'number'],
-          <Object?>[alloc.defPtr, radius, rectPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number', 'number'],
+        <Object?>[alloc.defPtr, radius, rectPtr],
+      ]);
       alloc.copyBack();
     } finally {
       if (rectPtr != 0) {
@@ -577,22 +520,12 @@ class YuvImageImpl implements YuvImage {
   }) {
     final rawModule = _requireModule();
     final srcAlloc = _WasmYuvAlloc.fromImage(rawModule, this);
-    final dst = YuvImageImpl(
-      _format,
-      dstWidth,
-      dstHeight,
-      yPixelStride: y.pixelStride,
-      uvPixelStride: u?.pixelStride ?? 1,
-    );
+    final dst = YuvImageImpl(_format, dstWidth, dstHeight, yPixelStride: y.pixelStride, uvPixelStride: u?.pixelStride ?? 1);
     final dstAlloc = _WasmYuvAlloc.fromImage(rawModule, dst);
     try {
       final argTypes = <String>['number', 'number', ...extraArgTypes];
       final args = <Object?>[srcAlloc.defPtr, dstAlloc.defPtr, ...extraArgs];
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[symbol, 'void', argTypes, args],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[symbol, 'void', argTypes, args]);
       dstAlloc.copyBack();
       _width = dstWidth;
       _height = dstHeight;
@@ -603,24 +536,17 @@ class YuvImageImpl implements YuvImage {
     }
   }
 
-  void _callFormatConversion({
-    required String symbol,
-    required YuvImageImpl dst,
-  }) {
+  void _callFormatConversion({required String symbol, required YuvImageImpl dst}) {
     final rawModule = _requireModule();
     final srcAlloc = _WasmYuvAlloc.fromImage(rawModule, this);
     final dstAlloc = _WasmYuvAlloc.fromImage(rawModule, dst);
     try {
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number'],
-          <Object?>[srcAlloc.defPtr, dstAlloc.defPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number'],
+        <Object?>[srcAlloc.defPtr, dstAlloc.defPtr],
+      ]);
       dstAlloc.copyBack();
     } finally {
       srcAlloc.dispose();
@@ -634,16 +560,12 @@ class YuvImageImpl implements YuvImage {
     final alloc = _WasmYuvAlloc.fromImage(rawModule, this);
     try {
       _heapWrite(rawModule, rgbaPtr, rgba);
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number'],
-          <Object?>[rgbaPtr, alloc.defPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number'],
+        <Object?>[rgbaPtr, alloc.defPtr],
+      ]);
       alloc.copyBack();
     } finally {
       _free(rawModule, rgbaPtr);
@@ -657,16 +579,12 @@ class YuvImageImpl implements YuvImage {
     final outLength = _width * _height * _bytesPerPixel;
     final outPtr = _malloc(rawModule, outLength);
     try {
-      js_util.callMethod<Object?>(
-        rawModule,
-        'ccall',
-        <Object?>[
-          symbol,
-          'void',
-          <String>['number', 'number'],
-          <Object?>[alloc.defPtr, outPtr],
-        ],
-      );
+      js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[
+        symbol,
+        'void',
+        <String>['number', 'number'],
+        <Object?>[alloc.defPtr, outPtr],
+      ]);
       return _heapRead(rawModule, outPtr, outLength);
     } finally {
       _free(rawModule, outPtr);
@@ -687,14 +605,7 @@ class YuvImageImpl implements YuvImage {
 }
 
 final class _WasmYuvAlloc {
-  _WasmYuvAlloc._({
-    required this.module,
-    required this.image,
-    required this.defPtr,
-    required this.yPtr,
-    required this.uPtr,
-    required this.vPtr,
-  });
+  _WasmYuvAlloc._({required this.module, required this.image, required this.defPtr, required this.yPtr, required this.uPtr, required this.vPtr});
 
   final Object module;
   final YuvImageImpl image;
@@ -734,14 +645,7 @@ final class _WasmYuvAlloc {
       uvPixelStride: image.u?.pixelStride ?? 0,
     );
 
-    return _WasmYuvAlloc._(
-      module: module,
-      image: image,
-      defPtr: defPtr,
-      yPtr: yPtr,
-      uPtr: uPtr,
-      vPtr: vPtr,
-    );
+    return _WasmYuvAlloc._(module: module, image: image, defPtr: defPtr, yPtr: yPtr, uPtr: uPtr, vPtr: vPtr);
   }
 
   void copyBack() {

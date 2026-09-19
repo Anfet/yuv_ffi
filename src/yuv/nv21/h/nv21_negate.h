@@ -3,8 +3,9 @@
 
 #include "../../yuv.h"
 
+// In-place: mutates the planes of `image`.
 FFI_PLUGIN_EXPORT void nv21_negate(
-        const YUVDef *src
+        YUVDef *image
 );
 
 #endif

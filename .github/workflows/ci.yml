@@ -16,19 +16,38 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.44.9'
 
-      - name: Flutter pub get
+      - name: Flutter pub get (root)
         run: flutter pub get
 
-      - name: Analyze
+      - name: Analyze (root)
         run: flutter analyze
+
+      # Since YUV-06 the loader opens the library by its installed name, so the
+      # build output is placed on the dynamic loader's search path instead of
+      # the old native/src/build/ build-tree path. Building into a throwaway
+      # directory and exporting LD_LIBRARY_PATH is what a real consumer's
+      # install looks like; keeping the old in-tree path would have hidden a
+      # packaging regression behind a green job.
+      - name: Build native library
+        shell: bash
+        run: |
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.so"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
 
       - name: Unit tests
         run: flutter test
 
-  wasm-web-smoke:
-    if: github.event_name == 'workflow_dispatch'
+  # YUV-06: proves the package is loadable the way a real consumer loads it.
+  # Both jobs build from a clean checkout, install the library the way the
+  # platform expects, and run a smoke suite that refuses to skip when the
+  # library is missing — a skipped native run and a passing one used to look
+  # identical in the log, which is how broken Linux/macOS packaging stayed
+  # green.
+  linux-native-smoke:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,7 +56,134 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      # Installed name on the loader search path, never the CMake build tree:
+      # native/src/build/libyuv_ffi.so does not exist in a published package.
+      - name: Build and install native library
+        shell: bash
+        run: |
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.so"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
+
+      - name: Packaging smoke
+        run: flutter test test/native_packaging_smoke_test.dart --reporter expanded
+
+      # The example app ships no linux/ runner directory, so the platform
+      # folder is scaffolded here rather than committed: `flutter config` only
+      # enables the toolchain, it does not create a missing platform.
+      - name: Build example (linux desktop)
+        working-directory: example
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev
+          flutter config --enable-linux-desktop
+          flutter create --platforms=linux .
+          flutter pub get
+          flutter build linux --release
+
+  macos-native-smoke:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      # On Apple platforms the sources are linked into the pod target, so the
+      # symbols live in the running process and there is no file to open. The
+      # dylib built here is what `flutter test` (a plain VM process, not an app
+      # bundle) resolves through DYLD_LIBRARY_PATH.
+      - name: Build and install native library
+        shell: bash
+        run: |
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.dylib"
+          echo "DYLD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
+
+      - name: Packaging smoke
+        run: flutter test test/native_packaging_smoke_test.dart --reporter expanded
+
+      # Builds the macOS example through CocoaPods, which is what actually
+      # compiles macos/Classes/*.c. Before YUV-06 the pod target contained only
+      # a forwarder to a header, so no operation symbol was ever built here.
+      - name: Build example (macos desktop)
+        working-directory: example
+        shell: bash
+        run: |
+          flutter config --enable-macos-desktop
+          flutter create --platforms=macos .
+          flutter pub get
+          flutter build macos --release
+
+  example-analyze-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: Analyze (example)
+        working-directory: example
+        run: flutter analyze
+
+      - name: Build Web (example)
+        working-directory: example
+        run: flutter build web
+
+  # The package WASM loader needs Flutter's asset bundle. `flutter test --platform
+  # chrome` does not serve that bundle, so every asset-dependent runtime test
+  # belongs in example/integration_test and runs through flutter drive.
+  wasm-web-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      # Both must come from the same install, or the driver refuses the session:
+      # the stable channel briefly shipped chromedriver 153 against Chrome 152,
+      # which failed with "This version of ChromeDriver only supports Chrome
+      # version 153". Pinning one version keeps the pair consistent.
+      - name: Setup Chrome and matching chromedriver
+        uses: browser-actions/setup-chrome@v1
+        id: chrome
+        with:
+          chrome-version: '152'
+          install-chromedriver: true
+          install-dependencies: true
+
+      - name: Report the browser/driver pair
+        shell: bash
+        run: |
+          echo "chrome:       ${{ steps.chrome.outputs.chrome-version }}"
+          echo "chromedriver: ${{ steps.chrome.outputs.chromedriver-version }}"
+          "${{ steps.chrome.outputs.chromedriver-path }}" --version
 
       - name: Install Emscripten SDK
         shell: bash
@@ -55,30 +201,64 @@ jobs:
           test -f assets/wasm/yuv_ffi.js
           test -f assets/wasm/yuv_ffi.wasm
 
-      - name: Flutter pub get
-        run: flutter pub get
-
       - name: Enable Flutter web
         run: flutter config --enable-web
 
-      - name: Web parity gate (Chrome)
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      # Every asset-dependent Web acceptance case runs here. `flutter drive`
+      # takes one target at a time, so the suites are driven in a loop rather
+      # than as a directory; an unset `set -e` would let a failing target pass
+      # the job, so each exit status is checked explicitly.
+      - name: Required Web integration gate
+        working-directory: example
         shell: bash
         run: |
-          required=(
-            test/web/yuv_web_wasm_test.dart
-            test/web/wasm_parity_conversions_test.dart
-            test/web/wasm_parity_transforms_test.dart
-            test/web/wasm_parity_edge_cases_test.dart
+          set -euo pipefail
+
+          chromedriver --port=4444 > /tmp/chromedriver.log 2>&1 &
+          chromedriver_pid=$!
+          trap 'cat /tmp/chromedriver.log; kill "$chromedriver_pid"' EXIT
+
+          for _ in $(seq 1 10); do
+            if curl --fail --silent http://127.0.0.1:4444/status > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4444/status > /dev/null
+
+          targets=(
+            integration_test/wasm_bootstrap_test.dart
+            integration_test/getbytes_contract_test.dart
+            integration_test/padded_bgra_constructor_test.dart
+            integration_test/image_cache_key_test.dart
+            integration_test/serialization_contract_test.dart
+            integration_test/wasm_loader_lifecycle_test.dart
+            integration_test/wasm_parity_edge_cases_test.dart
           )
 
-          for f in "${required[@]}"; do
-            if [ ! -f "$f" ]; then
-              echo "Required web parity test is missing: $f"
-              exit 1
+          failed=()
+          for target in "${targets[@]}"; do
+            echo "::group::$target"
+            if xvfb-run -a flutter drive \
+              --driver=test_driver/integration_test.dart \
+              --target="$target" \
+              -d web-server \
+              --browser-name=chrome \
+              --headless; then
+              echo "PASS $target"
+            else
+              echo "FAIL $target"
+              failed+=("$target")
             fi
+            echo "::endgroup::"
           done
 
-          for f in "${required[@]}"; do
-            echo "Running web test: $f"
-            xvfb-run -a flutter test -d chrome "$f"
-          done
+          if [ ${#failed[@]} -ne 0 ]; then
+            echo "Failed Web integration targets:"
+            printf '  %s\n' "${failed[@]}"
+            exit 1
+          fi

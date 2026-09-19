@@ -81,39 +81,6 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
     await widget.cameraController.startImageStream(onNewImageAvailable);
   }
 
-  //
-  //
-  // Future<void> _captureSnapshotFrame() async {
-  //   if (isProcessing || !widget.cameraController.value.isInitialized) {
-  //     return;
-  //   }
-  //
-  //   isProcessing = true;
-  //   try {
-  //     final xfile = await widget.cameraController.takePicture();
-  //     final encoded = await xfile.readAsBytes();
-  //     final codec = await ui.instantiateImageCodec(encoded);
-  //     final frame = await codec.getNextFrame();
-  //     final image = frame.image;
-  //     try {
-  //       final rgba = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-  //       if (rgba == null) {
-  //         return;
-  //       }
-  //       var yuv = YuvImage.bgra(image.width, image.height)..fromRgba8888(rgba.buffer.asUint8List());
-  //       yuv = widget.transform?.call(yuv) ?? yuv;
-  //       streamController.add(yuv);
-  //       dynamicFps++;
-  //     } finally {
-  //       image.dispose();
-  //     }
-  //   } catch (ex) {
-  //     debugPrint('_YuvCameraPreviewMobile snapshot error: $ex');
-  //   } finally {
-  //     isProcessing = false;
-  //   }
-  // }
-
   Future<void> onNewImageAvailable(CameraImage image) async {
     if (isProcessing) {
       return;

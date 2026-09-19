@@ -1,15 +1,15 @@
 #include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void nv21_box_blur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         const uint32_t *rect
 ) {
-    const int width  = src->width;
-    const int height = src->height;
-    const int rowStride   = src->yRowStride;
-    const int pixelStride = src->yPixelStride;
-    uint8_t *dst = src->y;
+    const int width  = image->width;
+    const int height = image->height;
+    const int rowStride   = image->yRowStride;
+    const int pixelStride = image->yPixelStride;
+    uint8_t *dst = image->y;
 
     uint32_t left = 0, top = 0, right = width, bottom = height;
     if (rect) {
@@ -22,9 +22,9 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
     uint8_t *temp = (uint8_t *) malloc(height * rowStride);
     if (!temp) return;
 
-    // --- Горизонтальный проход (Y) ---
+    // --- Horizontal pass (Y) ---
     for (int y = 0; y < height; ++y) {
-        const uint8_t *row    = src->y + y * rowStride;
+        const uint8_t *row    = image->y + y * rowStride;
         uint8_t *temp_row     = temp   + y * rowStride;
 
         int sum = 0;
@@ -42,7 +42,7 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
         }
     }
 
-    // --- Вертикальный проход (Y) ---
+    // --- Vertical pass (Y) ---
     for (int x = 0; x < width; ++x) {
         int sum = 0;
         for (int dy = -radius; dy <= radius; ++dy) {
@@ -52,7 +52,7 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
 
         for (int y = 0; y < height; ++y) {
             int dstIndex = yuv_index(x, y, rowStride, pixelStride);
-            uint8_t original = src->y[dstIndex];
+            uint8_t original = image->y[dstIndex];
 
             if (x < (int)left || x >= (int)right ||
                 y < (int)top  || y >= (int)bottom) {
@@ -72,25 +72,33 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
 
     free(temp);
 
-    // --- UV (VU interleaved) ---
+    // --- Chroma ((U, V) interleaved) ---
+    //
+    // NOTE ON LOCAL NAMES: the v_plane/u_plane identifiers below are
+    // historical and do NOT reflect the actual byte order — byte 0 of each
+    // pair is U, not V. Unpack and repack use the same (mis)naming
+    // symmetrically, so the output is correct; renaming only one of the two
+    // loops would silently swap chroma. Deferred until the currently red blur
+    // reference cases are restored.
     const int uv_width  = width  / 2;
     const int uv_height = height / 2;
 
     uint8_t *u_plane = (uint8_t *) malloc(uv_width * uv_height);
     uint8_t *v_plane = (uint8_t *) malloc(uv_width * uv_height);
 
-    // Распаковка
+    // Unpack
     for (int y = 0; y < uv_height; ++y) {
-        const uint8_t *row = src->u + y * src->uvRowStride;
+        const uint8_t *row = image->u + y * image->uvRowStride;
         for (int x = 0; x < uv_width; ++x) {
             v_plane[y * uv_width + x] = row[x * 2 + 0];
             u_plane[y * uv_width + x] = row[x * 2 + 1];
         }
     }
 
-    // Размытие U и V так же, как Y (с box blur)
-    // ⚠️ Упрощённо: без rect, т.к. в NV21 UV соответствует 2×2 блокам Y
-    // Если нужен rect и на UV — придётся аккуратно учитывать even coords.
+    // Blur both chroma planes the same way as Y (box blur).
+    // Note: simplified, without rect, since one chroma sample covers a 2x2
+    // block of Y. Applying rect to chroma as well would require careful
+    // handling of even coordinates.
     for (int y = 0; y < uv_height; ++y) {
         for (int x = 0; x < uv_width; ++x) {
             int sumU = 0, sumV = 0, count = 0;
@@ -108,9 +116,9 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
         }
     }
 
-    // Сборка обратно в interleaved VU
+    // Pack back into the interleaved chroma plane, mirroring the unpack above
     for (int y = 0; y < uv_height; ++y) {
-        uint8_t *row = src->u + y * src->uvRowStride;
+        uint8_t *row = image->u + y * image->uvRowStride;
         for (int x = 0; x < uv_width; ++x) {
             row[x * 2 + 0] = v_plane[y * uv_width + x];
             row[x * 2 + 1] = u_plane[y * uv_width + x];

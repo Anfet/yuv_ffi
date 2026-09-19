@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/camera_screen.dart';
 import 'package:yuv_ffi_example/ext.dart';
@@ -88,26 +87,26 @@ class _MyAppState extends State<MyApp> {
                             ),
                             IconButton(
                               onPressed: () => flipImageVertically(),
-                              icon: Icon(MdiIcons.flipVertical, size: 32),
+                              icon: Icon(CupertinoIcons.arrow_up_arrow_down, size: 32),
                               tooltip: 'Flip vertically',
                             ),
                             IconButton(
                               onPressed: () => flitImageHorizontally(),
-                              icon: Icon(MdiIcons.flipHorizontal, size: 32),
+                              icon: Icon(CupertinoIcons.arrow_left_right, size: 32),
                               tooltip: 'Flip horizontally',
                             ),
                             IconButton(onPressed: () => cropImage(), icon: Icon(Icons.crop, size: 32), tooltip: 'crop image'),
                             IconButton(onPressed: () => grayscaleImage(), icon: Icon(CupertinoIcons.color_filter, size: 32), tooltip: 'Grayscale'),
                             IconButton(
                               onPressed: () => blackwhiteImage(),
-                              icon: Icon(MdiIcons.imageFilterBlackWhite, size: 32),
+                              icon: Icon(Icons.filter_b_and_w, size: 32),
                               tooltip: 'Black&White',
                             ),
-                            IconButton(onPressed: () => invertImage(), icon: Icon(MdiIcons.invertColors, size: 32), tooltip: 'Negate'),
-                            IconButton(onPressed: () => gaussianBlurImage(), icon: Icon(MdiIcons.blur, size: 32), tooltip: 'Gaussian blur'),
-                            IconButton(onPressed: () => meanBlurImage(), icon: Icon(MdiIcons.blurLinear, size: 32), tooltip: 'Mean blur'),
-                            IconButton(onPressed: () => boxBlurImage(), icon: Icon(MdiIcons.box, size: 32), tooltip: 'Box blur'),
-                            IconButton(onPressed: () => doFaceDetection(), icon: Icon(MdiIcons.faceManOutline, size: 32), tooltip: 'Face detection'),
+                            IconButton(onPressed: () => invertImage(), icon: Icon(Icons.invert_colors, size: 32), tooltip: 'Negate'),
+                            IconButton(onPressed: () => gaussianBlurImage(), icon: Icon(Icons.blur_on, size: 32), tooltip: 'Gaussian blur'),
+                            IconButton(onPressed: () => meanBlurImage(), icon: Icon(Icons.blur_linear, size: 32), tooltip: 'Mean blur'),
+                            IconButton(onPressed: () => boxBlurImage(), icon: Icon(Icons.crop_square, size: 32), tooltip: 'Box blur'),
+                            IconButton(onPressed: () => doFaceDetection(), icon: Icon(Icons.face_outlined, size: 32), tooltip: 'Face detection'),
                             IconButton(onPressed: () => toI420(), icon: Text('To i420', style: TextStyle(fontSize: 12)), tooltip: 'To i420'),
                             IconButton(onPressed: () => toNV21(), icon: Text('To Nv21', style: TextStyle(fontSize: 12)), tooltip: 'To NV21'),
                             IconButton(onPressed: () => toBGRA(), icon: Text('To BGRA', style: TextStyle(fontSize: 12)), tooltip: 'To BGRA8888'),
@@ -259,8 +258,9 @@ class _MyAppState extends State<MyApp> {
       options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    var inputImage =
-        ((!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? requireImage.toYuvBgra8888() : requireImage.toYuvNv21()).toInputImage();
+    final yuvForMlInput =
+        (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? requireImage.copy().toYuvBgra8888() : requireImage.copy().toYuvNv21();
+    final inputImage = yuvForMlInput.toInputImage();
 
     final faces = await detector.processImage(inputImage);
     if (faces.isEmpty) {
@@ -275,15 +275,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future toI420() async {
-    logTimed(() => image = requireImage.toYuvI420(), name: '$image toI420');
+    logTimed(() => requireImage.toYuvI420(), name: '$image toI420');
   }
 
   Future toNV21() async {
-    logTimed(() => image = requireImage.toYuvNv21(), name: '$image toNV21');
+    logTimed(() => requireImage.toYuvNv21(), name: '$image toNV21');
   }
 
   Future toBGRA() async {
-    logTimed(() => image = requireImage.toYuvBgra8888(), name: '$image toBGRA');
+    logTimed(() => requireImage.toYuvBgra8888(), name: '$image toBGRA');
   }
 }
 

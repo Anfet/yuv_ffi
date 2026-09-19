@@ -1,15 +1,15 @@
 #include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void yuv420_box_blur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         const uint32_t *rect
 ) {
-    const int width = src->width;
-    const int height = src->height;
-    const int rowStride = src->yRowStride;
-    const int pixelStride = src->yPixelStride;
-    uint8_t *dst = src->y;
+    const int width = image->width;
+    const int height = image->height;
+    const int rowStride = image->yRowStride;
+    const int pixelStride = image->yPixelStride;
+    uint8_t *dst = image->y;
 
     uint32_t left = 0, top = 0, right = width, bottom = height;
     if (rect) {
@@ -23,7 +23,7 @@ FFI_PLUGIN_EXPORT void yuv420_box_blur(
     if (!temp) return;
 
     for (int y = 0; y < height; ++y) {
-        const uint8_t *row = src->y + y * rowStride;
+        const uint8_t *row = image->y + y * rowStride;
         uint8_t *temp_row = temp + y * rowStride;
 
         int sum = 0;
@@ -42,11 +42,11 @@ FFI_PLUGIN_EXPORT void yuv420_box_blur(
         }
     }
 
-    // Вертикальный проход (ускоренный)
+    // Vertical pass (accelerated)
     for (int x = 0; x < width; ++x) {
         int sum = 0;
 
-        // начальная сумма на первом пикселе
+        // initial sum at the first pixel
         for (int dy = -radius; dy <= radius; ++dy) {
             int yy = MIN(height - 1, MAX(0, dy));
             sum += temp[yy * rowStride + x * pixelStride];
@@ -54,7 +54,7 @@ FFI_PLUGIN_EXPORT void yuv420_box_blur(
 
         for (int y = 0; y < height; ++y) {
             int dstIndex = yuv_index(x, y, rowStride, pixelStride);
-            uint8_t original = src->y[dstIndex];
+            uint8_t original = image->y[dstIndex];
 
             if (x < left || x >= right || y < top || y >= bottom) {
                 dst[dstIndex] = original;
@@ -62,7 +62,7 @@ FFI_PLUGIN_EXPORT void yuv420_box_blur(
                 dst[dstIndex] = (uint8_t)(sum / (2 * radius + 1));
             }
 
-            // подготавливаем сумму для следующего y
+            // prepare the sum for the next y
             if (y + 1 < height) {
                 int y_add = MIN(height - 1, y + radius + 1);
                 int y_sub = MAX(0, y - radius);

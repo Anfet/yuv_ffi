@@ -3,6 +3,7 @@
 
 #include "../../yuv.h"
 
-FFI_PLUGIN_EXPORT void bgra8888_from_rgba8888(const uint8_t *rgba, const YUVDef *dst);
+// Reads `rgba`, writes the converted result into `dst`.
+FFI_PLUGIN_EXPORT void bgra8888_from_rgba8888(const uint8_t *rgba, YUVDef *dst);
 
 #endif

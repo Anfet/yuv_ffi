@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
-// Макрос для вычисления индекса пикселя в изображении YUV
+// Macro computing the index of a pixel inside a YUV image
 #define yuv_index(x, y, rowStride, pixelStride) ((y) * (rowStride) + (x) * (pixelStride))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -17,7 +17,7 @@ static inline void swap_bytes(void* a, void* b, uint32_t len) {
         *(uint8_t*)b = tmp;
     } else {
         uint8_t* temp = (uint8_t*)malloc(len);
-        if (!temp) return;  // защита от OOM
+        if (!temp) return;  // guard against OOM
         memcpy(temp, b, len);
         memcpy(b, a, len);
         memcpy(a, temp, len);

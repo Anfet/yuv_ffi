@@ -1,12 +1,10 @@
 part of 'yuv_camera_preview_io.dart';
 
 class _YuvCameraPreviewDesktop extends StatefulWidget {
-  final CameraController cameraController;
   final YuvImage Function(YuvImage image)? transform;
 
   const _YuvCameraPreviewDesktop({
     super.key,
-    required this.cameraController,
     this.transform,
   });
 
@@ -32,14 +30,6 @@ class _YuvCameraPreviewDesktopState extends State<_YuvCameraPreviewDesktop> {
   }
 
   @override
-  void didUpdateWidget(covariant _YuvCameraPreviewDesktop oldWidget) {
-    if (oldWidget.cameraController != widget.cameraController) {
-      unawaited(_restartStream());
-    }
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
   void dispose() {
     _captureTimer?.cancel();
     _captureTimer = null;
@@ -55,7 +45,7 @@ class _YuvCameraPreviewDesktopState extends State<_YuvCameraPreviewDesktop> {
         child: Text(
           'Desktop camera error: $_lastError',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 11, color: Colors.white),
+          style: TextStyle(fontSize: 14, color: Colors.white),
         ),
       );
     }
@@ -65,16 +55,6 @@ class _YuvCameraPreviewDesktopState extends State<_YuvCameraPreviewDesktop> {
     }
 
     return RTCVideoView(_renderer, mirror: false);
-  }
-
-  Future<void> _restartStream() async {
-    await _stopStream();
-    _lastError = null;
-    _reusableBgraFrame = null;
-    if (mounted) {
-      setState(() {});
-    }
-    await _startStream();
   }
 
   Future<void> _startStream() async {

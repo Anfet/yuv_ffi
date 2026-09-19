@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
@@ -17,6 +18,9 @@ class _CameraScreenState extends State<CameraScreen> {
   CameraController? cameraController;
 
   CameraController get controller => cameraController!;
+  bool get _isDesktopWithoutCameraPlugin =>
+      !kIsWeb && (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux);
+  bool get _isPreviewReady => _isDesktopWithoutCameraPlugin || cameraController?.value.isInitialized == true;
 
   Object? cameraError;
   Completer<YuvImage?>? captureCompleter;
@@ -52,17 +56,18 @@ class _CameraScreenState extends State<CameraScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text('Camera error', style: Theme.of(context).textTheme.titleMedium),
+                            Text('Camera error', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
                             SizedBox(height: 12),
-                            Text('$cameraError', style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+                            SelectableText('$cameraError',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white), textAlign: TextAlign.center),
                           ],
                         ),
                       );
                     }
 
-                    if (cameraController?.value.isInitialized == true) {
+                    if (_isPreviewReady) {
                       return YuvCameraPreview(
-                        cameraController: controller,
+                        cameraController: _isDesktopWithoutCameraPlugin ? null : controller,
                         showDebugInfo: true,
                         transform: imageCapturer,
                       );
@@ -72,7 +77,7 @@ class _CameraScreenState extends State<CameraScreen> {
                   },
                 ),
               ),
-              if (cameraController?.value.isInitialized == true)
+              if (_isPreviewReady)
                 Positioned(
                   left: 0,
                   right: 0,
@@ -101,6 +106,10 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future initCamera() async {
     try {
+      if (_isDesktopWithoutCameraPlugin) {
+        return;
+      }
+
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
         cameraError = 'No cameras available on device';
@@ -124,25 +133,6 @@ class _CameraScreenState extends State<CameraScreen> {
       if (yuv == null) {
         return;
       }
-
-      // var xfile = await controller.takePicture();
-      // var bytes = await xfile.readAsBytes();
-      // final codec = await ui.instantiateImageCodec(bytes);
-      // final frame = await codec.getNextFrame();
-      // final image = frame.image;
-      //
-      // final int width = image.width;
-      // final int height = image.height;
-      //
-      // final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-      // final Uint8List rgba = byteData!.buffer.asUint8List();
-      //
-      // YuvImage yuv = YuvImage.bgra(width, height);
-      // yuv.fromRgba8888(rgba);
-      //
-      // if (controller.description.lensDirection == CameraLensDirection.front && _isAndroid) {
-      //   yuv = yuv.copy().flipHorizontally();
-      // }
 
       await Future.delayed(Duration(milliseconds: 500));
       if (!mounted) {

@@ -2,23 +2,23 @@
 
 
 FFI_PLUGIN_EXPORT void bgra8888_gaussian_blur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         float sigma
 ) {
-    const int width = src->width;
-    const int height = src->height;
+    const int width = image->width;
+    const int height = image->height;
     const int bytesPerPixel = 4;
-    const int rowStride = src->yRowStride;
+    const int rowStride = image->yRowStride;
 
-    uint8_t *data = src->y;
+    uint8_t *data = image->y;
     uint8_t *temp = (uint8_t *) malloc(width * height * bytesPerPixel);
     if (!temp) return;
 
     float *kernel = (float *) malloc((2 * radius + 1) * sizeof(float));
     generate_gaussian_kernel(kernel, radius, sigma);
 
-    // --- Горизонтальное размытие ---
+    // --- Horizontal blur ---
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             for (int c = 0; c < 4; ++c) {
@@ -35,7 +35,7 @@ FFI_PLUGIN_EXPORT void bgra8888_gaussian_blur(
         }
     }
 
-    // --- Вертикальное размытие ---
+    // --- Vertical blur ---
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             for (int c = 0; c < 4; ++c) {

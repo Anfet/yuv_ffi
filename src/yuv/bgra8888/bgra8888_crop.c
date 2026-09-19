@@ -2,7 +2,7 @@
 
 FFI_PLUGIN_EXPORT void bgra8888_crop_rect(
         const YUVDef *src,
-        const YUVDef *dst,
+        YUVDef *dst,
         const int left,
         const int top,
         const int crop_width,

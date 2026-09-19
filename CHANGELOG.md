@@ -1,11 +1,64 @@
+## 0.3.0
+
+### Breaking changes
+
+- Converted `swapNv()` and the format conversion methods (`toYuvNv21()`, `toYuvI420()`, `toYuvBgra8888()`) to in-place behavior. They mutate the current image and return `this` instead of returning a new instance. Call `copy()` first to keep the previous semantics, e.g. `image.copy().toYuvI420()`.
+- Migrated the Web interop layer from the removed `dart:js_util` APIs to `dart:js_interop` + `dart:js_interop_unsafe`.
+- Moved frame revision off the public interface; implementations that cannot report mutations no longer participate in revision-keyed caching.
+- Removed the `getBytes` alignment tail and the orphan NV21 RGB declaration from the native surface.
+- `nv21` keeps its established `(U,V)` sample order. This is deliberate and is documented as a deprecated migration path rather than silently corrected.
+
+### Changes
+
+- Added checked native arithmetic helpers for addition, multiplication, ceil-half, plane span and sample offset. Overflow is detected before any pointer arithmetic or memory access, replacing signed `int` expressions that could overflow before reaching `size_t`.
+- Added internal validated const/mutable plane and frame views that carry actual buffer lengths and validate format IDs, plane counts, sample sizes, independent row/pixel strides, minimum spans and destination geometry.
+- Padded and gapped plane layouts are accepted with larger positive strides; row gaps, pixel gaps and bytes beyond the minimum span stay padding and are never treated as logical sample data.
+- Added a C unit test harness with `BUILD_TESTING`, strict compiler warnings and sanitizers where the toolchain supports them. It is off by default and does not affect the normal plugin build.
+- Validated image geometry and planes before any FFI call, and made sequential native allocations exception-safe.
+- Corrected native custom-stride and odd-size conversion safety, and rejected mismatched I420 chroma strides declared in metadata.
+- Repacked padded BGRA planes on the Web backend and kept the declared layout of a padded BGRA plane intact.
+- Preserved the Y plane during `swapNv()`.
+- Hardened the save/load codec: it reads the stream sequentially, judges plane geometry from the header before reading the body, treats EOF as the payload boundary, and catches trailing bytes that arrive after the payload's own chunk.
+- Pinned the IO and Web initialization contract, and cached the native bindings instance.
+- Loaded the native library by its installed name instead of a CMake build-tree path.
+- Removed a failed loader script tag so a retry can succeed.
+- Narrowed `ffigen` to the ABI the package actually uses and switched the native build to an explicit source list.
+- Enabled optimization for native builds and SIMD for the WASM artifacts, and rebuilt those artifacts from the fixed C sources.
+- Added a Web reference conversion matrix and an independent `test_pattern_512` reference, and made the reference matrix skip honestly when no native library is present.
+- Documented the approved public Dart API and native C ABI contract for `0.3.0` in `docs/api-abi-0.3-design.md`.
+
+### Notes
+
+- Web remains a partial WASM backend and is not at feature parity with the native backends.
+- The versioned status-returning native ABI described in `docs/api-abi-0.3-design.md` is designed and approved, but not yet implemented; the operations still expose the pre-`0.3` entry points.
+
+## 0.2.4
+
+### Breaking changes
+
+- Converted `swapNv()` and format conversion methods (`toYuvNv21()`, `toYuvI420()`, `toYuvBgra8888()`) to in-place behavior. These methods now mutate the current image and return `this` instead of returning a new image instance.
+- If you need the previous "return new object" behavior, call `copy()` first, e.g. `image.copy().toYuvI420()`.
+
+### Changes
+
+- Migrated Web JS interop compatibility layer from removed `dart:js_util` APIs to a local shim built on `dart:js_interop` + `dart:js_interop_unsafe`.
+- Updated package Web implementation imports to use the new compatibility shim:
+  - `lib/src/loader/impl/wasm_loader_web.dart`
+  - `lib/src/yuv/impl/web/yuv_web.dart`
+- Updated `example/` Web camera preview to use the same compatibility approach.
+- Improved pub.dev analyzer compatibility for current stable SDK/runtime used by pub points checks.
+- Fixed desktop (`Windows`/`Linux`) example camera startup by skipping `camera` plugin initialization (`availableCameras()`), preventing `MissingPluginException` on platforms without camera plugin implementation.
+- Updated example camera preview wiring to support desktop WebRTC-only flow without requiring `CameraController`.
+- Kept `CameraController` required for mobile/web preview paths and added explicit argument validation in platform-specific preview builders.
+
 ## 0.2.3
 
 ### Changes
 
 - Fixed Web JS interop imports for compatibility with lower dependency bounds used by pub.dev static analysis:
-  - replaced `dart:js_util` with `package:js/js_util.dart` in package Web implementation files.
-- Fixed the same `dart:js_util` import in `example/` Web camera preview implementation.
-- Added explicit `js` dependency declarations where required to satisfy analyzer dependency checks.
+  - replaced `package:js/js_util.dart` with `dart:js_util` in package Web implementation files.
+- Fixed the same Web interop import in `example/` Web camera preview implementation.
+- Removed explicit direct `js` dependency declarations from package manifests.
 - Improved pub.dev static analysis compatibility (`pub downgrade` + `flutter analyze` flow).
 
 ## 0.2.2

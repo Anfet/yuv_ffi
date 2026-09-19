@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 const String _testAssetPath = 'test/assets/test_pattern_512.png';
@@ -29,7 +30,14 @@ Future<_FakeBgraImage> _loadFakeBgraFromAsset() async {
   return _FakeBgraImage(width, height, bytes: bgra);
 }
 
-class _FakeBgraImage implements YuvImage {
+/// A counting stand-in for one of this package's own backends.
+///
+/// It implements [YuvRevisionAware], because that is what the real IO and Web
+/// images do and what makes revision-based cache keys safe: every mutation is
+/// reported from inside the mutating method. A foreign implementation, which
+/// reports nothing, is covered separately in
+/// `yuv_image_source_compatibility_test.dart`.
+class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   _FakeBgraImage(
     this.width,
     this.height, {
@@ -42,6 +50,27 @@ class _FakeBgraImage implements YuvImage {
   final bool _shouldThrow;
   final Uint8List _bytes;
   final YuvPlane _plane;
+
+  int _revision = 0;
+
+  @override
+  int get internalRevision => _revision;
+
+  @override
+  void bumpInternalRevision() => _revision++;
+
+  /// Number of times this frame was converted to BGRA.
+  ///
+  /// A cache hit must not convert again, so the count is what proves the cache
+  /// key works; comparing providers alone would not.
+  int conversions = 0;
+
+  /// Simulates an in-place mutation the way the real backends perform one:
+  /// change the bytes, then report it from inside the method.
+  void mutateInPlace() {
+    _bytes[0] = (_bytes[0] + 1) & 0xFF;
+    markDirty();
+  }
 
   @override
   final int width;
@@ -140,6 +169,7 @@ class _FakeBgraImage implements YuvImage {
 
   @override
   Uint8List toBgra8888() {
+    conversions++;
     if (_shouldThrow) {
       throw UnsupportedError('fake decode failure');
     }
@@ -219,6 +249,96 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.text('image-error'), findsOneWidget);
+  });
+
+  group('image cache key', () {
+    setUp(() {
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+    });
+
+    test('F-006 diagnostic case: two providers of one frame share a key', () {
+      final image = _FakeBgraImage(4, 4, bytes: Uint8List(4 * 4 * 4));
+
+      final first = YuvImageProvider(image);
+      final second = YuvImageProvider(image);
+
+      expect(first, equals(second));
+      expect(first.hashCode, equals(second.hashCode));
+    });
+
+    test('a mutation makes a new provider a different key', () {
+      final image = _FakeBgraImage(4, 4, bytes: Uint8List(4 * 4 * 4));
+      final before = YuvImageProvider(image);
+
+      image.mutateInPlace();
+      final after = YuvImageProvider(image);
+
+      expect(after, isNot(equals(before)));
+      expect(after.hashCode, isNot(equals(before.hashCode)));
+    });
+
+    test('markDirty invalidates the key after a direct plane write', () {
+      final image = _FakeBgraImage(4, 4, bytes: Uint8List(4 * 4 * 4));
+      final before = YuvImageProvider(image);
+
+      // Writing straight into plane bytes cannot be intercepted, so the key
+      // only changes once the caller signals it.
+      image.yPlane.bytes[0] = 0xFF;
+      expect(YuvImageProvider(image), equals(before), reason: 'a silent write must not change the key on its own');
+
+      image.markDirty();
+      expect(YuvImageProvider(image), isNot(equals(before)));
+    });
+
+    test('two different images never share a key', () {
+      final a = _FakeBgraImage(4, 4, bytes: Uint8List(4 * 4 * 4));
+      final b = _FakeBgraImage(4, 4, bytes: Uint8List(4 * 4 * 4));
+
+      expect(YuvImageProvider(a), isNot(equals(YuvImageProvider(b))));
+    });
+
+    test('the key snapshot does not drift after a later mutation', () {
+      final image = _FakeBgraImage(4, 4, bytes: Uint8List(4 * 4 * 4));
+      final key = YuvImageProvider(image);
+      final hashWhenCached = key.hashCode;
+
+      image.mutateInPlace();
+
+      // A key already stored in the image cache must keep its hashCode, or the
+      // cache entry becomes unreachable and leaks.
+      expect(key.hashCode, hashWhenCached);
+    });
+
+    testWidgets('an unchanged frame is converted once across rebuilds', (tester) async {
+      final image = _FakeBgraImage(imageFromAsset.width, imageFromAsset.height, bytes: imageFromAsset.getBytes());
+
+      await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image)));
+      await tester.pumpAndSettle();
+      final afterFirstBuild = image.conversions;
+      expect(afterFirstBuild, greaterThan(0));
+
+      // Rebuild with a new widget instance: the provider is recreated, but the
+      // key is equal, so the decoded frame must be reused.
+      await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image, boxFit: BoxFit.contain)));
+      await tester.pumpAndSettle();
+
+      expect(image.conversions, afterFirstBuild, reason: 'an unchanged frame must not be converted again');
+    });
+
+    testWidgets('a mutated frame is converted again', (tester) async {
+      final image = _FakeBgraImage(imageFromAsset.width, imageFromAsset.height, bytes: imageFromAsset.getBytes());
+
+      await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image)));
+      await tester.pumpAndSettle();
+      final afterFirstBuild = image.conversions;
+
+      image.mutateInPlace();
+      await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image, boxFit: BoxFit.contain)));
+      await tester.pumpAndSettle();
+
+      expect(image.conversions, greaterThan(afterFirstBuild), reason: 'a mutated frame must not be served from the cache');
+    });
   });
 
   testWidgets('YuvImageWidget matches golden', (tester) async {

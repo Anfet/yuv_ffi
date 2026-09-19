@@ -1,6 +1,6 @@
 #include "../yuv.h"
 
-FFI_PLUGIN_EXPORT void bgra8888_to_nv21(const YUVDef *src, const YUVDef *dst) {
+FFI_PLUGIN_EXPORT void bgra8888_to_nv21(const YUVDef *src, YUVDef *dst) {
     const int W = src->width;
     const int H = src->height;
 

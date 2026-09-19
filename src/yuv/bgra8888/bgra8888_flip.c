@@ -1,14 +1,14 @@
 #include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void bgra8888_flip_horizontally(
-        const YUVDef *src
+        YUVDef *image
 ) {
-    const int bytesPerPixel = src->yPixelStride;
+    const int bytesPerPixel = image->yPixelStride;
     uint8_t* temp = (uint8_t*)malloc(bytesPerPixel);
     if (!temp) return;
-    const int height = src->height;
-    const int width = src->width;
-    uint8_t *data = src->y;
+    const int height = image->height;
+    const int width = image->width;
+    uint8_t *data = image->y;
 
     for (int y = 0; y < height; y++) {
         uint8_t *row = data + y * width * bytesPerPixel;
@@ -25,13 +25,13 @@ FFI_PLUGIN_EXPORT void bgra8888_flip_horizontally(
 }
 
 FFI_PLUGIN_EXPORT void bgra8888_flip_vertically(
-        const YUVDef *src
+        YUVDef *image
 ) {
-    uint8_t *data = src->y;
-    const int height = src->height;
-    const int width = src->width;
+    uint8_t *data = image->y;
+    const int height = image->height;
+    const int width = image->width;
 
-    const int bytesPerPixel = src->yPixelStride;
+    const int bytesPerPixel = image->yPixelStride;
     uint8_t *tempRow = (uint8_t *) malloc(width * bytesPerPixel);
 
 

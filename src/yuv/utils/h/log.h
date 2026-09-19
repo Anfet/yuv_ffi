@@ -15,9 +15,9 @@
 #include <stdio.h>
 
 #define LOGI(...) printf("[INFO] " __VA_ARGS__); printf("\n")
-#define debug(...) printf("[DEBUG] " __VA_ARGS__); printf("\n")
-#define warn(...) printf("[WARN] " __VA_ARGS__); printf("\n")
-#define error(...) printf("[ERROR] " __VA_ARGS__); printf("\n")
+#define LOGD(...) printf("[DEBUG] " __VA_ARGS__); printf("\n")
+#define LOGW(...) printf("[WARN] " __VA_ARGS__); printf("\n")
+#define LOGE(...) printf("[ERROR] " __VA_ARGS__); printf("\n")
 #endif
 
 #endif // YUV_LOG_H

@@ -3,6 +3,7 @@
 
 #include "../../yuv.h"
 
-FFI_PLUGIN_EXPORT void nv21_to_i420(const YUVDef* src, const YUVDef* dst);
+// Reads `src`, writes the I420 result into `dst`.
+FFI_PLUGIN_EXPORT void nv21_to_i420(const YUVDef *src, YUVDef *dst);
 
 #endif

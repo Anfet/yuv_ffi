@@ -3,6 +3,7 @@
 
 #include "../../yuv.h"
 
-FFI_PLUGIN_EXPORT void yuv420_i420_to_nv21(const YUVDef *src, const YUVDef *dst);
+// Reads `src`, writes the interleaved-chroma result into `dst`.
+FFI_PLUGIN_EXPORT void yuv420_i420_to_nv21(const YUVDef *src, YUVDef *dst);
 
 #endif

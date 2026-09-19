@@ -1,0 +1,210 @@
+import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
+
+/// Shared geometry and plane-layout validation for every backend.
+///
+/// Both the native (`io`) and the Web (`wasm`) implementations run these checks
+/// before any FFI/WASM call, so the two backends accept and reject exactly the
+/// same geometry. Native code walks planes using `width`, `height` and the
+/// declared strides rather than the Dart buffer length, so a plane that is too
+/// small for its declared geometry would be read and written out of bounds.
+///
+/// Every failure throws [ArgumentError] before any native allocation happens.
+abstract final class YuvGeometry {
+  /// Number of planes required by [format].
+  static int planeCountFor(YuvFileFormat format) => switch (format) {
+        YuvFileFormat.bgra8888 => 1,
+        YuvFileFormat.nv21 => 2,
+        YuvFileFormat.i420 => 3,
+      };
+
+  /// Bytes per sample in the luma/packed plane of [format].
+  static int _lumaSampleBytes(YuvFileFormat format) => format == YuvFileFormat.bgra8888 ? 4 : 1;
+
+  /// Chroma plane height for [height] rows, rounded up for odd sizes.
+  ///
+  /// Odd dimensions keep the trailing half-row, matching the `ceil` allocation
+  /// used by the image constructors.
+  static int chromaHeight(int height) => (height + 1) ~/ 2;
+
+  /// Chroma plane width in samples for [width] columns, rounded up.
+  static int chromaWidth(int width) => (width + 1) ~/ 2;
+
+  /// Validates image dimensions.
+  ///
+  /// Throws [ArgumentError] when [width] or [height] is not positive.
+  static void validateDimensions(int width, int height) {
+    if (width <= 0) {
+      throw ArgumentError.value(width, 'width', 'Image width must be greater than zero');
+    }
+    if (height <= 0) {
+      throw ArgumentError.value(height, 'height', 'Image height must be greater than zero');
+    }
+  }
+
+  /// Pixel stride required by an interleaved NV chroma plane.
+  ///
+  /// The native converters address an NV chroma sample as a packed `(U, V)`
+  /// pair at `index * 2`, so any other stride would be read and written at the
+  /// wrong offsets.
+  static const int nvChromaPixelStride = 2;
+
+  /// Validates a full image description before it reaches native code.
+  ///
+  /// [planes] must already be in format order: `[Y]` for BGRA8888, `[Y, UV]`
+  /// for NV, and `[Y, U, V]` for I420.
+  ///
+  /// Throws [ArgumentError] when the geometry is inconsistent.
+  static void validateImage({
+    required YuvFileFormat format,
+    required int width,
+    required int height,
+    required List<YuvPlane> planes,
+  }) {
+    validateDimensions(width, height);
+
+    final expectedPlanes = planeCountFor(format);
+    if (planes.length != expectedPlanes) {
+      throw ArgumentError.value(
+        planes.length,
+        'planes.length',
+        'Format ${format.name} requires exactly $expectedPlanes plane(s)',
+      );
+    }
+
+    validatePlane(
+      plane: planes[0],
+      label: 'yPlane',
+      expectedHeight: height,
+      expectedWidth: width,
+      sampleBytes: _lumaSampleBytes(format),
+    );
+
+    if (format == YuvFileFormat.bgra8888) {
+      return;
+    }
+
+    final uvHeight = chromaHeight(height);
+    final uvWidth = chromaWidth(width);
+
+    // NV keeps one interleaved chroma plane; I420 keeps two planar ones. An
+    // interleaved NV row holds a (U, V) pair per chroma sample, so its last
+    // sample needs one extra byte beyond the luma-style minimum.
+    if (format == YuvFileFormat.nv21) {
+      // The converters index chroma as a packed pair, so only a stride of
+      // exactly two is actually supported. Anything else is rejected here
+      // rather than silently misread (or silently ignored) by native code.
+      if (planes[1].pixelStride != nvChromaPixelStride) {
+        throw ArgumentError.value(
+          planes[1].pixelStride,
+          'uvPlane.pixelStride',
+          'Interleaved NV chroma requires a pixel stride of exactly $nvChromaPixelStride',
+        );
+      }
+      validatePlane(
+        plane: planes[1],
+        label: 'uvPlane',
+        expectedHeight: uvHeight,
+        expectedWidth: uvWidth,
+        sampleBytes: nvChromaPixelStride,
+      );
+      return;
+    }
+
+    validatePlane(plane: planes[1], label: 'uPlane', expectedHeight: uvHeight, expectedWidth: uvWidth, sampleBytes: 1);
+    validatePlane(plane: planes[2], label: 'vPlane', expectedHeight: uvHeight, expectedWidth: uvWidth, sampleBytes: 1);
+
+    // I420 chroma planes are addressed with a shared uvRowStride and
+    // uvPixelStride in the native struct, so a mismatch between U and V would
+    // make one of them be walked with the other's geometry.
+    if (planes[1].rowStride != planes[2].rowStride || planes[1].pixelStride != planes[2].pixelStride) {
+      throw ArgumentError.value(
+        '${planes[2].rowStride}/${planes[2].pixelStride}',
+        'vPlane',
+        'I420 U and V planes must share the same rowStride and pixelStride '
+            '(U is ${planes[1].rowStride}/${planes[1].pixelStride})',
+      );
+    }
+  }
+
+  /// Geometry a plane must declare to belong to this image, or `null` when
+  /// [planeIndex] is not a plane of [format].
+  ///
+  /// Returns the expected row count and the smallest legal row stride, both
+  /// derived from [format], [width] and [height] alone. A decoder can therefore
+  /// judge a plane from its metadata, before buffering the bytes that metadata
+  /// describes.
+  static ({int height, int minRowStride})? expectedPlaneMetadata({
+    required YuvFileFormat format,
+    required int width,
+    required int height,
+    required int planeIndex,
+    required int pixelStride,
+  }) {
+    if (planeIndex < 0 || planeIndex >= planeCountFor(format) || pixelStride <= 0) {
+      return null;
+    }
+    if (planeIndex == 0) {
+      return (height: height, minRowStride: (width - 1) * pixelStride + _lumaSampleBytes(format));
+    }
+    final sampleBytes = format == YuvFileFormat.nv21 ? nvChromaPixelStride : 1;
+    return (height: chromaHeight(height), minRowStride: (chromaWidth(width) - 1) * pixelStride + sampleBytes);
+  }
+
+  /// Whether a BGRA plane is tightly packed for [width].
+  ///
+  /// Several native effects allocate a tight temporary buffer while addressing
+  /// the source through its row stride, so a padded plane has to be repacked
+  /// before such an operation instead of being passed through.
+  static bool isTightBgra(YuvPlane plane, int width) => plane.rowStride == width * 4 && plane.pixelStride == 4;
+
+  /// Validates a single plane against its expected geometry.
+  ///
+  /// [sampleBytes] is the number of bytes the native code reads at the last
+  /// sample of a row, so the minimum row length accounts for the final sample
+  /// rather than only the stride steps between samples.
+  ///
+  /// Throws [ArgumentError] when the plane cannot hold the declared geometry.
+  static void validatePlane({
+    required YuvPlane plane,
+    required String label,
+    required int expectedHeight,
+    required int expectedWidth,
+    required int sampleBytes,
+  }) {
+    if (plane.pixelStride <= 0) {
+      throw ArgumentError.value(plane.pixelStride, '$label.pixelStride', 'Pixel stride must be greater than zero');
+    }
+    if (plane.rowStride <= 0) {
+      throw ArgumentError.value(plane.rowStride, '$label.rowStride', 'Row stride must be greater than zero');
+    }
+    if (plane.height != expectedHeight) {
+      throw ArgumentError.value(
+        plane.height,
+        '$label.height',
+        'Expected $expectedHeight rows for this image geometry',
+      );
+    }
+
+    // Last sample starts at (expectedWidth - 1) * pixelStride and occupies
+    // sampleBytes bytes, so the row must be at least that long.
+    final minRowStride = (expectedWidth - 1) * plane.pixelStride + sampleBytes;
+    if (plane.rowStride < minRowStride) {
+      throw ArgumentError.value(
+        plane.rowStride,
+        '$label.rowStride',
+        'Row stride must be at least $minRowStride bytes for width $expectedWidth '
+            '(pixelStride ${plane.pixelStride}, $sampleBytes byte(s) per sample)',
+      );
+    }
+
+    final expectedLength = plane.height * plane.rowStride;
+    if (plane.bytes.length != expectedLength) {
+      throw ArgumentError.value(
+        plane.bytes.length,
+        '$label.bytes.length',
+        'Expected exactly $expectedLength bytes (height ${plane.height} * rowStride ${plane.rowStride})',
+      );
+    }
+  }
+}

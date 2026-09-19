@@ -30,3 +30,14 @@ build/
 .zshrc
 yuv_ffi.dll
 .vscode/
+_tmp**
+
+# Internal process/audit documents: local engineering journal, not part of
+# the published plugin.
+/Agent Orchestration Protocol.md
+/dart-architecture-audit.md
+/failed-test-cases.md
+/web-gate-blocker.md
+/todo.md
+/todo-waitlist.md
+/native-primitives-research.md

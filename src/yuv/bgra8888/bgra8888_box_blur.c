@@ -1,16 +1,16 @@
 #include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void bgra8888_box_blur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         const uint32_t *rect
 ) {
-    const int width  = src->width;
-    const int height = src->height;
-    const int stride = src->yRowStride;   // bytes per row
+    const int width  = image->width;
+    const int height = image->height;
+    const int stride = image->yRowStride;   // bytes per row
     const int bpp    = 4;                 // BGRA
 
-    uint8_t *dst = src->y;
+    uint8_t *dst = image->y;
 
     uint32_t left = 0, top = 0, right = width, bottom = height;
     if (rect) {
@@ -23,9 +23,9 @@ FFI_PLUGIN_EXPORT void bgra8888_box_blur(
     uint8_t *temp = (uint8_t *) malloc(height * stride);
     if (!temp) return;
 
-    // --- Горизонтальный проход ---
+    // --- Horizontal pass ---
     for (int y = 0; y < height; ++y) {
-        const uint8_t *row = src->y + y * stride;
+        const uint8_t *row = image->y + y * stride;
         uint8_t *temp_row  = temp + y * stride;
 
         for (int c = 0; c < bpp; ++c) {
@@ -46,7 +46,7 @@ FFI_PLUGIN_EXPORT void bgra8888_box_blur(
         }
     }
 
-    // --- Вертикальный проход ---
+    // --- Vertical pass ---
     for (int x = 0; x < width; ++x) {
         for (int c = 0; c < bpp; ++c) {
             int sum = 0;
@@ -57,11 +57,11 @@ FFI_PLUGIN_EXPORT void bgra8888_box_blur(
 
             for (int y = 0; y < height; ++y) {
                 int idx = y * stride + x * bpp + c;
-                uint8_t original = src->y[idx];
+                uint8_t original = image->y[idx];
 
                 if (x < (int)left || x >= (int)right ||
                     y < (int)top  || y >= (int)bottom) {
-                    dst[idx] = original; // оставляем как есть
+                    dst[idx] = original; // leave as is
                 } else {
                     dst[idx] = (uint8_t)(sum / (2 * radius + 1));
                 }

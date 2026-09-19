@@ -99,8 +99,13 @@ fi
 
 if [ "$PROFILE" = "release" ]; then
   OPT_LEVEL="-O3"
+  # WebAssembly SIMD, so the conversion loops vectorize the same way they do on
+  # native targets. Supported by Chrome/Firefox/Safari since 2021; browsers
+  # older than that cannot instantiate a simd-enabled module at all.
+  SIMD_FLAG="-msimd128"
 else
   OPT_LEVEL="-O0"
+  SIMD_FLAG=""
 fi
 
 # IMPORTANT:
@@ -122,6 +127,7 @@ echo "Sources: $SOURCE_COUNT"
 find src -type f -name '*.c' ! -path '*/build/*' -print0 | \
   xargs -0 "$EMCC" \
     "$OPT_LEVEL" \
+    $SIMD_FLAG \
     -Isrc \
     -sWASM=1 \
     -sMODULARIZE=1 \

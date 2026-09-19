@@ -2,7 +2,7 @@
 
 FFI_PLUGIN_EXPORT void bgra8888_rotate(
         const YUVDef *src,
-        const YUVDef *dst,
+        YUVDef *dst,
         int rotationDegrees
 ) {
     const int rotation90 = rotationDegrees / 90.0;

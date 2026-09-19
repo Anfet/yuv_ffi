@@ -1,18 +1,18 @@
 #include "../yuv.h"
 
 FFI_PLUGIN_EXPORT void nv21_negate(
-        const YUVDef *src
+        YUVDef *image
 ) {
-    int y_plane_size = src->height * src->yRowStride;
-    int uv_plane_size = (src->height / 2) * src->uvRowStride;
+    int y_plane_size = image->height * image->yRowStride;
+    int uv_plane_size = (image->height / 2) * image->uvRowStride;
 
-    // Инвертируем яркость
+    // Invert the luma
     for (int i = 0; i < y_plane_size; ++i) {
-        src->y[i] = 255 - src->y[i];
+        image->y[i] = 255 - image->y[i];
     }
 
-    // Инвертируем цвет (симметрично вокруг 128)
+    // Invert the color (symmetrically around 128)
     for (int i = 0; i < uv_plane_size; ++i) {
-        src->u[i] = 256 - src->u[i]; // или (255 - (u_src[i] - 128)) + 128
+        image->u[i] = 256 - image->u[i]; // or (255 - (u_src[i] - 128)) + 128
     }
 }

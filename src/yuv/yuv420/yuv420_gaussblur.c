@@ -2,22 +2,22 @@
 
 
 FFI_PLUGIN_EXPORT void yuv420_gaussblur(
-        const YUVDef *src,
+        YUVDef *image,
         int radius,
         int sigma
 ) {
-    const int width = src->width;
-    const int height = src->height;
-    uint8_t *y_src = src->y;
-    uint8_t *y_dst = src->y;
-    uint8_t *u_src = src->u;
-    uint8_t *u_dst = src->u;
-    uint8_t *v_src = src->v;
-    uint8_t *v_dst = src->v;
-    const int y_row_stride = src->yRowStride;
-    const int y_pixel_stride = src->yPixelStride;
-    const int uv_row_stride = src->uvRowStride;
-    const int uv_pixel_stride = src->uvPixelStride;
+    const int width = image->width;
+    const int height = image->height;
+    uint8_t *y_src = image->y;
+    uint8_t *y_dst = image->y;
+    uint8_t *u_src = image->u;
+    uint8_t *u_dst = image->u;
+    uint8_t *v_src = image->v;
+    uint8_t *v_dst = image->v;
+    const int y_row_stride = image->yRowStride;
+    const int y_pixel_stride = image->yPixelStride;
+    const int uv_row_stride = image->uvRowStride;
+    const int uv_pixel_stride = image->uvPixelStride;
 
     gaussian_blur_plane_strided(
             y_src, y_dst,
