@@ -21,11 +21,17 @@
  * inclusion-exclusion query reconstructs the right rectangle sum even from
  * wrapped int32_t cells. The one query shape that reads a table cell
  * unpaired (x1 == 0 && y1 == 0, no subtraction at all) only occurs for the
- * top-left pixel's own kernel, which is bounded the same way. So the
- * overflow was UB and worth removing on its own terms, but it did not
- * produce a wrong average at any legal radius — this widening is defense in
- * depth against UB and against a query shape this file does not currently
- * have, not a fix for an observed wrong blur.
+ * top-left pixel's own kernel, which is bounded the same way.
+ *
+ * That argument only holds under an explicit two's-complement wraparound
+ * model. Signed overflow is undefined behavior in C, not guaranteed
+ * wraparound: a compiler is free to assume it never happens and to use that
+ * assumption to reorder or eliminate arithmetic (including the very
+ * subtractions the argument above depends on), so the int32_t table build
+ * had no actual correctness guarantee at any radius — it happened not to
+ * misbehave on the compilers this project builds with, which is not the same
+ * as being safe. This widening removes that UB outright and additionally
+ * guards against a query shape this file does not currently have.
  */
 static int64_t yuv_sat_rect(const int64_t *sat, int width, int x1, int y1, int x2, int y2) {
     int64_t sum = sat[(int64_t) y2 * width + x2];

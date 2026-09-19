@@ -9,15 +9,17 @@
  * every sample in the plane, up to width * height * 255. A 4K luma plane
  * alone (4096 * 2160 * 255 = 2,256,076,800) already exceeds INT32_MAX, so a
  * 32-bit accumulator would overflow during the table build — signed
- * overflow, undefined behavior in C on its own terms. In practice every
- * query this file issues is bounded by the kernel
- * (2 * radius + 1, capped at 513 by YuvGeometry.maxBlurRadius), so no single
- * query result approaches INT32_MAX even on a huge frame, and paired
- * inclusion-exclusion reads reconstruct the right sum modulo 2^32 regardless
- * of whether the stored cells wrapped — see the longer argument in
- * bgra8888_mean_blur.c, which this file mirrors. The widening removes real
- * UB and guards against a query shape this file does not currently have; it
- * is not evidence of an observed wrong blur.
+ * overflow, undefined behavior in C. Under an explicit two's-complement
+ * wraparound model, every query this file issues is bounded by the kernel
+ * (2 * radius + 1, capped at 513 by YuvGeometry.maxBlurRadius), so paired
+ * inclusion-exclusion reads would reconstruct the right sum regardless of
+ * whether the stored cells wrapped — see the longer argument in
+ * bgra8888_mean_blur.c, which this file mirrors. But that argument assumes a
+ * wraparound guarantee C does not give: signed overflow is UB, not defined
+ * wraparound, so the int32_t table build had no actual correctness
+ * guarantee at any radius. This widening removes that UB outright and
+ * additionally guards against a query shape this file does not currently
+ * have.
  */
 static int64_t yuv_sat_rect(const int64_t *sat, int width, int x1, int y1, int x2, int y2) {
     int64_t sum = sat[(int64_t) y2 * width + x2];

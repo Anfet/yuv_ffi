@@ -147,39 +147,41 @@ void main() {
     expect(image.yPlane.bytes, orderedEquals(original));
   });
 
-  test('a large uniform frame does not overflow the SAT accumulator', () {
+  test('a large uniform frame blurs correctly (large-frame smoke test)', () {
     if (!nativeAvailable) {
       markTestSkipped('native library is not available on this host');
       return;
     }
-    // Regression guard for the P1 review finding on 2026-09-20: the SAT
-    // accumulators used to be int32_t, and a single-channel SAT cell at the
-    // bottom-right corner sums every sample in the plane. An all-white frame
-    // of 3000x2900 pixels (255 per sample, one channel) sums to
-    // 2,218,500,000, already past INT32_MAX (2,147,483,647).
+    // Originally written as a P1 overflow regression for the 2026-09-20
+    // review (the SAT accumulators used to be int32_t, and a single-channel
+    // SAT cell at the bottom-right corner sums every sample in the plane; an
+    // all-white 3000x2900 frame sums to 2,218,500,000, past INT32_MAX). That
+    // framing turned out to be wrong on two counts, found on a later pass of
+    // the same review:
     //
-    // Worked out analytically (not just guessed) after the review: the
-    // int32_t table cells themselves did overflow on this fixture, but every
-    // query this algorithm ever issues reads a *rectangle* via
-    // inclusion-exclusion (sum minus the row above minus the column to the
-    // left plus their shared corner), never a bare corner cell — the one
-    // exception is a rectangle already anchored at (0, 0), which is only
-    // reached by the top-left pixel's own kernel, whose area is capped by
-    // `radius <= 256` and so never approaches INT32_MAX regardless of image
-    // size. Two's-complement add/subtract is exact modulo 2^32, so any
-    // *paired* combination of wrapped reads reconstructs the true rectangle
-    // sum bit-for-bit even when the individual stored cells overflowed —
-    // meaning this fixture cannot actually distinguish int32_t from int64_t
-    // storage for this algorithm's query shapes (verified by simulating both
-    // in isolation; every sampled query matched). The int64_t widening is
-    // still correct and worth keeping as defense-in-depth — it removes
-    // signed-overflow UB in the table build itself, and protects any future
-    // change that reads a SAT cell directly rather than through a paired
-    // rectangle query — but this test's real, honest value is guarding the
-    // allocation size (`width * height` must not overflow 32-bit indexing)
-    // and the SAT loop's shape on a frame this large, not the accumulator
-    // width. See `bgra8888_mean_blur.c` for the query-shape argument this
-    // relies on.
+    // 1. It does not exercise 32-bit index/allocation overflow either:
+    //    width * height here is 8,700,000, four orders of magnitude below
+    //    where 32-bit indexing would actually wrap (~2^31). It is simply a
+    //    large frame, not a boundary case for sizing.
+    // 2. It cannot distinguish int32_t from int64_t SAT storage at all.
+    //    Every query this algorithm issues reads a *rectangle* via
+    //    inclusion-exclusion, bounded by the kernel (`radius <= 256`, so
+    //    area <= 513x513), never a bare unpaired corner cell except for the
+    //    (0,0) pixel's own kernel, which is bounded the same way. Under an
+    //    explicit two's-complement wraparound model, paired add/subtract is
+    //    exact modulo 2^32, so it reconstructs the true rectangle sum even
+    //    from wrapped int32_t cells — verified by simulating both
+    //    accumulator widths directly; every sampled query matched. (Signed
+    //    overflow is still UB in C, not a guaranteed wraparound, which is
+    //    why the int64_t widening was correct regardless — see
+    //    bgra8888_mean_blur.c.) Either way, this fixture's result is
+    //    identical whether the table is int32_t or int64_t, so it proves
+    //    nothing about the accumulator width.
+    //
+    // Kept as what it actually is: a smoke test that the SAT build and
+    // clamp-to-edge blur behave correctly at a resolution well above the
+    // small fixtures used elsewhere in this file, not a regression guard for
+    // any specific overflow.
     const width = 3000;
     const height = 2900;
     final bytes = Uint8List(width * height * 4)..fillRange(0, width * height * 4, 0xFF);
