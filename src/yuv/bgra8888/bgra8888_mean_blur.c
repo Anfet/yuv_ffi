@@ -10,9 +10,22 @@
  * Entries are int64_t rather than int32_t: a single-channel SAT cell at the
  * bottom-right corner sums every sample in the plane, up to width * height *
  * 255. That already exceeds INT32_MAX past roughly 2160p (4096 * 2160 * 255 =
- * 2,256,076,800), so a 4K or larger frame would silently overflow a 32-bit
- * accumulator into undefined behavior and a wrong blur. int64_t keeps the
- * same worst case comfortably inside range through 16K frames.
+ * 2,256,076,800), so a 4K or larger frame would overflow a 32-bit accumulator
+ * during the table build — signed overflow, which is undefined behavior in C
+ * regardless of what a specific compiler happens to do with it.
+ *
+ * In practice, every caller of this function passes a rectangle bounded by
+ * the kernel (2 * radius + 1, capped at 513 by YuvGeometry.maxBlurRadius), so
+ * the *result* of any one query never approaches INT32_MAX even on a huge
+ * frame; two's-complement add/subtract is exact modulo 2^32, so a paired
+ * inclusion-exclusion query reconstructs the right rectangle sum even from
+ * wrapped int32_t cells. The one query shape that reads a table cell
+ * unpaired (x1 == 0 && y1 == 0, no subtraction at all) only occurs for the
+ * top-left pixel's own kernel, which is bounded the same way. So the
+ * overflow was UB and worth removing on its own terms, but it did not
+ * produce a wrong average at any legal radius — this widening is defense in
+ * depth against UB and against a query shape this file does not currently
+ * have, not a fix for an observed wrong blur.
  */
 static int64_t yuv_sat_rect(const int64_t *sat, int width, int x1, int y1, int x2, int y2) {
     int64_t sum = sat[(int64_t) y2 * width + x2];

@@ -8,8 +8,16 @@
  * Entries are int64_t rather than int32_t: the bottom-right SAT cell sums
  * every sample in the plane, up to width * height * 255. A 4K luma plane
  * alone (4096 * 2160 * 255 = 2,256,076,800) already exceeds INT32_MAX, so a
- * 32-bit accumulator would silently overflow into undefined behavior and a
- * wrong blur on any 4K-or-larger frame.
+ * 32-bit accumulator would overflow during the table build — signed
+ * overflow, undefined behavior in C on its own terms. In practice every
+ * query this file issues is bounded by the kernel
+ * (2 * radius + 1, capped at 513 by YuvGeometry.maxBlurRadius), so no single
+ * query result approaches INT32_MAX even on a huge frame, and paired
+ * inclusion-exclusion reads reconstruct the right sum modulo 2^32 regardless
+ * of whether the stored cells wrapped — see the longer argument in
+ * bgra8888_mean_blur.c, which this file mirrors. The widening removes real
+ * UB and guards against a query shape this file does not currently have; it
+ * is not evidence of an observed wrong blur.
  */
 static int64_t yuv_sat_rect(const int64_t *sat, int width, int x1, int y1, int x2, int y2) {
     int64_t sum = sat[(int64_t) y2 * width + x2];

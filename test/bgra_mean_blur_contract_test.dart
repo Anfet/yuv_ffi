@@ -156,15 +156,30 @@ void main() {
     // accumulators used to be int32_t, and a single-channel SAT cell at the
     // bottom-right corner sums every sample in the plane. An all-white frame
     // of 3000x2900 pixels (255 per sample, one channel) sums to
-    // 2,218,500,000, already past INT32_MAX (2,147,483,647) — smaller than a
-    // real 4K frame (4096x2160 sums to 2,256,076,800) but large enough to
-    // exercise the same overflow deterministically without allocating a full
-    // 4K buffer.
+    // 2,218,500,000, already past INT32_MAX (2,147,483,647).
     //
-    // A 32-bit accumulator would wrap into a negative or corrupted sum here,
-    // producing a blurred value far from the uniform 255 every pixel of a
-    // flat white frame must blur to. int64_t keeps the same worst case in
-    // range through 16K frames.
+    // Worked out analytically (not just guessed) after the review: the
+    // int32_t table cells themselves did overflow on this fixture, but every
+    // query this algorithm ever issues reads a *rectangle* via
+    // inclusion-exclusion (sum minus the row above minus the column to the
+    // left plus their shared corner), never a bare corner cell — the one
+    // exception is a rectangle already anchored at (0, 0), which is only
+    // reached by the top-left pixel's own kernel, whose area is capped by
+    // `radius <= 256` and so never approaches INT32_MAX regardless of image
+    // size. Two's-complement add/subtract is exact modulo 2^32, so any
+    // *paired* combination of wrapped reads reconstructs the true rectangle
+    // sum bit-for-bit even when the individual stored cells overflowed —
+    // meaning this fixture cannot actually distinguish int32_t from int64_t
+    // storage for this algorithm's query shapes (verified by simulating both
+    // in isolation; every sampled query matched). The int64_t widening is
+    // still correct and worth keeping as defense-in-depth — it removes
+    // signed-overflow UB in the table build itself, and protects any future
+    // change that reads a SAT cell directly rather than through a paired
+    // rectangle query — but this test's real, honest value is guarding the
+    // allocation size (`width * height` must not overflow 32-bit indexing)
+    // and the SAT loop's shape on a frame this large, not the accumulator
+    // width. See `bgra8888_mean_blur.c` for the query-shape argument this
+    // relies on.
     const width = 3000;
     const height = 2900;
     final bytes = Uint8List(width * height * 4)..fillRange(0, width * height * 4, 0xFF);
@@ -172,8 +187,7 @@ void main() {
 
     image.meanBlur(radius: 4);
 
-    // Every channel of a flat white frame must still blur to 255: a wrapped
-    // or corrupted SAT sum would produce a wrong, non-255 average instead.
+    // Every channel of a flat white frame must still blur to 255.
     for (int i = 0; i < image.yPlane.bytes.length; i += 4) {
       expect(image.yPlane.bytes[i], 0xFF, reason: 'blue at pixel ${i ~/ 4}');
       expect(image.yPlane.bytes[i + 1], 0xFF, reason: 'green at pixel ${i ~/ 4}');
