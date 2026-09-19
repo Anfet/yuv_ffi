@@ -4,12 +4,18 @@
  * Inclusive sum over the rectangle [x1, x2] x [y1, y2] of a summed-area table
  * whose rows are `width` entries wide. Mirrors
  * src/yuv/bgra8888/bgra8888_mean_blur.c::yuv_sat_rect.
+ *
+ * Entries are int64_t rather than int32_t: the bottom-right SAT cell sums
+ * every sample in the plane, up to width * height * 255. A 4K luma plane
+ * alone (4096 * 2160 * 255 = 2,256,076,800) already exceeds INT32_MAX, so a
+ * 32-bit accumulator would silently overflow into undefined behavior and a
+ * wrong blur on any 4K-or-larger frame.
  */
-static int32_t yuv_sat_rect(const int32_t *sat, int width, int x1, int y1, int x2, int y2) {
-    int32_t sum = sat[y2 * width + x2];
-    if (y1 > 0) sum -= sat[(y1 - 1) * width + x2];
-    if (x1 > 0) sum -= sat[y2 * width + (x1 - 1)];
-    if (x1 > 0 && y1 > 0) sum += sat[(y1 - 1) * width + (x1 - 1)];
+static int64_t yuv_sat_rect(const int64_t *sat, int width, int x1, int y1, int x2, int y2) {
+    int64_t sum = sat[(int64_t) y2 * width + x2];
+    if (y1 > 0) sum -= sat[(int64_t) (y1 - 1) * width + x2];
+    if (x1 > 0) sum -= sat[(int64_t) y2 * width + (x1 - 1)];
+    if (x1 > 0 && y1 > 0) sum += sat[(int64_t) (y1 - 1) * width + (x1 - 1)];
     return sum;
 }
 
@@ -41,7 +47,7 @@ static void yuv_box_blur_plane(
         int right,
         int bottom
 ) {
-    int32_t *sat = (int32_t *) calloc((size_t) width * height, sizeof(int32_t));
+    int64_t *sat = (int64_t *) calloc((size_t) width * (size_t) height, sizeof(int64_t));
     uint8_t *temp = (uint8_t *) malloc((size_t) height * rowStride);
     if (!sat || !temp) {
         free(sat);
@@ -51,12 +57,12 @@ static void yuv_box_blur_plane(
     memcpy(temp, src, (size_t) height * rowStride);
 
     for (int y = 0; y < height; ++y) {
-        int32_t rowSum = 0;
+        int64_t rowSum = 0;
         const uint8_t *row = src + y * rowStride;
         for (int x = 0; x < width; ++x) {
             rowSum += row[x * pixelStride];
-            const int satIdx = y * width + x;
-            sat[satIdx] = rowSum + (y > 0 ? sat[(y - 1) * width + x] : 0);
+            const int64_t satIdx = (int64_t) y * width + x;
+            sat[satIdx] = rowSum + (y > 0 ? sat[(int64_t) (y - 1) * width + x] : 0);
         }
     }
 
@@ -79,7 +85,7 @@ static void yuv_box_blur_plane(
             // Base rectangle, each sample once; replicated edge bands; then
             // corners, missing from both a row and a column and so counted
             // padTop*padLeft times and so on.
-            int32_t sum = 0;
+            int64_t sum = 0;
             const struct { int x1, y1, x2, y2, weight; } parts[] = {
                 { x1, y1, x2, y2, 1 },
                 { x1, y1, x2, y1, padTop },
@@ -94,7 +100,7 @@ static void yuv_box_blur_plane(
             for (size_t i = 0; i < sizeof(parts) / sizeof(parts[0]); ++i) {
                 const int weight = parts[i].weight;
                 if (weight == 0) continue;
-                sum += weight * yuv_sat_rect(sat, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
+                sum += (int64_t) weight * yuv_sat_rect(sat, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
             }
 
             temp[y * rowStride + x * pixelStride] = (uint8_t)((sum + half) / area);

@@ -187,6 +187,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) {
+    YuvGeometry.validateBlurRadius(radius);
     _requireTightBgraFor('gaussianBlur');
     _callInPlaceBlur(_symbolForFormat(i420: 'yuv420_gaussblur', nv21: 'nv21_gaussian_blur', bgra: 'bgra8888_gaussian_blur'), radius, sigma);
     _revision++;
@@ -195,6 +196,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) {
+    YuvGeometry.validateBlurRadius(radius);
     _requireTightBgraFor('boxBlur');
     _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_box_blur', nv21: 'nv21_box_blur', bgra: 'bgra8888_box_blur'), radius, rect);
     _revision++;
@@ -203,6 +205,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) {
+    YuvGeometry.validateBlurRadius(radius);
     _requireTightBgraFor('meanBlur');
     _callInPlaceBlurWithRect(_symbolForFormat(i420: 'yuv420_mean_blur', nv21: 'nv21_mean_blur', bgra: 'bgra8888_mean_blur'), radius, rect);
     _revision++;

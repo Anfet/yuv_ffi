@@ -220,6 +220,25 @@ void main() {
       expect(a.uPlane.bytes, orderedEquals(b.uPlane.bytes));
     });
   });
+
+  test('an invalid radius is rejected before reaching native code, for I420 and NV21', () {
+    // Regression guard for the general P1 review finding on 2026-09-20:
+    // boxBlur/meanBlur passed any radius straight to C without validation. A
+    // negative radius inverts the SAT rectangle bounds and reads/writes out
+    // of bounds; this does not need nativeAvailable, since validation
+    // happens in Dart before any native call or allocation.
+    final i420 = patternI420(8, 8);
+    expect(() => i420.boxBlur(radius: -1), throwsArgumentError);
+    expect(() => i420.meanBlur(radius: -1), throwsArgumentError);
+    expect(() => i420.boxBlur(radius: 257), throwsArgumentError);
+    expect(() => i420.meanBlur(radius: 257), throwsArgumentError);
+
+    final nv21 = patternNv21(8, 8);
+    expect(() => nv21.boxBlur(radius: -1), throwsArgumentError);
+    expect(() => nv21.meanBlur(radius: -1), throwsArgumentError);
+    expect(() => nv21.boxBlur(radius: 257), throwsArgumentError);
+    expect(() => nv21.meanBlur(radius: 257), throwsArgumentError);
+  });
 }
 
 bool _checkNativeAvailable() {

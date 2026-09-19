@@ -207,4 +207,29 @@ abstract final class YuvGeometry {
       );
     }
   }
+
+  /// Largest `radius` a box/mean/gaussian blur accepts.
+  ///
+  /// Matches the `1..256` bound documented for the native ABI in
+  /// `doc/api-abi-0.3-design.md`. Native blur builds a SAT-style summed-area
+  /// table and computes plane-wide row/column pad weights from `radius`; an
+  /// unvalidated negative or absurdly large radius produces inverted SAT
+  /// bounds and an out-of-bounds native read/write rather than a clean
+  /// rejection.
+  static const int maxBlurRadius = 256;
+
+  /// Validates a blur `radius` before it reaches native code.
+  ///
+  /// `radius == 0` is the documented no-op and is accepted here; callers
+  /// short-circuit on it before doing any allocation or native call. Throws
+  /// [ArgumentError] for a negative radius or one above [maxBlurRadius].
+  static void validateBlurRadius(int radius) {
+    if (radius < 0 || radius > maxBlurRadius) {
+      throw ArgumentError.value(
+        radius,
+        'radius',
+        'Radius must be 0 (no-op) or between 1 and $maxBlurRadius',
+      );
+    }
+  }
 }

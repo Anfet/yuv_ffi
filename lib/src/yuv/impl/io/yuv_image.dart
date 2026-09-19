@@ -190,6 +190,10 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) {
+    YuvGeometry.validateBlurRadius(radius);
+    if (radius == 0) {
+      return this;
+    }
     _requireTightBgraFor('boxBlur');
     final def = YUVDefClass(this);
     final Pointer<Uint32> rectPtr;
@@ -429,6 +433,10 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) {
+    YuvGeometry.validateBlurRadius(radius);
+    if (radius == 0) {
+      return this;
+    }
     _requireTightBgraFor('gaussianBlur');
     final def = YUVDefClass(this);
     try {
@@ -486,6 +494,10 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) {
+    YuvGeometry.validateBlurRadius(radius);
+    if (radius == 0) {
+      return this;
+    }
     _requireTightBgraFor('meanBlur');
     final def = YUVDefClass(this);
     final Pointer<Uint32> rectPtr;

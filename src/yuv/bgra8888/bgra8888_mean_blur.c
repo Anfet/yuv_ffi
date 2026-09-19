@@ -6,12 +6,19 @@
  *
  * The inclusion-exclusion terms read the row above and the column left of the
  * rectangle, so they are only subtracted when that row/column exists.
+ *
+ * Entries are int64_t rather than int32_t: a single-channel SAT cell at the
+ * bottom-right corner sums every sample in the plane, up to width * height *
+ * 255. That already exceeds INT32_MAX past roughly 2160p (4096 * 2160 * 255 =
+ * 2,256,076,800), so a 4K or larger frame would silently overflow a 32-bit
+ * accumulator into undefined behavior and a wrong blur. int64_t keeps the
+ * same worst case comfortably inside range through 16K frames.
  */
-static int32_t yuv_sat_rect(const int32_t *sat, int width, int x1, int y1, int x2, int y2) {
-    int32_t sum = sat[y2 * width + x2];
-    if (y1 > 0) sum -= sat[(y1 - 1) * width + x2];
-    if (x1 > 0) sum -= sat[y2 * width + (x1 - 1)];
-    if (x1 > 0 && y1 > 0) sum += sat[(y1 - 1) * width + (x1 - 1)];
+static int64_t yuv_sat_rect(const int64_t *sat, int width, int x1, int y1, int x2, int y2) {
+    int64_t sum = sat[(int64_t) y2 * width + x2];
+    if (y1 > 0) sum -= sat[(int64_t) (y1 - 1) * width + x2];
+    if (x1 > 0) sum -= sat[(int64_t) y2 * width + (x1 - 1)];
+    if (x1 > 0 && y1 > 0) sum += sat[(int64_t) (y1 - 1) * width + (x1 - 1)];
     return sum;
 }
 
@@ -42,12 +49,17 @@ FFI_PLUGIN_EXPORT void bgra8888_mean_blur(
         return;
     }
 
-    // Integral images (int to avoid overflow). Alpha deliberately has no table:
-    // the blur contract keeps alpha exact, so it is copied per pixel rather
-    // than averaged.
-    int32_t *satB = (int32_t*) calloc(width * height, sizeof(int32_t));
-    int32_t *satG = (int32_t*) calloc(width * height, sizeof(int32_t));
-    int32_t *satR = (int32_t*) calloc(width * height, sizeof(int32_t));
+    // Integral images. Alpha deliberately has no table: the blur contract
+    // keeps alpha exact, so it is copied per pixel rather than averaged.
+    //
+    // width and height are cast to size_t before multiplying, so the
+    // allocation size itself is computed without a 32-bit overflow even
+    // though width/height stay declared int (the rest of the file indexes
+    // them as int throughout).
+    const size_t planeSamples = (size_t) width * (size_t) height;
+    int64_t *satB = (int64_t*) calloc(planeSamples, sizeof(int64_t));
+    int64_t *satG = (int64_t*) calloc(planeSamples, sizeof(int64_t));
+    int64_t *satR = (int64_t*) calloc(planeSamples, sizeof(int64_t));
 
     if (!satB || !satG || !satR) {
         free(satB); free(satG); free(satR);
@@ -56,15 +68,15 @@ FFI_PLUGIN_EXPORT void bgra8888_mean_blur(
 
     // Building the summed area table
     for (int y = 0; y < height; ++y) {
-        int32_t rowB = 0, rowG = 0, rowR = 0;
+        int64_t rowB = 0, rowG = 0, rowR = 0;
         for (int x = 0; x < width; ++x) {
             int srcByteIdx = y * rowStride + x * bytesPerPixel;
             rowB += data[srcByteIdx + 0];
             rowG += data[srcByteIdx + 1];
             rowR += data[srcByteIdx + 2];
 
-            int satIdx = y * width + x;
-            int satPrevIdx = (y - 1) * width + x;
+            const int64_t satIdx = (int64_t) y * width + x;
+            const int64_t satPrevIdx = (int64_t) (y - 1) * width + x;
 
             satB[satIdx] = rowB + (y > 0 ? satB[satPrevIdx] : 0);
             satG[satIdx] = rowG + (y > 0 ? satG[satPrevIdx] : 0);
@@ -114,7 +126,7 @@ FFI_PLUGIN_EXPORT void bgra8888_mean_blur(
             // Base rectangle, each sample once; then the replicated edge bands;
             // then the corners, which are missing from both a row and a column
             // and so are counted padTop*padLeft times and so on.
-            int sumB = 0, sumG = 0, sumR = 0;
+            int64_t sumB = 0, sumG = 0, sumR = 0;
             const struct { int x1, y1, x2, y2, weight; } parts[] = {
                 { x1, y1, x2, y2, 1 },
                 { x1, y1, x2, y1, padTop },
@@ -131,14 +143,14 @@ FFI_PLUGIN_EXPORT void bgra8888_mean_blur(
                 if (weight == 0) {
                     continue;
                 }
-                sumB += weight * yuv_sat_rect(satB, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
-                sumG += weight * yuv_sat_rect(satG, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
-                sumR += weight * yuv_sat_rect(satR, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
+                sumB += (int64_t) weight * yuv_sat_rect(satB, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
+                sumG += (int64_t) weight * yuv_sat_rect(satG, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
+                sumR += (int64_t) weight * yuv_sat_rect(satR, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
             }
 
             // Round half up, matching the reference oracle's `value.round()`.
             // Truncating instead biases every channel down by up to one step.
-            const int half = area / 2;
+            const int64_t half = area / 2;
             const int dstByteIdx = y * rowStride + x * bytesPerPixel;
             temp[dstByteIdx + 0] = (uint8_t)((sumB + half) / area);
             temp[dstByteIdx + 1] = (uint8_t)((sumG + half) / area);

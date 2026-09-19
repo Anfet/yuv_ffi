@@ -146,6 +146,57 @@ void main() {
 
     expect(image.yPlane.bytes, orderedEquals(original));
   });
+
+  test('a large uniform frame does not overflow the SAT accumulator', () {
+    if (!nativeAvailable) {
+      markTestSkipped('native library is not available on this host');
+      return;
+    }
+    // Regression guard for the P1 review finding on 2026-09-20: the SAT
+    // accumulators used to be int32_t, and a single-channel SAT cell at the
+    // bottom-right corner sums every sample in the plane. An all-white frame
+    // of 3000x2900 pixels (255 per sample, one channel) sums to
+    // 2,218,500,000, already past INT32_MAX (2,147,483,647) — smaller than a
+    // real 4K frame (4096x2160 sums to 2,256,076,800) but large enough to
+    // exercise the same overflow deterministically without allocating a full
+    // 4K buffer.
+    //
+    // A 32-bit accumulator would wrap into a negative or corrupted sum here,
+    // producing a blurred value far from the uniform 255 every pixel of a
+    // flat white frame must blur to. int64_t keeps the same worst case in
+    // range through 16K frames.
+    const width = 3000;
+    const height = 2900;
+    final bytes = Uint8List(width * height * 4)..fillRange(0, width * height * 4, 0xFF);
+    final image = YuvImage(YuvFileFormat.bgra8888, width, height, planes: [YuvPlane(height, width * 4, 4, bytes)]);
+
+    image.meanBlur(radius: 4);
+
+    // Every channel of a flat white frame must still blur to 255: a wrapped
+    // or corrupted SAT sum would produce a wrong, non-255 average instead.
+    for (int i = 0; i < image.yPlane.bytes.length; i += 4) {
+      expect(image.yPlane.bytes[i], 0xFF, reason: 'blue at pixel ${i ~/ 4}');
+      expect(image.yPlane.bytes[i + 1], 0xFF, reason: 'green at pixel ${i ~/ 4}');
+      expect(image.yPlane.bytes[i + 2], 0xFF, reason: 'red at pixel ${i ~/ 4}');
+      expect(image.yPlane.bytes[i + 3], 0xFF, reason: 'alpha at pixel ${i ~/ 4}');
+    }
+  }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test('an invalid radius is rejected before reaching native code', () {
+    // Regression guard for the general P1 review finding on 2026-09-20:
+    // boxBlur/meanBlur/gaussianBlur passed any radius straight to C without
+    // validation. A negative radius inverts the SAT rectangle bounds
+    // (x1 > x2, y1 > y2) and reads/writes out of bounds; this does not need
+    // nativeAvailable, since validation happens in Dart before any native
+    // call or allocation.
+    final image = patternImage(8, 8);
+    expect(() => image.meanBlur(radius: -1), throwsArgumentError);
+    expect(() => image.boxBlur(radius: -1), throwsArgumentError);
+    expect(() => image.gaussianBlur(radius: -1), throwsArgumentError);
+    expect(() => image.meanBlur(radius: 257), throwsArgumentError);
+    expect(() => image.boxBlur(radius: 257), throwsArgumentError);
+    expect(() => image.gaussianBlur(radius: 257), throwsArgumentError);
+  });
 }
 
 bool _checkNativeAvailable() {
