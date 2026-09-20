@@ -12,8 +12,8 @@ FFI_PLUGIN_EXPORT void bgra8888_grayscale(YUVDef *image) {
             uint8_t g = pixel[1];
             uint8_t r = pixel[2];
 
-            // Standard formula: Y = 0.299*R + 0.587*G + 0.114*B
-            uint8_t gray = (uint8_t)(0.299f * r + 0.587f * g + 0.114f * b);
+            // Contract: round((299R + 587G + 114B) / 1000), half-up.
+            uint8_t gray = (uint8_t)((299 * r + 587 * g + 114 * b + 500) / 1000);
 
             // Set every component to the same value (gray)
             pixel[0] = gray; // B

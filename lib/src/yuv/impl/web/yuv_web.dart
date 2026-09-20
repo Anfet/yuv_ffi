@@ -17,7 +17,9 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 /// Web backend implementation backed by WASM exports where available.
 class YuvImageImpl implements YuvImage, YuvRevisionAware {
-  YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+  // I420 stores U and V as separate single-byte-per-sample planes, so the
+  // default pixelStride is 1, unlike NV21's interleaved (U, V) pairs.
+  YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
       : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})

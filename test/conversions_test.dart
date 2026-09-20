@@ -755,7 +755,9 @@ void main() {
       final image = YuvImage.i420(3, 3);
       final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 
-      expect(expectedLength, 25);
+      // Y: 3x3 = 9 bytes. Chroma: ceil(3/2) x ceil(3/2) = 2x2, one byte per
+      // sample for I420's planar (not interleaved) U and V, 4 bytes each.
+      expect(expectedLength, 17);
       expect(image.getBytes(), hasLength(expectedLength));
     });
   });
