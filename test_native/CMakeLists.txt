@@ -104,6 +104,37 @@ add_test(
     COMMAND abi_layout_test
 )
 
+# ABI v1 status and atomicity tests (YUV-36b)
+# Exercises the eleven yuv_*_v1 entry points through their shared validation
+# prologue: reachable validation statuses have concrete descriptor or options
+# cases, while reserved status 3 has its numeric value pinned. Negative cases
+# check that the destination buffer remains byte-for-byte unchanged (canary
+# fill). Compiles the ABI sources directly, as the other test_native
+# targets do, rather than linking the shared library.
+add_executable(abi_status_test
+    abi_status_test.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_convert_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_black_white_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_grayscale_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_negate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_gaussian_blur_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_mean_blur_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_box_blur_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_crop_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_flip_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_rotate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_chroma_swap_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/validated_view.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/checked_arithmetic.c
+)
+target_include_directories(abi_status_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+add_test(
+    NAME abi_status_tests
+    COMMAND abi_status_test
+)
+
 # Windows: document ASan/UBSan limitation
 # On Windows, the standard LLVM/GCC sanitizers may not be available. Projects using
 # this harness on Windows CI should either:
