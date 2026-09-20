@@ -88,6 +88,22 @@ add_test(
     COMMAND validated_view_test
 )
 
+# ABI v1 layout test (YUV-36a)
+# Verifies that the public wire-stable descriptor/options layout matches
+# docs/api-abi-0.3-design.md sections 9-10 on this toolchain, and prints the
+# actual sizeof/offsetof values so a reviewer on a new target (native32,
+# native64, wasm32) can read them rather than infer them. The header itself
+# also fails to compile on a mismatch; this target proves the same numbers at
+# runtime and covers the status/format constant values. Header-only: there is
+# no library source to compile in, because YUV-36a adds no exported symbol.
+add_executable(abi_layout_test abi_layout_test.c)
+target_include_directories(abi_layout_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+add_test(
+    NAME abi_layout_tests
+    COMMAND abi_layout_test
+)
+
 # Windows: document ASan/UBSan limitation
 # On Windows, the standard LLVM/GCC sanitizers may not be available. Projects using
 # this harness on Windows CI should either:
