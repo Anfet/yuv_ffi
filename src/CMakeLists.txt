@@ -40,6 +40,7 @@ set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_rotate_v1.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_chroma_swap_v1.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_blackwhite.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_block_uv.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_box_blur.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_crop.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_flip.c"

@@ -1,4 +1,5 @@
 #include "../yuv.h"
+#include "h/bgra8888_block_uv.h"
 
 // BT.601 limited-range encode, consistent with the *_to_bgra8888 decode
 // matrix used elsewhere in this project. Chroma is the average of the actual
@@ -27,28 +28,12 @@ FFI_PLUGIN_EXPORT void bgra8888_to_nv21(const YUVDef *src, YUVDef *dst) {
         int j = by / 2;
         for (int bx = 0; bx < W; bx += 2) {
             int i = bx / 2;
-            int sumR = 0, sumG = 0, sumB = 0, samples = 0;
-            for (int oy = 0; oy < 2; ++oy) {
-                int py = by + oy;
-                if (py >= H) continue;
-                const uint8_t *row = src->y + (size_t) py * src->yRowStride;
-                for (int ox = 0; ox < 2; ++ox) {
-                    int px = bx + ox;
-                    if (px >= W) continue;
-                    const uint8_t *pixel = row + (size_t) px * src->yPixelStride;
-                    sumB += pixel[0];
-                    sumG += pixel[1];
-                    sumR += pixel[2];
-                    samples++;
-                }
-            }
-            int R = sumR / samples, G = sumG / samples, B = sumB / samples;
-            int U = ((-38 * R - 74 * G + 112 * B + 128) >> 8) + 128;
-            int V = ((112 * R - 94 * G - 18 * B + 128) >> 8) + 128;
+            uint8_t U, V;
+            bgra8888_block_uv(src, bx, by, &U, &V);
 
             int uvIndex = yuv_index(i, j, dst->uvRowStride, dst->uvPixelStride);
-            dst->u[uvIndex] = (uint8_t) CLAMP(U);
-            dst->u[uvIndex + 1] = (uint8_t) CLAMP(V);
+            dst->u[uvIndex] = U;
+            dst->u[uvIndex + 1] = V;
         }
     }
 }
