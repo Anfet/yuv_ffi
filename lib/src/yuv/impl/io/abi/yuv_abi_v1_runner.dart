@@ -6,6 +6,7 @@ import 'package:yuv_ffi/src/functions/bindings/yuv_ffi_bingings.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 
 import 'yuv_abi_v1_frame.dart';
@@ -64,7 +65,7 @@ class YuvAbiV1Runner {
   /// fields in ABI v1, only the shared struct header and reserved padding).
   static YuvAbiV1FrameResult convert({required YuvAbiV1FrameInput source, required YuvAbiV1DestinationLayout destinationLayout}) {
     return _run(
-      operation: 'yuv_convert_v1',
+      operation: yuvSymbolConvertV1,
       source: source,
       destinationLayout: destinationLayout,
       allocateOptions: (allocator) => _allocateConvertOptions(allocator).cast(),
@@ -76,19 +77,19 @@ class YuvAbiV1Runner {
   /// Runs `yuv_black_white_v1`. [region] selects the ROI, or `null` for the
   /// whole frame.
   static YuvAbiV1FrameResult blackWhite({required YuvAbiV1FrameInput source, YuvAbiV1Region? region}) {
-    return _runEffect('yuv_black_white_v1', source, region, (src, dst, options) => ffiBingings.yuv_black_white_v1(src, dst, options));
+    return _runEffect(yuvSymbolBlackWhiteV1, source, region, (src, dst, options) => ffiBingings.yuv_black_white_v1(src, dst, options));
   }
 
   /// Runs `yuv_grayscale_v1`. [region] selects the ROI, or `null` for the
   /// whole frame.
   static YuvAbiV1FrameResult grayscale({required YuvAbiV1FrameInput source, YuvAbiV1Region? region}) {
-    return _runEffect('yuv_grayscale_v1', source, region, (src, dst, options) => ffiBingings.yuv_grayscale_v1(src, dst, options));
+    return _runEffect(yuvSymbolGrayscaleV1, source, region, (src, dst, options) => ffiBingings.yuv_grayscale_v1(src, dst, options));
   }
 
   /// Runs `yuv_negate_v1`. [region] selects the ROI, or `null` for the whole
   /// frame.
   static YuvAbiV1FrameResult negate({required YuvAbiV1FrameInput source, YuvAbiV1Region? region}) {
-    return _runEffect('yuv_negate_v1', source, region, (src, dst, options) => ffiBingings.yuv_negate_v1(src, dst, options));
+    return _runEffect(yuvSymbolNegateV1, source, region, (src, dst, options) => ffiBingings.yuv_negate_v1(src, dst, options));
   }
 
   /// Runs `yuv_chroma_swap_v1`. ABI v1 requires its region disabled (section
@@ -96,7 +97,7 @@ class YuvAbiV1Runner {
   /// method takes no [YuvAbiV1Region] parameter at all -- there is no value
   /// that would produce anything other than `INVALID_ARGUMENT`.
   static YuvAbiV1FrameResult chromaSwap({required YuvAbiV1FrameInput source}) {
-    return _runEffect('yuv_chroma_swap_v1', source, null, (src, dst, options) => ffiBingings.yuv_chroma_swap_v1(src, dst, options));
+    return _runEffect(yuvSymbolChromaSwapV1, source, null, (src, dst, options) => ffiBingings.yuv_chroma_swap_v1(src, dst, options));
   }
 
   /// Runs one of `yuv_gaussian_blur_v1`, `yuv_mean_blur_v1`, or
@@ -114,9 +115,9 @@ class YuvAbiV1Runner {
     YuvAbiV1Region? region,
   }) {
     final String operation = switch (kind) {
-      YuvAbiV1BlurKind.gaussian => 'yuv_gaussian_blur_v1',
-      YuvAbiV1BlurKind.mean => 'yuv_mean_blur_v1',
-      YuvAbiV1BlurKind.box => 'yuv_box_blur_v1',
+      YuvAbiV1BlurKind.gaussian => yuvSymbolGaussianBlurV1,
+      YuvAbiV1BlurKind.mean => yuvSymbolMeanBlurV1,
+      YuvAbiV1BlurKind.box => yuvSymbolBoxBlurV1,
     };
 
     final YuvAbiV1DestinationLayout destinationLayout = _sameGeometryDestination(source);
@@ -151,7 +152,7 @@ class YuvAbiV1Runner {
       {required YuvAbiV1FrameInput source, required int left, required int top, required int width, required int height}) {
     final YuvAbiV1DestinationLayout destinationLayout = _destinationWithGeometry(source, width: width, height: height);
     return _run(
-      operation: 'yuv_crop_v1',
+      operation: yuvSymbolCropV1,
       source: source,
       destinationLayout: destinationLayout,
       allocateOptions: (allocator) => _allocateCropOptions(allocator, left: left, top: top, width: width, height: height).cast(),
@@ -166,7 +167,7 @@ class YuvAbiV1Runner {
   static YuvAbiV1FrameResult flip({required YuvAbiV1FrameInput source, required int direction}) {
     final YuvAbiV1DestinationLayout destinationLayout = _sameGeometryDestination(source);
     return _run(
-      operation: 'yuv_flip_v1',
+      operation: yuvSymbolFlipV1,
       source: source,
       destinationLayout: destinationLayout,
       allocateOptions: (allocator) => _allocateFlipOptions(allocator, direction: direction).cast(),
@@ -184,7 +185,7 @@ class YuvAbiV1Runner {
         ? _destinationWithGeometry(source, width: source.height, height: source.width, transposedStrides: true)
         : _sameGeometryDestination(source);
     return _run(
-      operation: 'yuv_rotate_v1',
+      operation: yuvSymbolRotateV1,
       source: source,
       destinationLayout: destinationLayout,
       allocateOptions: (allocator) => _allocateRotateOptions(allocator, rotationDegrees: rotationDegrees).cast(),
