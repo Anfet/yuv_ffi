@@ -1,5 +1,6 @@
 #include "h/yuv_ops_v1.h"
 #include "h/yuv_validate_v1.h"
+#include "h/yuv_kernel_v1.h"
 
 #include <math.h>
 
@@ -54,14 +55,7 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_mean_blur_v1(const YuvConstFrameV1 *source, YuvM
         return regionStatus;
     }
 
-    /* Validation is complete and both descriptors are sound, but the blur
-     * kernel has not landed yet -- YUV-23 owns it. Returning INTERNAL_ERROR
-     * without writing a single destination byte keeps the atomicity contract
-     * honest in the meantime: a caller sees a clean failure, never a
-     * half-written frame.
-     *
-     * Replace this with the real kernel -- never with a bare YUV_STATUS_OK,
-     * which would report success for an untouched frame.
-     */
-    return YUV_STATUS_INTERNAL_ERROR;
+    YuvRegionV1 region = yuv_kernel_v1_region(&options->region);
+
+    return yuv_kernel_v1_blur(&sourceView, &destinationView, &region, options->radius, NULL);
 }

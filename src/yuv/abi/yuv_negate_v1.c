@@ -1,10 +1,26 @@
 #include "h/yuv_ops_v1.h"
 #include "h/yuv_validate_v1.h"
+#include "h/yuv_kernel_v1.h"
 
 /*
  * Visible RGB negate: each channel becomes 255 - channel, with alpha preserved.
  * I420->I420, NV12->NV12, BGRA->BGRA at identical geometry.
  */
+/* Section 11: negate is an RGB operation, (255-R, 255-G, 255-B). Inverting
+ * the stored Y/U/V samples instead is not equivalent in limited range -- that
+ * is the MAE 8.152 in EFFECT-NEGATE-I420 -- and the legacy chroma form
+ * 256 - value had no representable result for 0, wrapping back to 0 in a
+ * uint8_t. Going through RGB removes both problems by construction. */
+static YuvRgbaPixelV1 yuv_negate_v1_effect(void *context, YuvRgbaPixelV1 pixel, uint32_t x, uint32_t y) {
+    (void)context;
+    (void)x;
+    (void)y;
+    pixel.r = (uint8_t)(255 - pixel.r);
+    pixel.g = (uint8_t)(255 - pixel.g);
+    pixel.b = (uint8_t)(255 - pixel.b);
+    return pixel;
+}
+
 FFI_PLUGIN_EXPORT YuvStatus yuv_negate_v1(const YuvConstFrameV1 *source, YuvMutableFrameV1 *destination,
     const YuvEffectOptionsV1 *options) {
     YuvStatus optionsStatus = yuv_validate_v1_options_header(options, (uint32_t)sizeof(YuvEffectOptionsV1));
@@ -34,17 +50,8 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_negate_v1(const YuvConstFrameV1 *source, YuvMuta
         return regionStatus;
     }
 
-    /* Validation is complete and both descriptors are sound, but the pixel
-     * kernel for this operation has not landed yet -- YUV-22 owns it.
-     * Returning INTERNAL_ERROR without writing a single destination byte is
-     * what keeps the atomicity contract honest in the meantime: a caller sees
-     * a clean failure, never a half-written frame.
-     *
-     * YUV-36b deliberately ships the ABI surface and its validation ahead of
-     * the kernels, so that the status contract, the Dart exception mapping,
-     * and the WASM symbol table can be built and tested against a signature
-     * that will not move. Replace this with the real kernel -- never with a
-     * bare YUV_STATUS_OK, which would report success for an untouched frame.
-     */
-    return YUV_STATUS_INTERNAL_ERROR;
+    YuvRegionV1 region = yuv_kernel_v1_region(&options->region);
+    yuv_kernel_v1_apply_effect(&sourceView, &destinationView, &region, yuv_negate_v1_effect, NULL);
+
+    return YUV_STATUS_OK;
 }

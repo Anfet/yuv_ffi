@@ -27,6 +27,7 @@ set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/utils/checked_arithmetic.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/utils/validated_view.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_validate_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_kernel_v1.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_convert_v1.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_black_white_v1.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_grayscale_v1.c"

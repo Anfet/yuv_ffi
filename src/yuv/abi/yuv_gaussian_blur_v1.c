@@ -1,7 +1,10 @@
 #include "h/yuv_ops_v1.h"
 #include "h/yuv_validate_v1.h"
+#include "h/yuv_kernel_v1.h"
+#include "../utils/h/checked_arithmetic.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 /*
  * Gaussian blur with the normalized two-dimensional kernel
@@ -60,14 +63,46 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_gaussian_blur_v1(const YuvConstFrameV1 *source, 
         return regionStatus;
     }
 
-    /* Validation is complete and both descriptors are sound, but the blur
-     * kernel has not landed yet -- YUV-23 owns it. Returning INTERNAL_ERROR
-     * without writing a single destination byte keeps the atomicity contract
-     * honest in the meantime: a caller sees a clean failure, never a
-     * half-written frame.
-     *
-     * Replace this with the real kernel -- never with a bare YUV_STATUS_OK,
-     * which would report success for an untouched frame.
-     */
-    return YUV_STATUS_INTERNAL_ERROR;
+    YuvRegionV1 region = yuv_kernel_v1_region(&options->region);
+
+    /* radius 0 leaves a single-cell kernel of weight 1, which the shared blur
+     * path already handles as an exact copy; no weight table is needed. */
+    if (options->radius == 0) {
+        return yuv_kernel_v1_blur(&sourceView, &destinationView, &region, 0, NULL);
+    }
+
+    /* The separable form is not used here: the oracle in section 11 is the
+     * two-dimensional kernel exp(-(dx^2+dy^2)/(2*sigma^2)), and matching it
+     * exactly matters more than the saved multiplications at the radii this
+     * ABI accepts. Weights are left unnormalized because the blur driver
+     * divides by their actual sum, which is also what makes edge-replicate
+     * come out right. */
+    uint32_t side = options->radius * 2 + 1;
+    YuvSizeResult cells = yuv_checked_mul((size_t)side, (size_t)side);
+    if (!cells.success) {
+        return YUV_STATUS_OVERFLOW;
+    }
+    YuvSizeResult weightBytes = yuv_checked_mul(cells.value, sizeof(double));
+    if (!weightBytes.success) {
+        return YUV_STATUS_OVERFLOW;
+    }
+
+    double *weights = (double *)malloc(weightBytes.value);
+    if (weights == NULL) {
+        return YUV_STATUS_ALLOCATION_FAILED;
+    }
+
+    double denominator = 2.0 * options->sigma * options->sigma;
+    for (int32_t offsetY = -(int32_t)options->radius; offsetY <= (int32_t)options->radius; offsetY++) {
+        for (int32_t offsetX = -(int32_t)options->radius; offsetX <= (int32_t)options->radius; offsetX++) {
+            double squared = (double)(offsetX * offsetX + offsetY * offsetY);
+            size_t index = (size_t)(offsetY + (int32_t)options->radius) * side +
+                (size_t)(offsetX + (int32_t)options->radius);
+            weights[index] = exp(-squared / denominator);
+        }
+    }
+
+    YuvStatus status = yuv_kernel_v1_blur(&sourceView, &destinationView, &region, options->radius, weights);
+    free(weights);
+    return status;
 }

@@ -114,6 +114,7 @@ add_test(
 add_executable(abi_status_test
     abi_status_test.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_kernel_v1.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_convert_v1.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_black_white_v1.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_grayscale_v1.c
@@ -133,6 +134,102 @@ target_include_directories(abi_status_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.
 add_test(
     NAME abi_status_tests
     COMMAND abi_status_test
+)
+
+# ABI v1 geometric transform tests (YUV-31)
+# Verifies crop, flip, and rotate produce the visible-pixel mapping of
+# docs/api-abi-0.3-design.md section 11 against an oracle built independently
+# of the implementation, across I420, NV12, and BGRA8888, at even, odd, and
+# degenerate (1x1, 1xN, Nx1) geometry. Every fixture carries padded row
+# strides and canary-filled gaps, so a kernel that copies a row stride or a
+# pixel stride instead of a sample is caught rather than merely suspected.
+add_executable(abi_transform_test
+    abi_transform_test.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_kernel_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_crop_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_flip_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_rotate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/validated_view.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/checked_arithmetic.c
+)
+target_include_directories(abi_transform_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+add_test(
+    NAME abi_transform_tests
+    COMMAND abi_transform_test
+)
+
+# ABI v1 conversion tests (YUV-32)
+# The central case is parity: the same image presented as RGBA and as BGRA
+# must convert to identical YUV samples, which fails for either half of the
+# old defect (a different matrix, or chroma taken from the top-left pixel
+# instead of the clipped 2x2 average). Absolute values are additionally pinned
+# against the reference oracle transcribed into the test, so two paths that
+# agree and are both wrong still fail.
+add_executable(abi_convert_test
+    abi_convert_test.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_kernel_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_convert_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/validated_view.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/checked_arithmetic.c
+)
+target_include_directories(abi_convert_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+add_test(
+    NAME abi_convert_tests
+    COMMAND abi_convert_test
+)
+
+# ABI v1 effect tests (YUV-22)
+# Pins the three reference failures YUV-11 reported: grayscale rounding, the
+# black-white `>= 128` threshold, and RGB-visible negate (the stored-sample
+# inversion was max 134 off the oracle, and its 256 - value chroma form had no
+# representable result for 0). BGRA is checked against the oracle exactly,
+# since it has no subsampling; the three formats are additionally required to
+# agree on the visible result.
+add_executable(abi_effect_test
+    abi_effect_test.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_kernel_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_grayscale_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_black_white_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_negate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_chroma_swap_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/validated_view.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/checked_arithmetic.c
+)
+target_include_directories(abi_effect_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+add_test(
+    NAME abi_effect_tests
+    COMMAND abi_effect_test
+)
+
+# ABI v1 blur tests (YUV-23)
+# Covers the structural defects behind the 19 reported blur failures: results
+# that depended on the destination's prior contents (the kernel read what it
+# was writing), destroyed alpha and uninitialized bytes outside the region,
+# mean and box disagreeing though section 11 makes them one oracle, and the
+# edge-replicate border rule fixed by the Engineer on 2026-09-20 -- pinned
+# both by an invariant (a flat image is preserved) and by a hand-computed
+# vector.
+add_executable(abi_blur_test
+    abi_blur_test.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_kernel_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_mean_blur_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_box_blur_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_gaussian_blur_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/validated_view.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/checked_arithmetic.c
+)
+target_include_directories(abi_blur_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+add_test(
+    NAME abi_blur_tests
+    COMMAND abi_blur_test
 )
 
 # Windows: document ASan/UBSan limitation

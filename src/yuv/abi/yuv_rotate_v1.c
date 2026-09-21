@@ -1,5 +1,6 @@
 #include "h/yuv_ops_v1.h"
 #include "h/yuv_validate_v1.h"
+#include "h/yuv_kernel_v1.h"
 
 /*
  * Clockwise rotation by exactly 0, 90, 180, or 270 degrees.
@@ -9,6 +10,44 @@
  * likeliest caller mistake here, which is why the geometry rule is chosen from
  * the angle before the destination is checked against it.
  */
+/* Reversing an axis of extent n keeps every 2x2 chroma block intact exactly
+ * when n is even, or when n is 1 and the reversal is therefore the identity.
+ * At any other odd extent a destination block straddles two source blocks. */
+static int yuv_axis_reversal_is_block_aligned(uint32_t extent) {
+    return (extent % 2) == 0 || extent == 1;
+}
+
+typedef struct {
+    uint32_t sourceWidth;
+    uint32_t sourceHeight;
+    uint32_t degrees;
+} YuvRotateContextV1;
+
+/* Clockwise, per section 11: 90 takes destination (x,y) from source
+ * (y, height-1-x), 180 from (width-1-x, height-1-y), 270 from (width-1-y, x). */
+static void yuv_rotate_v1_map(
+    void *context, uint32_t destinationX, uint32_t destinationY, uint32_t *outSourceX, uint32_t *outSourceY) {
+    const YuvRotateContextV1 *rotate = (const YuvRotateContextV1 *)context;
+    switch (rotate->degrees) {
+        case 90:
+            *outSourceX = destinationY;
+            *outSourceY = rotate->sourceHeight - 1 - destinationX;
+            return;
+        case 180:
+            *outSourceX = rotate->sourceWidth - 1 - destinationX;
+            *outSourceY = rotate->sourceHeight - 1 - destinationY;
+            return;
+        case 270:
+            *outSourceX = rotate->sourceWidth - 1 - destinationY;
+            *outSourceY = destinationX;
+            return;
+        default:
+            *outSourceX = destinationX;
+            *outSourceY = destinationY;
+            return;
+    }
+}
+
 FFI_PLUGIN_EXPORT YuvStatus yuv_rotate_v1(const YuvConstFrameV1 *source, YuvMutableFrameV1 *destination,
     const YuvRotateOptionsV1 *options) {
     YuvStatus optionsStatus = yuv_validate_v1_options_header(options, (uint32_t)sizeof(YuvRotateOptionsV1));
@@ -47,13 +86,20 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_rotate_v1(const YuvConstFrameV1 *source, YuvMuta
         return pairStatus;
     }
 
-    /* Validation is complete and both descriptors are sound, but the rotation kernel
-     * has not landed yet -- YUV-31 owns it. Returning INTERNAL_ERROR without
-     * writing a single destination byte keeps the atomicity contract honest in
-     * the meantime: a caller sees a clean failure, never a half-written frame.
-     *
-     * Replace this with the real kernel -- never with a bare YUV_STATUS_OK,
-     * which would report success for an untouched frame.
-     */
-    return YUV_STATUS_INTERNAL_ERROR;
+    /* 0 degrees is the identity. Every other angle reverses at least one
+     * axis (180 reverses both; 90 and 270 reverse one and transpose), and a
+     * transpose can pair any x block with any y block, so both extents have
+     * to survive reversal for the copy path to stay phase-correct. */
+    int blockAligned = options->rotationDegrees == 0 ||
+        (yuv_axis_reversal_is_block_aligned(sourceView.width) &&
+            yuv_axis_reversal_is_block_aligned(sourceView.height));
+
+    YuvRotateContextV1 context;
+    context.sourceWidth = sourceView.width;
+    context.sourceHeight = sourceView.height;
+    context.degrees = options->rotationDegrees;
+
+    yuv_kernel_v1_transform(&sourceView, &destinationView, yuv_rotate_v1_map, &context, blockAligned);
+
+    return YUV_STATUS_OK;
 }

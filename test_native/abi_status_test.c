@@ -12,12 +12,12 @@
  *     check that pattern after the call. Valid calls separately confirm that
  *     validation reaches the temporary kernel stub.
  *
- * The kernels themselves are not implemented yet (YUV-31/32/22/23), so a fully
- * valid call currently returns YUV_STATUS_INTERNAL_ERROR. That is deliberate,
- * and the tests below assert exactly that for a valid descriptor: it proves
- * validation was passed rather than short-circuited, and it will start failing
- * the moment a kernel lands without this file being updated -- which is the
- * intended reminder.
+ * Kernels land task by task. An operation whose kernel is implemented asserts
+ * YUV_STATUS_OK here; one still stubbed asserts YUV_STATUS_INTERNAL_ERROR,
+ * which proves validation was passed rather than short-circuited and starts
+ * failing the moment that kernel lands without this file being updated --
+ * the intended reminder. The transforms (YUV-31) are implemented; their
+ * pixel-level correctness is covered by abi_transform_test.c.
  *
  * Checks are routed through helpers taking volatile locals so MSVC does not
  * report C4127 (constant conditional) under /W4 /WX, and failures are reported
@@ -731,8 +731,7 @@ static void test_transform_options(void) {
         YuvEffectOptionsV1 options = make_effect_options();
         YuvStatus status = yuv_chroma_swap_v1(&source, &destination, &options);
         expect_status("chroma swap accepts NV12 with a disabled region", status,
-            YUV_STATUS_INTERNAL_ERROR);
-        expect_true("      destination canary intact", destination_untouched());
+            YUV_STATUS_OK);
     }
 }
 
@@ -753,49 +752,48 @@ static void test_valid_descriptor_reaches_kernel(void) {
         YuvConstFrameV1 source = make_bgra_source();
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvEffectOptionsV1 options = make_effect_options();
-        expect_status("grayscale reaches the kernel", yuv_grayscale_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
-        expect_true("      destination still untouched by the stub", destination_untouched());
+        expect_status("grayscale succeeds", yuv_grayscale_v1(&source, &destination, &options),
+            YUV_STATUS_OK);
     }
     {
         reset_buffers();
         YuvConstFrameV1 source = make_bgra_source();
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvEffectOptionsV1 options = make_effect_options();
-        expect_status("black-white reaches the kernel", yuv_black_white_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
+        expect_status("black-white succeeds", yuv_black_white_v1(&source, &destination, &options),
+            YUV_STATUS_OK);
     }
     {
         reset_buffers();
         YuvConstFrameV1 source = make_bgra_source();
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvEffectOptionsV1 options = make_effect_options();
-        expect_status("negate reaches the kernel", yuv_negate_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
+        expect_status("negate succeeds", yuv_negate_v1(&source, &destination, &options),
+            YUV_STATUS_OK);
     }
     {
         reset_buffers();
         YuvConstFrameV1 source = make_bgra_source();
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvConvertOptionsV1 options = make_convert_options();
-        expect_status("convert reaches the kernel", yuv_convert_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
+        expect_status("convert succeeds", yuv_convert_v1(&source, &destination, &options),
+            YUV_STATUS_OK);
     }
     {
         reset_buffers();
         YuvConstFrameV1 source = make_bgra_source();
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvBlurOptionsV1 options = make_blur_options(2, 0.0);
-        expect_status("mean blur reaches the kernel", yuv_mean_blur_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
+        expect_status("mean blur succeeds", yuv_mean_blur_v1(&source, &destination, &options),
+            YUV_STATUS_OK);
     }
     {
         reset_buffers();
         YuvConstFrameV1 source = make_bgra_source();
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvBlurOptionsV1 options = make_blur_options(2, 0.0);
-        expect_status("box blur reaches the kernel", yuv_box_blur_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
+        expect_status("box blur succeeds", yuv_box_blur_v1(&source, &destination, &options),
+            YUV_STATUS_OK);
     }
     {
         reset_buffers();
@@ -803,7 +801,7 @@ static void test_valid_descriptor_reaches_kernel(void) {
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvBlurOptionsV1 options = make_blur_options(2, 1.5);
         expect_status("gaussian blur reaches the kernel",
-            yuv_gaussian_blur_v1(&source, &destination, &options), YUV_STATUS_INTERNAL_ERROR);
+            yuv_gaussian_blur_v1(&source, &destination, &options), YUV_STATUS_OK);
     }
     {
         /* radius 0 is a defined no-op, not an error, so it must pass
@@ -813,23 +811,23 @@ static void test_valid_descriptor_reaches_kernel(void) {
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvBlurOptionsV1 options = make_blur_options(0, 0.0);
         expect_status("blur radius 0 is accepted", yuv_mean_blur_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
+            YUV_STATUS_OK);
     }
     {
         reset_buffers();
         YuvConstFrameV1 source = make_bgra_source();
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvFlipOptionsV1 options = make_flip_options(YUV_FLIP_HORIZONTAL);
-        expect_status("flip reaches the kernel", yuv_flip_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
+        expect_status("flip succeeds", yuv_flip_v1(&source, &destination, &options),
+            YUV_STATUS_OK);
     }
     {
         reset_buffers();
         YuvConstFrameV1 source = make_bgra_source();
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvRotateOptionsV1 options = make_rotate_options(180);
-        expect_status("rotate 180 reaches the kernel", yuv_rotate_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
+        expect_status("rotate 180 succeeds", yuv_rotate_v1(&source, &destination, &options),
+            YUV_STATUS_OK);
     }
     {
         /* A crop whose destination geometry matches the rectangle. */
@@ -841,8 +839,8 @@ static void test_valid_descriptor_reaches_kernel(void) {
         destination.planes[0].rowStride = 4 * 4;
         destination.planes[0].length = 4 * 4 * 2;
         YuvCropOptionsV1 options = make_crop_options(1, 1, 4, 2);
-        expect_status("crop reaches the kernel", yuv_crop_v1(&source, &destination, &options),
-            YUV_STATUS_INTERNAL_ERROR);
+        expect_status("crop succeeds", yuv_crop_v1(&source, &destination, &options),
+            YUV_STATUS_OK);
     }
     {
         /* A larger structSize must be accepted and its unknown tail ignored:
@@ -854,7 +852,7 @@ static void test_valid_descriptor_reaches_kernel(void) {
         YuvMutableFrameV1 destination = make_bgra_destination();
         YuvEffectOptionsV1 options = make_effect_options();
         expect_status("larger source structSize is accepted",
-            yuv_grayscale_v1(&source, &destination, &options), YUV_STATUS_INTERNAL_ERROR);
+            yuv_grayscale_v1(&source, &destination, &options), YUV_STATUS_OK);
     }
     {
         /* A destination sharing the allocation but sitting past the source's
@@ -869,7 +867,7 @@ static void test_valid_descriptor_reaches_kernel(void) {
         destination.planes[0].length = BGRA_STRIDE * 2;
         YuvEffectOptionsV1 options = make_effect_options();
         expect_status("adjacent non-overlapping spans in one allocation",
-            yuv_grayscale_v1(&source, &destination, &options), YUV_STATUS_INTERNAL_ERROR);
+            yuv_grayscale_v1(&source, &destination, &options), YUV_STATUS_OK);
     }
 }
 

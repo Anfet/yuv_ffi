@@ -1,5 +1,6 @@
 #include "h/yuv_ops_v1.h"
 #include "h/yuv_validate_v1.h"
+#include "h/yuv_kernel_v1.h"
 
 /*
  * Swaps the U and V sample values of an NV12 frame without changing its format.
@@ -44,17 +45,37 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_chroma_swap_v1(const YuvConstFrameV1 *source, Yu
         return regionStatus;
     }
 
-    /* Validation is complete and both descriptors are sound, but the pixel
-     * kernel for this operation has not landed yet -- YUV-31 owns it.
-     * Returning INTERNAL_ERROR without writing a single destination byte is
-     * what keeps the atomicity contract honest in the meantime: a caller sees
-     * a clean failure, never a half-written frame.
-     *
-     * YUV-36b deliberately ships the ABI surface and its validation ahead of
-     * the kernels, so that the status contract, the Dart exception mapping,
-     * and the WASM symbol table can be built and tested against a signature
-     * that will not move. Replace this with the real kernel -- never with a
-     * bare YUV_STATUS_OK, which would report success for an untouched frame.
-     */
-    return YUV_STATUS_INTERNAL_ERROR;
+    /* Section 14 Q1: a channel-value effect on stored samples, not a format
+     * conversion and not a visible-pixel operation. Y is copied byte for byte
+     * and each UV pair is written back as (V,U); nothing is decoded to RGB,
+     * because a round trip would quantize a frame whose samples the caller
+     * only asked to reorder. */
+    for (uint32_t y = 0; y < destinationView.height; y++) {
+        for (uint32_t x = 0; x < destinationView.width; x++) {
+            const uint8_t *from = yuv_kernel_v1_const_sample(&sourceView.planes[0], x, y);
+            uint8_t *to = yuv_kernel_v1_mutable_sample(&destinationView.planes[0], x, y);
+            if (from == NULL || to == NULL) {
+                return YUV_STATUS_OVERFLOW;
+            }
+            to[0] = from[0];
+        }
+    }
+
+    uint32_t chromaWidth = (destinationView.width + 1) / 2;
+    uint32_t chromaHeight = (destinationView.height + 1) / 2;
+    for (uint32_t y = 0; y < chromaHeight; y++) {
+        for (uint32_t x = 0; x < chromaWidth; x++) {
+            const uint8_t *from = yuv_kernel_v1_const_sample(&sourceView.planes[1], x, y);
+            uint8_t *to = yuv_kernel_v1_mutable_sample(&destinationView.planes[1], x, y);
+            if (from == NULL || to == NULL) {
+                return YUV_STATUS_OVERFLOW;
+            }
+            uint8_t u = from[0];
+            uint8_t v = from[1];
+            to[0] = v;
+            to[1] = u;
+        }
+    }
+
+    return YUV_STATUS_OK;
 }
