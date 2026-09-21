@@ -25,31 +25,54 @@ FFI_PLUGIN_EXPORT void yuv420_gaussblur(
     // conversion MSVC's /W4 flags as C4244.
     const float sigmaF = (float) sigma;
 
-    gaussian_blur_plane_strided(
-            y_src, y_dst,
-            width, height,
-            y_row_stride, y_pixel_stride,
-            radius, sigmaF
-    );
-
     // Chroma dimensions round up on odd luma sizes, matching
     // YuvGeometry.chromaWidth/chromaHeight on the Dart side.
     const int uv_width = (width + 1) / 2;
     const int uv_height = (height + 1) / 2;
 
-    gaussian_blur_plane_strided(
+    // One kernel and one bounded scratch set for the whole call instead of
+    // one triple per plane: the luma plane is always >= each chroma plane in
+    // both dimensions, so sizing scratch for it covers Y, U and V alike.
+    float *kernel = (float *) malloc((size_t) (2 * radius + 1) * sizeof(float));
+    const int lineLen = width > height ? width : height;
+    uint8_t *line_in = (uint8_t *) malloc((size_t) lineLen);
+    uint8_t *line_out = (uint8_t *) malloc((size_t) lineLen);
+    uint8_t *tmp = (uint8_t *) malloc((size_t) width * (size_t) height);
+    if (!kernel || !line_in || !line_out || !tmp) {
+        free(kernel);
+        free(line_in);
+        free(line_out);
+        free(tmp);
+        return;
+    }
+    generate_gaussian_kernel(kernel, radius, sigmaF);
+    YuvGaussianScratch scratch = {line_in, line_out, tmp};
+
+    gaussian_blur_plane_strided_with_kernel(
+            y_src, y_dst,
+            width, height,
+            y_row_stride, y_pixel_stride,
+            radius, kernel, &scratch
+    );
+
+    gaussian_blur_plane_strided_with_kernel(
             u_src, u_dst,
             uv_width, uv_height,
             uv_row_stride, uv_pixel_stride,
-            radius, sigmaF
+            radius, kernel, &scratch
     );
 
-    gaussian_blur_plane_strided(
+    gaussian_blur_plane_strided_with_kernel(
             v_src, v_dst,
             uv_width, uv_height,
             uv_row_stride, uv_pixel_stride,
-            radius, sigmaF
+            radius, kernel, &scratch
     );
+
+    free(kernel);
+    free(line_in);
+    free(line_out);
+    free(tmp);
 }
 
 

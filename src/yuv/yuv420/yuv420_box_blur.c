@@ -43,6 +43,11 @@ static int64_t yuv_sat_rect(const int64_t *sat, int width, int x1, int y1, int x
  * the same decomposition YUV-42 uses for bgra8888_mean_blur, so the average is
  * one rounding step instead of the two a separable horizontal-then-vertical
  * pass would introduce.
+ *
+ * `sat` and `temp` are caller-owned scratch, at least width * height entries
+ * each (int64_t and uint8_t respectively, tight -- not rowStride-sized): one
+ * pair sized for the luma plane is reused for the smaller chroma planes,
+ * instead of a fresh malloc/free pair per plane.
  */
 static void yuv_box_blur_plane(
         const uint8_t *src,
@@ -55,22 +60,21 @@ static void yuv_box_blur_plane(
         int left,
         int top,
         int right,
-        int bottom
+        int bottom,
+        int64_t *sat,
+        uint8_t *temp
 ) {
-    int64_t *sat = (int64_t *) calloc((size_t) width * (size_t) height, sizeof(int64_t));
-    uint8_t *temp = (uint8_t *) malloc((size_t) height * rowStride);
-    if (!sat || !temp) {
-        free(sat);
-        free(temp);
-        return;
+    for (int y = 0; y < height; ++y) {
+        const uint8_t *row = src + y * rowStride;
+        for (int x = 0; x < width; ++x) {
+            temp[y * width + x] = row[x * pixelStride];
+        }
     }
-    memcpy(temp, src, (size_t) height * rowStride);
 
     for (int y = 0; y < height; ++y) {
         int64_t rowSum = 0;
-        const uint8_t *row = src + y * rowStride;
         for (int x = 0; x < width; ++x) {
-            rowSum += row[x * pixelStride];
+            rowSum += temp[y * width + x];
             const int64_t satIdx = (int64_t) y * width + x;
             sat[satIdx] = rowSum + (y > 0 ? sat[(int64_t) (y - 1) * width + x] : 0);
         }
@@ -113,14 +117,16 @@ static void yuv_box_blur_plane(
                 sum += (int64_t) weight * yuv_sat_rect(sat, width, parts[i].x1, parts[i].y1, parts[i].x2, parts[i].y2);
             }
 
-            temp[y * rowStride + x * pixelStride] = (uint8_t)((sum + half) / area);
+            temp[y * width + x] = (uint8_t)((sum + half) / area);
         }
     }
 
-    memcpy(dst, temp, (size_t) height * rowStride);
-
-    free(sat);
-    free(temp);
+    for (int y = 0; y < height; ++y) {
+        uint8_t *row = dst + y * rowStride;
+        for (int x = 0; x < width; ++x) {
+            row[x * pixelStride] = temp[y * width + x];
+        }
+    }
 }
 
 FFI_PLUGIN_EXPORT void yuv420_box_blur(
@@ -153,7 +159,18 @@ FFI_PLUGIN_EXPORT void yuv420_box_blur(
         return;
     }
 
-    yuv_box_blur_plane(image->y, image->y, width, height, image->yRowStride, image->yPixelStride, radius, left, top, right, bottom);
+    // One sat/temp scratch pair for the whole call, sized for the luma plane
+    // (always >= each chroma plane in both dimensions) and reused for U and
+    // V, instead of a fresh malloc/free pair per plane.
+    int64_t *sat = (int64_t *) calloc((size_t) width * (size_t) height, sizeof(int64_t));
+    uint8_t *temp = (uint8_t *) malloc((size_t) width * (size_t) height);
+    if (!sat || !temp) {
+        free(sat);
+        free(temp);
+        return;
+    }
+
+    yuv_box_blur_plane(image->y, image->y, width, height, image->yRowStride, image->yPixelStride, radius, left, top, right, bottom, sat, temp);
 
     // Chroma ROI is the luma ROI's footprint at half resolution, rounded
     // outward so a luma-odd edge is still covered.
@@ -163,8 +180,11 @@ FFI_PLUGIN_EXPORT void yuv420_box_blur(
     const int uvBottom = MIN(uvHeight, (bottom + 1) / 2);
     if (uvLeft < uvRight && uvTop < uvBottom) {
         yuv_box_blur_plane(
-                image->u, image->u, uvWidth, uvHeight, image->uvRowStride, image->uvPixelStride, radius, uvLeft, uvTop, uvRight, uvBottom);
+                image->u, image->u, uvWidth, uvHeight, image->uvRowStride, image->uvPixelStride, radius, uvLeft, uvTop, uvRight, uvBottom, sat, temp);
         yuv_box_blur_plane(
-                image->v, image->v, uvWidth, uvHeight, image->uvRowStride, image->uvPixelStride, radius, uvLeft, uvTop, uvRight, uvBottom);
+                image->v, image->v, uvWidth, uvHeight, image->uvRowStride, image->uvPixelStride, radius, uvLeft, uvTop, uvRight, uvBottom, sat, temp);
     }
+
+    free(sat);
+    free(temp);
 }

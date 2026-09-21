@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "h/gauss.h"
+
 void generate_gaussian_kernel(float *kernel, int radius, float sigma) {
     float sum = 0.0f;
     for (int i = -radius; i <= radius; ++i) {
@@ -42,30 +44,23 @@ void apply_1d_gaussian(
     }
 }
 
-// Blurs a Y/U/V plane honouring rowStride and pixelStride
-void gaussian_blur_plane_strided(
+// Blurs a Y/U/V plane honouring rowStride and pixelStride, using an
+// already-built kernel and caller-owned scratch. See gauss.h for the sizing
+// contract on `scratch`. Arithmetic and rounding are unchanged from the
+// original single-call implementation this factors out of: only the
+// allocation lifetime moved to the caller.
+void gaussian_blur_plane_strided_with_kernel(
         const uint8_t *src, uint8_t *dst,
         int width, int height,
         int row_stride,
         int pixel_stride,
         int radius,
-        float sigma
+        const float *kernel,
+        YuvGaussianScratch *scratch
 ) {
-    float *kernel = (float *) malloc((2 * radius + 1) * sizeof(float));
-    // One row/column buffer pair, reused across every line and column instead
-    // of a fresh malloc/free per iteration: fewer allocations, and no path
-    // that can `return` early mid-loop while other buffers are still held.
-    uint8_t *line_in = (uint8_t *) malloc((size_t) (width > height ? width : height));
-    uint8_t *line_out = (uint8_t *) malloc((size_t) (width > height ? width : height));
-    uint8_t *tmp = (uint8_t *) malloc((size_t) width * height);
-    if (!kernel || !line_in || !line_out || !tmp) {
-        free(kernel);
-        free(line_in);
-        free(line_out);
-        free(tmp);
-        return;
-    }
-    generate_gaussian_kernel(kernel, radius, sigma);
+    uint8_t *line_in = scratch->line_in;
+    uint8_t *line_out = scratch->line_out;
+    uint8_t *tmp = scratch->tmp;
 
     // --- Horizontal blur ---
     for (int y = 0; y < height; ++y) {
@@ -94,6 +89,35 @@ void gaussian_blur_plane_strided(
             dst[y * row_stride + x * pixel_stride] = line_out[y];
         }
     }
+}
+
+// Blurs a Y/U/V plane honouring rowStride and pixelStride
+void gaussian_blur_plane_strided(
+        const uint8_t *src, uint8_t *dst,
+        int width, int height,
+        int row_stride,
+        int pixel_stride,
+        int radius,
+        float sigma
+) {
+    float *kernel = (float *) malloc((2 * radius + 1) * sizeof(float));
+    // One row/column buffer pair, reused across every line and column instead
+    // of a fresh malloc/free per iteration: fewer allocations, and no path
+    // that can `return` early mid-loop while other buffers are still held.
+    uint8_t *line_in = (uint8_t *) malloc((size_t) (width > height ? width : height));
+    uint8_t *line_out = (uint8_t *) malloc((size_t) (width > height ? width : height));
+    uint8_t *tmp = (uint8_t *) malloc((size_t) width * height);
+    if (!kernel || !line_in || !line_out || !tmp) {
+        free(kernel);
+        free(line_in);
+        free(line_out);
+        free(tmp);
+        return;
+    }
+    generate_gaussian_kernel(kernel, radius, sigma);
+
+    YuvGaussianScratch scratch = {line_in, line_out, tmp};
+    gaussian_blur_plane_strided_with_kernel(src, dst, width, height, row_stride, pixel_stride, radius, kernel, &scratch);
 
     free(kernel);
     free(line_in);

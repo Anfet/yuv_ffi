@@ -39,6 +39,11 @@ static int64_t yuv_sat_rect(const int64_t *sat, int width, int x1, int y1, int x
  * replication at the border (the mandated 0.3.0 blur contract) — see
  * src/yuv/bgra8888/bgra8888_mean_blur.c for the weighted-rectangle
  * decomposition this reuses.
+ *
+ * `sat` and `temp` are caller-owned scratch, at least width * height entries
+ * each (int64_t and uint8_t respectively): one pair is sized once for the
+ * luma plane and reused for the smaller chroma planes, instead of a fresh
+ * malloc/free pair per plane.
  */
 static void yuv_box_blur_channel(
         const uint8_t *src,
@@ -50,15 +55,10 @@ static void yuv_box_blur_channel(
         int left,
         int top,
         int right,
-        int bottom
+        int bottom,
+        int64_t *sat,
+        uint8_t *temp
 ) {
-    int64_t *sat = (int64_t *) calloc((size_t) width * (size_t) height, sizeof(int64_t));
-    uint8_t *temp = (uint8_t *) malloc((size_t) width * (size_t) height);
-    if (!sat || !temp) {
-        free(sat);
-        free(temp);
-        return;
-    }
     for (int y = 0; y < height; ++y) {
         memcpy(temp + y * width, src + y * stride, (size_t) width);
     }
@@ -113,9 +113,6 @@ static void yuv_box_blur_channel(
     for (int y = 0; y < height; ++y) {
         memcpy(dst + y * stride, temp + y * width, (size_t) width);
     }
-
-    free(sat);
-    free(temp);
 }
 
 FFI_PLUGIN_EXPORT void nv21_box_blur(
@@ -143,11 +140,26 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
         return;
     }
 
+    // Chroma dimensions round up on odd luma sizes, matching
+    // YuvGeometry.chromaWidth/chromaHeight on the Dart side. Luma is always
+    // >= each chroma plane in both dimensions, so one sat/temp pair sized for
+    // it is reused for Y, U and V instead of a fresh pair per plane.
+    const int uv_width  = (width + 1) / 2;
+    const int uv_height = (height + 1) / 2;
+
+    int64_t *sat = (int64_t *) calloc((size_t) width * (size_t) height, sizeof(int64_t));
+    uint8_t *temp = (uint8_t *) malloc((size_t) width * (size_t) height);
+    if (!sat || !temp) {
+        free(sat);
+        free(temp);
+        return;
+    }
+
     // --- Y plane ---
     // yuv_box_blur_channel walks its plane with a plain row stride (no pixel
     // stride), which matches every native call site: Y always arrives tight
     // per row in this legacy YUVDef ABI.
-    yuv_box_blur_channel(image->y, image->y, width, height, image->yRowStride, radius, left, top, right, bottom);
+    yuv_box_blur_channel(image->y, image->y, width, height, image->yRowStride, radius, left, top, right, bottom, sat, temp);
 
     // --- Chroma ((U, V) interleaved) ---
     //
@@ -157,11 +169,6 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
     // symmetrically, so the output is correct; renaming only one of the two
     // loops would silently swap chroma.
     //
-    // Chroma dimensions round up on odd luma sizes, matching
-    // YuvGeometry.chromaWidth/chromaHeight on the Dart side.
-    const int uv_width  = (width + 1) / 2;
-    const int uv_height = (height + 1) / 2;
-
     // Chroma ROI is the luma ROI's footprint at half resolution, rounded
     // outward so a luma-odd edge is still covered.
     const int uvLeft = left / 2;
@@ -169,12 +176,16 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
     const int uvRight = MIN(uv_width, (right + 1) / 2);
     const int uvBottom = MIN(uv_height, (bottom + 1) / 2);
     if (uvLeft >= uvRight || uvTop >= uvBottom) {
+        free(sat);
+        free(temp);
         return;
     }
 
     uint8_t *u_plane = (uint8_t *) malloc((size_t) uv_width * uv_height);
     uint8_t *v_plane = (uint8_t *) malloc((size_t) uv_width * uv_height);
     if (!u_plane || !v_plane) {
+        free(sat);
+        free(temp);
         free(u_plane);
         free(v_plane);
         return;
@@ -190,8 +201,8 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
         }
     }
 
-    yuv_box_blur_channel(u_plane, u_plane, uv_width, uv_height, uv_width, radius, uvLeft, uvTop, uvRight, uvBottom);
-    yuv_box_blur_channel(v_plane, v_plane, uv_width, uv_height, uv_width, radius, uvLeft, uvTop, uvRight, uvBottom);
+    yuv_box_blur_channel(u_plane, u_plane, uv_width, uv_height, uv_width, radius, uvLeft, uvTop, uvRight, uvBottom, sat, temp);
+    yuv_box_blur_channel(v_plane, v_plane, uv_width, uv_height, uv_width, radius, uvLeft, uvTop, uvRight, uvBottom, sat, temp);
 
     // Pack back into the interleaved chroma plane, mirroring the unpack above.
     for (int y = 0; y < uv_height; ++y) {
@@ -202,6 +213,8 @@ FFI_PLUGIN_EXPORT void nv21_box_blur(
         }
     }
 
+    free(sat);
+    free(temp);
     free(u_plane);
     free(v_plane);
 }
