@@ -270,12 +270,43 @@ static void test_checked_plane_span(void) {
     ASSERT_TRUE(r.success, "width=1920 should succeed");
     ASSERT_EQUAL(r.value, 7680, "span should equal 7680");
 
-    /* Note: On 64-bit systems, (UINT32_MAX - 1) * UINT32_MAX + 1 still fits in size_t.
-       To test overflow in plane_span, we'd need platform-specific values or 32-bit
-       compilation. This test documents the boundary correctly but will pass on 64-bit. */
+    /* span = (UINT32_MAX - 1) * UINT32_MAX + 1 = 18446744060824649731, which
+       is the actual boundary case for this helper's widest legal inputs.
+       Whether that fits depends on size_t's width, so the expectation is
+       branched by SIZE_MAX rather than fixed at "always succeeds" (YUV-36g):
+       on 64-bit size_t (SIZE_MAX == 2^64-1 == 18446744073709551615) the value
+       fits with room to spare, so this must still succeed; on 32-bit size_t
+       (SIZE_MAX == 2^32-1) it overflows by many orders of magnitude, and the
+       library correctly reports that -- an unconditional "always succeeds"
+       previously asserted the 64-bit answer on every platform, which is what
+       made this test abort on a 32-bit build. Branching on SIZE_MAX (rather
+       than accepting either outcome) keeps this case exercising the actual
+       overflow boundary on both widths instead of degrading into a
+       tautology. */
     TEST_CASE("width boundary: UINT32_MAX, pixelStride=UINT32_MAX");
     r = yuv_checked_plane_span(UINT32_MAX, UINT32_MAX, 1);
-    ASSERT_TRUE(r.success, "boundary case fits in 64-bit size_t");
+    /* span = (UINT32_MAX - 1) * UINT32_MAX + 1 = 18446744060824649731, which
+       is the actual boundary case for this helper's widest legal inputs.
+       Whether that fits depends on size_t's width, so the expectation is
+       branched by preprocessor condition on SIZE_MAX (matching the
+       `#if SIZE_MAX < UINT64_MAX` pattern already used later in this file for
+       yuv_checked_sample_offset) rather than fixed at "always succeeds":
+       on 64-bit size_t (SIZE_MAX == 2^64-1) the value fits with room to
+       spare, so this must succeed; on 32-bit size_t (SIZE_MAX == 2^32-1) it
+       overflows by many orders of magnitude, and the library correctly
+       reports that -- an unconditional "always succeeds" previously asserted
+       the 64-bit answer on every platform, which is what made this test
+       abort on a 32-bit build. A runtime `if (SIZE_MAX >= ...)` was
+       considered instead, but MSVC reports C4127 ("conditional expression is
+       constant") for it under this harness's /W4 /WX, and the preprocessor
+       form is already this file's established way of expressing exactly
+       this condition. */
+#if SIZE_MAX >= 18446744060824649731ULL
+    ASSERT_TRUE(r.success, "boundary case must succeed on a size_t wide enough to hold it");
+    ASSERT_EQUAL(r.value, 18446744060824649731ULL, "span should equal (UINT32_MAX-1)*UINT32_MAX+1");
+#else
+    ASSERT_TRUE(!r.success, "boundary case must overflow on a size_t too narrow to hold it");
+#endif
 
     /* edge case: width=UINT32_MAX, pixelStride=1, sampleBytes=1 */
     TEST_CASE("width=UINT32_MAX, pixelStride=1, sampleBytes=1");
@@ -382,15 +413,20 @@ static void test_checked_sample_offset(void) {
     ASSERT_TRUE(r.success, "should succeed");
     ASSERT_EQUAL(r.value, 4151040, "offset should equal 4,151,040");
 
-    /* overflow: y * rowStride overflows with maximum uint32_t y and large stride */
-    TEST_CASE("overflow: y * rowStride with y=UINT32_MAX and rowStride=2");
-    /* UINT32_MAX * 2 = 2^33 - 2, which is well within size_t on 64-bit,
-       but we test that the detection logic works by checking when result exceeds SIZE_MAX */
+    /* offset = y * rowStride = UINT32_MAX * UINT32_MAX = (2^32-1)^2
+       = 18446744065119617025. Same boundary-width issue as the plane_span
+       case above (YUV-36g): this fits in a 64-bit size_t with room to spare,
+       but overflows a 32-bit one by many orders of magnitude, so the
+       expectation is branched the same way rather than fixed at "always
+       succeeds". */
+    TEST_CASE("overflow: y * rowStride with y=UINT32_MAX and rowStride=UINT32_MAX");
     r = yuv_checked_sample_offset(UINT32_MAX, UINT32_MAX, 0, 1);
-    /* On 64-bit, UINT32_MAX * UINT32_MAX = (2^32-1)^2, which fits in 64-bit.
-       So this should actually succeed, but demonstrates boundary testing. */
-    ASSERT_TRUE(r.success, "UINT32_MAX * UINT32_MAX should fit in 64-bit size_t");
+#if SIZE_MAX >= 18446744065119617025ULL
+    ASSERT_TRUE(r.success, "UINT32_MAX * UINT32_MAX must succeed on a size_t wide enough to hold it");
     ASSERT_EQUAL(r.value, (size_t)UINT32_MAX * UINT32_MAX, "value should match");
+#else
+    ASSERT_TRUE(!r.success, "UINT32_MAX * UINT32_MAX must overflow on a size_t too narrow to hold it");
+#endif
 
 #if SIZE_MAX < UINT64_MAX
     TEST_CASE("sample offset rejects rowStride wider than size_t without narrowing");
