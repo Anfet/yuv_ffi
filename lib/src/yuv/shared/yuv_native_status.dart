@@ -1,0 +1,129 @@
+/// The `YuvStatus` values of the versioned native ABI v1
+/// (`docs/api-abi-0.3-design.md` section 9) and their Dart exception mapping
+/// (section 11's "Status-to-Dart exception mapping" table).
+///
+/// This maps a single [int] returned by a `yuv_*_v1` symbol to the exception
+/// the typed IO runner throws. It does not decide *when* a status is
+/// produced — that is entirely native validation — only what each numeric
+/// value means to a Dart caller.
+library;
+
+/// Marker for a `YuvStatus` value not defined by ABI v1.
+///
+/// Any status outside `0..7` reaches Dart only if a future native build
+/// speaks a newer ABI version than this package understands. The numeric
+/// code is preserved in [YuvNativeException.statusCode] rather than being
+/// collapsed into a generic failure, so a caller (or a bug report) can still
+/// see exactly what the native side reported.
+const int yuvStatusUnknownLowerBound = 8;
+
+/// `YUV_STATUS_OK` (0): the operation completed and the destination may be
+/// committed.
+const int yuvStatusOk = 0;
+
+/// `YUV_STATUS_INVALID_ARGUMENT` (1): a null pointer, a bad ABI version, a
+/// `structSize` smaller than the full v1 type, a non-zero reserved field, or
+/// an unknown numeric format/matrix/range value. The descriptor itself is
+/// malformed.
+const int yuvStatusInvalidArgument = 1;
+
+/// `YUV_STATUS_UNSUPPORTED_FORMAT` (2): a known format used in a
+/// source/destination pairing (or plane role) an operation does not accept.
+const int yuvStatusUnsupportedFormat = 2;
+
+/// `YUV_STATUS_UNSUPPORTED_LAYOUT` (3): a structurally valid layout ABI v1
+/// does not implement.
+///
+/// No `yuv_*_v1` entry point can currently return this value — see the
+/// Engineer's YUV-36b decision recorded in `todo.md`: every layout ABI v1
+/// defines is either accepted or rejected by a more specific status, so the
+/// set this status describes is empty in this ABI version. The mapping below
+/// still exists, because a future ABI revision may introduce a layout this
+/// build genuinely cannot support, and Dart must already know how to react
+/// to it without a follow-up release.
+const int yuvStatusUnsupportedLayout = 3;
+
+/// `YUV_STATUS_OVERFLOW` (4): geometry, stride, or span arithmetic could not
+/// be carried out on this target without wrapping.
+const int yuvStatusOverflow = 4;
+
+/// `YUV_STATUS_ALLOCATION_FAILED` (5): the native side could not allocate
+/// scratch memory it needed before writing.
+const int yuvStatusAllocationFailed = 5;
+
+/// `YUV_STATUS_INTERNAL_ERROR` (6): an operation-internal failure that is
+/// neither a caller mistake nor a resource exhaustion.
+///
+/// Every ABI v1 kernel currently returns exactly this status as a deliberate
+/// placeholder (YUV-36b): validation runs to completion and only the pixel
+/// kernel is unimplemented. A [YuvNativeException] with this code today means
+/// "validated, kernel pending", not "genuine internal defect" — see
+/// YUV-31/32/22/23 for when each operation's real kernel lands.
+const int yuvStatusInternalError = 6;
+
+/// `YUV_STATUS_UNSUPPORTED_COLOR` (7): a known format declaring a
+/// `colorMatrix`/`colorRange` pairing ABI v1 does not support for it.
+const int yuvStatusUnsupportedColor = 7;
+
+/// Thrown for a native status that maps to neither [ArgumentError] nor
+/// [UnsupportedError]: `4 OVERFLOW`, `5 ALLOCATION_FAILED`, `6 INTERNAL_ERROR`,
+/// and any status value ABI v1 does not define.
+///
+/// [statusCode] retains the raw `YuvStatus` value exactly as the native call
+/// returned it, including an unknown code -- see section 11: "any unknown
+/// non-zero value" still becomes a [YuvNativeException], not a silently
+/// dropped failure. [operation] names the `yuv_*_v1` symbol that returned it,
+/// so a caught exception is actionable without a native stack trace.
+class YuvNativeException implements Exception {
+  /// Creates an exception for [statusCode] returned by [operation].
+  const YuvNativeException({required this.statusCode, required this.operation});
+
+  /// The raw `YuvStatus` value the native call returned.
+  final int statusCode;
+
+  /// The `yuv_*_v1` symbol name that produced [statusCode].
+  final String operation;
+
+  @override
+  String toString() => 'YuvNativeException($operation returned status $statusCode)';
+}
+
+/// Translates a raw native `YuvStatus` [status] returned by [operation] into
+/// the Dart result section 11 requires.
+///
+/// Returns `null` for `YUV_STATUS_OK` (0): the caller commits the destination
+/// and does not throw. Every other value throws before returning, per the
+/// "Status-to-Dart exception mapping" table:
+///
+/// | status | Dart result |
+/// |---:|---|
+/// | 1 | [ArgumentError] naming [operation] and the violated contract |
+/// | 2, 3, 7 | [UnsupportedError] |
+/// | 4, 5, 6, unknown | [YuvNativeException] retaining [status] |
+///
+/// [detail] is folded into the thrown message where the mapping provides one
+/// (`ArgumentError`/`UnsupportedError`); it should describe the specific
+/// descriptor/options contract the caller can identify without native source,
+/// e.g. `'destination geometry does not match crop options'`.
+Never yuvThrowForStatus({required int status, required String operation, String? detail}) {
+  assert(status != yuvStatusOk, 'yuvThrowForStatus must not be called for YUV_STATUS_OK; the runner commits instead.');
+
+  switch (status) {
+    case yuvStatusInvalidArgument:
+      throw ArgumentError(detail == null ? '$operation: invalid descriptor or options' : '$operation: $detail');
+    case yuvStatusUnsupportedFormat:
+      throw UnsupportedError(detail == null ? '$operation: unsupported source/destination format' : '$operation: $detail');
+    case yuvStatusUnsupportedLayout:
+      throw UnsupportedError(detail == null ? '$operation: unsupported but structurally valid layout' : '$operation: $detail');
+    case yuvStatusUnsupportedColor:
+      throw UnsupportedError(detail == null ? '$operation: unsupported color matrix/range' : '$operation: $detail');
+    case yuvStatusOverflow:
+    case yuvStatusAllocationFailed:
+    case yuvStatusInternalError:
+      throw YuvNativeException(statusCode: status, operation: operation);
+    default:
+      // Any value ABI v1 does not define. Preserved rather than collapsed --
+      // see the class dartdoc.
+      throw YuvNativeException(statusCode: status, operation: operation);
+  }
+}
