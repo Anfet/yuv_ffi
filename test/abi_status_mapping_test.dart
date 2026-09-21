@@ -122,7 +122,12 @@ void main() {
 
   final bool nativeAvailable = _checkNativeAvailable();
 
-  group('YuvAbiV1Runner against the real native library', () {
+  group('YuvAbiV1Runner descriptor construction (YUV-36i: no yuv_ffi.dll required)', () {
+    // Every test in this group drives the runner through debugInvokeOverride
+    // (YUV-36k's seam) instead of the real yuv_ffi.dll symbols, so it runs
+    // identically with or without the native library on the host -- unlike
+    // the group below, which specifically exercises the real binary and is
+    // still skipped when that binary is unavailable.
     YuvAbiV1FrameInput bgraSource(int width, int height, {int fill = 0x11}) {
       final bytes = Uint8List(width * height * 4)..fillRange(0, width * height * 4, fill);
       return YuvAbiV1FrameInput(
@@ -133,15 +138,17 @@ void main() {
       );
     }
 
-    test('a fully valid call reaches the kernel placeholder (INTERNAL_ERROR)', () {
-      // Every yuv_*_v1 kernel is currently a deliberate stub (YUV-36b): a
-      // structurally valid call passes all validation and returns
-      // YUV_STATUS_INTERNAL_ERROR without writing a byte. Reaching exactly
-      // this status is what proves the runner builds a descriptor native
-      // validation accepts. This assertion is expected to start failing the
-      // moment a real kernel lands (YUV-22/23/31/32) -- see the dartdoc on
-      // yuvStatusInternalError -- and this test must be updated alongside it,
-      // not silenced.
+    setUp(() => YuvAbiV1Runner.debugInvokeOverride = null);
+    tearDown(() => YuvAbiV1Runner.debugInvokeOverride = null);
+
+    test('a fully valid call reaches the kernel step and surfaces its status', () {
+      // The kernel stub always returns INTERNAL_ERROR in the real binary
+      // (YUV-36b); the fake kernel here reproduces exactly that status, so
+      // this checks the same thing the real-library test below checks --
+      // that the runner builds a descriptor the "native" call actually
+      // receives and its status reaches the caller -- without needing the
+      // DLL to prove it.
+      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusInternalError;
       expect(
         () => YuvAbiV1Runner.grayscale(source: bgraSource(4, 4)),
         throwsA(isA<YuvNativeException>()
@@ -150,8 +157,10 @@ void main() {
       );
     });
 
-    test('every operation reaches the native call (all currently INTERNAL_ERROR)', () {
+    test('every operation reaches the invoke step and surfaces the injected status', () {
       final source = bgraSource(4, 4);
+      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusInternalError;
+
       void expectReachesKernel(String label, YuvAbiV1FrameResult Function() call) {
         expect(call, throwsA(isA<YuvNativeException>().having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)), reason: label);
       }
@@ -176,73 +185,6 @@ void main() {
       expectReachesKernel('crop', () => YuvAbiV1Runner.crop(source: source, left: 1, top: 1, width: 2, height: 2));
     });
 
-    test('chroma swap requires NV12 and rejects BGRA with UNSUPPORTED_FORMAT (2)', () {
-      expect(() => YuvAbiV1Runner.chromaSwap(source: bgraSource(4, 4)), throwsUnsupportedError);
-    });
-
-    test('an out-of-range region on the source frame throws ArgumentError (1)', () {
-      final source = bgraSource(4, 4);
-      expect(
-        () => YuvAbiV1Runner.grayscale(source: source, region: const YuvAbiV1Region(left: 0, top: 0, right: 100, bottom: 100)),
-        throwsArgumentError,
-      );
-    });
-
-    test('a failing call never mutates the caller-owned source bytes (YUV-36d DoD: bytes unchanged on failure)', () {
-      // The runner copies source.bytes into native memory (step 2) rather
-      // than exposing them to the native call directly, so a failing
-      // operation cannot write back through the caller's own Uint8List --
-      // this is what makes that true for a native failure specifically,
-      // not merely by accident of the kernels being stubs. Filled with a
-      // recognizable non-zero pattern rather than zero, so a stray native
-      // write is not indistinguishable from the buffer's initial state.
-      final originalBytes = Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x5A);
-      final canary = Uint8List.fromList(originalBytes);
-      final source = YuvAbiV1FrameInput(
-        format: yuvFormatBgra8888,
-        width: 4,
-        height: 4,
-        planes: [YuvAbiV1PlaneInput(bytes: originalBytes, rowStride: 16, pixelStride: 4)],
-      );
-
-      // A failing call (out-of-range region -> INVALID_ARGUMENT, never
-      // reaches the native symbol) and a stub-succeeding call (reaches the
-      // native symbol, which currently always returns INTERNAL_ERROR) both
-      // exercise this: neither Dart failure path writes back into the
-      // caller's buffer.
-      expect(
-        () => YuvAbiV1Runner.grayscale(source: source, region: const YuvAbiV1Region(left: 0, top: 0, right: 100, bottom: 100)),
-        throwsArgumentError,
-      );
-      expect(originalBytes, canary, reason: 'source bytes changed after a call that never reached the native symbol');
-
-      expect(() => YuvAbiV1Runner.grayscale(source: source), throwsA(isA<YuvNativeException>()));
-      expect(originalBytes, canary, reason: 'source bytes changed after a call that reached the native symbol and failed');
-    });
-
-    test('an unsupported color pairing throws UnsupportedError (7)', () {
-      // BGRA requires colorMatrix/colorRange NONE (section 9); the runner
-      // always derives the correct pairing from the format
-      // (yuvAbiV1ColorMatrixFor/yuvAbiV1ColorRangeFor), so this exercises
-      // status 7 through a hand-built frame bypassing that derivation --
-      // representative of what a future caller with a raw descriptor could
-      // still get wrong, and of native validation being authoritative
-      // regardless of what the Dart layer intended to send.
-      //
-      // yuvAbiV1ColorMatrixFor/yuvAbiV1ColorRangeFor cannot themselves
-      // express a wrong pairing (each returns exactly one value per format),
-      // so this is exercised through the runner's public region-rejection
-      // path being wired to real native statuses at all, rather than by
-      // constructing a malformed descriptor directly -- YuvAbiV1FrameInput
-      // has no color fields to corrupt from the outside. Direct
-      // status-7 coverage of the native validator itself lives in
-      // test_native/abi_status_test.c.
-      expect(yuvAbiV1ColorMatrixFor(yuvFormatBgra8888), yuvColorMatrixNone);
-      expect(yuvAbiV1ColorRangeFor(yuvFormatBgra8888), yuvColorRangeNone);
-      expect(yuvAbiV1ColorMatrixFor(yuvFormatNv12), yuvColorMatrixBt601);
-      expect(yuvAbiV1ColorRangeFor(yuvFormatNv12), yuvColorRangeLimited);
-    });
-
     test('a wrong plane count is rejected by the runner before any allocation', () {
       final malformed = YuvAbiV1FrameInput(
         format: yuvFormatI420,
@@ -250,14 +192,15 @@ void main() {
         height: 4,
         planes: [YuvAbiV1PlaneInput(bytes: Uint8List(16), rowStride: 4, pixelStride: 1)], // I420 needs 3
       );
+      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusOk;
       expect(() => YuvAbiV1Runner.grayscale(source: malformed), throwsArgumentError);
     });
 
     test('ROI grayscale seeds the destination from source outside the ROI on BGRA (YUV-36h)', () {
-      // Kernels are stubs (INTERNAL_ERROR, YUV-36b) so there is no successful
-      // native write to inspect the destination through; instead this
+      // Kernels are stubs (INTERNAL_ERROR, YUV-36b) in the real binary, so
+      // this drives the same INTERNAL_ERROR result through the override and
       // captures what the runner itself staged into destination memory
-      // before the native call, using a byte-count-aware allocator that
+      // before the "native" call, using a byte-count-aware allocator that
       // snapshots each buffer at free() time -- the only point after seeding
       // where the bytes are still readable (see
       // _SnapshottingNativeAllocator's dartdoc).
@@ -272,6 +215,7 @@ void main() {
         height: height,
         planes: [YuvAbiV1PlaneInput(bytes: sourceBytes, rowStride: width * 4, pixelStride: 4)],
       );
+      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusInternalError;
       final snapshotting = _SnapshottingNativeAllocator();
       withNativeAllocator(snapshotting, () {
         expect(
@@ -313,6 +257,7 @@ void main() {
           YuvAbiV1PlaneInput(bytes: v, rowStride: width ~/ 2, pixelStride: 1),
         ],
       );
+      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusInternalError;
       final snapshotting = _SnapshottingNativeAllocator();
       withNativeAllocator(snapshotting, () {
         expect(
@@ -326,6 +271,154 @@ void main() {
         final matchesSeeding = sameSize.where((b) => _bytesEqual(b, planeBytes)).toList();
         expect(matchesSeeding, isNotEmpty, reason: 'destination staging was not seeded with source bytes for plane of size ${planeBytes.length}');
       }
+    });
+  });
+
+  group('YuvAbiV1Runner runner-level atomicity on nonzero status (YUV-36i)', () {
+    // Engineer decision 2026-09-21 (variant A): the runner never mutates an
+    // existing "recipient" object -- it only ever returns a fresh
+    // YuvAbiV1FrameResult, and only on YUV_STATUS_OK. "metadata"/"revision"
+    // (YuvImage.revision, yuv_revision.dart) belong to the mutable public API
+    // YUV-28 introduces on top of this runner and do not exist at this layer,
+    // so the runner-level invariant this group checks is exactly: on a
+    // nonzero status, (a) source bytes are unchanged and (b) no
+    // YuvAbiV1FrameResult is ever constructed (no copy-back happens). The
+    // public bytes/metadata/revision-of-the-recipient invariant remains
+    // YUV-28's obligation once a mutable recipient exists to check it against.
+    setUp(() => YuvAbiV1Runner.debugInvokeOverride = null);
+    tearDown(() => YuvAbiV1Runner.debugInvokeOverride = null);
+
+    test('several nonzero statuses leave source bytes unchanged and never produce a result', () {
+      for (final status in [
+        yuvStatusInvalidArgument,
+        yuvStatusUnsupportedFormat,
+        yuvStatusOverflow,
+        yuvStatusAllocationFailed,
+        yuvStatusInternalError,
+        yuvStatusUnsupportedColor,
+        42
+      ]) {
+        final originalBytes = Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x5A);
+        final canary = Uint8List.fromList(originalBytes);
+        final source = YuvAbiV1FrameInput(
+          format: yuvFormatBgra8888,
+          width: 4,
+          height: 4,
+          planes: [YuvAbiV1PlaneInput(bytes: originalBytes, rowStride: 16, pixelStride: 4)],
+        );
+
+        YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => status;
+
+        YuvAbiV1FrameResult? result;
+        Object? caught;
+        try {
+          result = YuvAbiV1Runner.grayscale(source: source);
+        } catch (e) {
+          caught = e;
+        }
+
+        expect(result, isNull, reason: 'status $status must not produce a YuvAbiV1FrameResult (no copy-back on failure)');
+        expect(caught, isNotNull, reason: 'status $status must throw');
+        expect(originalBytes, canary, reason: 'source bytes changed for status $status');
+      }
+    });
+
+    test('a failing call never mutates the caller-owned source bytes even when it never reaches invoke', () {
+      // Complements the loop above: this failure path (wrong plane count for
+      // the format -- checked directly in Dart by _run, section 13 step 1)
+      // is rejected before invoke is ever called at all -- the override
+      // below would fail the test if it were ever reached -- so this checks
+      // the same bytes-unchanged invariant for the "rejected before native
+      // call" branch, not just the "native call returned nonzero" branch.
+      // (An out-of-range region, unlike a wrong plane count, is NOT rejected
+      // in Dart -- the runner has no region-bounds check of its own, only
+      // native validation does -- so it cannot stand in for this branch
+      // without a real native call, and is covered instead in the real-DLL
+      // group below.)
+      final originalBytes = Uint8List(16);
+      final canary = Uint8List.fromList(originalBytes);
+      final malformed = YuvAbiV1FrameInput(
+        format: yuvFormatI420,
+        width: 4,
+        height: 4,
+        planes: [YuvAbiV1PlaneInput(bytes: originalBytes, rowStride: 4, pixelStride: 1)], // I420 needs 3
+      );
+      YuvAbiV1Runner.debugInvokeOverride =
+          (src, dst, options) => throw StateError('invoke must not be reached for a plane count rejected before any allocation');
+
+      expect(() => YuvAbiV1Runner.grayscale(source: malformed), throwsArgumentError);
+      expect(originalBytes, canary, reason: 'source bytes changed after a call that never reached invoke');
+    });
+  });
+
+  group('YuvAbiV1Runner against the real native library', () {
+    YuvAbiV1FrameInput bgraSource(int width, int height, {int fill = 0x11}) {
+      final bytes = Uint8List(width * height * 4)..fillRange(0, width * height * 4, fill);
+      return YuvAbiV1FrameInput(
+        format: yuvFormatBgra8888,
+        width: width,
+        height: height,
+        planes: [YuvAbiV1PlaneInput(bytes: bytes, rowStride: width * 4, pixelStride: 4)],
+      );
+    }
+
+    test('a fully valid call reaches the real kernel placeholder (INTERNAL_ERROR)', () {
+      // Every yuv_*_v1 kernel is currently a deliberate stub (YUV-36b): a
+      // structurally valid call passes all validation and returns
+      // YUV_STATUS_INTERNAL_ERROR without writing a byte. This is the real-DLL
+      // counterpart of the override-driven test with the same name above --
+      // it exists specifically to catch a real kernel landing (YUV-22/23/31/32,
+      // see the dartdoc on yuvStatusInternalError) or a real ABI mismatch that
+      // a fake kernel could never surface, and remains skipped when the DLL is
+      // unavailable, unlike every group above.
+      expect(
+        () => YuvAbiV1Runner.grayscale(source: bgraSource(4, 4)),
+        throwsA(isA<YuvNativeException>()
+            .having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)
+            .having((e) => e.operation, 'operation', 'yuv_grayscale_v1')),
+      );
+    });
+
+    test('chroma swap requires NV12 and rejects BGRA with UNSUPPORTED_FORMAT (2)', () {
+      // Rejected by native validation, not by the runner itself (the runner
+      // has no format-pair check of its own for chroma swap) -- this needs
+      // the real DLL and cannot be moved to the override-driven group above.
+      expect(() => YuvAbiV1Runner.chromaSwap(source: bgraSource(4, 4)), throwsUnsupportedError);
+    });
+
+    test('an out-of-range region on the source frame throws ArgumentError (1)', () {
+      // Rejected by native validation, not by the runner itself (the runner
+      // has no region-bounds check of its own -- see YuvAbiV1Region's
+      // dartdoc) -- this needs the real DLL and cannot be moved to the
+      // override-driven group above.
+      final source = bgraSource(4, 4);
+      expect(
+        () => YuvAbiV1Runner.grayscale(source: source, region: const YuvAbiV1Region(left: 0, top: 0, right: 100, bottom: 100)),
+        throwsArgumentError,
+      );
+    });
+
+    test('an unsupported color pairing throws UnsupportedError (7)', () {
+      // BGRA requires colorMatrix/colorRange NONE (section 9); the runner
+      // always derives the correct pairing from the format
+      // (yuvAbiV1ColorMatrixFor/yuvAbiV1ColorRangeFor), so this exercises
+      // status 7 through a hand-built frame bypassing that derivation --
+      // representative of what a future caller with a raw descriptor could
+      // still get wrong, and of native validation being authoritative
+      // regardless of what the Dart layer intended to send.
+      //
+      // yuvAbiV1ColorMatrixFor/yuvAbiV1ColorRangeFor cannot themselves
+      // express a wrong pairing (each returns exactly one value per format),
+      // so this is exercised through the runner's public region-rejection
+      // path being wired to real native statuses at all, rather than by
+      // constructing a malformed descriptor directly -- YuvAbiV1FrameInput
+      // has no color fields to corrupt from the outside. Direct
+      // status-7 coverage of the native validator itself lives in
+      // test_native/abi_status_test.c.
+      expect(yuvAbiV1ColorMatrixFor(yuvFormatBgra8888), yuvColorMatrixNone);
+      expect(yuvAbiV1ColorRangeFor(yuvFormatBgra8888), yuvColorRangeNone);
+      expect(yuvAbiV1ColorMatrixFor(yuvFormatNv12), yuvColorMatrixBt601);
+      expect(yuvAbiV1ColorRangeFor(yuvFormatNv12), yuvColorRangeLimited);
     });
   }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
 
@@ -482,12 +575,100 @@ void main() {
     });
   });
 
-  group('YuvAbiV1Runner releases every allocation on a native call (YUV-36d)', () {
+  group('YuvAbiV1Runner releases every allocation on a call (YUV-36d/YUV-36i: no yuv_ffi.dll required)', () {
     /// Counts native allocations a clean call makes, then re-runs with the
     /// instrumented allocator failing at each allocation index in turn,
     /// asserting nothing is left outstanding either way. Mirrors the pattern
     /// already established in native_allocation_safety_test.dart for
-    /// YUVDefClass.
+    /// YUVDefClass. [call] is expected to drive the runner through
+    /// debugInvokeOverride rather than the real yuv_ffi.dll, per YUV-36i.
+    void expectNoLeakAtEveryAllocation(String label, YuvAbiV1FrameResult Function() call) {
+      final counting = InstrumentedNativeAllocator();
+      final int total;
+      try {
+        withNativeAllocator(counting, () {
+          try {
+            call();
+          } catch (_) {
+            // The fake kernel below always returns INTERNAL_ERROR; what this
+            // loop verifies is allocation bookkeeping, not the call's result.
+          }
+        });
+        total = counting.allocationCount;
+      } finally {
+        counting.releaseAll();
+      }
+      expect(total, greaterThan(0), reason: '$label performed no native allocations');
+
+      for (int failAt = 1; failAt <= total; failAt++) {
+        final failing = InstrumentedNativeAllocator(failAtAllocation: failAt);
+        try {
+          withNativeAllocator(failing, () {
+            try {
+              call();
+            } catch (_) {
+              // The injected allocation failure (or the fake kernel's
+              // INTERNAL_ERROR) is expected; what matters is that nothing
+              // leaked.
+            }
+          });
+          expect(failing.outstanding, 0, reason: '$label leaked when allocation #$failAt of $total failed');
+        } finally {
+          failing.releaseAll();
+        }
+      }
+    }
+
+    setUp(() => YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusInternalError);
+    tearDown(() => YuvAbiV1Runner.debugInvokeOverride = null);
+
+    test('a successful call leaks nothing at any allocation-failure point', () {
+      final bytes = Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x22);
+      final source = YuvAbiV1FrameInput(
+        format: yuvFormatBgra8888,
+        width: 4,
+        height: 4,
+        planes: [YuvAbiV1PlaneInput(bytes: bytes, rowStride: 16, pixelStride: 4)],
+      );
+      expectNoLeakAtEveryAllocation('grayscale', () => YuvAbiV1Runner.grayscale(source: source));
+    });
+
+    test('a crop call (different destination geometry) leaks nothing at any allocation-failure point', () {
+      final bytes = Uint8List(8 * 8 * 4)..fillRange(0, 8 * 8 * 4, 0x33);
+      final source = YuvAbiV1FrameInput(
+        format: yuvFormatBgra8888,
+        width: 8,
+        height: 8,
+        planes: [YuvAbiV1PlaneInput(bytes: bytes, rowStride: 32, pixelStride: 4)],
+      );
+      expectNoLeakAtEveryAllocation('crop', () => YuvAbiV1Runner.crop(source: source, left: 1, top: 1, width: 4, height: 4));
+    });
+
+    test('a multi-plane I420 call leaks nothing at any allocation-failure point', () {
+      const width = 4;
+      const height = 4;
+      final y = Uint8List(width * height)..fillRange(0, width * height, 0x40);
+      final u = Uint8List((width ~/ 2) * (height ~/ 2))..fillRange(0, (width ~/ 2) * (height ~/ 2), 0x80);
+      final v = Uint8List((width ~/ 2) * (height ~/ 2))..fillRange(0, (width ~/ 2) * (height ~/ 2), 0xC0);
+      final source = YuvAbiV1FrameInput(
+        format: yuvFormatI420,
+        width: width,
+        height: height,
+        planes: [
+          YuvAbiV1PlaneInput(bytes: y, rowStride: width, pixelStride: 1),
+          YuvAbiV1PlaneInput(bytes: u, rowStride: width ~/ 2, pixelStride: 1),
+          YuvAbiV1PlaneInput(bytes: v, rowStride: width ~/ 2, pixelStride: 1),
+        ],
+      );
+      expectNoLeakAtEveryAllocation('I420 blur', () => YuvAbiV1Runner.blur(kind: YuvAbiV1BlurKind.box, source: source, radius: 1));
+    });
+  });
+
+  group('YuvAbiV1Runner releases every allocation on a real native call (YUV-36d)', () {
+    // Real-DLL counterpart of the group above: same three calls, but through
+    // the actual yuv_ffi.dll symbols, to catch a real ABI/allocator mismatch
+    // a fake kernel could never surface. Skipped when the DLL is unavailable,
+    // per YUV-36i's requirement that this be the exception, not the rule.
     void expectNoLeakAtEveryAllocation(String label, YuvAbiV1FrameResult Function() call) {
       final counting = InstrumentedNativeAllocator();
       final int total;
