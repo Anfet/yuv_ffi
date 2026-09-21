@@ -97,7 +97,12 @@ YuvSizeResult yuv_checked_plane_size(uint32_t plane_height, uint64_t row_stride,
 
     /* when plane_height == 0, size is just min_span */
     if (plane_height == 0) {
-        result.value = min_span;
+        /* The cast is explicit because the guard above already rejected
+           min_span > SIZE_MAX, so this narrowing cannot lose data. Without it
+           MSVC reports C4244 on a 32-bit target, where size_t is 32 bits, and
+           /WX turns that into a build failure -- the compiler cannot see that
+           the range was already proven. */
+        result.value = (size_t)min_span;
         result.success = 1;
         return result;
     }
