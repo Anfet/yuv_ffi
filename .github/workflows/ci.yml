@@ -41,6 +41,98 @@ jobs:
       - name: Unit tests
         run: flutter test
 
+  # YUV-34: required native memory-safety gate. Flutter reference tests prove
+  # wrong pixels; they cannot prove the absence of out-of-bounds access,
+  # uninitialized reads, integer UB, or leaks inside the C kernels. This job
+  # builds the C-only test_native harness (never the Flutter plugin build)
+  # with clang and ASan+UBSan (LSan is bundled into ASan on Linux), and fails
+  # on any sanitizer report or non-zero ctest exit -- no continue-on-error.
+  native-sanitizer-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Report toolchain versions
+        run: |
+          clang --version
+          cmake --version
+
+      # BUILD_TESTING=ON pulls in test_native/ (see root CMakeLists.txt); the
+      # generator is left at its Ubuntu default (Unix Makefiles), and the
+      # compiler is pinned to clang explicitly rather than relying on
+      # whatever cc/gcc the runner image defaults to, since the sanitizer
+      # flags in test_native/CMakeLists.txt are written for GCC/Clang and the
+      # required CI evidence should name one specific compiler.
+      - name: Configure
+        run: |
+          cmake -S . -B "$RUNNER_TEMP/sanitizer-build" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=clang
+
+      - name: Build
+        run: cmake --build "$RUNNER_TEMP/sanitizer-build" --config Debug
+
+      # --output-on-failure surfaces the sanitizer report inline in the job
+      # log; run twice (Debug is ctest's implicit default here, Release is
+      # asserted explicitly per the project rule that NDEBUG silences assert()
+      # and must not silently drop the harness's own checks).
+      - name: Run native test suite (Debug)
+        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build" -C Debug --output-on-failure
+
+      - name: Configure (Release)
+        run: |
+          cmake -S . -B "$RUNNER_TEMP/sanitizer-build-release" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=clang
+
+      - name: Build (Release)
+        run: cmake --build "$RUNNER_TEMP/sanitizer-build-release" --config Release
+
+      - name: Run native test suite (Release)
+        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build-release" -C Release --output-on-failure
+
+      # Prints the sanitizer safety gate's own executed-case count into the
+      # job log as required evidence, independent of ctest's per-test pass
+      # count (ctest reports one pass/fail per executable, not per case).
+      - name: Report executed case count
+        run: "$RUNNER_TEMP/sanitizer-build/test_native/abi_sanitizer_test"
+
+  # YUV-26: proves ffigen.yaml's allowlist is host-independent. libclang's
+  # system headers differ between Windows and Linux, so a `functions.include`
+  # / `structs.include` pattern that is accidentally too broad (or too
+  # narrow) can generate identically on one host and diverge on the other
+  # without either host reporting an error. Regenerating from a clean
+  # checkout and diffing against the committed file is a stronger proof of
+  # host-independence than re-deriving the expected symbol set by hand.
+  bindings-regeneration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Install libclang
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      - name: Regenerate bindings
+        run: flutter pub run ffigen --config ffigen.yaml
+
+      - name: Audit generated bindings against Dart usage
+        run: dart run tool/verify_bindings_audit.dart
+
+      - name: Fail on any drift from the committed bindings
+        run: git diff --exit-code -- ffigen.yaml lib/src/functions/bindings/yuv_ffi_bingings.dart
+
   # YUV-06: proves the package is loadable the way a real consumer loads it.
   # Both jobs build from a clean checkout, install the library the way the
   # platform expects, and run a smoke suite that refuses to skip when the

@@ -16,11 +16,47 @@ endif()
 # lld-link which does not provide integrated ASan/UBSan runtime, so sanitizers
 # are disabled to avoid link errors (_wassert undefined symbols, ASan init conflicts).
 # Tests still compile and run normally on Windows without sanitizers.
+#
+# The check is written as "this platform, and NOT MSVC" rather than as a
+# negation of one compiler: NOT MSVC is also true for clang-cl and for clang
+# targeting the MSVC ABI on Windows, where ASan's runtime is not the
+# integrated one this flag combination assumes. Gating on the actual
+# supported platform pair is what keeps that combination out, not a
+# compiler-name check that would let it back in.
 if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "Darwin") AND NOT MSVC)
     # Enable AddressSanitizer (ASan) and UndefinedBehaviorSanitizer (UBSan)
     # on GCC and Clang on supported platforms to detect memory errors and undefined behavior at runtime
     add_compile_options(-fsanitize=address -fsanitize=undefined)
     add_link_options(-fsanitize=address -fsanitize=undefined)
+
+    # LeakSanitizer (YUV-34): bundled into ASan and on by default on Linux
+    # x86_64/i386/arm64 -- no separate -fsanitize=leak flag is needed there,
+    # and adding one is in fact rejected by the Linux ASan runtime ("-fsanitize=
+    # leak is incompatible with enabled -fsanitize=address"). It is NOT
+    # supported by ASan on macOS at all (Darwin's ASan silently disables leak
+    # detection), so LSAN_OPTIONS/ASAN_OPTIONS=detect_leaks=1 is exported only
+    # where it is stably supported: Linux.
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set(YUV_FFI_LSAN_SUPPORTED TRUE)
+    else()
+        set(YUV_FFI_LSAN_SUPPORTED FALSE)
+    endif()
+else()
+    set(YUV_FFI_LSAN_SUPPORTED FALSE)
+endif()
+
+# Allocation-failure injection (YUV-34): abi_sanitizer_test.c wraps malloc via
+# the GNU/gold/lld ELF linker's --wrap to inject controlled allocation
+# failures into the ABI v1 blur entry points, the only ones that allocate.
+# --wrap is a linker feature, not a compiler one, and is not available from
+# MSVC's link.exe or from lld-link's MSVC-compatible driver -- only from an
+# ELF-targeting linker. That is exactly the Linux/non-MSVC condition already
+# established above for the sanitizers themselves, so the same guard is
+# reused rather than re-deriving a second one.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT MSVC)
+    set(YUV_FFI_MALLOC_WRAP_SUPPORTED TRUE)
+else()
+    set(YUV_FFI_MALLOC_WRAP_SUPPORTED FALSE)
 endif()
 
 # Smoke test 1: basic assertions and boundary checks
@@ -231,6 +267,53 @@ add_test(
     NAME abi_blur_tests
     COMMAND abi_blur_test
 )
+
+# ABI v1 native ASan/UBSan/LSan safety gate (YUV-34)
+# Calls all eleven exported ABI v1 entry points against frames whose planes are
+# each their own exact-length heap allocation, so a kernel that steps outside a
+# plane trips ASan's own heap redzone rather than only a manually placed byte.
+# Row/column padding gaps inside those same allocations are separately filled
+# with a canary and checked byte-for-byte, catching a stride-confusion bug
+# that never leaves the allocation. Covers canary probes across every
+# operation family (C-01..C-03), the geometric transforms and chroma swap
+# (C-04..C-06), region of interest (C-07), an exact-fit allocation with zero
+# padding slack (C-08), repeated allocate/free cycles for LSan (C-09), invalid
+# rect/radius/sigma/geometry (H-01), and checked-arithmetic overflow (H-02).
+add_executable(abi_sanitizer_test
+    abi_sanitizer_test.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_kernel_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_convert_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_grayscale_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_black_white_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_negate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_chroma_swap_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_gaussian_blur_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_mean_blur_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_box_blur_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_crop_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_flip_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_rotate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/validated_view.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/checked_arithmetic.c
+)
+target_include_directories(abi_sanitizer_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+if(YUV_FFI_MALLOC_WRAP_SUPPORTED)
+    # Only the ELF/GNU-family linker accepts --wrap; guarded above by the same
+    # Linux-and-not-MSVC condition the sanitizer flags use.
+    target_compile_definitions(abi_sanitizer_test PRIVATE ENABLE_MALLOC_WRAP)
+    target_link_options(abi_sanitizer_test PRIVATE -Wl,--wrap=malloc)
+endif()
+
+add_test(
+    NAME abi_sanitizer_tests
+    COMMAND abi_sanitizer_test
+)
+
+if(YUV_FFI_LSAN_SUPPORTED)
+    set_tests_properties(abi_sanitizer_tests PROPERTIES ENVIRONMENT "ASAN_OPTIONS=detect_leaks=1")
+endif()
 
 # Windows: document ASan/UBSan limitation
 # On Windows, the standard LLVM/GCC sanitizers may not be available. Projects using
