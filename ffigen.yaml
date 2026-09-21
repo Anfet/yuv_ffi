@@ -3,6 +3,26 @@ name: YuvFfiBindings
 description: FFI bindings for native YUV code
 output: lib/src/functions/bindings/yuv_ffi_bingings.dart
 
+# YUV-36c: src/yuv/abi/h/yuv_abi_v1.h asserts its section-9/10 layout with
+# `typedef char name[(condition) ? 1 : -1]` (see YUV-36a). That header
+# compiles cleanly under clang -fsyntax-only, MSVC /W4 /WX, GCC and wasm32
+# (verified in YUV-36a/b), but ffigen's own libclang-based parser -- a
+# separate code path from real compilation -- does not fold `offsetof()`
+# inside that array-bound expression to a constant, and reports every one of
+# those typedefs as a "variable length array" error ("folded to constant
+# array as an extension"). Left unaddressed, ffigen refuses to generate any
+# bindings at all ("Skipped generating bindings due to errors in source
+# files"), even though the header itself has no defect.
+#
+# `-Wno-gnu-folding-constant` suppresses exactly this warning and nothing
+# else, so a real error in a header -- this one or a future one -- still
+# stops generation. `ignore-source-errors` was tried first and rejected: it
+# silences ALL source diagnostics project-wide, which would also hide a
+# genuine header defect. Verified byte-for-byte identical generated bindings
+# between the two approaches.
+compiler-opts:
+  - '-Wno-gnu-folding-constant'
+
 headers:
   entry-points:
     - 'src/yuv_ffi.h'
@@ -15,9 +35,11 @@ functions:
     - 'nv21_.*'
     - 'yuv420_.*'
     - 'nvXX_to_nvYY'
+    - 'yuv_.*_v1'
   exclude:
     - 'nv21_to_rgb'
 
 structs:
   include:
     - YUVDef
+    - 'Yuv.*V1'

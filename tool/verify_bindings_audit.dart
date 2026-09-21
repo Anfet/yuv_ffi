@@ -28,14 +28,75 @@ Future<void> main() async {
   print('  Generated members: ${generatedMembers.join(', ')}\n');
 
   // Step 3: Compare
+  //
+  // ABI v1 (YUV-36c, docs/api-abi-0.3-design.md sections 9-11): 11 `yuv_*_v1`
+  // functions and 11 descriptor/options structs are generated but not yet
+  // called from lib/src/**/*.dart -- the typed IO runner is YUV-36d.
+  //
+  // The two are tracked separately rather than in one list, because
+  // _getUsedSymbols() below can only ever confirm the first group:
+  //
+  //   - functions ARE eventually detectable: they are always called through
+  //     `ffiBingings.<name>(...)`, which the regex below matches. Once
+  //     YUV-36d lands, `knownAbiV1Functions` can be deleted and these 11 will
+  //     be picked up by the normal used/generated comparison, same as the 40
+  //     legacy symbols today.
+  //   - structs are NEVER detectable this way, not even after YUV-36d: a
+  //     struct is referenced as a bare Dart type (`YuvConstFrameV1 frame =
+  //     ...`, a parameter type, `.ref` on a pointer), never as
+  //     `ffiBingings.TypeName`. This is not new to YUV-36c -- `YUVDef` has
+  //     the same property and was already hardcoded out of `extra` below
+  //     before this task touched the file. `knownAbiV1Structs` documents
+  //     that permanently, it is not scheduled for removal.
+  //
+  // Both lists are checked in both directions: `generatedMembers` must
+  // contain every name listed (an entry disappearing from ffigen.yaml or the
+  // generated file is a regression), and nothing here stands in for a
+  // "used" symbol going missing from generatedMembers -- that still fails
+  // via `missing` below once real call sites exist.
+  const knownAbiV1Functions = {
+    'yuv_convert_v1',
+    'yuv_black_white_v1',
+    'yuv_grayscale_v1',
+    'yuv_negate_v1',
+    'yuv_gaussian_blur_v1',
+    'yuv_mean_blur_v1',
+    'yuv_box_blur_v1',
+    'yuv_crop_v1',
+    'yuv_flip_v1',
+    'yuv_rotate_v1',
+    'yuv_chroma_swap_v1',
+  };
+  const knownAbiV1Structs = {
+    'YuvConstPlaneV1',
+    'YuvMutablePlaneV1',
+    'YuvConstFrameV1',
+    'YuvMutableFrameV1',
+    'YuvRegionOptionsV1',
+    'YuvBlurOptionsV1',
+    'YuvEffectOptionsV1',
+    'YuvConvertOptionsV1',
+    'YuvCropOptionsV1',
+    'YuvFlipOptionsV1',
+    'YuvRotateOptionsV1',
+  };
+  // Structs that are never detectable via ffiBingings.* usage (see above):
+  // known ABI v1 structs, plus the legacy YUVDef this script already carried
+  // that exemption for.
+  const neverUsageDetectedStructs = {'YUVDef', ...knownAbiV1Structs};
+
   final missing = usedSymbols.where((sym) => !generatedMembers.contains(sym)).toList();
-  final extra = generatedMembers.where((mem) => !usedSymbols.contains(mem) && mem != 'YUVDef').toList();
+  final extra = generatedMembers
+      .where((mem) => !usedSymbols.contains(mem) && !neverUsageDetectedStructs.contains(mem) && !knownAbiV1Functions.contains(mem))
+      .toList();
+  final missingFromKnownAbiV1 = {...knownAbiV1Functions, ...knownAbiV1Structs}.where((name) => !generatedMembers.contains(name)).toList();
 
   print('Step 3: Comparison results\n');
 
-  if (missing.isEmpty && extra.isEmpty) {
+  if (missing.isEmpty && extra.isEmpty && missingFromKnownAbiV1.isEmpty) {
     print('✓ SUCCESS: All used symbols are present with correct names.');
     print('✓ No unexpected members found.');
+    print('✓ All known ABI v1 functions and structs are present.');
     exit(0);
   } else {
     bool hasProblem = false;
@@ -52,6 +113,14 @@ Future<void> main() async {
       print('✗ UNEXPECTED MEMBERS (in bindings but not used in Dart):');
       for (final mem in extra) {
         print('  - $mem');
+      }
+      hasProblem = true;
+    }
+
+    if (missingFromKnownAbiV1.isNotEmpty) {
+      print('✗ MISSING ABI V1 SURFACE (expected but not in generated bindings):');
+      for (final name in missingFromKnownAbiV1) {
+        print('  - $name');
       }
       hasProblem = true;
     }
@@ -86,8 +155,11 @@ Future<Set<String>> _getGeneratedMembers() async {
 
   final members = <String>{};
 
-  // Find function wrappers: "  void functionName(" or "  <type> functionName("
-  final funcRegex = RegExp(r'^  (void|late final) (\w+)\(', multiLine: true);
+  // Find function wrappers: "  void functionName(", "  int functionName(" or
+  // "  late final functionName(". `int` covers the YUV-36 status-returning
+  // ABI v1 wrappers (YuvStatus is a typedef'd int32_t, so ffigen emits `int`
+  // as the Dart return type), alongside the legacy `void` wrappers.
+  final funcRegex = RegExp(r'^  (void|int|late final) (\w+)\(', multiLine: true);
   for (final match in funcRegex.allMatches(content)) {
     final name = match.group(2);
     if (name != null && !name.startsWith('_')) {

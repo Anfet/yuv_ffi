@@ -15,6 +15,204 @@ class YuvFfiBindings {
   /// The symbols are looked up with [lookup].
   YuvFfiBindings.fromLookup(ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup) : _lookup = lookup;
 
+  int yuv_convert_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvConvertOptionsV1> options,
+  ) {
+    return _yuv_convert_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_convert_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvConvertOptionsV1>)>>(
+          'yuv_convert_v1');
+  late final _yuv_convert_v1 =
+      _yuv_convert_v1Ptr.asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvConvertOptionsV1>)>();
+
+  int yuv_black_white_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvEffectOptionsV1> options,
+  ) {
+    return _yuv_black_white_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_black_white_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvEffectOptionsV1>)>>(
+          'yuv_black_white_v1');
+  late final _yuv_black_white_v1 = _yuv_black_white_v1Ptr
+      .asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvEffectOptionsV1>)>();
+
+  int yuv_grayscale_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvEffectOptionsV1> options,
+  ) {
+    return _yuv_grayscale_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_grayscale_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvEffectOptionsV1>)>>(
+          'yuv_grayscale_v1');
+  late final _yuv_grayscale_v1 =
+      _yuv_grayscale_v1Ptr.asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvEffectOptionsV1>)>();
+
+  int yuv_negate_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvEffectOptionsV1> options,
+  ) {
+    return _yuv_negate_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_negate_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvEffectOptionsV1>)>>(
+          'yuv_negate_v1');
+  late final _yuv_negate_v1 =
+      _yuv_negate_v1Ptr.asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvEffectOptionsV1>)>();
+
+  int yuv_gaussian_blur_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvBlurOptionsV1> options,
+  ) {
+    return _yuv_gaussian_blur_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_gaussian_blur_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvBlurOptionsV1>)>>(
+          'yuv_gaussian_blur_v1');
+  late final _yuv_gaussian_blur_v1 = _yuv_gaussian_blur_v1Ptr
+      .asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvBlurOptionsV1>)>();
+
+  int yuv_mean_blur_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvBlurOptionsV1> options,
+  ) {
+    return _yuv_mean_blur_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_mean_blur_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvBlurOptionsV1>)>>(
+          'yuv_mean_blur_v1');
+  late final _yuv_mean_blur_v1 =
+      _yuv_mean_blur_v1Ptr.asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvBlurOptionsV1>)>();
+
+  int yuv_box_blur_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvBlurOptionsV1> options,
+  ) {
+    return _yuv_box_blur_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_box_blur_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvBlurOptionsV1>)>>(
+          'yuv_box_blur_v1');
+  late final _yuv_box_blur_v1 =
+      _yuv_box_blur_v1Ptr.asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvBlurOptionsV1>)>();
+
+  int yuv_crop_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvCropOptionsV1> options,
+  ) {
+    return _yuv_crop_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_crop_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvCropOptionsV1>)>>(
+          'yuv_crop_v1');
+  late final _yuv_crop_v1 =
+      _yuv_crop_v1Ptr.asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvCropOptionsV1>)>();
+
+  int yuv_flip_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvFlipOptionsV1> options,
+  ) {
+    return _yuv_flip_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_flip_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvFlipOptionsV1>)>>(
+          'yuv_flip_v1');
+  late final _yuv_flip_v1 =
+      _yuv_flip_v1Ptr.asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvFlipOptionsV1>)>();
+
+  int yuv_rotate_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvRotateOptionsV1> options,
+  ) {
+    return _yuv_rotate_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_rotate_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvRotateOptionsV1>)>>(
+          'yuv_rotate_v1');
+  late final _yuv_rotate_v1 =
+      _yuv_rotate_v1Ptr.asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvRotateOptionsV1>)>();
+
+  int yuv_chroma_swap_v1(
+    ffi.Pointer<YuvConstFrameV1> source,
+    ffi.Pointer<YuvMutableFrameV1> destination,
+    ffi.Pointer<YuvEffectOptionsV1> options,
+  ) {
+    return _yuv_chroma_swap_v1(
+      source,
+      destination,
+      options,
+    );
+  }
+
+  late final _yuv_chroma_swap_v1Ptr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvEffectOptionsV1>)>>(
+          'yuv_chroma_swap_v1');
+  late final _yuv_chroma_swap_v1 = _yuv_chroma_swap_v1Ptr
+      .asFunction<int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<YuvEffectOptionsV1>)>();
+
   void bgra8888_from_rgba8888(
     ffi.Pointer<ffi.Uint8> rgba,
     ffi.Pointer<YUVDef> dst,
@@ -603,4 +801,229 @@ final class YUVDef extends ffi.Struct {
 
   @ffi.Int()
   external int uvPixelStride;
+}
+
+final class YuvConstPlaneV1 extends ffi.Struct {
+  @ffi.Uint64()
+  external int length;
+
+  @ffi.Uint64()
+  external int rowStride;
+
+  @ffi.Uint32()
+  external int pixelStride;
+
+  @ffi.Uint32()
+  external int sampleBytes;
+
+  external ffi.Pointer<ffi.Uint8> data;
+}
+
+final class YuvMutablePlaneV1 extends ffi.Struct {
+  @ffi.Uint64()
+  external int length;
+
+  @ffi.Uint64()
+  external int rowStride;
+
+  @ffi.Uint32()
+  external int pixelStride;
+
+  @ffi.Uint32()
+  external int sampleBytes;
+
+  external ffi.Pointer<ffi.Uint8> data;
+}
+
+final class YuvConstFrameV1 extends ffi.Struct {
+  @ffi.Uint32()
+  external int structSize;
+
+  @ffi.Uint32()
+  external int abiVersion;
+
+  @ffi.Uint32()
+  external int format;
+
+  @ffi.Uint32()
+  external int planeCount;
+
+  @ffi.Uint32()
+  external int width;
+
+  @ffi.Uint32()
+  external int height;
+
+  @ffi.Uint32()
+  external int colorMatrix;
+
+  @ffi.Uint32()
+  external int colorRange;
+
+  @ffi.Array.multi([3])
+  external ffi.Array<YuvConstPlaneV1> planes;
+
+  @ffi.Array.multi([4])
+  external ffi.Array<ffi.Uint64> reserved;
+}
+
+final class YuvMutableFrameV1 extends ffi.Struct {
+  @ffi.Uint32()
+  external int structSize;
+
+  @ffi.Uint32()
+  external int abiVersion;
+
+  @ffi.Uint32()
+  external int format;
+
+  @ffi.Uint32()
+  external int planeCount;
+
+  @ffi.Uint32()
+  external int width;
+
+  @ffi.Uint32()
+  external int height;
+
+  @ffi.Uint32()
+  external int colorMatrix;
+
+  @ffi.Uint32()
+  external int colorRange;
+
+  @ffi.Array.multi([3])
+  external ffi.Array<YuvMutablePlaneV1> planes;
+
+  @ffi.Array.multi([4])
+  external ffi.Array<ffi.Uint64> reserved;
+}
+
+final class YuvRegionOptionsV1 extends ffi.Struct {
+  @ffi.Uint32()
+  external int structSize;
+
+  @ffi.Uint32()
+  external int abiVersion;
+
+  @ffi.Int32()
+  external int left;
+
+  @ffi.Int32()
+  external int top;
+
+  @ffi.Int32()
+  external int right;
+
+  @ffi.Int32()
+  external int bottom;
+
+  @ffi.Uint32()
+  external int enabled;
+
+  @ffi.Uint32()
+  external int reserved0;
+}
+
+final class YuvBlurOptionsV1 extends ffi.Struct {
+  @ffi.Uint32()
+  external int structSize;
+
+  @ffi.Uint32()
+  external int abiVersion;
+
+  @ffi.Uint32()
+  external int radius;
+
+  @ffi.Uint32()
+  external int borderMode;
+
+  @ffi.Double()
+  external double sigma;
+
+  external YuvRegionOptionsV1 region;
+
+  @ffi.Array.multi([2])
+  external ffi.Array<ffi.Uint64> reserved;
+}
+
+final class YuvEffectOptionsV1 extends ffi.Struct {
+  @ffi.Uint32()
+  external int structSize;
+
+  @ffi.Uint32()
+  external int abiVersion;
+
+  external YuvRegionOptionsV1 region;
+
+  @ffi.Array.multi([2])
+  external ffi.Array<ffi.Uint64> reserved;
+}
+
+final class YuvConvertOptionsV1 extends ffi.Struct {
+  @ffi.Uint32()
+  external int structSize;
+
+  @ffi.Uint32()
+  external int abiVersion;
+
+  @ffi.Array.multi([3])
+  external ffi.Array<ffi.Uint64> reserved;
+}
+
+final class YuvCropOptionsV1 extends ffi.Struct {
+  @ffi.Uint32()
+  external int structSize;
+
+  @ffi.Uint32()
+  external int abiVersion;
+
+  @ffi.Int32()
+  external int left;
+
+  @ffi.Int32()
+  external int top;
+
+  @ffi.Uint32()
+  external int width;
+
+  @ffi.Uint32()
+  external int height;
+
+  @ffi.Array.multi([1])
+  external ffi.Array<ffi.Uint64> reserved;
+}
+
+final class YuvFlipOptionsV1 extends ffi.Struct {
+  @ffi.Uint32()
+  external int structSize;
+
+  @ffi.Uint32()
+  external int abiVersion;
+
+  @ffi.Uint32()
+  external int direction;
+
+  @ffi.Uint32()
+  external int reserved0;
+
+  @ffi.Array.multi([2])
+  external ffi.Array<ffi.Uint64> reserved;
+}
+
+final class YuvRotateOptionsV1 extends ffi.Struct {
+  @ffi.Uint32()
+  external int structSize;
+
+  @ffi.Uint32()
+  external int abiVersion;
+
+  @ffi.Uint32()
+  external int rotationDegrees;
+
+  @ffi.Uint32()
+  external int reserved0;
+
+  @ffi.Array.multi([2])
+  external ffi.Array<ffi.Uint64> reserved;
 }
