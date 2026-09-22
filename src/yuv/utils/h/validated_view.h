@@ -12,14 +12,14 @@
  * docs/api-abi-0.3-design.md sections 9-11, but this header intentionally does
  * NOT redeclare those exact ABI structs: YUV-36 owns the public, wire-stable
  * descriptor/status ABI (structSize/abiVersion negotiation, sizeof/offsetof
- * layout assertions, reserved-field zero checks). This task (YUV-33c) owns the
- * validation LOGIC and an internal view shape that future operations can adopt
- * ahead of, or independently from, the full public ABI landing.
+ * layout assertions, reserved-field zero checks). This header owns the
+ * validation LOGIC and the internal view shape the `yuv_*_v1` operations
+ * build from those public structs.
  *
- * A caller-facing plane descriptor. Deliberately shaped like the future ABI
- * plane structs (`length`, `rowStride`, `pixelStride`, `sampleBytes`, `data`)
- * so that adopting the real ABI struct later is a type swap, not a semantic
- * change. `data` is `const void *` / `void *` here rather than `uint8_t *`
+ * A caller-facing plane descriptor. Deliberately shaped like the public ABI
+ * plane structs (`length`, `rowStride`, `pixelStride`, `sampleBytes`, `data`),
+ * so building one from a `YuvConstPlaneV1`/`YuvMutablePlaneV1` is a field
+ * copy, not a semantic conversion. `data` is `const void *` / `void *` here rather than `uint8_t *`
  * because validation never dereferences or indexes through it -- see the
  * adoption contract below.
  */
@@ -45,9 +45,9 @@ typedef struct {
 #define YUV_VIEW_FORMAT_BGRA8888 ((uint32_t)3)
 #define YUV_VIEW_FORMAT_RGBA8888 ((uint32_t)4)
 
-/* Validation status, kept intentionally close to the future YuvStatus (ABI
- * section 9) but not aliased to it: this file does not own status-value
- * stability for the public ABI, YUV-36 does. */
+/* Validation status, kept intentionally close to YuvStatus (ABI section 9)
+ * but not aliased to it: this file does not own status-value stability for
+ * the public ABI, src/yuv/abi/h/yuv_abi_v1.h does. */
 typedef enum {
     YUV_VIEW_OK = 0,
     YUV_VIEW_INVALID_ARGUMENT = 1,
@@ -186,67 +186,33 @@ YuvViewStatus yuv_validated_view_check_destination_geometry(
 
 /*
  * ---------------------------------------------------------------------------
- * Adoption contract (YUV-33 Architect Decision #6 / scope: document, not
- * implement -- no operations file is touched by this task).
+ * Adoption contract (YUV-33 Architect Decision #6)
  * ---------------------------------------------------------------------------
  *
- * Every future native operation MUST complete validation via
+ * Every native operation MUST complete validation via
  * yuv_validated_view_build_const_frame() / yuv_validated_view_build_mutable_frame()
  * (and yuv_validated_view_check_destination_geometry() for its expected
  * output size) BEFORE its first destination mutation, and use a single
- * cleanup/return path on any non-OK status (Architect Decision #6). The
- * mapping of future task to the files that must consume these views:
+ * cleanup/return path on any non-OK status.
  *
- *   - YUV-36 (public length-aware descriptor/status ABI): defines the public
- *     `YuvConstFrameV1`/`YuvMutableFrameV1`/`YuvStatus` types from section 9
- *     and the `yuv_*_v1` entry points from section 11. Its entry-point
- *     implementations (new files, one per symbol in section 11's table, e.g.
- *     a future `src/yuv/yuv_convert_v1.c`, `src/yuv/yuv_crop_v1.c`, etc.)
- *     construct `YuvValidatedConstFrameView` / `YuvValidatedMutableFrameView`
- *     from the public ABI structs via yuv_validated_view_build_const_frame()/
- *     yuv_validated_view_build_mutable_frame() as their first step, and use
- *     yuv_validated_view_check_destination_geometry() before writing.
+ * This is now the state of the tree rather than a plan for it. The eleven
+ * `yuv_*_v1` entry points in `src/yuv/abi/` are the whole processing surface:
+ * each builds its source and destination views from the public
+ * `YuvConstFrameV1`/`YuvMutableFrameV1` structs as its first step, and checks
+ * destination geometry before writing. There are no length-less pointer
+ * triples left to migrate -- YUV-52 removed the per-format
+ * `src/yuv/bgra8888/`, `src/yuv/nv21/` and `src/yuv/yuv420/` implementations
+ * and the `YUVDef` descriptor along with them, so every call site reaching
+ * these views arrives through the section-9 ABI.
  *
- *   - YUV-31 (native correctness: transforms -- crop/flip/rotate) and
- *     YUV-32 (native correctness: effects/blur) consume these views inside
- *     the `yuv_*_v1` bodies YUV-36 creates; they do not read raw
- *     length-less pointers or re-derive spans themselves. Concretely this
- *     covers replacing today's per-format transform/effect files
- *     (every .c file under `src/yuv/bgra8888/`, `src/yuv/nv21/`, and
- *     `src/yuv/yuv420/`) with `0.3` implementations that receive an already-validated
- *     `YuvValidatedConstFrameView`/`YuvValidatedMutableFrameView` rather than
- *     raw `YUVDef`/pointer triples. That file-by-file migration is explicitly
- *     out of scope for YUV-33c (no mass operations migration).
- *
- *   - YUV-22 and YUV-23 (native correctness: conversions, e.g.
- *     `bgra8888_to_i420.c`, `nv21_to_nv12.c`, `yuv420_to_bgra.c` and peers)
- *     likewise build both a source `YuvValidatedConstFrameView` and a
- *     destination `YuvValidatedMutableFrameView` through this header before
- *     any pixel is read or written, so format/plane-count/sample-size/stride/
- *     span checks are uniform across every conversion pair in section 11's
- *     matrix instead of re-implemented per file.
- *
- * None of the files named above are modified by YUV-33c. This block is the
- * adoption contract required by Architect Decision #6/DoD, not an
- * implementation of it.
- *
- * ---------------------------------------------------------------------------
- * Legacy YUVDef note (see src/yuv/yuv.h)
- * ---------------------------------------------------------------------------
- * `YUVDef` (src/yuv/yuv.h) carries `y`/`u`/`v` pointers, `width`/`height`, and
- * row/pixel strides, but NO buffer length field. Any adapter that turns a
- * `YUVDef` into a `YuvValidatedConstFrameView`/`YuvValidatedMutableFrameView`
- * can therefore only validate what YUVDef actually carries (non-null
- * pointers, positive geometry, positive strides); it CANNOT verify that the
- * caller's real allocation is at least as large as the minimum span this
- * header computes, because YUVDef never received that length from its
- * caller. Such an adapter must compute a length via
- * yuv_checked_plane_span()/yuv_checked_plane_size() and use that COMPUTED
- * value as the view's `length` -- which validates internal consistency of
- * width/height/strides, but is not a caller-verified allocation size, unlike
- * the section-9 ABI's explicit `length` field. This is the "weaker guarantee"
- * called out in YUV-33 Architect Decision #5: closing it fully requires the
- * caller-supplied length that only the section-9 ABI (YUV-36) carries.
+ * That also closes the "weaker guarantee" recorded in YUV-33 Architect
+ * Decision #5. A `YUVDef` carried no buffer length, so an adapter built on it
+ * could only ever check internal consistency (non-null pointers, positive
+ * geometry and strides) against a length it computed itself via
+ * yuv_checked_plane_span()/yuv_checked_plane_size(). The section-9 descriptors
+ * carry an explicit caller-supplied `length`, so a view built from them
+ * validates the caller's real allocation, which is what the computed value
+ * could never stand in for.
  */
 
 #endif  // YUV_VALIDATED_VIEW_H

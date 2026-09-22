@@ -22,8 +22,6 @@ project(yuv_ffi_library VERSION 0.0.1 LANGUAGES C)
 # this list, or if this list contains a name not on disk, or a duplicate.
 set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv_ffi.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/utils/gauss.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/utils/checked_arithmetic.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/utils/validated_view.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_validate_v1.c"
@@ -39,44 +37,6 @@ set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_flip_v1.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_rotate_v1.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_chroma_swap_v1.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_blackwhite.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_block_uv.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_box_blur.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_crop.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_flip.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_from_rgba.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_gaussblur.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_grayscale.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_mean_blur.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_negate.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_rotate.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_to_i420.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/bgra8888/bgra8888_to_nv21.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_blackwhite.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_box_blur.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_crop.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_flip.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_from_rgba8888.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_gaussblur.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_grayscale.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_mean_blur.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_negate.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_rotate.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_to_420.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_to_bgra8888.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/nv21/nv21_to_nv12.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_blackwhite.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_box_blur.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_crop.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_flip.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_from_rgba.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_gaussblur.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_grayscale.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_mean_blur.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_negate.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_rotate.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_to_bgra.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv420/yuv420_to_nv21.c"
 )
 add_library(
     yuv_ffi SHARED ${SOURCES}
@@ -120,9 +80,11 @@ endif ()
 
 # --- Platform-specific linking ---
 
-# Android: link with liblog for __android_log_print
+# Android: liblog is no longer linked. The only user of __android_log_print was
+# src/yuv/utils/h/log.h, which YUV-52 removed together with the legacy
+# processing sources that included it; linking a library nothing references
+# would just misstate the target's dependencies.
 if (ANDROID)
-    target_link_libraries(yuv_ffi log)
     # Android 15: 16k page size support
     target_link_options(yuv_ffi PRIVATE "-Wl,-z,max-page-size=16384")
 

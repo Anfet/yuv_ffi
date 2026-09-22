@@ -108,16 +108,17 @@ else
   SIMD_FLAG=""
 fi
 
-# IMPORTANT:
-# Legacy per-format exports (yuv420_*/nv21_*/bgra8888_*/nvXX_to_nvYY) are kept
-# until YUV-28 moves the Web backend onto the ABI v1 dispatch the IO backend
-# already uses. The eleven `_yuv_*_v1` entries (YUV-36e) are the versioned
-# status-returning symbols from docs/api-abi-0.3-design.md section 11; nothing
-# in lib/src/yuv/impl/web/yuv_web.dart calls them yet -- that wiring is also
-# YUV-28 -- so exporting them here only makes the symbols reachable from
-# WebAssembly ahead of their Dart caller, the same relationship YUV-36c/36d
-# already established for the native ffigen bindings.
-EXPORTED_FUNCTIONS="['_malloc','_free','_yuv420_blackwhite','_nv21_blackwhite','_bgra8888_blackwhite','_yuv420_flip_horizontally','_nv21_flip_horizontally','_bgra8888_flip_horizontally','_yuv420_flip_vertically','_nv21_flip_vertically','_bgra8888_flip_vertically','_yuv420_grayscale','_nv21_grayscale','_bgra8888_grayscale','_yuv420_negate','_nv21_negate','_bgra8888_negate','_yuv420_crop_rect','_nv21_crop_rect','_bgra8888_crop_rect','_yuv420_rotate','_nv21_rotate','_bgra8888_rotate','_nvXX_to_nvYY','_yuv420_gaussblur','_nv21_gaussian_blur','_bgra8888_gaussian_blur','_yuv420_box_blur','_nv21_box_blur','_bgra8888_box_blur','_yuv420_mean_blur','_nv21_mean_blur','_bgra8888_mean_blur','_yuv420_from_rgba8888','_nv21_from_rgba8888','_bgra8888_from_rgba8888','_nv21_to_i420','_bgra8888_to_i420','_yuv420_i420_to_nv21','_bgra8888_to_nv21','_nv21_to_bgra8888','_yuv420_to_bgra8888','_yuv_convert_v1','_yuv_black_white_v1','_yuv_grayscale_v1','_yuv_negate_v1','_yuv_gaussian_blur_v1','_yuv_mean_blur_v1','_yuv_box_blur_v1','_yuv_crop_v1','_yuv_flip_v1','_yuv_rotate_v1','_yuv_chroma_swap_v1']"
+# The eleven `_yuv_*_v1` entries are the versioned status-returning symbols
+# from docs/api-abi-0.3-design.md section 11, and they are the module's entire
+# processing surface: YUV-52 removed the legacy per-format sources
+# (yuv420_*/nv21_*/bgra8888_*/nvXX_to_nvYY), so there is nothing else left to
+# export. The Web backend calls these directly (lib/src/yuv/impl/web/), so a
+# name dropped from this list goes missing at the Dart call site rather than
+# at link time -- test/abi_symbol_manifest_test.dart cross-checks this list
+# against the C header, the ffigen allowlist and the Dart symbol manifest.
+# `_malloc`/`_free` stay because the Dart side stages descriptors and planes
+# in WASM linear memory itself.
+EXPORTED_FUNCTIONS="['_malloc','_free','_yuv_convert_v1','_yuv_black_white_v1','_yuv_grayscale_v1','_yuv_negate_v1','_yuv_gaussian_blur_v1','_yuv_mean_blur_v1','_yuv_box_blur_v1','_yuv_crop_v1','_yuv_flip_v1','_yuv_rotate_v1','_yuv_chroma_swap_v1']"
 EXPORTED_RUNTIME_METHODS="['ccall','cwrap','HEAPU8','HEAP32']"
 
 OUTPUT_JS="$OUT_DIR/yuv_ffi.js"

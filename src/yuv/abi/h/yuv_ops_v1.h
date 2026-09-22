@@ -25,9 +25,11 @@
  *    caller must free; there is no hidden ownership transfer.
  */
 
-/* Guarded: src/yuv/yuv.h defines the same macro, and a translation unit that
- * includes both would otherwise hit a macro-redefinition warning, which the
- * test harness's /WX turns into a build failure. */
+/* Guarded so a translation unit that also picks the macro up from elsewhere
+ * does not hit a macro-redefinition warning, which the test harness's /WX
+ * turns into a build failure. Since YUV-52 removed src/yuv/yuv.h this header
+ * is the only definition in the tree, and the guard keeps that true for any
+ * future one. */
 #ifndef FFI_PLUGIN_EXPORT
 #ifdef _WIN32
 #define FFI_PLUGIN_EXPORT __declspec(dllexport)
