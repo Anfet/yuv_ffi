@@ -134,11 +134,13 @@ jobs:
         run: git diff --exit-code -- ffigen.yaml lib/src/functions/bindings/yuv_ffi_bingings.dart
 
   # YUV-06: proves the package is loadable the way a real consumer loads it.
-  # Both jobs build from a clean checkout, install the library the way the
-  # platform expects, and run a smoke suite that refuses to skip when the
-  # library is missing — a skipped native run and a passing one used to look
-  # identical in the log, which is how broken Linux/macOS packaging stayed
-  # green.
+  # Both jobs build from a clean checkout and then assert twice over: a VM
+  # smoke, which resolves the library by its installed name, and an app-runtime
+  # smoke through `flutter drive` against the built desktop application, which
+  # is the only place the loader's real per-platform branch runs. Neither suite
+  # skips when the library is missing — a skipped native run and a passing one
+  # used to look identical in the log, which is how broken Linux/macOS
+  # packaging stayed green.
   linux-native-smoke:
     runs-on: ubuntu-latest
     steps:
@@ -179,6 +181,19 @@ jobs:
           flutter create --platforms=linux .
           flutter pub get
           flutter build linux --release
+
+      # The VM smoke above resolves the library through LD_LIBRARY_PATH, which
+      # is not how an installed app finds it. This runs the same assertions
+      # inside the built application, where the plugin's own CMake install
+      # rules are what must place the .so next to the runner.
+      - name: App-runtime smoke (linux desktop)
+        working-directory: example
+        shell: bash
+        run: |
+          xvfb-run -a flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/native_app_runtime_smoke_test.dart \
+            -d linux
 
   macos-native-smoke:
     runs-on: macos-latest
@@ -221,6 +236,28 @@ jobs:
           flutter pub get
           flutter build macos --release
 
+      # The required macOS evidence. The VM smoke above side-loads the dylib
+      # through DYLD_LIBRARY_PATH and therefore never reaches the branch a real
+      # app takes: `_openYuvLibrary` returns `DynamicLibrary.process()` on
+      # macOS because the sources are compiled into the pod target. A pod
+      # target that forwarded no operation sources at all — the pre-YUV-06
+      # state — still passed the VM smoke through the side-loaded dylib, so
+      # only this step can prove the pod target itself carries the symbols.
+      #
+      # DYLD_LIBRARY_PATH is deliberately NOT exported here: it is set for the
+      # job via GITHUB_ENV above, and leaving it visible would let the app fall
+      # back to the same side-loaded dylib and mask an empty pod target.
+      - name: App-runtime smoke (macos desktop)
+        working-directory: example
+        shell: bash
+        env:
+          DYLD_LIBRARY_PATH: ''
+        run: |
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/native_app_runtime_smoke_test.dart \
+            -d macos
+
   # YUV-24: proves the plugin's Android build actually configures and builds
   # the shared src/CMakeLists.txt source list through the NDK, not just that
   # the Gradle file parses. android/build.gradle wires externalNativeBuild's
@@ -251,6 +288,34 @@ jobs:
       - name: Build example (android)
         working-directory: example
         run: flutter build apk --debug
+
+  # YUV-06 requires mobile build evidence on both platforms. Android is covered
+  # by android-native-build through the NDK; iOS is covered here. Runtime on a
+  # real device or simulator is out of scope — what must not be missing is
+  # proof that the iOS pod target compiles, which is the half that broke on
+  # macOS: ios/Classes/*.c are the only route the shared C sources take into an
+  # Apple build, and nothing else in CI compiles them.
+  #
+  # --no-codesign is what makes this runnable without provisioning profiles; it
+  # skips signing only, not the compile and link of the pod target.
+  ios-native-build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: Build example (ios, no codesign)
+        working-directory: example
+        run: flutter build ios --debug --no-codesign
 
   example-analyze-and-build:
     runs-on: ubuntu-latest

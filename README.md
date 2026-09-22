@@ -19,6 +19,11 @@ devices is often delivered in **UV** interleaving (closer to `NV12` than classic
 This is based on observed device output in real pipelines.  
 Do not blindly swap U/V: on these inputs, swapping chroma produces incorrect colors.
 
+`nv21` is a legacy public API name: it keeps its established `(U, V)` byte order rather than the
+literal NV21 `(V, U)` order, and is treated as deprecated in favor of an explicit NV12-like name.
+See [`doc/api-abi-0.3-design.md`](doc/api-abi-0.3-design.md) (section 2, contract 5) for the
+approved migration policy.
+
 ## Installation
 
 From pub.dev:
@@ -71,12 +76,16 @@ Main constructors:
 
 ## Platform support
 
-- Android: native FFI (`armeabi-v7a`, `arm64-v8a`, `x86_64`; the 32-bit `x86` ABI is not built — Flutter has shipped no `x86` binaries since 3.35 and Google Play never accepted it as a supported ABI for Flutter apps)
-- iOS: native FFI
-- macOS: native FFI
-- Windows: native FFI
-- Linux: native FFI
+- Android: native FFI (`armeabi-v7a`, `arm64-v8a`, `x86_64`; the 32-bit `x86` ABI is not built — Flutter has shipped no `x86` binaries since 3.35 and Google Play never accepted it as a supported ABI for Flutter apps). Verified: plugin/example build via CI (`android-native-build`).
+- iOS: native FFI. Verified: plugin/example build only (`flutter build ios --debug --no-codesign`); no on-device/runtime smoke.
+- macOS: native FFI. Verified: build and app-runtime smoke (real conversion + effect call from a built app) on macOS 15.6.1 arm64.
+- Windows: native FFI. Verified: build and app-runtime smoke (`flutter drive`).
+- Linux: native FFI. Verified in CI build/smoke jobs; not re-run on a local Linux host.
 - Web: package builds and uses a **partial WASM backend** (work in progress, not feature-complete)
+
+macOS/Linux app-runtime and iOS build verification above reflect the YUV-06 result, which is on
+review and not yet accepted by the engineer at the time of writing; treat it as the latest available
+evidence rather than a final, accepted claim.
 
 ## Example camera preview notes
 

@@ -12,3 +12,4 @@
 #include "../../src/yuv/bgra8888/bgra8888_gaussblur.c"
 #include "../../src/yuv/bgra8888/bgra8888_to_i420.c"
 #include "../../src/yuv/bgra8888/bgra8888_to_nv21.c"
+#include "../../src/yuv/bgra8888/bgra8888_block_uv.c"
