@@ -29,44 +29,18 @@ Future<void> main() async {
 
   // Step 3: Compare
   //
-  // ABI v1 (YUV-36c, docs/api-abi-0.3-design.md sections 9-11): 11 `yuv_*_v1`
-  // functions and 11 descriptor/options structs are generated but not yet
-  // called from lib/src/**/*.dart -- the typed IO runner is YUV-36d.
+  // ABI v1 (YUV-36c, docs/api-abi-0.3-design.md sections 9-11): 11
+  // `yuv_*_v1` functions have been called from the typed IO runner
+  // (`yuv_abi_v1_runner.dart`, YUV-36d) since that landed, so they are
+  // detected as regular used symbols like the 40 legacy ones -- no
+  // function allowlist is needed any more.
   //
-  // The two are tracked separately rather than in one list, because
-  // _getUsedSymbols() below can only ever confirm the first group:
-  //
-  //   - functions ARE eventually detectable: they are always called through
-  //     `ffiBingings.<name>(...)`, which the regex below matches. Once
-  //     YUV-36d lands, `knownAbiV1Functions` can be deleted and these 11 will
-  //     be picked up by the normal used/generated comparison, same as the 40
-  //     legacy symbols today.
-  //   - structs are NEVER detectable this way, not even after YUV-36d: a
-  //     struct is referenced as a bare Dart type (`YuvConstFrameV1 frame =
-  //     ...`, a parameter type, `.ref` on a pointer), never as
-  //     `ffiBingings.TypeName`. This is not new to YUV-36c -- `YUVDef` has
-  //     the same property and was already hardcoded out of `extra` below
-  //     before this task touched the file. `knownAbiV1Structs` documents
-  //     that permanently, it is not scheduled for removal.
-  //
-  // Both lists are checked in both directions: `generatedMembers` must
-  // contain every name listed (an entry disappearing from ffigen.yaml or the
-  // generated file is a regression), and nothing here stands in for a
-  // "used" symbol going missing from generatedMembers -- that still fails
-  // via `missing` below once real call sites exist.
-  const knownAbiV1Functions = {
-    'yuv_convert_v1',
-    'yuv_black_white_v1',
-    'yuv_grayscale_v1',
-    'yuv_negate_v1',
-    'yuv_gaussian_blur_v1',
-    'yuv_mean_blur_v1',
-    'yuv_box_blur_v1',
-    'yuv_crop_v1',
-    'yuv_flip_v1',
-    'yuv_rotate_v1',
-    'yuv_chroma_swap_v1',
-  };
+  // The 11 descriptor/options structs stay in `knownAbiV1Structs`: a struct
+  // is referenced as a bare Dart type (`YuvConstFrameV1 frame = ...`, a
+  // parameter type, `.ref` on a pointer), never as `ffiBingings.TypeName`,
+  // so `_getUsedSymbols()` can never detect it as "used" no matter how the
+  // Dart call sites evolve. `YUVDef` has the same property and carries the
+  // same exemption.
   const knownAbiV1Structs = {
     'YuvConstPlaneV1',
     'YuvMutablePlaneV1',
@@ -86,17 +60,15 @@ Future<void> main() async {
   const neverUsageDetectedStructs = {'YUVDef', ...knownAbiV1Structs};
 
   final missing = usedSymbols.where((sym) => !generatedMembers.contains(sym)).toList();
-  final extra = generatedMembers
-      .where((mem) => !usedSymbols.contains(mem) && !neverUsageDetectedStructs.contains(mem) && !knownAbiV1Functions.contains(mem))
-      .toList();
-  final missingFromKnownAbiV1 = {...knownAbiV1Functions, ...knownAbiV1Structs}.where((name) => !generatedMembers.contains(name)).toList();
+  final extra = generatedMembers.where((mem) => !usedSymbols.contains(mem) && !neverUsageDetectedStructs.contains(mem)).toList();
+  final missingKnownAbiV1Structs = knownAbiV1Structs.where((name) => !generatedMembers.contains(name)).toList();
 
   print('Step 3: Comparison results\n');
 
-  if (missing.isEmpty && extra.isEmpty && missingFromKnownAbiV1.isEmpty) {
+  if (missing.isEmpty && extra.isEmpty && missingKnownAbiV1Structs.isEmpty) {
     print('✓ SUCCESS: All used symbols are present with correct names.');
     print('✓ No unexpected members found.');
-    print('✓ All known ABI v1 functions and structs are present.');
+    print('✓ All known ABI v1 structs are present.');
     exit(0);
   } else {
     bool hasProblem = false;
@@ -117,9 +89,9 @@ Future<void> main() async {
       hasProblem = true;
     }
 
-    if (missingFromKnownAbiV1.isNotEmpty) {
-      print('✗ MISSING ABI V1 SURFACE (expected but not in generated bindings):');
-      for (final name in missingFromKnownAbiV1) {
+    if (missingKnownAbiV1Structs.isNotEmpty) {
+      print('✗ MISSING ABI V1 STRUCTS (expected but not in generated bindings):');
+      for (final name in missingKnownAbiV1Structs) {
         print('  - $name');
       }
       hasProblem = true;
@@ -139,7 +111,7 @@ Future<Set<String>> _getUsedSymbols() async {
 
   for (final file in dartFiles) {
     final content = File(file).readAsStringSync();
-    final regex = RegExp(r'ffiBingings\.([a-zA-Z0-9_]+)');
+    final regex = RegExp(r'ffiBingings\.([a-zA-Z0-9_]+)\(');
     for (final match in regex.allMatches(content)) {
       symbols.add(match.group(1)!);
     }
