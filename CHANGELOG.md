@@ -7,6 +7,8 @@
 - Moved frame revision off the public interface; implementations that cannot report mutations no longer participate in revision-keyed caching.
 - Removed the `getBytes` alignment tail and the orphan NV21 RGB declaration from the native surface.
 - `nv21` keeps its established `(U,V)` sample order. This is deliberate and is documented as a deprecated migration path rather than silently corrected.
+- Raised the minimum supported SDK to Dart `^3.10.0` / Flutter `>=3.38.0`.
+- Excluded the 32-bit `x86` Android ABI from the plugin's native build (`armeabi-v7a`, `arm64-v8a`, `x86_64` only). Flutter has shipped no `x86` native binaries since 3.35 and Google Play never accepted `x86` as a supported ABI for Flutter apps; it only ever mattered for legacy 32-bit emulator images, which the ABI v1 struct layout (a fixed 64-bit `sizeof(void*)` layout) cannot support. A consuming app that still explicitly requests `x86` (e.g. via its own `abiFilters` or an old x86 emulator image) will no longer build against this plugin.
 
 ### Changes
 
@@ -26,6 +28,8 @@
 - Enabled optimization for native builds and SIMD for the WASM artifacts, and rebuilt those artifacts from the fixed C sources.
 - Added a Web reference conversion matrix and an independent `test_pattern_512` reference, and made the reference matrix skip honestly when no native library is present.
 - Documented the approved public Dart API and native C ABI contract for `0.3.0` in `doc/api-abi-0.3-design.md`.
+- Upgraded `ffigen` to `^21.0.0`, `ffi` to `^2.2.0`, `build_runner` to `^2.15.1`, `flutter_lints` to `^6.0.0` and `image` (dev) to `^4.10.1`, and regenerated the native bindings; the output is formatting-only (ffigen's newer, more compact function-signature style), with the same symbols and struct layout confirmed by `tool/verify_bindings_audit.dart`.
+- Added a dedicated Android CI build job that exercises the plugin's `externalNativeBuild`/CMake wiring through a real `flutter build apk` (YUV-24).
 
 ### Notes
 

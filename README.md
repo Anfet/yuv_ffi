@@ -71,7 +71,7 @@ Main constructors:
 
 ## Platform support
 
-- Android: native FFI
+- Android: native FFI (`armeabi-v7a`, `arm64-v8a`, `x86_64`; the 32-bit `x86` ABI is not built — Flutter has shipped no `x86` binaries since 3.35 and Google Play never accepted it as a supported ABI for Flutter apps)
 - iOS: native FFI
 - macOS: native FFI
 - Windows: native FFI
