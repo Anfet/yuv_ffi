@@ -49,31 +49,15 @@ void main() {
     final image = YuvImage.i420(width, height)..fromRgba8888(rgba);
     final bgra = image.toBgra8888();
 
-    expect(
-      bgra.length,
-      width * height * 4,
-      reason: 'toBgra8888 must return a tightly packed buffer',
-    );
-    expect(
-      bgra.any((byte) => byte != 0),
-      isTrue,
-      reason: 'a conversion that produced only zeroes means the native symbols did not run',
-    );
-    expect(
-      image.width,
-      width,
-      reason: 'the converted image must keep its declared geometry',
-    );
+    expect(bgra.length, width * height * 4, reason: 'toBgra8888 must return a tightly packed buffer');
+    expect(bgra.any((byte) => byte != 0), isTrue, reason: 'a conversion that produced only zeroes means the native symbols did not run');
+    expect(image.width, width, reason: 'the converted image must keep its declared geometry');
 
     // An in-place native effect must also resolve and mutate the image, which
     // proves the operation symbols are present — not just the conversion ones.
     final before = Uint8List.fromList(image.getBytes());
     image.negate();
-    expect(
-      image.getBytes(),
-      isNot(orderedEquals(before)),
-      reason: 'negate() must change the planes, or the native effect symbol did not run',
-    );
+    expect(image.getBytes(), isNot(orderedEquals(before)), reason: 'negate() must change the planes, or the native effect symbol did not run');
 
     // Printed so a CI log records which platform actually produced this
     // evidence; a green run with no line here would be a run that never

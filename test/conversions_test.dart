@@ -261,42 +261,9 @@ void main() {
   test('swapNv preserves Y and reverses every chroma pair exactly', () {
     const width = 4;
     const height = 4;
-    final originalY = Uint8List.fromList([
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-    ]);
-    final originalChroma = Uint8List.fromList([
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-    ]);
-    final image = YuvImage.nv21(
-      width,
-      height,
-      planes: [
-        YuvPlane(height, width, 1, originalY),
-        YuvPlane(height ~/ 2, width, 2, originalChroma),
-      ],
-    );
+    final originalY = Uint8List.fromList([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]);
+    final originalChroma = Uint8List.fromList([1, 2, 3, 4, 5, 6, 7, 8]);
+    final image = YuvImage.nv21(width, height, planes: [YuvPlane(height, width, 1, originalY), YuvPlane(height ~/ 2, width, 2, originalChroma)]);
 
     final swapped = image.swapNv();
 
@@ -305,10 +272,7 @@ void main() {
     expect(swapped.width, width);
     expect(swapped.height, height);
     expect(swapped.yPlane.bytes, orderedEquals(originalY));
-    expect(
-      swapped.uPlane.bytes,
-      orderedEquals(<int>[2, 1, 4, 3, 6, 5, 8, 7]),
-    );
+    expect(swapped.uPlane.bytes, orderedEquals(<int>[2, 1, 4, 3, 6, 5, 8, 7]));
 
     final restored = swapped.swapNv();
     expect(restored.yPlane.bytes, orderedEquals(originalY));
@@ -318,24 +282,7 @@ void main() {
   test('swapNv preserves Y after conversion from I420', () {
     const width = 4;
     const height = 4;
-    final originalY = Uint8List.fromList([
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-    ]);
+    final originalY = Uint8List.fromList([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]);
     final image = YuvImage.i420(
       width,
       height,
@@ -360,53 +307,12 @@ void main() {
     const height = 4;
     const yRowStride = 6;
     const uvRowStride = 6;
-    final originalY = Uint8List.fromList([
-      10,
-      11,
-      12,
-      13,
-      90,
-      91,
-      14,
-      15,
-      16,
-      17,
-      92,
-      93,
-      18,
-      19,
-      20,
-      21,
-      94,
-      95,
-      22,
-      23,
-      24,
-      25,
-      96,
-      97,
-    ]);
-    final originalChroma = Uint8List.fromList([
-      1,
-      2,
-      3,
-      4,
-      80,
-      81,
-      5,
-      6,
-      7,
-      8,
-      82,
-      83,
-    ]);
+    final originalY = Uint8List.fromList([10, 11, 12, 13, 90, 91, 14, 15, 16, 17, 92, 93, 18, 19, 20, 21, 94, 95, 22, 23, 24, 25, 96, 97]);
+    final originalChroma = Uint8List.fromList([1, 2, 3, 4, 80, 81, 5, 6, 7, 8, 82, 83]);
     final image = YuvImage.nv21(
       width,
       height,
-      planes: [
-        YuvPlane(height, yRowStride, 1, originalY),
-        YuvPlane(height ~/ 2, uvRowStride, 2, originalChroma),
-      ],
+      planes: [YuvPlane(height, yRowStride, 1, originalY), YuvPlane(height ~/ 2, uvRowStride, 2, originalChroma)],
     );
     final sourceYPlane = image.yPlane;
     final sourceChromaPlane = image.uPlane;
@@ -690,10 +596,7 @@ void main() {
       // A row that cannot hold width * 4 bytes is genuinely invalid, and both
       // entry points must reject it through the shared validator.
       expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
-      expect(
-        () => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]),
-        throwsArgumentError,
-      );
+      expect(() => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
     });
   });
 
@@ -701,23 +604,14 @@ void main() {
   // library. Guarding them with `skip: !_nativeAvailable` would let the F-003
   // regression pass unnoticed on a machine with no built binary.
   group('getBytes contract', () {
-    const sizes = <({int w, int h})>[
-      (w: 1, h: 1),
-      (w: 3, h: 3),
-      (w: 127, h: 255),
-      (w: 512, h: 512),
-    ];
+    const sizes = <({int w, int h})>[(w: 1, h: 1), (w: 3, h: 3), (w: 127, h: 255), (w: 512, h: 512)];
 
     for (final size in sizes) {
       test('returns exactly the summed plane length for ${size.w}x${size.h}', () {
         for (final image in _imagesForEachFormat(size.w, size.h)) {
           final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 
-          expect(
-            image.getBytes(),
-            hasLength(expectedLength),
-            reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail',
-          );
+          expect(image.getBytes(), hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
         }
       });
 
@@ -768,11 +662,7 @@ void main() {
 ///
 /// The legacy `nv21` name keeps its current NV12-like UV byte order; these
 /// cases only concatenate planes and never reinterpret chroma.
-List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[
-      YuvImage.bgra(w, h),
-      YuvImage.i420(w, h),
-      YuvImage.nv21(w, h),
-    ];
+List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[YuvImage.bgra(w, h), YuvImage.i420(w, h), YuvImage.nv21(w, h)];
 
 /// Writes a per-plane pattern so a misordered or truncated concatenation cannot
 /// coincidentally match an all-zero buffer.

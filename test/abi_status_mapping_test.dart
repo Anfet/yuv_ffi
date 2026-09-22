@@ -48,7 +48,8 @@ void main() {
       expect(
         () => yuvThrowForStatus(status: yuvStatusInvalidArgument, operation: 'yuv_crop_v1', detail: 'destination geometry mismatch'),
         throwsA(
-            isA<ArgumentError>().having((e) => e.toString(), 'toString', allOf(contains('yuv_crop_v1'), contains('destination geometry mismatch')))),
+          isA<ArgumentError>().having((e) => e.toString(), 'toString', allOf(contains('yuv_crop_v1'), contains('destination geometry mismatch'))),
+        ),
       );
     });
 
@@ -68,9 +69,11 @@ void main() {
     test('YUV_STATUS_OVERFLOW (4) throws YuvNativeException retaining the code', () {
       expect(
         () => yuvThrowForStatus(status: yuvStatusOverflow, operation: 'yuv_box_blur_v1'),
-        throwsA(isA<YuvNativeException>()
-            .having((e) => e.statusCode, 'statusCode', yuvStatusOverflow)
-            .having((e) => e.operation, 'operation', 'yuv_box_blur_v1')),
+        throwsA(
+          isA<YuvNativeException>()
+              .having((e) => e.statusCode, 'statusCode', yuvStatusOverflow)
+              .having((e) => e.operation, 'operation', 'yuv_box_blur_v1'),
+        ),
       );
     });
 
@@ -151,9 +154,11 @@ void main() {
       YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusInternalError;
       expect(
         () => YuvAbiV1Runner.grayscale(source: bgraSource(4, 4)),
-        throwsA(isA<YuvNativeException>()
-            .having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)
-            .having((e) => e.operation, 'operation', 'yuv_grayscale_v1')),
+        throwsA(
+          isA<YuvNativeException>()
+              .having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)
+              .having((e) => e.operation, 'operation', 'yuv_grayscale_v1'),
+        ),
       );
     });
 
@@ -172,8 +177,13 @@ void main() {
         'convert',
         () => YuvAbiV1Runner.convert(
           source: source,
-          destinationLayout:
-              const YuvAbiV1DestinationLayout(format: yuvFormatBgra8888, width: 4, height: 4, planeRowStrides: [16], planePixelStrides: [4]),
+          destinationLayout: const YuvAbiV1DestinationLayout(
+            format: yuvFormatBgra8888,
+            width: 4,
+            height: 4,
+            planeRowStrides: [16],
+            planePixelStrides: [4],
+          ),
         ),
       );
       expectReachesKernel('mean blur', () => YuvAbiV1Runner.blur(kind: YuvAbiV1BlurKind.mean, source: source, radius: 1));
@@ -296,7 +306,7 @@ void main() {
         yuvStatusAllocationFailed,
         yuvStatusInternalError,
         yuvStatusUnsupportedColor,
-        42
+        42,
       ]) {
         final originalBytes = Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x5A);
         final canary = Uint8List.fromList(originalBytes);
@@ -343,8 +353,8 @@ void main() {
         height: 4,
         planes: [YuvAbiV1PlaneInput(bytes: originalBytes, rowStride: 4, pixelStride: 1)], // I420 needs 3
       );
-      YuvAbiV1Runner.debugInvokeOverride =
-          (src, dst, options) => throw StateError('invoke must not be reached for a plane count rejected before any allocation');
+      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) =>
+          throw StateError('invoke must not be reached for a plane count rejected before any allocation');
 
       expect(() => YuvAbiV1Runner.grayscale(source: malformed), throwsArgumentError);
       expect(originalBytes, canary, reason: 'source bytes changed after a call that never reached invoke');
@@ -373,9 +383,11 @@ void main() {
       // unavailable, unlike every group above.
       expect(
         () => YuvAbiV1Runner.grayscale(source: bgraSource(4, 4)),
-        throwsA(isA<YuvNativeException>()
-            .having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)
-            .having((e) => e.operation, 'operation', 'yuv_grayscale_v1')),
+        throwsA(
+          isA<YuvNativeException>()
+              .having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)
+              .having((e) => e.operation, 'operation', 'yuv_grayscale_v1'),
+        ),
       );
     });
 
@@ -563,12 +575,18 @@ void main() {
           final int destinationOffset = row * destinationRowStride + col * 4;
           final bool insideRoi = col >= region.left && col < region.right && row >= region.top && row < region.bottom;
           if (insideRoi) {
-            expect(destinationPlane.sublist(destinationOffset, destinationOffset + 4), List.filled(4, 0x77),
-                reason: 'ROI sample at ($col,$row) was not written by the fake kernel');
+            expect(
+              destinationPlane.sublist(destinationOffset, destinationOffset + 4),
+              List.filled(4, 0x77),
+              reason: 'ROI sample at ($col,$row) was not written by the fake kernel',
+            );
           } else {
             final int sourceOffset = row * sourceRowStride + col * sourcePixelStride;
-            expect(destinationPlane.sublist(destinationOffset, destinationOffset + 4), sourceBytes.sublist(sourceOffset, sourceOffset + 4),
-                reason: 'non-ROI sample at ($col,$row) must equal the source sample read through its own stride, not the destination stride');
+            expect(
+              destinationPlane.sublist(destinationOffset, destinationOffset + 4),
+              sourceBytes.sublist(sourceOffset, sourceOffset + 4),
+              reason: 'non-ROI sample at ($col,$row) must equal the source sample read through its own stride, not the destination stride',
+            );
           }
         }
       }
@@ -664,89 +682,93 @@ void main() {
     });
   });
 
-  group('YuvAbiV1Runner releases every allocation on a real native call (YUV-36d)', () {
-    // Real-DLL counterpart of the group above: same three calls, but through
-    // the actual yuv_ffi.dll symbols, to catch a real ABI/allocator mismatch
-    // a fake kernel could never surface. Skipped when the DLL is unavailable,
-    // per YUV-36i's requirement that this be the exception, not the rule.
-    void expectNoLeakAtEveryAllocation(String label, YuvAbiV1FrameResult Function() call) {
-      final counting = InstrumentedNativeAllocator();
-      final int total;
-      try {
-        withNativeAllocator(counting, () {
-          try {
-            call();
-          } catch (_) {
-            // A real native call may itself throw (every kernel is currently
-            // a stub returning INTERNAL_ERROR); what this loop verifies is
-            // allocation bookkeeping, not the call's result.
-          }
-        });
-        total = counting.allocationCount;
-      } finally {
-        counting.releaseAll();
-      }
-      expect(total, greaterThan(0), reason: '$label performed no native allocations');
-
-      for (int failAt = 1; failAt <= total; failAt++) {
-        final failing = InstrumentedNativeAllocator(failAtAllocation: failAt);
+  group(
+    'YuvAbiV1Runner releases every allocation on a real native call (YUV-36d)',
+    () {
+      // Real-DLL counterpart of the group above: same three calls, but through
+      // the actual yuv_ffi.dll symbols, to catch a real ABI/allocator mismatch
+      // a fake kernel could never surface. Skipped when the DLL is unavailable,
+      // per YUV-36i's requirement that this be the exception, not the rule.
+      void expectNoLeakAtEveryAllocation(String label, YuvAbiV1FrameResult Function() call) {
+        final counting = InstrumentedNativeAllocator();
+        final int total;
         try {
-          withNativeAllocator(failing, () {
+          withNativeAllocator(counting, () {
             try {
               call();
             } catch (_) {
-              // The injected failure (or the real native failure it
-              // uncovers) is expected; what matters is that nothing leaked.
+              // A real native call may itself throw (every kernel is currently
+              // a stub returning INTERNAL_ERROR); what this loop verifies is
+              // allocation bookkeeping, not the call's result.
             }
           });
-          expect(failing.outstanding, 0, reason: '$label leaked when allocation #$failAt of $total failed');
+          total = counting.allocationCount;
         } finally {
-          failing.releaseAll();
+          counting.releaseAll();
+        }
+        expect(total, greaterThan(0), reason: '$label performed no native allocations');
+
+        for (int failAt = 1; failAt <= total; failAt++) {
+          final failing = InstrumentedNativeAllocator(failAtAllocation: failAt);
+          try {
+            withNativeAllocator(failing, () {
+              try {
+                call();
+              } catch (_) {
+                // The injected failure (or the real native failure it
+                // uncovers) is expected; what matters is that nothing leaked.
+              }
+            });
+            expect(failing.outstanding, 0, reason: '$label leaked when allocation #$failAt of $total failed');
+          } finally {
+            failing.releaseAll();
+          }
         }
       }
-    }
 
-    test('a successful call leaks nothing at any allocation-failure point', () {
-      final bytes = Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x22);
-      final source = YuvAbiV1FrameInput(
-        format: yuvFormatBgra8888,
-        width: 4,
-        height: 4,
-        planes: [YuvAbiV1PlaneInput(bytes: bytes, rowStride: 16, pixelStride: 4)],
-      );
-      expectNoLeakAtEveryAllocation('grayscale', () => YuvAbiV1Runner.grayscale(source: source));
-    });
+      test('a successful call leaks nothing at any allocation-failure point', () {
+        final bytes = Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x22);
+        final source = YuvAbiV1FrameInput(
+          format: yuvFormatBgra8888,
+          width: 4,
+          height: 4,
+          planes: [YuvAbiV1PlaneInput(bytes: bytes, rowStride: 16, pixelStride: 4)],
+        );
+        expectNoLeakAtEveryAllocation('grayscale', () => YuvAbiV1Runner.grayscale(source: source));
+      });
 
-    test('a crop call (different destination geometry) leaks nothing at any allocation-failure point', () {
-      final bytes = Uint8List(8 * 8 * 4)..fillRange(0, 8 * 8 * 4, 0x33);
-      final source = YuvAbiV1FrameInput(
-        format: yuvFormatBgra8888,
-        width: 8,
-        height: 8,
-        planes: [YuvAbiV1PlaneInput(bytes: bytes, rowStride: 32, pixelStride: 4)],
-      );
-      expectNoLeakAtEveryAllocation('crop', () => YuvAbiV1Runner.crop(source: source, left: 1, top: 1, width: 4, height: 4));
-    });
+      test('a crop call (different destination geometry) leaks nothing at any allocation-failure point', () {
+        final bytes = Uint8List(8 * 8 * 4)..fillRange(0, 8 * 8 * 4, 0x33);
+        final source = YuvAbiV1FrameInput(
+          format: yuvFormatBgra8888,
+          width: 8,
+          height: 8,
+          planes: [YuvAbiV1PlaneInput(bytes: bytes, rowStride: 32, pixelStride: 4)],
+        );
+        expectNoLeakAtEveryAllocation('crop', () => YuvAbiV1Runner.crop(source: source, left: 1, top: 1, width: 4, height: 4));
+      });
 
-    test('a multi-plane I420 call leaks nothing at any allocation-failure point', () {
-      const width = 4;
-      const height = 4;
-      final y = Uint8List(width * height)..fillRange(0, width * height, 0x40);
-      final u = Uint8List((width ~/ 2) * (height ~/ 2))..fillRange(0, (width ~/ 2) * (height ~/ 2), 0x80);
-      final v = Uint8List((width ~/ 2) * (height ~/ 2))..fillRange(0, (width ~/ 2) * (height ~/ 2), 0xC0);
-      final source = YuvAbiV1FrameInput(
-        format: yuvFormatI420,
-        width: width,
-        height: height,
-        planes: [
-          YuvAbiV1PlaneInput(bytes: y, rowStride: width, pixelStride: 1),
-          YuvAbiV1PlaneInput(bytes: u, rowStride: width ~/ 2, pixelStride: 1),
-          YuvAbiV1PlaneInput(bytes: v, rowStride: width ~/ 2, pixelStride: 1),
-        ],
-      );
-      expectNoLeakAtEveryAllocation('I420 blur', () => YuvAbiV1Runner.blur(kind: YuvAbiV1BlurKind.box, source: source, radius: 1));
-    });
-  }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
+      test('a multi-plane I420 call leaks nothing at any allocation-failure point', () {
+        const width = 4;
+        const height = 4;
+        final y = Uint8List(width * height)..fillRange(0, width * height, 0x40);
+        final u = Uint8List((width ~/ 2) * (height ~/ 2))..fillRange(0, (width ~/ 2) * (height ~/ 2), 0x80);
+        final v = Uint8List((width ~/ 2) * (height ~/ 2))..fillRange(0, (width ~/ 2) * (height ~/ 2), 0xC0);
+        final source = YuvAbiV1FrameInput(
+          format: yuvFormatI420,
+          width: width,
+          height: height,
+          planes: [
+            YuvAbiV1PlaneInput(bytes: y, rowStride: width, pixelStride: 1),
+            YuvAbiV1PlaneInput(bytes: u, rowStride: width ~/ 2, pixelStride: 1),
+            YuvAbiV1PlaneInput(bytes: v, rowStride: width ~/ 2, pixelStride: 1),
+          ],
+        );
+        expectNoLeakAtEveryAllocation('I420 blur', () => YuvAbiV1Runner.blur(kind: YuvAbiV1BlurKind.box, source: source, radius: 1));
+      });
+    },
+    skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
+  );
 }
 
 /// Captures the final bytes of every native buffer it allocates, snapshotted
@@ -790,8 +812,10 @@ class _SnapshottingNativeAllocator implements NativeAllocator {
 /// single-plane-ROI tests, which only assert on plane 0's ROI edges
 /// (chroma-footprint ROI mapping for blur/effects is a kernel concern, not
 /// the runner's -- see YUV-36h's dartdoc).
-int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<ffi.NativeType>) _fillRoiWithFixedByte(
-    {required YuvAbiV1Region roi, required int fillByte}) {
+int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<ffi.NativeType>) _fillRoiWithFixedByte({
+  required YuvAbiV1Region roi,
+  required int fillByte,
+}) {
   return (src, dst, options) {
     _fillPlaneRoiWithFixedByte(dst.ref.planes[0], roi: roi, fillByte: fillByte);
     return yuvStatusOk;
@@ -835,8 +859,11 @@ void _expectRoiFilledElsewherePreserved({
         expect(actual, List.filled(sampleBytes, fillByte & 0xFF), reason: 'ROI sample at ($col,$row) was not written by the fake kernel');
       } else {
         final int sourceOffset = row * rowStride + col * pixelStride;
-        expect(actual, source.sublist(sourceOffset, sourceOffset + sampleBytes),
-            reason: 'non-ROI sample at ($col,$row) must equal the seeded source sample');
+        expect(
+          actual,
+          source.sublist(sourceOffset, sourceOffset + sampleBytes),
+          reason: 'non-ROI sample at ($col,$row) must equal the seeded source sample',
+        );
       }
     }
   }

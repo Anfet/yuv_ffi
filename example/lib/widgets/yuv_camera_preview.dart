@@ -12,13 +12,7 @@ class YuvCameraPreview extends StatefulWidget {
   final Widget? child;
   final bool showDebugInfo;
 
-  const YuvCameraPreview({
-    super.key,
-    this.cameraController,
-    this.transform,
-    this.child,
-    this.showDebugInfo = false,
-  });
+  const YuvCameraPreview({super.key, this.cameraController, this.transform, this.child, this.showDebugInfo = false});
 
   @override
   State<YuvCameraPreview> createState() => _YuvCameraPreviewState();
@@ -56,11 +50,7 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
       fit: StackFit.expand,
       children: [
         Positioned.fill(
-          child: impl.buildYuvCameraPreview(
-            key: widget.key,
-            cameraController: widget.cameraController,
-            transform: infoTransformer,
-          ),
+          child: impl.buildYuvCameraPreview(key: widget.key, cameraController: widget.cameraController, transform: infoTransformer),
         ),
         if (widget.showDebugInfo)
           Positioned(

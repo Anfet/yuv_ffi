@@ -17,12 +17,8 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 /// objects stay mutable — that is the package's public model — but each one here
 /// was freshly built by the decoder and is not shared with any caller.
 class YuvValidatedImageDraft {
-  YuvValidatedImageDraft({
-    required this.format,
-    required this.width,
-    required this.height,
-    required List<YuvPlane> planes,
-  }) : planes = List<YuvPlane>.unmodifiable(planes);
+  YuvValidatedImageDraft({required this.format, required this.width, required this.height, required List<YuvPlane> planes})
+    : planes = List<YuvPlane>.unmodifiable(planes);
 
   final YuvFileFormat format;
   final int width;
@@ -72,20 +68,8 @@ abstract final class YuvCodec {
   static const int maxPlaneBytes = 1 << 30;
 
   /// Encodes [format], [width], [height] and [planes] into one byte buffer.
-  static Uint8List encode({
-    required YuvFileFormat format,
-    required int width,
-    required int height,
-    required List<YuvPlane> planes,
-  }) {
-    final header = utf8.encode(
-      jsonEncode(<String, Object>{
-        'version': version,
-        'format': format.name,
-        'width': width,
-        'height': height,
-      }),
-    );
+  static Uint8List encode({required YuvFileFormat format, required int width, required int height, required List<YuvPlane> planes}) {
+    final header = utf8.encode(jsonEncode(<String, Object>{'version': version, 'format': format.name, 'width': width, 'height': height}));
 
     int total = 4 + header.length + 1;
     for (final plane in planes) {
@@ -228,22 +212,14 @@ abstract final class YuvCodec {
         );
       }
       if (pixelStride <= 0 || rowStride <= 0) {
-        throw FormatException(
-          'Malformed yuv_ffi payload: plane $i declares a non-positive stride (rowStride $rowStride, pixelStride $pixelStride)',
-        );
+        throw FormatException('Malformed yuv_ffi payload: plane $i declares a non-positive stride (rowStride $rowStride, pixelStride $pixelStride)');
       }
 
       // The header already fixes the format and the image dimensions, so the
       // geometry this plane must have is known now. Checking it here rejects an
       // impossible plane on its metadata instead of first buffering up to
       // maxPlaneBytes and building a YuvPlane only to discard it.
-      final expected = YuvGeometry.expectedPlaneMetadata(
-        format: format,
-        width: width,
-        height: height,
-        planeIndex: i,
-        pixelStride: pixelStride,
-      );
+      final expected = YuvGeometry.expectedPlaneMetadata(format: format, width: width, height: height, planeIndex: i, pixelStride: pixelStride);
       if (expected == null) {
         throw FormatException('Malformed yuv_ffi payload: plane $i is not a plane of format ${format.name}');
       }

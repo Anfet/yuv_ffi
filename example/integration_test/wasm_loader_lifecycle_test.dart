@@ -30,11 +30,7 @@ void main() {
 
   testWidgets('a successful initialization is cached across repeated calls', (tester) async {
     YuvWasmLoader.debugReset();
-    YuvWasmLoader.debugSetInitializer(({
-      required String scriptPath,
-      required String wasmPath,
-      required String moduleFactoryName,
-    }) async {
+    YuvWasmLoader.debugSetInitializer(({required String scriptPath, required String wasmPath, required String moduleFactoryName}) async {
       return YuvModule(Object());
     });
 
@@ -47,11 +43,7 @@ void main() {
 
   testWidgets('concurrent callers share one in-flight attempt', (tester) async {
     YuvWasmLoader.debugReset();
-    YuvWasmLoader.debugSetInitializer(({
-      required String scriptPath,
-      required String wasmPath,
-      required String moduleFactoryName,
-    }) async {
+    YuvWasmLoader.debugSetInitializer(({required String scriptPath, required String wasmPath, required String moduleFactoryName}) async {
       await Future<void>.delayed(Duration.zero);
       return YuvModule(Object());
     });
@@ -69,11 +61,7 @@ void main() {
   testWidgets('a failed attempt is not cached and the next call retries', (tester) async {
     var attempts = 0;
     YuvWasmLoader.debugReset();
-    YuvWasmLoader.debugSetInitializer(({
-      required String scriptPath,
-      required String wasmPath,
-      required String moduleFactoryName,
-    }) async {
+    YuvWasmLoader.debugSetInitializer(({required String scriptPath, required String wasmPath, required String moduleFactoryName}) async {
       attempts++;
       if (attempts == 1) {
         throw StateError('simulated init failure');
@@ -93,11 +81,7 @@ void main() {
 
   testWidgets('a failed attempt leaves no partially initialized module', (tester) async {
     YuvWasmLoader.debugReset();
-    YuvWasmLoader.debugSetInitializer(({
-      required String scriptPath,
-      required String wasmPath,
-      required String moduleFactoryName,
-    }) async {
+    YuvWasmLoader.debugSetInitializer(({required String scriptPath, required String wasmPath, required String moduleFactoryName}) async {
       throw StateError('simulated init failure');
     });
 
@@ -108,11 +92,7 @@ void main() {
 
   testWidgets('the original error type and stack trace survive', (tester) async {
     YuvWasmLoader.debugReset();
-    YuvWasmLoader.debugSetInitializer(({
-      required String scriptPath,
-      required String wasmPath,
-      required String moduleFactoryName,
-    }) async {
+    YuvWasmLoader.debugSetInitializer(({required String scriptPath, required String wasmPath, required String moduleFactoryName}) async {
       throw StateError('simulated init failure');
     });
 

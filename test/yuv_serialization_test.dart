@@ -42,8 +42,8 @@ void main() {
 
   /// Feeds the payload in small chunks, the way a real file or socket would.
   Stream<List<int>> asFragmentedStream(List<int> bytes, {int chunk = 7}) => Stream<List<int>>.fromIterable(<List<int>>[
-        for (int start = 0; start < bytes.length; start += chunk) bytes.sublist(start, (start + chunk).clamp(0, bytes.length)),
-      ]);
+    for (int start = 0; start < bytes.length; start += chunk) bytes.sublist(start, (start + chunk).clamp(0, bytes.length)),
+  ]);
 
   group('round-trip', () {
     for (final format in YuvFileFormat.values) {
@@ -297,10 +297,7 @@ void main() {
       addTearDown(controller.close);
       controller.add(patched);
 
-      await expectLater(
-        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
-        throwsFormatException,
-      );
+      await expectLater(YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)), throwsFormatException);
     });
 
     test('an oversized plane length is refused before allocation', () async {
@@ -344,10 +341,7 @@ void main() {
       addTearDown(controller.close);
       controller.add(metadata);
 
-      await expectLater(
-        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
-        throwsFormatException,
-      );
+      await expectLater(YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)), throwsFormatException);
     });
 
     test('trailing bytes delivered in a later chunk are still rejected', () async {
@@ -356,10 +350,12 @@ void main() {
       final payload = await validPayload(width: 16, height: 16);
 
       await expectLater(
-        YuvCodec.decodeStream(Stream<List<int>>.fromIterable(<List<int>>[
-          payload,
-          <int>[9, 9, 9]
-        ])),
+        YuvCodec.decodeStream(
+          Stream<List<int>>.fromIterable(<List<int>>[
+            payload,
+            <int>[9, 9, 9],
+          ]),
+        ),
         throwsFormatException,
       );
     });
@@ -390,10 +386,7 @@ void main() {
         controller.close();
       });
 
-      await expectLater(
-        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
-        throwsFormatException,
-      );
+      await expectLater(YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)), throwsFormatException);
     });
 
     test('mismatched I420 chroma strides are rejected without requesting the second body', () async {
@@ -430,10 +423,7 @@ void main() {
       addTearDown(controller.close);
       controller.add(builder.takeBytes());
 
-      await expectLater(
-        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
-        throwsFormatException,
-      );
+      await expectLater(YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)), throwsFormatException);
     });
 
     test('a chroma plane impossible for the header is rejected without requesting the body', () async {
@@ -467,10 +457,7 @@ void main() {
       addTearDown(controller.close);
       controller.add(builder.takeBytes());
 
-      await expectLater(
-        YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
-        throwsFormatException,
-      );
+      await expectLater(YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)), throwsFormatException);
     });
   });
 }

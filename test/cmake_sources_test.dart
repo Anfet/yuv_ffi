@@ -51,20 +51,14 @@ const _cmakeSourceDirPrefix = r'${CMAKE_CURRENT_SOURCE_DIR}/';
 void main() {
   group('CMakeLists.txt source list stays in sync with src/**/*.c', () {
     test('every .c file on disk is listed exactly once, and nothing else is listed', () {
-      final result = _compare(
-        onDisk: _cSourcesOnDisk(),
-        listed: _parseSourcesFromCMakeLists(File(_cmakeListsPath).readAsStringSync()),
-      );
+      final result = _compare(onDisk: _cSourcesOnDisk(), listed: _parseSourcesFromCMakeLists(File(_cmakeListsPath).readAsStringSync()));
 
-      expect(
-        result.duplicates,
-        isEmpty,
-        reason: 'duplicate source entries in CMakeLists.txt (relative to src/): ${result.duplicates}',
-      );
+      expect(result.duplicates, isEmpty, reason: 'duplicate source entries in CMakeLists.txt (relative to src/): ${result.duplicates}');
       expect(
         result.isInSync,
         isTrue,
-        reason: 'CMakeLists.txt source list is out of sync with src/**/*.c.\n'
+        reason:
+            'CMakeLists.txt source list is out of sync with src/**/*.c.\n'
             'Missing from CMakeLists.txt (present on disk): ${result.missingFromCMake}\n'
             'Listed in CMakeLists.txt but not on disk: ${result.extraInCMake}',
       );
@@ -76,23 +70,17 @@ void main() {
       // Remove one real, currently-listed entry to simulate "a new .c file
       // was added on disk but nobody updated CMakeLists.txt".
       const droppedEntry = '"\${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv.c"';
-      expect(
-        original.contains(droppedEntry),
-        isTrue,
-        reason: 'test setup assumption broken: expected entry not found in CMakeLists.txt',
-      );
+      expect(original.contains(droppedEntry), isTrue, reason: 'test setup assumption broken: expected entry not found in CMakeLists.txt');
       final broken = original.replaceFirst(RegExp('${RegExp.escape(droppedEntry)}\r?\n'), '');
       expect(broken, isNot(equals(original)), reason: 'test setup did not actually remove anything');
 
-      final result = _compare(
-        onDisk: _cSourcesOnDisk(),
-        listed: _parseSourcesFromCMakeLists(broken),
-      );
+      final result = _compare(onDisk: _cSourcesOnDisk(), listed: _parseSourcesFromCMakeLists(broken));
 
       expect(
         result.isInSync,
         isFalse,
-        reason: 'the comparison must go RED when a real source is missing from the list; '
+        reason:
+            'the comparison must go RED when a real source is missing from the list; '
             'it did not, which means the completeness test above would not catch this either. '
             'missingFromCMake=${result.missingFromCMake} extraInCMake=${result.extraInCMake}',
       );
@@ -103,24 +91,18 @@ void main() {
       final original = File(_cmakeListsPath).readAsStringSync();
 
       const anchorEntry = '"\${CMAKE_CURRENT_SOURCE_DIR}/yuv_ffi.c"';
-      expect(
-        original.contains(anchorEntry),
-        isTrue,
-        reason: 'test setup assumption broken: expected entry not found in CMakeLists.txt',
-      );
+      expect(original.contains(anchorEntry), isTrue, reason: 'test setup assumption broken: expected entry not found in CMakeLists.txt');
       const phantomEntry = '"\${CMAKE_CURRENT_SOURCE_DIR}/yuv/does_not_exist_on_disk.c"';
       final broken = original.replaceFirst(anchorEntry, '$anchorEntry\n    $phantomEntry');
       expect(broken, isNot(equals(original)), reason: 'test setup did not actually add anything');
 
-      final result = _compare(
-        onDisk: _cSourcesOnDisk(),
-        listed: _parseSourcesFromCMakeLists(broken),
-      );
+      final result = _compare(onDisk: _cSourcesOnDisk(), listed: _parseSourcesFromCMakeLists(broken));
 
       expect(
         result.isInSync,
         isFalse,
-        reason: 'the comparison must go RED when CMakeLists.txt lists a file absent from disk; '
+        reason:
+            'the comparison must go RED when CMakeLists.txt lists a file absent from disk; '
             'it did not, which means the completeness test above would not catch this either. '
             'missingFromCMake=${result.missingFromCMake} extraInCMake=${result.extraInCMake}',
       );
@@ -131,29 +113,22 @@ void main() {
       final original = File(_cmakeListsPath).readAsStringSync();
 
       const targetEntry = '"\${CMAKE_CURRENT_SOURCE_DIR}/yuv_ffi.c"';
-      expect(
-        original.contains(targetEntry),
-        isTrue,
-        reason: 'test setup assumption broken: expected entry not found in CMakeLists.txt',
-      );
+      expect(original.contains(targetEntry), isTrue, reason: 'test setup assumption broken: expected entry not found in CMakeLists.txt');
       final broken = original.replaceFirst(targetEntry, '$targetEntry\n    $targetEntry');
 
-      final result = _compare(
-        onDisk: _cSourcesOnDisk(),
-        listed: _parseSourcesFromCMakeLists(broken),
-      );
+      final result = _compare(onDisk: _cSourcesOnDisk(), listed: _parseSourcesFromCMakeLists(broken));
 
       expect(
         result.duplicates,
         isNot(isEmpty),
-        reason: 'the duplicate check must go RED when an entry is listed twice; '
+        reason:
+            'the duplicate check must go RED when an entry is listed twice; '
             'it did not, which means the completeness test above would not catch this either',
       );
       expect(result.duplicates, contains('yuv_ffi.c'));
     });
 
-    test(
-        'negative control: two files sharing a basename in different directories, '
+    test('negative control: two files sharing a basename in different directories, '
         'with only one listed, makes the check fail', () {
       // This is the case a basename-only comparison cannot catch: two real
       // files on disk, in different directories, with the identical
@@ -190,7 +165,8 @@ void main() {
         // A synthetic source list that names only relativeA, in exactly the
         // quoted `${CMAKE_CURRENT_SOURCE_DIR}/...` form the real file uses,
         // so the real parser is exercised rather than bypassed.
-        final syntheticCMake = 'set(SOURCES\n'
+        final syntheticCMake =
+            'set(SOURCES\n'
             '    "$_cmakeSourceDirPrefix$relativeA"\n'
             ')\n';
 
@@ -198,19 +174,18 @@ void main() {
         expect(
           onDisk,
           containsAll(<String>[relativeA, relativeB]),
-          reason: 'test setup assumption broken: both collision probe files should be '
+          reason:
+              'test setup assumption broken: both collision probe files should be '
               'enumerated in the fixture tree; got $onDisk',
         );
 
-        final result = _compare(
-          onDisk: onDisk,
-          listed: _parseSourcesFromCMakeLists(syntheticCMake),
-        );
+        final result = _compare(onDisk: onDisk, listed: _parseSourcesFromCMakeLists(syntheticCMake));
 
         expect(
           result.isInSync,
           isFalse,
-          reason: 'the comparison must go RED when two files share a basename in different '
+          reason:
+              'the comparison must go RED when two files share a basename in different '
               'directories and only one is listed; it did not, which means a basename-only '
               'comparison (or a regression back to one) would silently drop a translation '
               'unit from the build. missingFromCMake=${result.missingFromCMake} '
@@ -220,7 +195,8 @@ void main() {
         expect(
           result.missingFromCMake,
           isNot(contains(relativeA)),
-          reason: 'the listed path must be recognised as present; if both paths are reported '
+          reason:
+              'the listed path must be recognised as present; if both paths are reported '
               'missing the parser is not matching the entry at all and the redness above '
               'would be vacuous',
         );
@@ -243,11 +219,7 @@ void main() {
 /// `CMakeLists.txt` entries, both keyed by full path relative to `src/`
 /// with forward slashes.
 class _ComparisonResult {
-  _ComparisonResult({
-    required this.missingFromCMake,
-    required this.extraInCMake,
-    required this.duplicates,
-  });
+  _ComparisonResult({required this.missingFromCMake, required this.extraInCMake, required this.duplicates});
 
   final Set<String> missingFromCMake;
   final Set<String> extraInCMake;
@@ -256,21 +228,14 @@ class _ComparisonResult {
   bool get isInSync => missingFromCMake.isEmpty && extraInCMake.isEmpty;
 }
 
-_ComparisonResult _compare({
-  required Set<String> onDisk,
-  required List<String> listed,
-}) {
+_ComparisonResult _compare({required Set<String> onDisk, required List<String> listed}) {
   final duplicates = <String>{
     for (final path in listed.toSet())
       if (listed.where((p) => p == path).length > 1) path,
   };
   final listedSet = listed.toSet();
 
-  return _ComparisonResult(
-    missingFromCMake: onDisk.difference(listedSet),
-    extraInCMake: listedSet.difference(onDisk),
-    duplicates: duplicates,
-  );
+  return _ComparisonResult(missingFromCMake: onDisk.difference(listedSet), extraInCMake: listedSet.difference(onDisk), duplicates: duplicates);
 }
 
 /// Full paths (relative to [root], forward-slash separated, e.g.
@@ -281,12 +246,9 @@ _ComparisonResult _compare({
 /// fixture root instead, so it exercises this exact walker without writing
 /// anything into `src/`.
 Set<String> _cSourcesOnDisk({String root = _srcDir}) {
-  return Directory(root)
-      .listSync(recursive: true)
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.c'))
-      .map((file) => _relativeTo(root, file.path))
-      .toSet();
+  return Directory(
+    root,
+  ).listSync(recursive: true).whereType<File>().where((file) => file.path.endsWith('.c')).map((file) => _relativeTo(root, file.path)).toSet();
 }
 
 /// Normalizes a file path (which may use backslashes on Windows) to a
@@ -296,11 +258,7 @@ String _relativeTo(String root, String filePath) {
   final normalizedRoot = root.replaceAll(r'\', '/');
   final normalized = filePath.replaceAll(r'\', '/');
   final prefix = '$normalizedRoot/';
-  expect(
-    normalized.startsWith(prefix),
-    isTrue,
-    reason: 'path "$filePath" is not under the expected root "$root"',
-  );
+  expect(normalized.startsWith(prefix), isTrue, reason: 'path "$filePath" is not under the expected root "$root"');
   return normalized.substring(prefix.length);
 }
 
@@ -327,7 +285,8 @@ List<String> _parseSourcesFromCMakeLists(String contents) {
     expect(
       rawPath.startsWith(_cmakeSourceDirPrefix),
       isTrue,
-      reason: 'CMakeLists.txt entry "$rawPath" does not start with the expected '
+      reason:
+          'CMakeLists.txt entry "$rawPath" does not start with the expected '
           '"$_cmakeSourceDirPrefix" prefix',
     );
     entries.add(rawPath.substring(_cmakeSourceDirPrefix.length));

@@ -102,12 +102,7 @@ Uint8List _buildTightBgraPattern(int width, int height) {
 /// Builds a [YuvPlane] whose rows carry [tight]'s bytes followed by
 /// distinguishable `0xa5` padding, matching the convention used by
 /// `test/reference_native_conversions_test.dart`'s `_plane` helper.
-YuvPlane _plane(
-  Uint8List tight, {
-  required int height,
-  required int rowStride,
-  required int usefulRowBytes,
-}) {
+YuvPlane _plane(Uint8List tight, {required int height, required int rowStride, required int usefulRowBytes}) {
   final bytes = Uint8List(height * rowStride)..fillRange(0, height * rowStride, 0xa5);
   for (int row = 0; row < height; row++) {
     final destination = row * rowStride;

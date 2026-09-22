@@ -59,20 +59,12 @@ final class YuvWasmLoader {
   /// callers do not each start their own initialization.
   static int debugInitCount = 0;
 
-  static Future<YuvModule> Function({
-    required String scriptPath,
-    required String wasmPath,
-    required String moduleFactoryName,
-  })? _initializerOverride;
+  static Future<YuvModule> Function({required String scriptPath, required String wasmPath, required String moduleFactoryName})? _initializerOverride;
 
   /// Replaces the initializer so tests can count attempts and fail
   /// deterministically without a real module. Not exported publicly.
   static void debugSetInitializer(
-    Future<YuvModule> Function({
-      required String scriptPath,
-      required String wasmPath,
-      required String moduleFactoryName,
-    })? initializer,
+    Future<YuvModule> Function({required String scriptPath, required String wasmPath, required String moduleFactoryName})? initializer,
   ) {
     _initializerOverride = initializer;
   }
@@ -134,11 +126,7 @@ final class YuvWasmLoader {
     debugInitCount++;
     final initializer = _initializerOverride ?? _initialize;
     late final Future<YuvModule> attempt;
-    attempt = initializer(
-      scriptPath: scriptPath,
-      wasmPath: wasmPath,
-      moduleFactoryName: moduleFactoryName,
-    ).onError<Object>((error, stackTrace) {
+    attempt = initializer(scriptPath: scriptPath, wasmPath: wasmPath, moduleFactoryName: moduleFactoryName).onError<Object>((error, stackTrace) {
       // Clear only if this attempt is still the current one. A later call may
       // already have replaced it, and dropping that newer future would make
       // concurrent callers wait on an attempt nobody owns any more.
@@ -152,17 +140,10 @@ final class YuvWasmLoader {
     return attempt;
   }
 
-  static Future<YuvModule> _initialize({
-    required String scriptPath,
-    required String wasmPath,
-    required String moduleFactoryName,
-  }) async {
+  static Future<YuvModule> _initialize({required String scriptPath, required String wasmPath, required String moduleFactoryName}) async {
     await _injectScriptOnce(scriptPath);
 
-    final factory = js_util.getProperty(
-      js_util.globalThis,
-      moduleFactoryName,
-    );
+    final factory = js_util.getProperty(js_util.globalThis, moduleFactoryName);
     if (factory == null) {
       throw StateError(
         'WASM module factory "$moduleFactoryName" was not found on globalThis. '
@@ -186,21 +167,11 @@ final class YuvWasmLoader {
       return requestedNameDart;
     }
 
-    js_util.setProperty(
-      moduleConfig,
-      'locateFile',
-      locateFile.toJS,
-    );
+    js_util.setProperty(moduleConfig, 'locateFile', locateFile.toJS);
 
-    final modulePromise = js_util.callMethod<Object>(
-      factory,
-      'call',
-      <Object?>[null, moduleConfig],
-    );
+    final modulePromise = js_util.callMethod<Object>(factory, 'call', <Object?>[null, moduleConfig]);
 
-    final module = YuvModule(
-      await js_util.promiseToFuture<Object>(modulePromise),
-    );
+    final module = YuvModule(await js_util.promiseToFuture<Object>(modulePromise));
     _module = module;
     return module;
   }
@@ -217,9 +188,7 @@ final class YuvWasmLoader {
   /// Concurrent callers cannot race here: [ensureInitialized] coalesces them onto
   /// one in-flight attempt, so this runs alone.
   static Future<void> _injectScriptOnce(String scriptPath) async {
-    final existing = html.document.querySelector(
-      'script[data-yuv-ffi-wasm-loader="1"]',
-    );
+    final existing = html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]');
     if (existing != null) {
       return;
     }
@@ -241,11 +210,7 @@ final class YuvWasmLoader {
       if (!completer.isCompleted) {
         // Drop the dead tag first, so the next attempt injects a fresh one.
         script.remove();
-        completer.completeError(
-          StateError(
-            'Failed to load WASM loader script: $scriptPath',
-          ),
-        );
+        completer.completeError(StateError('Failed to load WASM loader script: $scriptPath'));
       }
     });
 

@@ -37,15 +37,12 @@ void main() {
     expect(
       library.providesSymbol('nv21_to_bgra8888'),
       isTrue,
-      reason: 'the supported NV21 conversion must still be exported; if this is false the '
+      reason:
+          'the supported NV21 conversion must still be exported; if this is false the '
           'probe is wrong and the absence assertion below would pass vacuously',
     );
 
-    expect(
-      library.providesSymbol('nv21_to_rgb'),
-      isFalse,
-      reason: 'nv21_to_rgb has no implementation and must not be exported',
-    );
+    expect(library.providesSymbol('nv21_to_rgb'), isFalse, reason: 'nv21_to_rgb has no implementation and must not be exported');
   });
 
   test('a real NV21 to BGRA8888 conversion still runs after the header removal', () async {
@@ -71,22 +68,14 @@ void main() {
     final bgra = image.toBgra8888();
 
     expect(bgra.length, width * height * 4, reason: 'toBgra8888 must return a tightly packed buffer');
-    expect(
-      bgra.any((byte) => byte != 0),
-      isTrue,
-      reason: 'an all-zero result means the native NV21 symbols did not run',
-    );
+    expect(bgra.any((byte) => byte != 0), isTrue, reason: 'an all-zero result means the native NV21 symbols did not run');
   });
 
   test('the NV21 interleaved chroma contract is unchanged', () {
     final image = YuvImage.nv21(8, 8);
 
     expect(image.format, YuvFileFormat.nv21);
-    expect(
-      image.uPlane.pixelStride,
-      2,
-      reason: 'NV21 keeps its interleaved chroma plane; the header removal must not alter geometry',
-    );
+    expect(image.uPlane.pixelStride, 2, reason: 'NV21 keeps its interleaved chroma plane; the header removal must not alter geometry');
   });
 
   group('source/header surface (the actual discriminating probe)', () {
@@ -136,7 +125,8 @@ void main() {
         expect(
           headerNames,
           equals(sourceNames),
-          reason: 'src/yuv/$format/h declarations and src/yuv/$format implementations must correspond '
+          reason:
+              'src/yuv/$format/h declarations and src/yuv/$format implementations must correspond '
               '1:1; a header with no matching .c (such as the removed nv21_to_rgb.h) fails this check',
         );
       });
@@ -153,14 +143,11 @@ void main() {
       expect(
         headerFile.existsSync(),
         isFalse,
-        reason: 'src/yuv/nv21/h/nv21_to_rgb.h must stay deleted; its restoration is the exact regression '
+        reason:
+            'src/yuv/nv21/h/nv21_to_rgb.h must stay deleted; its restoration is the exact regression '
             'this card guards against',
       );
-      expect(
-        aggregatorSource,
-        isNot(contains('nv21_to_rgb.h')),
-        reason: 'src/yuv/nv21.h must not include nv21_to_rgb.h again',
-      );
+      expect(aggregatorSource, isNot(contains('nv21_to_rgb.h')), reason: 'src/yuv/nv21.h must not include nv21_to_rgb.h again');
       expect(
         aggregatorSource,
         isNot(contains(RegExp(r'\bnv21_to_rgb\b'))),

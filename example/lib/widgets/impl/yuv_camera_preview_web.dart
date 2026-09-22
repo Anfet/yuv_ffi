@@ -10,30 +10,18 @@ import 'package:flutter/material.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'js_util_compat_web.dart' as js_util;
 
-Widget buildYuvCameraPreview({
-  Key? key,
-  CameraController? cameraController,
-  YuvImage Function(YuvImage image)? transform,
-}) {
+Widget buildYuvCameraPreview({Key? key, CameraController? cameraController, YuvImage Function(YuvImage image)? transform}) {
   if (cameraController == null) {
     throw ArgumentError('CameraController is required on web platform');
   }
-  return _YuvCameraPreviewWeb(
-    key: key,
-    cameraController: cameraController,
-    transform: transform,
-  );
+  return _YuvCameraPreviewWeb(key: key, cameraController: cameraController, transform: transform);
 }
 
 class _YuvCameraPreviewWeb extends StatefulWidget {
   final CameraController cameraController;
   final YuvImage Function(YuvImage image)? transform;
 
-  const _YuvCameraPreviewWeb({
-    super.key,
-    required this.cameraController,
-    this.transform,
-  });
+  const _YuvCameraPreviewWeb({super.key, required this.cameraController, this.transform});
 
   @override
   State<_YuvCameraPreviewWeb> createState() => _YuvCameraPreviewWebState();
@@ -95,12 +83,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
   @override
   Widget build(BuildContext context) {
     if (_lastError != null) {
-      return Center(
-        child: Text(
-          'Web camera error: $_lastError',
-          textAlign: TextAlign.center,
-        ),
-      );
+      return Center(child: Text('Web camera error: $_lastError', textAlign: TextAlign.center));
     }
 
     return StreamBuilder<YuvImage?>(
@@ -137,9 +120,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
     try {
       final constraints = <String, dynamic>{
         'audio': false,
-        'video': <String, dynamic>{
-          'facingMode': _facingModeFromLens(widget.cameraController.description.lensDirection),
-        },
+        'video': <String, dynamic>{'facingMode': _facingModeFromLens(widget.cameraController.description.lensDirection)},
       };
 
       _mediaStream = await html.window.navigator.mediaDevices?.getUserMedia(constraints);
@@ -188,12 +169,9 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
     try {
       final track = tracks.first;
       final ctor = js_util.getProperty<Object>(html.window, 'MediaStreamTrackProcessor');
-      final processor = js_util.callConstructor<Object>(
-        ctor as dynamic,
-        [
-          js_util.jsify({'track': track})
-        ],
-      );
+      final processor = js_util.callConstructor<Object>(ctor as dynamic, [
+        js_util.jsify({'track': track}),
+      ]);
       final readable = js_util.getProperty<Object>(processor, 'readable');
       _trackReader = js_util.callMethod<Object>(readable, 'getReader', const []);
       debugPrint('[YuvCameraPreviewWeb] Using MediaStreamTrackProcessor + VideoFrame.copyTo');
@@ -214,9 +192,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
 
     while (_running) {
       try {
-        final readResult = await js_util.promiseToFuture<Object>(
-          js_util.callMethod<Object>(reader, 'read', const []),
-        );
+        final readResult = await js_util.promiseToFuture<Object>(js_util.callMethod<Object>(reader, 'read', const []));
 
         final done = js_util.getProperty<bool?>(readResult, 'done') ?? false;
         if (done) {
@@ -270,9 +246,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       var usedBgraCopyFormat = _copyToUseBgra;
       if (usedBgraCopyFormat) {
         try {
-          await js_util.promiseToFuture<Object>(
-            js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsBgra]),
-          );
+          await js_util.promiseToFuture<Object>(js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsBgra]));
         } catch (e) {
           _copyToUseBgra = false;
           usedBgraCopyFormat = false;
@@ -280,14 +254,10 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
             debugPrint('[YuvCameraPreviewWeb] copyTo(BGRA) unsupported, fallback to RGBA: $e');
             _loggedCopyToFormatFallback = true;
           }
-          await js_util.promiseToFuture<Object>(
-            js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsRgba]),
-          );
+          await js_util.promiseToFuture<Object>(js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsRgba]));
         }
       } else {
-        await js_util.promiseToFuture<Object>(
-          js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsRgba]),
-        );
+        await js_util.promiseToFuture<Object>(js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsRgba]));
       }
       var yuv = _reusableBgraFrame;
       if (yuv == null || yuv.width != width || yuv.height != height) {
@@ -338,11 +308,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       _scheduleVideoFrameCallback();
     }
 
-    final id = js_util.callMethod<Object>(
-      _videoElement,
-      'requestVideoFrameCallback',
-      [callback.toJS],
-    );
+    final id = js_util.callMethod<Object>(_videoElement, 'requestVideoFrameCallback', [callback.toJS]);
     if (id is int) {
       _videoFrameRequestId = id;
     } else if (id is num) {
@@ -439,11 +405,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
 
     final vfId = _videoFrameRequestId;
     if (vfId != null && js_util.hasProperty(_videoElement, 'cancelVideoFrameCallback')) {
-      js_util.callMethod<void>(
-        _videoElement,
-        'cancelVideoFrameCallback',
-        [vfId],
-      );
+      js_util.callMethod<void>(_videoElement, 'cancelVideoFrameCallback', [vfId]);
       _videoFrameRequestId = null;
     }
   }

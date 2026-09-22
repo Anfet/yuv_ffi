@@ -65,10 +65,10 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   // I420 stores U and V as separate single-byte-per-sample planes, so the
   // default pixelStride is 1, unlike NV21's interleaved (U, V) pairs.
   YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   /// Creates a BGRA image, optionally adopting a caller-supplied plane.
   ///
@@ -79,23 +79,23 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   /// `YuvImage(YuvFileFormat.bgra8888, ...)` constructor, so both entry points
   /// share one validation and copy contract.
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: planes);
+    : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: planes);
 
   YuvImageImpl(YuvFileFormat format, int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
-      : _state = YuvImageState(format, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : _state = YuvImageState(format, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   @override
   Uint8List getBytes() => _state.getBytes();
 
   @override
   YuvImage copy({bool blank = false}) => YuvImageImpl(
-        format,
-        width,
-        height,
-        planes: _state.copiedPlanes(blank: blank),
-        yPixelStride: _state.yPixelStride,
-        uvPixelStride: _state.uvPixelStride,
-      );
+    format,
+    width,
+    height,
+    planes: _state.copiedPlanes(blank: blank),
+    yPixelStride: _state.yPixelStride,
+    uvPixelStride: _state.uvPixelStride,
+  );
 
   @override
   Future save(Sink<List<int>> sink) async {
@@ -552,18 +552,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
       // Keep both destination strides compatible with the source. The native
       // helper accepts one chroma stride for both buffers and only writes active
       // chroma pairs, so a tight destination is not safe for padded input.
-      nvYY = YuvImageImpl.nv21(
-        width,
-        height,
-        planes: [
-          nvXX.yPlane,
-          YuvPlane(
-            nvXX.uPlane.height,
-            nvXX.uPlane.rowStride,
-            nvXX.uPlane.pixelStride,
-          ),
-        ],
-      );
+      nvYY = YuvImageImpl.nv21(width, height, planes: [nvXX.yPlane, YuvPlane(nvXX.uPlane.height, nvXX.uPlane.rowStride, nvXX.uPlane.pixelStride)]);
       defYY = YUVDefClass(nvYY);
     } catch (_) {
       def.dispose();
@@ -578,13 +567,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
       defYY.dispose();
     }
 
-    _state.replaceFromRevision(
-      format: nvYY.format,
-      width: nvYY.width,
-      height: nvYY.height,
-      planes: nvYY.planes,
-      revision: revisionBefore,
-    );
+    _state.replaceFromRevision(format: nvYY.format, width: nvYY.width, height: nvYY.height, planes: nvYY.planes, revision: revisionBefore);
     return this;
   }
 
@@ -631,12 +614,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
     final bytes = toBgra8888();
     final image = YuvImageImpl(YuvFileFormat.bgra8888, width, height, planes: [YuvPlane(height, width * 4, 4, bytes)], yPixelStride: 4);
-    _state.replace(
-      format: image.format,
-      width: image.width,
-      height: image.height,
-      planes: image.planes.map((p) => p.copy()).toList(growable: false),
-    );
+    _state.replace(format: image.format, width: image.width, height: image.height, planes: image.planes.map((p) => p.copy()).toList(growable: false));
     return this;
   }
 
@@ -675,12 +653,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
       def.dispose();
       def420.dispose();
     }
-    _state.replace(
-      format: i420.format,
-      width: i420.width,
-      height: i420.height,
-      planes: i420.planes.map((p) => p.copy()).toList(growable: false),
-    );
+    _state.replace(format: i420.format, width: i420.width, height: i420.height, planes: i420.planes.map((p) => p.copy()).toList(growable: false));
     return this;
   }
 
@@ -719,12 +692,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
       def21.dispose();
     }
 
-    _state.replace(
-      format: n21.format,
-      width: n21.width,
-      height: n21.height,
-      planes: n21.planes.map((p) => p.copy()).toList(growable: false),
-    );
+    _state.replace(format: n21.format, width: n21.width, height: n21.height, planes: n21.planes.map((p) => p.copy()).toList(growable: false));
     return this;
   }
 }

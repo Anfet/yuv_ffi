@@ -77,11 +77,7 @@ class YuvImageState {
         final nvPixelStride = uvPixelStride < YuvGeometry.nvChromaPixelStride ? YuvGeometry.nvChromaPixelStride : uvPixelStride;
         return [yPlane, YuvPlane(uvHeight, uvWidth * nvPixelStride, nvPixelStride)];
       case YuvFileFormat.i420:
-        return [
-          yPlane,
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-          YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride),
-        ];
+        return [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride), YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
       case YuvFileFormat.bgra8888:
         return [yPlane];
     }
@@ -190,8 +186,9 @@ class YuvImageState {
   /// allocation, so padded metadata survives. Rebuilding through
   /// [allocatePlanes] instead would produce tight planes and silently drop the
   /// padding.
-  List<YuvPlane> copiedPlanes({bool blank = false}) =>
-      [for (final plane in _planes) blank ? YuvPlane(plane.height, plane.rowStride, plane.pixelStride) : plane.copy()];
+  List<YuvPlane> copiedPlanes({bool blank = false}) => [
+    for (final plane in _planes) blank ? YuvPlane(plane.height, plane.rowStride, plane.pixelStride) : plane.copy(),
+  ];
 
   /// Encodes this state into the `yuv_ffi` container format.
   Uint8List encode() => YuvCodec.encode(format: _format, width: _width, height: _height, planes: _planes);

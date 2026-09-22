@@ -24,11 +24,7 @@ void main() {
 
   YuvPlane canaryPlane(int height, int rowStride, int pixelStride) => filledPlane(height, rowStride, pixelStride, 0xA5);
 
-  void expectPaddingUntouched(
-    YuvPlane plane, {
-    required int logicalWidth,
-    required int sampleBytes,
-  }) {
+  void expectPaddingUntouched(YuvPlane plane, {required int logicalWidth, required int sampleBytes}) {
     for (int row = 0; row < plane.height; row++) {
       final logicalOffsets = <int>{};
       for (int column = 0; column < logicalWidth; column++) {
@@ -39,11 +35,7 @@ void main() {
       }
       for (int offset = 0; offset < plane.rowStride; offset++) {
         if (!logicalOffsets.contains(offset)) {
-          expect(
-            plane.bytes[row * plane.rowStride + offset],
-            0xA5,
-            reason: 'padding byte $offset in row $row was modified',
-          );
+          expect(plane.bytes[row * plane.rowStride + offset], 0xA5, reason: 'padding byte $offset in row $row was modified');
         }
       }
     }
@@ -59,11 +51,7 @@ void main() {
       final image = YuvImage.i420(
         width,
         height,
-        planes: [
-          filledPlane(height, width + padding, 1, 0),
-          filledPlane(2, 2, 1, 0),
-          filledPlane(2, 2, 1, 0),
-        ],
+        planes: [filledPlane(height, width + padding, 1, 0), filledPlane(2, 2, 1, 0), filledPlane(2, 2, 1, 0)],
       );
 
       // Tight RGBA input, as the public contract requires.
@@ -101,20 +89,12 @@ void main() {
       }
 
       final baselineBgra = YuvImage.bgra(width, height)..fromRgba8888(rgba);
-      final paddedBgra = YuvImage(
-        YuvFileFormat.bgra8888,
-        width,
-        height,
-        planes: [canaryPlane(height, width * 4 + 7, 4)],
-      )..fromRgba8888(rgba);
+      final paddedBgra = YuvImage(YuvFileFormat.bgra8888, width, height, planes: [canaryPlane(height, width * 4 + 7, 4)])..fromRgba8888(rgba);
       for (int row = 0; row < height; row++) {
         for (int column = 0; column < width; column++) {
           final expected = row * baselineBgra.yPlane.rowStride + column * 4;
           final actual = row * paddedBgra.yPlane.rowStride + column * 4;
-          expect(
-            paddedBgra.yPlane.bytes.sublist(actual, actual + 4),
-            orderedEquals(baselineBgra.yPlane.bytes.sublist(expected, expected + 4)),
-          );
+          expect(paddedBgra.yPlane.bytes.sublist(actual, actual + 4), orderedEquals(baselineBgra.yPlane.bytes.sublist(expected, expected + 4)));
         }
       }
       expectPaddingUntouched(paddedBgra.yPlane, logicalWidth: width, sampleBytes: 4);
@@ -148,10 +128,7 @@ void main() {
       final paddedNv = YuvImage.nv21(
         width,
         height,
-        planes: [
-          canaryPlane(height, width * 2 + 3, 2),
-          canaryPlane(chromaHeight, chromaWidth * 2 + 3, 2),
-        ],
+        planes: [canaryPlane(height, width * 2 + 3, 2), canaryPlane(chromaHeight, chromaWidth * 2 + 3, 2)],
       )..fromRgba8888(rgba);
       for (int row = 0; row < height; row++) {
         for (int column = 0; column < width; column++) {
@@ -162,10 +139,7 @@ void main() {
         for (int column = 0; column < chromaWidth; column++) {
           final actual = row * paddedNv.uPlane.rowStride + column * 2;
           final expected = row * baselineNv.uPlane.rowStride + column * 2;
-          expect(
-            paddedNv.uPlane.bytes.sublist(actual, actual + 2),
-            orderedEquals(baselineNv.uPlane.bytes.sublist(expected, expected + 2)),
-          );
+          expect(paddedNv.uPlane.bytes.sublist(actual, actual + 2), orderedEquals(baselineNv.uPlane.bytes.sublist(expected, expected + 2)));
         }
       }
       expectPaddingUntouched(paddedNv.yPlane, logicalWidth: width, sampleBytes: 1);
@@ -180,11 +154,7 @@ void main() {
       final src = YuvImage.i420(
         width,
         height,
-        planes: [
-          filledPlane(height, width + 16, 1, 0x11),
-          filledPlane(2, 2, 1, 0x22),
-          filledPlane(2, 2, 1, 0x33),
-        ],
+        planes: [filledPlane(height, width + 16, 1, 0x11), filledPlane(2, 2, 1, 0x22), filledPlane(2, 2, 1, 0x33)],
       );
 
       // A whole-buffer memcpy of the source would run past this destination.
@@ -205,14 +175,7 @@ void main() {
       const width = 4;
       const height = 4;
 
-      final src = YuvImage.nv21(
-        width,
-        height,
-        planes: [
-          filledPlane(height, width + 16, 1, 0x44),
-          filledPlane(2, 4, 2, 0x55),
-        ],
-      );
+      final src = YuvImage.nv21(width, height, planes: [filledPlane(height, width + 16, 1, 0x44), filledPlane(2, 4, 2, 0x55)]);
 
       expect(() => src.toYuvI420(), returnsNormally);
       expect(src.format, YuvFileFormat.i420);
@@ -239,38 +202,17 @@ void main() {
         return plane;
       }
 
-      final i420 = YuvImage.i420(
-        width,
-        height,
-        planes: [
-          stridedLuma(),
-          filledPlane(2, 3, 1, 100),
-          filledPlane(2, 3, 1, 150),
-        ],
-      )..toYuvNv21();
-      expect(
-        [
-          for (int row = 0; row < height; row++)
-            for (int column = 0; column < width; column++) i420.yPlane.getPixel(column, row)
-        ],
-        orderedEquals(expected),
-      );
+      final i420 = YuvImage.i420(width, height, planes: [stridedLuma(), filledPlane(2, 3, 1, 100), filledPlane(2, 3, 1, 150)])..toYuvNv21();
+      expect([
+        for (int row = 0; row < height; row++)
+          for (int column = 0; column < width; column++) i420.yPlane.getPixel(column, row),
+      ], orderedEquals(expected));
 
-      final nv = YuvImage.nv21(
-        width,
-        height,
-        planes: [
-          stridedLuma(),
-          filledPlane(2, 6, 2, 128),
-        ],
-      )..toYuvI420();
-      expect(
-        [
-          for (int row = 0; row < height; row++)
-            for (int column = 0; column < width; column++) nv.yPlane.getPixel(column, row)
-        ],
-        orderedEquals(expected),
-      );
+      final nv = YuvImage.nv21(width, height, planes: [stridedLuma(), filledPlane(2, 6, 2, 128)])..toYuvI420();
+      expect([
+        for (int row = 0; row < height; row++)
+          for (int column = 0; column < width; column++) nv.yPlane.getPixel(column, row),
+      ], orderedEquals(expected));
     });
 
     test('swapNv keeps padded chroma padding untouched', () {
@@ -330,29 +272,17 @@ void main() {
         }
 
         final i420 = YuvImage.i420(width, height)..fromRgba8888(rgba);
-        expect(
-          i420.uPlane.bytes.any((b) => b != 0),
-          isTrue,
-          reason: 'I420 ${width}x$height left the U plane entirely zero',
-        );
+        expect(i420.uPlane.bytes.any((b) => b != 0), isTrue, reason: 'I420 ${width}x$height left the U plane entirely zero');
         expect(i420.uPlane.height, (height + 1) ~/ 2);
 
         final nv21 = YuvImage.nv21(width, height)..fromRgba8888(rgba);
-        expect(
-          nv21.uPlane.bytes.any((b) => b != 0),
-          isTrue,
-          reason: 'NV21 ${width}x$height left the chroma plane entirely zero',
-        );
+        expect(nv21.uPlane.bytes.any((b) => b != 0), isTrue, reason: 'NV21 ${width}x$height left the chroma plane entirely zero');
         expect(nv21.uPlane.height, (height + 1) ~/ 2);
       }
     });
 
     test('every odd-edge chroma sample is written in UV order', () {
-      for (final size in const <({int width, int height})>[
-        (width: 1, height: 1),
-        (width: 3, height: 5),
-        (width: 127, height: 255),
-      ]) {
+      for (final size in const <({int width, int height})>[(width: 1, height: 1), (width: 3, height: 5), (width: 127, height: 255)]) {
         final rgba = Uint8List(size.width * size.height * 4);
         for (int i = 0; i < rgba.length; i += 4) {
           rgba[i] = 255;
@@ -372,10 +302,7 @@ void main() {
         final nv = YuvImage.nv21(
           size.width,
           size.height,
-          planes: [
-            canaryPlane(size.height, size.width + 3, 1),
-            canaryPlane(chromaHeight, chromaWidth * 2 + 3, 2),
-          ],
+          planes: [canaryPlane(size.height, size.width + 3, 1), canaryPlane(chromaHeight, chromaWidth * 2 + 3, 2)],
         )..fromRgba8888(rgba);
 
         final expectedU = i420.uPlane.getPixel(0, 0);

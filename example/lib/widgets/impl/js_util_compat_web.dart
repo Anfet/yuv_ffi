@@ -17,10 +17,7 @@ void setProperty(Object object, String property, Object? value) {
 Object newObject() => JSObject();
 
 T callMethod<T>(Object object, String method, List<Object?> arguments) {
-  final value = _asJsObject(object).callMethodVarArgs<JSAny?>(
-    method.toJS,
-    arguments.map(_toJs).toList(growable: false),
-  );
+  final value = _asJsObject(object).callMethodVarArgs<JSAny?>(method.toJS, arguments.map(_toJs).toList(growable: false));
   return _fromJs<T>(value);
 }
 
@@ -35,9 +32,7 @@ bool hasProperty(Object object, String property) {
 
 T callConstructor<T>(Object constructor, List<Object?> arguments) {
   final ctorObject = _asJsObject(constructor);
-  final value = (ctorObject as JSFunction).callAsConstructorVarArgs<JSObject>(
-    arguments.map(_toJs).toList(growable: false),
-  );
+  final value = (ctorObject as JSFunction).callAsConstructorVarArgs<JSObject>(arguments.map(_toJs).toList(growable: false));
   return _fromJs<T>(value);
 }
 

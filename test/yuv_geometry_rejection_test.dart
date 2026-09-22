@@ -111,12 +111,7 @@ void main() {
 
   group('load() validates before mutating the image', () {
     /// Serializes an arbitrary header and plane table, bypassing save().
-    Stream<List<int>> malformedPayload({
-      required String format,
-      required int width,
-      required int height,
-      required List<List<int>> planes,
-    }) {
+    Stream<List<int>> malformedPayload({required String format, required int width, required int height, required List<List<int>> planes}) {
       final image = YuvImage.i420(2, 2);
       final chunks = <List<int>>[];
       final sink = _CollectingSink(chunks);
@@ -144,10 +139,7 @@ void main() {
 
       // YUV-07 pins this to FormatException; it was deliberately loose while
       // the reader could still surface RangeError or TypeError instead.
-      await expectLater(
-        image.load(malformedPayload(format: 'i420', width: 8, height: 8, planes: const [])),
-        throwsFormatException,
-      );
+      await expectLater(image.load(malformedPayload(format: 'i420', width: 8, height: 8, planes: const [])), throwsFormatException);
 
       expect(image.width, before.width, reason: 'width was mutated by a failed load');
       expect(image.height, before.height, reason: 'height was mutated by a failed load');
@@ -174,13 +166,7 @@ void main() {
   });
 
   group('padded BGRA is refused before an unsafe native effect', () {
-    YuvImage paddedBgra() => YuvImage(
-          YuvFileFormat.bgra8888,
-          8,
-          8,
-          yPixelStride: 4,
-          planes: [filled(8, 8 * 4 + 16, 4)],
-        );
+    YuvImage paddedBgra() => YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [filled(8, 8 * 4 + 16, 4)]);
 
     test('blur operations reject a padded plane rather than overflowing', () {
       // These native effects allocate a tight width * height * 4 scratch buffer

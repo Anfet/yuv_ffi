@@ -72,16 +72,8 @@ void main() {
 
       // nv21_to_bgra8888 and nv21_to_i420 both read byte 0 as U and byte 1 as V,
       // so a writer must follow the same order.
-      expect(
-        image.uPlane.bytes[0],
-        closeTo(expectedU, tolerance),
-        reason: 'byte 0 of the chroma pair must be U (~$expectedU for red)',
-      );
-      expect(
-        image.uPlane.bytes[1],
-        closeTo(expectedV, tolerance),
-        reason: 'byte 1 of the chroma pair must be V (~$expectedV for red)',
-      );
+      expect(image.uPlane.bytes[0], closeTo(expectedU, tolerance), reason: 'byte 0 of the chroma pair must be U (~$expectedU for red)');
+      expect(image.uPlane.bytes[1], closeTo(expectedV, tolerance), reason: 'byte 1 of the chroma pair must be V (~$expectedV for red)');
     });
 
     test('RGBA -> NV21 -> I420 lands U and V in the correct planes', () {

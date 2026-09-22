@@ -53,11 +53,7 @@ void main() {
     final total = allocationsOf(body);
     expect(total, greaterThan(0), reason: '$label performed no native allocations');
     for (int failAt = 1; failAt <= total; failAt++) {
-      expect(
-        outstandingAfterFailure(failAt, body),
-        0,
-        reason: '$label leaked native memory when allocation #$failAt of $total failed',
-      );
+      expect(outstandingAfterFailure(failAt, body), 0, reason: '$label leaked native memory when allocation #$failAt of $total failed');
     }
   }
 

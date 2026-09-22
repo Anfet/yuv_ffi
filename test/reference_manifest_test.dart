@@ -41,11 +41,9 @@ void main() {
         expect(bytes.length, metadata['byteLength'], reason: entry.key);
         expect(sha256Hex(bytes), metadata['sha256'], reason: entry.key);
       }
-      final artifactFiles = Directory('test/reference/test_pattern_512/artifacts')
-          .listSync(recursive: true)
-          .whereType<File>()
-          .map((file) => file.uri.pathSegments.last)
-          .toSet();
+      final artifactFiles = Directory(
+        'test/reference/test_pattern_512/artifacts',
+      ).listSync(recursive: true).whereType<File>().map((file) => file.uri.pathSegments.last).toSet();
       expect(artifactFiles, equals(artifacts.keys.toSet()));
     });
 
@@ -225,12 +223,7 @@ void main() {
             for (final format in <String>['I420', 'NV21']) 'BLUR-${entry.key}-$format-$artifact',
       };
 
-      const expectedEffectPlanarIds = <String>{
-        'EFFECT-BLACKWHITE-I420',
-        'EFFECT-BLACKWHITE-NV21',
-        'EFFECT-NEGATE-I420',
-        'EFFECT-NEGATE-NV21',
-      };
+      const expectedEffectPlanarIds = <String>{'EFFECT-BLACKWHITE-I420', 'EFFECT-BLACKWHITE-NV21', 'EFFECT-NEGATE-I420', 'EFFECT-NEGATE-NV21'};
 
       expect(expectedBlurPlanarIds, hasLength(16));
       for (final id in expectedBlurPlanarIds) {
@@ -248,7 +241,7 @@ void main() {
       for (final id in <String>[
         'BLUR-GAUSSIANBLUR-BGRA8888-GAUSSIAN_DEFAULT',
         'BLUR-BOXBLUR-BGRA8888-BOX_DEFAULT',
-        'BLUR-MEANBLUR-BGRA8888-MEAN_DEFAULT'
+        'BLUR-MEANBLUR-BGRA8888-MEAN_DEFAULT',
       ]) {
         expect(byId(id)['comparison'], 'blur', reason: id);
       }

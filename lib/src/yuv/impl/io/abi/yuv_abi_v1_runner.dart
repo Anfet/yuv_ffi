@@ -148,8 +148,13 @@ class YuvAbiV1Runner {
   /// starting at `(left, top)` in source visible-pixel coordinates (section
   /// 11): unlike every other operation, its geometry is NOT the source
   /// geometry.
-  static YuvAbiV1FrameResult crop(
-      {required YuvAbiV1FrameInput source, required int left, required int top, required int width, required int height}) {
+  static YuvAbiV1FrameResult crop({
+    required YuvAbiV1FrameInput source,
+    required int left,
+    required int top,
+    required int width,
+    required int height,
+  }) {
     final YuvAbiV1DestinationLayout destinationLayout = _destinationWithGeometry(source, width: width, height: height);
     return _run(
       operation: yuvSymbolCropV1,
@@ -223,8 +228,12 @@ class YuvAbiV1Runner {
   /// [source]'s format. `transposedStrides` exists only for readability at
   /// call sites (rotate 90/270): the tight-stride formula already depends on
   /// the destination width it is given, so no extra logic is needed for it.
-  static YuvAbiV1DestinationLayout _destinationWithGeometry(YuvAbiV1FrameInput source,
-      {required int width, required int height, bool transposedStrides = false}) {
+  static YuvAbiV1DestinationLayout _destinationWithGeometry(
+    YuvAbiV1FrameInput source, {
+    required int width,
+    required int height,
+    bool transposedStrides = false,
+  }) {
     final int planeCount = yuvAbiV1PlaneCount(source.format);
     final List<int> rowStrides = <int>[];
     final List<int> pixelStrides = <int>[];
@@ -235,7 +244,12 @@ class YuvAbiV1Runner {
       rowStrides.add(planeWidth * sampleBytes);
     }
     return YuvAbiV1DestinationLayout(
-        format: source.format, width: width, height: height, planeRowStrides: rowStrides, planePixelStrides: pixelStrides);
+      format: source.format,
+      width: width,
+      height: height,
+      planeRowStrides: rowStrides,
+      planePixelStrides: pixelStrides,
+    );
   }
 
   static YuvAbiV1FrameResult _run({
@@ -391,8 +405,11 @@ class YuvAbiV1Runner {
   /// Transactional in the same sense as [_allocateConstFrame]: any throw
   /// partway through is caught, everything allocated so far is freed through
   /// [_freeMutableFrame], and the exception is rethrown.
-  static ffi.Pointer<YuvMutableFrameV1> _allocateMutableFrame(NativeAllocator allocator, YuvAbiV1DestinationLayout layout,
-      {YuvAbiV1FrameInput? seedFromSource}) {
+  static ffi.Pointer<YuvMutableFrameV1> _allocateMutableFrame(
+    NativeAllocator allocator,
+    YuvAbiV1DestinationLayout layout, {
+    YuvAbiV1FrameInput? seedFromSource,
+  }) {
     final ffi.Pointer<YuvMutableFrameV1> frame = allocator.allocate<YuvMutableFrameV1>(ffi.sizeOf<YuvMutableFrameV1>());
     final int planeCount = yuvAbiV1PlaneCount(layout.format);
 
@@ -506,8 +523,12 @@ class YuvAbiV1Runner {
     return options;
   }
 
-  static ffi.Pointer<YuvEffectOptionsV1> _allocateEffectOptions(NativeAllocator allocator,
-      {required YuvAbiV1Region? region, required int width, required int height}) {
+  static ffi.Pointer<YuvEffectOptionsV1> _allocateEffectOptions(
+    NativeAllocator allocator, {
+    required YuvAbiV1Region? region,
+    required int width,
+    required int height,
+  }) {
     final ffi.Pointer<YuvEffectOptionsV1> options = allocator.allocate<YuvEffectOptionsV1>(ffi.sizeOf<YuvEffectOptionsV1>());
     options.ref.structSize = ffi.sizeOf<YuvEffectOptionsV1>();
     options.ref.abiVersion = yuvAbiVersion1;
@@ -533,8 +554,13 @@ class YuvAbiV1Runner {
     return options;
   }
 
-  static ffi.Pointer<YuvCropOptionsV1> _allocateCropOptions(NativeAllocator allocator,
-      {required int left, required int top, required int width, required int height}) {
+  static ffi.Pointer<YuvCropOptionsV1> _allocateCropOptions(
+    NativeAllocator allocator, {
+    required int left,
+    required int top,
+    required int width,
+    required int height,
+  }) {
     final ffi.Pointer<YuvCropOptionsV1> options = allocator.allocate<YuvCropOptionsV1>(ffi.sizeOf<YuvCropOptionsV1>());
     options.ref.structSize = ffi.sizeOf<YuvCropOptionsV1>();
     options.ref.abiVersion = yuvAbiVersion1;

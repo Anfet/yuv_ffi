@@ -125,22 +125,10 @@ Map<String, RgbaFrame> _frames(RgbaFrame source, Yuv420Frame i420, Yuv420Frame n
     'gaussian_r3_s2.png': source.gaussianBlur(radius: 3, sigma: 2),
     'box_default.png': source.boxBlur(radius: 10),
     'box_full.png': source.boxBlur(radius: 5),
-    'box_rect.png': source.boxBlur(
-      radius: 5,
-      left: rectLeft,
-      top: rectTop,
-      rectWidth: rectWidth,
-      rectHeight: rectHeight,
-    ),
+    'box_rect.png': source.boxBlur(radius: 5, left: rectLeft, top: rectTop, rectWidth: rectWidth, rectHeight: rectHeight),
     'mean_default.png': source.meanBlur(radius: 2),
     'mean_full.png': source.meanBlur(radius: 5),
-    'mean_rect.png': source.meanBlur(
-      radius: 5,
-      left: rectLeft,
-      top: rectTop,
-      rectWidth: rectWidth,
-      rectHeight: rectHeight,
-    ),
+    'mean_rect.png': source.meanBlur(radius: 5, left: rectLeft, top: rectTop, rectWidth: rectWidth, rectHeight: rectHeight),
   };
 }
 
@@ -231,11 +219,7 @@ Map<String, Object> _manifest(
     },
     'artifacts': <String, Object>{
       for (final entry in artifacts.entries)
-        entry.key: <String, Object>{
-          'path': 'artifacts/${entry.key}',
-          'sha256': sha256Hex(entry.value),
-          'byteLength': entry.value.length,
-        },
+        entry.key: <String, Object>{'path': 'artifacts/${entry.key}', 'sha256': sha256Hex(entry.value), 'byteLength': entry.value.length},
     },
     'formatReference': sourceFormatMetadata,
     'cases': cases,
@@ -260,10 +244,7 @@ Map<String, Object> _manifest(
   };
 }
 
-List<Map<String, Object>> _matrix(
-  RgbaFrame source,
-  Map<String, RgbaFrame> frames,
-) {
+List<Map<String, Object>> _matrix(RgbaFrame source, Map<String, RgbaFrame> frames) {
   final cases = <Map<String, Object>>[];
   void add({
     required String id,
@@ -289,11 +270,7 @@ List<Map<String, Object>> _matrix(
       'id': id,
       'group': group,
       'operation': operation,
-      'input': <String, Object>{
-        'format': inputFormat,
-        'layout': layout,
-        'dimensions': inputDimensions ?? _dimensions(source),
-      },
+      'input': <String, Object>{'format': inputFormat, 'layout': layout, 'dimensions': inputDimensions ?? _dimensions(source)},
       'parameters': parameters,
       'expected': <String, Object>{
         'format': format,
@@ -309,112 +286,121 @@ List<Map<String, Object>> _matrix(
   for (final format in formats) {
     for (final layout in <String>['tight', 'padded']) {
       add(
-          id: 'CONSTRUCT-${format.toUpperCase()}-${layout.toUpperCase()}',
-          group: 'Construction',
-          operation: 'YuvImage.${format == 'bgra8888' ? 'bgra' : format}',
-          inputFormat: format,
-          layout: layout);
+        id: 'CONSTRUCT-${format.toUpperCase()}-${layout.toUpperCase()}',
+        group: 'Construction',
+        operation: 'YuvImage.${format == 'bgra8888' ? 'bgra' : format}',
+        inputFormat: format,
+        layout: layout,
+      );
     }
     add(
-        id: 'INPUT-FROM-RGBA-${format.toUpperCase()}',
-        group: 'Input',
-        operation: 'fromRgba8888',
+      id: 'INPUT-FROM-RGBA-${format.toUpperCase()}',
+      group: 'Input',
+      operation: 'fromRgba8888',
+      inputFormat: format,
+      artifact: format == 'bgra8888' ? 'source_bgra8888.bin' : '${format == 'i420' ? 'i420' : 'nv21_uv'}_decoded.png',
+      rawArtifact: 'original.png',
+      comparison: format == 'bgra8888'
+          ? 'exact'
+          : format == 'i420'
+          ? 'yuvRoundTrip'
+          : 'nv21RoundTrip',
+    );
+    for (final layout in <String>['tight', 'padded']) {
+      add(
+        id: 'OUTPUT-TO-BGRA-${format.toUpperCase()}-${layout.toUpperCase()}',
+        group: 'Output',
+        operation: 'toBgra8888',
         inputFormat: format,
+        layout: layout,
         artifact: format == 'bgra8888' ? 'source_bgra8888.bin' : '${format == 'i420' ? 'i420' : 'nv21_uv'}_decoded.png',
-        rawArtifact: 'original.png',
         comparison: format == 'bgra8888'
             ? 'exact'
             : format == 'i420'
-                ? 'yuvRoundTrip'
-                : 'nv21RoundTrip');
-    for (final layout in <String>['tight', 'padded']) {
-      add(
-          id: 'OUTPUT-TO-BGRA-${format.toUpperCase()}-${layout.toUpperCase()}',
-          group: 'Output',
-          operation: 'toBgra8888',
-          inputFormat: format,
-          layout: layout,
-          artifact: format == 'bgra8888' ? 'source_bgra8888.bin' : '${format == 'i420' ? 'i420' : 'nv21_uv'}_decoded.png',
-          comparison: format == 'bgra8888'
-              ? 'exact'
-              : format == 'i420'
-                  ? 'yuvRoundTrip'
-                  : 'nv21RoundTrip',
-          expectedFormat: 'bgra8888',
-          expectedLayout: 'tight');
+            ? 'yuvRoundTrip'
+            : 'nv21RoundTrip',
+        expectedFormat: 'bgra8888',
+        expectedLayout: 'tight',
+      );
     }
   }
 
   for (final input in <String>['i420', 'nv21']) {
     add(
-        id: 'FORMAT-TO-BGRA-${input.toUpperCase()}',
-        group: 'Format',
-        operation: 'toYuvBgra8888',
-        inputFormat: input,
-        artifact: '${input == 'i420' ? 'i420' : 'nv21_uv'}_decoded.png',
-        comparison: input == 'i420' ? 'yuvRoundTrip' : 'nv21RoundTrip',
-        expectedFormat: 'bgra8888',
-        expectedLayout: 'tight');
+      id: 'FORMAT-TO-BGRA-${input.toUpperCase()}',
+      group: 'Format',
+      operation: 'toYuvBgra8888',
+      inputFormat: input,
+      artifact: '${input == 'i420' ? 'i420' : 'nv21_uv'}_decoded.png',
+      comparison: input == 'i420' ? 'yuvRoundTrip' : 'nv21RoundTrip',
+      expectedFormat: 'bgra8888',
+      expectedLayout: 'tight',
+    );
   }
   for (final layout in <String>['tight', 'padded']) {
     add(
-        id: 'FORMAT-TO-I420-BGRA-${layout.toUpperCase()}',
-        group: 'Format',
-        operation: 'toYuvI420',
-        inputFormat: 'bgra8888',
-        layout: layout,
-        artifact: 'i420_decoded.png',
-        rawArtifact: 'original.png',
-        comparison: 'yuvRoundTrip',
-        expectedFormat: 'i420',
-        expectedLayout: 'tight');
+      id: 'FORMAT-TO-I420-BGRA-${layout.toUpperCase()}',
+      group: 'Format',
+      operation: 'toYuvI420',
+      inputFormat: 'bgra8888',
+      layout: layout,
+      artifact: 'i420_decoded.png',
+      rawArtifact: 'original.png',
+      comparison: 'yuvRoundTrip',
+      expectedFormat: 'i420',
+      expectedLayout: 'tight',
+    );
     add(
-        id: 'FORMAT-TO-I420-NV21-${layout.toUpperCase()}',
-        group: 'Format',
-        operation: 'toYuvI420',
-        inputFormat: 'nv21',
-        layout: layout,
-        artifact: 'i420_decoded.png',
-        comparison: 'exact',
-        expectedFormat: 'i420',
-        expectedLayout: 'tight',
-        rawPlaneReference: _formatReference(source, 'i420', 'tight'));
+      id: 'FORMAT-TO-I420-NV21-${layout.toUpperCase()}',
+      group: 'Format',
+      operation: 'toYuvI420',
+      inputFormat: 'nv21',
+      layout: layout,
+      artifact: 'i420_decoded.png',
+      comparison: 'exact',
+      expectedFormat: 'i420',
+      expectedLayout: 'tight',
+      rawPlaneReference: _formatReference(source, 'i420', 'tight'),
+    );
     add(
-        id: 'FORMAT-TO-NV21-BGRA-${layout.toUpperCase()}',
-        group: 'Format',
-        operation: 'toYuvNv21',
-        inputFormat: 'bgra8888',
-        layout: layout,
-        artifact: 'nv21_uv_decoded.png',
-        rawArtifact: 'original.png',
-        comparison: 'nv21RoundTrip',
-        expectedFormat: 'nv21',
-        expectedLayout: 'tight');
+      id: 'FORMAT-TO-NV21-BGRA-${layout.toUpperCase()}',
+      group: 'Format',
+      operation: 'toYuvNv21',
+      inputFormat: 'bgra8888',
+      layout: layout,
+      artifact: 'nv21_uv_decoded.png',
+      rawArtifact: 'original.png',
+      comparison: 'nv21RoundTrip',
+      expectedFormat: 'nv21',
+      expectedLayout: 'tight',
+    );
     add(
-        id: 'FORMAT-TO-NV21-I420-${layout.toUpperCase()}',
-        group: 'Format',
-        operation: 'toYuvNv21',
-        inputFormat: 'i420',
-        layout: layout,
-        artifact: 'nv21_uv_decoded.png',
-        comparison: 'exact',
-        expectedFormat: 'nv21',
-        expectedLayout: 'tight',
-        rawPlaneReference: _formatReference(source, 'nv21', 'tight'));
+      id: 'FORMAT-TO-NV21-I420-${layout.toUpperCase()}',
+      group: 'Format',
+      operation: 'toYuvNv21',
+      inputFormat: 'i420',
+      layout: layout,
+      artifact: 'nv21_uv_decoded.png',
+      comparison: 'exact',
+      expectedFormat: 'nv21',
+      expectedLayout: 'tight',
+      rawPlaneReference: _formatReference(source, 'nv21', 'tight'),
+    );
   }
 
   for (final input in <String>['nv21', 'i420']) {
     for (final swaps in <int>[1, 2]) {
       add(
-          id: 'CHROMA-SWAP-${input.toUpperCase()}-$swaps',
-          group: 'Chroma',
-          operation: 'swapNv',
-          inputFormat: input,
-          parameters: <String, Object>{'swaps': swaps},
-          artifact: swaps == 1 ? 'swap_nv_once.png' : 'original.png',
-          comparison: 'exact',
-          expectedFormat: 'nv21',
-          rawPlaneReference: _swapNvReference(source, swaps));
+        id: 'CHROMA-SWAP-${input.toUpperCase()}-$swaps',
+        group: 'Chroma',
+        operation: 'swapNv',
+        inputFormat: input,
+        parameters: <String, Object>{'swaps': swaps},
+        artifact: swaps == 1 ? 'swap_nv_once.png' : 'original.png',
+        comparison: 'exact',
+        expectedFormat: 'nv21',
+        rawPlaneReference: _swapNvReference(source, swaps),
+      );
     }
   }
 
@@ -426,35 +412,39 @@ List<Map<String, Object>> _matrix(
   for (final format in formats) {
     for (final cropCase in cropCases) {
       add(
-          id: 'GEOMETRY-CROP-${format.toUpperCase()}-${cropCase.$1.toUpperCase()}',
-          group: 'Geometry',
-          operation: 'crop',
-          inputFormat: format,
-          parameters: cropCase.$2,
-          artifact: cropCase.$3,
-          expectedDimensions: cropCase.$1 == 'inner' ? <String, Object>{'width': 256, 'height': 320} : _dimensions(source));
+        id: 'GEOMETRY-CROP-${format.toUpperCase()}-${cropCase.$1.toUpperCase()}',
+        group: 'Geometry',
+        operation: 'crop',
+        inputFormat: format,
+        parameters: cropCase.$2,
+        artifact: cropCase.$3,
+        expectedDimensions: cropCase.$1 == 'inner' ? <String, Object>{'width': 256, 'height': 320} : _dimensions(source),
+      );
     }
     for (final rotation in <int>[0, 90, 180, 270]) {
       add(
-          id: 'GEOMETRY-ROTATE-${format.toUpperCase()}-$rotation',
-          group: 'Geometry',
-          operation: 'rotate',
-          inputFormat: format,
-          parameters: <String, Object>{'degreesClockwise': rotation},
-          artifact: rotation == 0 ? 'original.png' : 'rotate_$rotation.png');
+        id: 'GEOMETRY-ROTATE-${format.toUpperCase()}-$rotation',
+        group: 'Geometry',
+        operation: 'rotate',
+        inputFormat: format,
+        parameters: <String, Object>{'degreesClockwise': rotation},
+        artifact: rotation == 0 ? 'original.png' : 'rotate_$rotation.png',
+      );
     }
     add(
-        id: 'GEOMETRY-FLIP-H-${format.toUpperCase()}',
-        group: 'Geometry',
-        operation: 'flipHorizontally',
-        inputFormat: format,
-        artifact: 'flip_horizontal.png');
+      id: 'GEOMETRY-FLIP-H-${format.toUpperCase()}',
+      group: 'Geometry',
+      operation: 'flipHorizontally',
+      inputFormat: format,
+      artifact: 'flip_horizontal.png',
+    );
     add(
-        id: 'GEOMETRY-FLIP-V-${format.toUpperCase()}',
-        group: 'Geometry',
-        operation: 'flipVertically',
-        inputFormat: format,
-        artifact: 'flip_vertical.png');
+      id: 'GEOMETRY-FLIP-V-${format.toUpperCase()}',
+      group: 'Geometry',
+      operation: 'flipVertically',
+      inputFormat: format,
+      artifact: 'flip_vertical.png',
+    );
   }
 
   for (final operation in <(String, String, bool)>[
@@ -464,16 +454,17 @@ List<Map<String, Object>> _matrix(
   ]) {
     for (final format in formats) {
       add(
-          id: 'EFFECT-${operation.$1.toUpperCase()}-${format.toUpperCase()}',
-          group: 'Effect',
-          operation: operation.$1,
-          inputFormat: format,
-          artifact: operation.$2,
-          comparison: format == 'bgra8888'
-              ? 'exact'
-              : operation.$3
-                  ? 'effectPlanar'
-                  : 'yuvRoundTrip');
+        id: 'EFFECT-${operation.$1.toUpperCase()}-${format.toUpperCase()}',
+        group: 'Effect',
+        operation: operation.$1,
+        inputFormat: format,
+        artifact: operation.$2,
+        comparison: format == 'bgra8888'
+            ? 'exact'
+            : operation.$3
+            ? 'effectPlanar'
+            : 'yuvRoundTrip',
+      );
     }
   }
 
@@ -487,8 +478,8 @@ List<Map<String, Object>> _matrix(
       'box_rect.png',
       <String, Object>{
         'radius': 5,
-        'rect': <String, int>{'left': 32, 'top': 32, 'width': 256, 'height': 256}
-      }
+        'rect': <String, int>{'left': 32, 'top': 32, 'width': 256, 'height': 256},
+      },
     ),
     ('meanBlur', 'mean_default.png', <String, Object>{'radius': 2}),
     ('meanBlur', 'mean_full.png', <String, Object>{'radius': 5}),
@@ -497,74 +488,75 @@ List<Map<String, Object>> _matrix(
       'mean_rect.png',
       <String, Object>{
         'radius': 5,
-        'rect': <String, int>{'left': 32, 'top': 32, 'width': 256, 'height': 256}
-      }
+        'rect': <String, int>{'left': 32, 'top': 32, 'width': 256, 'height': 256},
+      },
     ),
   ];
   for (final blur in blurCases) {
     for (final format in formats) {
       add(
-          id: 'BLUR-${blur.$1.toUpperCase()}-${format.toUpperCase()}-${blur.$2.replaceAll('.png', '').toUpperCase()}',
-          group: 'Blur',
-          operation: blur.$1,
-          inputFormat: format,
-          parameters: blur.$3,
-          artifact: blur.$2,
-          comparison: format == 'bgra8888' ? 'blur' : 'blurPlanar');
+        id: 'BLUR-${blur.$1.toUpperCase()}-${format.toUpperCase()}-${blur.$2.replaceAll('.png', '').toUpperCase()}',
+        group: 'Blur',
+        operation: blur.$1,
+        inputFormat: format,
+        parameters: blur.$3,
+        artifact: blur.$2,
+        comparison: format == 'bgra8888' ? 'blur' : 'blurPlanar',
+      );
     }
   }
 
   for (final format in formats) {
     for (final blank in <bool>[false, true]) {
       add(
-          id: 'STATE-COPY-${format.toUpperCase()}-${blank ? 'BLANK' : 'NORMAL'}',
-          group: 'State',
-          operation: 'copy',
-          inputFormat: format,
-          parameters: <String, Object>{'blank': blank},
-          artifact: blank
-              ? format == 'bgra8888'
+        id: 'STATE-COPY-${format.toUpperCase()}-${blank ? 'BLANK' : 'NORMAL'}',
+        group: 'State',
+        operation: 'copy',
+        inputFormat: format,
+        parameters: <String, Object>{'blank': blank},
+        artifact: blank
+            ? format == 'bgra8888'
                   ? 'blank_bgra8888.bin'
                   : format == 'i420'
-                      ? 'blank_i420.yuv'
-                      : 'blank_nv21_uv.yuv'
-              : 'original.png',
-          rawPlaneReference: blank ? _blankReference(source, format, 'tight') : null);
+                  ? 'blank_i420.yuv'
+                  : 'blank_nv21_uv.yuv'
+            : 'original.png',
+        rawPlaneReference: blank ? _blankReference(source, format, 'tight') : null,
+      );
     }
     for (final layout in <String>['tight', 'padded']) {
       add(
-          id: 'BYTES-GET-${format.toUpperCase()}-${layout.toUpperCase()}',
-          group: 'Bytes',
-          operation: 'getBytes',
-          inputFormat: format,
-          layout: layout);
+        id: 'BYTES-GET-${format.toUpperCase()}-${layout.toUpperCase()}',
+        group: 'Bytes',
+        operation: 'getBytes',
+        inputFormat: format,
+        layout: layout,
+      );
     }
     for (final stream in <String>['single_chunk', 'fragmented']) {
       add(
-          id: 'IO-SAVE-LOAD-${format.toUpperCase()}-${stream.toUpperCase()}',
-          group: 'I/O',
-          operation: 'save/load',
-          inputFormat: format,
-          parameters: <String, Object>{'stream': stream});
+        id: 'IO-SAVE-LOAD-${format.toUpperCase()}-${stream.toUpperCase()}',
+        group: 'I/O',
+        operation: 'save/load',
+        inputFormat: format,
+        parameters: <String, Object>{'stream': stream},
+      );
     }
     add(
-        id: 'FLUTTER-TO-IMAGE-${format.toUpperCase()}',
-        group: 'Flutter',
-        operation: 'toImage',
-        inputFormat: format,
-        artifact: format == 'bgra8888' ? 'original.png' : '${format == 'i420' ? 'i420' : 'nv21_uv'}_decoded.png',
-        comparison: format == 'bgra8888'
-            ? 'exact'
-            : format == 'i420'
-                ? 'yuvRoundTrip'
-                : 'nv21RoundTrip');
+      id: 'FLUTTER-TO-IMAGE-${format.toUpperCase()}',
+      group: 'Flutter',
+      operation: 'toImage',
+      inputFormat: format,
+      artifact: format == 'bgra8888' ? 'original.png' : '${format == 'i420' ? 'i420' : 'nv21_uv'}_decoded.png',
+      comparison: format == 'bgra8888'
+          ? 'exact'
+          : format == 'i420'
+          ? 'yuvRoundTrip'
+          : 'nv21RoundTrip',
+    );
   }
 
-  for (final oddCase in <(String, int, int)>[
-    ('1X1', 1, 1),
-    ('3X5', 3, 5),
-    ('127X255', 127, 255),
-  ]) {
+  for (final oddCase in <(String, int, int)>[('1X1', 1, 1), ('3X5', 3, 5), ('127X255', 127, 255)]) {
     final artifact = 'crop_${oddCase.$2}x${oddCase.$3}.png';
     final dimensions = <String, Object>{'width': oddCase.$2, 'height': oddCase.$3};
     for (final format in formats) {
@@ -590,11 +582,11 @@ List<Map<String, Object>> _matrix(
 Map<String, Object> _dimensions(RgbaFrame frame) => <String, Object>{'width': frame.width, 'height': frame.height};
 
 Map<String, Object> _formatReference(RgbaFrame frame, String format, String layout) => switch (format) {
-      'bgra8888' => bgraPlaneMetadata(frame.toBgra(), frame.width, frame.height, layout: layout),
-      'i420' => planeMetadata(rgbaToI420(frame), layout: layout),
-      'nv21' => planeMetadata(i420ToNv21Uv(rgbaToI420(frame)), layout: layout),
-      _ => throw ArgumentError.value(format, 'format', 'unsupported reference format'),
-    };
+  'bgra8888' => bgraPlaneMetadata(frame.toBgra(), frame.width, frame.height, layout: layout),
+  'i420' => planeMetadata(rgbaToI420(frame), layout: layout),
+  'nv21' => planeMetadata(i420ToNv21Uv(rgbaToI420(frame)), layout: layout),
+  _ => throw ArgumentError.value(format, 'format', 'unsupported reference format'),
+};
 
 Map<String, Object> _swapNvReference(RgbaFrame source, int swaps) {
   final nv21 = i420ToNv21Uv(rgbaToI420(source));
@@ -612,12 +604,7 @@ Map<String, Object> _swapNvReference(RgbaFrame source, int swaps) {
 Map<String, Object> _blankReference(RgbaFrame source, String format, String layout) {
   final reference = _formatReference(source, format, layout);
   final planes = (reference['planes']! as List<Map<String, Object>>)
-      .map(
-        (plane) => <String, Object>{
-          ...plane,
-          'sha256': sha256Hex(Uint8List(plane['byteLength']! as int)),
-        },
-      )
+      .map((plane) => <String, Object>{...plane, 'sha256': sha256Hex(Uint8List(plane['byteLength']! as int))})
       .toList(growable: false);
   return <String, Object>{...reference, 'planes': planes, 'isZeroFilled': true};
 }

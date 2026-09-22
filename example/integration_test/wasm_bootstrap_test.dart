@@ -25,14 +25,7 @@ void main() {
     // BGRA -> I420, and I420 -> BGRA. A module that only loaded but could not
     // execute a conversion fails this test.
     final image = YuvImage.bgra(2, 2)
-      ..fromRgba8888(
-        Uint8List.fromList(<int>[
-          255, 0, 0, 255,
-          0, 255, 0, 255,
-          0, 0, 255, 255,
-          255, 255, 255, 255,
-        ]),
-      )
+      ..fromRgba8888(Uint8List.fromList(<int>[255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255]))
       ..toYuvI420();
 
     final bytes = image.toBgra8888();

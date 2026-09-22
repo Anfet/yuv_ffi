@@ -19,19 +19,12 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('getBytes returns exactly the concatenated plane bytes for 1x1, 3x3, 127x255 and 512x512', (
-    tester,
-  ) async {
+  testWidgets('getBytes returns exactly the concatenated plane bytes for 1x1, 3x3, 127x255 and 512x512', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     await YuvFfi.ensureInitialized();
 
-    const sizes = <({int w, int h})>[
-      (w: 1, h: 1),
-      (w: 3, h: 3),
-      (w: 127, h: 255),
-      (w: 512, h: 512),
-    ];
+    const sizes = <({int w, int h})>[(w: 1, h: 1), (w: 3, h: 3), (w: 127, h: 255), (w: 512, h: 512)];
 
     for (final size in sizes) {
       for (final image in _imagesForEachFormat(size.w, size.h)) {
@@ -42,16 +35,8 @@ void main() {
 
         final actual = image.getBytes();
 
-        expect(
-          actual,
-          hasLength(expectedLength),
-          reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail',
-        );
-        expect(
-          actual,
-          orderedEquals(expectedBytes),
-          reason: '${image.format.name} ${size.w}x${size.h} must concatenate planes in format order',
-        );
+        expect(actual, hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
+        expect(actual, orderedEquals(expectedBytes), reason: '${image.format.name} ${size.w}x${size.h} must concatenate planes in format order');
       }
     }
   });
@@ -84,9 +69,7 @@ void main() {
     expect(image.getBytes(), hasLength(25));
   });
 
-  testWidgets('getBytes returns an independent copy, decoupled from the plane bytes in both directions', (
-    tester,
-  ) async {
+  testWidgets('getBytes returns an independent copy, decoupled from the plane bytes in both directions', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     await YuvFfi.ensureInitialized();
@@ -119,11 +102,7 @@ void main() {
 
 /// Builds one image per public format, so a contract case covers BGRA, I420
 /// and the legacy `nv21` name without repeating itself.
-List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[
-      YuvImage.bgra(w, h),
-      YuvImage.i420(w, h),
-      YuvImage.nv21(w, h),
-    ];
+List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[YuvImage.bgra(w, h), YuvImage.i420(w, h), YuvImage.nv21(w, h)];
 
 /// Writes a per-plane pattern so a misordered or truncated concatenation
 /// cannot coincidentally match an all-zero buffer.

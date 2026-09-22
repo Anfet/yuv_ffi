@@ -64,11 +64,7 @@ class YuvPlane {
 
     final expectedLength = _height * rowStride;
     if (bytes != null && bytes.length != expectedLength) {
-      throw ArgumentError.value(
-        bytes.length,
-        'bytes.length',
-        'Expected exactly $expectedLength bytes (height $_height * rowStride $rowStride)',
-      );
+      throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected exactly $expectedLength bytes (height $_height * rowStride $rowStride)');
     }
 
     _bytes = Uint8List(expectedLength);
@@ -119,11 +115,7 @@ class YuvPlane {
   /// internal use of this method.
   void assignFrom(Uint8List other) {
     if (other.length != _bytes.length) {
-      throw ArgumentError.value(
-        other.length,
-        'other.length',
-        'Expected exactly ${_bytes.length} bytes to fully overwrite this plane',
-      );
+      throw ArgumentError.value(other.length, 'other.length', 'Expected exactly ${_bytes.length} bytes to fully overwrite this plane');
     }
     _bytes.setAll(0, other);
   }

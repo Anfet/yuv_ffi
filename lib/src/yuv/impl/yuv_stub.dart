@@ -20,16 +20,16 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   // I420 stores U and V as separate single-byte-per-sample planes, so the
   // default pixelStride is 1, unlike NV21's interleaved (U, V) pairs.
   YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
-      : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
+    : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
 
   YuvImageImpl(YuvFileFormat format, int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
-      : _state = YuvImageState(format, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : _state = YuvImageState(format, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   final YuvImageState _state;
 
@@ -77,13 +77,13 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   YuvImage copy({bool blank = false}) => YuvImageImpl(
-        format,
-        width,
-        height,
-        yPixelStride: _state.yPixelStride,
-        uvPixelStride: _state.uvPixelStride,
-        planes: _state.copiedPlanes(blank: blank),
-      );
+    format,
+    width,
+    height,
+    yPixelStride: _state.yPixelStride,
+    uvPixelStride: _state.uvPixelStride,
+    planes: _state.copiedPlanes(blank: blank),
+  );
 
   @override
   Future<void> save(Sink<List<int>> sink) async {

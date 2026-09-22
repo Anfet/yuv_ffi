@@ -192,8 +192,11 @@ void main() {
         expect(content, contains(constantName!), reason: '$_nativeRunnerPath never dispatches $symbol through $constantName');
         expect(content, contains('ffiBingings.$symbol('), reason: '$_nativeRunnerPath never calls the generated binding for $symbol');
       }
-      expect(content, contains("import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';"),
-          reason: '$_nativeRunnerPath must take its symbol names from the shared manifest');
+      expect(
+        content,
+        contains("import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';"),
+        reason: '$_nativeRunnerPath must take its symbol names from the shared manifest',
+      );
     });
 
     test('the Web dispatch resolves its symbols from the shared manifest and is reached from the Web backend', () {
@@ -203,12 +206,18 @@ void main() {
       // reference that layer, so the list is wired into real dispatch rather
       // than sitting unused.
       final dispatch = File(_webDispatchPath).readAsStringSync();
-      expect(dispatch, contains("import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';"),
-          reason: '$_webDispatchPath must take its symbol names from the shared manifest');
+      expect(
+        dispatch,
+        contains("import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';"),
+        reason: '$_webDispatchPath must take its symbol names from the shared manifest',
+      );
       expect(dispatch, contains('yuvAbiV1Symbols'), reason: '$_webDispatchPath must iterate the shared manifest list');
       for (final symbol in _abiV1Symbols) {
-        expect(dispatch, isNot(contains("'$symbol'")),
-            reason: '$_webDispatchPath re-spells $symbol as a literal instead of taking it from the shared manifest');
+        expect(
+          dispatch,
+          isNot(contains("'$symbol'")),
+          reason: '$_webDispatchPath re-spells $symbol as a literal instead of taking it from the shared manifest',
+        );
       }
 
       final backend = File(_webBackendPath).readAsStringSync();

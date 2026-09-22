@@ -54,11 +54,7 @@ void main() {
   });
 
   test('native library required by the backend is available', () {
-    expect(
-      nativeAvailable,
-      isTrue,
-      reason: 'YUV-11 cannot be accepted from a run that skipped every native case',
-    );
+    expect(nativeAvailable, isTrue, reason: 'YUV-11 cannot be accepted from a run that skipped every native case');
   });
 
   for (final entry in _casesFromManifest()) {
@@ -90,8 +86,8 @@ File? _nativeLibraryFile() {
   final String name = Platform.isLinux
       ? 'libyuv_ffi.so'
       : Platform.isMacOS
-          ? 'libyuv_ffi.dylib'
-          : '';
+      ? 'libyuv_ffi.dylib'
+      : '';
   if (name.isEmpty) return null;
 
   final searchPath = Platform.environment[Platform.isMacOS ? 'DYLD_LIBRARY_PATH' : 'LD_LIBRARY_PATH'] ?? '';
@@ -194,17 +190,23 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
       break;
     case 'boxBlur':
       _inPlace(
-          entry,
-          image,
-          () => image.boxBlur(
-              radius: parameters['radius'] as int, rect: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null));
+        entry,
+        image,
+        () => image.boxBlur(
+          radius: parameters['radius'] as int,
+          rect: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
+        ),
+      );
       break;
     case 'meanBlur':
       _inPlace(
-          entry,
-          image,
-          () => image.meanBlur(
-              radius: parameters['radius'] as int, rect: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null));
+        entry,
+        image,
+        () => image.meanBlur(
+          radius: parameters['radius'] as int,
+          rect: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
+        ),
+      );
       break;
     case 'copy':
       final copied = image.copy(blank: parameters['blank'] as bool);
@@ -264,11 +266,7 @@ YuvImage _newImage(YuvFileFormat format, int width, int height, List<YuvPlane> p
   };
 }
 
-List<YuvPlane> _blankLogicalSamples(
-  YuvFileFormat format,
-  int width,
-  List<YuvPlane> planes,
-) {
+List<YuvPlane> _blankLogicalSamples(YuvFileFormat format, int width, List<YuvPlane> planes) {
   final chromaWidth = (width + 1) ~/ 2;
   return List<YuvPlane>.generate(planes.length, (planeIndex) {
     final plane = planes[planeIndex];
@@ -290,26 +288,26 @@ List<YuvPlane> _blankLogicalSamples(
 }
 
 YuvFileFormat _format(String value) => switch (value) {
-      'bgra8888' => YuvFileFormat.bgra8888,
-      'i420' => YuvFileFormat.i420,
-      'nv21' => YuvFileFormat.nv21,
-      _ => throw ArgumentError.value(value, 'format'),
-    };
+  'bgra8888' => YuvFileFormat.bgra8888,
+  'i420' => YuvFileFormat.i420,
+  'nv21' => YuvFileFormat.nv21,
+  _ => throw ArgumentError.value(value, 'format'),
+};
 
 YuvImageRotation _rotation(int degrees) => switch (degrees) {
-      0 => YuvImageRotation.rotation0,
-      90 => YuvImageRotation.rotation90,
-      180 => YuvImageRotation.rotation180,
-      270 => YuvImageRotation.rotation270,
-      _ => throw ArgumentError.value(degrees, 'degrees'),
-    };
+  0 => YuvImageRotation.rotation0,
+  90 => YuvImageRotation.rotation90,
+  180 => YuvImageRotation.rotation180,
+  270 => YuvImageRotation.rotation270,
+  _ => throw ArgumentError.value(degrees, 'degrees'),
+};
 
 ui.Rect _rect(Map<String, dynamic> value) => ui.Rect.fromLTWH(
-      (value['left'] as num).toDouble(),
-      (value['top'] as num).toDouble(),
-      (value['width'] as num).toDouble(),
-      (value['height'] as num).toDouble(),
-    );
+  (value['left'] as num).toDouble(),
+  (value['top'] as num).toDouble(),
+  (value['width'] as num).toDouble(),
+  (value['height'] as num).toDouble(),
+);
 
 RgbaFrame _sourceFrame(RgbaFrame source, Map<String, dynamic> parameters) {
   final crop = parameters['sourceCrop'];
@@ -328,25 +326,51 @@ List<YuvPlane> _planesFor(YuvFileFormat format, RgbaFrame frame, String layout) 
   final chromaHeight = (frame.height + 1) ~/ 2;
   final strides = switch (format) {
     YuvFileFormat.bgra8888 => <int>[
-        switch (layout) { 'padded' => frame.width * 4 + 16, 'customStride' => frame.width * 4 + 7, _ => frame.width * 4 }
-      ],
+      switch (layout) {
+        'padded' => frame.width * 4 + 16,
+        'customStride' => frame.width * 4 + 7,
+        _ => frame.width * 4,
+      },
+    ],
     YuvFileFormat.i420 => <int>[
-        switch (layout) { 'padded' => frame.width + 8, 'customStride' => frame.width + 3, _ => frame.width },
-        switch (layout) { 'padded' => chromaWidth + 4, 'customStride' => chromaWidth + 2, _ => chromaWidth },
-        switch (layout) { 'padded' => chromaWidth + 4, 'customStride' => chromaWidth + 2, _ => chromaWidth },
-      ],
+      switch (layout) {
+        'padded' => frame.width + 8,
+        'customStride' => frame.width + 3,
+        _ => frame.width,
+      },
+      switch (layout) {
+        'padded' => chromaWidth + 4,
+        'customStride' => chromaWidth + 2,
+        _ => chromaWidth,
+      },
+      switch (layout) {
+        'padded' => chromaWidth + 4,
+        'customStride' => chromaWidth + 2,
+        _ => chromaWidth,
+      },
+    ],
     YuvFileFormat.nv21 => <int>[
-        switch (layout) { 'padded' => frame.width + 8, 'customStride' => frame.width + 3, _ => frame.width },
-        switch (layout) { 'padded' => chromaWidth * 2 + 8, 'customStride' => chromaWidth * 2 + 3, _ => chromaWidth * 2 },
-      ],
+      switch (layout) {
+        'padded' => frame.width + 8,
+        'customStride' => frame.width + 3,
+        _ => frame.width,
+      },
+      switch (layout) {
+        'padded' => chromaWidth * 2 + 8,
+        'customStride' => chromaWidth * 2 + 3,
+        _ => chromaWidth * 2,
+      },
+    ],
   };
-  final heights =
-      format == YuvFileFormat.bgra8888 ? <int>[frame.height] : <int>[frame.height, chromaHeight, if (format == YuvFileFormat.i420) chromaHeight];
+  final heights = format == YuvFileFormat.bgra8888
+      ? <int>[frame.height]
+      : <int>[frame.height, chromaHeight, if (format == YuvFileFormat.i420) chromaHeight];
   final useful = format == YuvFileFormat.bgra8888
       ? <int>[frame.width * 4]
       : <int>[frame.width, if (format == YuvFileFormat.nv21) chromaWidth * 2 else chromaWidth, if (format == YuvFileFormat.i420) chromaWidth];
-  final pixelStrides =
-      format == YuvFileFormat.bgra8888 ? <int>[4] : <int>[1, if (format == YuvFileFormat.nv21) 2 else 1, if (format == YuvFileFormat.i420) 1];
+  final pixelStrides = format == YuvFileFormat.bgra8888
+      ? <int>[4]
+      : <int>[1, if (format == YuvFileFormat.nv21) 2 else 1, if (format == YuvFileFormat.i420) 1];
   return List<YuvPlane>.generate(tight.length, (index) => _plane(tight[index], heights[index], strides[index], pixelStrides[index], useful[index]));
 }
 
@@ -479,9 +503,7 @@ Uint8List _concat(Iterable<Uint8List> parts) {
 
 List<List<int>> _fragment(List<List<int>> chunks) {
   final bytes = _concat(chunks.map(Uint8List.fromList));
-  return [
-    for (var start = 0; start < bytes.length; start += 137) bytes.sublist(start, (start + 137).clamp(0, bytes.length)),
-  ];
+  return [for (var start = 0; start < bytes.length; start += 137) bytes.sublist(start, (start + 137).clamp(0, bytes.length))];
 }
 
 class _ListSink implements Sink<List<int>> {

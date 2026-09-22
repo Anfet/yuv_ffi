@@ -58,8 +58,11 @@ class _CameraScreenState extends State<CameraScreen> {
                           children: [
                             Text('Camera error', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
                             SizedBox(height: 12),
-                            SelectableText('$cameraError',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white), textAlign: TextAlign.center),
+                            SelectableText(
+                              '$cameraError',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
                           ],
                         ),
                       );

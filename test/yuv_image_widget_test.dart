@@ -38,14 +38,10 @@ Future<_FakeBgraImage> _loadFakeBgraFromAsset() async {
 /// reports nothing, is covered separately in
 /// `yuv_image_source_compatibility_test.dart`.
 class _FakeBgraImage implements YuvImage, YuvRevisionAware {
-  _FakeBgraImage(
-    this.width,
-    this.height, {
-    required Uint8List bytes,
-    bool shouldThrow = false,
-  })  : _shouldThrow = shouldThrow,
-        _bytes = bytes,
-        _plane = YuvPlane(height, width * 4, 4, bytes);
+  _FakeBgraImage(this.width, this.height, {required Uint8List bytes, bool shouldThrow = false})
+    : _shouldThrow = shouldThrow,
+      _bytes = bytes,
+      _plane = YuvPlane(height, width * 4, 4, bytes);
 
   final bool _shouldThrow;
   final Uint8List _bytes;
@@ -109,12 +105,8 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   Uint8List getBytes() => _bytes;
 
   @override
-  YuvImage copy({bool blank = false}) => _FakeBgraImage(
-        width,
-        height,
-        bytes: blank ? Uint8List(_bytes.length) : Uint8List.fromList(_bytes),
-        shouldThrow: _shouldThrow,
-      );
+  YuvImage copy({bool blank = false}) =>
+      _FakeBgraImage(width, height, bytes: blank ? Uint8List(_bytes.length) : Uint8List.fromList(_bytes), shouldThrow: _shouldThrow);
 
   @override
   Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
@@ -216,9 +208,7 @@ void main() {
   testWidgets('YuvImageWidget applies width/height from YuvImage', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Center(
-          child: YuvImageWidget(image: imageFromAsset),
-        ),
+        home: Center(child: YuvImageWidget(image: imageFromAsset)),
       ),
     );
     await tester.pumpAndSettle();
@@ -229,12 +219,7 @@ void main() {
   });
 
   testWidgets('YuvImageWidget delegates errorBuilder on provider errors', (tester) async {
-    final broken = _FakeBgraImage(
-      imageFromAsset.width,
-      imageFromAsset.height,
-      bytes: imageFromAsset.getBytes(),
-      shouldThrow: true,
-    );
+    final broken = _FakeBgraImage(imageFromAsset.width, imageFromAsset.height, bytes: imageFromAsset.getBytes(), shouldThrow: true);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -320,7 +305,11 @@ void main() {
 
       // Rebuild with a new widget instance: the provider is recreated, but the
       // key is equal, so the decoded frame must be reused.
-      await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image, boxFit: BoxFit.contain)));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: YuvImageWidget(image: image, boxFit: BoxFit.contain),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(image.conversions, afterFirstBuild, reason: 'an unchanged frame must not be converted again');
@@ -334,7 +323,11 @@ void main() {
       final afterFirstBuild = image.conversions;
 
       image.mutateInPlace();
-      await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image, boxFit: BoxFit.contain)));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: YuvImageWidget(image: image, boxFit: BoxFit.contain),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(image.conversions, greaterThan(afterFirstBuild), reason: 'a mutated frame must not be served from the cache');
@@ -342,9 +335,7 @@ void main() {
   });
 
   testWidgets('YuvImageWidget matches golden', (tester) async {
-    await tester.binding.setSurfaceSize(
-      Size(imageFromAsset.width.toDouble(), imageFromAsset.height.toDouble()),
-    );
+    await tester.binding.setSurfaceSize(Size(imageFromAsset.width.toDouble(), imageFromAsset.height.toDouble()));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
@@ -362,9 +353,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await expectLater(
-      find.byKey(_goldenBoundaryKey),
-      matchesGoldenFile(_testAssetGoldenPath),
-    );
+    await expectLater(find.byKey(_goldenBoundaryKey), matchesGoldenFile(_testAssetGoldenPath));
   });
 }

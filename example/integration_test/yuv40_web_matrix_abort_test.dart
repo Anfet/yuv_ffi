@@ -67,17 +67,13 @@ void main() {
       rethrow;
     }
     _marker(
-        'candidate after toYuvNv21 format=${candidate.format.name} planes=${candidate.planes.length} yBytes=${candidate.yPlane.bytes.length} uvBytes=${candidate.uPlane.bytes.length}');
+      'candidate after toYuvNv21 format=${candidate.format.name} planes=${candidate.planes.length} yBytes=${candidate.yPlane.bytes.length} uvBytes=${candidate.uPlane.bytes.length}',
+    );
   }, timeout: const Timeout(Duration(minutes: 2)));
 }
 
-YuvImage _bgra(RgbaFrame source) => YuvImage.bgra(
-      source.width,
-      source.height,
-      planes: <YuvPlane>[
-        YuvPlane(source.height, source.width * 4, 4, source.toBgra()),
-      ],
-    );
+YuvImage _bgra(RgbaFrame source) =>
+    YuvImage.bgra(source.width, source.height, planes: <YuvPlane>[YuvPlane(source.height, source.width * 4, 4, source.toBgra())]);
 
 YuvImage _nv21(RgbaFrame source) {
   final i420 = rgbaToI420(source);

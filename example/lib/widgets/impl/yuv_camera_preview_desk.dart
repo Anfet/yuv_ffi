@@ -3,10 +3,7 @@ part of 'yuv_camera_preview_io.dart';
 class _YuvCameraPreviewDesktop extends StatefulWidget {
   final YuvImage Function(YuvImage image)? transform;
 
-  const _YuvCameraPreviewDesktop({
-    super.key,
-    this.transform,
-  });
+  const _YuvCameraPreviewDesktop({super.key, this.transform});
 
   @override
   State<_YuvCameraPreviewDesktop> createState() => _YuvCameraPreviewDesktopState();

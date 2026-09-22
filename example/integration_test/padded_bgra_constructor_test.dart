@@ -38,10 +38,7 @@ void main() {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
-    expect(
-      () => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]),
-      throwsArgumentError,
-    );
+    expect(() => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
   });
 
   testWidgets('constructing from a plane deep-copies bytes in both directions', (tester) async {

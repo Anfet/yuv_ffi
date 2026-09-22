@@ -97,19 +97,27 @@ class _MyAppState extends State<MyApp> {
                             ),
                             IconButton(onPressed: () => cropImage(), icon: Icon(Icons.crop, size: 32), tooltip: 'crop image'),
                             IconButton(onPressed: () => grayscaleImage(), icon: Icon(CupertinoIcons.color_filter, size: 32), tooltip: 'Grayscale'),
-                            IconButton(
-                              onPressed: () => blackwhiteImage(),
-                              icon: Icon(Icons.filter_b_and_w, size: 32),
-                              tooltip: 'Black&White',
-                            ),
+                            IconButton(onPressed: () => blackwhiteImage(), icon: Icon(Icons.filter_b_and_w, size: 32), tooltip: 'Black&White'),
                             IconButton(onPressed: () => invertImage(), icon: Icon(Icons.invert_colors, size: 32), tooltip: 'Negate'),
                             IconButton(onPressed: () => gaussianBlurImage(), icon: Icon(Icons.blur_on, size: 32), tooltip: 'Gaussian blur'),
                             IconButton(onPressed: () => meanBlurImage(), icon: Icon(Icons.blur_linear, size: 32), tooltip: 'Mean blur'),
                             IconButton(onPressed: () => boxBlurImage(), icon: Icon(Icons.crop_square, size: 32), tooltip: 'Box blur'),
                             IconButton(onPressed: () => doFaceDetection(), icon: Icon(Icons.face_outlined, size: 32), tooltip: 'Face detection'),
-                            IconButton(onPressed: () => toI420(), icon: Text('To i420', style: TextStyle(fontSize: 12)), tooltip: 'To i420'),
-                            IconButton(onPressed: () => toNV21(), icon: Text('To Nv21', style: TextStyle(fontSize: 12)), tooltip: 'To NV21'),
-                            IconButton(onPressed: () => toBGRA(), icon: Text('To BGRA', style: TextStyle(fontSize: 12)), tooltip: 'To BGRA8888'),
+                            IconButton(
+                              onPressed: () => toI420(),
+                              icon: Text('To i420', style: TextStyle(fontSize: 12)),
+                              tooltip: 'To i420',
+                            ),
+                            IconButton(
+                              onPressed: () => toNV21(),
+                              icon: Text('To Nv21', style: TextStyle(fontSize: 12)),
+                              tooltip: 'To NV21',
+                            ),
+                            IconButton(
+                              onPressed: () => toBGRA(),
+                              icon: Text('To BGRA', style: TextStyle(fontSize: 12)),
+                              tooltip: 'To BGRA8888',
+                            ),
                           ],
                         ),
                       ),
@@ -118,10 +126,7 @@ class _MyAppState extends State<MyApp> {
                 ),
                 if (lastOpTiming != null) Positioned(right: 8, top: 8, child: Text('$lastOpTiming msec', style: baseStyle)),
                 if (image != null) Positioned(left: 8, top: 8, child: Text('$image', style: baseStyle)),
-                if (isLoading)
-                  Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                if (isLoading) Center(child: CircularProgressIndicator()),
               ],
             ),
           );
@@ -258,8 +263,9 @@ class _MyAppState extends State<MyApp> {
       options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    final yuvForMlInput =
-        (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? requireImage.copy().toYuvBgra8888() : requireImage.copy().toYuvNv21();
+    final yuvForMlInput = (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
+        ? requireImage.copy().toYuvBgra8888()
+        : requireImage.copy().toYuvNv21();
     final inputImage = yuvForMlInput.toInputImage();
 
     final faces = await detector.processImage(inputImage);

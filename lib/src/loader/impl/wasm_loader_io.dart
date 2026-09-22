@@ -28,11 +28,7 @@ final class YuvWasmLoader {
 
   /// Accepted and ignored, so a shared test can set it on either target.
   static void debugSetInitializer(
-    Future<YuvModule> Function({
-      required String scriptPath,
-      required String wasmPath,
-      required String moduleFactoryName,
-    })? initializer,
+    Future<YuvModule> Function({required String scriptPath, required String wasmPath, required String moduleFactoryName})? initializer,
   ) {}
 
   /// Resets the counter; there is no cached state on a non-web target.
@@ -46,11 +42,7 @@ final class YuvWasmLoader {
   /// Always false: there is no document to inject into here.
   static bool get debugHasInjectedScript => false;
 
-  static Future<YuvModule> ensureInitialized({
-    String scriptPath = '',
-    String wasmPath = '',
-    String moduleFactoryName = '',
-  }) async {
+  static Future<YuvModule> ensureInitialized({String scriptPath = '', String wasmPath = '', String moduleFactoryName = ''}) async {
     throw UnsupportedError(
       'YuvWasmLoader is available only on Web. '
       'Use native FFI backends on mobile/desktop.',

@@ -7,5 +7,5 @@ enum YuvFileFormat {
   i420,
 
   /// Packed BGRA8888 format.
-  bgra8888
+  bgra8888,
 }

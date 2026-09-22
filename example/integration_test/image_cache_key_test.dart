@@ -194,10 +194,7 @@ void main() {
 
       final rejected = YuvImage.i420(2, 2);
       final beforeFailure = rejected.revision;
-      await expectLater(
-        rejected.load(Stream<List<int>>.value(payload.sublist(0, payload.length ~/ 2))),
-        throwsFormatException,
-      );
+      await expectLater(rejected.load(Stream<List<int>>.value(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
       expect(rejected.revision, beforeFailure, reason: 'a rejected payload must not look like a new frame');
     });
   });
@@ -266,7 +263,11 @@ void main() {
         reason: 'an untouched frame must be reachable under an equal key',
       );
 
-      await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image, boxFit: BoxFit.contain)));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: YuvImageWidget(image: image, boxFit: BoxFit.contain),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(
@@ -300,7 +301,11 @@ void main() {
         reason: 'a mutated frame must not be served from the previous entry',
       );
 
-      await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image, boxFit: BoxFit.contain)));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: YuvImageWidget(image: image, boxFit: BoxFit.contain),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(

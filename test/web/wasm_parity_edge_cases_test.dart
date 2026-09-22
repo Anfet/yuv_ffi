@@ -20,11 +20,7 @@ void main() {
   });
 
   test('odd-size conversion parity envelope holds for 1x1, 3x5, 127x255', () {
-    const sizes = <({int w, int h})>[
-      (w: 1, h: 1),
-      (w: 3, h: 5),
-      (w: 127, h: 255),
-    ];
+    const sizes = <({int w, int h})>[(w: 1, h: 1), (w: 3, h: 5), (w: 127, h: 255)];
 
     for (final s in sizes) {
       final rgba = _buildRgbaPattern(s.w, s.h);
@@ -51,11 +47,7 @@ void main() {
     const w = 8;
     const h = 4;
     final bad = Uint8List(w * h * 4 - 1);
-    final images = <YuvImage>[
-      YuvImage.i420(w, h),
-      YuvImage.nv21(w, h),
-      YuvImage.bgra(w, h),
-    ];
+    final images = <YuvImage>[YuvImage.i420(w, h), YuvImage.nv21(w, h), YuvImage.bgra(w, h)];
 
     for (final image in images) {
       expect(() => image.fromRgba8888(bad), throwsArgumentError);
@@ -71,13 +63,7 @@ void main() {
     final uvW = (w / 2).ceil();
     final uvH = (h / 2).ceil();
 
-    final yPadded = _copyPlaneWithPadding(
-      source: baseline.yPlane,
-      logicalWidth: w,
-      logicalHeight: h,
-      dstRowStride: w + 7,
-      dstPixelStride: 1,
-    );
+    final yPadded = _copyPlaneWithPadding(source: baseline.yPlane, logicalWidth: w, logicalHeight: h, dstRowStride: w + 7, dstPixelStride: 1);
     final uPadded = _copyPlaneWithPadding(
       source: baseline.uPlane,
       logicalWidth: uvW,
@@ -104,13 +90,7 @@ void main() {
     final rgba = _buildRgbaPattern(w, h);
     final baseline = YuvImage.nv21(w, h)..fromRgba8888(rgba);
 
-    final yPadded = _copyPlaneWithPadding(
-      source: baseline.yPlane,
-      logicalWidth: w,
-      logicalHeight: h,
-      dstRowStride: w + 11,
-      dstPixelStride: 1,
-    );
+    final yPadded = _copyPlaneWithPadding(source: baseline.yPlane, logicalWidth: w, logicalHeight: h, dstRowStride: w + 11, dstPixelStride: 1);
     final uvPadded = _copyUvInterleavedPlaneWithPadding(
       source: baseline.uPlane,
       logicalRowBytes: baseline.uPlane.rowStride,
@@ -133,15 +113,8 @@ void main() {
     final uvH = (h + 1) ~/ 2;
     final u = Uint8List(uvH * (uvW * 2 + 2))..fillRange(0, uvH * (uvW * 2 + 2), 0xA5);
     final v = Uint8List.fromList(u);
-    final image = YuvImage.i420(
-      w,
-      h,
-      planes: [
-        YuvPlane(h, w * 2 + 3, 2, y),
-        YuvPlane(uvH, uvW * 2 + 2, 2, u),
-        YuvPlane(uvH, uvW * 2 + 2, 2, v),
-      ],
-    )..fromRgba8888(rgba);
+    final image = YuvImage.i420(w, h, planes: [YuvPlane(h, w * 2 + 3, 2, y), YuvPlane(uvH, uvW * 2 + 2, 2, u), YuvPlane(uvH, uvW * 2 + 2, 2, v)])
+      ..fromRgba8888(rgba);
 
     _expectPadding(image.yPlane, logicalWidth: w, sampleBytes: 1);
     _expectPadding(image.uPlane, logicalWidth: uvW, sampleBytes: 1);
@@ -162,11 +135,7 @@ void main() {
         uv[offset + 1] = 180 + row;
       }
     }
-    final image = YuvImage.nv21(
-      w,
-      h,
-      planes: [YuvPlane(h, yStride, 1, y), YuvPlane((h + 1) ~/ 2, uvStride, 2, uv)],
-    )..swapNv();
+    final image = YuvImage.nv21(w, h, planes: [YuvPlane(h, yStride, 1, y), YuvPlane((h + 1) ~/ 2, uvStride, 2, uv)])..swapNv();
 
     expect(image.yPlane.rowStride, yStride);
     expect(image.uPlane.rowStride, uvStride);
@@ -266,31 +235,19 @@ void main() {
 
     test('an invalid padded layout throws ArgumentError, not a RangeError', () {
       expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
-      expect(
-        () => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]),
-        throwsArgumentError,
-      );
+      expect(() => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
     });
   });
 
   group('getBytes contract', () {
-    const sizes = <({int w, int h})>[
-      (w: 1, h: 1),
-      (w: 3, h: 3),
-      (w: 127, h: 255),
-      (w: 512, h: 512),
-    ];
+    const sizes = <({int w, int h})>[(w: 1, h: 1), (w: 3, h: 3), (w: 127, h: 255), (w: 512, h: 512)];
 
     for (final size in sizes) {
       test('returns exactly the summed plane length for ${size.w}x${size.h}', () {
         for (final image in _imagesForEachFormat(size.w, size.h)) {
           final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 
-          expect(
-            image.getBytes(),
-            hasLength(expectedLength),
-            reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail',
-          );
+          expect(image.getBytes(), hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
         }
       });
 
@@ -365,12 +322,7 @@ double _mae(Uint8List a, Uint8List b) {
   return sum / a.length;
 }
 
-void _expectPadding(
-  YuvPlane plane, {
-  required int logicalWidth,
-  required int sampleBytes,
-  int expected = 0xA5,
-}) {
+void _expectPadding(YuvPlane plane, {required int logicalWidth, required int sampleBytes, int expected = 0xA5}) {
   for (int row = 0; row < plane.height; row++) {
     final logicalOffsets = <int>{};
     for (int column = 0; column < logicalWidth; column++) {
@@ -425,11 +377,7 @@ YuvPlane _copyUvInterleavedPlaneWithPadding({
 ///
 /// The legacy `nv21` name keeps its current NV12-like UV byte order; these
 /// cases only concatenate planes and never reinterpret chroma.
-List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[
-      YuvImage.bgra(w, h),
-      YuvImage.i420(w, h),
-      YuvImage.nv21(w, h),
-    ];
+List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[YuvImage.bgra(w, h), YuvImage.i420(w, h), YuvImage.nv21(w, h)];
 
 /// Writes a per-plane pattern so a misordered or truncated concatenation cannot
 /// coincidentally match an all-zero buffer.
@@ -452,14 +400,7 @@ Uint8List _concatPlanesDirectly(YuvImage image) {
   return Uint8List.fromList(out);
 }
 
-Uint8List _cropBgra(
-  Uint8List src,
-  int srcWidth,
-  int left,
-  int top,
-  int cropWidth,
-  int cropHeight,
-) {
+Uint8List _cropBgra(Uint8List src, int srcWidth, int left, int top, int cropWidth, int cropHeight) {
   final out = Uint8List(cropWidth * cropHeight * 4);
   for (int y = 0; y < cropHeight; y++) {
     for (int x = 0; x < cropWidth; x++) {

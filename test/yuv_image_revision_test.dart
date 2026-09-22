@@ -88,92 +88,96 @@ void main() {
       });
     });
 
-    group('native mutating operations advance the revision exactly once', () {
-      Uint8List rgba(int w, int h) => Uint8List(w * h * 4);
+    group(
+      'native mutating operations advance the revision exactly once',
+      () {
+        Uint8List rgba(int w, int h) => Uint8List(w * h * 4);
 
-      test('in-place effects', () {
-        for (final operation in <String>['grayscale', 'negate', 'blackwhite', 'flipHorizontally', 'flipVertically']) {
+        test('in-place effects', () {
+          for (final operation in <String>['grayscale', 'negate', 'blackwhite', 'flipHorizontally', 'flipVertically']) {
+            final image = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
+            final before = image.revision;
+
+            switch (operation) {
+              case 'grayscale':
+                image.grayscale();
+              case 'negate':
+                image.negate();
+              case 'blackwhite':
+                image.blackwhite();
+              case 'flipHorizontally':
+                image.flipHorizontally();
+              case 'flipVertically':
+                image.flipVertically();
+            }
+
+            expect(image.revision, before + 1, reason: '$operation must advance the revision exactly once');
+          }
+        });
+
+        test('fromRgba8888', () {
+          final image = YuvImage.i420(8, 8);
+          final before = image.revision;
+
+          image.fromRgba8888(rgba(8, 8));
+
+          expect(image.revision, before + 1);
+        });
+
+        test('fromRgba8888 into a padded BGRA plane', () {
+          // This path writes planes directly and returns early, so it has to bump
+          // the revision on its own.
+          final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(2 * 16))]);
+          final before = image.revision;
+
+          image.fromRgba8888(rgba(2, 2));
+
+          expect(image.revision, before + 1);
+        });
+
+        test('a real crop', () {
+          final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
+          final before = image.revision;
+
+          image.crop(const ui.Rect.fromLTWH(0, 0, 4, 4));
+
+          expect(image.revision, before + 1);
+        });
+
+        test('a real rotate', () {
+          final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
+          final before = image.revision;
+
+          image.rotate(YuvImageRotation.rotation90);
+
+          expect(image.revision, before + 1);
+        });
+
+        test('a format conversion', () {
           final image = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
           final before = image.revision;
 
-          switch (operation) {
-            case 'grayscale':
-              image.grayscale();
-            case 'negate':
-              image.negate();
-            case 'blackwhite':
-              image.blackwhite();
-            case 'flipHorizontally':
-              image.flipHorizontally();
-            case 'flipVertically':
-              image.flipVertically();
-          }
+          image.toYuvNv21();
 
-          expect(image.revision, before + 1, reason: '$operation must advance the revision exactly once');
-        }
-      });
+          expect(image.revision, before + 1);
+        });
 
-      test('fromRgba8888', () {
-        final image = YuvImage.i420(8, 8);
-        final before = image.revision;
+        test('swapNv advances exactly once even when it converts first', () {
+          // swapNv() calls toYuvNv21() internally, which bumps on its own. One
+          // public call must still count as one revision.
+          final alreadyNv = YuvImage.nv21(8, 8)..fromRgba8888(rgba(8, 8));
+          final alreadyNvBefore = alreadyNv.revision;
+          alreadyNv.swapNv();
+          expect(alreadyNv.revision, alreadyNvBefore + 1, reason: 'no conversion needed');
 
-        image.fromRgba8888(rgba(8, 8));
-
-        expect(image.revision, before + 1);
-      });
-
-      test('fromRgba8888 into a padded BGRA plane', () {
-        // This path writes planes directly and returns early, so it has to bump
-        // the revision on its own.
-        final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(2 * 16))]);
-        final before = image.revision;
-
-        image.fromRgba8888(rgba(2, 2));
-
-        expect(image.revision, before + 1);
-      });
-
-      test('a real crop', () {
-        final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
-        final before = image.revision;
-
-        image.crop(const ui.Rect.fromLTWH(0, 0, 4, 4));
-
-        expect(image.revision, before + 1);
-      });
-
-      test('a real rotate', () {
-        final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
-        final before = image.revision;
-
-        image.rotate(YuvImageRotation.rotation90);
-
-        expect(image.revision, before + 1);
-      });
-
-      test('a format conversion', () {
-        final image = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
-        final before = image.revision;
-
-        image.toYuvNv21();
-
-        expect(image.revision, before + 1);
-      });
-
-      test('swapNv advances exactly once even when it converts first', () {
-        // swapNv() calls toYuvNv21() internally, which bumps on its own. One
-        // public call must still count as one revision.
-        final alreadyNv = YuvImage.nv21(8, 8)..fromRgba8888(rgba(8, 8));
-        final alreadyNvBefore = alreadyNv.revision;
-        alreadyNv.swapNv();
-        expect(alreadyNv.revision, alreadyNvBefore + 1, reason: 'no conversion needed');
-
-        final needsConversion = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
-        final needsConversionBefore = needsConversion.revision;
-        needsConversion.swapNv();
-        expect(needsConversion.revision, needsConversionBefore + 1, reason: 'an internal conversion must not double-count');
-      });
-    }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
+          final needsConversion = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
+          final needsConversionBefore = needsConversion.revision;
+          needsConversion.swapNv();
+          expect(needsConversion.revision, needsConversionBefore + 1, reason: 'an internal conversion must not double-count');
+        });
+      },
+      skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
+    );
   });
 }
 

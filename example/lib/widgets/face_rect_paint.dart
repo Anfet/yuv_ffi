@@ -8,12 +8,7 @@ class FaceRectPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
 
-  FaceRectPainter({
-    required this.image,
-    required this.rect,
-    this.color = Colors.green,
-    this.strokeWidth = 2,
-  });
+  FaceRectPainter({required this.image, required this.rect, this.color = Colors.green, this.strokeWidth = 2});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -58,12 +53,7 @@ class FaceRectPainter extends CustomPainter {
     Rect r = imageRect;
     if (swapped) {
       // Повернём bbox в «прямые» координаты (origin в лев.верх)
-      r = Rect.fromLTWH(
-        imageRect.top,
-        imgW - (imageRect.left + imageRect.width),
-        imageRect.height,
-        imageRect.width,
-      );
+      r = Rect.fromLTWH(imageRect.top, imgW - (imageRect.left + imageRect.width), imageRect.height, imageRect.width);
     }
 
     // 2) Масштаб «как у CameraPreview (cover)» + центрирование
@@ -72,21 +62,11 @@ class FaceRectPainter extends CustomPainter {
     final dx = (widgetSize.width - imgW * scale) / 2.0;
     final dy = (widgetSize.height - imgH * scale) / 2.0;
 
-    Rect out = Rect.fromLTWH(
-      dx + r.left * scale,
-      dy + r.top * scale,
-      r.width * scale,
-      r.height * scale,
-    );
+    Rect out = Rect.fromLTWH(dx + r.left * scale, dy + r.top * scale, r.width * scale, r.height * scale);
 
     // 3) Зеркалка для фронталки, чтобы совпасть с превью
     if (mirrorHorizontally) {
-      out = Rect.fromLTWH(
-        widgetSize.width - out.right,
-        out.top,
-        out.width,
-        out.height,
-      );
+      out = Rect.fromLTWH(widgetSize.width - out.right, out.top, out.width, out.height);
     }
     return out;
   }

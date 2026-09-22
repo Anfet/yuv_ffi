@@ -29,16 +29,7 @@ void main() {
       u[i] = (i * 11) & 0xFF;
       v[i] = (i * 13) & 0xFF;
     }
-    return YuvImage(
-      YuvFileFormat.i420,
-      width,
-      height,
-      planes: [
-        YuvPlane(height, width, 1, y),
-        YuvPlane(uvH, uvW, 1, u),
-        YuvPlane(uvH, uvW, 1, v),
-      ],
-    );
+    return YuvImage(YuvFileFormat.i420, width, height, planes: [YuvPlane(height, width, 1, y), YuvPlane(uvH, uvW, 1, u), YuvPlane(uvH, uvW, 1, v)]);
   }
 
   /// Same content as [patternI420], but every plane carries a padded row
@@ -68,11 +59,7 @@ void main() {
       YuvFileFormat.i420,
       width,
       height,
-      planes: [
-        YuvPlane(height, yRowStride, 2, y),
-        YuvPlane(uvH, uvRowStride, 2, u),
-        YuvPlane(uvH, uvRowStride, 2, v),
-      ],
+      planes: [YuvPlane(height, yRowStride, 2, y), YuvPlane(uvH, uvRowStride, 2, u), YuvPlane(uvH, uvRowStride, 2, v)],
     );
   }
 
@@ -86,15 +73,7 @@ void main() {
     for (int i = 0; i < uv.length; i++) {
       uv[i] = (i * 11) & 0xFF;
     }
-    return YuvImage(
-      YuvFileFormat.nv21,
-      width,
-      height,
-      planes: [
-        YuvPlane(height, width, 1, y),
-        YuvPlane(uvH, uvW * 2, 2, uv),
-      ],
-    );
+    return YuvImage(YuvFileFormat.nv21, width, height, planes: [YuvPlane(height, width, 1, y), YuvPlane(uvH, uvW * 2, 2, uv)]);
   }
 
   /// Same content as [patternNv21], but with an additional row-stride pad on
@@ -116,15 +95,7 @@ void main() {
         uv[row * uvRowStride + col] = ((row * uvW * 2 + col) * 11) & 0xFF;
       }
     }
-    return YuvImage(
-      YuvFileFormat.nv21,
-      width,
-      height,
-      planes: [
-        YuvPlane(height, yRowStride, 1, y),
-        YuvPlane(uvH, uvRowStride, 2, uv),
-      ],
-    );
+    return YuvImage(YuvFileFormat.nv21, width, height, planes: [YuvPlane(height, yRowStride, 1, y), YuvPlane(uvH, uvRowStride, 2, uv)]);
   }
 
   group('I420', () {
@@ -225,11 +196,7 @@ void main() {
       final uvW = (width + 1) ~/ 2, uvH = (height + 1) ~/ 2;
       for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
-          expect(
-            padded.yPlane.bytes[row * width * 2 + col * 2],
-            tight.yPlane.bytes[row * width + col],
-            reason: 'Y sample ($col, $row)',
-          );
+          expect(padded.yPlane.bytes[row * width * 2 + col * 2], tight.yPlane.bytes[row * width + col], reason: 'Y sample ($col, $row)');
           expect(padded.yPlane.bytes[row * width * 2 + col * 2 + 1], 0xEE, reason: 'Y gap byte ($col, $row) must stay untouched');
         }
       }

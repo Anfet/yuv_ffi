@@ -69,17 +69,11 @@ void main() {
 
   group('plane geometry', () {
     test('rejects a luma plane with the wrong height', () {
-      expect(
-        () => YuvImage.i420(8, 8, planes: [plane(4, 8), plane(4, 4), plane(4, 4)]),
-        throwsArgumentError,
-      );
+      expect(() => YuvImage.i420(8, 8, planes: [plane(4, 8), plane(4, 4), plane(4, 4)]), throwsArgumentError);
     });
 
     test('rejects chroma planes with the wrong height', () {
-      expect(
-        () => YuvImage.i420(8, 8, planes: [plane(8, 8), plane(8, 4), plane(4, 4)]),
-        throwsArgumentError,
-      );
+      expect(() => YuvImage.i420(8, 8, planes: [plane(8, 8), plane(8, 4), plane(4, 4)]), throwsArgumentError);
     });
 
     test('rejects a row stride too small for the declared width', () {
@@ -91,18 +85,12 @@ void main() {
     });
 
     test('rejects a zero pixel stride', () {
-      expect(
-        () => YuvImage.i420(8, 8, planes: [YuvPlane(8, 8, 0, Uint8List(64)), plane(4, 4), plane(4, 4)]),
-        throwsArgumentError,
-      );
+      expect(() => YuvImage.i420(8, 8, planes: [YuvPlane(8, 8, 0, Uint8List(64)), plane(4, 4), plane(4, 4)]), throwsArgumentError);
     });
 
     test('rejects an NV chroma plane that cannot hold the final UV pair', () {
       // Interleaved chroma needs (uvWidth - 1) * pixelStride + 2 bytes per row.
-      expect(
-        () => YuvImage.nv21(8, 8, planes: [plane(8, 8), YuvPlane(4, 7, 2, Uint8List(28))]),
-        throwsArgumentError,
-      );
+      expect(() => YuvImage.nv21(8, 8, planes: [plane(8, 8), YuvPlane(4, 7, 2, Uint8List(28))]), throwsArgumentError);
     });
   });
 
@@ -129,17 +117,11 @@ void main() {
       const width = 8;
       const height = 8;
       const paddedRowStride = width * 4 + 16;
-      expect(
-        () => YuvImage(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: [plane(height, paddedRowStride, 4)]),
-        returnsNormally,
-      );
+      expect(() => YuvImage(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: [plane(height, paddedRowStride, 4)]), returnsNormally);
     });
 
     test('accepts padded luma and chroma strides for I420', () {
-      expect(
-        () => YuvImage.i420(8, 8, planes: [plane(8, 16), plane(4, 8), plane(4, 8)]),
-        returnsNormally,
-      );
+      expect(() => YuvImage.i420(8, 8, planes: [plane(8, 16), plane(4, 8), plane(4, 8)]), returnsNormally);
     });
 
     test('accepts odd dimensions using ceil-sized chroma planes', () {

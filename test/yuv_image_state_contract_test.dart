@@ -83,10 +83,7 @@ void main() {
     });
 
     test('a caller-supplied plane list of the wrong length is rejected', () {
-      expect(
-        () => YuvImage.i420(4, 4, planes: [YuvPlane(4, 4)]),
-        throwsArgumentError,
-      );
+      expect(() => YuvImage.i420(4, 4, planes: [YuvPlane(4, 4)]), throwsArgumentError);
     });
   });
 

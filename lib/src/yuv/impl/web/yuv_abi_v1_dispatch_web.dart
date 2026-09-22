@@ -39,9 +39,9 @@ abstract final class YuvAbiV1WebDispatch {
   /// A non-empty one names exactly what is missing, which is the difference
   /// between a diagnosable partial build and an opaque `ccall` failure.
   static List<String> missingFrom(Object rawModule) => [
-        for (final symbol in yuvAbiV1Symbols)
-          if (!moduleExports(rawModule, symbol)) symbol,
-      ];
+    for (final symbol in yuvAbiV1Symbols)
+      if (!moduleExports(rawModule, symbol)) symbol,
+  ];
 
   /// Throws [StateError] naming every ABI v1 symbol [rawModule] is missing.
   ///

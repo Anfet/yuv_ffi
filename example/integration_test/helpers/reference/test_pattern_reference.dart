@@ -60,12 +60,7 @@ class RgbaFrame {
     return RgbaFrame(outputWidth, outputHeight, result);
   }
 
-  RgbaFrame crop(int left, int top, int cropWidth, int cropHeight) => transformPixels(
-        (x, _) => left + x,
-        (_, y) => top + y,
-        cropWidth,
-        cropHeight,
-      );
+  RgbaFrame crop(int left, int top, int cropWidth, int cropHeight) => transformPixels((x, _) => left + x, (_, y) => top + y, cropWidth, cropHeight);
 
   RgbaFrame flipHorizontally() => transformPixels((x, _) => width - 1 - x, (_, y) => y, width, height);
 
@@ -78,15 +73,15 @@ class RgbaFrame {
   RgbaFrame rotate270() => transformPixels((_, y) => width - 1 - y, (x, _) => x, height, width);
 
   RgbaFrame grayscale() => _mapRgb((red, green, blue) {
-        final gray = ((299 * red + 587 * green + 114 * blue + 500) ~/ 1000).clamp(0, 255);
-        return (gray, gray, gray);
-      });
+    final gray = ((299 * red + 587 * green + 114 * blue + 500) ~/ 1000).clamp(0, 255);
+    return (gray, gray, gray);
+  });
 
   RgbaFrame blackwhite() => _mapRgb((red, green, blue) {
-        final gray = ((299 * red + 587 * green + 114 * blue + 500) ~/ 1000).clamp(0, 255);
-        final value = gray >= 128 ? 255 : 0;
-        return (value, value, value);
-      });
+    final gray = ((299 * red + 587 * green + 114 * blue + 500) ~/ 1000).clamp(0, 255);
+    final value = gray >= 128 ? 255 : 0;
+    return (value, value, value);
+  });
 
   RgbaFrame negate() => _mapRgb((red, green, blue) => (255 - red, 255 - green, 255 - blue));
 
@@ -98,23 +93,11 @@ class RgbaFrame {
   RgbaFrame boxBlur({required int radius, int? left, int? top, int? rectWidth, int? rectHeight}) {
     final size = radius * 2 + 1;
     final weight = 1 / (size * size);
-    return _convolve(
-      List<double>.filled(size * size, weight),
-      radius,
-      left: left,
-      top: top,
-      rectWidth: rectWidth,
-      rectHeight: rectHeight,
-    );
+    return _convolve(List<double>.filled(size * size, weight), radius, left: left, top: top, rectWidth: rectWidth, rectHeight: rectHeight);
   }
 
-  RgbaFrame meanBlur({required int radius, int? left, int? top, int? rectWidth, int? rectHeight}) => boxBlur(
-        radius: radius,
-        left: left,
-        top: top,
-        rectWidth: rectWidth,
-        rectHeight: rectHeight,
-      );
+  RgbaFrame meanBlur({required int radius, int? left, int? top, int? rectWidth, int? rectHeight}) =>
+      boxBlur(radius: radius, left: left, top: top, rectWidth: rectWidth, rectHeight: rectHeight);
 
   RgbaFrame _mapRgb((int, int, int) Function(int red, int green, int blue) map) {
     final result = Uint8List.fromList(bytes);
@@ -163,10 +146,7 @@ class RgbaFrame {
 class Yuv420Frame {
   Yuv420Frame.i420(this.width, this.height, this.y, this.u, this.v) : uv = null;
 
-  Yuv420Frame.nv21Uv(this.width, this.height, this.y, Uint8List interleavedUv)
-      : u = null,
-        v = null,
-        uv = interleavedUv;
+  Yuv420Frame.nv21Uv(this.width, this.height, this.y, Uint8List interleavedUv) : u = null, v = null, uv = interleavedUv;
 
   final int width;
   final int height;
@@ -193,9 +173,9 @@ class Yuv420Frame {
         final d = chromaU - 128;
         final e = chromaV - 128;
         final destination = (row * width + column) * 4;
-        output[destination] = _clip((298 * c + 409 * e + 128) >> 8);
-        output[destination + 1] = _clip((298 * c - 100 * d - 208 * e + 128) >> 8);
-        output[destination + 2] = _clip((298 * c + 516 * d + 128) >> 8);
+        output[destination] = _clip(_shr8(298 * c + 409 * e + 128));
+        output[destination + 1] = _clip(_shr8(298 * c - 100 * d - 208 * e + 128));
+        output[destination + 2] = _clip(_shr8(298 * c + 516 * d + 128));
         output[destination + 3] = 255;
       }
     }
@@ -270,9 +250,7 @@ Map<String, Object> planeMetadata(Yuv420Frame frame, {required String layout}) {
   };
   final result = <String, Object>{
     'layout': layout,
-    'planes': <Map<String, Object>>[
-      _planeMap(frame.y, frame.height, yStride, 1, frame.width),
-    ],
+    'planes': <Map<String, Object>>[_planeMap(frame.y, frame.height, yStride, 1, frame.width)],
   };
   final planes = result['planes']! as List<Map<String, Object>>;
   if (frame.isI420) {
@@ -291,21 +269,21 @@ Map<String, Object> planeMetadata(Yuv420Frame frame, {required String layout}) {
 }
 
 Map<String, Object> bgraPlaneMetadata(Uint8List tightBgra, int width, int height, {required String layout}) => <String, Object>{
-      'layout': layout,
-      'planes': <Map<String, Object>>[
-        _planeMap(
-          tightBgra,
-          height,
-          switch (layout) {
-            'padded' => width * 4 + 16,
-            'customStride' => width * 4 + 7,
-            _ => width * 4,
-          },
-          4,
-          width * 4,
-        ),
-      ],
-    };
+  'layout': layout,
+  'planes': <Map<String, Object>>[
+    _planeMap(
+      tightBgra,
+      height,
+      switch (layout) {
+        'padded' => width * 4 + 16,
+        'customStride' => width * 4 + 7,
+        _ => width * 4,
+      },
+      4,
+      width * 4,
+    ),
+  ],
+};
 
 Map<String, Object> _planeMap(Uint8List tight, int height, int rowStride, int pixelStride, int usefulRowBytes) {
   final bytes = Uint8List(height * rowStride);
@@ -369,7 +347,16 @@ List<double> _gaussianKernel(int radius, int sigma) {
   return result.map((value) => value / total).toList(growable: false);
 }
 
-int _luma(int red, int green, int blue) => _clip(((66 * red + 129 * green + 25 * blue + 128) >> 8) + 16);
-int _chromaU(int red, int green, int blue) => _clip(((-38 * red - 74 * green + 112 * blue + 128) >> 8) + 128);
-int _chromaV(int red, int green, int blue) => _clip(((112 * red - 94 * green - 18 * blue + 128) >> 8) + 128);
+int _luma(int red, int green, int blue) => _clip(_shr8(66 * red + 129 * green + 25 * blue + 128) + 16);
+int _chromaU(int red, int green, int blue) => _clip(_shr8(-38 * red - 74 * green + 112 * blue + 128) + 128);
+int _chromaV(int red, int green, int blue) => _clip(_shr8(112 * red - 94 * green - 18 * blue + 128) + 128);
 int _clip(int value) => value.clamp(0, 255);
+
+/// Arithmetic (sign-extending) right shift by 8 bits, platform-independent.
+///
+/// Dart's `>>` operator is a true signed arithmetic shift on the VM but
+/// reinterprets negative operands as unsigned 32-bit values under dart2js/DDC
+/// (JS numbers), so `-1 >> 8` is `-1` on the VM and `4294967295` on Web. This
+/// negates negative inputs before shifting so the shifted operand is always
+/// non-negative on both platforms, then re-negates the (floor-divided) result.
+int _shr8(int value) => value >= 0 ? value >> 8 : -(((-value - 1) >> 8) + 1);

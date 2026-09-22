@@ -13,10 +13,10 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 abstract final class YuvGeometry {
   /// Number of planes required by [format].
   static int planeCountFor(YuvFileFormat format) => switch (format) {
-        YuvFileFormat.bgra8888 => 1,
-        YuvFileFormat.nv21 => 2,
-        YuvFileFormat.i420 => 3,
-      };
+    YuvFileFormat.bgra8888 => 1,
+    YuvFileFormat.nv21 => 2,
+    YuvFileFormat.i420 => 3,
+  };
 
   /// Bytes per sample in the luma/packed plane of [format].
   static int _lumaSampleBytes(YuvFileFormat format) => format == YuvFileFormat.bgra8888 ? 4 : 1;
@@ -55,30 +55,15 @@ abstract final class YuvGeometry {
   /// for NV, and `[Y, U, V]` for I420.
   ///
   /// Throws [ArgumentError] when the geometry is inconsistent.
-  static void validateImage({
-    required YuvFileFormat format,
-    required int width,
-    required int height,
-    required List<YuvPlane> planes,
-  }) {
+  static void validateImage({required YuvFileFormat format, required int width, required int height, required List<YuvPlane> planes}) {
     validateDimensions(width, height);
 
     final expectedPlanes = planeCountFor(format);
     if (planes.length != expectedPlanes) {
-      throw ArgumentError.value(
-        planes.length,
-        'planes.length',
-        'Format ${format.name} requires exactly $expectedPlanes plane(s)',
-      );
+      throw ArgumentError.value(planes.length, 'planes.length', 'Format ${format.name} requires exactly $expectedPlanes plane(s)');
     }
 
-    validatePlane(
-      plane: planes[0],
-      label: 'yPlane',
-      expectedHeight: height,
-      expectedWidth: width,
-      sampleBytes: _lumaSampleBytes(format),
-    );
+    validatePlane(plane: planes[0], label: 'yPlane', expectedHeight: height, expectedWidth: width, sampleBytes: _lumaSampleBytes(format));
 
     if (format == YuvFileFormat.bgra8888) {
       return;
@@ -101,13 +86,7 @@ abstract final class YuvGeometry {
           'Interleaved NV chroma requires a pixel stride of exactly $nvChromaPixelStride',
         );
       }
-      validatePlane(
-        plane: planes[1],
-        label: 'uvPlane',
-        expectedHeight: uvHeight,
-        expectedWidth: uvWidth,
-        sampleBytes: nvChromaPixelStride,
-      );
+      validatePlane(plane: planes[1], label: 'uvPlane', expectedHeight: uvHeight, expectedWidth: uvWidth, sampleBytes: nvChromaPixelStride);
       return;
     }
 
@@ -179,11 +158,7 @@ abstract final class YuvGeometry {
       throw ArgumentError.value(plane.rowStride, '$label.rowStride', 'Row stride must be greater than zero');
     }
     if (plane.height != expectedHeight) {
-      throw ArgumentError.value(
-        plane.height,
-        '$label.height',
-        'Expected $expectedHeight rows for this image geometry',
-      );
+      throw ArgumentError.value(plane.height, '$label.height', 'Expected $expectedHeight rows for this image geometry');
     }
 
     // Last sample starts at (expectedWidth - 1) * pixelStride and occupies
@@ -225,11 +200,7 @@ abstract final class YuvGeometry {
   /// [ArgumentError] for a negative radius or one above [maxBlurRadius].
   static void validateBlurRadius(int radius) {
     if (radius < 0 || radius > maxBlurRadius) {
-      throw ArgumentError.value(
-        radius,
-        'radius',
-        'Radius must be 0 (no-op) or between 1 and $maxBlurRadius',
-      );
+      throw ArgumentError.value(radius, 'radius', 'Radius must be 0 (no-op) or between 1 and $maxBlurRadius');
     }
   }
 }
