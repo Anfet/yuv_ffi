@@ -31,15 +31,8 @@ exclude-all-by-default: true
 
 functions:
   include:
-    - 'bgra8888_.*'
-    - 'nv21_.*'
-    - 'yuv420_.*'
-    - 'nvXX_to_nvYY'
     - 'yuv_.*_v1'
-  exclude:
-    - 'nv21_to_rgb'
 
 structs:
   include:
-    - YUVDef
     - 'Yuv.*V1'

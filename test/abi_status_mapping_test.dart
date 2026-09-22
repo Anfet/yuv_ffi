@@ -599,9 +599,9 @@ void main() {
     /// Counts native allocations a clean call makes, then re-runs with the
     /// instrumented allocator failing at each allocation index in turn,
     /// asserting nothing is left outstanding either way. Mirrors the pattern
-    /// already established in native_allocation_safety_test.dart for
-    /// YUVDefClass. [call] is expected to drive the runner through
-    /// debugInvokeOverride rather than the real yuv_ffi.dll, per YUV-36i.
+    /// native_allocation_safety_test.dart uses for the public operations.
+    /// [call] is expected to drive the runner through debugInvokeOverride
+    /// rather than the real yuv_ffi.dll, per YUV-36i.
     void expectNoLeakAtEveryAllocation(String label, YuvAbiV1FrameResult Function() call) {
       final counting = InstrumentedNativeAllocator();
       final int total;

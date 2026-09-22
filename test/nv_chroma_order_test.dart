@@ -38,7 +38,7 @@ void main() {
     test('RGBA -> NV21 writes the same chroma order as BGRA -> NV21', () {
       final direct = YuvImage.nv21(w, h)..fromRgba8888(solidRedRgba());
 
-      // The BGRA route reaches NV through bgra8888_to_nv21, which is the order
+      // The BGRA route reaches NV through yuv_convert_v1, which is the order
       // every other converter agrees on.
       final viaBgra = YuvImage.bgra(w, h)
         ..fromRgba8888(solidRedRgba())
@@ -70,8 +70,8 @@ void main() {
     test('the interleaved plane stores (U, V), matching every reader', () {
       final image = YuvImage.nv21(w, h)..fromRgba8888(solidRedRgba());
 
-      // nv21_to_bgra8888 and nv21_to_i420 both read byte 0 as U and byte 1 as V,
-      // so a writer must follow the same order.
+      // Conversion out of NV reads byte 0 as U and byte 1 as V, so a writer
+      // must follow the same order.
       expect(image.uPlane.bytes[0], closeTo(expectedU, tolerance), reason: 'byte 0 of the chroma pair must be U (~$expectedU for red)');
       expect(image.uPlane.bytes[1], closeTo(expectedV, tolerance), reason: 'byte 1 of the chroma pair must be V (~$expectedV for red)');
     });

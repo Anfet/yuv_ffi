@@ -327,7 +327,7 @@ class YuvAbiV1Runner {
   /// Allocates the source frame struct and one native buffer per source
   /// plane, copying [source]'s bytes into each.
   ///
-  /// Transactional like `YUVDefClass._` (`defs/yuv_def.dart`): if any
+  /// Transactional: if any
   /// allocation or copy throws partway through, every pointer this call
   /// itself created earlier is freed here, before the exception propagates.
   /// The caller's `finally` therefore only ever calls [_freeConstFrame] on a

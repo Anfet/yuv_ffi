@@ -32,15 +32,15 @@ Future<void> main() async {
   // ABI v1 (YUV-36c, docs/api-abi-0.3-design.md sections 9-11): 11
   // `yuv_*_v1` functions have been called from the typed IO runner
   // (`yuv_abi_v1_runner.dart`, YUV-36d) since that landed, so they are
-  // detected as regular used symbols like the 40 legacy ones -- no
-  // function allowlist is needed any more.
+  // detected as regular used symbols -- no function allowlist is needed any
+  // more. They are also the only processing functions left: YUV-52 removed
+  // the 40 legacy ones from the header, the ffigen allowlist and the library.
   //
   // The 11 descriptor/options structs stay in `knownAbiV1Structs`: a struct
   // is referenced as a bare Dart type (`YuvConstFrameV1 frame = ...`, a
   // parameter type, `.ref` on a pointer), never as `ffiBingings.TypeName`,
   // so `_getUsedSymbols()` can never detect it as "used" no matter how the
-  // Dart call sites evolve. `YUVDef` has the same property and carries the
-  // same exemption.
+  // Dart call sites evolve.
   const knownAbiV1Structs = {
     'YuvConstPlaneV1',
     'YuvMutablePlaneV1',
@@ -54,10 +54,11 @@ Future<void> main() async {
     'YuvFlipOptionsV1',
     'YuvRotateOptionsV1',
   };
-  // Structs that are never detectable via ffiBingings.* usage (see above):
-  // known ABI v1 structs, plus the legacy YUVDef this script already carried
-  // that exemption for.
-  const neverUsageDetectedStructs = {'YUVDef', ...knownAbiV1Structs};
+  // Structs that are never detectable via ffiBingings.* usage (see above).
+  // The legacy `YUVDef` used to carry the same exemption; YUV-52 removed the
+  // type along with the legacy processing ABI, so listing it here would keep
+  // excusing a name the bindings can no longer contain.
+  const neverUsageDetectedStructs = knownAbiV1Structs;
 
   final missing = usedSymbols.where((sym) => !generatedMembers.contains(sym)).toList();
   final extra = generatedMembers.where((mem) => !usedSymbols.contains(mem) && !neverUsageDetectedStructs.contains(mem)).toList();
@@ -139,7 +140,7 @@ Future<Set<String>> _getGeneratedMembers() async {
     }
   }
 
-  // Find struct declarations: "final class YUVDef"
+  // Find struct declarations: "final class YuvConstFrameV1"
   final structRegex = RegExp(r'^final class (\w+)', multiLine: true);
   for (final match in structRegex.allMatches(content)) {
     final name = match.group(1);

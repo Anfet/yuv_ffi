@@ -69,7 +69,7 @@ void main() {
 
       // Remove one real, currently-listed entry to simulate "a new .c file
       // was added on disk but nobody updated CMakeLists.txt".
-      const droppedEntry = '"\${CMAKE_CURRENT_SOURCE_DIR}/yuv/yuv.c"';
+      const droppedEntry = '"\${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_crop_v1.c"';
       expect(original.contains(droppedEntry), isTrue, reason: 'test setup assumption broken: expected entry not found in CMakeLists.txt');
       final broken = original.replaceFirst(RegExp('${RegExp.escape(droppedEntry)}\r?\n'), '');
       expect(broken, isNot(equals(original)), reason: 'test setup did not actually remove anything');
@@ -84,7 +84,7 @@ void main() {
             'it did not, which means the completeness test above would not catch this either. '
             'missingFromCMake=${result.missingFromCMake} extraInCMake=${result.extraInCMake}',
       );
-      expect(result.missingFromCMake, contains('yuv/yuv.c'));
+      expect(result.missingFromCMake, contains('yuv/abi/yuv_crop_v1.c'));
     });
 
     test('negative control: an entry with no file on disk makes the check fail', () {
@@ -239,7 +239,7 @@ _ComparisonResult _compare({required Set<String> onDisk, required List<String> l
 }
 
 /// Full paths (relative to [root], forward-slash separated, e.g.
-/// `yuv/nv21/nv21_crop.c`) of every `.c` file found recursively under [root].
+/// `yuv/abi/yuv_crop_v1.c`) of every `.c` file found recursively under [root].
 ///
 /// [root] defaults to the production `src/` tree, which is what the main
 /// test enumerates. The collision negative control passes a throwaway
@@ -253,7 +253,7 @@ Set<String> _cSourcesOnDisk({String root = _srcDir}) {
 
 /// Normalizes a file path (which may use backslashes on Windows) to a
 /// forward-slash path relative to [root], e.g.
-/// `src\yuv\nv21\nv21_crop.c` -> `yuv/nv21/nv21_crop.c`.
+/// `src\yuv\abi\yuv_crop_v1.c` -> `yuv/abi/yuv_crop_v1.c`.
 String _relativeTo(String root, String filePath) {
   final normalizedRoot = root.replaceAll(r'\', '/');
   final normalized = filePath.replaceAll(r'\', '/');

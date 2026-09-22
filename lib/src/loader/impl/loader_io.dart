@@ -2,6 +2,7 @@ import 'dart:ffi' as ffi;
 import 'dart:io' show Platform;
 
 import 'package:yuv_ffi/src/functions/bindings/yuv_ffi_bingings.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 
 ffi.DynamicLibrary? _library;
 YuvFfiBindings? _ffiBingings;
@@ -108,8 +109,13 @@ ffi.DynamicLibrary _openYuvLibrary() {
     // command-line host — links nothing, and `process()` there resolves to a
     // handle whose first symbol lookup throws "symbol not found". Falling back
     // to the installed dylib keeps both hosts working.
+    // Probed by an ABI v1 symbol, named from the shared manifest. It used to
+    // probe `yuv420_from_rgba8888`, one of the legacy processing exports
+    // YUV-52 removed: had the probe stayed, every macOS host would have fallen
+    // through to `open('libyuv_ffi.dylib')`, which in a real app bundle finds
+    // no such file and throws instead of using the already-linked symbols.
     final fromProcess = ffi.DynamicLibrary.process();
-    if (fromProcess.providesSymbol('yuv420_from_rgba8888')) {
+    if (fromProcess.providesSymbol(yuvSymbolConvertV1)) {
       return fromProcess;
     }
     return ffi.DynamicLibrary.open('libyuv_ffi.dylib');

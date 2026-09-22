@@ -27,7 +27,7 @@ const path = require('path');
 const createYuvFfiModule = require('../assets/wasm/yuv_ffi.js');
 
 /* Node has no fetch relative to the module, so the binary is handed over
- * directly, as tool/yuv05_wasm_harness.cjs already does. */
+ * directly. */
 const WASM_PATH = path.join(__dirname, '..', 'assets', 'wasm', 'yuv_ffi.wasm');
 
 let checks = 0;

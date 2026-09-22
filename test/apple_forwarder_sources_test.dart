@@ -25,12 +25,13 @@ const _forwarderDirs = <String, String>{'iOS': 'ios/Classes', 'macOS': 'macos/Cl
 /// CI everywhere except an actual Apple consumer's link step — and even there
 /// it only fails when something calls the missing symbol.
 ///
-/// That is exactly how `src/yuv/abi/*.c`, `src/yuv/utils/checked_arithmetic.c`,
-/// `src/yuv/utils/validated_view.c` and `src/yuv/bgra8888/bgra8888_block_uv.c`
-/// ended up absent from both forwarder sets while every gate stayed green: the
-/// versioned ABI symbols are not reachable from Dart yet, so nothing called
-/// them. This test makes the omission loud instead of waiting for the call
-/// site to arrive.
+/// That is exactly how `src/yuv/abi/*.c`, `src/yuv/utils/checked_arithmetic.c`
+/// and `src/yuv/utils/validated_view.c` once ended up absent from both
+/// forwarder sets while every gate stayed green: back then nothing called the
+/// versioned ABI symbols, so the missing link step had nothing to fail on.
+/// They are the whole library since YUV-52 removed the legacy sources, which
+/// makes this check the only thing standing between a forgotten include and a
+/// pod target that links without the operation a caller asks for.
 ///
 /// Two invariants per platform, both compared by full path relative to `src/`:
 ///  - every source in the CMake list is included exactly once;
@@ -77,7 +78,7 @@ void main() {
     test('negative control: dropping one include makes the check fail', () {
       // Proves the comparison is actually load-bearing. Uses a real, currently
       // forwarded entry so the control cannot pass by matching nothing.
-      const droppedSource = 'yuv/yuv420/yuv420_crop.c';
+      const droppedSource = 'yuv/abi/yuv_crop_v1.c';
       final included = _includesFromForwarders(_forwarderDirs['macOS']!)..removeWhere((path) => path == droppedSource);
 
       final result = _compare(expected: cmakeSources, included: included);
@@ -102,7 +103,7 @@ void main() {
     });
 
     test('negative control: the same source included twice is reported as a duplicate', () {
-      const repeated = 'yuv/yuv.c';
+      const repeated = 'yuv/abi/yuv_crop_v1.c';
       final included = _includesFromForwarders(_forwarderDirs['macOS']!)..add(repeated);
 
       final result = _compare(expected: cmakeSources, included: included);

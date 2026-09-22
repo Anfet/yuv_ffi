@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
-import 'package:yuv_ffi/src/yuv/impl/io/defs/yuv_def.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 /// Verifies YUV-16: every already-acquired native resource is released when a
@@ -64,10 +63,10 @@ void main() {
   YuvImage bgra() => YuvImage.bgra(w, h);
 
   group('native allocation safety', () {
-    test('YUVDefClass releases partial state when an inner allocation fails', () {
-      expectNoLeakAtEveryAllocation('YUVDefClass(i420)', () => i420().blackwhite());
-      expectNoLeakAtEveryAllocation('YUVDefClass(nv21)', () => nv21().blackwhite());
-      expectNoLeakAtEveryAllocation('YUVDefClass(bgra)', () => bgra().blackwhite());
+    test('blackwhite releases partial state when an inner allocation fails', () {
+      expectNoLeakAtEveryAllocation('blackwhite(i420)', () => i420().blackwhite());
+      expectNoLeakAtEveryAllocation('blackwhite(nv21)', () => nv21().blackwhite());
+      expectNoLeakAtEveryAllocation('blackwhite(bgra)', () => bgra().blackwhite());
     });
 
     test('crop releases srcDef when destination allocation fails', () {
@@ -136,22 +135,6 @@ void main() {
             () => i420().crop(const ui.Rect.fromLTWH(0, 0, 4, 4)),
             throwsA(predicate((e) => e.toString().contains('Injected allocation failure'))),
           );
-        });
-        expect(allocator.outstanding, 0);
-      } finally {
-        allocator.releaseAll();
-      }
-    });
-
-    test('YUVDefClass.dispose() is idempotent', () {
-      final allocator = InstrumentedNativeAllocator();
-      try {
-        withNativeAllocator(allocator, () {
-          final image = YuvImage.i420(w, h);
-          final def = YUVDefClass(image);
-          def.dispose();
-          def.dispose(); // Second dispose should not throw or crash
-          def.dispose(); // Third dispose should also be safe
         });
         expect(allocator.outstanding, 0);
       } finally {

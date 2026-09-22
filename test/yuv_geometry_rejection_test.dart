@@ -50,8 +50,8 @@ void main() {
 
   group('interleaved NV chroma requires a packed pair stride', () {
     test('a chroma pixel stride other than two is rejected', () {
-      // The converters address chroma as a packed (U, V) pair, and
-      // nv21_from_rgba8888 silently does nothing when the stride is not two.
+      // The converters address chroma as a packed (U, V) pair, so a stride
+      // other than two has no meaning to them.
       expect(
         () => YuvImage.nv21(8, 8, planes: [filled(8, 8), filled(4, 12, 3)]),
         throwsArgumentError,

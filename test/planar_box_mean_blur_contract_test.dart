@@ -185,8 +185,8 @@ void main() {
         markTestSkipped('native library is not available on this host');
         return;
       }
-      // YUV-47: yuv420_box_blur's scratch packing now walks src/dst by
-      // rowStride/pixelStride instead of memcpy-ing whole rows, so a
+      // yuv_box_blur_v1's scratch packing walks src/dst by
+      // rowStride/pixelStride rather than memcpy-ing whole rows, so a
       // pixelStride > 1 plane is a genuinely different code path from the
       // tight-stride cases above, not just a relabeling of the same bytes.
       const width = 16, height = 16;
@@ -291,8 +291,8 @@ void main() {
         markTestSkipped('native library is not available on this host');
         return;
       }
-      // YUV-47: nv21_box_blur's Y-plane scratch packing now walks src/dst by
-      // rowStride instead of memcpy-ing a whole tight plane in one call, so a
+      // yuv_box_blur_v1's Y-plane scratch packing walks src/dst by
+      // rowStride rather than memcpy-ing a whole tight plane in one call, so a
       // padded row stride is a genuinely different code path from the tight
       // cases above. The interleaved chroma plane already has an inherent
       // pixelStride of 2 (deinterleave/reinterleave), so this exercises an
