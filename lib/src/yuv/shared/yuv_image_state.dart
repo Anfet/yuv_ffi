@@ -157,25 +157,12 @@ class YuvImageState {
     _revision++;
   }
 
-  /// Like [replace], but sets [revision] to exactly [revision] + 1.
-  ///
-  /// Used by an operation that reaches its result through another mutating
-  /// operation (`swapNv` converting to NV21 first): the caller snapshots the
-  /// revision before that inner call so one public call advances the counter
-  /// exactly once, whatever path it took.
-  void replaceFromRevision({
-    required YuvFileFormat format,
-    required int width,
-    required int height,
-    required List<YuvPlane> planes,
-    required int revision,
-  }) {
-    _format = format;
-    _width = width;
-    _height = height;
-    _planes = planes;
-    _revision = revision + 1;
-  }
+  // There is deliberately no "replace but rewind the revision" variant. It
+  // existed for an operation that published an intermediate result and then
+  // corrected the counter afterwards (`swapNv` converting to NV21 first), which
+  // is exactly the partial-publish the 0.3.0 contract forbids: a failure in the
+  // second step left the receiver converted. An operation that needs several
+  // native calls completes them all on drafts and calls [replace] once.
 
   /// Every plane's bytes concatenated in format order, as a fresh buffer.
   Uint8List getBytes() => YuvPlaneBytes.concat(_planes);

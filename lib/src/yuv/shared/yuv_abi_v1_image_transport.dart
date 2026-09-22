@@ -1,21 +1,27 @@
 import 'dart:typed_data';
 
-import 'package:yuv_ffi/src/yuv/impl/io/abi/yuv_abi_v1_frame.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 
 /// Translates between the public Dart image shape ([YuvFileFormat] plus
-/// [YuvPlane] list) and the ABI v1 descriptors [YuvAbiV1Runner] consumes
-/// (YUV-50).
+/// [YuvPlane] list) and the ABI v1 descriptors the runners consume (YUV-50,
+/// YUV-51).
 ///
-/// The runner deliberately speaks only in numeric ABI format ids, byte buffers
+/// A runner deliberately speaks only in numeric ABI format ids, byte buffers
 /// and strides: it is the transport for `yuv_*_v1` and knows nothing about the
-/// public API. This is the one place that maps the two together, so the public
-/// IO backend never builds a descriptor by hand and the two sides cannot drift
-/// into disagreeing about plane order or chroma extents.
+/// public API. This is the one place that maps the two together, so no public
+/// backend builds a descriptor by hand and the sides cannot drift into
+/// disagreeing about plane order or chroma extents.
 ///
-/// The runner always allocates a *tight* destination, while a public image may
+/// It lives in `shared/` rather than beside either backend because both use it
+/// unchanged: the IO runner stages these descriptors into native memory through
+/// `dart:ffi`, the Web runner stages the identical descriptors into WASM linear
+/// memory. Format mapping, chroma extents and padding preservation are decided
+/// here once, so IO and Web cannot disagree about them.
+///
+/// A runner always allocates a *tight* destination, while a public image may
 /// legitimately carry row and pixel padding the contract requires to survive an
 /// operation. [applyTo] is therefore not a byte copy: it walks the logical
 /// samples through both layouts' strides and leaves every padding byte of the

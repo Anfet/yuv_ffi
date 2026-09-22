@@ -6,10 +6,9 @@ import 'package:yuv_ffi/src/functions/bindings/yuv_ffi_bingings.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
-
-import 'yuv_abi_v1_frame.dart';
 
 /// Typed IO runner for the ABI v1 `yuv_*_v1` symbols
 /// (`docs/api-abi-0.3-design.md` sections 9, 11, 13).
@@ -624,27 +623,4 @@ enum YuvAbiV1BlurKind {
 
   /// `yuv_box_blur_v1`.
   box,
-}
-
-/// A right/bottom-exclusive region of interest in source visible-pixel
-/// coordinates, mirroring `YuvRegionOptionsV1` (section 10) in its enabled
-/// form. Passing `null` where a runner method accepts this means "whole
-/// frame" (a disabled region).
-class YuvAbiV1Region {
-  /// Creates a region. The runner does not itself validate that it lies
-  /// inside the frame or is non-empty -- native validation is authoritative
-  /// (section 11) and reports `INVALID_ARGUMENT` for a malformed rectangle.
-  const YuvAbiV1Region({required this.left, required this.top, required this.right, required this.bottom});
-
-  /// Left edge, inclusive.
-  final int left;
-
-  /// Top edge, inclusive.
-  final int top;
-
-  /// Right edge, exclusive.
-  final int right;
-
-  /// Bottom edge, exclusive.
-  final int bottom;
 }

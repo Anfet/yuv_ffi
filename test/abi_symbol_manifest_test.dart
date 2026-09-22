@@ -34,6 +34,7 @@ const _dartManifestPath = 'lib/src/yuv/shared/yuv_abi_v1_symbols.dart';
 const _nativeRunnerPath = 'lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart';
 const _webDispatchPath = 'lib/src/yuv/impl/web/yuv_abi_v1_dispatch_web.dart';
 const _webBackendPath = 'lib/src/yuv/impl/web/yuv_web.dart';
+const _webRunnerPath = 'lib/src/yuv/impl/web/abi/yuv_abi_v1_web_runner.dart';
 
 /// Extracts every `FFI_PLUGIN_EXPORT YuvStatus <name>(` declaration from
 /// [_headerPath]: the ground truth for what ABI v1 actually declares.
@@ -199,6 +200,42 @@ void main() {
       );
     });
 
+    test('the Web runner dispatches every symbol through the shared manifest constant', () {
+      // The Web mirror of the native-runner check above, and the half of the
+      // gate YUV-51 made real: before it, the Web side could only be asked
+      // whether it *named* the symbols. Now the Web runner must reach each one
+      // through the manifest constant, exactly as the native runner does, so a
+      // symbol wired on one backend but not the other fails here.
+      final content = File(_webRunnerPath).readAsStringSync();
+      final manifest = File(_dartManifestPath).readAsStringSync();
+      for (final symbol in _abiV1Symbols) {
+        final constantName = RegExp("const String (\\w+) = '$symbol';").firstMatch(manifest)?.group(1);
+        expect(constantName, isNotNull, reason: '$_dartManifestPath declares no constant for $symbol');
+        expect(content, contains(constantName!), reason: '$_webRunnerPath never dispatches $symbol through $constantName');
+        expect(
+          content,
+          isNot(contains("'$symbol'")),
+          reason: '$_webRunnerPath re-spells $symbol as a literal instead of taking it from the shared manifest',
+        );
+      }
+      expect(
+        content,
+        contains("import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';"),
+        reason: '$_webRunnerPath must take its symbol names from the shared manifest',
+      );
+    });
+
+    test('the Web backend runs its public operations through the ABI v1 Web runner', () {
+      // The Web equivalent of "never calls the generated binding by hand": the
+      // backend must go through the runner, and must not have kept a legacy
+      // per-format entry point behind it.
+      final backend = File(_webBackendPath).readAsStringSync();
+      expect(backend, contains('YuvAbiV1WebRunner.'), reason: '$_webBackendPath must dispatch through the ABI v1 Web runner');
+      for (final legacy in ['yuv420_', 'nv21_', 'bgra8888_', 'nvXX_to_nvYY']) {
+        expect(backend, isNot(contains("'$legacy")), reason: '$_webBackendPath still calls the legacy processing symbol prefix $legacy');
+      }
+    });
+
     test('the Web dispatch resolves its symbols from the shared manifest and is reached from the Web backend', () {
       // The fourth side of the gate, as actual Web dispatch rather than only a
       // build-script export list: the Web dispatch layer must iterate the shared
@@ -221,8 +258,13 @@ void main() {
       }
 
       final backend = File(_webBackendPath).readAsStringSync();
+      final runner = File(_webRunnerPath).readAsStringSync();
       expect(backend, contains("import 'yuv_abi_v1_dispatch_web.dart';"), reason: '$_webBackendPath must import the ABI v1 Web dispatch');
       expect(backend, contains('YuvAbiV1WebDispatch.'), reason: '$_webBackendPath must actually use the ABI v1 Web dispatch');
+      // Since YUV-51 the per-operation dispatch happens in the runner, so the
+      // dispatch layer has to be reached from there too -- otherwise the
+      // completeness check could be bypassed by every real operation.
+      expect(runner, contains('YuvAbiV1WebDispatch.call('), reason: '$_webRunnerPath must invoke symbols through the ABI v1 Web dispatch');
     });
 
     test('a symbol missing from any one source is caught, not silently tolerated', () {

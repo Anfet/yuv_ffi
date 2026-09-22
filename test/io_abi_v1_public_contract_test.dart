@@ -39,6 +39,11 @@ void main() {
       'rotate': (image) => image.rotate(YuvImageRotation.rotation90),
       'crop': (image) => image.crop(const ui.Rect.fromLTRB(0, 0, 4, 4)),
       'toYuvI420': (image) => image.toYuvI420(),
+      // Reaches the kernel in one call when the receiver is already NV21,
+      // which is the shape this group's fixture uses. The two-call form
+      // (convert, then swap) has its own test below, because only that one
+      // can fail *after* a successful first call.
+      'swapNv': (image) => image.swapNv(),
     };
 
     for (final entry in operations.entries) {
@@ -61,6 +66,94 @@ void main() {
         expect((image as YuvRevisionAware).internalRevision, revisionBefore, reason: 'revision advanced on a failed ${entry.key}');
       });
     }
+  });
+
+  group('swapNv on a non-NV receiver is atomic across both native calls', () {
+    // The review defect (2026-09-23): swapNv on I420/BGRA needs two native
+    // calls -- a conversion to NV12, then the chroma swap. Publishing the
+    // conversion before attempting the swap left a receiver that had failed
+    // swapNv() sitting in NV21, with different bytes and an advanced revision.
+    //
+    // These drive the two calls independently through debugInvokeOverride:
+    // the first returns OK, the second INTERNAL_ERROR. Nothing about the
+    // receiver may have changed once the exception surfaces.
+    tearDown(() => YuvAbiV1Runner.debugInvokeOverride = null);
+
+    /// Fails the [failAt]-th native call (1-based) with INTERNAL_ERROR and
+    /// lets every other call succeed, counting the calls actually made.
+    int installOverrideFailingAt(int failAt) {
+      int calls = 0;
+      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) {
+        calls++;
+        return calls == failAt ? yuvStatusInternalError : yuvStatusOk;
+      };
+      return calls;
+    }
+
+    for (final format in [YuvFileFormat.i420, YuvFileFormat.bgra8888]) {
+      test('a failing chroma swap after a successful conversion leaves a $format receiver untouched', () {
+        final YuvImage image = format == YuvFileFormat.i420
+            ? YuvImage.i420(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 4, 1, 0x50), plane(4, 4, 1, 0x70)])
+            : YuvImage.bgra(8, 8, planes: [plane(8, 32, 4, 0x30)]);
+
+        final bytesBefore = image.getBytes();
+        final revisionBefore = (image as YuvRevisionAware).internalRevision;
+        final widthBefore = image.width;
+        final heightBefore = image.height;
+
+        int calls = 0;
+        YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) {
+          calls++;
+          // 1 = yuv_convert_v1 (succeeds), 2 = yuv_chroma_swap_v1 (fails).
+          return calls == 1 ? yuvStatusOk : yuvStatusInternalError;
+        };
+
+        expect(() => image.swapNv(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', 'yuv_chroma_swap_v1')));
+
+        expect(calls, 2, reason: 'the conversion must have succeeded before the swap was attempted');
+        expect(image.format, format, reason: 'format changed although swapNv failed');
+        expect(image.getBytes(), bytesBefore, reason: 'bytes changed although swapNv failed');
+        expect(image.width, widthBefore);
+        expect(image.height, heightBefore);
+        expect((image as YuvRevisionAware).internalRevision, revisionBefore, reason: 'revision advanced although swapNv failed');
+      });
+
+      test('a failing conversion leaves a $format receiver untouched', () {
+        final YuvImage image = format == YuvFileFormat.i420
+            ? YuvImage.i420(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 4, 1, 0x50), plane(4, 4, 1, 0x70)])
+            : YuvImage.bgra(8, 8, planes: [plane(8, 32, 4, 0x30)]);
+
+        final bytesBefore = image.getBytes();
+        final revisionBefore = (image as YuvRevisionAware).internalRevision;
+
+        installOverrideFailingAt(1);
+
+        expect(() => image.swapNv(), throwsA(isA<YuvNativeException>()));
+
+        expect(image.format, format);
+        expect(image.getBytes(), bytesBefore);
+        expect((image as YuvRevisionAware).internalRevision, revisionBefore);
+      });
+    }
+
+    test('both calls succeeding publishes once, as NV21, advancing the revision by one', () {
+      // The positive half of the same path: the two-call form must still
+      // produce exactly one publish, so the fix cannot be "never publish".
+      final image = YuvImage.i420(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 4, 1, 0x50), plane(4, 4, 1, 0x70)]);
+      final revisionBefore = (image as YuvRevisionAware).internalRevision;
+
+      int calls = 0;
+      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) {
+        calls++;
+        return yuvStatusOk;
+      };
+
+      image.swapNv();
+
+      expect(calls, 2);
+      expect(image.format, YuvFileFormat.nv21);
+      expect((image as YuvRevisionAware).internalRevision, revisionBefore + 1, reason: 'two native calls must still be one publish');
+    });
   });
 
   group('a successful operation advances the revision exactly once', () {

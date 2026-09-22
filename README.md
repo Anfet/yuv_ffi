@@ -128,16 +128,27 @@ Current phase includes:
 - WASM build script (`tool/wasm/build_wasm.sh`)
 - package asset layout for generated artifacts (`assets/wasm/`)
 - Web module loader scaffold (`lib/src/loader/wasm_loader.dart`)
-- WASM-routed `YuvImage` operations on Web:
-  - conversions: `fromRgba8888`, `toYuvI420`, `toYuvNv21`, `toBgra8888`
+- WASM-routed `YuvImage` operations on Web, all of them through the versioned
+  `yuv_*_v1` ABI (the same one the native backend calls):
+  - conversions: `fromRgba8888`, `toYuvI420`, `toYuvNv21`, `toYuvBgra8888`, `toBgra8888`
   - transforms: `crop`, `rotate`, `flipHorizontally`, `flipVertically`
   - effects: `grayscale`, `blackwhite`, `negate`
   - blur: `gaussianBlur`, `boxBlur`, `meanBlur`
   - `swapNv`
 
+The Web backend stages ABI v1 descriptors in WASM linear memory at the wasm32
+layout `src/yuv/abi/h/yuv_abi_v1.h` declares, and shares the format mapping,
+padding-preservation rule and `YuvStatus` contract with the native backend, so
+an operation behaves the same on both. A non-zero status throws before any
+result byte is read back, leaving the image untouched, and a WASM module missing
+an ABI v1 export is rejected by symbol name rather than failing inside a
+`ccall`.
+
 Limitations:
 
-- Web backend is still in-progress and should be treated as non-final.
+- Web backend is still in-progress and should be treated as non-final. Running
+  on ABI v1 aligns the two backends' behavior; it does not by itself make Web
+  feature-complete with native.
 - Web tests are maintained separately under `test/web/` and are intended for browser runner execution.
 
 ### Known limitations (explicit)

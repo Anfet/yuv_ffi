@@ -13,13 +13,14 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 /// from [yuvAbiV1Symbols] rather than being spelled out again here, so the Web
 /// dispatch cannot drift onto a different spelling than the native runner uses.
 ///
-/// Naming a symbol is not the same as implementing an operation on top of it:
-/// the Web backend's public operations still run the legacy `yuv420_*`/`nv21_*`
-/// entry points, and Web remains a partial WASM backend. What this class
-/// guarantees is that when a Web operation is moved onto ABI v1, the symbol it
-/// reaches for is the same one the header declares and the build exports -- and
-/// that a symbol missing from the module is reported as such instead of failing
-/// as an opaque JS error deep inside a `ccall`.
+/// Since YUV-51 the Web backend's public operations run entirely on these
+/// symbols, staged by `abi/yuv_abi_v1_web_runner.dart`. What this class
+/// guarantees is that the symbol a Web operation reaches for is the same one
+/// the header declares and the build exports -- and that a symbol missing from
+/// the module is reported by name before the call, instead of failing as an
+/// opaque JS error deep inside a `ccall`. Running on ABI v1 does not make Web a
+/// feature-complete peer of the native backend; it remains a partial WASM
+/// backend.
 abstract final class YuvAbiV1WebDispatch {
   /// Emscripten prefixes an exported C function with an underscore.
   static const String exportPrefix = '_';

@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:yuv_ffi/src/yuv/impl/io/abi/yuv_abi_v1_frame.dart';
-import 'package:yuv_ffi/src/yuv/impl/io/abi/yuv_abi_v1_image_transport.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_image_transport.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
@@ -206,21 +206,46 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   @override
   YuvImage swapNv() {
     // Deprecated compatibility path (section 14, Q1): convert non-NV input to
-    // canonical NV12 first, then swap the chroma sample values. The conversion
-    // is itself a mutating operation that bumps the revision, so the counter is
-    // snapshotted here and restored below -- one public swapNv() advances it
-    // exactly once, whatever path it took to get there.
-    final revisionBefore = _state.revision;
-    if (format != YuvFileFormat.nv21) {
-      toYuvNv21();
+    // canonical NV12 first, then swap the chroma sample values.
+    //
+    // Both steps run on local drafts and nothing is published until both have
+    // succeeded. Converting through `toYuvNv21()` first would publish the
+    // converted image before the swap was attempted, so a chroma swap that
+    // returned a non-zero status would leave the receiver converted -- a
+    // visible partial result, which section 13 and this card's DoD forbid.
+    // That is also why the revision is not snapshotted and restored here any
+    // more: there is only ever one publish, which advances it exactly once.
+    final YuvFileFormat sourceFormat = format;
+    final YuvAbiV1FrameInput swapSource;
+    if (sourceFormat == YuvFileFormat.nv21) {
+      swapSource = _sourceFrame();
+    } else {
+      final converted = YuvAbiV1Runner.convert(
+        source: _sourceFrame(),
+        destinationLayout: YuvAbiV1ImageTransport.destination(format: YuvFileFormat.nv21, width: width, height: height),
+      );
+      swapSource = YuvAbiV1ImageTransport.source(
+        format: YuvFileFormat.nv21,
+        width: width,
+        height: height,
+        planes: YuvAbiV1ImageTransport.planesOf(result: converted, format: YuvFileFormat.nv21, width: width, height: height),
+      );
     }
 
-    final result = YuvAbiV1Runner.chromaSwap(source: _sourceFrame());
-    // Keeps this image's own chroma layout: chroma swap does not change
-    // geometry, so a padded NV plane survives with its padding intact.
-    final swapped = _state.copiedPlanes();
-    YuvAbiV1ImageTransport.applyTo(result: result, planes: swapped, format: format, width: width, height: height);
-    _state.replaceFromRevision(format: format, width: width, height: height, planes: swapped, revision: revisionBefore);
+    final result = YuvAbiV1Runner.chromaSwap(source: swapSource);
+
+    // A receiver that was already NV21 keeps its own chroma layout, padding
+    // included; one that had to be converted adopts the tight planes the
+    // conversion produced, since its previous layout described a different
+    // format.
+    final List<YuvPlane> swapped = sourceFormat == YuvFileFormat.nv21
+        ? _state.copiedPlanes()
+        : YuvAbiV1ImageTransport.planesOf(result: result, format: YuvFileFormat.nv21, width: width, height: height);
+    if (sourceFormat == YuvFileFormat.nv21) {
+      YuvAbiV1ImageTransport.applyTo(result: result, planes: swapped, format: YuvFileFormat.nv21, width: width, height: height);
+    }
+
+    _state.replace(format: YuvFileFormat.nv21, width: width, height: height, planes: swapped);
     return this;
   }
 

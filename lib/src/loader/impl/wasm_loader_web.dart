@@ -126,16 +126,26 @@ final class YuvWasmLoader {
     debugInitCount++;
     final initializer = _initializerOverride ?? _initialize;
     late final Future<YuvModule> attempt;
-    attempt = initializer(scriptPath: scriptPath, wasmPath: wasmPath, moduleFactoryName: moduleFactoryName).onError<Object>((error, stackTrace) {
-      // Clear only if this attempt is still the current one. A later call may
-      // already have replaced it, and dropping that newer future would make
-      // concurrent callers wait on an attempt nobody owns any more.
-      if (identical(_initFuture, attempt)) {
-        _initFuture = null;
-      }
-      _module = null;
-      Error.throwWithStackTrace(error, stackTrace);
-    });
+    attempt = initializer(scriptPath: scriptPath, wasmPath: wasmPath, moduleFactoryName: moduleFactoryName)
+        .then((module) {
+          // Publishing the module here rather than only inside [_initialize] is
+          // what makes an injected initializer a complete stand-in for the real
+          // one: otherwise a test that installs a fake module would see
+          // `ensureInitialized()` succeed while [moduleIfInitialized] stayed null,
+          // and every operation after it would fail as "not initialized".
+          _module = module;
+          return module;
+        })
+        .onError<Object>((error, stackTrace) {
+          // Clear only if this attempt is still the current one. A later call may
+          // already have replaced it, and dropping that newer future would make
+          // concurrent callers wait on an attempt nobody owns any more.
+          if (identical(_initFuture, attempt)) {
+            _initFuture = null;
+          }
+          _module = null;
+          Error.throwWithStackTrace(error, stackTrace);
+        });
     _initFuture = attempt;
     return attempt;
   }
@@ -171,9 +181,9 @@ final class YuvWasmLoader {
 
     final modulePromise = js_util.callMethod<Object>(factory, 'call', <Object?>[null, moduleConfig]);
 
-    final module = YuvModule(await js_util.promiseToFuture<Object>(modulePromise));
-    _module = module;
-    return module;
+    // Publishing into `_module` is the caller's job (see `ensureInitialized`),
+    // so the injected-initializer path and this one behave identically.
+    return YuvModule(await js_util.promiseToFuture<Object>(modulePromise));
   }
 
   /// Injects the Emscripten loader script, at most once per successful load.

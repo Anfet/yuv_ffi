@@ -57,7 +57,7 @@ void main() {
     expect(image.getBytes(), orderedEquals(expectedBytes));
   });
 
-  testWidgets('F-003 diagnostic case: i420 3x3 yields exactly 25 bytes, not 32', (tester) async {
+  testWidgets('F-003 diagnostic case: tight i420 3x3 yields exactly 17 bytes', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     await YuvFfi.ensureInitialized();
@@ -65,8 +65,9 @@ void main() {
     final image = YuvImage.i420(3, 3);
     final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 
-    expect(expectedLength, 25);
-    expect(image.getBytes(), hasLength(25));
+    // Y: 3*3 = 9; U and V: ceil(3/2)*ceil(3/2) = 4 each.
+    expect(expectedLength, 17);
+    expect(image.getBytes(), hasLength(17));
   });
 
   testWidgets('getBytes returns an independent copy, decoupled from the plane bytes in both directions', (tester) async {

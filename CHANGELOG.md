@@ -12,8 +12,10 @@
 
 ### Changes
 
-- Routed every public native-backend operation through the versioned `yuv_*_v1` ABI. The per-format `yuv420_*`, `nv21_*` and `bgra8888_*` entry points are no longer called from Dart.
-- A failed operation now leaves the image completely unchanged: a non-zero native status is raised before any result byte is read back, so bytes, format, geometry and the revision counter all keep their previous values.
+- Routed every public native-backend and Web-backend operation through the versioned `yuv_*_v1` ABI. The per-format `yuv420_*`, `nv21_*` and `bgra8888_*` entry points, and `nvXX_to_nvYY`, are no longer called from Dart on either backend.
+- Moved the Web backend onto the same ABI v1 descriptors the native backend uses: it stages `YuvConstFrameV1`/`YuvMutableFrameV1` and the versioned options structs in WASM linear memory at the wasm32 layout the C header declares, and maps `YuvStatus` through the shared status contract. Web and native now share one transport, one format mapping and one padding-preservation rule, so an operation behaves the same on both. Web remains a partial WASM backend.
+- Web operations now report a failure instead of silently continuing: a non-zero `YuvStatus` throws before any result byte is read back, so a failed Web operation leaves bytes, geometry and the revision counter unchanged, and a WASM module missing an ABI v1 export is rejected by symbol name rather than failing inside a `ccall`.
+- A failed operation now leaves the image completely unchanged: a non-zero native status is raised before any result byte is read back, so bytes, format, geometry and the revision counter all keep their previous values. This holds for `swapNv()` on an I420 or BGRA image too, which needs two native calls: the conversion to NV12 and the chroma swap both complete on drafts, and the result is published once, so a chroma swap that fails no longer leaves the image converted.
 - An image's declared plane layout survives an in-place operation. Only active samples are written, so row padding, pixel gaps and bytes past the last sample keep their previous contents instead of being repacked.
 - Blur and effects accept a padded BGRA plane, which the previous per-format kernels could not address safely and which the Dart layer therefore rejected.
 - Fixed `I420 <-> NV12` conversion, which ran through a YUV->RGB->YUV round trip and so perturbed every Y sample and re-averaged chroma that was already at final resolution. Both formats store identical samples, so the conversion now moves them directly.

@@ -109,3 +109,26 @@ class YuvAbiV1FrameResult {
   /// One entry per destination plane, in ABI plane order.
   final List<Uint8List> planes;
 }
+
+/// A right/bottom-exclusive region of interest in source visible-pixel
+/// coordinates, mirroring `YuvRegionOptionsV1` (section 10) in its enabled
+/// form. Passing `null` where a runner method accepts this means "whole
+/// frame" (a disabled region).
+class YuvAbiV1Region {
+  /// Creates a region. A runner does not itself validate that it lies
+  /// inside the frame or is non-empty -- native validation is authoritative
+  /// (section 11) and reports `INVALID_ARGUMENT` for a malformed rectangle.
+  const YuvAbiV1Region({required this.left, required this.top, required this.right, required this.bottom});
+
+  /// Left edge, inclusive.
+  final int left;
+
+  /// Top edge, inclusive.
+  final int top;
+
+  /// Right edge, exclusive.
+  final int right;
+
+  /// Bottom edge, exclusive.
+  final int bottom;
+}

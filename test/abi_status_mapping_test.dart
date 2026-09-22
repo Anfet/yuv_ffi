@@ -5,7 +5,7 @@ import 'package:ffi/ffi.dart' as pkg_ffi;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/functions/bindings/yuv_ffi_bingings.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
-import 'package:yuv_ffi/src/yuv/impl/io/abi/yuv_abi_v1_frame.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
