@@ -54,11 +54,10 @@ const int yuvStatusAllocationFailed = 5;
 /// `YUV_STATUS_INTERNAL_ERROR` (6): an operation-internal failure that is
 /// neither a caller mistake nor a resource exhaustion.
 ///
-/// Every ABI v1 kernel currently returns exactly this status as a deliberate
-/// placeholder (YUV-36b): validation runs to completion and only the pixel
-/// kernel is unimplemented. A [YuvNativeException] with this code today means
-/// "validated, kernel pending", not "genuine internal defect" — see
-/// YUV-31/32/22/23 for when each operation's real kernel lands.
+/// This used to be the placeholder every ABI v1 kernel returned while only
+/// validation was implemented (YUV-36b). Those stubs are gone
+/// (YUV-22/23/31/32), so a [YuvNativeException] with this code now means a
+/// genuine internal defect rather than "kernel pending".
 const int yuvStatusInternalError = 6;
 
 /// `YUV_STATUS_UNSUPPORTED_COLOR` (7): a known format declaring a

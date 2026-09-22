@@ -372,23 +372,25 @@ void main() {
       );
     }
 
-    test('a fully valid call reaches the real kernel placeholder (INTERNAL_ERROR)', () {
-      // Every yuv_*_v1 kernel is currently a deliberate stub (YUV-36b): a
-      // structurally valid call passes all validation and returns
-      // YUV_STATUS_INTERNAL_ERROR without writing a byte. This is the real-DLL
-      // counterpart of the override-driven test with the same name above --
-      // it exists specifically to catch a real kernel landing (YUV-22/23/31/32,
-      // see the dartdoc on yuvStatusInternalError) or a real ABI mismatch that
-      // a fake kernel could never surface, and remains skipped when the DLL is
-      // unavailable, unlike every group above.
-      expect(
-        () => YuvAbiV1Runner.grayscale(source: bgraSource(4, 4)),
-        throwsA(
-          isA<YuvNativeException>()
-              .having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)
-              .having((e) => e.operation, 'operation', 'yuv_grayscale_v1'),
-        ),
-      );
+    test('a fully valid call runs the real kernel and returns its result', () {
+      // This used to assert the opposite: while every yuv_*_v1 kernel was a
+      // deliberate stub (YUV-36b), a structurally valid call passed validation
+      // and returned YUV_STATUS_INTERNAL_ERROR. The stubs are gone
+      // (YUV-22/23/31/32), so the same call now has to succeed and hand back a
+      // destination of the right shape. It stays the real-DLL counterpart of
+      // the override-driven group above: it is the only thing here that would
+      // catch an ABI mismatch a fake kernel cannot surface, and it remains
+      // skipped when the DLL is unavailable.
+      final result = YuvAbiV1Runner.grayscale(source: bgraSource(4, 4, fill: 0x40));
+
+      expect(result.planes, hasLength(1));
+      expect(result.planes[0], hasLength(4 * 4 * 4));
+      // A uniform source grayscales to a uniform result, so the whole plane is
+      // one repeating BGRA sample rather than whatever a stub left behind.
+      final sample = result.planes[0].sublist(0, 4);
+      for (int pixel = 0; pixel < 16; pixel++) {
+        expect(result.planes[0].sublist(pixel * 4, pixel * 4 + 4), sample, reason: 'pixel $pixel differs on a uniform frame');
+      }
     });
 
     test('chroma swap requires NV12 and rejects BGRA with UNSUPPORTED_FORMAT (2)', () {

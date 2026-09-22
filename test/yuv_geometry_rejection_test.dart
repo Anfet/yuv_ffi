@@ -165,15 +165,40 @@ void main() {
     });
   });
 
-  group('padded BGRA is refused before an unsafe native effect', () {
+  group('padded BGRA survives a native effect', () {
     YuvImage paddedBgra() => YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [filled(8, 8 * 4 + 16, 4)]);
 
-    test('blur operations reject a padded plane rather than overflowing', () {
-      // These native effects allocate a tight width * height * 4 scratch buffer
-      // while addressing it through the source row stride.
-      expect(() => paddedBgra().gaussianBlur(radius: 1), throwsArgumentError);
-      expect(() => paddedBgra().boxBlur(radius: 1), throwsArgumentError);
-      expect(() => paddedBgra().meanBlur(radius: 1), throwsArgumentError);
+    test('blur operations accept a padded plane and leave its padding untouched', () {
+      // Until YUV-50 these threw: the legacy per-format kernels allocated a
+      // tight width * height * 4 scratch buffer while addressing it through the
+      // source row stride, so a padded plane made them write past it, and the
+      // Dart side refused the input rather than passing it on. ABI v1 walks
+      // every plane through its own declared strides, so the input is now
+      // supported and its padding is contractually preserved (section 11).
+      const rowStride = 8 * 4 + 16;
+      for (final blur in <void Function(YuvImage)>[
+        (image) => image.gaussianBlur(radius: 1),
+        (image) => image.boxBlur(radius: 1),
+        (image) => image.meanBlur(radius: 1),
+      ]) {
+        final image = paddedBgra();
+        // Canary the 16 padding bytes of every row, which no operation may
+        // touch.
+        for (int row = 0; row < 8; row++) {
+          image.yPlane.bytes.fillRange(row * rowStride + 8 * 4, (row + 1) * rowStride, 0xEE);
+        }
+
+        blur(image);
+
+        expect(image.yPlane.rowStride, rowStride);
+        for (int row = 0; row < 8; row++) {
+          expect(
+            image.yPlane.bytes.sublist(row * rowStride + 8 * 4, (row + 1) * rowStride),
+            everyElement(0xEE),
+            reason: 'blur wrote into row $row padding',
+          );
+        }
+      }
     });
 
     test('a tight BGRA plane is still accepted by the same operations', () {

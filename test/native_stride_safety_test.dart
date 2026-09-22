@@ -242,11 +242,12 @@ void main() {
           expect(image.uPlane.bytes[row * chromaRowStride + i], 10 + row * 10 + i + 1);
           expect(image.uPlane.bytes[row * chromaRowStride + i + 1], 10 + row * 10 + i);
         }
-        // swapNv writes into a freshly allocated destination plane, so the
-        // padding of the result is zero rather than a copy of the source
-        // padding. What matters is that the stride is preserved and that no
-        // active data leaked into the padding region.
-        expect(paddingTail(image.uPlane, row, activeChromaBytes), everyElement(0), reason: 'swapNv left data in row $row padding');
+        // Since YUV-50 swapNv publishes through the ABI v1 transport, which
+        // writes only active samples into the receiver's existing layout, so
+        // the source padding survives verbatim instead of being replaced by a
+        // freshly zeroed allocation. Either way no active data may leak into
+        // the padding region, which is what the canary below checks.
+        expect(paddingTail(image.uPlane, row, activeChromaBytes), everyElement(0xEE), reason: 'swapNv overwrote row $row padding');
       }
       expect(image.uPlane.rowStride, chromaRowStride, reason: 'swapNv must preserve the chroma row stride');
     });
