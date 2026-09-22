@@ -221,6 +221,37 @@ jobs:
           flutter pub get
           flutter build macos --release
 
+  # YUV-24: proves the plugin's Android build actually configures and builds
+  # the shared src/CMakeLists.txt source list through the NDK, not just that
+  # the Gradle file parses. android/build.gradle wires externalNativeBuild's
+  # cmake.path straight at ../src/CMakeLists.txt, so a real `flutter build apk`
+  # is what exercises the explicit source list on Android, the same list
+  # test/cmake_sources_test.dart keeps in sync with src/**/*.c on the host.
+  android-native-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: Build example (android)
+        working-directory: example
+        run: flutter build apk --debug
+
   example-analyze-and-build:
     runs-on: ubuntu-latest
     steps:
