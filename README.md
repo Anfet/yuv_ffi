@@ -83,9 +83,8 @@ Main constructors:
 - Linux: native FFI. Verified in CI build/smoke jobs; not re-run on a local Linux host.
 - Web: package builds and uses a **partial WASM backend** (work in progress, not feature-complete)
 
-macOS/Linux app-runtime and iOS build verification above reflect the YUV-06 result, which is on
-review and not yet accepted by the engineer at the time of writing; treat it as the latest available
-evidence rather than a final, accepted claim.
+macOS/Linux app-runtime and iOS build verification above reflect the YUV-06 result, accepted and
+covered by the CI pipeline (`.github/workflows/ci.yml`).
 
 ## Example camera preview notes
 
