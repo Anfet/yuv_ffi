@@ -204,6 +204,62 @@ void main() {
       }
     });
 
+    test('pins the F-011/F-012 planar tolerance sections and their case assignment (YUV-49)', () {
+      final tolerances = manifest['tolerances'] as Map<String, dynamic>;
+      final cases = (manifest['cases'] as List<dynamic>).cast<Map<String, dynamic>>();
+      Map<String, dynamic> byId(String id) => cases.singleWhere((entry) => entry['id'] == id);
+
+      expect(tolerances['blurPlanar'], isA<Map<String, dynamic>>());
+      expect(tolerances['blurPlanar']['rationale'], contains('F-011'));
+      expect(tolerances['effectPlanar'], isA<Map<String, dynamic>>());
+      expect(tolerances['effectPlanar']['rationale'], contains('F-012'));
+
+      const blurArtifactsByOperation = <String, List<String>>{
+        'GAUSSIANBLUR': <String>['GAUSSIAN_DEFAULT', 'GAUSSIAN_R3_S2'],
+        'BOXBLUR': <String>['BOX_DEFAULT', 'BOX_FULL', 'BOX_RECT'],
+        'MEANBLUR': <String>['MEAN_DEFAULT', 'MEAN_FULL', 'MEAN_RECT'],
+      };
+      final expectedBlurPlanarIds = <String>{
+        for (final entry in blurArtifactsByOperation.entries)
+          for (final artifact in entry.value)
+            for (final format in <String>['I420', 'NV21']) 'BLUR-${entry.key}-$format-$artifact',
+      };
+
+      const expectedEffectPlanarIds = <String>{
+        'EFFECT-BLACKWHITE-I420',
+        'EFFECT-BLACKWHITE-NV21',
+        'EFFECT-NEGATE-I420',
+        'EFFECT-NEGATE-NV21',
+      };
+
+      expect(expectedBlurPlanarIds, hasLength(16));
+      for (final id in expectedBlurPlanarIds) {
+        expect(byId(id)['comparison'], 'blurPlanar', reason: id);
+      }
+      for (final id in expectedEffectPlanarIds) {
+        expect(byId(id)['comparison'], 'effectPlanar', reason: id);
+      }
+
+      final actualBlurPlanarIds = cases.where((entry) => entry['comparison'] == 'blurPlanar').map((entry) => entry['id'] as String).toSet();
+      final actualEffectPlanarIds = cases.where((entry) => entry['comparison'] == 'effectPlanar').map((entry) => entry['id'] as String).toSet();
+      expect(actualBlurPlanarIds, expectedBlurPlanarIds);
+      expect(actualEffectPlanarIds, expectedEffectPlanarIds);
+
+      for (final id in <String>[
+        'BLUR-GAUSSIANBLUR-BGRA8888-GAUSSIAN_DEFAULT',
+        'BLUR-BOXBLUR-BGRA8888-BOX_DEFAULT',
+        'BLUR-MEANBLUR-BGRA8888-MEAN_DEFAULT'
+      ]) {
+        expect(byId(id)['comparison'], 'blur', reason: id);
+      }
+      for (final id in <String>['EFFECT-BLACKWHITE-BGRA8888', 'EFFECT-NEGATE-BGRA8888']) {
+        expect(byId(id)['comparison'], 'exact', reason: id);
+      }
+      for (final id in <String>['EFFECT-GRAYSCALE-I420', 'EFFECT-GRAYSCALE-NV21']) {
+        expect(byId(id)['comparison'], 'yuvRoundTrip', reason: id);
+      }
+    });
+
     test('generator and helper remain independent from the package under test', () async {
       final generator = await File('tool/reference/generate_test_pattern_references.dart').readAsString();
       final helper = await File('test/helpers/reference/test_pattern_reference.dart').readAsString();
