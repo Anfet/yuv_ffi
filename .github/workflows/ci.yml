@@ -313,6 +313,15 @@ jobs:
         working-directory: example
         run: flutter pub get
 
+      # The runner's CocoaPods CDN index has, in practice, been stale enough
+      # to reject the MLKit graph outright ("specs repository is too
+      # out-of-date to satisfy dependencies") on a cold cache, even though the
+      # same graph resolves cleanly once the index is current. `pod install`
+      # already prints this exact remedy in its own error message.
+      - name: Update CocoaPods spec repo
+        working-directory: example/ios
+        run: pod repo update
+
       - name: Build example (ios, no codesign)
         working-directory: example
         run: flutter build ios --debug --no-codesign
