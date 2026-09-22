@@ -84,7 +84,7 @@ Main constructors:
 - Web: package builds and uses a **partial WASM backend** (work in progress, not feature-complete)
 
 macOS/Linux app-runtime and iOS build verification above reflect the YUV-06 result, accepted and
-covered by the CI pipeline (`.github/workflows/ci.yml`).
+covered by [CI run 35775516094](https://github.com/Anfet/yuv_ffi/actions/runs/35775516094).
 
 ## Example camera preview notes
 
