@@ -27,6 +27,91 @@ static void yuv_convert_v1_identity(
     *outSourceY = destinationY;
 }
 
+/*
+ * True for the I420 <-> NV12 pair, the one cross-format conversion that stores
+ * exactly the same samples in a different layout.
+ */
+static int yuv_convert_v1_is_relayout(uint32_t sourceFormat, uint32_t destinationFormat) {
+    return (sourceFormat == YUV_VIEW_FORMAT_I420 && destinationFormat == YUV_VIEW_FORMAT_NV12) ||
+           (sourceFormat == YUV_VIEW_FORMAT_NV12 && destinationFormat == YUV_VIEW_FORMAT_I420);
+}
+
+/*
+ * Moves I420 <-> NV12 as stored samples: Y byte for byte, and each chroma
+ * sample de-interleaved or interleaved in place.
+ *
+ * Both formats are BT.601 limited-range 4:2:0 with identical logical sample
+ * geometry -- only the chroma *layout* differs (two planar planes versus one
+ * interleaved plane). Routing the pair through decode-to-RGB and re-encode
+ * would quantize a frame that lost nothing to begin with: it perturbs every Y
+ * sample and re-averages chroma that was already at final resolution. The
+ * independent reference oracle
+ * (tool/reference/generate_test_pattern_references.dart, `i420ToNv21Uv`)
+ * defines this conversion as the pure relayout implemented here, and compares
+ * it byte-exact.
+ *
+ * Both views are already validated, so every sample address below is in
+ * bounds; active samples move through each descriptor's own strides and no
+ * padding byte is read or written.
+ */
+static void yuv_convert_v1_relayout(
+    const YuvValidatedConstFrameView *source, const YuvValidatedMutableFrameView *destination) {
+    for (uint32_t y = 0; y < destination->height; y++) {
+        for (uint32_t x = 0; x < destination->width; x++) {
+            const uint8_t *fromLuma = yuv_kernel_v1_const_sample(&source->planes[0], x, y);
+            uint8_t *toLuma = yuv_kernel_v1_mutable_sample(&destination->planes[0], x, y);
+            if (fromLuma == NULL || toLuma == NULL) {
+                return;
+            }
+            toLuma[0] = fromLuma[0];
+        }
+    }
+
+    uint32_t chromaWidth = (destination->width + 1u) / 2u;
+    uint32_t chromaHeight = (destination->height + 1u) / 2u;
+
+    for (uint32_t y = 0; y < chromaHeight; y++) {
+        for (uint32_t x = 0; x < chromaWidth; x++) {
+            uint8_t u;
+            uint8_t v;
+
+            if (source->format == YUV_VIEW_FORMAT_I420) {
+                const uint8_t *fromU = yuv_kernel_v1_const_sample(&source->planes[1], x, y);
+                const uint8_t *fromV = yuv_kernel_v1_const_sample(&source->planes[2], x, y);
+                if (fromU == NULL || fromV == NULL) {
+                    return;
+                }
+                u = fromU[0];
+                v = fromV[0];
+            } else {
+                const uint8_t *fromUv = yuv_kernel_v1_const_sample(&source->planes[1], x, y);
+                if (fromUv == NULL) {
+                    return;
+                }
+                u = fromUv[0];
+                v = fromUv[1];
+            }
+
+            if (destination->format == YUV_VIEW_FORMAT_I420) {
+                uint8_t *toU = yuv_kernel_v1_mutable_sample(&destination->planes[1], x, y);
+                uint8_t *toV = yuv_kernel_v1_mutable_sample(&destination->planes[2], x, y);
+                if (toU == NULL || toV == NULL) {
+                    return;
+                }
+                toU[0] = u;
+                toV[0] = v;
+            } else {
+                uint8_t *toUv = yuv_kernel_v1_mutable_sample(&destination->planes[1], x, y);
+                if (toUv == NULL) {
+                    return;
+                }
+                toUv[0] = u;
+                toUv[1] = v;
+            }
+        }
+    }
+}
+
 FFI_PLUGIN_EXPORT YuvStatus yuv_convert_v1(const YuvConstFrameV1 *source, YuvMutableFrameV1 *destination,
     const YuvConvertOptionsV1 *options) {
     YuvStatus optionsStatus = yuv_validate_v1_options_header(options, (uint32_t)sizeof(YuvConvertOptionsV1));
@@ -76,6 +161,14 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_convert_v1(const YuvConstFrameV1 *source, YuvMut
      * strides, and an identity map is trivially block aligned. */
     if (sourceView.format == destinationView.format) {
         yuv_kernel_v1_transform(&sourceView, &destinationView, yuv_convert_v1_identity, NULL, 1);
+        return YUV_STATUS_OK;
+    }
+
+    /* I420 <-> NV12 is a layout change over identical samples, so it takes the
+     * same "move stored bytes" treatment as the same-format copy rather than
+     * the decode/re-encode path below. */
+    if (yuv_convert_v1_is_relayout(sourceView.format, destinationView.format)) {
+        yuv_convert_v1_relayout(&sourceView, &destinationView);
         return YUV_STATUS_OK;
     }
 
