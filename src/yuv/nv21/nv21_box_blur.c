@@ -44,6 +44,15 @@ static int64_t yuv_sat_rect(const int64_t *sat, int width, int x1, int y1, int x
  * each (int64_t and uint8_t respectively): one pair is sized once for the
  * luma plane and reused for the smaller chroma planes, instead of a fresh
  * malloc/free pair per plane.
+ *
+ * CONTRACT: every call site passes src == dst (in-place blur on image->y, or
+ * on the deinterleaved u_plane/v_plane scratch, which is likewise blurred in
+ * place before being repacked). The unpack loop only reads/writes the
+ * `width` valid samples of each row through `stride`; any padding past
+ * width is never read or written, so it survives only because src and dst
+ * are the same buffer. A future caller with src != dst would need to also
+ * copy dst's padding from src first, or the destination's gaps would be
+ * left uninitialized/stale.
  */
 static void yuv_box_blur_channel(
         const uint8_t *src,

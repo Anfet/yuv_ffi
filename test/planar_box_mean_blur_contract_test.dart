@@ -41,6 +41,41 @@ void main() {
     );
   }
 
+  /// Same content as [patternI420], but every plane carries a padded row
+  /// stride and a `pixelStride` of 2 (one gap byte after every sample). The
+  /// gap bytes are filled with a sentinel so a test can assert they survive
+  /// blur untouched.
+  YuvImage patternI420Padded(int width, int height, {int gapByte = 0xEE}) {
+    final uvW = (width + 1) ~/ 2, uvH = (height + 1) ~/ 2;
+    final yRowStride = width * 2;
+    final uvRowStride = uvW * 2;
+    final y = Uint8List(height * yRowStride)..fillRange(0, height * yRowStride, gapByte);
+    final u = Uint8List(uvH * uvRowStride)..fillRange(0, uvH * uvRowStride, gapByte);
+    final v = Uint8List(uvH * uvRowStride)..fillRange(0, uvH * uvRowStride, gapByte);
+    for (int row = 0; row < height; row++) {
+      for (int col = 0; col < width; col++) {
+        y[row * yRowStride + col * 2] = ((row * width + col) * 7) & 0xFF;
+      }
+    }
+    for (int row = 0; row < uvH; row++) {
+      for (int col = 0; col < uvW; col++) {
+        final i = row * uvW + col;
+        u[row * uvRowStride + col * 2] = (i * 11) & 0xFF;
+        v[row * uvRowStride + col * 2] = (i * 13) & 0xFF;
+      }
+    }
+    return YuvImage(
+      YuvFileFormat.i420,
+      width,
+      height,
+      planes: [
+        YuvPlane(height, yRowStride, 2, y),
+        YuvPlane(uvH, uvRowStride, 2, u),
+        YuvPlane(uvH, uvRowStride, 2, v),
+      ],
+    );
+  }
+
   YuvImage patternNv21(int width, int height) {
     final uvW = (width + 1) ~/ 2, uvH = (height + 1) ~/ 2;
     final y = Uint8List(width * height);
@@ -58,6 +93,36 @@ void main() {
       planes: [
         YuvPlane(height, width, 1, y),
         YuvPlane(uvH, uvW * 2, 2, uv),
+      ],
+    );
+  }
+
+  /// Same content as [patternNv21], but with an additional row-stride pad on
+  /// top of the format's inherent chroma `pixelStride` of 2. Gap bytes are
+  /// filled with a sentinel so a test can assert they survive blur untouched.
+  YuvImage patternNv21Padded(int width, int height, {int gapByte = 0xEE}) {
+    final uvW = (width + 1) ~/ 2, uvH = (height + 1) ~/ 2;
+    final yRowStride = width + 4;
+    final uvRowStride = uvW * 2 + 4;
+    final y = Uint8List(height * yRowStride)..fillRange(0, height * yRowStride, gapByte);
+    final uv = Uint8List(uvH * uvRowStride)..fillRange(0, uvH * uvRowStride, gapByte);
+    for (int row = 0; row < height; row++) {
+      for (int col = 0; col < width; col++) {
+        y[row * yRowStride + col] = ((row * width + col) * 7) & 0xFF;
+      }
+    }
+    for (int row = 0; row < uvH; row++) {
+      for (int col = 0; col < uvW * 2; col++) {
+        uv[row * uvRowStride + col] = ((row * uvW * 2 + col) * 11) & 0xFF;
+      }
+    }
+    return YuvImage(
+      YuvFileFormat.nv21,
+      width,
+      height,
+      planes: [
+        YuvPlane(height, yRowStride, 1, y),
+        YuvPlane(uvH, uvRowStride, 2, uv),
       ],
     );
   }
@@ -143,6 +208,40 @@ void main() {
       expect(image.uPlane.bytes, isNot(orderedEquals(beforeU)));
       expect(image.vPlane.bytes, isNot(orderedEquals(beforeV)));
     });
+
+    test('a padded pixelStride > 1 plane blurs the same samples as a tight one, gaps untouched', () {
+      if (!nativeAvailable) {
+        markTestSkipped('native library is not available on this host');
+        return;
+      }
+      // YUV-47: yuv420_box_blur's scratch packing now walks src/dst by
+      // rowStride/pixelStride instead of memcpy-ing whole rows, so a
+      // pixelStride > 1 plane is a genuinely different code path from the
+      // tight-stride cases above, not just a relabeling of the same bytes.
+      const width = 16, height = 16;
+      final tight = patternI420(width, height)..boxBlur(radius: 3);
+      final padded = patternI420Padded(width, height)..boxBlur(radius: 3);
+
+      final uvW = (width + 1) ~/ 2, uvH = (height + 1) ~/ 2;
+      for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+          expect(
+            padded.yPlane.bytes[row * width * 2 + col * 2],
+            tight.yPlane.bytes[row * width + col],
+            reason: 'Y sample ($col, $row)',
+          );
+          expect(padded.yPlane.bytes[row * width * 2 + col * 2 + 1], 0xEE, reason: 'Y gap byte ($col, $row) must stay untouched');
+        }
+      }
+      for (int row = 0; row < uvH; row++) {
+        for (int col = 0; col < uvW; col++) {
+          expect(padded.uPlane.bytes[row * uvW * 2 + col * 2], tight.uPlane.bytes[row * uvW + col], reason: 'U sample ($col, $row)');
+          expect(padded.vPlane.bytes[row * uvW * 2 + col * 2], tight.vPlane.bytes[row * uvW + col], reason: 'V sample ($col, $row)');
+          expect(padded.uPlane.bytes[row * uvW * 2 + col * 2 + 1], 0xEE, reason: 'U gap byte ($col, $row) must stay untouched');
+          expect(padded.vPlane.bytes[row * uvW * 2 + col * 2 + 1], 0xEE, reason: 'V gap byte ($col, $row) must stay untouched');
+        }
+      }
+    });
   });
 
   group('NV21', () {
@@ -218,6 +317,42 @@ void main() {
 
       expect(a.yPlane.bytes, orderedEquals(b.yPlane.bytes));
       expect(a.uPlane.bytes, orderedEquals(b.uPlane.bytes));
+    });
+
+    test('a padded row stride blurs the same samples as a tight one, gaps untouched', () {
+      if (!nativeAvailable) {
+        markTestSkipped('native library is not available on this host');
+        return;
+      }
+      // YUV-47: nv21_box_blur's Y-plane scratch packing now walks src/dst by
+      // rowStride instead of memcpy-ing a whole tight plane in one call, so a
+      // padded row stride is a genuinely different code path from the tight
+      // cases above. The interleaved chroma plane already has an inherent
+      // pixelStride of 2 (deinterleave/reinterleave), so this exercises an
+      // additional row-stride pad on top of that.
+      const width = 16, height = 16;
+      final tight = patternNv21(width, height)..boxBlur(radius: 3);
+      final padded = patternNv21Padded(width, height)..boxBlur(radius: 3);
+
+      final uvW = (width + 1) ~/ 2, uvH = (height + 1) ~/ 2;
+      final paddedYStride = width + 4;
+      final paddedUvStride = uvW * 2 + 4;
+      for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+          expect(padded.yPlane.bytes[row * paddedYStride + col], tight.yPlane.bytes[row * width + col], reason: 'Y sample ($col, $row)');
+        }
+        for (int col = width; col < paddedYStride; col++) {
+          expect(padded.yPlane.bytes[row * paddedYStride + col], 0xEE, reason: 'Y gap byte at row $row, col $col must stay untouched');
+        }
+      }
+      for (int row = 0; row < uvH; row++) {
+        for (int col = 0; col < uvW * 2; col++) {
+          expect(padded.uPlane.bytes[row * paddedUvStride + col], tight.uPlane.bytes[row * uvW * 2 + col], reason: 'UV sample ($col, $row)');
+        }
+        for (int col = uvW * 2; col < paddedUvStride; col++) {
+          expect(padded.uPlane.bytes[row * paddedUvStride + col], 0xEE, reason: 'UV gap byte at row $row, col $col must stay untouched');
+        }
+      }
     });
   });
 
