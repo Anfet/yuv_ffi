@@ -5,7 +5,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.5.0'
+  sdk: '>=3.10.0'
 
 
 dependencies:
@@ -18,7 +18,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   image_picker: ^1.1.2
   camera: ^0.11.0+2
-  flutter_webrtc: 0.12.8
+  flutter_webrtc: ^1.6.2+hotfix.3
   google_mlkit_face_detection: ^0.13.1
 
 dev_dependencies:
