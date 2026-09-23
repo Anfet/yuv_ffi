@@ -12,9 +12,9 @@
 | [ ] | REL-04 | BLOCKED | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
 | [ ] | REL-05 | BLOCKED | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
 | [ ] | REL-06 | BLOCKED | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
-| [ ] | REL-07 | BLOCKED | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
+| [x] | REL-07 | DONE | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
 | [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
-| [ ] | REL-09 | BLOCKED | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
+| [ ] | REL-09 | IN_PROGRESS | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
 | [ ] | REL-10 | BLOCKED | 2 · Terra | 08, 09 | R2 | Типизированные ошибки ABI/loader. |
 | [ ] | REL-11 | BLOCKED | 2 · Terra | 02, 05, 08 | R3 | Widget/provider и revision. |
 | [x] | REL-12 | DONE | 2 · Terra | — | R1 | BGRA с `pixelStride > 4`. |
