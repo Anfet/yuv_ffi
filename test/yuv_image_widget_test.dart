@@ -163,13 +163,7 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   YuvImage rotate(YuvImageRotation rotation) => throw UnimplementedError();
 
   @override
-  Uint8List toBgra8888() {
-    conversions++;
-    if (_shouldThrow) {
-      throw UnsupportedError('fake decode failure');
-    }
-    return _bytes;
-  }
+  Uint8List toBgra8888() => _bytes;
 
   @override
   Future<ui.Image> toImage() => throw UnimplementedError();
@@ -232,7 +226,218 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   Uint8List toBytes() => throw UnimplementedError();
 
   @override
-  Uint8List toBgraBytes() => throw UnimplementedError();
+  Uint8List toBgraBytes() {
+    conversions++;
+    if (_shouldThrow) {
+      throw UnsupportedError('fake decode failure');
+    }
+    return _bytes;
+  }
+}
+
+/// A [YuvImage] whose single BGRA plane has row padding and a pixel gap.
+///
+/// [toBgraBytes] packs only the four live bytes of each logical pixel and
+/// skips [YuvPlane.pixelStride] and [YuvPlane.rowStride] slack, mirroring what
+/// the real IO/Web backends do (REL-05/REL-12). This class exists to prove the
+/// widget/provider layer correctly consumes that tight output, not to
+/// re-verify the packing logic itself.
+class _PaddedBgraImage implements YuvImage, YuvRevisionAware {
+  _PaddedBgraImage(this.width, this.height, {required int pixelStride, required int rowPadding})
+    : pixelStride = pixelStride,
+      _plane = YuvPlane(height, width * pixelStride + rowPadding, pixelStride) {
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        final base = y * _plane.rowStride + x * pixelStride;
+        _plane.bytes[base] = (x * 4) & 0xFF;
+        _plane.bytes[base + 1] = (x * 4 + 1) & 0xFF;
+        _plane.bytes[base + 2] = (x * 4 + 2) & 0xFF;
+        _plane.bytes[base + 3] = (x * 4 + 3) & 0xFF;
+      }
+    }
+  }
+
+  final int pixelStride;
+  final YuvPlane _plane;
+  int _revision = 0;
+
+  @override
+  int get internalRevision => _revision;
+
+  @override
+  void bumpInternalRevision() => _revision++;
+
+  @override
+  final int width;
+
+  @override
+  final int height;
+
+  @override
+  YuvFileFormat get format => YuvFileFormat.bgra8888;
+
+  @override
+  List<YuvPlane> get planes => [_plane];
+
+  @override
+  YuvPlane get yPlane => _plane;
+
+  @override
+  YuvPlane get uPlane => throw UnimplementedError();
+
+  @override
+  YuvPlane get vPlane => throw UnimplementedError();
+
+  @override
+  YuvPlane get y => _plane;
+
+  @override
+  YuvPlane? get u => null;
+
+  @override
+  YuvPlane? get v => null;
+
+  @override
+  ui.Size get size => ui.Size(width.toDouble(), height.toDouble());
+
+  @override
+  Uint8List getBytes() => _plane.bytes;
+
+  @override
+  YuvImage copy({bool blank = false}) => throw UnimplementedError();
+
+  @override
+  YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
+
+  @override
+  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
+
+  @override
+  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
+
+  @override
+  YuvImage blackwhite() => throw UnimplementedError();
+
+  @override
+  YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => throw UnimplementedError();
+
+  @override
+  YuvImage boxBlur({int radius = 10, ui.Rect? rect}) => throw UnimplementedError();
+
+  @override
+  YuvImage meanBlur({int radius = 2, ui.Rect? rect}) => throw UnimplementedError();
+
+  @override
+  YuvImage swapNv() => throw UnimplementedError();
+
+  @override
+  YuvImage toYuvNv21() => throw UnimplementedError();
+
+  @override
+  YuvImage toYuvI420() => throw UnimplementedError();
+
+  @override
+  YuvImage toYuvBgra8888() => this;
+
+  @override
+  YuvImage crop(ui.Rect rect) => throw UnimplementedError();
+
+  @override
+  YuvImage flipHorizontally() => throw UnimplementedError();
+
+  @override
+  YuvImage flipVertically() => throw UnimplementedError();
+
+  @override
+  void fromRgba8888(Uint8List bytes) => throw UnimplementedError();
+
+  @override
+  YuvImage grayscale() => throw UnimplementedError();
+
+  @override
+  YuvImage negate() => throw UnimplementedError();
+
+  @override
+  YuvImage rotate(YuvImageRotation rotation) => throw UnimplementedError();
+
+  @override
+  Uint8List toBgra8888() => throw UnimplementedError();
+
+  @override
+  Future<ui.Image> toImage() => throw UnimplementedError();
+
+  @override
+  YuvImage applyRgbaBytes(Uint8List bytes) => throw UnimplementedError();
+
+  @override
+  YuvImage applyGrayscale() => throw UnimplementedError();
+
+  @override
+  YuvImage applyBlackWhite() => throw UnimplementedError();
+
+  @override
+  YuvImage applyNegate() => throw UnimplementedError();
+
+  @override
+  YuvImage applyGaussianBlur({required int radius, required double sigma}) => throw UnimplementedError();
+
+  @override
+  YuvImage applyMeanBlur({required int radius, ui.Rect? region}) => throw UnimplementedError();
+
+  @override
+  YuvImage applyBoxBlur({required int radius, ui.Rect? region}) => throw UnimplementedError();
+
+  @override
+  YuvImage applyCrop(ui.Rect region) => throw UnimplementedError();
+
+  @override
+  YuvImage applyFlipHorizontal() => throw UnimplementedError();
+
+  @override
+  YuvImage applyFlipVertical() => throw UnimplementedError();
+
+  @override
+  YuvImage applyRotation(YuvImageRotation rotation) => throw UnimplementedError();
+
+  @override
+  YuvImage applyFormat(YuvPixelFormat format) => throw UnimplementedError();
+
+  @override
+  YuvImage applyChromaSwap() => throw UnimplementedError();
+
+  @override
+  YuvImage cropped(ui.Rect region) => throw UnimplementedError();
+
+  @override
+  YuvImage rotated(YuvImageRotation rotation) => throw UnimplementedError();
+
+  @override
+  YuvImage toI420() => throw UnimplementedError();
+
+  @override
+  YuvImage toNv12() => throw UnimplementedError();
+
+  @override
+  YuvImage toBgra() => throw UnimplementedError();
+
+  @override
+  Uint8List toBytes() => throw UnimplementedError();
+
+  @override
+  Uint8List toBgraBytes() {
+    final tight = Uint8List(width * height * 4);
+    for (int py = 0; py < height; py++) {
+      for (int px = 0; px < width; px++) {
+        final srcBase = py * _plane.rowStride + px * pixelStride;
+        final dstBase = (py * width + px) * 4;
+        tight[dstBase] = _plane.bytes[srcBase];
+        tight[dstBase + 1] = _plane.bytes[srcBase + 1];
+        tight[dstBase + 2] = _plane.bytes[srcBase + 2];
+        tight[dstBase + 3] = _plane.bytes[srcBase + 3];
+      }
+    }
+    return tight;
+  }
 }
 
 void main() {
@@ -395,6 +600,68 @@ void main() {
 
       expect(image.conversions, greaterThan(afterFirstBuild), reason: 'a mutated frame must not be served from the cache');
     });
+
+    testWidgets('a direct plane write plus markDirty changes the decoded pixels the widget shows', (tester) async {
+      final image = _FakeBgraImage(2, 2, bytes: Uint8List(2 * 2 * 4));
+
+      await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image)));
+      await tester.pumpAndSettle();
+
+      // Bytes fed to ui.decodeImageFromPixels come straight from toBgraBytes(),
+      // so comparing its output before/after is exactly what the widget saw.
+      final beforeBytes = Uint8List.fromList(image.toBgraBytes());
+      image.conversions = 0;
+
+      // Direct write through the mutable plane API, exactly as documented on
+      // `YuvImageInvalidation.markDirty`. This fake's backing bytes are shared
+      // with getBytes()/toBgraBytes() through the constructor, mirroring the
+      // real backends where the plane and the frame's bytes are one buffer.
+      image.getBytes()[0] = 0xAB;
+      image.markDirty();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: YuvImageWidget(image: image, boxFit: BoxFit.contain),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(image.conversions, greaterThan(0), reason: 'markDirty after a direct write must force a redecode, not a cache hit');
+      final afterBytes = image.toBgraBytes();
+      expect(afterBytes[0], 0xAB);
+      expect(afterBytes, isNot(orderedEquals(beforeBytes)));
+    });
+  });
+
+  testWidgets('YuvImageWidget renders a padded BGRA source through toBgraBytes()', (tester) async {
+    const width = 3;
+    const height = 2;
+    final padded = _PaddedBgraImage(width, height, pixelStride: 5, rowPadding: 7);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(child: YuvImageWidget(image: padded)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final imageWidget = tester.widget<Image>(find.byType(Image));
+    expect(imageWidget.width, width.toDouble());
+    expect(imageWidget.height, height.toDouble());
+
+    // The widget must have decoded successfully (no error builder triggered)
+    // and the tight bytes toBgraBytes() produced must be exactly width*height*4
+    // with no padding or gap bytes leaking into the packed pixel content.
+    final tight = padded.toBgraBytes();
+    expect(tight.length, width * height * 4);
+    for (int x = 0; x < width; x++) {
+      final base = x * 4;
+      expect(tight[base], (x * 4) & 0xFF);
+      expect(tight[base + 1], (x * 4 + 1) & 0xFF);
+      expect(tight[base + 2], (x * 4 + 2) & 0xFF);
+      expect(tight[base + 3], (x * 4 + 3) & 0xFF);
+    }
+    expect(find.byType(Image), findsOneWidget);
   });
 
   testWidgets('YuvImageWidget matches golden', (tester) async {

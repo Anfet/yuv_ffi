@@ -109,7 +109,7 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
     try {
       // Allow one frame so placeholder can render before CPU-heavy conversion.
       await Future<void>.delayed(Duration.zero);
-      final bytes = image.toBgra8888();
+      final bytes = image.toBgraBytes();
       if (bytes.length != expectedTotalBytes) {
         throw StateError(
           'Invalid BGRA buffer size: got ${bytes.length}, expected $expectedTotalBytes '
