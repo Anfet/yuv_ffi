@@ -6,26 +6,26 @@
 
 | ✓ | ID | Статус | Tier / модель | Зависит от | Ревью | Результат |
 | --- | --- | --- | --- | --- | --- | --- |
-| [x] | REL-01 | REVIEW (ACCEPT, follow-up) | 2 · Terra | — | R1 | `YuvPixelFormat`, NV12, wire ID. |
-| [x] | REL-02 | REVIEW (ACCEPT) | 2 · Terra | — | R1 | Живые плоскости, `markDirty`, `applyPlanes`. |
-| [x] | REL-03 | REVIEW (ACCEPT, rework passed) | 2 · Terra | 01, 02 | R1 | Фабрики, `allocate`, RGBA импорт. |
+| [x] | REL-01 | DONE | 2 · Terra | — | R1 | `YuvPixelFormat`, NV12, wire ID. |
+| [x] | REL-02 | DONE | 2 · Terra | — | R1 | Живые плоскости, `markDirty`, `applyPlanes`. |
+| [x] | REL-03 | DONE | 2 · Terra | 01, 02 | R1 | Фабрики, `allocate`, RGBA импорт. |
 | [ ] | REL-04 | BLOCKED | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
 | [ ] | REL-05 | BLOCKED | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
 | [ ] | REL-06 | BLOCKED | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
 | [ ] | REL-07 | BLOCKED | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
-| [ ] | REL-08 | READY | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
+| [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
 | [ ] | REL-09 | BLOCKED | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
 | [ ] | REL-10 | BLOCKED | 2 · Terra | 08, 09 | R2 | Типизированные ошибки ABI/loader. |
 | [ ] | REL-11 | BLOCKED | 2 · Terra | 02, 05, 08 | R3 | Widget/provider и revision. |
-| [x] | REL-12 | REVIEW (ACCEPT, follow-up) | 2 · Terra | — | R1 | BGRA с `pixelStride > 4`. |
-| [x] | REL-13 | REVIEW (ACCEPT, redo passed) | 2 · Terra | — | R1 | Границы X/Y в `YuvPlane`. |
-| [ ] | REL-14 | READY | 3 · Luna | — | R4 | Apple/CMake release metadata. |
-| [ ] | REL-15 | READY | 2 · Terra | — | R4 | Нижняя граница Flutter/Dart. |
+| [x] | REL-12 | DONE | 2 · Terra | — | R1 | BGRA с `pixelStride > 4`. |
+| [x] | REL-13 | DONE | 2 · Terra | — | R1 | Границы X/Y в `YuvPlane`. |
+| [x] | REL-14 | DONE | 3 · Luna | — | R4 | Apple/CMake release metadata. |
+| [x] | REL-15 | DONE | 2 · Terra | — | R4 | Нижняя граница Flutter/Dart. |
 | [ ] | REL-16 | BLOCKED | 3 · Luna | 01–15 | R4 | README, пример, Dartdoc, CHANGELOG. |
 | [ ] | REL-17 | BLOCKED | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
 | [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
 
-**Итого (после волны 1 и ревью R1 2026-09-23):** 3 REVIEW (ACCEPT, ждут интеграции), 2 REJECTED (доработка), 3 READY, 11 BLOCKED, 0 IN_PROGRESS, 0 DONE. 0 ARCH REQUIRED.
+**Итого (после волны 1, интеграции и коммитов 2026-09-23):** 8 DONE (REL-01, REL-02, REL-03, REL-08, REL-12, REL-13, REL-14, REL-15), 0 REVIEW, 0 REJECTED, 0 READY, 10 BLOCKED, 0 IN_PROGRESS. 0 ARCH REQUIRED.
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Ревью пакета R1 (2026-09-23)
