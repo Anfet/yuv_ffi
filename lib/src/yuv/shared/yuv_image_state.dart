@@ -30,17 +30,51 @@ class YuvImageState {
   /// given rather than repacked. When it is `null`, one tightly packed plane per
   /// format plane is allocated and zero-filled.
   ///
+  /// [allowLargerNvChromaStride] is the REL-03 `nv12` entry point's opt-in to a
+  /// pixel stride above [YuvGeometry.nvChromaPixelStride] being real padding
+  /// rather than a rejected layout; see [YuvGeometry.validateImage]. It defaults
+  /// to `false`, which is what every other entry point (including legacy
+  /// `nv21`) keeps using.
+  ///
   /// Throws [ArgumentError] for a non-positive dimension, a plane count that
-  /// does not match [format], or a plane that cannot hold its declared
-  /// geometry -- always before any backend allocation.
-  YuvImageState(this._format, this._width, this._height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes}) {
+  /// does not match [format], a plane that cannot hold its declared geometry,
+  /// or (when [allowLargerNvChromaStride] is `false`) an interleaved chroma
+  /// [uvPixelStride] other than exactly [YuvGeometry.nvChromaPixelStride] --
+  /// always before any backend allocation.
+  YuvImageState(
+    this._format,
+    this._width,
+    this._height, {
+    int yPixelStride = 1,
+    int uvPixelStride = 1,
+    Iterable<YuvPlane>? planes,
+    bool allowLargerNvChromaStride = false,
+  }) {
     YuvGeometry.validateDimensions(_width, _height);
 
     if (planes != null) {
       final copied = List<YuvPlane>.of(planes.map((plane) => plane.copy()));
-      YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: copied);
+      YuvGeometry.validateImage(
+        format: _format,
+        width: _width,
+        height: _height,
+        planes: copied,
+        allowLargerNvChromaStride: allowLargerNvChromaStride,
+      );
       _planes = copied;
       return;
+    }
+
+    if (allowLargerNvChromaStride && _format == YuvFileFormat.nv21 && uvPixelStride < YuvGeometry.nvChromaPixelStride) {
+      // The relaxed nv12 path never silently clamps a too-small stride the way
+      // the legacy default allocation does (allocatePlanes below): an explicit
+      // value below the packed-pair minimum is a caller mistake and must throw,
+      // not be corrected into a different geometry than what was asked for.
+      throw ArgumentError.value(
+        uvPixelStride,
+        'uvPixelStride',
+        'Interleaved NV12 chroma requires a pixel stride of at least ${YuvGeometry.nvChromaPixelStride}',
+      );
     }
 
     _planes = allocatePlanes(format: _format, width: _width, height: _height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride);
@@ -48,7 +82,7 @@ class YuvImageState {
     // Validate the geometry just allocated as well: a caller-supplied zero or
     // negative stride would otherwise produce a degenerate plane and still
     // reach a backend call.
-    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: _planes);
+    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: _planes, allowLargerNvChromaStride: allowLargerNvChromaStride);
   }
 
   /// Tightly packed, zero-filled planes for [format] at [width] x [height].
@@ -157,6 +191,25 @@ class YuvImageState {
     _revision++;
   }
 
+  /// Validates [planes] against this state's current format and geometry,
+  /// copies them in, and atomically replaces the plane set, advancing
+  /// [revision] exactly once.
+  ///
+  /// [planes] is copied and validated on that copy before [_planes] is
+  /// touched, so a rejected call leaves format, geometry, the existing plane
+  /// objects and [revision] exactly as they were -- a caller cannot observe a
+  /// half-applied replacement. Format and geometry are unchanged by this
+  /// call; only the plane content moves.
+  ///
+  /// Throws [ArgumentError] when [planes] does not match [format] at
+  /// [width] x [height].
+  void applyPlanes(Iterable<YuvPlane> planes) {
+    final copied = List<YuvPlane>.of(planes.map((plane) => plane.copy()));
+    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: copied);
+    _planes = copied;
+    _revision++;
+  }
+
   // There is deliberately no "replace but rewind the revision" variant. It
   // existed for an operation that published an intermediate result and then
   // corrected the counter afterwards (`swapNv` converting to NV21 first), which
@@ -260,24 +313,30 @@ class YuvImageState {
   }
 
   /// The BGRA plane's bytes as a fresh, tightly packed `width * height * 4`
-  /// buffer, repacking rows only when the plane declares padding.
+  /// buffer, repacking rows only when the plane declares row or pixel padding.
   ///
-  /// Decides on [YuvPlane.rowStride] alone, deliberately not through
-  /// [YuvGeometry.isTightBgra], which also demands `pixelStride == 4`: native
-  /// returns the bytes as they are for a plane whose row stride is already
-  /// `width * 4` but whose pixel stride is not 4, and matching that condition
-  /// is what keeps the backends byte-identical. The result is always a fresh
-  /// copy, never a view onto the mutable plane buffer.
+  /// A `pixelStride` greater than 4 (REL-12) leaves a per-pixel gap between
+  /// logical samples, distinct from row padding beyond `width * pixelStride`.
+  /// Both are skipped here: only the four logical bytes of each pixel are
+  /// copied, walked through the plane's own `rowStride`/`pixelStride`, so
+  /// neither kind of padding leaks into the tightly packed result. The result
+  /// is always a fresh copy, never a view onto the mutable plane buffer, and
+  /// the source plane is never modified.
   Uint8List packedBgraBytes() {
     final expectedRowStride = _width * 4;
-    if (yPlane.rowStride == expectedRowStride) {
+    if (yPlane.rowStride == expectedRowStride && yPlane.pixelStride == 4) {
       return Uint8List.fromList(yPlane.bytes);
     }
     final packed = Uint8List(_width * _height * 4);
+    final source = yPlane.bytes;
     for (int row = 0; row < _height; row++) {
-      final sourceStart = row * yPlane.rowStride;
-      final destinationStart = row * expectedRowStride;
-      packed.setRange(destinationStart, destinationStart + expectedRowStride, yPlane.bytes, sourceStart);
+      final sourceRowStart = row * yPlane.rowStride;
+      final destinationRowStart = row * expectedRowStride;
+      for (int column = 0; column < _width; column++) {
+        final sourceOffset = sourceRowStart + column * yPlane.pixelStride;
+        final destinationOffset = destinationRowStart + column * 4;
+        packed.setRange(destinationOffset, destinationOffset + 4, source, sourceOffset);
+      }
     }
     return packed;
   }

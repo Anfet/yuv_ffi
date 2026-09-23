@@ -109,6 +109,9 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
       _FakeBgraImage(width, height, bytes: blank ? Uint8List(_bytes.length) : Uint8List.fromList(_bytes), shouldThrow: _shouldThrow);
 
   @override
+  YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
+
+  @override
   Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
 
   @override

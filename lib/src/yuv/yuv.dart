@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 
@@ -85,6 +86,39 @@ abstract interface class YuvImage {
   /// If [planes] is provided, plane data is copied from it.
   factory YuvImage(YuvFileFormat format, int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl;
 
+  /// Creates an NV12 image with the truthfully named semi-planar storage.
+  ///
+  /// Canonical replacement for [YuvImage.nv21]: same interleaved chroma
+  /// storage, without claiming the legacy NV21 byte order.
+  ///
+  /// [width] and [height] are image dimensions in pixels.
+  /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
+  /// when [planes] is omitted; [uvPixelStride] defaults to `2`, matching the
+  /// interleaved `(U, V)` pair every sample stores.
+  /// If [planes] is provided, plane data is copied from it.
+  factory YuvImage.nv12(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl.nv12;
+
+  /// Allocates a new tightly packed, zero-filled image for [format] at
+  /// [width] x [height].
+  ///
+  /// Unlike the named factories, this always produces tight planes with no
+  /// row or pixel padding: it is the replacement for `copy(blank: true)`.
+  ///
+  /// Throws [ArgumentError] for a non-positive dimension.
+  factory YuvImage.allocate(YuvPixelFormat format, int width, int height) = YuvImageImpl.allocate;
+
+  /// Creates a new image of [format] at [width] x [height], filled by
+  /// converting [bytes] from RGBA8888.
+  ///
+  /// [bytes] must hold exactly `width * height * 4` tightly packed RGBA
+  /// bytes; RGBA8888 is an ABI input-only format and never a storable
+  /// [YuvPixelFormat] of its own.
+  ///
+  /// Throws [ArgumentError] when [bytes] does not have the exact expected
+  /// length, or for a non-positive dimension.
+  factory YuvImage.fromRgbaBytes(Uint8List bytes, {required int width, required int height, required YuvPixelFormat format}) =
+      YuvImageImpl.fromRgbaBytes;
+
   /// Returns all planes concatenated into a single byte buffer.
   Uint8List getBytes();
 
@@ -92,6 +126,23 @@ abstract interface class YuvImage {
   ///
   /// If [blank] is `true`, returns an image with same geometry but zeroed planes.
   YuvImage copy({bool blank = false});
+
+  /// Validates [planes] against this image's format and geometry, copies
+  /// them in, and atomically replaces the current plane set.
+  ///
+  /// On success, every previously obtained [planes]/[yPlane]/[uPlane]/[vPlane]
+  /// reference (and the legacy [y]/[u]/[v] aliases) becomes stale: it still
+  /// points at the storage this image held before the call, not the new one.
+  /// Callers must re-fetch plane references afterward. The revision advances
+  /// exactly once.
+  ///
+  /// Throws [ArgumentError] when [planes] does not match this image's format
+  /// and geometry. [planes] is copied and validated on that copy before this
+  /// image's own plane set is replaced, so a rejected call never touches it:
+  /// this image's bytes, metadata and revision are left exactly as they were.
+  ///
+  /// Returns `this`.
+  YuvImage applyPlanes(Iterable<YuvPlane> planes);
 
   /// Serializes this image into [sink].
   ///

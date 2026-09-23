@@ -54,8 +54,25 @@ abstract final class YuvGeometry {
   /// [planes] must already be in format order: `[Y]` for BGRA8888, `[Y, UV]`
   /// for NV, and `[Y, U, V]` for I420.
   ///
+  /// [allowLargerNvChromaStride] relaxes the interleaved-chroma check from
+  /// "exactly [nvChromaPixelStride]" to "at least [nvChromaPixelStride]".
+  /// Native code (`validated_view.c`/`yuv_kernel_v1.c`) already addresses every
+  /// sample through its declared `rowStride`/`pixelStride` generically and only
+  /// enforces a *minimum* pixel stride, so a larger explicit stride is real,
+  /// native-supported padding (design doc section 11: "Positive larger pixel/row
+  /// strides are supported"), not a layout native code cannot express. This
+  /// defaults to `false` so the legacy `nv21` entry points keep their 0.3.0
+  /// exact-two behavior unchanged; only the truthfully named `nv12` construction
+  /// path opts into the relaxed check (REL-03).
+  ///
   /// Throws [ArgumentError] when the geometry is inconsistent.
-  static void validateImage({required YuvFileFormat format, required int width, required int height, required List<YuvPlane> planes}) {
+  static void validateImage({
+    required YuvFileFormat format,
+    required int width,
+    required int height,
+    required List<YuvPlane> planes,
+    bool allowLargerNvChromaStride = false,
+  }) {
     validateDimensions(width, height);
 
     final expectedPlanes = planeCountFor(format);
@@ -76,14 +93,19 @@ abstract final class YuvGeometry {
     // interleaved NV row holds a (U, V) pair per chroma sample, so its last
     // sample needs one extra byte beyond the luma-style minimum.
     if (format == YuvFileFormat.nv21) {
-      // The converters index chroma as a packed pair, so only a stride of
-      // exactly two is actually supported. Anything else is rejected here
-      // rather than silently misread (or silently ignored) by native code.
-      if (planes[1].pixelStride != nvChromaPixelStride) {
+      // The converters index chroma as a packed pair, so a stride below two
+      // cannot hold it and is always rejected. A stride above two is a pixel
+      // gap -- real padding a generic stride-aware kernel supports -- but the
+      // legacy nv21 entry points keep rejecting it unless the caller opted into
+      // the relaxed nv12 check above.
+      final bool valid = allowLargerNvChromaStride ? planes[1].pixelStride >= nvChromaPixelStride : planes[1].pixelStride == nvChromaPixelStride;
+      if (!valid) {
         throw ArgumentError.value(
           planes[1].pixelStride,
           'uvPlane.pixelStride',
-          'Interleaved NV chroma requires a pixel stride of exactly $nvChromaPixelStride',
+          allowLargerNvChromaStride
+              ? 'Interleaved NV chroma requires a pixel stride of at least $nvChromaPixelStride'
+              : 'Interleaved NV chroma requires a pixel stride of exactly $nvChromaPixelStride',
         );
       }
       validatePlane(plane: planes[1], label: 'uvPlane', expectedHeight: uvHeight, expectedWidth: uvWidth, sampleBytes: nvChromaPixelStride);

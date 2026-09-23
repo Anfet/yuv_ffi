@@ -153,6 +153,9 @@ class _LegacyExternalImage implements YuvImage {
   YuvImage copy({bool blank = false}) => _LegacyExternalImage(width, height);
 
   @override
+  YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
+
+  @override
   Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
 
   @override

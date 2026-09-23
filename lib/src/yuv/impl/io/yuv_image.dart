@@ -10,6 +10,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_state.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
@@ -76,6 +77,24 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
     : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
+  /// Truthfully named replacement for [YuvImageImpl.nv21]: same semi-planar
+  /// storage, same default interleaved chroma pixel stride of 2.
+  ///
+  /// Unlike [YuvImageImpl.nv21], an explicit [uvPixelStride] above the packed
+  /// pair minimum is honored as a real pixel gap rather than being folded into
+  /// the legacy constructor's own validation; see
+  /// [YuvGeometry.validateImage]'s `allowLargerNvChromaStride`.
+  YuvImageImpl.nv12(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+    : _state = YuvImageState(
+        YuvFileFormat.nv21,
+        width,
+        height,
+        yPixelStride: yPixelStride,
+        uvPixelStride: uvPixelStride,
+        planes: planes,
+        allowLargerNvChromaStride: true,
+      );
+
   /// Creates a BGRA image, optionally adopting a caller-supplied plane.
   ///
   /// A valid padded plane keeps its `rowStride` and `pixelStride`: the plane is
@@ -90,8 +109,37 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   YuvImageImpl(YuvFileFormat format, int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
     : _state = YuvImageState(format, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
+  /// Allocates a new tightly packed, zero-filled image for [format].
+  ///
+  /// Always produces tight planes: no caller-supplied layout to preserve, so
+  /// this never takes a `planes` argument the way the named format factories
+  /// do.
+  factory YuvImageImpl.allocate(YuvPixelFormat format, int width, int height) {
+    final legacy = format.legacy;
+    return YuvImageImpl(
+      legacy,
+      width,
+      height,
+      planes: YuvImageState.allocatePlanes(format: legacy, width: width, height: height),
+    );
+  }
+
+  /// Creates a new [format] image at [width] x [height], filled by converting
+  /// [bytes] from RGBA8888.
+  factory YuvImageImpl.fromRgbaBytes(Uint8List bytes, {required int width, required int height, required YuvPixelFormat format}) {
+    final image = YuvImageImpl.allocate(format, width, height);
+    image.fromRgba8888(bytes);
+    return image;
+  }
+
   @override
   Uint8List getBytes() => _state.getBytes();
+
+  @override
+  YuvImage applyPlanes(Iterable<YuvPlane> planes) {
+    _state.applyPlanes(planes);
+    return this;
+  }
 
   @override
   YuvImage copy({bool blank = false}) => YuvImageImpl(
