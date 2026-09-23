@@ -11,12 +11,12 @@
 | [x] | REL-03 | DONE | 2 · Terra | 01, 02 | R1 | Фабрики, `allocate`, RGBA импорт. |
 | [x] | REL-04 | DONE | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
 | [x] | REL-05 | DONE | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
-| [ ] | REL-06 | READY | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
+| [ ] | REL-06 | IN_PROGRESS | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
 | [x] | REL-07 | DONE | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
 | [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
 | [x] | REL-09 | DONE | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
 | [x] | REL-10 | DONE | 2 · Terra | 08, 09 | R2 | Типизированные ошибки ABI/loader. |
-| [ ] | REL-11 | READY | 2 · Terra | 02, 05, 08 | R3 | Widget/provider и revision. |
+| [x] | REL-11 | DONE | 2 · Terra | 02, 05, 08 | R3 | Widget/provider и revision. |
 | [x] | REL-12 | DONE | 2 · Terra | — | R1 | BGRA с `pixelStride > 4`. |
 | [x] | REL-13 | DONE | 2 · Terra | — | R1 | Границы X/Y в `YuvPlane`. |
 | [x] | REL-14 | DONE | 3 · Luna | — | R4 | Apple/CMake release metadata. |
