@@ -9,8 +9,8 @@
 | [x] | REL-01 | DONE | 2 · Terra | — | R1 | `YuvPixelFormat`, NV12, wire ID. |
 | [x] | REL-02 | DONE | 2 · Terra | — | R1 | Живые плоскости, `markDirty`, `applyPlanes`. |
 | [x] | REL-03 | DONE | 2 · Terra | 01, 02 | R1 | Фабрики, `allocate`, RGBA импорт. |
-| [ ] | REL-04 | READY | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
-| [ ] | REL-05 | BLOCKED | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
+| [x] | REL-04 | DONE | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
+| [ ] | REL-05 | READY | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
 | [ ] | REL-06 | BLOCKED | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
 | [x] | REL-07 | DONE | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
 | [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
