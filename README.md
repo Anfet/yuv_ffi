@@ -4,25 +4,21 @@
 
 ## Features
 
-- YUV format conversions (`i420`, `nv21`, `bgra8888`)
+- YUV format conversions (`i420`, `nv12`, `bgra8888`)
 - Crop, rotate, flip
 - Grayscale, black/white, negate
 - Mean/box/Gaussian blur
-- Plane-based API with row/pixel stride support
-- In-memory save/load helpers for frame serialization
+- Live, directly writable plane-based API with row/pixel stride support
+- Typed capabilities query (`YuvFfi.initialize()`) instead of guessing what a backend supports
+- Binary codec v2 for frame serialization (`encodeTo`/`YuvImage.decode`)
 
-## Important format note (`nv21`)
+## Important format note (`nv12`/`nv21`)
 
-In this project, the `nv21` API label is intentionally kept for compatibility, but camera input on target
-devices is often delivered in **UV** interleaving (closer to `NV12` than classic `NV21` VU).
-
-This is based on observed device output in real pipelines.  
-Do not blindly swap U/V: on these inputs, swapping chroma produces incorrect colors.
-
-`nv21` is a legacy public API name: it keeps its established `(U, V)` byte order rather than the
-literal NV21 `(V, U)` order. The 0.4.0 design deprecates that label in favor of `nv12`.
-See the [0.4.0 API design](doc/api-abi-0.4-design.md) (section 2, contract 5)
-for the planned migration policy.
+Camera input on target devices is often delivered in **UV** interleaving (closer to `NV12` than
+classic `NV21` VU). This project's `nv12` format keeps that observed `(U, V)` byte order rather
+than the literal NV21 `(V, U)` order; do not blindly swap U/V on these inputs, or you get incorrect
+colors. The legacy `nv21` name from `0.3.0` is a deprecated alias for the same storage: a `nv21`-built
+image reports `format == YuvPixelFormat.nv12`.
 
 ## Installation
 
@@ -30,7 +26,7 @@ From pub.dev:
 
 ```yaml
 dependencies:
-  yuv_ffi: ^0.3.0
+  yuv_ffi: ^0.4.0
 ```
 
 Or from Git:
@@ -47,32 +43,110 @@ dependencies:
 ```dart
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-await YuvFfi.ensureInitialized();
+// Web needs this before any image operation; on IO/native it is recommended
+// but not required. Repeated calls are safe: success is cached, failure is not.
+final capabilities = await YuvFfi.initialize();
 
 final image = YuvImage.i420(1280, 720);
-image.fromRgba8888(rgbaBytes); // rgbaBytes.length must be width * height * 4
+image.applyRgbaBytes(rgbaBytes); // rgbaBytes.length must be width * height * 4
 
-image.rotate(YuvImageRotation.rotation90);
-image.grayscale();
-final preview = image.toBgra8888();
+image.applyRotation(YuvImageRotation.rotation90);
+image.applyGrayscale();
+final preview = image.toBgraBytes();
 ```
+
+Every `apply*` method mutates the receiver in place, returns `identical(this)`, and throws
+`UnsupportedError` up front (before touching any byte) if the backend or format pair doesn't
+support it — check first with `capabilities.supports(...)` if you need to branch instead of catch:
+
+```dart
+if (capabilities.supports(YuvOperation.gaussianBlur, sourceFormat: image.format)) {
+  image.applyGaussianBlur(radius: 8, sigma: 8);
+}
+```
+
+Methods that return a new, independent image instead of mutating (`toI420()`, `toNv12()`,
+`toBgra()`, `cropped(...)`, `rotated(...)`, `copy()`) never touch the source.
+
+## Live planes and `markDirty()`
+
+`yPlane`, `uPlane`, `vPlane` and `planes` expose the image's real backing storage, not a copy —
+writing into `image.yPlane.bytes` mutates the image directly. That kind of direct write cannot be
+detected automatically, so it does not by itself refresh a `YuvImageWidget` built from that image
+(which caches by revision). Call `markDirty()` afterwards:
+
+```dart
+image.yPlane.bytes[0] = 0xFF;
+image.markDirty(); // otherwise a cached widget keeps showing the previous frame
+```
+
+`apply*` methods and `applyPlanes(...)` already advance the revision themselves; `markDirty()` is
+only needed after writing straight into plane bytes. Calling it when nothing changed is harmless.
+
+To replace an image's format/geometry/planes wholesale in one atomic step, use `applyPlanes(...)`
+instead of assigning planes one at a time — every previously obtained `planes`/`yPlane`/`uPlane`/
+`vPlane` reference is stale after it succeeds.
 
 ## Public API (Dart)
 
 Exports from `package:yuv_ffi/yuv_ffi.dart`:
 
-- `YuvImage`
+- `YuvImage` (plus its deprecated `0.3.0` extension, `DeprecatedYuvImageApi`)
 - `YuvPlane`
-- `YuvFileFormat`
+- `YuvPixelFormat` (`i420`, `nv12`, `bgra8888`) and the deprecated `YuvFileFormat`
 - `YuvImageRotation`
+- `YuvOperation`, `YuvCapabilities`
+- `YuvNativeException`
 - `YuvImageWidget`
-- `YuvFfi` (`ensureInitialized()`)
+- `YuvFfi` (`initialize()`)
 
 Main constructors:
 
 - `YuvImage.i420(width, height, ...)`
-- `YuvImage.nv21(width, height, ...)`
+- `YuvImage.nv12(width, height, ...)`
 - `YuvImage.bgra(width, height, ...)`
+- `YuvImage.allocate(format, width, height)` — blank, tightly packed image
+- `YuvImage.fromRgbaBytes(bytes, width:, height:, format:)` — convert RGBA8888 input into a new image
+
+## Migrating from `0.3.0`
+
+The `0.3.0` API still compiles: every old instance method now lives in a deprecated
+`DeprecatedYuvImageApi` extension that forwards to its `0.4.0` replacement, so existing code keeps
+working (with deprecation warnings) while you migrate at your own pace. New code should use the
+right-hand side below.
+
+| `0.3.0` (deprecated) | `0.4.0` |
+| --- | --- |
+| `YuvFfi.ensureInitialized()` | `YuvFfi.initialize()` — now returns `YuvCapabilities` |
+| `image.fromRgba8888(bytes)` | `image.applyRgbaBytes(bytes)` |
+| `image.rotate(r)`, `.crop(rect)`, `.flipHorizontally()`, `.flipVertically()` | `image.applyRotation(r)`, `.applyCrop(rect)`, `.applyFlipHorizontal()`, `.applyFlipVertical()` |
+| `image.grayscale()`, `.blackwhite()`, `.negate()` | `image.applyGrayscale()`, `.applyBlackWhite()`, `.applyNegate()` |
+| `image.gaussianBlur(radius:, sigma:)`, `.boxBlur(radius:, rect:)`, `.meanBlur(radius:, rect:)` | `image.applyGaussianBlur(radius:, sigma:)`, `.applyBoxBlur(radius:, region:)`, `.applyMeanBlur(radius:, region:)` |
+| `image.toYuvI420()`, `.toYuvNv21()`, `.toYuvBgra8888()` (in-place) | `image.applyFormat(YuvPixelFormat.i420 / .nv12 / .bgra8888)` (in-place), or `image.toI420()` / `.toNv12()` / `.toBgra()` for a new independent image |
+| `image.swapNv()` | `image.applyChromaSwap()` (NV12 only); convert first with `applyFormat(YuvPixelFormat.nv12)` if the source isn't already NV |
+| `image.getBytes()` | `image.toBytes()` |
+| `image.toBgra8888()` | `image.toBgraBytes()` |
+| `image.y` / `.u` / `.v` | `image.yPlane` / `.uPlane` / `.vPlane` |
+| `image.copy(blank: true)` | `YuvImage.allocate(format, width, height)` |
+| `image.save(sink)` | `image.encodeTo(sink)` |
+| `image.load(stream)` (mutates in place) | `YuvImage.decode(stream)` (returns a new image; nothing to mutate) |
+| `YuvImage.nv21(...)`, `YuvImage(YuvFileFormat.x, ...)` | `YuvImage.nv12(...)`, `YuvImage.i420(...)` / `.bgra(...)` / `.allocate(...)` |
+| `image.format` returning `YuvFileFormat` | `image.format` returning `YuvPixelFormat` (a legacy `nv21`-built image now reports `nv12`) |
+
+Two behavioral notes when migrating:
+
+- The default I420 chroma pixel stride changed from `2` to `1`. Code that relied on the old gapped
+  default must now pass `uvPixelStride: 2` explicitly to `YuvImage.i420(...)`.
+- `swapNv()`'s old two-step "convert then swap" behavior for a non-NV source is not a single
+  `0.4.0` method: call `applyFormat(YuvPixelFormat.nv12)` then `applyChromaSwap()` explicitly.
+- Frames serialized with `0.3.0` (`save`/`load`, wire format v1) are not readable by `0.4.0`'s
+  `decode`/`load`: decode a v1 payload with a `0.3.0` build of this package and re-encode it with
+  `encodeTo`/`save` before upgrading the data, since `0.4.0` only ever writes v2 and rejects v1 on
+  read with a `FormatException`.
+
+Adding the full `0.4.0` `apply*`/`to*` surface to the `YuvImage` interface is a breaking change for
+any external `implements YuvImage` class: such a class must implement every new required member
+(the deprecated extension still works on it, forwarding to those members) to keep compiling.
 
 ## Platform support
 
@@ -102,7 +176,10 @@ Processing backend note:
 
 ## Initialization
 
-Call package bootstrap once at app start:
+Call package bootstrap once at app start. On Web this must complete before any `YuvImage`
+operation runs (there is no lazy fallback); on IO/native it is recommended but not required.
+Repeated calls are safe: a successful initialization is cached, a failed one is not, so the next
+call retries.
 
 ```dart
 import 'package:flutter/widgets.dart';
@@ -110,10 +187,15 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await YuvFfi.ensureInitialized();
-  runApp(const MyApp());
+  final capabilities = await YuvFfi.initialize();
+  runApp(MyApp(capabilities: capabilities));
 }
 ```
+
+`capabilities.supports(operation, sourceFormat: ..., destinationFormat: ...)` reports whether a
+given `YuvOperation` is available for a format (pair), reflecting what the loaded native library or
+WASM module actually exports on this run — every isolate initializes separately, so a fresh
+isolate must call `YuvFfi.initialize()` itself.
 
 ## TODO
 
@@ -130,11 +212,15 @@ Current phase includes:
 - Web module loader scaffold (`lib/src/loader/wasm_loader.dart`)
 - WASM-routed `YuvImage` operations on Web, all of them through the versioned
   `yuv_*_v1` ABI (the same one the native backend calls):
-  - conversions: `fromRgba8888`, `toYuvI420`, `toYuvNv21`, `toYuvBgra8888`, `toBgra8888`
-  - transforms: `crop`, `rotate`, `flipHorizontally`, `flipVertically`
-  - effects: `grayscale`, `blackwhite`, `negate`
-  - blur: `gaussianBlur`, `boxBlur`, `meanBlur`
-  - `swapNv`
+  - conversion: `applyRgbaBytes`, `applyFormat`, `toI420`/`toNv12`/`toBgra`
+  - transforms: `applyCrop`, `applyRotation`, `applyFlipHorizontal`, `applyFlipVertical`
+  - effects: `applyGrayscale`, `applyBlackWhite`, `applyNegate`
+  - blur: `applyGaussianBlur`, `applyBoxBlur`, `applyMeanBlur`
+  - `applyChromaSwap`
+  
+  Which of these actually succeed on Web depends on which `yuv_*_v1` symbols the loaded
+  `.wasm` module exports: query `capabilities.supports(...)` (from `YuvFfi.initialize()`) rather
+  than assuming every operation above is available in a given build.
 
 The Web backend stages ABI v1 descriptors in WASM linear memory at the wasm32
 layout `src/yuv/abi/h/yuv_abi_v1.h` declares, and shares the format mapping,
@@ -163,15 +249,15 @@ Limitations:
 This matrix defines current parity targets and validation scope for Web WASM against native backends.
 
 - `Conversions`:
-  scope: `fromRgba8888`, `toYuvI420`, `toYuvNv21`, `toYuvBgra8888`, `toBgra8888`
+  scope: `applyRgbaBytes`, `applyFormat`, `toI420`/`toNv12`/`toBgra`, `toBgraBytes`
   validation: round-trip quality thresholds and dimension checks
   (`test/web/wasm_parity_conversions_test.dart`)
 - `Geometry transforms`:
-  scope: `crop`, `rotate`, `flipHorizontally`, `flipVertically`
+  scope: `applyCrop`, `applyRotation`, `applyFlipHorizontal`, `applyFlipVertical`
   validation: exact/predictable BGRA checks
   (`test/web/wasm_parity_transforms_test.dart`)
 - `Effects/blur`:
-  scope: `grayscale`, `blackwhite`, `negate`, `boxBlur`, `meanBlur`, `gaussianBlur`
+  scope: `applyGrayscale`, `applyBlackWhite`, `applyNegate`, `applyBoxBlur`, `applyMeanBlur`, `applyGaussianBlur`
   validation: web runtime smoke coverage (`test/web/yuv_web_wasm_test.dart`)
 - `Edge cases`:
   scope: odd sizes (`1x1`, `3x5`, `127x255`), custom rowStride/pixelStride,

@@ -1,17 +1,25 @@
 ## 0.4.0
 
-Unreleased. The changes below are planned and awaiting implementation and acceptance.
+Implemented against [the 0.4.0 design](doc/api-abi-0.4-design.md). See the README's
+"Migrating from `0.3.0`" section for a full method-by-method mapping.
 
-### Planned breaking changes
+### Breaking changes
 
-- Replace the public storage format with `YuvPixelFormat` and canonical `nv12`; preserve the old `nv21` UV interpretation through deprecated entry points.
-- Add explicit in-place `apply*` methods and independent `to*` methods. Foreign implementations of `YuvImage` must implement the expanded interface.
-- Change the default I420 chroma pixel stride to 1; callers needing a gapped layout must set the stride explicitly.
-- Write codec v2 and reject v1 during decoding. Migrate saved v1 frames with 0.3.0 before upgrading.
-- Expose live mutable image planes; direct edits require `markDirty()`, and replacement operations invalidate previously obtained plane references.
-- Add `YuvFfi.initialize()`, capability queries and typed failures; Web remains a partial backend.
+- Replaced the public storage format with `YuvPixelFormat` (`i420`, `nv12`, `bgra8888` with stable wire IDs). `YuvImage.format` now returns `YuvPixelFormat`; the old `YuvFileFormat` enum is deprecated and kept only for the `nv21` legacy entry points. A legacy `nv21`-built image reports `format == YuvPixelFormat.nv12`.
+- Added the full `apply*` (in-place, capability-gated, returns `identical(this)`) and `to*` (independent result) method surface to the `YuvImage` interface. Every 0.3.0 instance method still compiles: it moved into the deprecated `DeprecatedYuvImageApi` extension and forwards to its 0.4.0 replacement, preserving 0.3.0's exact dispatch semantics (no `YuvFfi.initialize()` requirement) and byte behavior, including the historical `nv21` UV order and `swapNv()`'s in-place two-step convert-then-swap. Any external `implements YuvImage` class must add the new required interface members to keep compiling.
+- Changed the default I420 chroma pixel stride from `2` to `1`. Code that relied on the old gapped default must now pass `uvPixelStride: 2` explicitly to `YuvImage.i420(...)`.
+- Added `encodeTo(sink)` and the static `YuvImage.decode(stream)`. `save`/`load` moved to the deprecated extension: `save` forwards to `encodeTo` with identical bytes; `load` mutates in place through a package-private atomic state-replacement path and throws `UnsupportedError` without mutating on a foreign `implements YuvImage` (the same fallback shape as `swapNv()`).
+- Codec now writes and reads only wire format v2 (`formatId` from `YuvPixelFormat.wireId` instead of a string `format` field). A v1 payload (the frozen `0.3.0` wire shape) is rejected with `FormatException` on read; there is no v1 writer and no automatic migration. An application holding `0.3.0`-era serialized frames must decode and re-encode them with a `0.3.0` build of this package before upgrading.
+- `YuvFfi.ensureInitialized()` is deprecated in favor of `YuvFfi.initialize()`, which now returns a `YuvCapabilities` snapshot instead of `void`. A negative `capabilities.supports(...)` result, or calling an unsupported operation directly, throws `UnsupportedError` before any allocation, native dispatch, or revision change. Each isolate still initializes independently.
+- Image plane getters (`yPlane`, `uPlane`, `vPlane`, `planes`) expose live, directly writable storage. A direct write through them (or `setPixel`/`assignFrom`) is not detected automatically and needs an explicit `markDirty()` call afterwards to refresh revision-keyed caches such as `YuvImageWidget`. `apply*` and `applyPlanes(...)` already advance the revision themselves. `applyPlanes(...)` atomically validates, copies, and replaces the full plane set in one step; every previously obtained plane reference is stale after it succeeds.
+- Added typed error handling: `YuvNativeException` now carries a `YuvOperation` and message instead of a bare status/string pair; ABI status codes and loader failures are consistently `ArgumentError`, `UnsupportedError`, or `YuvNativeException` per the design's contract, and a failed operation always leaves bytes, format, geometry and revision unchanged.
+- `YuvImageWidget`/`YuvImageProvider` now render through `toBgraBytes()` and cache by the image's revision instead of by identity alone, so a mutated `YuvImage` reused across rebuilds refreshes correctly.
 
-These changes are planned in [the 0.4.0 design](doc/api-abi-0.4-design.md) and are not yet implemented. Release acceptance is pending.
+### Notes
+
+- Web remains a partial WASM backend: a successful `YuvFfi.initialize()` means the WASM runtime loaded, not that every operation available on native is supported. Query `capabilities.supports(...)` rather than assuming parity.
+- `applyChromaSwap()` is valid only on an NV12-formatted image on every backend; convert first with `applyFormat(YuvPixelFormat.nv12)` if the source isn't already NV.
+- The example app (`example/`) still targets the deprecated `0.3.0` instance-method surface; migrating it to `apply*`/`to*` is tracked separately (REL-21).
 
 ## 0.3.0
 

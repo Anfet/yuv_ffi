@@ -21,13 +21,14 @@
 | [x] | REL-13 | DONE | 2 · Terra | — | R1 | Границы X/Y в `YuvPlane`. |
 | [x] | REL-14 | DONE | 3 · Luna | — | R4 | Apple/CMake release metadata. |
 | [x] | REL-15 | DONE | 2 · Terra | — | R4 | Нижняя граница Flutter/Dart. |
-| [ ] | REL-16 | READY | 3 · Luna | 01–15, 19, 20 | R4 | README, пример, Dartdoc, CHANGELOG. |
-| [ ] | REL-17 | BLOCKED | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
+| [x] | REL-16 | DONE | 3 · Luna | 01–15, 19, 20 | R4 | README, пример, Dartdoc, CHANGELOG. |
+| [ ] | REL-17 | READY | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
 | [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
 | [x] | REL-19 | DONE | 2 · Terra | 06 | R3 | `format` → `YuvPixelFormat` на публичном интерфейсе. |
 | [x] | REL-20 | DONE | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
+| [ ] | REL-21 | READY | 3 · Luna | 06, 16 | — | Миграция `example/` на `apply*`/`to*` API. |
 
-**Итого (2026-09-23, после приёмки REL-19/REL-20):** 16 DONE (REL-01–15 кроме REL-16–18, плюс REL-19, REL-20), 1 READY (REL-16), 3 BLOCKED (REL-17, REL-18), 0 REVIEW, 0 REJECTED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакеты R1, R2 полностью приняты; R3 (REL-04–07, 11, 19, 20) полностью закрыт.**
+**Итого (2026-09-23, после приёмки REL-16):** 17 DONE (REL-01–16 кроме REL-17–18, плюс REL-19, REL-20), 1 READY (REL-17), 2 BLOCKED (REL-18), 1 READY (REL-21, вне пакетов), 0 REVIEW, 0 REJECTED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакеты R1, R2, R3 полностью приняты.**
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Ревью пакета R1 (2026-09-23)
@@ -197,6 +198,15 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 
 Согласовать README, Dartdoc, пример и CHANGELOG с реализованным API; показать `markDirty()`, `applyPlanes`, NV12/legacy NV21, codec v1→v2 и ограничения Web. **Приёмка:** фрагменты компилируются; package version совпадает с верхним CHANGELOG; planned пункты названы реализованными только после проверки. Убрать устаревшие утверждения о native ABI.
 
+**Решение владельца (2026-09-23):** объём этой задачи — README, Dartdoc, CHANGELOG. Полная миграция `example/` (main.dart, ext.dart, integration-тесты) на новый `apply*`/`to*` API вынесена в отдельную задачу REL-21 (README вместо этого содержит текстовую таблицу миграции 0.3.0→0.4.0). Пример-приложение продолжает компилироваться через deprecated extension без изменений.
+
+**ВЫПОЛНЕНО (2026-09-23):**
+- README: quick start переписан на `applyRgbaBytes/applyRotation/applyGrayscale/toBgraBytes`; добавлена секция "Live planes and `markDirty()`" с точной цитатой поведения `applyPlanes`; добавлена полная таблица миграции 0.3.0→0.4.0 (по каждому методу) с двумя поведенческими примечаниями (I420 default chroma stride 2→1, `swapNv()` как двухшаговый `applyFormat`+`applyChromaSwap`, codec v1→v2 несовместимость); публичный API список обновлён (`YuvPixelFormat`, `YuvOperation`, `YuvCapabilities`, `YuvNativeException`, deprecated `YuvFileFormat`); секция Initialization переведена на `YuvFfi.initialize()` → `YuvCapabilities`; Web WASM секции (список операций, parity-матрица) переведены с 0.3.0-имён методов на `apply*`/`to*`; версия pubspec `^0.3.0` → `^0.4.0`.
+- CHANGELOG: секция 0.4.0 переписана из "Planned/Unreleased" в фактический список изменений с описанием реализованного поведения (не намерения); добавлена заметка про вынесенную в REL-21 миграцию примера.
+- Оба ключевых code-snippet'а README (quick start + capabilities-gate + markDirty) скомпилированы через `dart analyze` против реального пакета — 0 ошибок.
+- Design-doc §16 намеренно не переименован ("Planned breaking changes for 0.4.0" остаётся заголовком раздела дизайн-документа, не текущего состояния) — вне scope этой задачи, дизайн-документ не редактируется по правилу AGENTS.md.
+- Версия pubspec (`0.4.0`) совпадает с верхней записью CHANGELOG.
+
 ### REL-17 — Release gates
 
 На итоговом SHA запустить format/analyze/tests, bindings/symbol audit, C tests/sanitizers, IO/Web reference matrix, Android/Apple CI builds, пример и publish dry-run. **Приёмка:** таблица SHA/платформа/команда/результат; runtime отделён от сборки; пропуски и риски указаны явно.
@@ -233,3 +243,14 @@ REL-20: `encodeTo`/`decode` добавлены на интерфейс; `save`/`
 **Интеграция:** оба диффа применились друг на друга без текстовых конфликтов (пересекались в 4 test-fixture файлах на разных строках). При интеграции обнаружен и исправлен один реальный шов: новый `test/rel20_encode_decode_test.dart` содержал собственный `_ForeignImage` fixture с `format` ещё типа `YuvFileFormat` (агент REL-20 не видел диффа REL-19, так как оба работали параллельно) — поправлено на `YuvPixelFormat`, устаревший комментарий про "REL-19 is a separate parallel task" удалён. Полный набор тестов на объединённом дереве: **630/630** (618 база + 2 REL-19 + 10 REL-20), `flutter analyze` чист (0 ошибок).
 
 REL-16 разблокирована (READY): теперь зависит от 01–15 плюс 19, 20, так как документирует финальную публичную поверхность API.
+
+### REL-21 — Миграция `example/` на `apply*`/`to*` API
+
+**Заведено при приёмке REL-16 (2026-09-23) по решению владельца.** `example/lib/main.dart` и `ext.dart` целиком используют устаревший 0.3.0 API (`rotate`, `grayscale`, `blackwhite`, `negate`, `gaussianBlur`/`meanBlur`/`boxBlur`, `crop`, `flipHorizontally`/`flipVertically`, `fromRgba8888`, `toYuvI420`/`toYuvNv21`/`toYuvBgra8888`) — компилируется только благодаря `DeprecatedYuvImageApi`. `example/lib/widgets/impl/*` (desk/mobile/web camera preview) и ~10 файлов в `example/integration_test/` также используют старый API. **Объём:**
+- Перевести видимый пользователю demo-код (`main.dart`, `ext.dart`, `widgets/impl/*`) на `apply*`/`to*`/`YuvFfi.initialize()`.
+- `example/integration_test/*` — тесты поведения; при миграции сохранить их фактическую проверяемую семантику (byte-exact/timing контракты), не только сменить имена методов. Если какой-то тест специально проверяет legacy-диспетчеризацию (`DeprecatedYuvImageApi`/`YuvLegacyDispatchAdapter`) — не мигрировать его, он существует для проверки обратной совместимости.
+- Обновить README/CHANGELOG, если пример перестаёт демонстрировать deprecated API (таблица миграции REL-16 остаётся, так как 0.3.0-код по-прежнему компилируется и существует у внешних потребителей).
+
+**Приёмка:** `flutter analyze`/`flutter test` на `example/` чисты; демо-функциональность (камера, кроп, эффекты, face detection) не регрессирует; `flutter pub publish --dry-run` без новых предупреждений про пример.
+
+Не блокирует REL-17/REL-18 — миграция примера не входит в release gates 0.4.0.
