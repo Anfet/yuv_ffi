@@ -9,13 +9,13 @@
 | [x] | REL-01 | DONE | 2 · Terra | — | R1 | `YuvPixelFormat`, NV12, wire ID. |
 | [x] | REL-02 | DONE | 2 · Terra | — | R1 | Живые плоскости, `markDirty`, `applyPlanes`. |
 | [x] | REL-03 | DONE | 2 · Terra | 01, 02 | R1 | Фабрики, `allocate`, RGBA импорт. |
-| [ ] | REL-04 | BLOCKED | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
+| [ ] | REL-04 | READY | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
 | [ ] | REL-05 | BLOCKED | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
 | [ ] | REL-06 | BLOCKED | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
 | [x] | REL-07 | DONE | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
 | [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
 | [x] | REL-09 | DONE | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
-| [ ] | REL-10 | READY | 2 · Terra | 08, 09 | R2 | Типизированные ошибки ABI/loader. |
+| [x] | REL-10 | DONE | 2 · Terra | 08, 09 | R2 | Типизированные ошибки ABI/loader. |
 | [ ] | REL-11 | BLOCKED | 2 · Terra | 02, 05, 08 | R3 | Widget/provider и revision. |
 | [x] | REL-12 | DONE | 2 · Terra | — | R1 | BGRA с `pixelStride > 4`. |
 | [x] | REL-13 | DONE | 2 · Terra | — | R1 | Границы X/Y в `YuvPlane`. |
@@ -25,7 +25,7 @@
 | [ ] | REL-17 | BLOCKED | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
 | [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
 
-**Итого (после волны 2, интеграции и коммитов 2026-09-23):** 10 DONE (REL-01, REL-02, REL-03, REL-07, REL-08, REL-09, REL-12, REL-13, REL-14, REL-15), 0 REVIEW, 0 REJECTED, 1 READY (REL-10), 7 BLOCKED, 0 IN_PROGRESS. 0 ARCH REQUIRED.
+**Итого (после волны 2, интеграции и коммитов 2026-09-23):** 11 DONE (REL-01, REL-02, REL-03, REL-07, REL-08, REL-09, REL-10, REL-12, REL-13, REL-14, REL-15), 0 REVIEW, 0 REJECTED, 1 READY (REL-04), 6 BLOCKED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакет R2 (REL-08, REL-09, REL-10) полностью принят.**
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Ревью пакета R1 (2026-09-23)
