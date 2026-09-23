@@ -1,4 +1,19 @@
 # Run with `flutter pub run ffigen --config ffigen.yaml`.
+#
+# HOST MATTERS: the committed bindings must be the output of the LINUX host.
+# ffigen parses through libclang, and the same ffigen version produces
+# different output on different hosts -- Windows libclang omits the struct
+# helper constructors that apt's libclang-dev emits, and orders declarations
+# differently. The `bindings-regeneration` CI job diffs the regenerated file
+# against the committed one with `git diff --exit-code`, so a file generated
+# on Windows or macOS fails CI even though it is a legitimate ffigen output
+# and the exported ABI symbol set is identical. This has now bitten twice
+# (f116348, then d2f5c93 -- the YUV-52 reconciliation).
+#
+# Regenerating from a non-Linux host is fine for local inspection, but do NOT
+# commit that output. Take the authoritative file from the CI job instead:
+# apply the diff its failing step prints, then confirm the result with
+# `dart run tool/verify_bindings_audit.dart`. Never hand-edit the bindings.
 name: YuvFfiBindings
 description: FFI bindings for native YUV code
 output: lib/src/functions/bindings/yuv_ffi_bingings.dart
