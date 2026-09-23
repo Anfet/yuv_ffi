@@ -433,7 +433,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     if (module == null) {
       throw StateError(
         'YUV WASM module is not initialized. '
-        'Call YuvFfi.ensureInitialized() before image operations on Web.',
+        'Call YuvFfi.initialize() before image operations on Web.',
       );
     }
     return module.rawModule;

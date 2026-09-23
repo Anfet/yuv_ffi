@@ -33,6 +33,18 @@ final class YuvFfi {
   /// really retries and may succeed. Nothing partially initialized is left
   /// behind by a failure.
   ///
+  /// ## Isolates
+  ///
+  /// Initialization state is held per-isolate, not process-wide. A fresh
+  /// isolate always starts uninitialized and must call this itself.
+  ///
+  /// ## Web status
+  ///
+  /// The Web backend is a partial WASM implementation: a successful
+  /// [initialize] only means the WASM runtime loaded, not that every
+  /// operation available on IO/native is supported. See
+  /// `lib/src/yuv/impl/web/yuv_web.dart` for current Web limitations.
+  ///
   /// ## Errors
   ///
   /// The original error is preserved rather than wrapped, so its type, message
@@ -42,7 +54,11 @@ final class YuvFfi {
   /// - An unsupported native platform throws [UnsupportedError].
   /// - A native library that cannot be opened throws the platform's own FFI
   ///   error.
-  static Future<void> ensureInitialized() async {
+  static Future<void> initialize() async {
     await backend_loader.ensureInitialized();
   }
+
+  /// Deprecated alias for [initialize].
+  @Deprecated('Use initialize().')
+  static Future<void> ensureInitialized() => initialize();
 }
