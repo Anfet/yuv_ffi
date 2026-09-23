@@ -1,13 +1,25 @@
+## 0.4.0
+
+Unreleased. The changes below are planned and awaiting implementation and acceptance.
+
+### Planned breaking changes
+
+- Replace the public storage format with `YuvPixelFormat` and canonical `nv12`; preserve the old `nv21` UV interpretation through deprecated entry points.
+- Add explicit in-place `apply*` methods and independent `to*` methods. Foreign implementations of `YuvImage` must implement the expanded interface.
+- Change the default I420 chroma pixel stride to 1; callers needing a gapped layout must set the stride explicitly.
+- Write codec v2 and reject v1 during decoding. Migrate saved v1 frames with 0.3.0 before upgrading.
+- Expose live mutable image planes; direct edits require `markDirty()`, and replacement operations invalidate previously obtained plane references.
+- Add `YuvFfi.initialize()`, capability queries and typed failures; Web remains a partial backend.
+
+These changes are planned in [the 0.4.0 design](doc/api-abi-0.4-design.md) and are not yet implemented. Release acceptance is pending.
+
 ## 0.3.0
 
 ### Breaking changes
 
-- Converted `swapNv()` and the format conversion methods (`toYuvNv21()`, `toYuvI420()`, `toYuvBgra8888()`) to in-place behavior. They mutate the current image and return `this` instead of returning a new instance. Call `copy()` first to keep the previous semantics, e.g. `image.copy().toYuvI420()`.
-- Migrated the Web interop layer from the removed `dart:js_util` APIs to `dart:js_interop` + `dart:js_interop_unsafe`.
 - Moved frame revision off the public interface; implementations that cannot report mutations no longer participate in revision-keyed caching.
 - Removed the `getBytes` alignment tail and the orphan NV21 RGB declaration from the native surface.
 - Removed the legacy processing ABI. The published native library and the WASM module export the eleven `yuv_*_v1` processing symbols and nothing else: the 40 per-format `yuv420_*`, `nv21_*` and `bgra8888_*` entry points, `nvXX_to_nvYY` and the `YUVDef` descriptor are gone from the headers, the generated FFI bindings and the binaries. A consumer that called those symbols directly through its own FFI lookup must move to the versioned ABI; the public Dart API, including the deprecated `nv21` name and its established `(U,V)` sample order, is unchanged.
-- `nv21` keeps its established `(U,V)` sample order. This is deliberate and is documented as a deprecated migration path rather than silently corrected.
 - Raised the minimum supported SDK to Dart `^3.10.0` / Flutter `>=3.38.0`.
 - Excluded the 32-bit `x86` Android ABI from the plugin's native build (`armeabi-v7a`, `arm64-v8a`, `x86_64` only). Flutter has shipped no `x86` native binaries since 3.35 and Google Play never accepted `x86` as a supported ABI for Flutter apps; it only ever mattered for legacy 32-bit emulator images, which the ABI v1 struct layout (a fixed 64-bit `sizeof(void*)` layout) cannot support. A consuming app that still explicitly requests `x86` (e.g. via its own `abiFilters` or an old x86 emulator image) will no longer build against this plugin.
 
@@ -35,14 +47,15 @@
 - Narrowed `ffigen` to the ABI the package actually uses and switched the native build to an explicit source list.
 - Enabled optimization for native builds and SIMD for the WASM artifacts, and rebuilt those artifacts from the fixed C sources.
 - Added a Web reference conversion matrix and an independent `test_pattern_512` reference, and made the reference matrix skip honestly when no native library is present.
-- Documented the approved public Dart API and native C ABI contract for `0.3.0` in `doc/api-abi-0.3-design.md`.
+- Documented the native C ABI and proposed public Dart API contract. The pending Dart API portion was carried forward to [the 0.4.0 design](doc/api-abi-0.4-design.md).
 - Upgraded `ffigen` to `^21.0.0`, `ffi` to `^2.2.0`, `build_runner` to `^2.15.1`, `flutter_lints` to `^6.0.0` and `image` (dev) to `^4.10.1`, and regenerated the native bindings; the output is formatting-only (ffigen's newer, more compact function-signature style), with the same symbols and struct layout confirmed by `tool/verify_bindings_audit.dart`.
 - Added a dedicated Android CI build job that exercises the plugin's `externalNativeBuild`/CMake wiring through a real `flutter build apk` (YUV-24).
 
 ### Notes
 
 - Web remains a partial WASM backend and is not at feature parity with the native backends.
-- The versioned status-returning native ABI described in `doc/api-abi-0.3-design.md` is designed and approved, but not yet implemented; the operations still expose the pre-`0.3` entry points.
+- The `nv21` API label keeps its historical `(U,V)` byte order; 0.3.0 did not rename or deprecate it in code.
+- The versioned status-returning native ABI is implemented. The proposed public Dart API and codec v2 were deferred to 0.4.0.
 
 ## 0.2.4
 

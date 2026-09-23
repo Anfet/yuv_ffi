@@ -20,9 +20,9 @@ This is based on observed device output in real pipelines.
 Do not blindly swap U/V: on these inputs, swapping chroma produces incorrect colors.
 
 `nv21` is a legacy public API name: it keeps its established `(U, V)` byte order rather than the
-literal NV21 `(V, U)` order, and is treated as deprecated in favor of an explicit NV12-like name.
-See [`doc/api-abi-0.3-design.md`](doc/api-abi-0.3-design.md) (section 2, contract 5) for the
-approved migration policy.
+literal NV21 `(V, U)` order. The 0.4.0 design deprecates that label in favor of `nv12`.
+See the [0.4.0 API design](doc/api-abi-0.4-design.md) (section 2, contract 5)
+for the planned migration policy.
 
 ## Installation
 

@@ -1,20 +1,23 @@
-# yuv_ffi 0.3.0: public Dart API and native ABI design
+# yuv_ffi 0.4.0: public Dart API and native ABI design
 
-Status: approved by the Architect/Reviewer for `0.3.0` on 2026-09-14.
-Production code is unchanged.
+Status: 0.4.0 target. The native ABI v1 and its IO/Web transport shipped in
+0.3.0; the public Dart API and codec changes below are pending. Owner decisions
+on live planes, codec v1 removal, public API and initialization were confirmed
+on 2026-09-23. The previous design review was on 2026-09-14.
 
 ## 1. Outcome
 
-Version `0.3.0` replaces the ambiguous `0.2.4` surface with:
+Version `0.4.0` builds on the 0.3.0 native ABI and changes the public Dart
+surface with:
 
 - explicit `apply*` in-place operations that return the same object;
 - `to*` conversions that always return an independent object;
-- detached plane snapshots instead of writable internal buffers;
+- live writable planes with explicit `markDirty()` invalidation;
 - a truthful `nv12` name while preserving legacy `nv21 == UV` bytes through
   deprecated compatibility entry points;
 - explicit backend capabilities and typed failures;
-- one format-independent, status-returning native symbol per operation;
-- one transactional Dart lifecycle:
+- the format-independent, status-returning native symbols shipped in 0.3.0;
+- the transactional Dart lifecycle shipped in 0.3.0:
   `marshal → invoke → status → commit → dispose`.
 
 Web remains a partial WASM backend. Shared API/state does not imply feature
@@ -27,8 +30,9 @@ parity.
 3. Legacy instance methods move to an exported extension and are deprecated.
    Factories/static methods that extensions cannot preserve remain deprecated
    members on their owning declaration.
-4. Constructors copy caller buffers. Image getters return detached snapshots;
-   no writable internal plane buffer escapes.
+4. Constructors copy caller buffers. Image getters expose live writable planes;
+   callers invoke `markDirty()` after direct writes. `applyPlanes` remains an
+   atomic copying replacement path.
 5. Canonical semi-planar UV is named NV12. Existing legacy `nv21` entry points
    keep their established UV byte interpretation and are deprecated.
 6. Invalid input throws `ArgumentError`; unsupported format/capability throws
@@ -56,14 +60,14 @@ parity.
 table covers declarations owned by this package; inherited Flutter/Object
 members are not a package API declaration.
 
-| Current declaration | Current exposure | 0.3.0 decision |
+| Current declaration | Current exposure | 0.4.0 decision |
 |---|---|---|
 | `YuvImage` | Root public interface | Replace its member set using section 4 |
 | `YuvImageImpl` | Accidentally exported by conditional export in `yuv.dart` | Hide; implementations remain under `impl/*_io.dart` and `impl/*_web.dart` |
-| `YuvPlane` | Root public mutable value | Keep as detached/caller-owned plane data; section 5 |
-| `YuvFileFormat` | Root public enum | Deprecate in favor of `YuvPixelFormat`; preserve explicit legacy wire decoding |
+| `YuvPlane` | Root public mutable value | Keep as live image plane or caller-owned plane data; section 5 |
+| `YuvFileFormat` | Root public enum | Deprecate in favor of `YuvPixelFormat`; preserve legacy source mapping, without v1 decoding |
 | `YuvImageRotation` | Root public enum | Keep, clean up legacy `toZero`; section 6 |
-| `YuvImageInvalidation` | Root public extension | Keep `revision`; retain `markDirty` for foreign implementations only |
+| `YuvImageInvalidation` | Root public extension | Keep `revision` and `markDirty` for direct edits and foreign implementations |
 | `YuvImageWidget` | Root public widget | Keep; consume the new `toBgraBytes()` contract |
 | `YuvImageProvider` | Root public provider | Keep; revision-based cache contract remains |
 | `YuvFfi` | Root public initializer | Add capabilities; section 7 |
@@ -91,19 +95,19 @@ registration and are excluded from `lib/yuv_ffi.dart`; application code uses
 
 ## 4. `YuvImage` member migration
 
-| 0.2.4 member | 0.3.0 member | Mutation/allocation | Failure/backend |
+| 0.3.0 member | 0.4.0 member | Mutation/allocation | Failure/backend |
 |---|---|---|---|
 | `format` | `format: YuvPixelFormat` | Read-only | Always available |
 | `width` | `width` | Read-only | Always available |
 | `height` | `height` | Read-only | Always available |
 | `size` | `size` | New `Size` value | Always available |
-| `planes` | `planes` | Unmodifiable list of detached `YuvPlane` copies | Always available |
-| `yPlane` | `yPlane` | Detached copy | `StateError` only for corrupt internal state |
-| `uPlane` | `uPlane` | Detached copy | `StateError` when format has no U plane |
-| `vPlane` | `vPlane` | Detached copy | `StateError` when format has no V plane |
-| `y` | deprecated extension `y` | Detached copy | Same as `yPlane` |
-| `u` | deprecated extension `u` | Detached nullable copy | Never mutates image |
-| `v` | deprecated extension `v` | Detached nullable copy | Never mutates image |
+| `planes` | `planes` | Unmodifiable list of live `YuvPlane` references | Always available |
+| `yPlane` | `yPlane` | Live plane | `StateError` only for corrupt internal state |
+| `uPlane` | `uPlane` | Live plane | `StateError` when format has no U plane |
+| `vPlane` | `vPlane` | Live plane | `StateError` when format has no V plane |
+| `y` | deprecated extension `y` | Live plane | Same as `yPlane` |
+| `u` | deprecated extension `u` | Live nullable plane | Direct writes require `markDirty()` |
+| `v` | deprecated extension `v` | Live nullable plane | Direct writes require `markDirty()` |
 | `YuvImage.i420(...)` | same named factory | New owned image; copies provided planes | `ArgumentError` geometry/layout |
 | `YuvImage.nv21(...)` | deprecated factory forwarding to canonical NV12 storage | New owned image; legacy UV interpretation unchanged | `ArgumentError` geometry/layout |
 | — | `YuvImage.nv12(...)` | New owned image | `ArgumentError` geometry/layout |
@@ -139,7 +143,7 @@ registration and are excluded from `lib/yuv_ffi.dart`; application code uses
 | `toImage()` | `toImage()` | New Flutter image; source unchanged | Decode/backend error |
 | `swapNv()` | deprecated extension → `applyChromaSwap()` | In-place channel-value effect | Keeps canonical NV12 label and historical output bytes |
 
-The following is the exhaustive `0.3.0` `YuvImage` member inventory. Factory
+The following is the exhaustive `0.4.0` `YuvImage` member inventory. Factory
 bodies/redirects are omitted from the sketch; implementation classes remain
 private to their platform libraries.
 
@@ -233,7 +237,11 @@ New-result counterparts never alias even for a semantic no-op: `cropped()` with
 an empty effective region, `rotated(rotation0)`, and same-format `to*` return an
 independent deep copy while leaving the source revision unchanged.
 `applyPlanes` preserves format/dimensions and atomically replaces only valid
-plane snapshots. `applyRgbaBytes` requires exactly `width * height * 4` tight
+plane data. It copies supplied buffers and invalidates previously obtained
+live plane references; callers reacquire planes after a replacement operation.
+Direct writes through current live planes require one `markDirty()` after the
+write batch so revision-keyed render caches can see the change. `applyRgbaBytes`
+requires exactly `width * height * 4` tight
 RGBA bytes. `applyChromaSwap` accepts only NV12; I420 and BGRA throw
 `UnsupportedError` without conversion or mutation. The deprecated `swapNv()`
 retains its separately specified convert-then-swap behavior in section 14.
@@ -245,15 +253,15 @@ or trailing bytes. `toBgraBytes()` instead returns exactly
 The canonical I420 allocation default changes from the historical
 `uvPixelStride = 2` to planar `uvPixelStride = 1`; callers that explicitly need
 gapped planar samples may still pass a larger positive stride. NV12 keeps
-`uvPixelStride = 2`. This is an intentional `0.3.0` breaking default correction,
+`uvPixelStride = 2`. This is an intentional `0.4.0` breaking default correction,
 not a reinterpretation of supplied plane bytes.
 
 ## 5. `YuvPlane` migration
 
-| Current member | 0.3.0 contract |
+| Current member | 0.4.0 contract |
 |---|---|
 | constructor | Keep; requires non-negative height/rowStride, positive pixelStride, checked `height * rowStride`, exact input length, and copies input; `rowStride == 0` is allowed only when `height == 0` |
-| `bytes` | Keeps a writable buffer owned by this detached `YuvPlane`; image getters return a copied plane, so this is never the image's backing memory |
+| `bytes` | Writable buffer; a plane obtained from an image aliases that image's storage, so direct writes require `image.markDirty()` |
 | `height` | Keep |
 | `rowStride` | Keep |
 | `bytesPerRow` | Keep as alias |
@@ -261,13 +269,17 @@ not a reinterpretation of supplied plane bytes.
 | `bytesPerPixel` | Keep as alias |
 | `bytesPerPixes` | Deprecated extension alias, then removal after migration window |
 | `getPixel(x,y)` | Keep; require `0 <= y < height`, `x >= 0`, and `x * pixelStride < rowStride` with checked index arithmetic |
-| `setPixel(x,y,value)` | Same unconditional coordinate/value checks; keep for detached/caller-owned plane values and never mutate an image snapshot already supplied |
-| `assignFrom(bytes)` | Keep for detached/caller-owned plane values with exact length |
+| `setPixel(x,y,value)` | Same unconditional coordinate/value checks; on a live image plane, the caller invokes `image.markDirty()` after the edit batch |
+| `assignFrom(bytes)` | Keep for live/caller-owned plane values with exact length; live edits require `markDirty()` |
 | `copy()` | Keep deep copy |
 | `toString()` | Keep diagnostic, do not print bytes |
 
-`YuvImage.planes/yPlane/uPlane/vPlane` create detached values. Mutation becomes
-explicit through `applyPlanes`, preventing invisible revision changes.
+`YuvImage.planes/yPlane/uPlane/vPlane` expose live values. Their buffers are
+stable only until an operation replaces the plane set; callers must reacquire
+the handles after `applyPlanes`, crop, rotation or format conversion. The
+`planes` list cannot be structurally modified. Direct writes never update the
+revision automatically; call `markDirty()` once after each batch. `applyPlanes`
+provides an atomic copied replacement when that behavior is needed.
 `setPixel` accepts only `0..255`. Constructor, coordinate, length, arithmetic,
 and value violations throw `ArgumentError` rather than relying on debug asserts
 or incidental `RangeError`.
@@ -293,7 +305,7 @@ therefore not a `YuvPixelFormat` value. `YuvFileFormat` remains exported but is
 deprecated; its values remain `nv21`, `i420`, and `bgra8888` for source
 compatibility only.
 
-### Codec v1 compatibility
+### Codec v1 breaking change
 
 The existing v1 byte stream is frozen exactly as implemented today:
 
@@ -306,14 +318,15 @@ The existing v1 byte stream is frozen exactly as implemented today:
    bytes;
 5. immediate EOF; trailing bytes are invalid.
 
-The v1 `format` field is a string, not an ID. Decoding maps `"i420"` to I420,
-`"bgra8888"` to BGRA8888, and the historical `"nv21"` string to canonical
-NV12 with unchanged `(U,V)` bytes. Any other string/version/type, invalid plane
-metadata, length, geometry, or trailing data throws `FormatException`.
+This layout documents existing 0.3.0 data only. The 0.4.0 decoder rejects
+`version: 1` with `FormatException`; there is no v1 writer or automatic
+migration. Applications retaining serialized 0.3.0 frames must decode and
+re-encode them with 0.3.0 before upgrading. Legacy `nv21` UV samples remain
+unchanged when converted by that older version.
 
 ### Codec v2 writer and reader
 
-Version `0.3.0` writes only v2 and reads both v1 and v2. V2 deliberately keeps
+Version `0.4.0` writes only v2 and reads only v2. V2 deliberately keeps
 the proven outer framing and plane body; only the header's format identity is
 made stable:
 
@@ -328,9 +341,8 @@ Required v2 fields must have the exact JSON scalar types above and positive
 dimensions. Unknown header keys are ignored for forward-compatible metadata;
 unknown `formatId` and unsupported `version` throw `FormatException`. Existing
 header/plane size limits and checked geometry validation apply before buffering
-plane data. A decode followed by encode upgrades v1 to v2; there is no public v1
-writer in `0.3.0`. Adding or reordering Dart enum values cannot change either
-wire format.
+plane data. Adding or reordering Dart enum values cannot change the v2 wire
+format.
 
 `YuvImageRotation.rotation0/90/180/270`, `degrees`, `swapSize`, `clockwise`, and
 `counterClockwise` remain. The identity-like `toZero()` becomes deprecated and
@@ -410,8 +422,8 @@ if (capabilities.supports(YuvOperation.gaussianBlur,
   whose exact format/pair capability is false throws `UnsupportedError` before
   allocation, native invocation, or revision change.
 - `YuvImageInvalidation.revision` remains.
-- `markDirty()` remains useful for foreign implementations, but package-owned
-  images no longer require it because internal bytes are not exposed.
+- `markDirty()` remains required after direct edits to live planes of
+  package-owned images and remains available for foreign implementations.
 - `YuvImageWidget` retains constructor fields `image`, `boxFit`,
   `loadingBuilder`, `errorBuilder`, and `frameBuilder`, plus its public
   `build(BuildContext)` override inherited from `StatelessWidget`.
@@ -540,7 +552,7 @@ Rules:
 - I420/NV12 frames require matrix `BT601` and range `LIMITED`. BGRA/RGBA frames
   require matrix/range `NONE`. These are the only color-space combinations in
   ABI v1; a known format with another declared color space returns
-  `YUV_STATUS_UNSUPPORTED_COLOR`. The `0.3.0` reference oracle is BT.601
+  `YUV_STATUS_UNSUPPORTED_COLOR`. The `0.4.0` reference oracle is BT.601
   limited-range.
 - Width/height are in `1..INT32_MAX`; all derived dimensions, strides, spans,
   allocation sizes, and coordinate arithmetic must additionally fit their
@@ -670,7 +682,7 @@ horizontal or vertical. Rotation is exactly `0`, `90`, `180`, or `270` degrees
 clockwise. Convert options carry no duplicated format/color fields: source and
 destination descriptors are authoritative, avoiding mismatch states.
 `yuv_chroma_swap_v1` requires its effect region to be disabled; regional chroma
-swap is not a public `0.3.0` operation.
+swap is not a public `0.4.0` operation.
 
 ## 11. Target exported native/WASM symbols
 
@@ -901,7 +913,7 @@ After writing starts, no fallible operation is permitted. Consequently a
 non-success status leaves destination unchanged. Source is always immutable and
 active source/destination spans cannot alias.
 
-The staging-copy design is intentional for `0.3.0`: current planes live on the
+The staging-copy design is intentional for `0.4.0`: current planes live on the
 Dart heap and Web has a separate linear memory. A native-backed zero-copy image
 is a future optional API requiring benchmark and lifecycle design.
 
@@ -945,33 +957,38 @@ Rejecting valid odd crop origins is not part of the target API.
 
 ## 15. Implementation sequence
 
-| Task | Design output consumed |
-|---|---|
-| YUV-41 | This document is the approved contract after Architect/Reviewer verification |
-| YUV-33 | Checked size/span/index helpers and descriptor validators |
-| YUV-36 | New headers/structs/status/symbols, minimal ffigen allowlist + generated bindings, Dart exception mapping, IO/WASM runners |
-| YUV-26 | Harden/narrow the resulting allowlist, add symbol audit and deterministic Unix regeneration CI |
-| YUV-31 | Crop/rotate/flip kernels using validated views and approved chroma phase |
-| YUV-32 | `yuv_convert_v1` matrix/range/stride/odd implementation |
-| YUV-22 | Black-white/grayscale/negate implementations |
-| YUV-23 | Gaussian/mean/box blur implementations |
-| YUV-28 | Shared Dart state/API/backend dispatch and deprecated extension |
-| YUV-34 | Final sanitizer gate over all new symbols and invalid descriptors |
+Native ABI tasks YUV-33/36/26/31/32/22/23/34 formed the 0.3.0 baseline. The
+remaining 0.4.0 work is decomposed in `todo.md`: format identity and codec;
+public factories and plane ownership; mutation and pure operations; deprecated
+compatibility; initialization, capabilities and errors; documentation; then
+platform verification. No new native symbol or C change is implied by this
+design revision. Any needed native C change requires its own plan and approval.
 
-No implementation task may preserve a legacy symbol merely to reduce its local
-diff. Compatibility is provided at the Dart API boundary unless the Engineer
-separately approves a native compatibility surface.
+## 16. Planned breaking changes for 0.4.0
 
-YUV-36 owns the first header/config/regeneration step because the typed IO runner
-cannot legally call new ABI declarations before ffigen generates them. The
-protected generated file is never handwritten. YUV-26 follows YUV-36 and proves
-that the already-working allowlist is minimal and reproducible across the Unix
-CI toolchain; it is hardening, not the first availability of new bindings.
+- The public storage format becomes `YuvPixelFormat` with explicit `nv12` and
+  stable wire IDs. Legacy `nv21` keeps its historical UV bytes and is deprecated.
+- New `apply*` methods mutate and return the same image; new `to*` methods return
+  an independent image. Old mutating methods remain as deprecated extensions.
+  Adding members to `YuvImage` also breaks foreign `implements YuvImage` classes.
+- The default I420 chroma pixel stride becomes 1. Code depending on the old
+  gapped default must specify its stride explicitly.
+- Codec output changes from v1 to v2 and the decoder accepts v2 only. Existing
+  serialized v1 frames require migration while running 0.3.0.
+- Image plane getters remain live and mutable. Clients that edit those buffers
+  must call `markDirty()` so revision-keyed caches refresh; replacement
+  operations invalidate earlier plane handles.
+- `YuvFfi.initialize()` returns capabilities, and unsupported operations report
+  typed failures according to sections 2 and 7. Web remains a partial backend.
 
-## 16. Required design verification
+These are target contracts. The release CHANGELOG must be checked against the
+implemented API before publishing 0.4.0.
+
+## 17. Required design verification
 
 - Public API compile tests for `apply* == identical(this)`, independent `to*`,
-  detached plane getters, deprecated forwarding, and foreign implementation.
+  live plane getters, `markDirty()` invalidation, deprecated forwarding, and
+  foreign implementation.
 - ABI layout tests for native-32, native-64, and wasm32 sizes/offsets.
 - One symbol-manifest test shared by headers, ffigen allowlist, Web dispatch,
   and WASM exported functions.
