@@ -3,6 +3,8 @@ import 'dart:io' show Platform;
 
 import 'package:yuv_ffi/src/functions/bindings/yuv_ffi_bingings.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
+import 'package:yuv_ffi/src/yuv_capabilities.dart';
 
 ffi.DynamicLibrary? _library;
 YuvFfiBindings? _ffiBingings;
@@ -27,13 +29,31 @@ void debugSetLibraryOpener(YuvLibraryOpener opener) {
   _opener = opener;
 }
 
-/// Restores the real opener and drops every cached handle.
+/// Whether [library] provides [symbol]; defaults to
+/// [ffi.DynamicLibrary.providesSymbol].
+///
+/// Replaceable so a test can exercise [ensureInitialized]'s complete-manifest
+/// gate with a fake library that cannot really export `yuv_*_v1` symbols
+/// (`ffi.DynamicLibrary.executable()`, used throughout this loader's other
+/// tests), without asserting anything about the real native build. Production
+/// code never overrides this.
+bool Function(ffi.DynamicLibrary library, String symbol) _symbolChecker = (library, symbol) => library.providesSymbol(symbol);
+
+/// Replaces the symbol-presence check [ensureInitialized] uses for its
+/// complete-manifest gate.
+void debugSetSymbolChecker(bool Function(ffi.DynamicLibrary library, String symbol) checker) {
+  _symbolChecker = checker;
+}
+
+/// Restores the real opener and symbol checker, and drops every cached
+/// handle.
 ///
 /// Clears the library, the bindings built from it and the open counter
 /// together, so a later test cannot observe bindings belonging to a library
 /// that is no longer installed.
 void debugResetLoader() {
   _opener = _openYuvLibrary;
+  _symbolChecker = (library, symbol) => library.providesSymbol(symbol);
   _library = null;
   _ffiBingings = null;
   debugOpenCount = 0;
@@ -51,9 +71,25 @@ void debugResetLoader() {
 ///
 /// Rethrows the original error. An unsupported platform throws
 /// [UnsupportedError]; a library that cannot be opened throws the platform's
-/// own FFI error, with its message and stack trace preserved.
-Future<void> ensureInitialized() async {
-  _openIfNeeded();
+/// own FFI error, with its message and stack trace preserved. Native IO
+/// initialization additionally requires the complete ABI v1 symbol manifest
+/// (`doc/api-abi-0.4-design.md` section 7): a library missing any required
+/// `yuv_*_v1` export fails initialization with [StateError] naming the missing
+/// symbols, rather than returning capabilities that silently mark them
+/// unsupported.
+Future<YuvCapabilities> ensureInitialized() async {
+  final library = _openIfNeeded();
+  final missing = <String>[
+    for (final symbol in yuvAbiV1Symbols)
+      if (!_symbolChecker(library, symbol)) symbol,
+  ];
+  if (missing.isNotEmpty) {
+    throw StateError(
+      'The loaded yuv_ffi native library does not export ${missing.length} of the '
+      '${yuvAbiV1Symbols.length} required ABI v1 symbols: ${missing.join(', ')}.',
+    );
+  }
+  return YuvCapabilitiesSnapshot(YuvOperation.values);
 }
 
 /// The loaded dynamic library.

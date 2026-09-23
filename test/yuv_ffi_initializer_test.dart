@@ -19,6 +19,7 @@ void main() {
     test('concurrent callers share a single initialization', () async {
       var opens = 0;
       loader_io.debugResetLoader();
+      loader_io.debugSetSymbolChecker((_, _) => true);
       loader_io.debugSetLibraryOpener(() {
         opens++;
         return _fakeLibrary();
@@ -32,6 +33,7 @@ void main() {
     test('a failed initialization is not cached and a later call retries', () async {
       var attempts = 0;
       loader_io.debugResetLoader();
+      loader_io.debugSetSymbolChecker((_, _) => true);
       loader_io.debugSetLibraryOpener(() {
         attempts++;
         if (attempts == 1) {
@@ -51,6 +53,7 @@ void main() {
     test('a successful initialization is cached across repeated calls', () async {
       var opens = 0;
       loader_io.debugResetLoader();
+      loader_io.debugSetSymbolChecker((_, _) => true);
       loader_io.debugSetLibraryOpener(() {
         opens++;
         return _fakeLibrary();
@@ -68,6 +71,7 @@ void main() {
     test('forwards to initialize() and completes successfully', () async {
       var opens = 0;
       loader_io.debugResetLoader();
+      loader_io.debugSetSymbolChecker((_, _) => true);
       loader_io.debugSetLibraryOpener(() {
         opens++;
         return _fakeLibrary();
@@ -82,6 +86,7 @@ void main() {
     test('shares in-flight state with initialize() rather than starting a second attempt', () async {
       var opens = 0;
       loader_io.debugResetLoader();
+      loader_io.debugSetSymbolChecker((_, _) => true);
       loader_io.debugSetLibraryOpener(() {
         opens++;
         return _fakeLibrary();
@@ -99,6 +104,7 @@ void main() {
     test('a failure surfaced through ensureInitialized() still allows a later retry', () async {
       var attempts = 0;
       loader_io.debugResetLoader();
+      loader_io.debugSetSymbolChecker((_, _) => true);
       loader_io.debugSetLibraryOpener(() {
         attempts++;
         if (attempts == 1) {

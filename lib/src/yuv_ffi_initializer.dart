@@ -1,4 +1,5 @@
 import 'package:yuv_ffi/src/loader/loader.dart' as backend_loader;
+import 'package:yuv_ffi/src/yuv_capabilities.dart';
 
 /// Public package bootstrap API.
 ///
@@ -54,11 +55,22 @@ final class YuvFfi {
   /// - An unsupported native platform throws [UnsupportedError].
   /// - A native library that cannot be opened throws the platform's own FFI
   ///   error.
-  static Future<void> initialize() async {
-    await backend_loader.ensureInitialized();
+  /// - IO additionally requires the complete ABI v1 symbol manifest: a native
+  ///   library missing a required export throws [StateError] naming it,
+  ///   rather than returning capabilities that silently mark it unsupported.
+  ///
+  /// ## Capabilities
+  ///
+  /// The returned [YuvCapabilities] is an immutable snapshot computed once
+  /// initialization succeeds. On Web it reflects the real WASM exports found
+  /// on the loaded module: an operation is supported only when its required
+  /// export is present and the module initialized successfully. See
+  /// `doc/api-abi-0.4-design.md` section 7.
+  static Future<YuvCapabilities> initialize() async {
+    return backend_loader.ensureInitialized();
   }
 
   /// Deprecated alias for [initialize].
   @Deprecated('Use initialize().')
-  static Future<void> ensureInitialized() => initialize();
+  static Future<YuvCapabilities> ensureInitialized() => initialize();
 }

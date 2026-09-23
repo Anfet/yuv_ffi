@@ -29,6 +29,7 @@ void main() {
       final fake = ffi.DynamicLibrary.executable();
       loader_io.debugResetLoader();
       loader_io.debugSetLibraryOpener(() => fake);
+      loader_io.debugSetSymbolChecker((_, _) => true);
 
       await loader_io.ensureInitialized();
       await loader_io.ensureInitialized();
@@ -41,6 +42,7 @@ void main() {
       final fake = ffi.DynamicLibrary.executable();
       loader_io.debugResetLoader();
       loader_io.debugSetLibraryOpener(() => fake);
+      loader_io.debugSetSymbolChecker((_, _) => true);
 
       await Future.wait<void>(<Future<void>>[
         loader_io.ensureInitialized(),
@@ -56,6 +58,7 @@ void main() {
       final fake = ffi.DynamicLibrary.executable();
       var attempts = 0;
       loader_io.debugResetLoader();
+      loader_io.debugSetSymbolChecker((_, _) => true);
       loader_io.debugSetLibraryOpener(() {
         attempts++;
         if (attempts == 1) {
@@ -106,12 +109,14 @@ void main() {
       final fake = ffi.DynamicLibrary.executable();
       loader_io.debugResetLoader();
       loader_io.debugSetLibraryOpener(() => fake);
+      loader_io.debugSetSymbolChecker((_, _) => true);
 
       await loader_io.ensureInitialized();
       final before = loader_io.ffiBingings;
 
       loader_io.debugResetLoader();
       loader_io.debugSetLibraryOpener(() => fake);
+      loader_io.debugSetSymbolChecker((_, _) => true);
       await loader_io.ensureInitialized();
 
       expect(identical(loader_io.ffiBingings, before), isFalse, reason: 'bindings must not outlive their library');
