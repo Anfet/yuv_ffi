@@ -197,10 +197,13 @@ YuvViewStatus yuv_validated_view_check_destination_geometry(
  *
  * This is now the state of the tree rather than a plan for it. The eleven
  * `yuv_*_v1` entry points in `src/yuv/abi/` are the whole processing surface:
- * each builds its source and destination views from the public
- * `YuvConstFrameV1`/`YuvMutableFrameV1` structs as its first step, and checks
- * destination geometry before writing. There are no length-less pointer
- * triples left to migrate -- YUV-52 removed the per-format
+ * each validates its options struct first (header, reserved fields and the
+ * operation's own parameters), then builds its source and destination views
+ * from the public `YuvConstFrameV1`/`YuvMutableFrameV1` structs, and checks
+ * destination geometry before writing. Both halves of that sequence precede
+ * the first destination mutation, which is what the contract above requires;
+ * the order between them is not itself part of the contract. There are no
+ * length-less pointer triples left to migrate -- YUV-52 removed the per-format
  * `src/yuv/bgra8888/`, `src/yuv/nv21/` and `src/yuv/yuv420/` implementations
  * and the `YUVDef` descriptor along with them, so every call site reaching
  * these views arrives through the section-9 ABI.
@@ -211,8 +214,15 @@ YuvViewStatus yuv_validated_view_check_destination_geometry(
  * geometry and strides) against a length it computed itself via
  * yuv_checked_plane_span()/yuv_checked_plane_size(). The section-9 descriptors
  * carry an explicit caller-supplied `length`, so a view built from them
- * validates the caller's real allocation, which is what the computed value
- * could never stand in for.
+ * validates the geometry and strides against the buffer length the caller
+ * declares, rather than against a length derived from that same geometry.
+ * Note the limit: `length` is the caller's claim about its buffer, not a
+ * measurement of the allocation behind the pointer. A caller that declares a
+ * length larger than it allocated still defeats these checks -- the ABI
+ * cannot observe the real allocation size, and no in-process validation can.
+ * What the descriptors buy is that an honest caller's under-sized buffer is
+ * now rejected instead of silently over-read, which a computed length could
+ * never catch.
  */
 
 #endif  // YUV_VALIDATED_VIEW_H
