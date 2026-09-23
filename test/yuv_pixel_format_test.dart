@@ -57,4 +57,24 @@ void main() {
       expect(allocated.planes.length, legacy.planes.length);
     });
   });
+
+  group('REL-19: YuvImage.format is YuvPixelFormat', () {
+    test('exhaustively switches over image.format through the public import alone', () {
+      String describe(YuvImage image) => switch (image.format) {
+        YuvPixelFormat.i420 => 'i420',
+        YuvPixelFormat.nv12 => 'nv12',
+        YuvPixelFormat.bgra8888 => 'bgra8888',
+      };
+
+      expect(describe(YuvImage.i420(2, 2)), 'i420');
+      expect(describe(YuvImage.nv12(2, 2)), 'nv12');
+      expect(describe(YuvImage.bgra(2, 2)), 'bgra8888');
+    });
+
+    test('a legacy nv21-labeled image reports YuvPixelFormat.nv12', () {
+      // ignore: deprecated_member_use_from_same_package
+      final legacy = YuvImage.nv21(2, 2);
+      expect(legacy.format, YuvPixelFormat.nv12);
+    });
+  });
 }

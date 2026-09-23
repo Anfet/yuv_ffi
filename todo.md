@@ -21,13 +21,13 @@
 | [x] | REL-13 | DONE | 2 · Terra | — | R1 | Границы X/Y в `YuvPlane`. |
 | [x] | REL-14 | DONE | 3 · Luna | — | R4 | Apple/CMake release metadata. |
 | [x] | REL-15 | DONE | 2 · Terra | — | R4 | Нижняя граница Flutter/Dart. |
-| [ ] | REL-16 | BLOCKED | 3 · Luna | 01–15 | R4 | README, пример, Dartdoc, CHANGELOG. |
+| [ ] | REL-16 | READY | 3 · Luna | 01–15, 19, 20 | R4 | README, пример, Dartdoc, CHANGELOG. |
 | [ ] | REL-17 | BLOCKED | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
 | [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
-| [ ] | REL-19 | READY | 2 · Terra | 06 | R3 | `format` → `YuvPixelFormat` на публичном интерфейсе. |
-| [ ] | REL-20 | READY | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
+| [x] | REL-19 | DONE | 2 · Terra | 06 | R3 | `format` → `YuvPixelFormat` на публичном интерфейсе. |
+| [x] | REL-20 | DONE | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
 
-**Итого (2026-09-23, после REL-06 rework и приёмки):** 14 DONE (REL-01–15 кроме REL-16–18, включая REL-06), 2 READY (REL-19, REL-20), 4 BLOCKED (REL-16, REL-17, REL-18), 0 REVIEW, 0 REJECTED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакеты R1, R2 полностью приняты.**
+**Итого (2026-09-23, после приёмки REL-19/REL-20):** 16 DONE (REL-01–15 кроме REL-16–18, плюс REL-19, REL-20), 1 READY (REL-16), 3 BLOCKED (REL-17, REL-18), 0 REVIEW, 0 REJECTED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакеты R1, R2 полностью приняты; R3 (REL-04–07, 11, 19, 20) полностью закрыт.**
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Ревью пакета R1 (2026-09-23)
@@ -223,3 +223,13 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 - `decode` возвращает новый образ и не меняет получателя (если вызван как метод расширения на существующем экземпляре) либо является чистой статической фабрикой.
 
 При R3-ревью пакета проверить остальные строки §4 на предмет других "осиротевших" пунктов, не взятых в scope ни одной задачей.
+
+**REL-19 и REL-20 ПРИНЯТЫ (2026-09-23).** Выполнены параллельно в отдельных worktree на базе `c35f117`, независимо проверены (диффы построчно, `flutter analyze`, `flutter test` на реальной `yuv_ffi.dll`) до интеграции.
+
+REL-19: ретайпинг `format` на `YuvPixelFormat` во всех трёх backend через уже существующий bridge REL-01 (`YuvFileFormatPixelFormatBridge`), ~90 внутренних точек вызова механически переведены на `_state.format` без изменения логики. Добавлен exhaustive-switch consumer-тест и `nv21→nv12` тест. Два файла в `example/` (`ext.dart`, `image_cache_key_test.dart`) исправлены за пределами заявленного scope `lib/`+`test/`, так как ретайпинг ломал их компиляцию/анализ — минимальные механические правки, оправданы требованием критерия приёмки "flutter analyze чист".
+
+REL-20: `encodeTo`/`decode` добавлены на интерфейс; `save`/`load` перенесены в `DeprecatedYuvImageApi` теми же средствами, что REL-06 использовал для остальных legacy-методов (`YuvLegacyDispatchAdapter.legacyLoad`, атомарная замена состояния через уже существующий `YuvImageState.decodeAndReplace`). `load()` на чужом получателе кидает `UnsupportedError` без мутации — второе документированное исключение после `swapNv()`. Stub-backend `load` осознанно переведён с no-op на настоящий decode для симметрии с IO/Web (не покрыт тестами, недостижим из `flutter test`, native код не тронут).
+
+**Интеграция:** оба диффа применились друг на друга без текстовых конфликтов (пересекались в 4 test-fixture файлах на разных строках). При интеграции обнаружен и исправлен один реальный шов: новый `test/rel20_encode_decode_test.dart` содержал собственный `_ForeignImage` fixture с `format` ещё типа `YuvFileFormat` (агент REL-20 не видел диффа REL-19, так как оба работали параллельно) — поправлено на `YuvPixelFormat`, устаревший комментарий про "REL-19 is a separate parallel task" удалён. Полный набор тестов на объединённом дереве: **630/630** (618 база + 2 REL-19 + 10 REL-20), `flutter analyze` чист (0 ошибок).
+
+REL-16 разблокирована (READY): теперь зависит от 01–15 плюс 19, 20, так как документирует финальную публичную поверхность API.

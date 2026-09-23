@@ -75,7 +75,7 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   final int height;
 
   @override
-  YuvFileFormat get format => YuvFileFormat.bgra8888;
+  YuvPixelFormat get format => YuvPixelFormat.bgra8888;
 
   @override
   List<YuvPlane> get planes => [_plane];
@@ -108,10 +108,7 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
 
   @override
-  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
-
-  @override
-  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
+  Future<void> encodeTo(Sink<List<int>> sink) => throw UnimplementedError();
 
   YuvImage blackwhite() => throw UnimplementedError();
 
@@ -254,7 +251,7 @@ class _PaddedBgraImage implements YuvImage, YuvRevisionAware {
   final int height;
 
   @override
-  YuvFileFormat get format => YuvFileFormat.bgra8888;
+  YuvPixelFormat get format => YuvPixelFormat.bgra8888;
 
   @override
   List<YuvPlane> get planes => [_plane];
@@ -286,10 +283,7 @@ class _PaddedBgraImage implements YuvImage, YuvRevisionAware {
   YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
 
   @override
-  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
-
-  @override
-  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
+  Future<void> encodeTo(Sink<List<int>> sink) => throw UnimplementedError();
 
   YuvImage blackwhite() => throw UnimplementedError();
 

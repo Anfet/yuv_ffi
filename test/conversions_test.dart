@@ -220,13 +220,13 @@ void main() {
 
     final nv = i420.toYuvNv21();
     expect(identical(nv, i420), isTrue);
-    expect(nv.format, YuvFileFormat.nv21);
+    expect(nv.format, YuvPixelFormat.nv12);
     expect(nv.width, _w);
     expect(nv.height, _h);
 
     final back = nv.toYuvI420();
     expect(identical(back, nv), isTrue);
-    expect(back.format, YuvFileFormat.i420);
+    expect(back.format, YuvPixelFormat.i420);
     expect(back.width, _w);
     expect(back.height, _h);
 
@@ -239,7 +239,7 @@ void main() {
     nv.fromRgba8888(rgba);
     final bgra = nv.toYuvBgra8888();
     expect(identical(bgra, nv), isTrue);
-    expect(bgra.format, YuvFileFormat.bgra8888);
+    expect(bgra.format, YuvPixelFormat.bgra8888);
     expect(bgra.width, _w);
     expect(bgra.height, _h);
     expect(bgra.yPlane.bytes.length, _w * _h * 4);
@@ -268,7 +268,7 @@ void main() {
     final swapped = image.swapNv();
 
     expect(identical(swapped, image), isTrue);
-    expect(swapped.format, YuvFileFormat.nv21);
+    expect(swapped.format, YuvPixelFormat.nv12);
     expect(swapped.width, width);
     expect(swapped.height, height);
     expect(swapped.yPlane.bytes, orderedEquals(originalY));
@@ -295,7 +295,7 @@ void main() {
 
     image.swapNv();
 
-    expect(image.format, YuvFileFormat.nv21);
+    expect(image.format, YuvPixelFormat.nv12);
     expect(image.width, width);
     expect(image.height, height);
     expect(image.yPlane.bytes, orderedEquals(originalY));

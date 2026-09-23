@@ -54,7 +54,7 @@ void main() {
 
         final i420 = bgra.toI420();
 
-        expect(i420.format, YuvFileFormat.i420);
+        expect(i420.format, YuvPixelFormat.i420);
         expect(i420.width, w);
         expect(i420.height, h);
         // A solid-color source converts to a solid Y/U/V plane: every sample in
@@ -83,7 +83,7 @@ void main() {
 
         final nv12 = bgra.toNv12();
 
-        expect(nv12.format, YuvFileFormat.nv21);
+        expect(nv12.format, YuvPixelFormat.nv12);
         expect(nv12.width, w);
         expect(nv12.height, h);
         expect(nv12.yPlane.bytes.toSet(), hasLength(1));
@@ -110,7 +110,7 @@ void main() {
 
         final bgra = i420.toBgra();
 
-        expect(bgra.format, YuvFileFormat.bgra8888);
+        expect(bgra.format, YuvPixelFormat.bgra8888);
         expect(bgra.width, w);
         expect(bgra.height, h);
         expect(bgra.yPlane.rowStride, w * 4, reason: 'toBgra() must produce a tight destination plane');

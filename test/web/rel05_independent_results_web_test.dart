@@ -37,11 +37,11 @@ void main() {
       final bgra = YuvImage.bgra(w, h)..fromRgba8888(rgba);
 
       final i420 = bgra.toI420();
-      expect(i420.format, YuvFileFormat.i420);
+      expect(i420.format, YuvPixelFormat.i420);
       expect(i420.yPlane.bytes.toSet(), hasLength(1));
 
       final nv12 = bgra.toNv12();
-      expect(nv12.format, YuvFileFormat.nv21);
+      expect(nv12.format, YuvPixelFormat.nv12);
       expect(nv12.yPlane.bytes.toSet(), hasLength(1));
 
       final roundTrip = i420.toBgra();

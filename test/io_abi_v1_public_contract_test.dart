@@ -60,7 +60,7 @@ void main() {
         expect(() => entry.value(image), throwsA(isA<YuvNativeException>().having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)));
 
         expect(image.getBytes(), bytesBefore, reason: 'bytes changed after a failed ${entry.key}');
-        expect(image.format, YuvFileFormat.nv21, reason: 'format changed after a failed ${entry.key}');
+        expect(image.format, YuvPixelFormat.nv12, reason: 'format changed after a failed ${entry.key}');
         expect(image.width, 8, reason: 'width changed after a failed ${entry.key}');
         expect(image.height, 8, reason: 'height changed after a failed ${entry.key}');
         expect((image as YuvRevisionAware).internalRevision, revisionBefore, reason: 'revision advanced on a failed ${entry.key}');
@@ -90,9 +90,9 @@ void main() {
       return calls;
     }
 
-    for (final format in [YuvFileFormat.i420, YuvFileFormat.bgra8888]) {
+    for (final format in [YuvPixelFormat.i420, YuvPixelFormat.bgra8888]) {
       test('a failing chroma swap after a successful conversion leaves a $format receiver untouched', () {
-        final YuvImage image = format == YuvFileFormat.i420
+        final YuvImage image = format == YuvPixelFormat.i420
             ? YuvImage.i420(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 4, 1, 0x50), plane(4, 4, 1, 0x70)])
             : YuvImage.bgra(8, 8, planes: [plane(8, 32, 4, 0x30)]);
 
@@ -119,7 +119,7 @@ void main() {
       });
 
       test('a failing conversion leaves a $format receiver untouched', () {
-        final YuvImage image = format == YuvFileFormat.i420
+        final YuvImage image = format == YuvPixelFormat.i420
             ? YuvImage.i420(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 4, 1, 0x50), plane(4, 4, 1, 0x70)])
             : YuvImage.bgra(8, 8, planes: [plane(8, 32, 4, 0x30)]);
 
@@ -151,7 +151,7 @@ void main() {
       image.swapNv();
 
       expect(calls, 2);
-      expect(image.format, YuvFileFormat.nv21);
+      expect(image.format, YuvPixelFormat.nv12);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore + 1, reason: 'two native calls must still be one publish');
     });
   });
@@ -175,7 +175,7 @@ void main() {
       (image as YuvImage).swapNv();
 
       expect(image.internalRevision, before + 1);
-      expect((image as YuvImage).format, YuvFileFormat.nv21);
+      expect((image as YuvImage).format, YuvPixelFormat.nv12);
     }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
   });
 

@@ -18,7 +18,7 @@ void main() {
 
     expect(image.width, 2);
     expect(image.height, 2);
-    expect(image.format, YuvFileFormat.bgra8888);
+    expect(image.format, YuvPixelFormat.bgra8888);
   });
 
   test('the extension API works on an implementation that knows nothing about it', () {
@@ -120,7 +120,7 @@ class _LegacyExternalImage implements YuvImage {
   final int height;
 
   @override
-  YuvFileFormat get format => YuvFileFormat.bgra8888;
+  YuvPixelFormat get format => YuvPixelFormat.bgra8888;
 
   @override
   List<YuvPlane> get planes => <YuvPlane>[_plane];
@@ -144,10 +144,7 @@ class _LegacyExternalImage implements YuvImage {
   YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
 
   @override
-  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
-
-  @override
-  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
+  Future<void> encodeTo(Sink<List<int>> sink) => throw UnimplementedError();
 
   // Pre-0.4.0 instance methods this legacy class already defined on itself,
   // same as a real `0.2.4`-era implementer would have. They are no longer

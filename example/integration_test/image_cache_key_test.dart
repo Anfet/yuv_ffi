@@ -404,7 +404,7 @@ class _ForeignImage implements YuvImage {
   final int height;
 
   @override
-  YuvFileFormat get format => YuvFileFormat.bgra8888;
+  YuvPixelFormat get format => YuvPixelFormat.bgra8888;
 
   @override
   List<YuvPlane> get planes => <YuvPlane>[_plane];

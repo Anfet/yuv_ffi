@@ -41,13 +41,13 @@ extension YuvImageToCameraExt on YuvImage {
   InputImage toInputImage() {
     InputImageFormat format;
     switch (this.format) {
-      case YuvFileFormat.i420:
+      case YuvPixelFormat.i420:
         format = InputImageFormat.yuv420;
         break;
-      case YuvFileFormat.nv21:
+      case YuvPixelFormat.nv12:
         format = InputImageFormat.nv21;
         break;
-      case YuvFileFormat.bgra8888:
+      case YuvPixelFormat.bgra8888:
         format = InputImageFormat.bgra8888;
         break;
     }

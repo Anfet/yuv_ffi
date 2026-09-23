@@ -159,7 +159,7 @@ void main() {
 
       // A whole-buffer memcpy of the source would run past this destination.
       expect(() => src.toYuvNv21(), returnsNormally);
-      expect(src.format, YuvFileFormat.nv21);
+      expect(src.format, YuvPixelFormat.nv12);
       expect(src.width, width);
       expect(src.height, height);
 
@@ -178,7 +178,7 @@ void main() {
       final src = YuvImage.nv21(width, height, planes: [filledPlane(height, width + 16, 1, 0x44), filledPlane(2, 4, 2, 0x55)]);
 
       expect(() => src.toYuvI420(), returnsNormally);
-      expect(src.format, YuvFileFormat.i420);
+      expect(src.format, YuvPixelFormat.i420);
 
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {

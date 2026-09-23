@@ -160,7 +160,7 @@ void main() {
 
       expect(target.width, 8);
       expect(target.height, 8);
-      expect(target.format, YuvFileFormat.i420);
+      expect(target.format, YuvPixelFormat.i420);
       expect(target.yPlane.bytes[0], 42);
     });
   });

@@ -395,8 +395,13 @@ void _assertCase(Map<String, dynamic> entry, _CaseResult result, Map<String, Rgb
   if (operation == 'toYuvBgra8888' ||
       operation == 'toYuvI420' ||
       operation == 'toYuvNv21' ||
-      (operation == 'swapNv' && result.image.format == YuvFileFormat.nv21)) {
-    expect(result.image.format.name, expected['format'], reason: entry['id'] as String);
+      (operation == 'swapNv' && result.image.format == YuvPixelFormat.nv12)) {
+    // The manifest still names the legacy NV21 label: it predates the
+    // truthfully-named YuvPixelFormat.nv12 (REL-19) and describes the same
+    // canonical semi-planar storage, so the comparison maps nv12 back to that
+    // legacy name rather than expecting the fixture data to be relabeled.
+    final actualFormatName = result.image.format == YuvPixelFormat.nv12 ? 'nv21' : result.image.format.name;
+    expect(actualFormatName, expected['format'], reason: entry['id'] as String);
   }
 
   final artifact = expected['artifact'] as String;

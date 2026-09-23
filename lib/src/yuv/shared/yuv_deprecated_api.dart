@@ -40,10 +40,13 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// breaking change requires every `YuvImage` implementer to provide -- so a
 /// pre-existing foreign implementation still gets a working (if
 /// capability-gated) deprecated method rather than an outright failure. The
-/// sole exception is [swapNv]: its two-step convert-then-swap cannot be made
-/// atomic against an arbitrary foreign implementation (see its own doc), so it
-/// throws [UnsupportedError] without mutating when the receiver is foreign,
-/// exactly as section 8 specifies for the legacy `load()` extension.
+/// two exceptions are [swapNv] and [load]: neither can be expressed as a call
+/// to a public `apply*`/`applyFormat` member on a foreign receiver -- swapNv's
+/// two-step convert-then-swap cannot be staged atomically (see its own doc),
+/// and load's full format/geometry/plane replacement is not an operation the
+/// `0.4.0` interface exposes as a mutator at all (`YuvImage.decode` builds a
+/// new instance instead) -- so both throw [UnsupportedError] without mutating
+/// when the receiver is foreign, exactly as section 8 specifies.
 extension DeprecatedYuvImageApi on YuvImage {
   /// Alias for [yPlane]. Never null: every format has a Y plane.
   @Deprecated('Use yPlane.')
@@ -200,6 +203,32 @@ extension DeprecatedYuvImageApi on YuvImage {
   YuvImage rotate(YuvImageRotation rotation) {
     final adapter = _adapter();
     return adapter != null ? adapter.legacyRotate(rotation) : applyRotation(rotation);
+  }
+
+  /// Serializes this image into [sink].
+  ///
+  /// Forwards to [YuvImage.encodeTo] with identical bytes; does not mutate.
+  @Deprecated('Use encodeTo().')
+  Future<void> save(Sink<List<int>> sink) => encodeTo(sink);
+
+  /// Decodes [stream] and replaces this image's format, geometry and planes
+  /// in place.
+  ///
+  /// Forwards to the package-private [YuvLegacyDispatchAdapter.legacyLoad]
+  /// atomic state-replacement adapter, the same pattern [swapNv] uses. A
+  /// foreign `implements YuvImage` that does not provide that adapter throws
+  /// [UnsupportedError] without mutating the receiver -- there is no
+  /// `apply*`-based fallback for a full state replacement, unlike every other
+  /// member of this extension (`doc/api-abi-0.4-design.md` section 8). New
+  /// code uses the static `YuvImage.decode()` instead, which returns a new
+  /// image and never mutates a receiver.
+  @Deprecated('Use the static YuvImage.decode().')
+  Future<void> load(Stream<List<int>> stream) {
+    final Object self = this;
+    if (self is YuvLegacyDispatchAdapter) {
+      return self.legacyLoad(stream);
+    }
+    throw UnsupportedError('load() requires this package\'s own YuvImage backend to stage its atomic state replacement.');
   }
 
   /// This receiver as its package-private legacy dispatch adapter, or `null`

@@ -102,4 +102,23 @@ abstract interface class YuvLegacyDispatchAdapter {
   /// order and historical output bytes exactly as `0.3.0`'s `swapNv()`
   /// produced them.
   YuvImage legacySwapNv();
+
+  /// `0.3.0` `load(stream)`: decodes [stream] and atomically replaces this
+  /// image's format, geometry and planes with what it held.
+  ///
+  /// Decoding completes into a fully validated draft (`YuvCodec.decodeStream`)
+  /// before anything on this receiver is touched, so a malformed payload
+  /// throws [FormatException] and leaves format, geometry, planes and revision
+  /// exactly as they were -- the same atomic state-replacement contract every
+  /// backend's `YuvImageState.decodeAndReplace` already gives. On success the
+  /// revision advances exactly once.
+  ///
+  /// Unlike every other method here, there is no `apply*`-based fallback a
+  /// foreign `implements YuvImage` could be forwarded to: replacing format,
+  /// geometry and every plane at once is not an operation the `0.4.0`
+  /// interface exposes at all (`YuvImage.decode` builds a new instance
+  /// instead), so `DeprecatedYuvImageApi.load` throws [UnsupportedError]
+  /// without mutating when the receiver does not implement this adapter --
+  /// exactly the fallback section 8 documents for legacy `load()`.
+  Future<void> legacyLoad(Stream<List<int>> stream);
 }

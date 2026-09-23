@@ -132,7 +132,7 @@ void main() {
       final result = image.applyFormat(YuvPixelFormat.bgra8888);
 
       expect(identical(result, image), isTrue);
-      expect(image.format.pixelFormat, YuvPixelFormat.bgra8888);
+      expect(image.format, YuvPixelFormat.bgra8888);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore + 1);
     });
   });
@@ -326,24 +326,24 @@ void main() {
 
           // Every effect, blur, flip, rotate and crop accepts every format
           // (section 11): same-format in, same-format out.
-          expect(image(4, 4).applyGrayscale().format.pixelFormat, format, reason: 'grayscale on $format');
-          expect(image(4, 4).applyBlackWhite().format.pixelFormat, format, reason: 'blackwhite on $format');
-          expect(image(4, 4).applyNegate().format.pixelFormat, format, reason: 'negate on $format');
-          expect(image(4, 4).applyGaussianBlur(radius: 1, sigma: 1.0).format.pixelFormat, format, reason: 'gaussian on $format');
-          expect(image(4, 4).applyMeanBlur(radius: 1).format.pixelFormat, format, reason: 'mean on $format');
-          expect(image(4, 4).applyBoxBlur(radius: 1).format.pixelFormat, format, reason: 'box on $format');
-          expect(image(4, 4).applyFlipHorizontal().format.pixelFormat, format, reason: 'flipH on $format');
-          expect(image(4, 4).applyFlipVertical().format.pixelFormat, format, reason: 'flipV on $format');
-          expect(image(4, 4).applyRotation(YuvImageRotation.rotation90).format.pixelFormat, format, reason: 'rotate on $format');
+          expect(image(4, 4).applyGrayscale().format, format, reason: 'grayscale on $format');
+          expect(image(4, 4).applyBlackWhite().format, format, reason: 'blackwhite on $format');
+          expect(image(4, 4).applyNegate().format, format, reason: 'negate on $format');
+          expect(image(4, 4).applyGaussianBlur(radius: 1, sigma: 1.0).format, format, reason: 'gaussian on $format');
+          expect(image(4, 4).applyMeanBlur(radius: 1).format, format, reason: 'mean on $format');
+          expect(image(4, 4).applyBoxBlur(radius: 1).format, format, reason: 'box on $format');
+          expect(image(4, 4).applyFlipHorizontal().format, format, reason: 'flipH on $format');
+          expect(image(4, 4).applyFlipVertical().format, format, reason: 'flipV on $format');
+          expect(image(4, 4).applyRotation(YuvImageRotation.rotation90).format, format, reason: 'rotate on $format');
           expect(image(8, 8).applyCrop(const ui.Rect.fromLTRB(0, 0, 4, 4)).width, 4, reason: 'crop on $format');
 
           for (final target in YuvPixelFormat.values) {
-            expect(image(4, 4).applyFormat(target).format.pixelFormat, target, reason: 'convert $format -> $target');
+            expect(image(4, 4).applyFormat(target).format, target, reason: 'convert $format -> $target');
           }
         }
 
         // chromaSwap is NV12-only.
-        expect(YuvImage.nv12(4, 4).applyChromaSwap().format.pixelFormat, YuvPixelFormat.nv12);
+        expect(YuvImage.nv12(4, 4).applyChromaSwap().format, YuvPixelFormat.nv12);
         expect(() => YuvImage.i420(4, 4).applyChromaSwap(), throwsUnsupportedError);
         expect(() => YuvImage.bgra(4, 4).applyChromaSwap(), throwsUnsupportedError);
       });

@@ -89,7 +89,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   void bumpInternalRevision() => _state.bumpRevision();
 
   @override
-  YuvFileFormat get format => _state.format;
+  YuvPixelFormat get format => _state.format.pixelFormat;
 
   @override
   int get width => _state.width;
@@ -122,7 +122,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
 
   @override
   YuvImage copy({bool blank = false}) => YuvImageImpl(
-    format,
+    _state.format,
     width,
     height,
     yPixelStride: _state.yPixelStride,
@@ -131,18 +131,16 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   );
 
   @override
-  Future<void> save(Sink<List<int>> sink) async {
+  Future<void> encodeTo(Sink<List<int>> sink) async {
     sink.add(_getBytes());
   }
 
   @override
-  Future<void> load(Stream<List<int>> stream) async {
-    await stream.drain<List<int>>();
-  }
+  Future<void> legacyLoad(Stream<List<int>> stream) => _state.decodeAndReplace(stream);
 
   @override
   String toString() {
-    return '$runtimeType(format: ${format.name}, width: $width, '
+    return '$runtimeType(format: ${_state.format.name}, width: $width, '
         'height: $height, planes: ${planes.length})';
   }
 
@@ -152,7 +150,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       return;
     }
 
-    if (format == YuvFileFormat.bgra8888) {
+    if (_state.format == YuvFileFormat.bgra8888) {
       final bgra = Uint8List(bytes.length);
       for (int i = 0; i < bytes.length; i += 4) {
         bgra[i] = bytes[i + 2];
@@ -217,10 +215,10 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       return this;
     }
     _state.replace(
-      format: format,
+      format: _state.format,
       width: region.width,
       height: region.height,
-      planes: YuvImageState.allocatePlanes(format: format, width: region.width, height: region.height, yPixelStride: _state.yPixelStride),
+      planes: YuvImageState.allocatePlanes(format: _state.format, width: region.width, height: region.height, yPixelStride: _state.yPixelStride),
     );
     return this;
   }
@@ -233,7 +231,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     // is the whole point of this being a stub. The luma pixel stride is
     // carried over so a BGRA source does not silently become a
     // one-byte-per-sample plane.
-    if (format == target) {
+    if (_state.format == target) {
       return this;
     }
     _state.replace(
@@ -315,7 +313,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
 
   @override
   Uint8List toBgraBytes() {
-    if (format == YuvFileFormat.bgra8888) {
+    if (_state.format == YuvFileFormat.bgra8888) {
       return Uint8List.fromList(yPlane.bytes);
     }
     return Uint8List(width * height * 4);

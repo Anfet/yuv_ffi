@@ -144,7 +144,7 @@ void main() {
       final image = YuvImage.i420(4, 6);
       image.applyPlanes([YuvPlane(6, 4), YuvPlane(3, 2), YuvPlane(3, 2)]);
 
-      expect(image.format, YuvFileFormat.i420);
+      expect(image.format, YuvPixelFormat.i420);
       expect(image.width, 4);
       expect(image.height, 6);
     });

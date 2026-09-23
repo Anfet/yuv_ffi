@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'package:yuv_ffi/src/yuv/shared/yuv_codec.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
@@ -29,12 +30,17 @@ export 'shared/yuv_deprecated_api.dart';
 ///   [applyRotation], [applyFormat], [applyChromaSwap], [applyRgbaBytes],
 ///   [applyPlanes].
 /// - Returns a new, independent image: [copy], [cropped], [rotated],
-///   [toI420], [toNv12], [toBgra].
+///   [toI420], [toNv12], [toBgra], and the static [YuvImage.decode].
 ///
 /// The `0.3.0` instance-method surface (`blackwhite()`, `gaussianBlur()`,
-/// `crop()`, `swapNv()`, `toYuvNv21()`, and the rest) still compiles: it lives
-/// in the deprecated `DeprecatedYuvImageApi` extension, forwarding to the
-/// members above (`doc/api-abi-0.4-design.md` sections 4 and 8).
+/// `crop()`, `swapNv()`, `toYuvNv21()`, `save()`, `load()`, and the rest)
+/// still compiles: it lives in the deprecated `DeprecatedYuvImageApi`
+/// extension, forwarding to the members above (`doc/api-abi-0.4-design.md`
+/// sections 4 and 8). `save()` forwards to [encodeTo] with identical bytes;
+/// `load()` mutates in place through a package-private atomic
+/// state-replacement adapter and throws [UnsupportedError] without mutating
+/// on a foreign `implements YuvImage` -- new code uses the static
+/// [YuvImage.decode], which returns a new image and never mutates a receiver.
 ///
 /// Breaking change for a foreign `implements YuvImage`: every `apply*`/`to*`
 /// member added for `0.4.0` is a required interface member, so an external
@@ -44,7 +50,13 @@ export 'shared/yuv_deprecated_api.dart';
 /// here adds further required members beyond that set.
 abstract interface class YuvImage {
   /// Pixel format of the current image.
-  YuvFileFormat get format;
+  ///
+  /// A legacy `nv21`-labeled image (created through the deprecated
+  /// [YuvImage.nv21] factory or [YuvImage] unnamed factory) reports
+  /// [YuvPixelFormat.nv12] here: the truthful name for the same canonical
+  /// semi-planar storage (section 4, lines ~112/144 of
+  /// `doc/api-abi-0.4-design.md`).
+  YuvPixelFormat get format;
 
   /// Image width in pixels.
   int get width;
@@ -158,13 +170,23 @@ abstract interface class YuvImage {
 
   /// Serializes this image into [sink].
   ///
-  /// Throws when [sink] rejects writes.
-  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
+  /// Does not mutate this image. Throws when [sink] rejects writes.
+  Future<void> encodeTo(Sink<List<int>> sink) => throw UnimplementedError();
 
-  /// Loads image data from [stream] and replaces current state.
+  /// Decodes [stream] into a new, independent image.
   ///
-  /// Throws [FormatException] when input payload is malformed.
-  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
+  /// Never mutates an existing instance -- there is no receiver, only a fresh
+  /// image built from the decoded payload (`doc/api-abi-0.4-design.md`
+  /// sections 4 and 8; the `0.3.0` mutating `load(stream)` moved to the
+  /// deprecated `DeprecatedYuvImageApi.load` extension, which additionally
+  /// requires a package-private atomic state-replacement adapter).
+  ///
+  /// Throws [FormatException] when [stream] holds a malformed or unsupported
+  /// (for example `0.3.0`-era version 1) payload.
+  static Future<YuvImage> decode(Stream<List<int>> stream) async {
+    final draft = await YuvCodec.decodeStream(stream);
+    return YuvImageImpl(draft.format, draft.width, draft.height, planes: draft.planes);
+  }
 
   /// Converts to Flutter [ui.Image].
   ///

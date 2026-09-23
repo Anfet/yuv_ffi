@@ -248,7 +248,7 @@ void main() {
       final payload = await validPayload(format: YuvFileFormat.nv21, width: 16, height: 16);
       await expectLater(image.load(asStream(<int>[...payload, 1, 2, 3])), throwsFormatException);
 
-      expect(image.format, YuvFileFormat.i420);
+      expect(image.format, YuvPixelFormat.i420);
       expect(image.width, 8);
       expect(image.getBytes(), orderedEquals(before));
     });

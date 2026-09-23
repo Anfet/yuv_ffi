@@ -128,7 +128,7 @@ class _PublicSurfaceOnlyImage implements YuvImage {
   final int height;
 
   @override
-  YuvFileFormat get format => YuvFileFormat.bgra8888;
+  YuvPixelFormat get format => YuvPixelFormat.bgra8888;
 
   @override
   List<YuvPlane> get planes => <YuvPlane>[_plane];
@@ -152,10 +152,7 @@ class _PublicSurfaceOnlyImage implements YuvImage {
   YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
 
   @override
-  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
-
-  @override
-  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
+  Future<void> encodeTo(Sink<List<int>> sink) => throw UnimplementedError();
 
   @override
   Future<ui.Image> toImage() => throw UnimplementedError();

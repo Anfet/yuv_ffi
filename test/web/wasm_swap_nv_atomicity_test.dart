@@ -163,7 +163,7 @@ void main() {
     expect(() => image.swapNv(), throwsA(isA<YuvNativeException>()));
 
     expect(_calls(module), [yuvSymbolChromaSwapV1], reason: 'an NV21 receiver needs no conversion');
-    expect(image.format, YuvFileFormat.nv21);
+    expect(image.format, YuvPixelFormat.nv12);
     expect(image.getBytes(), bytesBefore);
     expect((image as YuvRevisionAware).internalRevision, revisionBefore);
   });
@@ -180,7 +180,7 @@ void main() {
     image.swapNv();
 
     expect(_calls(module), [yuvSymbolConvertV1, yuvSymbolChromaSwapV1]);
-    expect(image.format, YuvFileFormat.nv21);
+    expect(image.format, YuvPixelFormat.nv12);
     expect((image as YuvRevisionAware).internalRevision, revisionBefore + 1, reason: 'two native calls must still be one publish');
   });
 }

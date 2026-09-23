@@ -207,7 +207,7 @@ void main() {
     group('conversion against the native backend', () {
       test('produces an image of the requested format and geometry', () {
         final image = YuvImage.fromRgbaBytes(Uint8List(4 * 3 * 4), width: 4, height: 3, format: YuvPixelFormat.bgra8888);
-        expect(image.format, YuvFileFormat.bgra8888);
+        expect(image.format, YuvPixelFormat.bgra8888);
         expect(image.width, 4);
         expect(image.height, 3);
       });

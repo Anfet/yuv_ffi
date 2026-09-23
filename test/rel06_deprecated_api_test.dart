@@ -74,11 +74,11 @@ void main() {
     test('YuvImage.nv21 and the unnamed YuvImage() factory still compile and construct', () {
       // ignore: deprecated_member_use_from_same_package
       final legacy = YuvImage.nv21(4, 4);
-      expect(legacy.format, YuvFileFormat.nv21);
+      expect(legacy.format, YuvPixelFormat.nv12);
 
       // ignore: deprecated_member_use_from_same_package
       final explicit = YuvImage(YuvFileFormat.bgra8888, 4, 4);
-      expect(explicit.format, YuvFileFormat.bgra8888);
+      expect(explicit.format, YuvPixelFormat.bgra8888);
     });
   });
 
@@ -312,7 +312,7 @@ void main() {
 
       expect(identical(result, image), isTrue);
       expect(invocationCount, 1, reason: 'an already-NV image must not be converted first, only swapped');
-      expect(image.format, YuvFileFormat.nv21);
+      expect(image.format, YuvPixelFormat.nv12);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore + 1);
     });
 
@@ -333,7 +333,7 @@ void main() {
 
       expect(identical(result, image), isTrue);
       expect(invocationCount, 2, reason: 'a non-NV source must be converted to NV12 first, then swapped');
-      expect(image.format, YuvFileFormat.nv21, reason: 'swapNv() adopts the legacy nv21 label after converting');
+      expect(image.format, YuvPixelFormat.nv12, reason: 'swapNv() adopts the legacy nv21 label after converting');
       // Exactly one publish happens no matter how many native calls it took to
       // get there (section 13): the receiver's revision must still advance by
       // exactly one, not once per internal native call.
@@ -405,8 +405,8 @@ void main() {
         modern.applyFormat(YuvPixelFormat.nv12);
         modern.applyChromaSwap();
 
-        expect(legacy.format, YuvFileFormat.nv21);
-        expect(modern.format.pixelFormat, YuvPixelFormat.nv12);
+        expect(legacy.format, YuvPixelFormat.nv12);
+        expect(modern.format, YuvPixelFormat.nv12);
         expect(legacy.getBytes(), modern.getBytes(), reason: 'swapNv() must preserve the historical two-step output bytes exactly');
       },
       skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
@@ -501,7 +501,7 @@ void main() {
       expect(image.calls, contains('applyFormat(YuvPixelFormat.nv12)'));
     });
 
-    test('swapNv() is the sole documented exception: it throws UnsupportedError without mutating, unlike every other method', () {
+    test('swapNv() is a documented exception: it throws UnsupportedError without mutating, unlike every other method', () {
       final image = _RecordingForeignImage(4, 4);
       final bytesBefore = Uint8List.fromList(image.yPlane.bytes);
 
@@ -510,6 +510,17 @@ void main() {
 
       expect(image.calls, isEmpty, reason: 'swapNv() must not fall back to any apply*/applyFormat call for a foreign receiver');
       expect(image.yPlane.bytes, orderedEquals(bytesBefore), reason: 'a rejected swapNv() must not mutate a foreign receiver');
+    });
+
+    test('load() is the other documented exception: it throws UnsupportedError without mutating (REL-20)', () {
+      final image = _RecordingForeignImage(4, 4);
+      final bytesBefore = Uint8List.fromList(image.yPlane.bytes);
+
+      // ignore: deprecated_member_use_from_same_package
+      expect(() => image.load(const Stream<List<int>>.empty()), throwsA(isA<UnsupportedError>()));
+
+      expect(image.calls, isEmpty, reason: 'load() must not fall back to any apply*/applyFormat call for a foreign receiver');
+      expect(image.yPlane.bytes, orderedEquals(bytesBefore), reason: 'a rejected load() must not mutate a foreign receiver');
     });
   });
 }
@@ -544,7 +555,7 @@ class _RecordingForeignImage implements YuvImage {
   final int height;
 
   @override
-  YuvFileFormat get format => YuvFileFormat.bgra8888;
+  YuvPixelFormat get format => YuvPixelFormat.bgra8888;
 
   @override
   List<YuvPlane> get planes => <YuvPlane>[_plane];
@@ -568,10 +579,7 @@ class _RecordingForeignImage implements YuvImage {
   YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
 
   @override
-  Future<void> save(Sink<List<int>> sink) => throw UnimplementedError();
-
-  @override
-  Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
+  Future<void> encodeTo(Sink<List<int>> sink) => throw UnimplementedError();
 
   @override
   Future<ui.Image> toImage() => throw UnimplementedError();
