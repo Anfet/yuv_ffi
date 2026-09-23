@@ -450,3 +450,65 @@ jobs:
             printf '  %s\n' "${failed[@]}"
             exit 1
           fi
+
+      # YUV-18: the full reference matrix (119 cases over test_pattern_512.png).
+      # CI did not cover it at all -- the targets above are contract and
+      # lifecycle suites, none of which compare against the reference images,
+      # so a Web/native divergence like F-009 could only be caught by a manual
+      # run. This step closes that gap.
+      #
+      # `flutter drive` cannot be trusted to report this suite's result: it
+      # prints "All tests passed." and exits 0 even when the browser never
+      # connected and not a single case ran (observed while wiring this up).
+      # The pass condition is therefore the suite's own summary line, and a run
+      # that never reaches that summary -- the F-010 silent-abort signature --
+      # fails instead of passing.
+      - name: Web reference matrix (YUV-12/YUV-18)
+        working-directory: example
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          chromedriver --port=4444 > /tmp/chromedriver-matrix.log 2>&1 &
+          chromedriver_pid=$!
+          trap 'kill "$chromedriver_pid" 2>/dev/null || true' EXIT
+
+          for _ in $(seq 1 10); do
+            curl --fail --silent http://127.0.0.1:4444/status > /dev/null && break
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4444/status > /dev/null
+
+          xvfb-run -a flutter drive             --driver=test_driver/integration_test.dart             --target=integration_test/reference_web_conversions_test.dart             -d web-server             --browser-name=chrome             --headless 2>&1 | tee /tmp/matrix.log || true
+
+          echo "--- matrix summary ---"
+
+          # The suite prints this unconditionally, right before its final
+          # expect(). "YUV-12: N/119 case(s) failed" is only the expect()
+          # reason, so it appears on failure ONLY and must not be the probe.
+          summary=$(grep -E "YUV-12 summary: executed=" /tmp/matrix.log | tail -1 || true)
+
+          if [ -z "$summary" ]; then
+            echo "No 'YUV-12 summary:' line: the suite did not run to completion."
+            echo "This is the F-010 silent-abort signature; drive's exit code"
+            echo "and its 'All tests passed.' line are not evidence here."
+            exit 1
+          fi
+
+          echo "$summary"
+
+          executed=$(sed -E 's/.*executed=([0-9]+).*/\1/' <<< "$summary")
+          failed=$(sed -E 's/.*failed=([0-9]+).*/\1/' <<< "$summary")
+
+          # A truncated run that still printed a summary must not pass either.
+          if [ "$executed" -ne 119 ]; then
+            echo "Expected 119 executed cases, got $executed."
+            exit 1
+          fi
+
+          if [ "$failed" -ne 0 ]; then
+            echo "Web reference matrix: $failed case(s) failed (ids in the summary above)."
+            exit 1
+          fi
+
+          echo "Web reference matrix: 119/119 cases passed."
