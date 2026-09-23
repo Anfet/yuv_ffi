@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 
 /// A fully read and validated payload, before it is applied to an image.
@@ -38,7 +39,7 @@ class YuvValidatedImageDraft {
 ///
 /// ```text
 /// uint32  header length
-/// bytes   header, UTF-8 JSON {version, format, width, height}
+/// bytes   header, UTF-8 JSON {version: 2, formatId, width, height}
 /// uint8   plane count
 /// repeated per plane:
 ///   uint32  height
@@ -48,12 +49,23 @@ class YuvValidatedImageDraft {
 ///   bytes   plane data
 /// ```
 ///
+/// `formatId` is [YuvPixelFormat.wireId] (section 6 of
+/// `doc/api-abi-0.4-design.md`), never a Dart enum index and never the legacy
+/// string `format` name v1 wrote: index and name both reflect declaration
+/// order and would silently renumber or rename a value already on disk.
+///
+/// Version 1 (the frozen 0.3.0 wire shape: string `format`, no `formatId`) is
+/// read only far enough to recognize and reject it -- there is no v1 writer
+/// and no automatic migration. An application holding 0.3.0-era serialized
+/// frames must decode and re-encode them with a 0.3.0 build of this package
+/// before upgrading; the current build refuses to read them at all.
+///
 /// Every malformed, truncated or unsupported payload throws a
 /// [FormatException]. Nothing here relies on `assert`, which would disappear in
 /// release builds and turn a rejected payload into an out-of-range read.
 abstract final class YuvCodec {
   /// Format version written by [encode] and the only one [decode] accepts.
-  static const int version = 1;
+  static const int version = 2;
 
   /// Largest header block accepted before the JSON is even parsed.
   ///
@@ -67,9 +79,16 @@ abstract final class YuvCodec {
   /// a corrupt length word cannot drive an allocation.
   static const int maxPlaneBytes = 1 << 30;
 
+  /// Reverse lookup from the stable wire identity to the enum value, built
+  /// once from [YuvPixelFormat.wireId] rather than hand-duplicated so an
+  /// added format value is picked up automatically.
+  static final Map<int, YuvPixelFormat> _pixelFormatByWireId = <int, YuvPixelFormat>{for (final value in YuvPixelFormat.values) value.wireId: value};
+
   /// Encodes [format], [width], [height] and [planes] into one byte buffer.
   static Uint8List encode({required YuvFileFormat format, required int width, required int height, required List<YuvPlane> planes}) {
-    final header = utf8.encode(jsonEncode(<String, Object>{'version': version, 'format': format.name, 'width': width, 'height': height}));
+    final header = utf8.encode(
+      jsonEncode(<String, Object>{'version': version, 'formatId': format.pixelFormat.wireId, 'width': width, 'height': height}),
+    );
 
     int total = 4 + header.length + 1;
     for (final plane in planes) {
@@ -116,6 +135,12 @@ abstract final class YuvCodec {
   /// Throws a [FormatException] for a truncated payload, an unknown version or
   /// format, wrong field types, an implausible plane count or length, geometry
   /// the planes cannot satisfy, or unexpected trailing bytes.
+  ///
+  /// Only version 2 is accepted. A version-1 payload -- the frozen 0.3.0 wire
+  /// shape, keyed by a string `format` name instead of a stable `formatId` --
+  /// is rejected with [FormatException] rather than transparently migrated;
+  /// there is no v1 writer. Re-encode 0.3.0-era frames with a 0.3.0 build of
+  /// this package before decoding them here.
   static Future<YuvValidatedImageDraft> decodeStream(Stream<List<int>> stream) async {
     final reader = _StreamReader(stream);
     try {
@@ -158,18 +183,15 @@ abstract final class YuvCodec {
       throw FormatException('Unsupported yuv_ffi payload version $payloadVersion; this build reads version $version');
     }
 
-    final formatName = decoded['format'];
-    if (formatName is! String) {
-      throw const FormatException('Malformed yuv_ffi payload: header format is missing or not a string');
+    final formatId = decoded['formatId'];
+    if (formatId is! int) {
+      throw const FormatException('Malformed yuv_ffi payload: header formatId is missing or not an integer');
     }
-    final YuvFileFormat format;
-    try {
-      format = YuvFileFormat.values.byName(formatName);
-    } on ArgumentError {
-      // byName throws ArgumentError, but an unknown format is a payload defect
-      // and the public contract promises FormatException.
-      throw FormatException('Malformed yuv_ffi payload: unknown format "$formatName"');
+    final pixelFormat = _pixelFormatByWireId[formatId];
+    if (pixelFormat == null) {
+      throw FormatException('Malformed yuv_ffi payload: unknown formatId $formatId');
     }
+    final format = pixelFormat.legacy;
 
     final width = decoded['width'];
     final height = decoded['height'];

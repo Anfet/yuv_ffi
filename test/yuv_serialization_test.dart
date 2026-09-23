@@ -118,28 +118,68 @@ void main() {
     });
 
     test('an unsupported version', () async {
-      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 99, 'format': 'i420', 'width': 8, 'height': 8}));
+      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 99, 'formatId': 1, 'width': 8, 'height': 8}));
       await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
     test('a missing version', () async {
-      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'format': 'i420', 'width': 8, 'height': 8}));
+      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'formatId': 1, 'width': 8, 'height': 8}));
       await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
-    test('an unknown format name', () async {
-      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 1, 'format': 'rgb565', 'width': 8, 'height': 8}));
+    test('an unknown formatId', () async {
+      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 2, 'formatId': 99, 'width': 8, 'height': 8}));
+      await expectLater(YuvCodec.decode(payload), throwsFormatException);
+    });
+
+    test('a formatId of the wrong type', () async {
+      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 2, 'formatId': '1', 'width': 8, 'height': 8}));
+      await expectLater(YuvCodec.decode(payload), throwsFormatException);
+    });
+
+    test('a missing formatId', () async {
+      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 2, 'width': 8, 'height': 8}));
       await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
     test('dimensions of the wrong type', () async {
-      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': '8', 'height': 8}));
+      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 2, 'formatId': 1, 'width': '8', 'height': 8}));
       await expectLater(YuvCodec.decode(payload), throwsFormatException);
     });
 
     test('non-positive dimensions', () async {
-      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': 0, 'height': 8}));
+      final payload = _payloadWithHeader(jsonEncode(<String, Object>{'version': 2, 'formatId': 1, 'width': 0, 'height': 8}));
       await expectLater(YuvCodec.decode(payload), throwsFormatException);
+    });
+
+    test('a genuine v1-shaped payload (string format, no formatId) is rejected', () async {
+      // What 0.3.0 actually wrote: version 1, a string `format` name, no
+      // `formatId`. This must be rejected outright -- no auto-detection, no
+      // transparent migration, no v1 reader path.
+      final header = utf8.encode(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': 8, 'height': 8}));
+      final builder = BytesBuilder();
+      final head = Uint8List(4 + header.length + 1);
+      ByteData.view(head.buffer).setUint32(0, header.length, Endian.little);
+      head.setRange(4, 4 + header.length, header);
+      head[4 + header.length] = 3; // I420 plane count
+      builder.add(head);
+
+      void addPlane(int height, int rowStride, int pixelStride) {
+        final out = Uint8List(16);
+        final view = ByteData.view(out.buffer);
+        view.setUint32(0, height, Endian.little);
+        view.setUint32(4, rowStride, Endian.little);
+        view.setUint32(8, pixelStride, Endian.little);
+        view.setUint32(12, height * rowStride, Endian.little);
+        builder.add(out);
+        builder.add(Uint8List(height * rowStride));
+      }
+
+      addPlane(8, 8, 1);
+      addPlane(4, 4, 1);
+      addPlane(4, 4, 1);
+
+      await expectLater(YuvCodec.decode(builder.takeBytes()), throwsFormatException);
     });
 
     test('a wrong plane count for the format', () async {
@@ -227,6 +267,15 @@ void main() {
       final header = jsonDecode(utf8.decode(payload.sublist(4, 4 + headerLength))) as Map<String, dynamic>;
 
       expect(header['version'], YuvCodec.version);
+    });
+
+    test('the header key is formatId, keyed by wireId, never the legacy format name or enum index', () async {
+      final payload = await validPayload(format: YuvFileFormat.nv21);
+      final headerLength = ByteData.view(payload.buffer).getUint32(0, Endian.little);
+      final header = jsonDecode(utf8.decode(payload.sublist(4, 4 + headerLength))) as Map<String, dynamic>;
+
+      expect(header.containsKey('format'), isFalse, reason: 'v2 must not write the legacy string format field');
+      expect(header['formatId'], YuvPixelFormat.nv12.wireId);
     });
   });
 
@@ -324,7 +373,7 @@ void main() {
       // two rows. The stream never closes and never supplies the body: a decoder
       // that waited for those bytes would hang until the timeout instead of
       // rejecting on the metadata it already holds.
-      final header = utf8.encode(jsonEncode(<String, Object>{'version': 1, 'format': 'bgra8888', 'width': 1, 'height': 1}));
+      final header = utf8.encode(jsonEncode(<String, Object>{'version': 2, 'formatId': 3, 'width': 1, 'height': 1}));
       final metadata = Uint8List(4 + header.length + 1 + 16);
       final view = ByteData.view(metadata.buffer);
       view.setUint32(0, header.length, Endian.little);
@@ -394,7 +443,7 @@ void main() {
       // check catches this: U declares a rowStride of 4 and V declares 8. Only
       // the cross-plane rule rejects it, and it has to do so from V's metadata —
       // the V body is never supplied and the stream never closes.
-      final header = utf8.encode(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': 8, 'height': 8}));
+      final header = utf8.encode(jsonEncode(<String, Object>{'version': 2, 'formatId': 1, 'width': 8, 'height': 8}));
       final builder = BytesBuilder();
       final head = Uint8List(4 + header.length + 1);
       ByteData.view(head.buffer).setUint32(0, header.length, Endian.little);
@@ -430,7 +479,7 @@ void main() {
       // Same shape for a multi-plane format: the luma plane is correct, and the
       // U plane's own arithmetic is consistent, but its row count does not match
       // the chroma height an 8x8 I420 image requires.
-      final header = utf8.encode(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': 8, 'height': 8}));
+      final header = utf8.encode(jsonEncode(<String, Object>{'version': 2, 'formatId': 1, 'width': 8, 'height': 8}));
       final builder = BytesBuilder();
       final head = Uint8List(4 + header.length + 1);
       ByteData.view(head.buffer).setUint32(0, header.length, Endian.little);
