@@ -11,7 +11,7 @@
 | [x] | REL-03 | DONE | 2 · Terra | 01, 02 | R1 | Фабрики, `allocate`, RGBA импорт. |
 | [x] | REL-04 | DONE | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
 | [x] | REL-05 | DONE | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
-| [ ] | REL-06 | IN_PROGRESS | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
+| [ ] | REL-06 | REJECTED | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
 | [x] | REL-07 | DONE | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
 | [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
 | [x] | REL-09 | DONE | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
@@ -24,8 +24,10 @@
 | [ ] | REL-16 | BLOCKED | 3 · Luna | 01–15 | R4 | README, пример, Dartdoc, CHANGELOG. |
 | [ ] | REL-17 | BLOCKED | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
 | [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
+| [ ] | REL-19 | BLOCKED | 2 · Terra | 06 | R3 | `format` → `YuvPixelFormat` на публичном интерфейсе. |
+| [ ] | REL-20 | BLOCKED | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
 
-**Итого (после волны 2, интеграции и коммитов 2026-09-23):** 11 DONE (REL-01, REL-02, REL-03, REL-07, REL-08, REL-09, REL-10, REL-12, REL-13, REL-14, REL-15), 0 REVIEW, 0 REJECTED, 1 READY (REL-04), 6 BLOCKED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакет R2 (REL-08, REL-09, REL-10) полностью принят.**
+**Итого (2026-09-23, после Tier 1 ревью REL-06):** 11 DONE, 1 REJECTED (REL-06, доработка), 2 новые BLOCKED задачи (REL-19, REL-20), 0 REVIEW, 0 READY, 8 BLOCKED всего, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакет R2 (REL-08, REL-09, REL-10) полностью принят.**
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Ревью пакета R1 (2026-09-23)
@@ -125,6 +127,25 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 
 **Дополнено по итогам ревью R1 (2026-09-23):** явно включить в scope `@Deprecated` на `YuvFileFormat` и точки входа `nv21` (отложено из REL-01/03 намеренно, чтобы не плодить churn `deprecated_member_use_from_same_package` в ~9 файлах вне границ той задачи). Internal bridge-extensions `YuvPixelFormatLegacyBridge`/`YuvFileFormatPixelFormatBridge` (`lib/src/yuv/shared/yuv_pixel_format.dart`) — оставить unexported, это штатный механизм форвардинга для этой миграции, конфликта с планом депрекации нет (подтверждено Tier 1). Также добавить недостающий из REL-01 byte-level тест UV-порядка (запись/чтение реальных байт через `nv12`/`nv21`, round-trip через BGRA-конвертацию на native, плюс Web-аналог) — текущий тест сравнивает только stride/format, не байты.
 
+**REJECTED — Tier 1 ревью 2026-09-23.** Первая попытка (worktree agent-a0d50b08cdaed8c65) в основном корректна (скрытый `YuvImageImpl`, deprecated-фабрики, `copy(blank:)`, `y/u/v/getBytes`, атомарный `swapNv`, `@Deprecated` на `YuvFileFormat`), но не завершена внутри собственного scope — это доработка, а не редизайн.
+
+**Architect Decision 1 — `format: YuvPixelFormat`:** дизайн требует ретайпинга (§4 строка 100: `format | format: YuvPixelFormat | Read-only | Always available`; исчерпывающий листинг строка 152: `YuvPixelFormat get format;`; §16: "The public storage format becomes `YuvPixelFormat`"). Промежуточное состояние (геттер остаётся `YuvFileFormat`) блокирует релиз: bridge-расширения из REL-01 намеренно unexported, поэтому у потребителя пакета нет чистого способа прочитать типизированный формат образа. **Владение переносится в новую задачу REL-19**, не в REL-06 — ретайпинг публичного геттера меняет core-член и переписывает assertions в уже принятых тестах REL-01/04/05/07, это отдельный diff для отдельного ревью. Внутренние ~60 точек вызова трогать не нужно — они продолжают читать `_state.format` (`YuvFileFormat`), маппится только публичный геттер.
+
+**Architect Decision 2 — `toBgra8888()`:** переносится в `DeprecatedYuvImageApi` как часть REL-06 (не остаётся live core-членом). §4 строка 142: `toBgra8888() | toBgraBytes() | New tight byte copy`; в исчерпывающем листинге §4 (строки 150–227) `toBgra8888` отсутствует; §8: "Old renamed members must be removed from the concrete class/interface because an instance member would shadow the extension." Единственная причина держать метод live — вызов из `YuvImageProvider` (REL-11) — снята: REL-11 уже принят и смёржен (коммит `7f75621`), виджет теперь вызывает `toBgraBytes()` напрямую. Первая попытка REL-06 разрабатывалась в параллельном worktree и не видела этого коммита на момент решения.
+
+**Оценка паттерна `YuvLegacyDispatchAdapter`:** идея верна (deprecated-слой обязан сохранять поведение 0.3.0, а 0.3.0 диспетчеризовал без `initialize()`) и отклоняется от буквального наброска §8 (`grayscale() => applyGrayscale();`) — это нужно зафиксировать как отдельное Architect Decision и обновить формулировку §8, что и делается здесь. Найдены три дефекта для исправления в доработке:
+1. Дублирование логики может разойтись: `applyCrop/Flip*/Rotation/RgbaBytes` корректно делают "gate, затем `legacy*()`", но `applyGrayscale/BlackWhite/Negate/GaussianBlur` дублируют тело legacy-метода дословно на IO и Web. Каждый `apply*` должен стать "gate, затем `legacy*`" без исключений.
+2. Чужие `implements YuvImage` регрессируют против дизайна: `_legacy()` кидает `UnsupportedError` для любого чужого класса. §8 разрешает такой fallback только для `load()`. Чужой получатель должен форвардиться на свой собственный `apply*`/`applyFormat(...)`. Throw допустим только для `swapNv()` — двухшаговый форвард не может быть атомарным на чужой реализации.
+3. Именование: `yuv_legacy_swap.dart` содержит весь адаптер целиком — переименовать в `yuv_legacy_dispatch.dart`.
+
+**Требуемая доработка REL-06 (тот же ID, новый проход):**
+- (a) Ребейзнуться на актуальный `release/0.4.0` (после мёржа REL-11) и перенести `toBgra8888` в extension согласно Decision 2.
+- (b) Каждый `apply*` должен делегировать в `legacy*` без исключений (устранить дублирование п.1).
+- (c) Чужие получатели форвардятся на `apply*`, добавить тесты и для чужого получателя, и для пакетного.
+- (d) Byte-level round-trip тест UV-порядка NV12/NV21 (IO + Web-аналог) из R1-дополнения всё ещё отсутствует — текущий новый тест-файл ссылается на `nv_chroma_order_test.dart`, который (по R1 ревью) проверяет только stride/format, не байты.
+- (e) Тест "скрытый `YuvImageImpl`" ничего не доказывает, так как импортирует impl напрямую — добавить consumer-тест, который импортирует только `package:yuv_ffi/yuv_ffi.dart` и упражняет весь 0.3.0-surface.
+- Переименовать `yuv_legacy_swap.dart` → `yuv_legacy_dispatch.dart` (п.3 выше).
+
 ### REL-07 — Codec v2
 
 Писать и читать только v2 с `formatId` из REL-01. V1 отвергать `FormatException`; автоматическую миграцию и v1 writer не делать. Сохранить лимиты размеров, строгую геометрию, потоковое чтение и EOF. **Приёмка:** golden v2, фрагментированный stream, неверные поля/версия/хвост и golden v1 с отказом; документировать перекодирование данных приложением на 0.3.0 до обновления.
@@ -176,3 +197,22 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 ### REL-18 — Новая приёмка
 
 Независимо сверить реализацию с дизайном 0.4.0 и результатами REL-17. Приёмку 0.3.0 не переносить на новый API. **Приёмка:** отдельный отчёт с каждым blocker и решением о готовности к тегу/публикации; до этого задача остаётся BLOCKED.
+
+### REL-19 — `format` возвращает `YuvPixelFormat`
+
+**Заведено Tier 1 2026-09-23 по итогам ревью REL-06** (Architect Decision 1 в описании REL-06 выше). `YuvImage.format` должен возвращать `YuvPixelFormat` на интерфейсе и во всех трёх backend (IO/Web/stub); внутренний код продолжает читать `_state.format` (`YuvFileFormat`), трогать ~60 внутренних точек вызова не нужно — маппится только публичный геттер через уже существующие bridge-extensions REL-01. Legacy `nv21`-образы должны репортить `format == YuvPixelFormat.nv12` (§4 строки 112/144); внутренний stride-клэмп `nv21` остаётся как есть. **Приёмка:**
+- Consumer-тест, использующий только публичный импорт (`package:yuv_ffi/yuv_ffi.dart`), делает исчерпывающий `switch (image.format)` по `YuvPixelFormat` без deprecation-предупреждений.
+- `swapNv()` на не-NV входе даёт `format == YuvPixelFormat.nv12`.
+- Затронутые assertions в уже принятых тестах (REL-01/04/05/07) и чужие test-fixtures обновлены.
+- Единственная оставшаяся публичная точка `YuvFileFormat` — deprecated unnamed-фабрика.
+- `flutter analyze` чист, тесты не хуже базовой линии.
+
+### REL-20 — `encodeTo`/`YuvImage.decode` вместо `save`/`load`
+
+**Заведено Tier 1 2026-09-23 по итогам ревью REL-06.** Ни REL-01, ни REL-07, ни REL-06 не взяли на себя эту часть §4 (строки 120–121, исчерпывающий листинг строки 181/225) и §8: `encodeTo(sink)` и статический `YuvImage.decode(stream)` нигде не существуют в `lib/`, хотя дизайн их требует; `save`/`load` должны переехать в deprecated extension. **Приёмка:**
+- `save` форвардится на `encodeTo` с идентичными байтами.
+- `load` работает через package-private atomic state-replacement adapter (аналогично `YuvLegacyDispatchAdapter` из REL-06).
+- `load` на чужом получателе (`implements YuvImage` вне пакета) кидает `UnsupportedError` и не меняет его состояние (§8 строки 463–467).
+- `decode` возвращает новый образ и не меняет получателя (если вызван как метод расширения на существующем экземпляре) либо является чистой статической фабрикой.
+
+При R3-ревью пакета проверить остальные строки §4 на предмет других "осиротевших" пунктов, не взятых в scope ни одной задачей.
