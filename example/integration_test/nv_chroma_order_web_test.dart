@@ -27,7 +27,7 @@ void main() {
   YuvPlane buildYPlane() => YuvPlane(h, w, 1, Uint8List(w * h)..fillRange(0, w * h, 16));
 
   YuvPlane buildUvPlane() {
-    final bytes = Uint8List(w * h);
+    final bytes = Uint8List((h ~/ 2) * w); // NV chroma plane: h/2 rows of w bytes each (w/2 (U, V) pairs per row).
     for (int i = 0; i < bytes.length; i += 2) {
       bytes[i] = uSample;
       bytes[i + 1] = vSample;
