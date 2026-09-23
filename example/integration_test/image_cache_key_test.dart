@@ -413,20 +413,5 @@ class _ForeignImage implements YuvImage {
   YuvPlane get yPlane => _plane;
 
   @override
-  YuvPlane get y => _plane;
-
-  @override
-  YuvPlane? get u => null;
-
-  @override
-  YuvPlane? get v => null;
-
-  @override
-  Uint8List toBgra8888() => _plane.bytes;
-
-  @override
-  Uint8List getBytes() => _plane.bytes;
-
-  @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
