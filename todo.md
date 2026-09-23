@@ -14,8 +14,8 @@
 | [ ] | REL-06 | BLOCKED | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
 | [x] | REL-07 | DONE | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
 | [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
-| [ ] | REL-09 | IN_PROGRESS | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
-| [ ] | REL-10 | BLOCKED | 2 · Terra | 08, 09 | R2 | Типизированные ошибки ABI/loader. |
+| [x] | REL-09 | DONE | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
+| [ ] | REL-10 | READY | 2 · Terra | 08, 09 | R2 | Типизированные ошибки ABI/loader. |
 | [ ] | REL-11 | BLOCKED | 2 · Terra | 02, 05, 08 | R3 | Widget/provider и revision. |
 | [x] | REL-12 | DONE | 2 · Terra | — | R1 | BGRA с `pixelStride > 4`. |
 | [x] | REL-13 | DONE | 2 · Terra | — | R1 | Границы X/Y в `YuvPlane`. |
@@ -25,7 +25,7 @@
 | [ ] | REL-17 | BLOCKED | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
 | [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
 
-**Итого (после волны 1, интеграции и коммитов 2026-09-23):** 8 DONE (REL-01, REL-02, REL-03, REL-08, REL-12, REL-13, REL-14, REL-15), 0 REVIEW, 0 REJECTED, 0 READY, 10 BLOCKED, 0 IN_PROGRESS. 0 ARCH REQUIRED.
+**Итого (после волны 2, интеграции и коммитов 2026-09-23):** 10 DONE (REL-01, REL-02, REL-03, REL-07, REL-08, REL-09, REL-12, REL-13, REL-14, REL-15), 0 REVIEW, 0 REJECTED, 1 READY (REL-10), 7 BLOCKED, 0 IN_PROGRESS. 0 ARCH REQUIRED.
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Ревью пакета R1 (2026-09-23)
@@ -112,6 +112,8 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 ### REL-04 — Мутация
 
 Реализовать весь набор `apply*` из дизайна: эффекты, три blur, crop, flip, rotation, format, chroma swap, RGBA и planes. Успех возвращает `identical(this)` и увеличивает revision один раз; определённые no-op и отказ не меняют байты, metadata и revision. **Приёмка:** матрица операций/форматов IO и поддерживаемого Web, padding/alpha, odd crop и blur border против reference oracle, отказ ABI.
+
+**Дополнено по итогам REL-09 (2026-09-23):** `yuvRequireCapability` (в `lib/src/yuv_capabilities.dart`) уже реализован и покрыт тестами изолированно — REL-09 намеренно не подключал его к реальным точкам вызова `apply*`, так как единого dispatch-слоя ещё не существовало. Каждый `apply*` в REL-04 должен вызывать `yuvRequireCapability(capabilities, YuvOperation.X, sourceFormat: ..., destinationFormat: ...)` первым действием, до любой аллокации/нативного вызова/изменения revision — именно это здесь и является критерием приёмки "отказ ABI" для случая отсутствующей capability.
 
 ### REL-05 — Независимые результаты
 
