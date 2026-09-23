@@ -22,13 +22,13 @@
 | [x] | REL-14 | DONE | 3 · Luna | — | R4 | Apple/CMake release metadata. |
 | [x] | REL-15 | DONE | 2 · Terra | — | R4 | Нижняя граница Flutter/Dart. |
 | [x] | REL-16 | DONE | 3 · Luna | 01–15, 19, 20 | R4 | README, пример, Dartdoc, CHANGELOG. |
-| [ ] | REL-17 | READY | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
+| [ ] | REL-17 | REVIEW | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
 | [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
 | [x] | REL-19 | DONE | 2 · Terra | 06 | R3 | `format` → `YuvPixelFormat` на публичном интерфейсе. |
 | [x] | REL-20 | DONE | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
 | [ ] | REL-21 | REVIEW | 3 · Luna | 06, 16 | — | Миграция `example/` на `apply*`/`to*` API. |
 
-**Итого (2026-09-23, после приёмки REL-16):** 17 DONE (REL-01–16 кроме REL-17–18, плюс REL-19, REL-20), 1 READY (REL-17), 2 BLOCKED (REL-18), 1 READY (REL-21, вне пакетов), 0 REVIEW, 0 REJECTED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакеты R1, R2, R3 полностью приняты.**
+**Итого (2026-09-23, после прогона REL-17 gates):** 16 DONE (REL-01–16 кроме REL-17, плюс REL-19, REL-20), 2 REVIEW (REL-17, REL-21), 1 BLOCKED (REL-18), 0 READY, 0 REJECTED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакеты R1, R2, R3 полностью приняты. REL-17 нашёл blocker для REL-18: Web-бэкенд расходится с native oracle на 4/119 reference-кейсов (`FORMAT-TO-NV21-*`), см. отчёт REL-17.**
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Ревью пакета R1 (2026-09-23)
@@ -210,6 +210,39 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 ### REL-17 — Release gates
 
 На итоговом SHA запустить format/analyze/tests, bindings/symbol audit, C tests/sanitizers, IO/Web reference matrix, Android/Apple CI builds, пример и publish dry-run. **Приёмка:** таблица SHA/платформа/команда/результат; runtime отделён от сборки; пропуски и риски указаны явно.
+
+**Отчёт исполнителя (2026-09-23).** Итоговый SHA `17771a9881374378ee4b7b81e7d07b9a81446d20` (ветка `release/0.4.0`, включает REL-21 отдельным коммитом `7625a26`/`2c3a1b1` — REL-21 не входит в release gates, но нужен для чистой фиксации SHA). CI: [run 35882819637](https://github.com/Anfet/yuv_ffi/actions/runs/35882819637).
+
+**Найдены и исправлены две блокирующие находки по ходу прогона** (не входили в буквальный scope REL-17, но блокировали сами гейты; правки узкие и точечные):
+1. `example/integration_test/image_cache_key_test.dart` (`_ForeignImage` fixture) — 5 `@override` ссылались на `y/u/v/toBgra8888()/getBytes()`, ушедшие из интерфейса `YuvImage` в REL-06; валило `flutter analyze` (`override_on_non_overriding_member`, warning). Члены нигде не вызывались — удалены целиком. Коммит `4512351`.
+2. `example/integration_test/nv_chroma_order_web_test.dart` — `buildUvPlane()` аллоцировал `Uint8List(w*h)`=16 байт вместо `(h~/2)*w`=8, `YuvPlane`-конструктор кидал `ArgumentError` до начала проверки; тот же off-by-two уже был исправлен в native-аналоге (`test/nv_chroma_order_test.dart`) при интеграции REL-06, но Web-копия фикс не получила. Валило `wasm-web-integration`/`Required Web integration gate`. Коммит `17771a9`.
+
+**Таблица SHA/платформа/команда/результат:**
+
+| Платформа/гейт | Job (CI) | Команда | Результат |
+|---|---|---|---|
+| Формат | локально | `dart format --line-length 150 lib test` | Чисто, 0 правок |
+| Analyze (root) | `analyze-and-test-vm` / локально | `flutter analyze` | 0 errors, 0 warnings; **200 info**, все в `example/integration_test/*` (deprecated API в намеренно немигрированных legacy-dispatch тестах) + 2 pre-existing `unnecessary_import` в `test/`. Job помечен ✗, т.к. `flutter analyze` возвращает exit 1 при любом числе issues, включая info-only — см. риск ниже |
+| Unit-тесты (root) | `analyze-and-test-vm` (native lib. step не достигнут из-за analyze exit code) / локально на реальной `yuv_ffi.dll` | `flutter test` | **630/630 passed** локально |
+| Bindings/symbol audit | `bindings-regeneration` (ubuntu-latest) | `ffigen` regen + `tool/verify_bindings_audit.dart` + `git diff --exit-code` | ✓ Зелёный, drift не обнаружен |
+| C tests/sanitizers | `native-sanitizer-gate` (ubuntu-latest, clang, ASan+UBSan+LSan) | `ctest` Debug + Release | ✓ Зелёный (40с) |
+| Linux native smoke | `linux-native-smoke` (ubuntu-latest) | build .so + packaging smoke + `flutter build linux` + `flutter drive` app-runtime smoke | ✓ Зелёный |
+| macOS native smoke | `macos-native-smoke` (macos-latest) | build .dylib + packaging smoke + `flutter build macos` + `flutter drive` app-runtime smoke | ✓ Зелёный |
+| Android native build | `android-native-build` (ubuntu-latest, NDK) | `flutter build apk --debug` | ✓ Зелёный |
+| iOS native build | `ios-native-build` (macos-latest) | `flutter build ios --debug --no-codesign` | ✓ Зелёный |
+| Пример: analyze/build | `example-analyze-and-build` (ubuntu-latest) | `flutter analyze` + `flutter build web` | Analyze ✗ по той же причине exit-code-on-info (0 errors/warnings); Build Web не достигнут |
+| Web/WASM integration gate | `wasm-web-integration` / `Required Web integration gate` | 8 required `flutter drive` таргетов через chromedriver | ✓ Зелёный (включая исправленный `nv_chroma_order_web_test.dart`) |
+| Web reference matrix (YUV-12/YUV-18) | `wasm-web-integration` / `Web reference matrix` | `flutter drive` `reference_web_conversions_test.dart`, 119 cases | ✗ **4/119 failed**: `FORMAT-TO-NV21-BGRA-TIGHT`, `FORMAT-TO-NV21-I420-TIGHT`, `FORMAT-TO-NV21-BGRA-PADDED`, `FORMAT-TO-NV21-I420-PADDED` — см. риск ниже |
+| Publish dry-run | локально | `flutter pub publish --dry-run` | 1 warning + 1 hint — см. риск ниже |
+
+**Риски и пропуски (явно, как требует приёмка):**
+- **Blocker, не исправлен в рамках REL-17:** Web-бэкенд расходится с native reference oracle на 4 из 119 кейсов `reference_web_conversions_test.dart`, все `FORMAT-TO-NV21-*` (in-place `applyFormat`/`toYuvNv21` в BGRA/I420→NV21, tight и padded). Ни один файл в моём диффе (`example/lib/*`, один test-фикс) не затрагивает `lib/src/yuv/impl/web/*` или конверсионную логику — похоже на pre-existing разрыв в Web/WASM-реализации `applyFormat`/`toNv12` для NV21-направления, не регрессия этой сессии. `failed-test-cases.md` (F-009) фиксирует, что аналогичный класс расхождений уже когда-то чинился (YUV-48, "Web matrix 119/119"), но документ относится к до-0.4.0 API и не покрывает нынешний `applyFormat`-путь — похоже на новый, более узкий регресс post-0.4.0-рефакторинга. **Правка native/Web-конверсии — вне scope REL-17 и требует отдельного плана по правилу AGENTS.md ("Native C менять лишь после отдельного плана и согласования"), плюс это не тривиальная точечная правка.** Рекомендация: завести отдельную задачу (Tier 1/2) до объявления релиза готовым; REL-18 должен явно учитывать этот блокер в решении о готовности к тегу.
+- `flutter analyze` без флагов в CI и локально возвращает **exit code 1 при любом количестве issues, включая info-only** — подтверждено прямым тестом (`echo $?`). Это делает джобы `analyze-and-test-vm`/`example-analyze-and-build` красными в CI притом что содержательно 0 errors/warnings — 200 info-level замечаний целиком в `example/integration_test/*` (намеренно немигрированные legacy-dispatch/back-compat тесты, см. REL-21) и `test/` (2 pre-existing `unnecessary_import`, коммит REL-19/20). Это репозиторное/тулинговое поведение gate, не функциональный дефект; исправление означало бы мигрировать сами legacy-тесты, что противоречит их предназначению.
+- `todo.md`/`todo-waitlist.md` закоммичены в git, но подпадают под `.gitignore` (`/todo.md`, `/todo-waitlist.md`) — `flutter pub publish --dry-run` подтверждает: pub молча исключит их из публикуемого архива. Не блокер (они не часть публичного API), но заявленный риск.
+- `flutter pub publish --dry-run` hint: pub.dev видит последней опубликованной версией `0.2.4`; реестр отстаёт от факта (0.3.0 уже выпущена по истории коммитов) — не блокер, информационное расхождение.
+- **Runtime отделён от сборки:** Android/iOS CI-джобы только собирают (`flutter build apk/ios --debug`), не гоняют на реальном устройстве/эмуляторе — рантайм-проверка на устройстве вне scope этого прогона.
+- **C sanitizers прогнаны только на ubuntu-latest** (clang ASan+UBSan+LSan), не на Mac — санитайзерное покрытие Apple-платформы отсутствует в этом CI.
+- Полный набор `example/integration_test/*` (кроме 8 обязательных Web-таргетов и Web reference matrix) не прогонялся ни локально, ни в CI как отдельная проверка — за пределами `wasm-web-integration` job'а.
 
 ### REL-18 — Новая приёмка
 
