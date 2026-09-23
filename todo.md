@@ -11,7 +11,7 @@
 | [x] | REL-03 | DONE | 2 · Terra | 01, 02 | R1 | Фабрики, `allocate`, RGBA импорт. |
 | [x] | REL-04 | DONE | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
 | [x] | REL-05 | DONE | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
-| [ ] | REL-06 | REJECTED | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
+| [x] | REL-06 | DONE | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
 | [x] | REL-07 | DONE | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
 | [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
 | [x] | REL-09 | DONE | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
@@ -24,10 +24,10 @@
 | [ ] | REL-16 | BLOCKED | 3 · Luna | 01–15 | R4 | README, пример, Dartdoc, CHANGELOG. |
 | [ ] | REL-17 | BLOCKED | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
 | [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
-| [ ] | REL-19 | BLOCKED | 2 · Terra | 06 | R3 | `format` → `YuvPixelFormat` на публичном интерфейсе. |
-| [ ] | REL-20 | BLOCKED | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
+| [ ] | REL-19 | READY | 2 · Terra | 06 | R3 | `format` → `YuvPixelFormat` на публичном интерфейсе. |
+| [ ] | REL-20 | READY | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
 
-**Итого (2026-09-23, после Tier 1 ревью REL-06):** 11 DONE, 1 REJECTED (REL-06, доработка), 2 новые BLOCKED задачи (REL-19, REL-20), 0 REVIEW, 0 READY, 8 BLOCKED всего, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакет R2 (REL-08, REL-09, REL-10) полностью принят.**
+**Итого (2026-09-23, после REL-06 rework и приёмки):** 14 DONE (REL-01–15 кроме REL-16–18, включая REL-06), 2 READY (REL-19, REL-20), 4 BLOCKED (REL-16, REL-17, REL-18), 0 REVIEW, 0 REJECTED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакеты R1, R2 полностью приняты.**
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Ревью пакета R1 (2026-09-23)
@@ -145,6 +145,13 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 - (d) Byte-level round-trip тест UV-порядка NV12/NV21 (IO + Web-аналог) из R1-дополнения всё ещё отсутствует — текущий новый тест-файл ссылается на `nv_chroma_order_test.dart`, который (по R1 ревью) проверяет только stride/format, не байты.
 - (e) Тест "скрытый `YuvImageImpl`" ничего не доказывает, так как импортирует impl напрямую — добавить consumer-тест, который импортирует только `package:yuv_ffi/yuv_ffi.dart` и упражняет весь 0.3.0-surface.
 - Переименовать `yuv_legacy_swap.dart` → `yuv_legacy_dispatch.dart` (п.3 выше).
+
+**REL-06 ПРИНЯТ после доработки (2026-09-23).** Все 5 пунктов доработки подтверждены в коде независимо (unified gate-then-legacy* без дублирования на IO и Web; foreign-implementer forwarding с единственным документированным исключением `swapNv()`; переименование файла; byte-level UV round-trip тест; genuine public-surface-only hidden-impl тест). При интеграции найдено и исправлено 3 дополнительных дефекта:
+1. 40 устаревших `@override` в `test/yuv_image_widget_test.dart` (файл REL-11, не в scope REL-06, но реальное следствие сокращения интерфейса) — удалены точечно.
+2. Off-by-two в размере буфера нового byte-level chroma-теста (`Uint8List(w*h)` вместо `Uint8List((h~/2)*w)`) — реальный баг в тесте, не в реализации.
+3. Тот же паттерн "file-level `setUp()` подсовывает fake library opener и не восстанавливает для группы, требующей реальную библиотеку", что уже чинился в REL-04 — повторился в двух новых test-группах (`rel06_deprecated_api_test.dart`'s `swapNv() matches historical bytes`, плюс отсутствие `YuvFfi.initialize()` в новом chroma-тесте). Также найдена и исправлена ложная универсальная assumption "на этом хосте нет native lib" в `rel06_public_surface_test.dart`, ломавшая тест именно на хосте, где native lib есть.
+
+Итог: 618/618 тестов зелёные на реальной native-библиотеке, `flutter analyze` чист. REL-19 и REL-20 разблокированы.
 
 ### REL-07 — Codec v2
 
