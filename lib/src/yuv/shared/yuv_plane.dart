@@ -75,28 +75,51 @@ class YuvPlane {
 
   /// Returns a single byte value at pixel coordinate `[x, y]`.
   ///
-  /// In debug mode, asserts when computed index is out of bounds.
-  /// In release mode, out-of-bounds access throws at runtime.
+  /// Throws an [ArgumentError] for an out-of-range coordinate or a zero
+  /// [pixelStride], identically in debug and release builds.
   int getPixel(int x, int y) {
-    final int index = _indexOf(x, y);
-    assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
+    final int index = _checkedIndexOf(x, y);
     return _bytes[index];
   }
 
   /// Sets a single byte [value] at pixel coordinate `[x, y]`.
   ///
-  /// In debug mode, asserts when computed index is out of bounds.
-  /// In release mode, out-of-bounds access throws at runtime.
+  /// Throws an [ArgumentError] for an out-of-range coordinate or a zero
+  /// [pixelStride], identically in debug and release builds.
   ///
   /// A plane does not know which image owns it, so this does not bump that
   /// image's revision. Call `YuvImage.markDirty()` after a batch of writes.
   void setPixel(int x, int y, int value) {
-    final int index = _indexOf(x, y);
-    assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
+    final int index = _checkedIndexOf(x, y);
     _bytes[index] = value;
   }
 
-  int _indexOf(int x, int y) => (y * rowStride) + (x * pixelStride);
+  /// Validates [x] and [y] before they ever combine into a flat buffer index.
+  ///
+  /// `x` is bound-checked via `(rowStride - 1) ~/ pixelStride` rather than by
+  /// computing `x * pixelStride` and comparing it against `rowStride`: for a
+  /// huge `x` that multiplication can overflow the 64-bit `int` range and wrap
+  /// into a value that a naive comparison would accept. Dividing the other way
+  /// keeps every intermediate value within the legal coordinate range.
+  int _checkedIndexOf(int x, int y) {
+    if (y < 0 || y >= _height) {
+      throw ArgumentError.value(y, 'y', 'Must satisfy 0 <= y < $_height');
+    }
+    if (x < 0) {
+      throw ArgumentError.value(x, 'x', 'Must not be negative');
+    }
+    if (pixelStride == 0) {
+      throw ArgumentError.value(pixelStride, 'pixelStride', 'Pixel stride must not be zero');
+    }
+    final int maxX = (rowStride - 1) ~/ pixelStride;
+    if (x > maxX) {
+      throw ArgumentError.value(x, 'x', 'Must not exceed $maxX for rowStride $rowStride and pixelStride $pixelStride');
+    }
+
+    final int index = (y * rowStride) + (x * pixelStride);
+    assert(index >= 0 && index < _bytes.length, "bad index in plane; must be 0 <= '$index' < ${_bytes.length}");
+    return index;
+  }
 
   /// Creates a deep copy of this plane.
   YuvPlane copy() => YuvPlane(_height, rowStride, pixelStride, _bytes);

@@ -155,4 +155,122 @@ void main() {
       }
     });
   });
+
+  group('YUV-52 / REL-13: getPixel/setPixel coordinate bounds', () {
+    // Regression for the original bug: with the old unchecked `_indexOf`,
+    // `(y * rowStride) + (x * pixelStride)` for x=-1, y=1, rowStride=8,
+    // pixelStride=1 computed `(1 * 8) + (-1 * 1) = 7`, which is a byte inside
+    // row 0's valid range. The negative X silently "borrowed" from the
+    // previous row instead of failing, so callers could read/write byte 7 of
+    // row 0 while believing they addressed row 1. The fixed code must reject
+    // x=-1 before any index arithmetic combines it with y.
+    test('x=-1, y=1 throws instead of wrapping into the previous row (regression)', () {
+      final plane = YuvPlane(4, 8, 1, Uint8List(32));
+      expect(() => plane.getPixel(-1, 1), throwsArgumentError);
+      expect(() => plane.setPixel(-1, 1, 42), throwsArgumentError);
+    });
+
+    test('negative or out-of-range x/y never touch or corrupt a neighboring row', () {
+      const height = 4, rowStride = 8, pixelStride = 1;
+      final sentinel = Uint8List.fromList(List<int>.generate(height * rowStride, (i) => (i + 1) % 256));
+      final untouched = Uint8List.fromList(sentinel);
+      final plane = YuvPlane(height, rowStride, pixelStride, sentinel);
+
+      final invalidCoordinates = <List<int>>[
+        [-1, 1], // the regression case: would land on row 0's last byte
+        [-1, 0],
+        [0, -1],
+        [-5, 2],
+        [rowStride, 0], // one past the last legal column
+        [rowStride, 1],
+        [0, height], // one past the last legal row
+        [0, height + 5],
+      ];
+
+      for (final coordinate in invalidCoordinates) {
+        final x = coordinate[0];
+        final y = coordinate[1];
+        expect(() => plane.getPixel(x, y), throwsArgumentError, reason: 'getPixel($x, $y) should have been rejected');
+        expect(() => plane.setPixel(x, y, 99), throwsArgumentError, reason: 'setPixel($x, $y) should have been rejected');
+        expect(plane.bytes, untouched, reason: 'a rejected setPixel($x, $y) must not mutate any byte');
+      }
+    });
+
+    test('a huge x that would overflow x * pixelStride throws RangeError-style ArgumentError, not silently succeeding', () {
+      // 1 << 62 chosen so that x * pixelStride (pixelStride = 4) overflows the
+      // 64-bit int range: (1 << 62) * 4 == 1 << 64, which wraps to 0 in Dart's
+      // 64-bit int arithmetic. A naive `x * pixelStride < rowStride` bounds
+      // check would see 0 < rowStride and wrongly accept it. The fixed check
+      // never multiplies x by pixelStride to bound it, so it must still
+      // reject this value cleanly.
+      const hugeX = 1 << 62;
+      final plane = YuvPlane(4, 8, 4, Uint8List(32));
+
+      expect(() => plane.getPixel(hugeX, 0), throwsArgumentError);
+      expect(() => plane.setPixel(hugeX, 0, 1), throwsArgumentError);
+
+      // Sanity: confirm the naive formula really would have overflowed/wrapped,
+      // to document why the direct multiply-and-compare approach is unsafe.
+      expect(hugeX * 4, 0, reason: 'the naive x * pixelStride computation wraps to 0 on overflow');
+    });
+
+    test('pixelStride == 0 throws cleanly instead of a division/comparison artifact', () {
+      final plane = YuvPlane(4, 8, 0, Uint8List(32));
+      expect(() => plane.getPixel(0, 0), throwsArgumentError);
+      expect(() => plane.setPixel(0, 0, 1), throwsArgumentError);
+    });
+
+    test('debug and release semantics are identical (no assert-only guard)', () {
+      // This test runs the same in both modes because the guards are plain
+      // `if`/`throw` statements, not `assert`, which Flutter strips in
+      // release/profile builds. Asserting `throwsArgumentError` here exercises
+      // exactly that: the check must fire unconditionally.
+      final plane = YuvPlane(4, 8, 1, Uint8List(32));
+      expect(() => plane.getPixel(-1, 0), throwsArgumentError);
+      expect(() => plane.getPixel(0, -1), throwsArgumentError);
+    });
+
+    group('boundary-exact legal coordinates keep working', () {
+      test('rowStride=8, pixelStride=1 -> max legal x is 7', () {
+        final plane = YuvPlane(2, 8, 1, Uint8List(16));
+        expect(() => plane.getPixel(7, 1), returnsNormally);
+        expect(() => plane.getPixel(8, 1), throwsArgumentError);
+      });
+
+      test('rowStride=10, pixelStride=4 -> max legal x is 2', () {
+        // x*pixelStride must stay <= rowStride - 1 == 9, so x=2 (8 <= 9) is
+        // legal and x=3 (12 > 9) is not.
+        final plane = YuvPlane(2, 10, 4, Uint8List(20));
+        expect(() => plane.getPixel(2, 0), returnsNormally);
+        expect(() => plane.getPixel(3, 0), throwsArgumentError);
+      });
+
+      test('max legal y still works and height is still exclusive', () {
+        final plane = YuvPlane(4, 8, 1, Uint8List(32));
+        expect(() => plane.getPixel(0, 3), returnsNormally);
+        expect(() => plane.getPixel(0, 4), throwsArgumentError);
+      });
+
+      test('setPixel/getPixel round-trip at every corner of a tight buffer', () {
+        final plane = YuvPlane(4, 8, 1, Uint8List(32));
+        plane.setPixel(0, 0, 11);
+        plane.setPixel(7, 0, 22);
+        plane.setPixel(0, 3, 33);
+        plane.setPixel(7, 3, 44);
+
+        expect(plane.getPixel(0, 0), 11);
+        expect(plane.getPixel(7, 0), 22);
+        expect(plane.getPixel(0, 3), 33);
+        expect(plane.getPixel(7, 3), 44);
+      });
+
+      test('a padded row stride still allows the full pixel-stride-scaled width', () {
+        // width 4 * pixelStride 4 = 16 bytes of pixels, padded to a 24-byte row.
+        final plane = YuvPlane(2, 24, 4, Uint8List(48));
+        expect(() => plane.getPixel(3, 0), returnsNormally); // 3*4=12 <= 23
+        expect(() => plane.getPixel(5, 0), returnsNormally); // 5*4=20 <= 23
+        expect(() => plane.getPixel(6, 0), throwsArgumentError); // 6*4=24 > 23
+      });
+    });
+  });
 }
