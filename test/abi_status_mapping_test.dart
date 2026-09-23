@@ -10,6 +10,7 @@ import 'package:yuv_ffi/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 
 /// Covers YUV-36d's two DoD items that a native call cannot exercise by
 /// itself:
@@ -39,14 +40,19 @@ void main() {
 
     test('YUV_STATUS_INVALID_ARGUMENT (1) throws ArgumentError naming the operation', () {
       expect(
-        () => yuvThrowForStatus(status: yuvStatusInvalidArgument, operation: 'yuv_convert_v1'),
+        () => yuvThrowForStatus(status: yuvStatusInvalidArgument, operation: YuvOperation.convert, nativeSymbol: 'yuv_convert_v1'),
         throwsA(isA<ArgumentError>().having((e) => e.toString(), 'toString', contains('yuv_convert_v1'))),
       );
     });
 
     test('YUV_STATUS_INVALID_ARGUMENT (1) folds in detail when given', () {
       expect(
-        () => yuvThrowForStatus(status: yuvStatusInvalidArgument, operation: 'yuv_crop_v1', detail: 'destination geometry mismatch'),
+        () => yuvThrowForStatus(
+          status: yuvStatusInvalidArgument,
+          operation: YuvOperation.crop,
+          nativeSymbol: 'yuv_crop_v1',
+          detail: 'destination geometry mismatch',
+        ),
         throwsA(
           isA<ArgumentError>().having((e) => e.toString(), 'toString', allOf(contains('yuv_crop_v1'), contains('destination geometry mismatch'))),
         ),
@@ -54,7 +60,10 @@ void main() {
     });
 
     test('YUV_STATUS_UNSUPPORTED_FORMAT (2) throws UnsupportedError', () {
-      expect(() => yuvThrowForStatus(status: yuvStatusUnsupportedFormat, operation: 'yuv_chroma_swap_v1'), throwsUnsupportedError);
+      expect(
+        () => yuvThrowForStatus(status: yuvStatusUnsupportedFormat, operation: YuvOperation.chromaSwap, nativeSymbol: 'yuv_chroma_swap_v1'),
+        throwsUnsupportedError,
+      );
     });
 
     test('YUV_STATUS_UNSUPPORTED_LAYOUT (3) throws UnsupportedError', () {
@@ -63,36 +72,43 @@ void main() {
       // yuvStatusUnsupportedLayout), but the mapping must already exist for
       // a future ABI revision that does, so it is tested directly here
       // rather than through a native call.
-      expect(() => yuvThrowForStatus(status: yuvStatusUnsupportedLayout, operation: 'yuv_convert_v1'), throwsUnsupportedError);
+      expect(
+        () => yuvThrowForStatus(status: yuvStatusUnsupportedLayout, operation: YuvOperation.convert, nativeSymbol: 'yuv_convert_v1'),
+        throwsUnsupportedError,
+      );
     });
 
     test('YUV_STATUS_OVERFLOW (4) throws YuvNativeException retaining the code', () {
       expect(
-        () => yuvThrowForStatus(status: yuvStatusOverflow, operation: 'yuv_box_blur_v1'),
+        () => yuvThrowForStatus(status: yuvStatusOverflow, operation: YuvOperation.boxBlur, nativeSymbol: 'yuv_box_blur_v1'),
         throwsA(
           isA<YuvNativeException>()
               .having((e) => e.statusCode, 'statusCode', yuvStatusOverflow)
-              .having((e) => e.operation, 'operation', 'yuv_box_blur_v1'),
+              .having((e) => e.operation, 'operation', YuvOperation.boxBlur)
+              .having((e) => e.message, 'message', isNotEmpty),
         ),
       );
     });
 
     test('YUV_STATUS_ALLOCATION_FAILED (5) throws YuvNativeException retaining the code', () {
       expect(
-        () => yuvThrowForStatus(status: yuvStatusAllocationFailed, operation: 'yuv_gaussian_blur_v1'),
+        () => yuvThrowForStatus(status: yuvStatusAllocationFailed, operation: YuvOperation.gaussianBlur, nativeSymbol: 'yuv_gaussian_blur_v1'),
         throwsA(isA<YuvNativeException>().having((e) => e.statusCode, 'statusCode', yuvStatusAllocationFailed)),
       );
     });
 
     test('YUV_STATUS_INTERNAL_ERROR (6) throws YuvNativeException retaining the code', () {
       expect(
-        () => yuvThrowForStatus(status: yuvStatusInternalError, operation: 'yuv_rotate_v1'),
+        () => yuvThrowForStatus(status: yuvStatusInternalError, operation: YuvOperation.rotate, nativeSymbol: 'yuv_rotate_v1'),
         throwsA(isA<YuvNativeException>().having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)),
       );
     });
 
     test('YUV_STATUS_UNSUPPORTED_COLOR (7) throws UnsupportedError', () {
-      expect(() => yuvThrowForStatus(status: yuvStatusUnsupportedColor, operation: 'yuv_grayscale_v1'), throwsUnsupportedError);
+      expect(
+        () => yuvThrowForStatus(status: yuvStatusUnsupportedColor, operation: YuvOperation.grayscale, nativeSymbol: 'yuv_grayscale_v1'),
+        throwsUnsupportedError,
+      );
     });
 
     test('an unknown non-zero status throws YuvNativeException retaining the exact code', () {
@@ -102,15 +118,19 @@ void main() {
       // failure.
       const unknownStatus = 42;
       expect(
-        () => yuvThrowForStatus(status: unknownStatus, operation: 'yuv_flip_v1'),
+        () => yuvThrowForStatus(status: unknownStatus, operation: YuvOperation.flipHorizontal, nativeSymbol: 'yuv_flip_v1'),
         throwsA(isA<YuvNativeException>().having((e) => e.statusCode, 'statusCode', unknownStatus)),
       );
     });
 
     test('YuvNativeException.toString names both the operation and the code', () {
-      const exception = YuvNativeException(statusCode: 5, operation: 'yuv_crop_v1');
-      expect(exception.toString(), allOf(contains('yuv_crop_v1'), contains('5')));
+      const exception = YuvNativeException(statusCode: 5, operation: YuvOperation.crop, message: 'yuv_crop_v1 returned status 5');
+      expect(exception.toString(), allOf(contains('crop'), contains('5')));
     });
+
+    test('YuvNativeException.message must be non-empty', () {
+      expect(() => YuvNativeException(statusCode: 5, operation: YuvOperation.crop, message: ''), throwsA(isA<AssertionError>()));
+    }, skip: !_assertionsEnabled());
   });
 
   group('yuvThrowForStatus assertion contract', () {
@@ -119,7 +139,10 @@ void main() {
       // the assertion is the enforcement of that contract in debug/test
       // builds. This does not test production release behavior (asserts are
       // stripped there), only that the contract is checked where it can be.
-      expect(() => yuvThrowForStatus(status: yuvStatusOk, operation: 'yuv_convert_v1'), throwsA(isA<AssertionError>()));
+      expect(
+        () => yuvThrowForStatus(status: yuvStatusOk, operation: YuvOperation.convert, nativeSymbol: 'yuv_convert_v1'),
+        throwsA(isA<AssertionError>()),
+      );
     }, skip: !_assertionsEnabled());
   });
 
@@ -157,7 +180,7 @@ void main() {
         throwsA(
           isA<YuvNativeException>()
               .having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)
-              .having((e) => e.operation, 'operation', 'yuv_grayscale_v1'),
+              .having((e) => e.operation, 'operation', YuvOperation.grayscale),
         ),
       );
     });
@@ -189,7 +212,7 @@ void main() {
       expectReachesKernel('mean blur', () => YuvAbiV1Runner.blur(kind: YuvAbiV1BlurKind.mean, source: source, radius: 1));
       expectReachesKernel('box blur', () => YuvAbiV1Runner.blur(kind: YuvAbiV1BlurKind.box, source: source, radius: 1));
       expectReachesKernel('gaussian blur', () => YuvAbiV1Runner.blur(kind: YuvAbiV1BlurKind.gaussian, source: source, radius: 1, sigma: 1.5));
-      expectReachesKernel('flip', () => YuvAbiV1Runner.flip(source: source, direction: yuvFlipHorizontal));
+      expectReachesKernel('flip', () => YuvAbiV1Runner.flip(source: source, direction: yuvFlipHorizontal, operation: YuvOperation.flipHorizontal));
       expectReachesKernel('rotate 180', () => YuvAbiV1Runner.rotate(source: source, rotationDegrees: 180));
       expectReachesKernel('rotate 90 (transposed)', () => YuvAbiV1Runner.rotate(source: source, rotationDegrees: 90));
       expectReachesKernel('crop', () => YuvAbiV1Runner.crop(source: source, left: 1, top: 1, width: 2, height: 2));

@@ -11,6 +11,7 @@ export 'src/yuv/shared/yuv_revision.dart' show YuvImageInvalidation;
 export 'src/yuv/shared/yuv_plane.dart';
 export 'src/yuv/shared/yuv_image_rotation.dart';
 export 'src/yuv/shared/yuv_file_format.dart';
+export 'src/yuv/shared/yuv_native_status.dart' show YuvNativeException;
 export 'src/yuv/shared/yuv_operation.dart' show YuvOperation;
 export 'src/yuv/shared/yuv_pixel_format.dart' show YuvPixelFormat;
 export 'src/widgets/yuv_image_widget.dart';

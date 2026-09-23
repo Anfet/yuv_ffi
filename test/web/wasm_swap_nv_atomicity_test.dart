@@ -123,7 +123,7 @@ void main() {
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
-      expect(() => image.swapNv(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', yuvSymbolChromaSwapV1)));
+      expect(() => image.swapNv(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', YuvOperation.chromaSwap)));
 
       expect(_calls(module), [yuvSymbolConvertV1, yuvSymbolChromaSwapV1], reason: 'the conversion must have succeeded before the swap was attempted');
       expect(image.format, format, reason: 'format changed although swapNv failed');

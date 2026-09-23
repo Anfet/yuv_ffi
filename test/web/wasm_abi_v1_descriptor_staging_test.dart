@@ -19,6 +19,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 
 /// YUV-51: what the Web runner actually writes into WASM linear memory.
 ///
@@ -501,7 +502,7 @@ void main() {
 
     test('flip and rotate options carry their one field and a zeroed reserved tail', () {
       final flipModule = _newFakeModule();
-      YuvAbiV1WebRunner.flip(module: flipModule, source: _i420Source(), direction: yuvFlipVertical);
+      YuvAbiV1WebRunner.flip(module: flipModule, source: _i420Source(), direction: yuvFlipVertical, operation: YuvOperation.flipVertical);
       final flipOptions = flipModule.calls.single.options;
       expect(flipModule.heap.getUint32(flipOptions + YuvWasmFlipOptionsV1.offsetDirection, Endian.little), yuvFlipVertical);
       expect(
@@ -566,7 +567,8 @@ void main() {
         yuvSymbolMeanBlurV1: (m) => YuvAbiV1WebRunner.blur(module: m, kind: YuvAbiV1BlurKind.mean, source: _i420Source(), radius: 1),
         yuvSymbolBoxBlurV1: (m) => YuvAbiV1WebRunner.blur(module: m, kind: YuvAbiV1BlurKind.box, source: _i420Source(), radius: 1),
         yuvSymbolCropV1: (m) => YuvAbiV1WebRunner.crop(module: m, source: _i420Source(), left: 0, top: 0, width: 2, height: 2),
-        yuvSymbolFlipV1: (m) => YuvAbiV1WebRunner.flip(module: m, source: _i420Source(), direction: yuvFlipHorizontal),
+        yuvSymbolFlipV1: (m) =>
+            YuvAbiV1WebRunner.flip(module: m, source: _i420Source(), direction: yuvFlipHorizontal, operation: YuvOperation.flipHorizontal),
         yuvSymbolRotateV1: (m) => YuvAbiV1WebRunner.rotate(module: m, source: _i420Source(), rotationDegrees: 90),
       };
 
@@ -635,7 +637,7 @@ void main() {
       module.status = yuvStatusInternalError;
       expect(
         () => YuvAbiV1WebRunner.rotate(module: module, source: _i420Source(), rotationDegrees: 90),
-        throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', yuvSymbolRotateV1)),
+        throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', YuvOperation.rotate)),
       );
     });
 

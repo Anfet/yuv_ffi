@@ -10,6 +10,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_state.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
@@ -191,10 +192,12 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   }
 
   @override
-  YuvImage flipHorizontally() => _applyInPlace(YuvAbiV1Runner.flip(source: _sourceFrame(), direction: yuvFlipHorizontal));
+  YuvImage flipHorizontally() =>
+      _applyInPlace(YuvAbiV1Runner.flip(source: _sourceFrame(), direction: yuvFlipHorizontal, operation: YuvOperation.flipHorizontal));
 
   @override
-  YuvImage flipVertically() => _applyInPlace(YuvAbiV1Runner.flip(source: _sourceFrame(), direction: yuvFlipVertical));
+  YuvImage flipVertically() =>
+      _applyInPlace(YuvAbiV1Runner.flip(source: _sourceFrame(), direction: yuvFlipVertical, operation: YuvOperation.flipVertical));
 
   @override
   void fromRgba8888(Uint8List bytes) {

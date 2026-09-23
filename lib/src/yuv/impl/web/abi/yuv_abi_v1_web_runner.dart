@@ -9,6 +9,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 
 /// Typed Web runner for the ABI v1 `yuv_*_v1` symbols (YUV-51).
 ///
@@ -52,7 +53,8 @@ abstract final class YuvAbiV1WebRunner {
   }) {
     return _run(
       module: module,
-      operation: yuvSymbolConvertV1,
+      operation: YuvOperation.convert,
+      nativeSymbol: yuvSymbolConvertV1,
       source: source,
       destinationLayout: destinationLayout,
       allocateOptions: (arena) {
@@ -67,24 +69,24 @@ abstract final class YuvAbiV1WebRunner {
   /// Runs `yuv_black_white_v1`. [region] selects the ROI, or `null` for the
   /// whole frame.
   static YuvAbiV1FrameResult blackWhite({required Object module, required YuvAbiV1FrameInput source, YuvAbiV1Region? region}) =>
-      _runEffect(module: module, operation: yuvSymbolBlackWhiteV1, source: source, region: region);
+      _runEffect(module: module, operation: YuvOperation.blackWhite, nativeSymbol: yuvSymbolBlackWhiteV1, source: source, region: region);
 
   /// Runs `yuv_grayscale_v1`. [region] selects the ROI, or `null` for the whole
   /// frame.
   static YuvAbiV1FrameResult grayscale({required Object module, required YuvAbiV1FrameInput source, YuvAbiV1Region? region}) =>
-      _runEffect(module: module, operation: yuvSymbolGrayscaleV1, source: source, region: region);
+      _runEffect(module: module, operation: YuvOperation.grayscale, nativeSymbol: yuvSymbolGrayscaleV1, source: source, region: region);
 
   /// Runs `yuv_negate_v1`. [region] selects the ROI, or `null` for the whole
   /// frame.
   static YuvAbiV1FrameResult negate({required Object module, required YuvAbiV1FrameInput source, YuvAbiV1Region? region}) =>
-      _runEffect(module: module, operation: yuvSymbolNegateV1, source: source, region: region);
+      _runEffect(module: module, operation: YuvOperation.negate, nativeSymbol: yuvSymbolNegateV1, source: source, region: region);
 
   /// Runs `yuv_chroma_swap_v1`.
   ///
   /// Takes no region: ABI v1 requires its region disabled (section 10), so
   /// there is no value that would produce anything but `INVALID_ARGUMENT`.
   static YuvAbiV1FrameResult chromaSwap({required Object module, required YuvAbiV1FrameInput source}) =>
-      _runEffect(module: module, operation: yuvSymbolChromaSwapV1, source: source, region: null);
+      _runEffect(module: module, operation: YuvOperation.chromaSwap, nativeSymbol: yuvSymbolChromaSwapV1, source: source, region: null);
 
   /// Runs one of `yuv_gaussian_blur_v1`, `yuv_mean_blur_v1` or
   /// `yuv_box_blur_v1`, selected by [kind].
@@ -99,15 +101,21 @@ abstract final class YuvAbiV1WebRunner {
     double sigma = 0.0,
     YuvAbiV1Region? region,
   }) {
-    final String operation = switch (kind) {
+    final String nativeSymbol = switch (kind) {
       YuvAbiV1BlurKind.gaussian => yuvSymbolGaussianBlurV1,
       YuvAbiV1BlurKind.mean => yuvSymbolMeanBlurV1,
       YuvAbiV1BlurKind.box => yuvSymbolBoxBlurV1,
+    };
+    final YuvOperation operation = switch (kind) {
+      YuvAbiV1BlurKind.gaussian => YuvOperation.gaussianBlur,
+      YuvAbiV1BlurKind.mean => YuvOperation.meanBlur,
+      YuvAbiV1BlurKind.box => YuvOperation.boxBlur,
     };
 
     return _run(
       module: module,
       operation: operation,
+      nativeSymbol: nativeSymbol,
       source: source,
       destinationLayout: _sameGeometryDestination(source),
       allocateOptions: (arena) {
@@ -135,7 +143,8 @@ abstract final class YuvAbiV1WebRunner {
   }) {
     return _run(
       module: module,
-      operation: yuvSymbolCropV1,
+      operation: YuvOperation.crop,
+      nativeSymbol: yuvSymbolCropV1,
       source: source,
       destinationLayout: _destinationWithGeometry(source, width: width, height: height),
       allocateOptions: (arena) {
@@ -152,11 +161,20 @@ abstract final class YuvAbiV1WebRunner {
   }
 
   /// Runs `yuv_flip_v1`. [direction] is [yuvFlipHorizontal] or
-  /// [yuvFlipVertical].
-  static YuvAbiV1FrameResult flip({required Object module, required YuvAbiV1FrameInput source, required int direction}) {
+  /// [yuvFlipVertical]. [operation] must be the matching
+  /// [YuvOperation.flipHorizontal] / [YuvOperation.flipVertical], since both
+  /// directions share this one native symbol and only the caller knows which
+  /// was requested.
+  static YuvAbiV1FrameResult flip({
+    required Object module,
+    required YuvAbiV1FrameInput source,
+    required int direction,
+    required YuvOperation operation,
+  }) {
     return _run(
       module: module,
-      operation: yuvSymbolFlipV1,
+      operation: operation,
+      nativeSymbol: yuvSymbolFlipV1,
       source: source,
       destinationLayout: _sameGeometryDestination(source),
       allocateOptions: (arena) {
@@ -180,7 +198,8 @@ abstract final class YuvAbiV1WebRunner {
 
     return _run(
       module: module,
-      operation: yuvSymbolRotateV1,
+      operation: YuvOperation.rotate,
+      nativeSymbol: yuvSymbolRotateV1,
       source: source,
       destinationLayout: _destinationWithGeometry(source, width: destinationWidth, height: destinationHeight),
       allocateOptions: (arena) {
@@ -195,13 +214,15 @@ abstract final class YuvAbiV1WebRunner {
 
   static YuvAbiV1FrameResult _runEffect({
     required Object module,
-    required String operation,
+    required YuvOperation operation,
+    required String nativeSymbol,
     required YuvAbiV1FrameInput source,
     required YuvAbiV1Region? region,
   }) {
     return _run(
       module: module,
       operation: operation,
+      nativeSymbol: nativeSymbol,
       source: source,
       destinationLayout: _sameGeometryDestination(source),
       allocateOptions: (arena) {
@@ -222,7 +243,8 @@ abstract final class YuvAbiV1WebRunner {
   /// ever hold integer pointers, which survive a growth unchanged.
   static YuvAbiV1FrameResult _run({
     required Object module,
-    required String operation,
+    required YuvOperation operation,
+    required String nativeSymbol,
     required YuvAbiV1FrameInput source,
     required YuvAbiV1DestinationLayout destinationLayout,
     required int Function(WasmArena arena) allocateOptions,
@@ -256,14 +278,14 @@ abstract final class YuvAbiV1WebRunner {
       // Step 5: exactly one format-independent symbol.
       final int status = YuvAbiV1WebDispatch.call(
         module,
-        operation,
+        nativeSymbol,
         argTypes: const <String>['number', 'number', 'number'],
         args: <Object?>[sourceFrame, destination.framePtr, options],
       );
 
       // Step 6: map a non-zero status before reading any destination byte.
       if (status != yuvStatusOk) {
-        yuvThrowForStatus(status: status, operation: operation);
+        yuvThrowForStatus(status: status, operation: operation, nativeSymbol: nativeSymbol);
       }
 
       // Step 7: copy the destination into Dart-owned buffers, while the WASM

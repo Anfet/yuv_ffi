@@ -1,12 +1,15 @@
 /// The `YuvStatus` values of the versioned native ABI v1
 /// (`docs/api-abi-0.3-design.md` section 9) and their Dart exception mapping
-/// (section 11's "Status-to-Dart exception mapping" table).
+/// (`doc/api-abi-0.4-design.md` section 2, contract 6, and section 7's
+/// [YuvNativeException] definition).
 ///
 /// This maps a single [int] returned by a `yuv_*_v1` symbol to the exception
-/// the typed IO runner throws. It does not decide *when* a status is
+/// the typed IO/Web runners throw. It does not decide *when* a status is
 /// produced — that is entirely native validation — only what each numeric
 /// value means to a Dart caller.
 library;
+
+import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 
 /// Marker for a `YuvStatus` value not defined by ABI v1.
 ///
@@ -66,29 +69,38 @@ const int yuvStatusUnsupportedColor = 7;
 
 /// Thrown for a native status that maps to neither [ArgumentError] nor
 /// [UnsupportedError]: `4 OVERFLOW`, `5 ALLOCATION_FAILED`, `6 INTERNAL_ERROR`,
-/// and any status value ABI v1 does not define.
+/// and any status value ABI v1 does not define
+/// (`doc/api-abi-0.4-design.md` section 2, contract 6).
 ///
 /// [statusCode] retains the raw `YuvStatus` value exactly as the native call
 /// returned it, including an unknown code -- see section 11: "any unknown
 /// non-zero value" still becomes a [YuvNativeException], not a silently
-/// dropped failure. [operation] names the `yuv_*_v1` symbol that returned it,
-/// so a caught exception is actionable without a native stack trace.
+/// dropped failure. [operation] names the public [YuvOperation] that was being
+/// attempted, so a caught exception is actionable without a native stack
+/// trace; [message] additionally names the `yuv_*_v1` symbol that returned
+/// [statusCode], for diagnostics that need the exact native entry point.
 class YuvNativeException implements Exception {
-  /// Creates an exception for [statusCode] returned by [operation].
-  const YuvNativeException({required this.statusCode, required this.operation});
+  /// Creates an exception for [statusCode] returned while attempting
+  /// [operation]. [message] must be non-empty.
+  const YuvNativeException({required this.statusCode, required this.operation, required this.message})
+    : assert(message != '', 'YuvNativeException.message must be non-empty.');
 
   /// The raw `YuvStatus` value the native call returned.
   final int statusCode;
 
-  /// The `yuv_*_v1` symbol name that produced [statusCode].
-  final String operation;
+  /// The public [YuvOperation] that was being attempted when the native call
+  /// returned [statusCode].
+  final YuvOperation operation;
+
+  /// A human-readable description of the failure, non-empty.
+  final String message;
 
   @override
-  String toString() => 'YuvNativeException($operation returned status $statusCode)';
+  String toString() => 'YuvNativeException(${operation.name} returned status $statusCode: $message)';
 }
 
-/// Translates a raw native `YuvStatus` [status] returned by [operation] into
-/// the Dart result section 11 requires.
+/// Translates a raw native `YuvStatus` [status] returned by [nativeSymbol]
+/// while attempting [operation] into the Dart result section 11 requires.
 ///
 /// Returns `null` for `YUV_STATUS_OK` (0): the caller commits the destination
 /// and does not throw. Every other value throws before returning, per the
@@ -96,33 +108,33 @@ class YuvNativeException implements Exception {
 ///
 /// | status | Dart result |
 /// |---:|---|
-/// | 1 | [ArgumentError] naming [operation] and the violated contract |
+/// | 1 | [ArgumentError] naming [nativeSymbol] and the violated contract |
 /// | 2, 3, 7 | [UnsupportedError] |
-/// | 4, 5, 6, unknown | [YuvNativeException] retaining [status] |
+/// | 4, 5, 6, unknown | [YuvNativeException] naming [operation], retaining [status] |
 ///
-/// [detail] is folded into the thrown message where the mapping provides one
-/// (`ArgumentError`/`UnsupportedError`); it should describe the specific
-/// descriptor/options contract the caller can identify without native source,
-/// e.g. `'destination geometry does not match crop options'`.
-Never yuvThrowForStatus({required int status, required String operation, String? detail}) {
+/// [detail] is folded into the thrown message where the mapping provides one;
+/// it should describe the specific descriptor/options contract the caller can
+/// identify without native source, e.g.
+/// `'destination geometry does not match crop options'`.
+Never yuvThrowForStatus({required int status, required YuvOperation operation, required String nativeSymbol, String? detail}) {
   assert(status != yuvStatusOk, 'yuvThrowForStatus must not be called for YUV_STATUS_OK; the runner commits instead.');
 
   switch (status) {
     case yuvStatusInvalidArgument:
-      throw ArgumentError(detail == null ? '$operation: invalid descriptor or options' : '$operation: $detail');
+      throw ArgumentError(detail == null ? '$nativeSymbol: invalid descriptor or options' : '$nativeSymbol: $detail');
     case yuvStatusUnsupportedFormat:
-      throw UnsupportedError(detail == null ? '$operation: unsupported source/destination format' : '$operation: $detail');
+      throw UnsupportedError(detail == null ? '$nativeSymbol: unsupported source/destination format' : '$nativeSymbol: $detail');
     case yuvStatusUnsupportedLayout:
-      throw UnsupportedError(detail == null ? '$operation: unsupported but structurally valid layout' : '$operation: $detail');
+      throw UnsupportedError(detail == null ? '$nativeSymbol: unsupported but structurally valid layout' : '$nativeSymbol: $detail');
     case yuvStatusUnsupportedColor:
-      throw UnsupportedError(detail == null ? '$operation: unsupported color matrix/range' : '$operation: $detail');
+      throw UnsupportedError(detail == null ? '$nativeSymbol: unsupported color matrix/range' : '$nativeSymbol: $detail');
     case yuvStatusOverflow:
     case yuvStatusAllocationFailed:
     case yuvStatusInternalError:
-      throw YuvNativeException(statusCode: status, operation: operation);
+      throw YuvNativeException(statusCode: status, operation: operation, message: '$nativeSymbol returned status $status');
     default:
       // Any value ABI v1 does not define. Preserved rather than collapsed --
       // see the class dartdoc.
-      throw YuvNativeException(statusCode: status, operation: operation);
+      throw YuvNativeException(statusCode: status, operation: operation, message: '$nativeSymbol returned unrecognized status $status');
   }
 }

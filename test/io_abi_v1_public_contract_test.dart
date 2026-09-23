@@ -108,7 +108,7 @@ void main() {
           return calls == 1 ? yuvStatusOk : yuvStatusInternalError;
         };
 
-        expect(() => image.swapNv(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', 'yuv_chroma_swap_v1')));
+        expect(() => image.swapNv(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', YuvOperation.chromaSwap)));
 
         expect(calls, 2, reason: 'the conversion must have succeeded before the swap was attempted');
         expect(image.format, format, reason: 'format changed although swapNv failed');
