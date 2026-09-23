@@ -14,7 +14,7 @@ import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await YuvFfi.ensureInitialized();
+  await YuvFfi.initialize();
   runApp(const MyApp());
 }
 
@@ -168,54 +168,54 @@ class _MyAppState extends State<MyApp> {
       isLoading = false;
       image = original!.copy();
 
-      // image = image!.toYuvI420();
-      // image = image!.toYuvNv21();
+      // image = image!.applyFormat(YuvPixelFormat.i420);
+      // image = image!.applyFormat(YuvPixelFormat.nv12);
 
       faceBox = null;
     });
   }
 
   void rotateClockWise() {
-    logTimed(() => requireImage.rotate(YuvImageRotation.rotation90), name: '$image rotateClockWise');
+    logTimed(() => requireImage.applyRotation(YuvImageRotation.rotation90), name: '$image rotateClockWise');
   }
 
   void rotateCouterClockwise() {
-    logTimed(() => requireImage.rotate(YuvImageRotation.rotation270), name: '$image rotateCouterClockwise');
+    logTimed(() => requireImage.applyRotation(YuvImageRotation.rotation270), name: '$image rotateCouterClockwise');
   }
 
   Future flipImageVertically() async {
-    logTimed(() async => requireImage.flipVertically(), name: '$image flipVertically');
+    logTimed(() async => requireImage.applyFlipVertical(), name: '$image flipVertically');
   }
 
   void flitImageHorizontally() {
-    logTimed(() => requireImage.flipHorizontally(), name: '$image flitHorizontally');
+    logTimed(() => requireImage.applyFlipHorizontal(), name: '$image flitHorizontally');
   }
 
   void cropImage() {
     var cropTarget = CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85);
     var r = cropTarget.place(requireImage.size);
 
-    logTimed(() => requireImage.crop(r), name: '$image cropImage');
+    logTimed(() => requireImage.applyCrop(r), name: '$image cropImage');
   }
 
   void grayscaleImage() {
-    logTimed(() => requireImage.grayscale(), name: '$image grayscaleImage');
+    logTimed(() => requireImage.applyGrayscale(), name: '$image grayscaleImage');
   }
 
   void blackwhiteImage() {
-    logTimed(() => requireImage.blackwhite(), name: '$image blackwhiteImage');
+    logTimed(() => requireImage.applyBlackWhite(), name: '$image blackwhiteImage');
   }
 
   void invertImage() {
-    logTimed(() => requireImage.negate(), name: '$image invertImage');
+    logTimed(() => requireImage.applyNegate(), name: '$image invertImage');
   }
 
   void gaussianBlurImage() {
-    logTimed(() => requireImage.gaussianBlur(radius: 10, sigma: 10), name: '$image gaussianBlurImage');
+    logTimed(() => requireImage.applyGaussianBlur(radius: 10, sigma: 10), name: '$image gaussianBlurImage');
   }
 
   void meanBlurImage() {
-    logTimed(() => requireImage.meanBlur(radius: 10), name: '$image meanBlurImage');
+    logTimed(() => requireImage.applyMeanBlur(radius: 10), name: '$image meanBlurImage');
   }
 
   Future logTimed(FutureOr Function() execution, {String? name}) async {
@@ -228,7 +228,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void boxBlurImage() {
-    logTimed(() => requireImage.boxBlur(radius: 10), name: '$image boxBlurImage');
+    logTimed(() => requireImage.applyBoxBlur(radius: 10), name: '$image boxBlurImage');
   }
 
   Future loadImage() async {
@@ -251,7 +251,7 @@ class _MyAppState extends State<MyApp> {
 
     if (rgbaBytes == null) throw Exception('Could not decode image');
     setState(() {
-      image = YuvImage.bgra(img.width, img.height)..fromRgba8888(rgbaBytes.buffer.asUint8List());
+      image = YuvImage.bgra(img.width, img.height)..applyRgbaBytes(rgbaBytes.buffer.asUint8List());
       original = image!.copy();
       faceBox = null;
       isLoading = false;
@@ -264,8 +264,8 @@ class _MyAppState extends State<MyApp> {
     );
 
     final yuvForMlInput = (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
-        ? requireImage.copy().toYuvBgra8888()
-        : requireImage.copy().toYuvNv21();
+        ? requireImage.copy().applyFormat(YuvPixelFormat.bgra8888)
+        : requireImage.copy().applyFormat(YuvPixelFormat.nv12);
     final inputImage = yuvForMlInput.toInputImage();
 
     final faces = await detector.processImage(inputImage);
@@ -281,15 +281,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future toI420() async {
-    logTimed(() => requireImage.toYuvI420(), name: '$image toI420');
+    logTimed(() => requireImage.applyFormat(YuvPixelFormat.i420), name: '$image toI420');
   }
 
   Future toNV21() async {
-    logTimed(() => requireImage.toYuvNv21(), name: '$image toNV21');
+    logTimed(() => requireImage.applyFormat(YuvPixelFormat.nv12), name: '$image toNV21');
   }
 
   Future toBGRA() async {
-    logTimed(() => requireImage.toYuvBgra8888(), name: '$image toBGRA');
+    logTimed(() => requireImage.applyFormat(YuvPixelFormat.bgra8888), name: '$image toBGRA');
   }
 }
 

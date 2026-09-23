@@ -19,7 +19,7 @@ Implemented against [the 0.4.0 design](doc/api-abi-0.4-design.md). See the READM
 
 - Web remains a partial WASM backend: a successful `YuvFfi.initialize()` means the WASM runtime loaded, not that every operation available on native is supported. Query `capabilities.supports(...)` rather than assuming parity.
 - `applyChromaSwap()` is valid only on an NV12-formatted image on every backend; convert first with `applyFormat(YuvPixelFormat.nv12)` if the source isn't already NV.
-- The example app (`example/`) still targets the deprecated `0.3.0` instance-method surface; migrating it to `apply*`/`to*` is tracked separately (REL-21).
+- The example app's demo code (`main.dart`, `ext.dart`, `widgets/impl/*`) now targets `apply*`/`to*`/`YuvFfi.initialize()`. Its `integration_test/*` suite intentionally still exercises the deprecated `0.3.0` surface where that is the test's actual subject (back-compat/legacy-dispatch contracts).
 
 ## 0.3.0
 

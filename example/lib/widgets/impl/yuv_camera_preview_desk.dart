@@ -148,7 +148,7 @@ class _YuvCameraPreviewDesktopState extends State<_YuvCameraPreviewDesktop> {
             yuv = YuvImage.bgra(image.width, image.height);
             _reusableBgraFrame = yuv;
           }
-          yuv.fromRgba8888(rgbaBytes);
+          yuv.applyRgbaBytes(rgbaBytes);
           widget.transform?.call(yuv);
         } finally {
           image.dispose();

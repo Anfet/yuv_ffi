@@ -266,8 +266,9 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       }
       if (usedBgraCopyFormat) {
         yuv.yPlane.assignFrom(_rgbaBuffer!);
+        yuv.markDirty();
       } else {
-        yuv.fromRgba8888(_rgbaBuffer!);
+        yuv.applyRgbaBytes(_rgbaBuffer!);
       }
       yuv = widget.transform?.call(yuv) ?? yuv;
 
@@ -371,7 +372,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       final rgba = imageData.data;
       final rgbaBytes = Uint8List.sublistView(rgba);
 
-      var yuv = YuvImage.bgra(width, height)..fromRgba8888(rgbaBytes);
+      var yuv = YuvImage.bgra(width, height)..applyRgbaBytes(rgbaBytes);
       yuv = widget.transform?.call(yuv) ?? yuv;
 
       _streamController.add(yuv);

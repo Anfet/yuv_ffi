@@ -27,6 +27,9 @@ extension CameraImageExt on CameraImage {
         return YuvImage.i420(width, height, planes: planes);
 
       case ImageFormatGroup.nv21:
+        // Deliberately not YuvImage.nv12(): camera frames in this group carry
+        // NV21's UV byte order, which only the nv21 label preserves.
+        // ignore: deprecated_member_use
         return YuvImage.nv21(width, height, planes: planes);
       case ImageFormatGroup.bgra8888:
         return YuvImage.bgra(width, height, planes: planes);
@@ -54,6 +57,6 @@ extension YuvImageToCameraExt on YuvImage {
 
     final meta = InputImageMetadata(size: size, rotation: InputImageRotation.rotation0deg, format: format, bytesPerRow: planes.first.bytesPerRow);
 
-    return InputImage.fromBytes(bytes: getBytes(), metadata: meta);
+    return InputImage.fromBytes(bytes: toBytes(), metadata: meta);
   }
 }
