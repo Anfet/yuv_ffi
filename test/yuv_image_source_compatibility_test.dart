@@ -211,4 +211,64 @@ class _LegacyExternalImage implements YuvImage {
 
   @override
   Future<ui.Image> toImage() => throw UnimplementedError();
+
+  @override
+  YuvImage applyRgbaBytes(Uint8List bytes) => throw UnimplementedError();
+
+  @override
+  YuvImage applyGrayscale() => throw UnimplementedError();
+
+  @override
+  YuvImage applyBlackWhite() => throw UnimplementedError();
+
+  @override
+  YuvImage applyNegate() => throw UnimplementedError();
+
+  @override
+  YuvImage applyGaussianBlur({required int radius, required double sigma}) => throw UnimplementedError();
+
+  @override
+  YuvImage applyMeanBlur({required int radius, ui.Rect? region}) => throw UnimplementedError();
+
+  @override
+  YuvImage applyBoxBlur({required int radius, ui.Rect? region}) => throw UnimplementedError();
+
+  @override
+  YuvImage applyCrop(ui.Rect region) => throw UnimplementedError();
+
+  @override
+  YuvImage applyFlipHorizontal() => throw UnimplementedError();
+
+  @override
+  YuvImage applyFlipVertical() => throw UnimplementedError();
+
+  @override
+  YuvImage applyRotation(YuvImageRotation rotation) => throw UnimplementedError();
+
+  @override
+  YuvImage applyFormat(YuvPixelFormat format) => throw UnimplementedError();
+
+  @override
+  YuvImage applyChromaSwap() => throw UnimplementedError();
+
+  @override
+  YuvImage cropped(ui.Rect region) => throw UnimplementedError();
+
+  @override
+  YuvImage rotated(YuvImageRotation rotation) => throw UnimplementedError();
+
+  @override
+  YuvImage toI420() => throw UnimplementedError();
+
+  @override
+  YuvImage toNv12() => throw UnimplementedError();
+
+  @override
+  YuvImage toBgra() => throw UnimplementedError();
+
+  @override
+  Uint8List toBytes() => throw UnimplementedError();
+
+  @override
+  Uint8List toBgraBytes() => throw UnimplementedError();
 }

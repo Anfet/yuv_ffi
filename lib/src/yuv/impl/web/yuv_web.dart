@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:yuv_ffi/src/loader/impl/loader_web.dart' as loader;
 import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 import 'package:yuv_ffi/src/yuv/impl/web/abi/yuv_abi_v1_web_runner.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
@@ -18,6 +19,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
+import 'package:yuv_ffi/src/yuv_capabilities.dart';
 
 import 'yuv_abi_v1_dispatch_web.dart';
 
@@ -442,4 +444,188 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     }
     return module.rawModule;
   }
+
+  // -- 0.4.0 `apply*`/`to*` surface ------------------------------------------
+
+  /// The currently loaded backend's capability snapshot.
+  ///
+  /// `null` before [YuvFfi.initialize] has completed successfully, mirroring
+  /// [YuvWasmLoader.moduleIfInitialized]'s own post-initialization cache. A
+  /// capability check against a `null` snapshot is unconditionally
+  /// unsupported: Web never reports success through a silent no-op (section
+  /// 2, contract 7), including before initialization.
+  YuvCapabilities? get _capabilities => loader.capabilitiesIfInitialized;
+
+  void _requireCapability(YuvOperation operation, {required YuvPixelFormat sourceFormat, YuvPixelFormat? destinationFormat}) {
+    final capabilities = _capabilities;
+    if (capabilities == null) {
+      throw UnsupportedError('$operation is not supported: the Web backend has not finished YuvFfi.initialize() yet.');
+    }
+    yuvRequireCapability(capabilities, operation, sourceFormat: sourceFormat, destinationFormat: destinationFormat);
+  }
+
+  @override
+  YuvImage applyRgbaBytes(Uint8List bytes) {
+    _requireCapability(YuvOperation.convert, sourceFormat: format.pixelFormat, destinationFormat: format.pixelFormat);
+    _state.validateRgba8888Length(bytes.length);
+    fromRgba8888(bytes);
+    return this;
+  }
+
+  @override
+  YuvImage applyGrayscale() {
+    _requireCapability(YuvOperation.grayscale, sourceFormat: format.pixelFormat);
+    return _applyInPlace(YuvAbiV1WebRunner.grayscale(module: _requireModule(), source: _sourceFrame()));
+  }
+
+  @override
+  YuvImage applyBlackWhite() {
+    _requireCapability(YuvOperation.blackWhite, sourceFormat: format.pixelFormat);
+    return _applyInPlace(YuvAbiV1WebRunner.blackWhite(module: _requireModule(), source: _sourceFrame()));
+  }
+
+  @override
+  YuvImage applyNegate() {
+    _requireCapability(YuvOperation.negate, sourceFormat: format.pixelFormat);
+    return _applyInPlace(YuvAbiV1WebRunner.negate(module: _requireModule(), source: _sourceFrame()));
+  }
+
+  @override
+  YuvImage applyGaussianBlur({required int radius, required double sigma}) {
+    _requireCapability(YuvOperation.gaussianBlur, sourceFormat: format.pixelFormat);
+    YuvGeometry.validateBlurRadius(radius);
+    if (radius == 0) {
+      return this;
+    }
+    return _applyInPlace(
+      YuvAbiV1WebRunner.blur(module: _requireModule(), kind: YuvAbiV1BlurKind.gaussian, source: _sourceFrame(), radius: radius, sigma: sigma),
+    );
+  }
+
+  @override
+  YuvImage applyMeanBlur({required int radius, ui.Rect? region}) {
+    _requireCapability(YuvOperation.meanBlur, sourceFormat: format.pixelFormat);
+    return _blur(YuvAbiV1BlurKind.mean, radius: radius, rect: region);
+  }
+
+  @override
+  YuvImage applyBoxBlur({required int radius, ui.Rect? region}) {
+    _requireCapability(YuvOperation.boxBlur, sourceFormat: format.pixelFormat);
+    return _blur(YuvAbiV1BlurKind.box, radius: radius, rect: region);
+  }
+
+  @override
+  YuvImage applyCrop(ui.Rect region) {
+    _requireCapability(YuvOperation.crop, sourceFormat: format.pixelFormat);
+    return crop(region);
+  }
+
+  @override
+  YuvImage applyFlipHorizontal() {
+    _requireCapability(YuvOperation.flipHorizontal, sourceFormat: format.pixelFormat);
+    return flipHorizontally();
+  }
+
+  @override
+  YuvImage applyFlipVertical() {
+    _requireCapability(YuvOperation.flipVertical, sourceFormat: format.pixelFormat);
+    return flipVertically();
+  }
+
+  @override
+  YuvImage applyRotation(YuvImageRotation rotation) {
+    _requireCapability(YuvOperation.rotate, sourceFormat: format.pixelFormat);
+    return rotate(rotation);
+  }
+
+  @override
+  YuvImage applyFormat(YuvPixelFormat targetFormat) {
+    _requireCapability(YuvOperation.convert, sourceFormat: format.pixelFormat, destinationFormat: targetFormat);
+    return _convertTo(targetFormat.legacy);
+  }
+
+  @override
+  YuvImage applyChromaSwap() {
+    if (format != YuvFileFormat.nv21) {
+      throw UnsupportedError('applyChromaSwap is only supported for NV12 images, not $format.');
+    }
+    _requireCapability(YuvOperation.chromaSwap, sourceFormat: format.pixelFormat);
+    return _applyInPlace(YuvAbiV1WebRunner.chromaSwap(module: _requireModule(), source: _sourceFrame()));
+  }
+
+  @override
+  YuvImage cropped(ui.Rect region) {
+    _requireCapability(YuvOperation.crop, sourceFormat: format.pixelFormat);
+    final clamped = _state.clampCrop(region);
+    if (clamped == null) {
+      return copy();
+    }
+    final result = YuvAbiV1WebRunner.crop(
+      module: _requireModule(),
+      source: _sourceFrame(),
+      left: clamped.left,
+      top: clamped.top,
+      width: clamped.width,
+      height: clamped.height,
+    );
+    return YuvImageImpl(
+      format,
+      clamped.width,
+      clamped.height,
+      planes: YuvAbiV1ImageTransport.planesOf(result: result, format: format, width: clamped.width, height: clamped.height),
+    );
+  }
+
+  @override
+  YuvImage rotated(YuvImageRotation rotation) {
+    _requireCapability(YuvOperation.rotate, sourceFormat: format.pixelFormat);
+    final int degrees = YuvImageState.normalizeRotationDegrees(rotation.degrees);
+    if (degrees == 0) {
+      return copy();
+    }
+    final result = YuvAbiV1WebRunner.rotate(module: _requireModule(), source: _sourceFrame(), rotationDegrees: degrees);
+    final int rotatedWidth = rotation.swapSize ? height : width;
+    final int rotatedHeight = rotation.swapSize ? width : height;
+    return YuvImageImpl(
+      format,
+      rotatedWidth,
+      rotatedHeight,
+      planes: YuvAbiV1ImageTransport.planesOf(result: result, format: format, width: rotatedWidth, height: rotatedHeight),
+    );
+  }
+
+  @override
+  YuvImage toI420() => _toIndependent(YuvFileFormat.i420, YuvOperation.convert);
+
+  @override
+  YuvImage toNv12() => _toIndependent(YuvFileFormat.nv21, YuvOperation.convert);
+
+  @override
+  YuvImage toBgra() => _toIndependent(YuvFileFormat.bgra8888, YuvOperation.convert);
+
+  /// Shared body of [toI420]/[toNv12]/[toBgra]: independent conversion that
+  /// never mutates or aliases the receiver, even for a same-format request.
+  YuvImage _toIndependent(YuvFileFormat target, YuvOperation operation) {
+    _requireCapability(operation, sourceFormat: format.pixelFormat, destinationFormat: target.pixelFormat);
+    if (format == target) {
+      return copy();
+    }
+    final result = YuvAbiV1WebRunner.convert(
+      module: _requireModule(),
+      source: _sourceFrame(),
+      destinationLayout: YuvAbiV1ImageTransport.destination(format: target, width: width, height: height),
+    );
+    return YuvImageImpl(
+      target,
+      width,
+      height,
+      planes: YuvAbiV1ImageTransport.planesOf(result: result, format: target, width: width, height: height),
+    );
+  }
+
+  @override
+  Uint8List toBytes() => getBytes();
+
+  @override
+  Uint8List toBgraBytes() => toBgra8888();
 }

@@ -8,6 +8,7 @@ import 'package:yuv_ffi/src/yuv_capabilities.dart';
 
 ffi.DynamicLibrary? _library;
 YuvFfiBindings? _ffiBingings;
+YuvCapabilities? _capabilities;
 
 /// Opens the platform dynamic library.
 ///
@@ -56,6 +57,7 @@ void debugResetLoader() {
   _symbolChecker = (library, symbol) => library.providesSymbol(symbol);
   _library = null;
   _ffiBingings = null;
+  _capabilities = null;
   debugOpenCount = 0;
 }
 
@@ -89,8 +91,20 @@ Future<YuvCapabilities> ensureInitialized() async {
       '${yuvAbiV1Symbols.length} required ABI v1 symbols: ${missing.join(', ')}.',
     );
   }
-  return YuvCapabilitiesSnapshot(YuvOperation.values);
+  final snapshot = YuvCapabilitiesSnapshot(YuvOperation.values);
+  _capabilities = snapshot;
+  return snapshot;
 }
+
+/// The most recently computed [YuvCapabilities], or `null` when
+/// [ensureInitialized] has not yet completed successfully.
+///
+/// Mirrors [library]/[ffiBingings]: a synchronous, per-isolate cache next to
+/// the other state this loader already keeps after a successful
+/// initialization, so `apply*` call sites can read the current backend's
+/// capabilities without threading an async result through every image
+/// instance.
+YuvCapabilities? get capabilitiesIfInitialized => _capabilities;
 
 /// The loaded dynamic library.
 ///

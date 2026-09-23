@@ -11,6 +11,17 @@ Never get library => throw UnsupportedError('Native FFI dynamic library is not a
 /// Web implementation placeholder for generated native bindings access.
 Never get ffiBingings => throw UnsupportedError('Native FFI bindings are not available on Web.');
 
+YuvCapabilities? _capabilities;
+
+/// The most recently computed [YuvCapabilities], or `null` when
+/// [ensureInitialized] has not yet completed successfully.
+///
+/// Mirrors [YuvWasmLoader.moduleIfInitialized]: a synchronous cache next to
+/// the loader's other post-initialization state, so `apply*` call sites on
+/// the Web backend can read the current capability snapshot without
+/// threading an async result through every image instance.
+YuvCapabilities? get capabilitiesIfInitialized => _capabilities;
+
 /// Unified backend initialization entrypoint for web platform.
 ///
 /// This reuses the WASM bootstrap loader and gives higher-level code a single
@@ -22,5 +33,7 @@ Never get ffiBingings => throw UnsupportedError('Native FFI bindings are not ava
 Future<YuvCapabilities> ensureInitialized() async {
   final module = await YuvWasmLoader.ensureInitialized();
   final available = yuvAvailableOperations((symbol) => YuvAbiV1WebDispatch.moduleExports(module.rawModule, symbol));
-  return YuvCapabilitiesSnapshot(available);
+  final snapshot = YuvCapabilitiesSnapshot(available);
+  _capabilities = snapshot;
+  return snapshot;
 }

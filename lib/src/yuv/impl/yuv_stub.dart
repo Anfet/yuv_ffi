@@ -267,4 +267,70 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     ui.decodeImageFromPixels(toBgra8888(), width, height, ui.PixelFormat.bgra8888, completer.complete);
     return completer.future;
   }
+
+  // This stub has no backend at all -- neither `dart:ffi` nor
+  // `dart:js_interop` -- so it has no capability snapshot to check and every
+  // `apply*`/`to*` below is unconditionally unsupported, per the same
+  // no-backend contract every other member on this class already follows.
+
+  @override
+  YuvImage applyRgbaBytes(Uint8List bytes) => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyGrayscale() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyBlackWhite() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyNegate() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyGaussianBlur({required int radius, required double sigma}) =>
+      throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyMeanBlur({required int radius, ui.Rect? region}) => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyBoxBlur({required int radius, ui.Rect? region}) => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyCrop(ui.Rect region) => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyFlipHorizontal() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyFlipVertical() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyRotation(YuvImageRotation rotation) => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyFormat(YuvPixelFormat format) => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage applyChromaSwap() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage cropped(ui.Rect region) => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage rotated(YuvImageRotation rotation) => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage toI420() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage toNv12() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  YuvImage toBgra() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
+
+  @override
+  Uint8List toBytes() => getBytes();
+
+  @override
+  Uint8List toBgraBytes() => toBgra8888();
 }
