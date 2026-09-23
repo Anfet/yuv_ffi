@@ -26,7 +26,7 @@
 | [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
 | [x] | REL-19 | DONE | 2 · Terra | 06 | R3 | `format` → `YuvPixelFormat` на публичном интерфейсе. |
 | [x] | REL-20 | DONE | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
-| [ ] | REL-21 | READY | 3 · Luna | 06, 16 | — | Миграция `example/` на `apply*`/`to*` API. |
+| [ ] | REL-21 | REVIEW | 3 · Luna | 06, 16 | — | Миграция `example/` на `apply*`/`to*` API. |
 
 **Итого (2026-09-23, после приёмки REL-16):** 17 DONE (REL-01–16 кроме REL-17–18, плюс REL-19, REL-20), 1 READY (REL-17), 2 BLOCKED (REL-18), 1 READY (REL-21, вне пакетов), 0 REVIEW, 0 REJECTED, 0 IN_PROGRESS. 0 ARCH REQUIRED. **Пакеты R1, R2, R3 полностью приняты.**
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
@@ -254,3 +254,7 @@ REL-16 разблокирована (READY): теперь зависит от 01
 **Приёмка:** `flutter analyze`/`flutter test` на `example/` чисты; демо-функциональность (камера, кроп, эффекты, face detection) не регрессирует; `flutter pub publish --dry-run` без новых предупреждений про пример.
 
 Не блокирует REL-17/REL-18 — миграция примера не входит в release gates 0.4.0.
+
+**Отчёт исполнителя (2026-09-23):** `main.dart`, `ext.dart` и все четыре `widgets/impl/*` переведены на `apply*`/`applyFormat`/`applyRgbaBytes`/`toBytes`/`YuvFfi.initialize()`. `integration_test/*` не тронуты — весь набор проверок в них (`getbytes_contract_test.dart`, `serialization_contract_test.dart`, `image_cache_key_test.dart`'s swapNv/save/load кейсы, `reference_web_conversions_test.dart`'s operation-switch) предметно проверяет legacy-диспетчеризацию/обратную совместимость, что явно исключено из scope. `ext.dart`: `YuvImage.nv21(...)` для `ImageFormatGroup.nv21` оставлен как есть с явным `// ignore: deprecated_member_use` и комментарием — это не случайный legacy-вызов, `nv21`-камера-кадры физически несут UV-порядок, который сохраняет только `nv21`-фабрика; замена на `nv12()` тихо сломала бы chroma. Найден и исправлен реальный дефект (не просто переименование): `yuv_camera_preview_web.dart` писал в `yPlane` напрямую (`assignFrom`) без последующего `markDirty()` — по контракту REL-02/design §4 это оставляло revision несвежим для виджет-кэша; добавлен вызов `markDirty()` сразу после прямой записи.
+
+Проверено: `flutter analyze lib` в `example/` — 0 issues. Полный `flutter analyze` — 203 info/warning, все в `integration_test/*`, ни одного нового (переиспользуют уже принятый REL-06/REL-19/REL-20 deprecated-слой намеренно) и 5 pre-existing warning в `image_cache_key_test.dart` (не в диффе, `git diff` по файлу пуст). `dart format --line-length 150` на изменённых файлах — без правок. `flutter pub get` в `example/` проходит. `flutter test`/`integration_test` не прогнаны — в `example/` нет обычного `test/`, весь набор в `integration_test/*` и требует реального устройства/браузера (см. memory про Mac-раннер); демо-функциональность (камера/face detection) также не проверена вручную на устройстве. CHANGELOG обновлён: снята пометка "example всё ещё на deprecated API".
