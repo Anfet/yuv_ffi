@@ -426,6 +426,7 @@ jobs:
             integration_test/serialization_contract_test.dart
             integration_test/wasm_loader_lifecycle_test.dart
             integration_test/wasm_parity_edge_cases_test.dart
+            integration_test/nv_chroma_order_web_test.dart
           )
 
           failed=()

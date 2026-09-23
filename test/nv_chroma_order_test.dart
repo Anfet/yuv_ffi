@@ -93,6 +93,47 @@ void main() {
       expect(bgra[2], greaterThan(180), reason: 'red channel lost: chroma order is swapped somewhere');
       expect(bgra[0], lessThan(80), reason: 'blue channel raised: chroma order is swapped somewhere');
     });
+
+    test('hand-written (U, V) chroma bytes, not derived from any RGBA conversion, '
+        'are read back identically through both the nv12 and nv21 labels', () async {
+      await YuvFfi.initialize();
+      // Unlike every test above, this writes exact known chroma byte values
+      // directly through applyPlanes() -- no RGBA->YUV conversion, no
+      // rounding, no tolerance. YuvPixelFormat.nv12 and the legacy nv21
+      // factory are documented to share the same interleaved storage
+      // (section 14, Q1); this proves it at the byte level, not just by
+      // comparing stride/format as `yuv_pixel_format_test.dart` does.
+      const int uSample = 37;
+      const int vSample = 219;
+      final yPlane = YuvPlane(h, w, 1, Uint8List(w * h)..fillRange(0, w * h, 16));
+      final uvBytes = Uint8List((h ~/ 2) * w); // NV chroma plane: h/2 rows of w bytes each (w/2 (U, V) pairs per row).
+      for (int i = 0; i < uvBytes.length; i += 2) {
+        uvBytes[i] = uSample;
+        uvBytes[i + 1] = vSample;
+      }
+      final uvPlane = YuvPlane(h ~/ 2, w, 2, uvBytes);
+
+      final nv12Labeled = YuvImage.nv12(w, h)..applyPlanes([yPlane, uvPlane]);
+      // ignore: deprecated_member_use_from_same_package
+      final nv21Labeled = YuvImage.nv21(w, h)..applyPlanes([yPlane, uvPlane]);
+
+      expect(nv12Labeled.uPlane.bytes, orderedEquals(nv21Labeled.uPlane.bytes), reason: 'nv12 and nv21 must store identical chroma bytes');
+      for (int i = 0; i < nv12Labeled.uPlane.bytes.length; i += 2) {
+        expect(nv12Labeled.uPlane.bytes[i], uSample, reason: 'byte $i (U) of the nv12-labeled chroma plane was not what was written');
+        expect(nv12Labeled.uPlane.bytes[i + 1], vSample, reason: 'byte ${i + 1} (V) of the nv12-labeled chroma plane was not what was written');
+      }
+
+      // Round-trip through BGRA and back to NV12: the exact input bytes are
+      // lossy through YUV<->RGB, so this checks the U/V byte order survives
+      // (first byte stays "more U-like", second stays "more V-like"),
+      // not exact equality.
+      final viaBgra = nv12Labeled.toBgra().toNv12();
+      expect(
+        viaBgra.uPlane.bytes[0] < viaBgra.uPlane.bytes[1],
+        uSample < vSample,
+        reason: 'chroma byte order flipped somewhere in the NV12 -> BGRA -> NV12 round trip',
+      );
+    });
   }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
 }
 

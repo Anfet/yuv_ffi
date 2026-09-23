@@ -89,19 +89,15 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   @override
   YuvPlane get vPlane => throw UnimplementedError();
 
-  @override
   YuvPlane get y => _plane;
 
-  @override
   YuvPlane? get u => null;
 
-  @override
   YuvPlane? get v => null;
 
   @override
   ui.Size get size => ui.Size(width.toDouble(), height.toDouble());
 
-  @override
   Uint8List getBytes() => _bytes;
 
   @override
@@ -117,52 +113,36 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   @override
   Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
 
-  @override
   YuvImage blackwhite() => throw UnimplementedError();
 
-  @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => throw UnimplementedError();
 
-  @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) => throw UnimplementedError();
 
-  @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) => throw UnimplementedError();
 
-  @override
   YuvImage swapNv() => throw UnimplementedError();
 
-  @override
   YuvImage toYuvNv21() => throw UnimplementedError();
 
-  @override
   YuvImage toYuvI420() => throw UnimplementedError();
 
-  @override
   YuvImage toYuvBgra8888() => this;
 
-  @override
   YuvImage crop(ui.Rect rect) => throw UnimplementedError();
 
-  @override
   YuvImage flipHorizontally() => throw UnimplementedError();
 
-  @override
   YuvImage flipVertically() => throw UnimplementedError();
 
-  @override
   void fromRgba8888(Uint8List bytes) => throw UnimplementedError();
 
-  @override
   YuvImage grayscale() => throw UnimplementedError();
 
-  @override
   YuvImage negate() => throw UnimplementedError();
 
-  @override
   YuvImage rotate(YuvImageRotation rotation) => throw UnimplementedError();
 
-  @override
   Uint8List toBgra8888() => _bytes;
 
   @override
@@ -288,19 +268,15 @@ class _PaddedBgraImage implements YuvImage, YuvRevisionAware {
   @override
   YuvPlane get vPlane => throw UnimplementedError();
 
-  @override
   YuvPlane get y => _plane;
 
-  @override
   YuvPlane? get u => null;
 
-  @override
   YuvPlane? get v => null;
 
   @override
   ui.Size get size => ui.Size(width.toDouble(), height.toDouble());
 
-  @override
   Uint8List getBytes() => _plane.bytes;
 
   @override
@@ -315,52 +291,36 @@ class _PaddedBgraImage implements YuvImage, YuvRevisionAware {
   @override
   Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
 
-  @override
   YuvImage blackwhite() => throw UnimplementedError();
 
-  @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => throw UnimplementedError();
 
-  @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) => throw UnimplementedError();
 
-  @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) => throw UnimplementedError();
 
-  @override
   YuvImage swapNv() => throw UnimplementedError();
 
-  @override
   YuvImage toYuvNv21() => throw UnimplementedError();
 
-  @override
   YuvImage toYuvI420() => throw UnimplementedError();
 
-  @override
   YuvImage toYuvBgra8888() => this;
 
-  @override
   YuvImage crop(ui.Rect rect) => throw UnimplementedError();
 
-  @override
   YuvImage flipHorizontally() => throw UnimplementedError();
 
-  @override
   YuvImage flipVertically() => throw UnimplementedError();
 
-  @override
   void fromRgba8888(Uint8List bytes) => throw UnimplementedError();
 
-  @override
   YuvImage grayscale() => throw UnimplementedError();
 
-  @override
   YuvImage negate() => throw UnimplementedError();
 
-  @override
   YuvImage rotate(YuvImageRotation rotation) => throw UnimplementedError();
 
-  @override
   Uint8List toBgra8888() => throw UnimplementedError();
 
   @override

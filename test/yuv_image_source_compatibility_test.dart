@@ -135,19 +135,7 @@ class _LegacyExternalImage implements YuvImage {
   YuvPlane get vPlane => throw UnimplementedError();
 
   @override
-  YuvPlane get y => _plane;
-
-  @override
-  YuvPlane? get u => null;
-
-  @override
-  YuvPlane? get v => null;
-
-  @override
   ui.Size get size => ui.Size(width.toDouble(), height.toDouble());
-
-  @override
-  Uint8List getBytes() => _plane.bytes;
 
   @override
   YuvImage copy({bool blank = false}) => _LegacyExternalImage(width, height);
@@ -161,52 +149,45 @@ class _LegacyExternalImage implements YuvImage {
   @override
   Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
 
-  @override
+  // Pre-0.4.0 instance methods this legacy class already defined on itself,
+  // same as a real `0.2.4`-era implementer would have. They are no longer
+  // `YuvImage` interface members -- `DeprecatedYuvImageApi` covers their name
+  // for every other `YuvImage` -- but a class that already had its own method
+  // of the same name keeps it: Dart resolves an instance member before an
+  // extension one, so these still shadow the extension here, exactly as they
+  // would have before REL-06 existed.
   YuvImage blackwhite() => throw UnimplementedError();
 
-  @override
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => throw UnimplementedError();
 
-  @override
   YuvImage boxBlur({int radius = 10, ui.Rect? rect}) => throw UnimplementedError();
 
-  @override
   YuvImage meanBlur({int radius = 2, ui.Rect? rect}) => throw UnimplementedError();
 
-  @override
   YuvImage swapNv() => throw UnimplementedError();
 
-  @override
   YuvImage toYuvNv21() => throw UnimplementedError();
 
-  @override
   YuvImage toYuvI420() => throw UnimplementedError();
 
-  @override
   YuvImage toYuvBgra8888() => this;
 
-  @override
   YuvImage crop(ui.Rect rect) => throw UnimplementedError();
 
-  @override
   YuvImage flipHorizontally() => throw UnimplementedError();
 
-  @override
   YuvImage flipVertically() => throw UnimplementedError();
 
-  @override
   void fromRgba8888(Uint8List bytes) => throw UnimplementedError();
 
-  @override
   YuvImage grayscale() => throw UnimplementedError();
 
-  @override
   YuvImage negate() => throw UnimplementedError();
 
-  @override
   YuvImage rotate(YuvImageRotation rotation) => throw UnimplementedError();
 
-  @override
+  Uint8List getBytes() => _plane.bytes;
+
   Uint8List toBgra8888() => _plane.bytes;
 
   @override

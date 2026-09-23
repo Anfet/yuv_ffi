@@ -9,19 +9,39 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart' show YuvOperation;
 
 import 'impl/yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_image.dart' if (dart.library.js_interop) 'impl/web/yuv_web.dart';
 
-export 'impl/yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_image.dart' if (dart.library.js_interop) 'impl/web/yuv_web.dart';
+export 'shared/yuv_deprecated_api.dart';
+
+// `YuvImageImpl` (whichever backend this conditional import resolves to) is
+// deliberately not exported: it is an internal implementation detail behind
+// the `YuvImage` interface, reachable by callers only through the factory
+// constructors below. REL-06 hides it; earlier revisions exported the impl
+// library wholesale.
 
 /// Represents an in-memory image in one of supported YUV/BGRA formats.
 ///
 /// Use factory constructors to create an instance for a specific format:
-/// [YuvImage.i420], [YuvImage.nv21], or [YuvImage.bgra].
+/// [YuvImage.i420], [YuvImage.nv12], or [YuvImage.bgra].
 ///
 /// Mutation model (`io` and `web` backends):
-/// - In-place (returns `this`): [blackwhite], [gaussianBlur], [boxBlur],
-///   [meanBlur], [crop], [flipHorizontally], [flipVertically], [grayscale],
-///   [negate], [rotate], [swapNv], [toYuvNv21], [toYuvI420],
-///   [toYuvBgra8888].
-/// - Returns a new image: [copy].
+/// - In-place (returns `this`): [applyGrayscale], [applyBlackWhite],
+///   [applyNegate], [applyGaussianBlur], [applyMeanBlur], [applyBoxBlur],
+///   [applyCrop], [applyFlipHorizontal], [applyFlipVertical],
+///   [applyRotation], [applyFormat], [applyChromaSwap], [applyRgbaBytes],
+///   [applyPlanes].
+/// - Returns a new, independent image: [copy], [cropped], [rotated],
+///   [toI420], [toNv12], [toBgra].
+///
+/// The `0.3.0` instance-method surface (`blackwhite()`, `gaussianBlur()`,
+/// `crop()`, `swapNv()`, `toYuvNv21()`, and the rest) still compiles: it lives
+/// in the deprecated `DeprecatedYuvImageApi` extension, forwarding to the
+/// members above (`doc/api-abi-0.4-design.md` sections 4 and 8).
+///
+/// Breaking change for a foreign `implements YuvImage`: every `apply*`/`to*`
+/// member added for `0.4.0` is a required interface member, so an external
+/// class that implements this interface directly (rather than extending a
+/// backend this package provides) must implement them too. This is the same
+/// breaking change already introduced when those members were added; nothing
+/// here adds further required members beyond that set.
 abstract interface class YuvImage {
   /// Pixel format of the current image.
   YuvFileFormat get format;
@@ -44,15 +64,6 @@ abstract interface class YuvImage {
   /// V plane for planar formats.
   YuvPlane get vPlane;
 
-  /// Alias for [yPlane].
-  YuvPlane get y;
-
-  /// Optional U plane.
-  YuvPlane? get u;
-
-  /// Optional V plane.
-  YuvPlane? get v;
-
   /// Convenience size object built from [width] and [height].
   ui.Size get size;
 
@@ -72,6 +83,7 @@ abstract interface class YuvImage {
   /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
   /// when [planes] is omitted.
   /// If [planes] is provided, plane data is copied from it.
+  @Deprecated('Legacy nv21 label contains UV bytes; use YuvImage.nv12().')
   factory YuvImage.nv21(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl.nv21;
 
   /// Creates a BGRA8888 image.
@@ -80,12 +92,13 @@ abstract interface class YuvImage {
   /// If [planes] is provided, plane data is copied from it.
   factory YuvImage.bgra(int width, int height, {Iterable<YuvPlane>? planes}) = YuvImageImpl.bgra;
 
-  /// Creates an image by explicit [format].
+  /// Creates an image by explicit legacy [format].
   ///
   /// [width] and [height] are image dimensions in pixels.
   /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
   /// when [planes] is omitted.
   /// If [planes] is provided, plane data is copied from it.
+  @Deprecated('Use a named factory (YuvImage.i420, YuvImage.nv12, YuvImage.bgra) or YuvImage.allocate().')
   factory YuvImage(YuvFileFormat format, int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl;
 
   /// Creates an NV12 image with the truthfully named semi-planar storage.
@@ -121,22 +134,19 @@ abstract interface class YuvImage {
   factory YuvImage.fromRgbaBytes(Uint8List bytes, {required int width, required int height, required YuvPixelFormat format}) =
       YuvImageImpl.fromRgbaBytes;
 
-  /// Returns all planes concatenated into a single byte buffer.
-  Uint8List getBytes();
-
   /// Creates a copy as a new image instance.
   ///
-  /// If [blank] is `true`, returns an image with same geometry but zeroed planes.
-  YuvImage copy({bool blank = false});
+  /// If [blank] is `true`, returns an image with same geometry but zeroed
+  /// planes.
+  YuvImage copy({@Deprecated('Use YuvImage.allocate() for a blank image.') bool blank = false});
 
   /// Validates [planes] against this image's format and geometry, copies
   /// them in, and atomically replaces the current plane set.
   ///
   /// On success, every previously obtained [planes]/[yPlane]/[uPlane]/[vPlane]
-  /// reference (and the legacy [y]/[u]/[v] aliases) becomes stale: it still
-  /// points at the storage this image held before the call, not the new one.
-  /// Callers must re-fetch plane references afterward. The revision advances
-  /// exactly once.
+  /// reference becomes stale: it still points at the storage this image held
+  /// before the call, not the new one. Callers must re-fetch plane references
+  /// afterward. The revision advances exactly once.
   ///
   /// Throws [ArgumentError] when [planes] does not match this image's format
   /// and geometry. [planes] is copied and validated on that copy before this
@@ -156,81 +166,6 @@ abstract interface class YuvImage {
   /// Throws [FormatException] when input payload is malformed.
   Future<void> load(Stream<List<int>> stream) => throw UnimplementedError();
 
-  /// Applies a black/white threshold effect in-place and returns `this`.
-  YuvImage blackwhite() => throw UnimplementedError();
-
-  /// Applies Gaussian blur in-place and returns `this`.
-  ///
-  /// [radius] controls blur kernel radius, [sigma] controls spread.
-  YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => throw UnimplementedError();
-
-  /// Applies box blur in-place.
-  ///
-  /// [radius] controls blur neighborhood.
-  /// If [rect] is provided, blur is applied only within that region.
-  /// Returns `this`.
-  YuvImage boxBlur({int radius = 10, ui.Rect? rect}) => throw UnimplementedError();
-
-  /// Applies mean blur in-place.
-  ///
-  /// [radius] controls blur neighborhood.
-  /// If [rect] is provided, blur is applied only within that region.
-  /// Returns `this`.
-  YuvImage meanBlur({int radius = 2, ui.Rect? rect}) => throw UnimplementedError();
-
-  /// Swaps interleaved chroma order for NV formats.
-  ///
-  /// Operates in-place and returns `this`.
-  YuvImage swapNv() => throw UnimplementedError();
-
-  /// Converts image to NV21-labeled representation.
-  ///
-  /// Operates in-place and returns `this`.
-  YuvImage toYuvNv21() => throw UnimplementedError();
-
-  /// Converts image to I420 representation.
-  ///
-  /// Operates in-place and returns `this`.
-  YuvImage toYuvI420() => throw UnimplementedError();
-
-  /// Converts image to BGRA8888 representation.
-  ///
-  /// Operates in-place and returns `this`.
-  YuvImage toYuvBgra8888() => throw UnimplementedError();
-
-  /// Crops the image to [rect] in-place and returns `this`.
-  ///
-  /// If the effective crop area is empty, image data is left unchanged.
-  YuvImage crop(ui.Rect rect) => throw UnimplementedError();
-
-  /// Flips the image horizontally in-place and returns `this`.
-  YuvImage flipHorizontally() => throw UnimplementedError();
-
-  /// Flips the image vertically in-place and returns `this`.
-  YuvImage flipVertically() => throw UnimplementedError();
-
-  /// Fills this image from RGBA8888 bytes.
-  ///
-  /// Expected size is `width * height * 4`.
-  /// Throws [ArgumentError] when [bytes] length does not match that size.
-  void fromRgba8888(Uint8List bytes) => throw UnimplementedError();
-
-  /// Converts image to grayscale in-place and returns `this`.
-  YuvImage grayscale() => throw UnimplementedError();
-
-  /// Inverts colors in-place and returns `this`.
-  YuvImage negate() => throw UnimplementedError();
-
-  /// Rotates image in-place and returns `this`.
-  ///
-  /// `rotation0` is a no-op.
-  YuvImage rotate(YuvImageRotation rotation) => throw UnimplementedError();
-
-  /// Returns BGRA8888 bytes with tightly packed rows.
-  ///
-  /// Returned length is always `width * height * 4`.
-  Uint8List toBgra8888() => throw UnimplementedError();
-
   /// Converts to Flutter [ui.Image].
   ///
   /// Throws if pixel decode fails in the underlying engine.
@@ -247,9 +182,10 @@ abstract interface class YuvImage {
   // geometry and revision are left exactly as they were. A defined no-op
   // (radius 0, an empty normalized crop/ROI, rotation 0, same-format
   // `applyFormat`) short-circuits before dispatch and does not advance the
-  // revision. These live alongside the 0.3.0 instance methods above rather
-  // than replacing them: retiring those into the deprecated compatibility
-  // extension is REL-06's separate task.
+  // revision. The 0.3.0 instance methods that used to live directly above
+  // this surface (`blackwhite()`, `crop()`, `swapNv()`, and the rest) were
+  // retired into the deprecated `DeprecatedYuvImageApi` extension (REL-06),
+  // which forwards every one of them to a member below.
 
   /// Replaces the current pixel content from tight RGBA8888 [bytes], in this
   /// image's own format and geometry, and returns `this`.

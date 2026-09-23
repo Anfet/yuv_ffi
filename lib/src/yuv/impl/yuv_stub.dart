@@ -6,6 +6,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_state.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_legacy_dispatch.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
@@ -18,7 +19,7 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// [YuvImageState] this holds by composition (YUV-28); what remains here is the
 /// no-backend behavior itself -- every processing operation is a no-op, and the
 /// format conversions only restate geometry.
-class YuvImageImpl implements YuvImage, YuvRevisionAware {
+class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapter {
   // I420 stores U and V as separate single-byte-per-sample planes, so the
   // default pixelStride is 1, unlike NV21's interleaved (U, V) pairs.
   YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
@@ -75,7 +76,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
       throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${width}x$height');
     }
     final image = YuvImageImpl.allocate(format, width, height);
-    image.fromRgba8888(bytes);
+    image.legacyFromRgba8888(bytes);
     return image;
   }
 
@@ -109,19 +110,9 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   YuvPlane get vPlane => _state.vPlane;
 
   @override
-  YuvPlane get y => _state.yPlane;
-
-  @override
-  YuvPlane? get u => _state.u;
-
-  @override
-  YuvPlane? get v => _state.v;
-
-  @override
   ui.Size get size => _state.size;
 
-  @override
-  Uint8List getBytes() => _state.getBytes();
+  Uint8List _getBytes() => _state.getBytes();
 
   @override
   YuvImage applyPlanes(Iterable<YuvPlane> planes) {
@@ -141,7 +132,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   Future<void> save(Sink<List<int>> sink) async {
-    sink.add(getBytes());
+    sink.add(_getBytes());
   }
 
   @override
@@ -156,51 +147,66 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   }
 
   @override
-  YuvImage blackwhite() => this;
-
-  @override
-  YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => this;
-
-  @override
-  YuvImage boxBlur({int radius = 10, ui.Rect? rect}) => this;
-
-  @override
-  YuvImage meanBlur({int radius = 2, ui.Rect? rect}) => this;
-
-  @override
-  YuvImage swapNv() => this;
-
-  @override
-  YuvImage toYuvNv21() => _reinterpretAs(YuvFileFormat.nv21);
-
-  @override
-  YuvImage toYuvI420() => _reinterpretAs(YuvFileFormat.i420);
-
-  @override
-  YuvImage toYuvBgra8888() => _reinterpretAs(YuvFileFormat.bgra8888);
-
-  /// Replaces the planes with a freshly allocated, zeroed set for [format] at
-  /// the current geometry.
-  ///
-  /// There is no backend to convert samples with, so a conversion here only
-  /// restates the layout: the pixel data is lost, which is the whole point of
-  /// this being a stub. The luma pixel stride is carried over so a BGRA source
-  /// does not silently become a one-byte-per-sample plane.
-  YuvImage _reinterpretAs(YuvFileFormat target) {
-    if (format == target) {
-      return this;
+  void legacyFromRgba8888(Uint8List bytes) {
+    if (bytes.length != width * height * 4) {
+      return;
     }
-    _state.replace(
-      format: target,
-      width: width,
-      height: height,
-      planes: YuvImageState.allocatePlanes(format: target, width: width, height: height, yPixelStride: _state.yPixelStride),
-    );
-    return this;
+
+    if (format == YuvFileFormat.bgra8888) {
+      final bgra = Uint8List(bytes.length);
+      for (int i = 0; i < bytes.length; i += 4) {
+        bgra[i] = bytes[i + 2];
+        bgra[i + 1] = bytes[i + 1];
+        bgra[i + 2] = bytes[i];
+        bgra[i + 3] = bytes[i + 3];
+      }
+      yPlane.assignFrom(bgra);
+      _state.bumpRevision();
+    }
   }
 
   @override
-  YuvImage crop(ui.Rect rect) {
+  Future<ui.Image> toImage() {
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromPixels(toBgraBytes(), width, height, ui.PixelFormat.bgra8888, completer.complete);
+    return completer.future;
+  }
+
+  // No native/WASM backend exists here, so every legacy effect/blur is a
+  // no-op, exactly as `0.3.0`'s stub behavior was: there is nothing to
+  // dispatch, so validation and processing are the same thing this stub
+  // always did -- nothing, beyond the geometry work crop/format-reinterpret
+  // still do below.
+
+  @override
+  YuvImage legacyBlackWhite() => this;
+
+  @override
+  YuvImage legacyGrayscale() => this;
+
+  @override
+  YuvImage legacyNegate() => this;
+
+  @override
+  YuvImage legacyGaussianBlur({required int radius, required double sigma}) => this;
+
+  @override
+  YuvImage legacyBoxBlur({required int radius, ui.Rect? rect}) => this;
+
+  @override
+  YuvImage legacyMeanBlur({required int radius, ui.Rect? rect}) => this;
+
+  @override
+  YuvImage legacyFlipHorizontal() => this;
+
+  @override
+  YuvImage legacyFlipVertical() => this;
+
+  @override
+  YuvImage legacyRotate(YuvImageRotation rotation) => this;
+
+  @override
+  YuvImage legacyCrop(ui.Rect rect) {
     // Clamped through the shared helper, so an empty rect is the same no-op it
     // is on the native and Web backends. The previous stub-only clamp allowed a
     // zero width or height through, which then either built a degenerate plane
@@ -220,53 +226,29 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   }
 
   @override
-  YuvImage flipHorizontally() => this;
-
-  @override
-  YuvImage flipVertically() => this;
-
-  @override
-  void fromRgba8888(Uint8List bytes) {
-    if (bytes.length != width * height * 4) {
-      return;
+  YuvImage legacyConvertTo(YuvFileFormat target) {
+    // Replaces the planes with a freshly allocated, zeroed set for [target] at
+    // the current geometry. There is no backend to convert samples with, so a
+    // conversion here only restates the layout: the pixel data is lost, which
+    // is the whole point of this being a stub. The luma pixel stride is
+    // carried over so a BGRA source does not silently become a
+    // one-byte-per-sample plane.
+    if (format == target) {
+      return this;
     }
-
-    if (format == YuvFileFormat.bgra8888) {
-      final bgra = Uint8List(bytes.length);
-      for (int i = 0; i < bytes.length; i += 4) {
-        bgra[i] = bytes[i + 2];
-        bgra[i + 1] = bytes[i + 1];
-        bgra[i + 2] = bytes[i];
-        bgra[i + 3] = bytes[i + 3];
-      }
-      yPlane.assignFrom(bgra);
-      _state.bumpRevision();
-    }
+    _state.replace(
+      format: target,
+      width: width,
+      height: height,
+      planes: YuvImageState.allocatePlanes(format: target, width: width, height: height, yPixelStride: _state.yPixelStride),
+    );
+    return this;
   }
 
+  /// No-op: this stub has no backend to stage a real convert-then-swap with,
+  /// consistent with `0.3.0`'s `swapNv()` returning `this` unconditionally here.
   @override
-  YuvImage grayscale() => this;
-
-  @override
-  YuvImage negate() => this;
-
-  @override
-  YuvImage rotate(YuvImageRotation rotation) => this;
-
-  @override
-  Uint8List toBgra8888() {
-    if (format == YuvFileFormat.bgra8888) {
-      return Uint8List.fromList(yPlane.bytes);
-    }
-    return Uint8List(width * height * 4);
-  }
-
-  @override
-  Future<ui.Image> toImage() {
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(toBgra8888(), width, height, ui.PixelFormat.bgra8888, completer.complete);
-    return completer.future;
-  }
+  YuvImage legacySwapNv() => this;
 
   // This stub has no backend at all -- neither `dart:ffi` nor
   // `dart:js_interop` -- so it has no capability snapshot to check and every
@@ -329,8 +311,13 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   YuvImage toBgra() => throw UnsupportedError('No yuv_ffi backend is available on this target.');
 
   @override
-  Uint8List toBytes() => getBytes();
+  Uint8List toBytes() => _getBytes();
 
   @override
-  Uint8List toBgraBytes() => toBgra8888();
+  Uint8List toBgraBytes() {
+    if (format == YuvFileFormat.bgra8888) {
+      return Uint8List.fromList(yPlane.bytes);
+    }
+    return Uint8List(width * height * 4);
+  }
 }
