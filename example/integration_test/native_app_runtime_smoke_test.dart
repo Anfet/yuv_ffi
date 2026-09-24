@@ -8,14 +8,11 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// YUV-06: the plugin must load and compute inside a real built application.
 ///
 /// `test/native_packaging_smoke_test.dart` runs under `flutter test`, a plain
-/// Dart VM process that links nothing and resolves the library through
-/// `LD_LIBRARY_PATH`/`DYLD_LIBRARY_PATH`. That proves the installed-name path
-/// works, but it cannot prove the path the loader actually takes in an app:
-/// on Apple platforms `_openYuvLibrary` returns `DynamicLibrary.process()`
-/// because the sources are compiled into the pod target, and a plain VM never
-/// exercises that branch. A macOS pod target that built no operation sources
-/// at all — which is exactly what this package shipped before YUV-06 — would
-/// still have passed the VM smoke through the side-loaded dylib.
+/// Dart VM process that links nothing and resolves the library through a
+/// host-side dynamic-library search path. That proves installed-name loading,
+/// but it cannot prove the path the loader takes in a packaged app. Android
+/// must load the `.so` from the APK, while Apple platform sources are linked
+/// into the pod target through `DynamicLibrary.process()`.
 ///
 /// This suite closes that hole: it runs in the built app bundle, so the symbols
 /// must come from wherever the platform's real packaging put them. It is the
@@ -50,9 +47,7 @@ void main() {
       }
     }
 
-    // A conversion and an in-place effect exercise two different symbol groups:
-    // a pod target that forwarded the conversion sources but not the effect
-    // ones would pass on the conversion alone.
+    // A conversion and an in-place effect exercise two different symbol groups.
     final image = YuvImage.i420(width, height)..applyRgbaBytes(rgba);
     final bgra = image.toBgraBytes();
 
