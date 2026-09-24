@@ -49,7 +49,7 @@ class YuvImageState {
     int uvPixelStride = 1,
     Iterable<YuvPlane>? planes,
     bool allowLargerNvChromaStride = false,
-  }) {
+  }) : _allowLargerNvChromaStride = allowLargerNvChromaStride {
     YuvGeometry.validateDimensions(_width, _height);
 
     if (planes != null) {
@@ -120,6 +120,7 @@ class YuvImageState {
   YuvFileFormat _format;
   int _width;
   int _height;
+  bool _allowLargerNvChromaStride;
   List<YuvPlane> _planes = const [];
   int _revision = 0;
 
@@ -174,6 +175,9 @@ class YuvImageState {
   /// Pixel stride of the chroma plane, or `1` when the format has none.
   int get uvPixelStride => u?.pixelStride ?? 1;
 
+  /// Whether replacements and derived images may retain gapped NV12 chroma.
+  bool get allowsLargerNvChromaStride => _allowLargerNvChromaStride;
+
   /// Advances [revision] by one.
   void bumpRevision() => _revision++;
 
@@ -183,11 +187,20 @@ class YuvImageState {
   /// here, so a partially updated state is not representable: the fields move
   /// together or not at all. [planes] is adopted as given -- callers that must
   /// not share buffers with the source pass copies.
-  void replace({required YuvFileFormat format, required int width, required int height, required List<YuvPlane> planes}) {
+  void replace({
+    required YuvFileFormat format,
+    required int width,
+    required int height,
+    required List<YuvPlane> planes,
+    bool? allowLargerNvChromaStride,
+  }) {
     _format = format;
     _width = width;
     _height = height;
     _planes = planes;
+    if (allowLargerNvChromaStride != null) {
+      _allowLargerNvChromaStride = allowLargerNvChromaStride;
+    }
     _revision++;
   }
 
@@ -205,7 +218,7 @@ class YuvImageState {
   /// [width] x [height].
   void applyPlanes(Iterable<YuvPlane> planes) {
     final copied = List<YuvPlane>.of(planes.map((plane) => plane.copy()));
-    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: copied);
+    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: copied, allowLargerNvChromaStride: _allowLargerNvChromaStride);
     _planes = copied;
     _revision++;
   }
@@ -240,7 +253,13 @@ class YuvImageState {
   /// [revision] alone as well.
   Future<void> decodeAndReplace(Stream<List<int>> stream) async {
     final draft = await YuvCodec.decodeStream(stream);
-    replace(format: draft.format, width: draft.width, height: draft.height, planes: draft.planes);
+    replace(
+      format: draft.format,
+      width: draft.width,
+      height: draft.height,
+      planes: draft.planes,
+      allowLargerNvChromaStride: draft.format == YuvFileFormat.nv21 && draft.planes[1].pixelStride > YuvGeometry.nvChromaPixelStride,
+    );
   }
 
   /// Whether the BGRA luma plane is tightly packed, so an operation that

@@ -77,6 +77,20 @@ void main() {
       expect(image.yPlane.getPixel(0, 0), 0, reason: 'applyPlanes must copy the supplied planes, not adopt them by reference');
     });
 
+    test('accepts gapped NV12 planes and retains their copy-in contract', () {
+      final image = YuvImage.nv12(4, 4, uvPixelStride: 3);
+      final replacement = [
+        YuvPlane(4, 4),
+        YuvPlane(2, 6, 3, Uint8List.fromList([1, 2, 0xEE, 3, 4, 0xEE, 5, 6, 0xEE, 7, 8, 0xEE])),
+      ];
+
+      image.applyPlanes(replacement);
+      replacement[1].bytes[0] = 0xFF;
+
+      expect(image.uPlane.pixelStride, 3);
+      expect(image.uPlane.bytes[0], 1, reason: 'applyPlanes must not alias a gapped NV12 source plane');
+    });
+
     test('advances the revision exactly once', () {
       final image = YuvImage.i420(4, 4);
       final before = image.revision;

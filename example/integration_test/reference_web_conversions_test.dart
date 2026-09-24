@@ -58,7 +58,7 @@ void main() {
     // silently "pass" by running on the VM instead of Chrome.
     expect(kIsWeb, isTrue, reason: 'YUV-12 must execute on the real Web/WASM backend, not the VM.');
 
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     final manifestString = await rootBundle.loadString(_manifestAssetPath);
     final manifest = jsonDecode(manifestString) as Map<String, dynamic>;
@@ -134,57 +134,63 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
     case 'YuvImage.nv21':
       break;
     case 'fromRgba8888':
-      image.fromRgba8888(frame.bytes);
+      image.applyRgbaBytes(frame.bytes);
       break;
     case 'toBgra8888':
-      rawBytes = image.toBgra8888();
+      rawBytes = image.toBgraBytes();
       break;
     case 'toYuvBgra8888':
-      _inPlace(entry, image, image.toYuvBgra8888);
+      _inPlace(entry, image, () => image.applyFormat(YuvPixelFormat.bgra8888));
       break;
     case 'toYuvI420':
-      _inPlace(entry, image, image.toYuvI420);
+      _inPlace(entry, image, () => image.applyFormat(YuvPixelFormat.i420));
       break;
     case 'toYuvNv21':
-      _inPlace(entry, image, image.toYuvNv21);
+      _inPlace(entry, image, () => image.applyFormat(YuvPixelFormat.nv12));
       break;
     case 'swapNv':
       final swaps = parameters['swaps'] as int;
+      // The manifest specifies the legacy swapNv() contract: non-NV input is
+      // converted to canonical NV12 before each U/V swap. applyChromaSwap()
+      // intentionally rejects I420, so retain that conversion explicitly.
+      if (image.format != YuvPixelFormat.nv12) {
+        _inPlace(entry, image, () => image.applyFormat(YuvPixelFormat.nv12));
+      }
       for (var i = 0; i < swaps; i++) {
-        _inPlace(entry, image, image.swapNv);
+        _inPlace(entry, image, image.applyChromaSwap);
       }
       break;
     case 'crop':
-      _inPlace(entry, image, () => image.crop(_rect(parameters)));
+      _inPlace(entry, image, () => image.applyCrop(_rect(parameters)));
       break;
     case 'rotate':
-      _inPlace(entry, image, () => image.rotate(_rotation(parameters['degreesClockwise'] as int)));
+      _inPlace(entry, image, () => image.applyRotation(_rotation(parameters['degreesClockwise'] as int)));
       break;
     case 'flipHorizontally':
-      _inPlace(entry, image, image.flipHorizontally);
+      _inPlace(entry, image, image.applyFlipHorizontal);
       break;
     case 'flipVertically':
-      _inPlace(entry, image, image.flipVertically);
+      _inPlace(entry, image, image.applyFlipVertical);
       break;
     case 'grayscale':
-      _inPlace(entry, image, image.grayscale);
+      _inPlace(entry, image, image.applyGrayscale);
       break;
     case 'blackwhite':
-      _inPlace(entry, image, image.blackwhite);
+      _inPlace(entry, image, image.applyBlackWhite);
       break;
     case 'negate':
-      _inPlace(entry, image, image.negate);
+      _inPlace(entry, image, image.applyNegate);
       break;
     case 'gaussianBlur':
-      _inPlace(entry, image, () => image.gaussianBlur(radius: parameters['radius'] as int, sigma: parameters['sigma'] as int));
+      _inPlace(entry, image, () => image.applyGaussianBlur(radius: parameters['radius'] as int, sigma: (parameters['sigma'] as num).toDouble()));
       break;
     case 'boxBlur':
       _inPlace(
         entry,
         image,
-        () => image.boxBlur(
+        () => image.applyBoxBlur(
           radius: parameters['radius'] as int,
-          rect: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
+          region: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
         ),
       );
       break;
@@ -192,30 +198,29 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
       _inPlace(
         entry,
         image,
-        () => image.meanBlur(
+        () => image.applyMeanBlur(
           radius: parameters['radius'] as int,
-          rect: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
+          region: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
         ),
       );
       break;
     case 'copy':
-      final copied = image.copy(blank: parameters['blank'] as bool);
+      final copied = parameters['blank'] as bool ? YuvImage.allocate(image.format, image.width, image.height) : image.copy();
       expect(identical(copied, image), isFalse, reason: '${entry['id']} copy must return a new image instance');
       expect(sha256Hex(frame.bytes), sourceFrameHash, reason: '${entry['id']} mutated source RGBA fixture');
       expect(_planesHash(image.planes), sourcePlaneHash, reason: '${entry['id']} mutated input during copy');
-      return _CaseResult(image: copied, outputBytes: copied.toBgra8888(), rawBytes: copied.getBytes());
+      return _CaseResult(image: copied, outputBytes: copied.toBgraBytes(), rawBytes: copied.toBytes());
     case 'getBytes':
-      rawBytes = image.getBytes();
+      rawBytes = image.toBytes();
       break;
     case 'save/load':
       final chunks = <List<int>>[];
-      await image.save(_ListSink(chunks));
-      final loaded = _newImage(format, width, height, _planesFor(format, frame, layout), false);
+      await image.encodeTo(_ListSink(chunks));
       final stream = parameters['stream'] == 'fragmented' ? _fragment(chunks) : chunks;
-      await loaded.load(Stream<List<int>>.fromIterable(stream));
+      final loaded = await YuvImage.decode(Stream<List<int>>.fromIterable(stream));
       expect(sha256Hex(frame.bytes), sourceFrameHash, reason: '${entry['id']} mutated source RGBA fixture');
       expect(_planesHash(image.planes), sourcePlaneHash, reason: '${entry['id']} mutated input during save');
-      return _CaseResult(image: loaded, outputBytes: loaded.toBgra8888(), rawBytes: loaded.getBytes());
+      return _CaseResult(image: loaded, outputBytes: loaded.toBgraBytes(), rawBytes: loaded.toBytes());
     case 'toImage':
       final decoded = await image.toImage();
       try {
@@ -233,7 +238,7 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
   if (operation == 'toBgra8888' || operation == 'getBytes' || operation == 'toImage') {
     expect(_planesHash(image.planes), sourcePlaneHash, reason: '${entry['id']} mutated input during read-only operation');
   }
-  return _CaseResult(image: image, outputBytes: rawBytes ?? image.toBgra8888(), imageBytes: imageBytes, rawBytes: rawBytes);
+  return _CaseResult(image: image, outputBytes: rawBytes ?? image.toBgraBytes(), imageBytes: imageBytes, rawBytes: rawBytes);
 }
 
 void _inPlace(Map<String, dynamic> entry, YuvImage image, YuvImage Function() operation) {
@@ -242,7 +247,7 @@ void _inPlace(Map<String, dynamic> entry, YuvImage image, YuvImage Function() op
 
 String _planesHash(Iterable<YuvPlane> planes) => sha256Hex(_concat(planes.map((plane) => plane.bytes)));
 
-YuvImage _newImage(YuvFileFormat format, int width, int height, List<YuvPlane> planes, bool blank) {
+YuvImage _newImage(YuvPixelFormat format, int width, int height, List<YuvPlane> planes, bool blank) {
   if (blank) {
     planes = _blankLogicalSamples(format, width, planes);
   }
@@ -250,21 +255,21 @@ YuvImage _newImage(YuvFileFormat format, int width, int height, List<YuvPlane> p
     // Since YUV-15 the named BGRA constructor preserves the declared layout
     // just like the explicit-format one, so both blank and populated cases can
     // go through it.
-    YuvFileFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes),
-    YuvFileFormat.i420 => YuvImage.i420(width, height, planes: planes),
-    YuvFileFormat.nv21 => YuvImage.nv21(width, height, planes: planes),
+    YuvPixelFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes),
+    YuvPixelFormat.i420 => YuvImage.i420(width, height, planes: planes),
+    YuvPixelFormat.nv12 => YuvImage.nv12(width, height, planes: planes),
   };
 }
 
-List<YuvPlane> _blankLogicalSamples(YuvFileFormat format, int width, List<YuvPlane> planes) {
+List<YuvPlane> _blankLogicalSamples(YuvPixelFormat format, int width, List<YuvPlane> planes) {
   final chromaWidth = (width + 1) ~/ 2;
   return List<YuvPlane>.generate(planes.length, (planeIndex) {
     final plane = planes[planeIndex];
     final bytes = Uint8List.fromList(plane.bytes);
     final logicalWidth = planeIndex == 0 ? width : chromaWidth;
     final sampleBytes = switch (format) {
-      YuvFileFormat.bgra8888 => 4,
-      YuvFileFormat.nv21 when planeIndex == 1 => 2,
+      YuvPixelFormat.bgra8888 => 4,
+      YuvPixelFormat.nv12 when planeIndex == 1 => 2,
       _ => 1,
     };
     for (var row = 0; row < plane.height; row++) {
@@ -277,10 +282,10 @@ List<YuvPlane> _blankLogicalSamples(YuvFileFormat format, int width, List<YuvPla
   });
 }
 
-YuvFileFormat _format(String value) => switch (value) {
-  'bgra8888' => YuvFileFormat.bgra8888,
-  'i420' => YuvFileFormat.i420,
-  'nv21' => YuvFileFormat.nv21,
+YuvPixelFormat _format(String value) => switch (value) {
+  'bgra8888' => YuvPixelFormat.bgra8888,
+  'i420' => YuvPixelFormat.i420,
+  'nv21' => YuvPixelFormat.nv12,
   _ => throw ArgumentError.value(value, 'format'),
 };
 
@@ -305,24 +310,24 @@ RgbaFrame _sourceFrame(RgbaFrame source, Map<String, dynamic> parameters) {
   return source.crop(crop['left'] as int, crop['top'] as int, crop['width'] as int, crop['height'] as int);
 }
 
-List<YuvPlane> _planesFor(YuvFileFormat format, RgbaFrame frame, String layout) {
+List<YuvPlane> _planesFor(YuvPixelFormat format, RgbaFrame frame, String layout) {
   final i420 = rgbaToI420(frame);
   final tight = switch (format) {
-    YuvFileFormat.bgra8888 => <Uint8List>[frame.toBgra()],
-    YuvFileFormat.i420 => <Uint8List>[i420.y, i420.u!, i420.v!],
-    YuvFileFormat.nv21 => <Uint8List>[i420.y, i420ToNv21Uv(i420).uv!],
+    YuvPixelFormat.bgra8888 => <Uint8List>[frame.toBgra()],
+    YuvPixelFormat.i420 => <Uint8List>[i420.y, i420.u!, i420.v!],
+    YuvPixelFormat.nv12 => <Uint8List>[i420.y, i420ToNv21Uv(i420).uv!],
   };
   final chromaWidth = (frame.width + 1) ~/ 2;
   final chromaHeight = (frame.height + 1) ~/ 2;
   final strides = switch (format) {
-    YuvFileFormat.bgra8888 => <int>[
+    YuvPixelFormat.bgra8888 => <int>[
       switch (layout) {
         'padded' => frame.width * 4 + 16,
         'customStride' => frame.width * 4 + 7,
         _ => frame.width * 4,
       },
     ],
-    YuvFileFormat.i420 => <int>[
+    YuvPixelFormat.i420 => <int>[
       switch (layout) {
         'padded' => frame.width + 8,
         'customStride' => frame.width + 3,
@@ -339,7 +344,7 @@ List<YuvPlane> _planesFor(YuvFileFormat format, RgbaFrame frame, String layout) 
         _ => chromaWidth,
       },
     ],
-    YuvFileFormat.nv21 => <int>[
+    YuvPixelFormat.nv12 => <int>[
       switch (layout) {
         'padded' => frame.width + 8,
         'customStride' => frame.width + 3,
@@ -352,15 +357,15 @@ List<YuvPlane> _planesFor(YuvFileFormat format, RgbaFrame frame, String layout) 
       },
     ],
   };
-  final heights = format == YuvFileFormat.bgra8888
+  final heights = format == YuvPixelFormat.bgra8888
       ? <int>[frame.height]
-      : <int>[frame.height, chromaHeight, if (format == YuvFileFormat.i420) chromaHeight];
-  final useful = format == YuvFileFormat.bgra8888
+      : <int>[frame.height, chromaHeight, if (format == YuvPixelFormat.i420) chromaHeight];
+  final useful = format == YuvPixelFormat.bgra8888
       ? <int>[frame.width * 4]
-      : <int>[frame.width, if (format == YuvFileFormat.nv21) chromaWidth * 2 else chromaWidth, if (format == YuvFileFormat.i420) chromaWidth];
-  final pixelStrides = format == YuvFileFormat.bgra8888
+      : <int>[frame.width, if (format == YuvPixelFormat.nv12) chromaWidth * 2 else chromaWidth, if (format == YuvPixelFormat.i420) chromaWidth];
+  final pixelStrides = format == YuvPixelFormat.bgra8888
       ? <int>[4]
-      : <int>[1, if (format == YuvFileFormat.nv21) 2 else 1, if (format == YuvFileFormat.i420) 1];
+      : <int>[1, if (format == YuvPixelFormat.nv12) 2 else 1, if (format == YuvPixelFormat.i420) 1];
   return List<YuvPlane>.generate(tight.length, (index) => _plane(tight[index], heights[index], strides[index], pixelStrides[index], useful[index]));
 }
 
@@ -391,8 +396,11 @@ void _assertCase(
   if (operation == 'toYuvBgra8888' ||
       operation == 'toYuvI420' ||
       operation == 'toYuvNv21' ||
-      (operation == 'swapNv' && result.image.format == YuvFileFormat.nv21)) {
-    expect(result.image.format.name, expected['format'], reason: entry['id'] as String);
+      (operation == 'swapNv' && result.image.format == YuvPixelFormat.nv12)) {
+    // The manifest retains its historical NV21 name, while the public API now
+    // truthfully reports that same semi-planar storage as NV12.
+    final actualFormatName = result.image.format == YuvPixelFormat.nv12 ? 'nv21' : result.image.format.name;
+    expect(actualFormatName, expected['format'], reason: entry['id'] as String);
   }
 
   final artifact = expected['artifact'] as String;

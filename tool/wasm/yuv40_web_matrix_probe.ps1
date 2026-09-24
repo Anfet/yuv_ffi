@@ -1,6 +1,7 @@
 # Test-only diagnostic runner for YUV-40 (F-010: Web/WASM reference matrix
 # abort investigation). Not part of the build/test pipeline; not invoked by
-# CI. Exists so every `flutter drive -d chrome` attempt against a named
+# CI. Exists so every `flutter drive -d web-server --browser-name=chrome`
+# attempt against a named
 # integration_test target ends in exactly one of two terminal results:
 #
 #   flutter_exit=<n>   -- the OS-level exit code of the flutter.bat process,
@@ -42,7 +43,7 @@
 #
 # Requires the caller to supply a chromedriver binary matching the local
 # Chrome install (not vendored in this repo) and a Flutter SDK capable of
-# `flutter drive -d chrome`.
+# `flutter drive -d web-server --browser-name=chrome`.
 
 param(
     [Parameter(Mandatory = $true)][string]$FlutterExe,
@@ -92,7 +93,10 @@ try {
     # / "Timer stream not supported on web devices") that this probe exists
     # to catch. Without it the process still hangs the same way, but the
     # log gives no way to tell a DWDS failure apart from a plain slow start.
-    $argList = @("drive", "--driver=test_driver/integration_test.dart", "--target=$Target", "-d", "chrome", "-v")
+    # Keep the same transport as the required CI Web gate. `-d chrome` uses a
+    # DWDS debug-service subscription to the unsupported `Timer` stream on
+    # Flutter 3.44, so it can hang before the integration target executes.
+    $argList = @("drive", "--driver=test_driver/integration_test.dart", "--target=$Target", "-d", "web-server", "--browser-name=chrome", "--headless", "-v")
     if ($DartDefine -ne "") {
         $argList += "--dart-define=$DartDefine"
     }
