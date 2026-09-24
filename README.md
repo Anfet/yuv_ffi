@@ -158,7 +158,12 @@ any external `implements YuvImage` class: such a class must implement every new 
 - macOS: native FFI. Verified: build and app-runtime smoke (real conversion + effect call from a built app) on macOS 15.6.1 arm64.
 - Windows: native FFI. Verified: build and app-runtime smoke (`flutter drive`).
 - Linux: native FFI. Verified in CI build/smoke jobs; not re-run on a local Linux host.
-- Web: package builds and uses a **partial WASM backend** (work in progress, not feature-complete)
+- Web: package builds and uses a **partial WASM backend** (work in progress, not feature-complete).
+  Flutter Web is supported through the standard JavaScript build: `flutter build web`. The Emscripten
+  `.js`/`.wasm` package assets do not make the Flutter application a dart2wasm build. `flutter build
+  web --wasm` is currently unsupported because `lib/src/loader/impl/wasm_loader_web.dart` imports
+  `dart:html` to inject the Emscripten loader script. Moving that loader to the Web APIs that dart2wasm
+  supports is separate future work.
 
 macOS/Linux app-runtime and iOS build verification above reflect the YUV-06 result, accepted and
 covered by [CI run 35775516094](https://github.com/Anfet/yuv_ffi/actions/runs/35775516094).
