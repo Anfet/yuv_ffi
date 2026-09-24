@@ -228,15 +228,14 @@ jobs:
       - name: Packaging smoke
         run: flutter test test/native_packaging_smoke_test.dart --reporter expanded
 
-      # Builds the macOS example through CocoaPods, which is what actually
-      # compiles macos/Classes/*.c. Before YUV-06 the pod target contained only
-      # a forwarder to a header, so no operation symbol was ever built here.
+      # The committed macOS runner builds the example through CocoaPods, which
+      # is what actually compiles macos/Classes/*.c. Before YUV-06 the pod
+      # target contained only a forwarder to a header, so no operation symbol
+      # was ever built here.
       - name: Build example (macos desktop)
         working-directory: example
         shell: bash
         run: |
-          flutter config --enable-macos-desktop
-          flutter create --platforms=macos .
           flutter pub get
           flutter build macos --release
 
