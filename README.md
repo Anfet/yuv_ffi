@@ -38,6 +38,17 @@ dependencies:
       url: https://github.com/Anfet/yuv_ffi.git
 ```
 
+Platform minimums are Android API 26 and iOS 13.0. If your Android app targets an earlier API,
+raise `minSdk` in `android/app/build.gradle.kts`:
+
+```kotlin
+android {
+    defaultConfig {
+        minSdk = 26
+    }
+}
+```
+
 ## Quick start
 
 ```dart
