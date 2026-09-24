@@ -271,7 +271,7 @@ void main() {
     expect(restored.uPlane.bytes, orderedEquals(originalChroma));
   }, skip: !_nativeAvailable);
 
-  test('swapNv preserves Y after conversion from I420', () {
+  test('legacy swapNv preserves Y after conversion from I420', () {
     const width = 4;
     const height = 4;
     final originalY = Uint8List.fromList([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]);
@@ -284,7 +284,10 @@ void main() {
         YuvPlane(height ~/ 2, width ~/ 2, 1, Uint8List.fromList([2, 4, 6, 8])),
       ],
     );
-    image.applyChromaSwap();
+    // swapNv is the retained compatibility API that first converts I420 to
+    // NV12, then swaps each chroma pair.
+    // ignore: deprecated_member_use_from_same_package
+    image.swapNv();
 
     expect(image.format, YuvPixelFormat.nv12);
     expect(image.width, width);
@@ -293,21 +296,23 @@ void main() {
     expect(image.uPlane.bytes, orderedEquals(<int>[2, 1, 4, 3, 6, 5, 8, 7]));
   }, skip: !_nativeAvailable);
 
-  test('swapNv preserves padded Y layout after one and two swaps', () {
+  test('legacy swapNv preserves padded Y layout after one and two swaps', () {
     const width = 4;
     const height = 4;
     const yRowStride = 6;
     const uvRowStride = 6;
     final originalY = Uint8List.fromList([10, 11, 12, 13, 90, 91, 14, 15, 16, 17, 92, 93, 18, 19, 20, 21, 94, 95, 22, 23, 24, 25, 96, 97]);
     final originalChroma = Uint8List.fromList([1, 2, 3, 4, 80, 81, 5, 6, 7, 8, 82, 83]);
-    final image = YuvImage.nv12(
+    // ignore: deprecated_member_use_from_same_package
+    final image = YuvImage.nv21(
       width,
       height,
       planes: [YuvPlane(height, yRowStride, 1, originalY), YuvPlane(height ~/ 2, uvRowStride, 2, originalChroma)],
     );
     final sourceYPlane = image.yPlane;
     final sourceChromaPlane = image.uPlane;
-    image.applyChromaSwap();
+    // ignore: deprecated_member_use_from_same_package
+    image.swapNv();
 
     expect(identical(image.yPlane, sourceYPlane), isFalse);
     expect(identical(image.yPlane.bytes, sourceYPlane.bytes), isFalse);
@@ -318,7 +323,8 @@ void main() {
     expect(image.uPlane.rowStride, uvRowStride);
     expect(image.uPlane.bytes.sublist(0, 4), orderedEquals(<int>[2, 1, 4, 3]));
     expect(image.uPlane.bytes.sublist(uvRowStride, uvRowStride + 4), orderedEquals(<int>[6, 5, 8, 7]));
-    image.applyChromaSwap();
+    // ignore: deprecated_member_use_from_same_package
+    image.swapNv();
 
     expect(image.yPlane.bytes, orderedEquals(originalY));
     expect(image.uPlane.bytes.sublist(0, 4), orderedEquals(<int>[1, 2, 3, 4]));

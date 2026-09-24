@@ -12,11 +12,11 @@
 
 ## AUD-02 — Устранить сбой первой iOS Simulator сборки
 
-- Статус: TODO — локальный холодный прогон принят, но обязателен зелёный удалённый iOS CI на commit с порядком; приоритет: P1; исполнитель: GPT-5.6 Terra; независимая приёмка: GPT-6 Sol.
+- Статус: DONE — cold iOS simulator путь и CI-приёмка подтверждены; приоритет: P1; исполнитель: GPT-5.6 Terra; независимая приёмка: GPT-6 Sol.
 - Исходный факт: на двух независимых чистых Mac checkout первый `flutter drive` на iPhone 16 Pro Simulator (iOS 18.6) завершился `Framework 'Pods_Runner' not found` под Flutter 3.38.10 и 3.44.9 соответственно. Повторная сборка, затем runtime smoke прошли на обеих версиях; тест подтвердил реальную конверсию и эффект.
 - Готово, когда: причина холодного сбоя установлена; первая сборка и `integration_test/native_app_runtime_smoke_test.dart` проходят из нового checkout без ручного повтора; симуляторный smoke включён в CI. Не считать успешный повтор доказательством исправления холодного старта.
 - Сделано: обновлён `Podfile.lock` (`ae5eeff`); simulator route в CI перенесён перед unsigned device build. Повторная приёмка выполнена в новом clone `/private/tmp/yuv-ffi-aud02.ySD1fm` на `cf83a2a`: `flutter pub get → pod install → boot simulator → Pods-Runner → flutter build ios --simulator → native_app_runtime_smoke_test → flutter build ios --debug --no-codesign`. Runtime smoke напечатал `YUV-06 app-runtime smoke passed on ios` и `All tests passed`; device build завершился успешно. До push отсутствует только обязательное внешнее доказательство — зелёный iOS CI job на commit с этим порядком.
-- Доработка 2026-09-24: порядок simulator smoke перед device build подготовлен к commit. После push нужен зелёный iOS CI job с успешным simulator runtime smoke перед device build.
+- Приёмка 2026-09-24: iOS CI job run 36015478340 завершился успешно на commit `5a3e3ec`. Он прошёл `Install iOS pods → Boot simulator → Build Pods-Runner → Build example (ios simulator) → App-runtime smoke (ios simulator) → Build example (ios device)`. Это подтверждает cold путь и фактическое исполнение simulator smoke до device build.
 
 ## AUD-03 — Проверить полный iOS example на физическом устройстве
 
