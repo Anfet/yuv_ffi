@@ -1,5 +1,5 @@
 /// Mirrors of the native ABI v1 numeric constants
-/// (`src/yuv/abi/h/yuv_abi_v1.h`, `docs/api-abi-0.3-design.md` section 9).
+/// (`src/yuv/abi/h/yuv_abi_v1.h`, `doc/api-abi-0.4-design.md` section 9).
 ///
 /// This file is hand-kept in sync with the C header rather than generated,
 /// because ffigen does not emit `#define` numeric macros as Dart constants --
@@ -20,7 +20,7 @@ const int yuvFormatI420 = 1;
 ///
 /// This is the canonical ABI v1 storage; the project's legacy `nv21` label
 /// keeps its historical `(U, V)` byte order under this same numeric format
-/// id (Engineer decision Q1, `docs/api-abi-0.3-design.md` section 14) -- ABI
+/// id (Engineer decision Q1, `doc/api-abi-0.4-design.md` section 14) -- ABI
 /// v1 does not define a separate NV21 format value.
 const int yuvFormatNv12 = 2;
 

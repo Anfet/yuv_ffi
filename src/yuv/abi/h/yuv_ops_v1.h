@@ -5,7 +5,7 @@
 
 /*
  * The eleven exported processing entry points of ABI v1
- * (docs/api-abi-0.3-design.md section 11).
+ * (doc/api-abi-0.4-design.md section 11).
  *
  * Every operation takes its arguments in the order (source, destination,
  * options) and returns a YuvStatus. There are no variadic, nullable-options,
@@ -76,7 +76,7 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_rotate_v1(const YuvConstFrameV1 *source, YuvMuta
 
 /* Swaps U and V sample values without changing the NV12 format. NV12->NV12
  * only, and its effect region must be disabled: regional chroma swap is not a
- * public 0.3.0 operation. */
+ * public 0.4.0 operation. */
 FFI_PLUGIN_EXPORT YuvStatus yuv_chroma_swap_v1(const YuvConstFrameV1 *source, YuvMutableFrameV1 *destination,
     const YuvEffectOptionsV1 *options);
 

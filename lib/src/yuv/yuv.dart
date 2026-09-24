@@ -33,7 +33,7 @@ export 'shared/yuv_deprecated_api.dart';
 /// - Returns a new, independent image: [copy], [cropped], [rotated],
 ///   [toI420], [toNv12], [toBgra], and the static [YuvImage.decode].
 ///
-/// The `0.3.0` instance-method surface (`blackwhite()`, `gaussianBlur()`,
+/// The published `0.2.4` instance-method surface (`blackwhite()`, `gaussianBlur()`,
 /// `crop()`, `swapNv()`, `toYuvNv21()`, `save()`, `load()`, and the rest)
 /// still compiles: it lives in the deprecated `DeprecatedYuvImageApi`
 /// extension, forwarding to the members above (`doc/api-abi-0.4-design.md`
@@ -178,12 +178,12 @@ abstract interface class YuvImage {
   ///
   /// Never mutates an existing instance -- there is no receiver, only a fresh
   /// image built from the decoded payload (`doc/api-abi-0.4-design.md`
-  /// sections 4 and 8; the `0.3.0` mutating `load(stream)` moved to the
+  /// sections 4 and 8; the legacy mutating `load(stream)` moved to the
   /// deprecated `DeprecatedYuvImageApi.load` extension, which additionally
   /// requires a package-private atomic state-replacement adapter).
   ///
   /// Throws [FormatException] when [stream] holds a malformed or unsupported
-  /// (for example `0.3.0`-era version 1) payload.
+  /// (for example a `0.2.4` version-1) payload.
   static Future<YuvImage> decode(Stream<List<int>> stream) async {
     final draft = await YuvCodec.decodeStream(stream);
     return YuvImageImpl(
@@ -211,7 +211,7 @@ abstract interface class YuvImage {
   // geometry and revision are left exactly as they were. A defined no-op
   // (radius 0, an empty normalized crop/ROI, rotation 0, same-format
   // `applyFormat`) short-circuits before dispatch and does not advance the
-  // revision. The 0.3.0 instance methods that used to live directly above
+  // revision. The legacy instance methods that used to live directly above
   // this surface (`blackwhite()`, `crop()`, `swapNv()`, and the rest) were
   // retired into the deprecated `DeprecatedYuvImageApi` extension (REL-06),
   // which forwards every one of them to a member below.

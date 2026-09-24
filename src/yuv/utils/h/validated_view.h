@@ -9,7 +9,7 @@
  *
  * These views mirror the wire-compatible `YuvConstPlaneV1` / `YuvMutablePlaneV1`
  * / `YuvConstFrameV1` / `YuvMutableFrameV1` layouts described in
- * docs/api-abi-0.3-design.md sections 9-11, but this header intentionally does
+ * doc/api-abi-0.4-design.md sections 9-11, but this header intentionally does
  * NOT redeclare those exact ABI structs: YUV-36 owns the public, wire-stable
  * descriptor/status ABI (structSize/abiVersion negotiation, sizeof/offsetof
  * layout assertions, reserved-field zero checks). This header owns the
@@ -39,7 +39,7 @@ typedef struct {
     void *data;
 } YuvValidatedMutablePlaneIn;
 
-/* Format IDs, matching docs/api-abi-0.3-design.md section 9 exactly. */
+/* Format IDs, matching doc/api-abi-0.4-design.md section 9 exactly. */
 #define YUV_VIEW_FORMAT_I420     ((uint32_t)1)
 #define YUV_VIEW_FORMAT_NV12     ((uint32_t)2)
 #define YUV_VIEW_FORMAT_BGRA8888 ((uint32_t)3)
@@ -134,7 +134,7 @@ YuvViewStatus yuv_validated_view_plane_sample_layout(
  * `planes` must have exactly `yuv_validated_view_plane_count(format)` entries
  * populated (planes beyond that count are ignored on input and the
  * corresponding output slots are zero-filled). Validation performed, in
- * order, per docs/api-abi-0.3-design.md sections 9-11:
+ * order, per doc/api-abi-0.4-design.md sections 9-11:
  *
  *   1. `out` non-null, `format` is one of the section-9 IDs, else
  *      UNSUPPORTED_FORMAT / INVALID_ARGUMENT (out null).

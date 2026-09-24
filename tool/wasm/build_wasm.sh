@@ -109,7 +109,7 @@ else
 fi
 
 # The eleven `_yuv_*_v1` entries are the versioned status-returning symbols
-# from docs/api-abi-0.3-design.md section 11, and they are the module's entire
+# from doc/api-abi-0.4-design.md section 11, and they are the module's entire
 # processing surface: YUV-52 removed the legacy per-format sources
 # (yuv420_*/nv21_*/bgra8888_*/nvXX_to_nvYY), so there is nothing else left to
 # export. The Web backend calls these directly (lib/src/yuv/impl/web/), so a

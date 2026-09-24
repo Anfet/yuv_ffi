@@ -54,10 +54,10 @@ class YuvValidatedImageDraft {
 /// string `format` name v1 wrote: index and name both reflect declaration
 /// order and would silently renumber or rename a value already on disk.
 ///
-/// Version 1 (the frozen 0.3.0 wire shape: string `format`, no `formatId`) is
+/// Version 1 (the wire shape published in 0.2.4: string `format`, no `formatId`) is
 /// read only far enough to recognize and reject it -- there is no v1 writer
-/// and no automatic migration. An application holding 0.3.0-era serialized
-/// frames must first be read by a 0.3.0 app into an application-owned
+/// and no automatic migration. An application holding 0.2.4-era serialized
+/// frames must first be read by a 0.2.4 app into an application-owned
 /// intermediate representation (format, dimensions, plane strides, and bytes).
 /// After upgrading, recreate the image from that representation and encode v2.
 ///
@@ -137,10 +137,10 @@ abstract final class YuvCodec {
   /// format, wrong field types, an implausible plane count or length, geometry
   /// the planes cannot satisfy, or unexpected trailing bytes.
   ///
-  /// Only version 2 is accepted. A version-1 payload -- the frozen 0.3.0 wire
+  /// Only version 2 is accepted. A version-1 payload -- the published 0.2.4 wire
   /// shape, keyed by a string `format` name instead of a stable `formatId` --
   /// is rejected with [FormatException] rather than transparently migrated;
-  /// there is no v1 writer. A 0.3.0 app must first preserve the decoded frame
+  /// there is no v1 writer. A 0.2.4 app must first preserve the decoded frame
   /// in an application-owned intermediate representation; a 0.4.0 app then
   /// recreates it and writes v2.
   static Future<YuvValidatedImageDraft> decodeStream(Stream<List<int>> stream) async {

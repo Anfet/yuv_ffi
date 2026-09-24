@@ -8,7 +8,7 @@
  * trailing row, and padding moved around as if it were image data.
  *
  * Every case is checked against an independent oracle built here from the
- * visible-pixel mapping in docs/api-abi-0.3-design.md section 11, not against
+ * visible-pixel mapping in doc/api-abi-0.4-design.md section 11, not against
  * the implementation's own helpers -- the point is to disagree with the
  * kernel if the kernel is wrong.
  *

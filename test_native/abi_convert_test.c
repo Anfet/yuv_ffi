@@ -545,7 +545,7 @@ static void test_rejected_pairs(void) {
     YuvConstFrameV1 sourceFrame = as_source(&source);
     YuvMutableFrameV1 destinationFrame = as_destination(&destination);
     YuvConvertOptionsV1 options = convert_options();
-    /* RGBA is a source-only format in 0.3.0. */
+    /* RGBA is a source-only format in 0.4.0. */
     expect_status("RGBA as a destination is unsupported",
         yuv_convert_v1(&sourceFrame, &destinationFrame, &options), YUV_STATUS_UNSUPPORTED_FORMAT);
 }

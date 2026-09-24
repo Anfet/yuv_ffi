@@ -29,7 +29,7 @@ Future<void> main() async {
 
   // Step 3: Compare
   //
-  // ABI v1 (YUV-36c, docs/api-abi-0.3-design.md sections 9-11): 11
+  // ABI v1 (YUV-36c, doc/api-abi-0.4-design.md sections 9-11): 11
   // `yuv_*_v1` functions have been called from the typed IO runner
   // (`yuv_abi_v1_runner.dart`, YUV-36d) since that landed, so they are
   // detected as regular used symbols -- no function allowlist is needed any

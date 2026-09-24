@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 
 /// The eleven ABI v1 processing symbols from
-/// `doc/api-abi-0.3-design.md` section 11 / `src/yuv/abi/h/yuv_ops_v1.h`.
+/// `doc/api-abi-0.4-design.md` section 11 / `src/yuv/abi/h/yuv_ops_v1.h`.
 ///
 /// This is the hand-kept reference list the gate judges every source against,
 /// including the shared Dart manifest in

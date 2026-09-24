@@ -1,5 +1,5 @@
 /// The `YuvStatus` values of the versioned native ABI v1
-/// (`docs/api-abi-0.3-design.md` section 9) and their Dart exception mapping
+/// (`doc/api-abi-0.4-design.md` section 9) and their Dart exception mapping
 /// (`doc/api-abi-0.4-design.md` section 2, contract 6, and section 7's
 /// [YuvNativeException] definition).
 ///

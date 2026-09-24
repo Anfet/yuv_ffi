@@ -278,7 +278,7 @@ void main() {
     });
 
     test('a genuine v1-shaped payload (string format, no formatId) is rejected', () async {
-      // What 0.3.0 actually wrote: version 1, a string `format` name, no
+      // What published 0.2.4 wrote: version 1, a string `format` name, no
       // `formatId`. This must be rejected outright -- no auto-detection, no
       // transparent migration, no v1 reader path.
       final header = utf8.encode(jsonEncode(<String, Object>{'version': 1, 'format': 'i420', 'width': 8, 'height': 8}));
@@ -380,11 +380,11 @@ void main() {
   });
 
   group('application-owned v1 migration', () {
-    test('a genuine historical v1 fixture is rejected by the 0.4 decoder', () async {
-      await expectLater(YuvImage.decode(asStream(historicalV1I4202x2)), throwsFormatException);
+    test('a published 0.2.4 v1 fixture is rejected by the 0.4 decoder', () async {
+      await expectLater(YuvImage.decode(asStream(published024V1I4202x2)), throwsFormatException);
     });
 
-    test('restores the intermediate file exported through 0.3.0 load() and writes v2', () async {
+    test('restores the intermediate file exported through 0.2.4 load() and writes v2', () async {
       final intermediate = await _readApplicationMigrationRecord();
 
       expect(intermediate.format, YuvPixelFormat.i420);
@@ -676,7 +676,7 @@ void main() {
   });
 }
 
-/// Reads the application's durable record exported by public 0.3.0 load().
+/// Reads the application's durable record exported by public 0.2.4 load().
 Future<_V1MigrationRecord> _readApplicationMigrationRecord() async {
   final json = jsonDecode(await File('test/fixtures/codec_v1_i420_2x2_intermediate.json').readAsString()) as Map<String, dynamic>;
   if (json['migrationSchema'] != 1) {

@@ -9,7 +9,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 /// Verifies YUV-50: the public IO operations run on ABI v1 and keep the
-/// transactional contract of `doc/api-abi-0.3-design.md` sections 11 and 13.
+/// transactional contract of `doc/api-abi-0.4-design.md` sections 11 and 13.
 ///
 /// The reference matrix already pins what each operation *computes*; what this
 /// suite pins is what the public Dart object does around the native call --

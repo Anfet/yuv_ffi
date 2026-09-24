@@ -2,7 +2,7 @@
  * ABI v1 layout test (YUV-36a).
  *
  * The header src/yuv/abi/h/yuv_abi_v1.h already fails to COMPILE on a target
- * whose layout differs from docs/api-abi-0.3-design.md sections 9 and 10. This
+ * whose layout differs from doc/api-abi-0.4-design.md sections 9 and 10. This
  * test adds the other half of the same guarantee: it prints the layout the
  * toolchain actually produced, so a reviewer on a new target (native32,
  * native64, wasm32) can read the real numbers instead of trusting that the

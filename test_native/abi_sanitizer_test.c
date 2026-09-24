@@ -1016,7 +1016,7 @@ static void test_allocation_failure_injection(void) {
         /* The proof is byte-for-byte: every destination byte, including
          * the padding, must still read as the canary this case pre-filled,
          * since blur's allocation happens before the first destination
-         * write (docs/api-abi-0.3-design.md section 13). */
+         * write (doc/api-abi-0.4-design.md section 13). */
         {
             int untouched = 1;
             for (size_t i = 0; i < (size_t)destination.length[0]; i++) {

@@ -5,10 +5,10 @@
 #include <stddef.h>
 
 /*
- * Public wire-stable native ABI v1 for yuv_ffi 0.3.0.
+ * Public wire-stable native ABI v1 for yuv_ffi 0.4.0.
  *
  * This header is the single source of truth for the descriptor, options, and
- * status types described in docs/api-abi-0.3-design.md sections 9 and 10.
+ * status types described in doc/api-abi-0.4-design.md sections 9 and 10.
  * Values and member order are copied from that document literally; this file
  * does not invent an alternative contract.
  *

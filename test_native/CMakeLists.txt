@@ -106,7 +106,7 @@ add_test(
 # Validated plane/frame view tests (YUV-33c)
 # Tests the internal validated const/mutable plane and frame views: format IDs,
 # plane counts, sample sizes, independent row/pixel strides, minimum spans, and
-# destination geometry, per docs/api-abi-0.3-design.md sections 9-11. Covers
+# destination geometry, per doc/api-abi-0.4-design.md sections 9-11. Covers
 # null pointers, zero/negative geometry, undersized strides/spans, wrong plane
 # count/sample size, incompatible destination geometry, and the allowed
 # padded/custom-pixel-stride and odd-geometry cases for I420, NV12, BGRA8888,
@@ -126,7 +126,7 @@ add_test(
 
 # ABI v1 layout test (YUV-36a)
 # Verifies that the public wire-stable descriptor/options layout matches
-# docs/api-abi-0.3-design.md sections 9-10 on this toolchain, and prints the
+# doc/api-abi-0.4-design.md sections 9-10 on this toolchain, and prints the
 # actual sizeof/offsetof values so a reviewer on a new target (native32,
 # native64, wasm32) can read them rather than infer them. The header itself
 # also fails to compile on a mismatch; this target proves the same numbers at
@@ -174,7 +174,7 @@ add_test(
 
 # ABI v1 geometric transform tests (YUV-31)
 # Verifies crop, flip, and rotate produce the visible-pixel mapping of
-# docs/api-abi-0.3-design.md section 11 against an oracle built independently
+# doc/api-abi-0.4-design.md section 11 against an oracle built independently
 # of the implementation, across I420, NV12, and BGRA8888, at even, odd, and
 # degenerate (1x1, 1xN, Nx1) geometry. Every fixture carries padded row
 # strides and canary-filled gaps, so a kernel that copies a row stride or a

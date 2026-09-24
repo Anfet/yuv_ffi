@@ -33,7 +33,7 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_chroma_swap_v1(const YuvConstFrameV1 *source, Yu
         return pairStatus;
     }
 
-    /* Regional chroma swap is not a public 0.3.0 operation, so the region
+    /* Regional chroma swap is not a public 0.4.0 operation, so the region
      * must be disabled rather than merely ignored: silently dropping a
      * region the caller set would swap the whole frame they meant to
      * protect. */

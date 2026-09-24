@@ -12,7 +12,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 
 /// Typed IO runner for the ABI v1 `yuv_*_v1` symbols
-/// (`docs/api-abi-0.3-design.md` sections 9, 11, 13).
+/// (`doc/api-abi-0.4-design.md` sections 9, 11, 13).
 ///
 /// This is the internal transport path YUV-36d owns: it stages source and
 /// destination native descriptors, invokes exactly one ABI v1 symbol, maps

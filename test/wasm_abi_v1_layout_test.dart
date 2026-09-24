@@ -13,7 +13,7 @@ import 'package:yuv_ffi/src/yuv/impl/web/abi/yuv_abi_v1_wasm_layout.dart';
 ///
 /// Two independent checks are made for every struct:
 ///
-///  1. against the literal offset tables of `doc/api-abi-0.3-design.md`
+///  1. against the literal offset tables of `doc/api-abi-0.4-design.md`
 ///     sections 9 and 10, spelled out here rather than imported, so this file
 ///     is a second source rather than a restatement of the one being tested;
 ///  2. against `src/yuv/abi/h/yuv_abi_v1.h`'s own `YUV_ABI_STATIC_ASSERT`

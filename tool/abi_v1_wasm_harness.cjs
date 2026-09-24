@@ -53,7 +53,7 @@ const FORMAT = { I420: 1, NV12: 2, BGRA: 3, RGBA: 4 };
 const STATUS_OK = 0;
 const CANARY = 0xc3;
 
-/* Layout from docs/api-abi-0.3-design.md section 9, which fixes the same
+/* Layout from doc/api-abi-0.4-design.md section 9, which fixes the same
  * numbers for native64, native32 and wasm32: the plane descriptor is 32 bytes
  * (length 0, rowStride 8, pixelStride 16, sampleBytes 20, data 24, tail
  * padding to 32), the frame's scalar prefix is 32, its three planes sit at

@@ -33,7 +33,7 @@ class YuvAbiV1PlaneInput {
 /// plane per the format's plane count (1 for BGRA/RGBA, 2 for NV12, 3 for
 /// I420 -- see `yuv_validated_view_plane_count` in
 /// `src/yuv/utils/h/validated_view.h`, mirrored by the format matrix in
-/// `docs/api-abi-0.3-design.md` section 11).
+/// `doc/api-abi-0.4-design.md` section 11).
 ///
 /// `colorMatrix`/`colorRange` are not fields here: they are fixed by
 /// [format] under ABI v1 (BT.601/limited for I420/NV12, none/none for

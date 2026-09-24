@@ -17,7 +17,7 @@
 Camera input on target devices is often delivered in **UV** interleaving (closer to `NV12` than
 classic `NV21` VU). This project's `nv12` format keeps that observed `(U, V)` byte order rather
 than the literal NV21 `(V, U)` order; do not blindly swap U/V on these inputs, or you get incorrect
-colors. The legacy `nv21` name from `0.3.0` is a deprecated alias for the same storage: a `nv21`-built
+colors. The legacy `nv21` name from `0.2.4` is a deprecated alias for the same storage: a `nv21`-built
 image reports `format == YuvPixelFormat.nv12`.
 
 ## Installation
@@ -91,7 +91,7 @@ instead of assigning planes one at a time — every previously obtained `planes`
 
 Exports from `package:yuv_ffi/yuv_ffi.dart`:
 
-- `YuvImage` (plus its deprecated `0.3.0` extension, `DeprecatedYuvImageApi`)
+- `YuvImage` (plus the deprecated legacy extension, `DeprecatedYuvImageApi`)
 - `YuvPlane`
 - `YuvPixelFormat` (`i420`, `nv12`, `bgra8888`) and the deprecated `YuvFileFormat`
 - `YuvImageRotation`
@@ -108,14 +108,14 @@ Main constructors:
 - `YuvImage.allocate(format, width, height)` — blank, tightly packed image
 - `YuvImage.fromRgbaBytes(bytes, width:, height:, format:)` — convert RGBA8888 input into a new image
 
-## Migrating from `0.3.0`
+## Migrating from `0.2.4`
 
-The `0.3.0` API still compiles: every old instance method now lives in a deprecated
+The published `0.2.4` API still compiles: its old instance methods now live in a deprecated
 `DeprecatedYuvImageApi` extension that forwards to its `0.4.0` replacement, so existing code keeps
 working (with deprecation warnings) while you migrate at your own pace. New code should use the
 right-hand side below.
 
-| `0.3.0` (deprecated) | `0.4.0` |
+| `0.2.4` (deprecated) | `0.4.0` |
 | --- | --- |
 | `YuvFfi.ensureInitialized()` | `YuvFfi.initialize()` — now returns `YuvCapabilities` |
 | `image.fromRgba8888(bytes)` | `image.applyRgbaBytes(bytes)` |
@@ -133,18 +133,19 @@ right-hand side below.
 | `YuvImage.nv21(...)`, `YuvImage(YuvFileFormat.x, ...)` | `YuvImage.nv12(...)`, `YuvImage.i420(...)` / `.bgra(...)` / `.allocate(...)` |
 | `image.format` returning `YuvFileFormat` | `image.format` returning `YuvPixelFormat` (a legacy `nv21`-built image now reports `nv12`) |
 
-Two behavioral notes when migrating:
+Migration details:
 
 - The default I420 chroma pixel stride changed from `2` to `1`. Code that relied on the old gapped
   default must now pass `uvPixelStride: 2` explicitly to `YuvImage.i420(...)`.
 - `swapNv()`'s old two-step "convert then swap" behavior for a non-NV source is not a single
   `0.4.0` method: call `applyFormat(YuvPixelFormat.nv12)` then `applyChromaSwap()` explicitly.
-- Frames serialized with `0.3.0` (`save`/`load`, wire format v1) are not readable by `0.4.0`'s
-  `decode`/`load`. Migrate them in two releases: while the app still uses `0.3.0`, read each v1
+- Frames serialized with `0.2.4` (`save`/`load`, wire format v1) are not readable by `0.4.0`'s
+  `decode`/`load`. Migrate them in two app versions: while the app still uses `0.2.4`, read each v1
   frame and persist its format, width, height, per-plane row/pixel strides, and raw plane bytes in
   an application-owned intermediate representation. After upgrading to `0.4.0`, recreate the image
   from that representation with the matching named factory and `YuvPlane` values, then write v2 via
-  `encodeTo`. A `0.3.0` re-save is still v1; `0.4.0` rejects v1 on read with `FormatException`.
+  `encodeTo`. A `0.2.4` re-save is still v1 (and may include trailing zero padding); do not transfer
+  the raw v1 file as the intermediate record. `0.4.0` rejects v1 on read with `FormatException`.
 
 Adding the full `0.4.0` `apply*`/`to*` surface to the `YuvImage` interface is a breaking change for
 any external `implements YuvImage` class: such a class must implement every new required member

@@ -128,4 +128,4 @@ Uint8List _concatPlanesDirectly(YuvImage image) {
 }
 
 // ignore_for_file: deprecated_member_use
-// This suite specifies the retained 0.3.0 getBytes() compatibility contract.
+// This suite specifies the retained legacy getBytes() compatibility contract.

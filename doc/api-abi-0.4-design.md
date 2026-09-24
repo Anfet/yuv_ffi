@@ -1,14 +1,16 @@
 # yuv_ffi 0.4.0: public Dart API and native ABI design
 
-Status: 0.4.0 target. The native ABI v1 and its IO/Web transport shipped in
-0.3.0; the public Dart API and codec changes below are pending. Owner decisions
-on live planes, codec v1 removal, public API and initialization were confirmed
-on 2026-09-23. The previous design review was on 2026-09-14.
+Status: implemented 0.4.0 release contract. The native ABI v1 and its IO/Web
+transport were developed on the unpublished 0.3.0 Git branch; 0.4.0 is the
+next public release after 0.2.4 and includes them alongside the public Dart API
+and codec changes below. Owner decisions on live planes, codec v1 removal,
+public API and initialization were confirmed on 2026-09-23. The previous
+design review was on 2026-09-14.
 
 ## 1. Outcome
 
-Version `0.4.0` builds on the 0.3.0 native ABI and changes the public Dart
-surface with:
+Version `0.4.0` builds on the unpublished 0.3.0 native ABI work and changes
+the public Dart surface with:
 
 - explicit `apply*` in-place operations that return the same object;
 - `to*` conversions that always return an independent object;
@@ -16,8 +18,8 @@ surface with:
 - a truthful `nv12` name while preserving legacy `nv21 == UV` bytes through
   deprecated compatibility entry points;
 - explicit backend capabilities and typed failures;
-- the format-independent, status-returning native symbols shipped in 0.3.0;
-- the transactional Dart lifecycle shipped in 0.3.0:
+- the format-independent, status-returning native symbols developed for 0.3.0;
+- the transactional Dart lifecycle developed for 0.3.0:
   `marshal → invoke → status → commit → dispose`.
 
 Web remains a partial WASM backend. Shared API/state does not imply feature
@@ -95,7 +97,7 @@ registration and are excluded from `lib/yuv_ffi.dart`; application code uses
 
 ## 4. `YuvImage` member migration
 
-| 0.3.0 member | 0.4.0 member | Mutation/allocation | Failure/backend |
+| Published 0.2.4 member | 0.4.0 member | Mutation/allocation | Failure/backend |
 |---|---|---|---|
 | `format` | `format: YuvPixelFormat` | Read-only | Always available |
 | `width` | `width` | Read-only | Always available |
@@ -307,7 +309,7 @@ compatibility only.
 
 ### Codec v1 breaking change
 
-The existing v1 byte stream is frozen exactly as implemented today:
+The v1 payload body used by 0.2.4 and the unpublished 0.3.0 baseline contains:
 
 1. `uint32 little-endian headerLength`;
 2. `headerLength` UTF-8 bytes containing a JSON object with integer `version: 1`,
@@ -316,17 +318,20 @@ The existing v1 byte stream is frozen exactly as implemented today:
 4. for each plane in format order: `uint32 LE height`, `uint32 LE rowStride`,
    `uint32 LE pixelStride`, `uint32 LE byteLength`, then exactly `byteLength`
    bytes;
-5. immediate EOF; trailing bytes are invalid.
+5. the unpublished 0.3.0 reader required immediate EOF; the published 0.2.4
+   writer may append zero padding, which its reader ignored.
 
-This layout documents existing 0.3.0 data only. The 0.4.0 decoder rejects
-`version: 1` with `FormatException`; there is no v1 writer or automatic
-migration. Applications retaining serialized 0.3.0 frames need a two-release
-transfer: before the upgrade, the 0.3.0 app reads each v1 frame and persists
+This layout documents v1 data written by published 0.2.4 and the unpublished
+0.3.0 Git baseline. The 0.4.0 decoder rejects `version: 1` with
+`FormatException`; there is no v1 writer or automatic migration. Applications
+retaining serialized 0.2.4 frames need a two-app-version
+transfer: before the upgrade, the 0.2.4 app reads each v1 frame and persists
 its format, dimensions, plane row/pixel strides, and bytes in an
 application-owned intermediate representation. After the upgrade, the 0.4.0
 app recreates the image from that representation and writes v2. Re-saving with
-0.3.0 would still produce v1. Legacy `nv21` UV samples remain unchanged when
-restored by the application.
+0.2.4 would still produce v1, potentially with trailing zero padding; raw v1
+bytes are not the intermediate representation. Legacy `nv21` UV samples remain
+unchanged when restored by the application.
 
 ### Codec v2 writer and reader
 
@@ -961,14 +966,15 @@ Rejecting valid odd crop origins is not part of the target API.
 
 ## 15. Implementation sequence
 
-Native ABI tasks YUV-33/36/26/31/32/22/23/34 formed the 0.3.0 baseline. The
-remaining 0.4.0 work is decomposed in `todo.md`: format identity and codec;
-public factories and plane ownership; mutation and pure operations; deprecated
-compatibility; initialization, capabilities and errors; documentation; then
-platform verification. No new native symbol or C change is implied by this
-design revision. Any needed native C change requires its own plan and approval.
+Native ABI tasks YUV-33/36/26/31/32/22/23/34 formed the unpublished 0.3.0
+development baseline. The 0.4.0 implementation sequence in `todo.md` covered
+format identity and codec; public factories and plane ownership; mutation and
+pure operations; deprecated compatibility; initialization, capabilities and
+errors; documentation; then platform verification. No new native symbol or C
+change is implied by this design revision. Any needed native C change requires
+its own plan and approval.
 
-## 16. Planned breaking changes for 0.4.0
+## 16. Breaking changes in 0.4.0
 
 - The public storage format becomes `YuvPixelFormat` with explicit `nv12` and
   stable wire IDs. Legacy `nv21` keeps its historical UV bytes and is deprecated.
@@ -978,8 +984,8 @@ design revision. Any needed native C change requires its own plan and approval.
 - The default I420 chroma pixel stride becomes 1. Code depending on the old
   gapped default must specify its stride explicitly.
 - Codec output changes from v1 to v2 and the decoder accepts v2 only. Existing
-  serialized v1 frames require a two-release migration: extract format,
-  dimensions, plane strides, and bytes while running 0.3.0; reconstruct and
+  serialized v1 frames require a two-app-version migration: extract format,
+  dimensions, plane strides, and bytes while running published 0.2.4; reconstruct and
   encode v2 only after upgrading.
 - Image plane getters remain live and mutable. Clients that edit those buffers
   must call `markDirty()` so revision-keyed caches refresh; replacement
@@ -987,8 +993,8 @@ design revision. Any needed native C change requires its own plan and approval.
 - `YuvFfi.initialize()` returns capabilities, and unsupported operations report
   typed failures according to sections 2 and 7. Web remains a partial backend.
 
-These are target contracts. The release CHANGELOG must be checked against the
-implemented API before publishing 0.4.0.
+These are the implemented release contracts; the release CHANGELOG documents
+their user-facing impact.
 
 ## 17. Required design verification
 

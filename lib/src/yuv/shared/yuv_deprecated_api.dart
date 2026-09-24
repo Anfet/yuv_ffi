@@ -9,7 +9,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
-/// The `0.3.0` instance-method surface, forwarded to its `0.4.0` replacement
+/// The published `0.2.4` instance-method surface, forwarded to its `0.4.0` replacement
 /// (`doc/api-abi-0.4-design.md` sections 4 and 8).
 ///
 /// An extension rather than interface members, so adding it does not break an
@@ -27,8 +27,8 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// [YuvLegacyDispatchAdapter] rather than its same-shaped `apply*`
 /// replacement. Forwarding straight to `apply*` would be simpler, but every
 /// `apply*` calls `yuvRequireCapability` first (REL-04) -- a precondition
-/// `0.3.0` never had. A caller that invoked one of these methods before
-/// `YuvFfi.initialize()` in `0.3.0` got argument validation or a native
+/// `0.2.4` never had. A caller that invoked one of these methods before
+/// initialization in `0.2.4` got argument validation or a native
 /// dispatch, never `UnsupportedError`; several pre-REL-06 tests
 /// (`bgra_mean_blur_contract_test.dart`, `conversions_test.dart`,
 /// `io_abi_v1_public_contract_test.dart`) pin that down. See
@@ -107,7 +107,7 @@ extension DeprecatedYuvImageApi on YuvImage {
   ///
   /// This is a two-step legacy path, not a simple alias for
   /// [YuvImage.applyChromaSwap] (`doc/api-abi-0.4-design.md` section 14, Q1):
-  /// it preserves `0.3.0`'s historical output bytes and legacy `nv21` UV
+  /// it preserves the historical output bytes and legacy `nv21` UV
   /// interpretation without claiming a truthful NV21 format exists.
   ///
   /// Unlike every other member of this extension, this one has no

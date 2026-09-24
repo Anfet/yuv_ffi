@@ -250,4 +250,4 @@ class _CollectingSink implements Sink<List<int>> {
 }
 
 // ignore_for_file: deprecated_member_use
-// This suite specifies the retained 0.3.0 save/load compatibility contract.
+// This suite specifies the retained legacy save/load compatibility contract.

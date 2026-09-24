@@ -208,7 +208,7 @@ abstract final class YuvGeometry {
   /// Largest `radius` a box/mean/gaussian blur accepts.
   ///
   /// Matches the `1..256` bound documented for the native ABI in
-  /// `doc/api-abi-0.3-design.md`. Native blur builds a SAT-style summed-area
+  /// `doc/api-abi-0.4-design.md`. Native blur builds a SAT-style summed-area
   /// table and computes plane-wide row/column pad weights from `radius`; an
   /// unvalidated negative or absurdly large radius produces inverted SAT
   /// bounds and an out-of-bounds native read/write rather than a clean

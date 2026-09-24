@@ -1,5 +1,5 @@
 /// The wasm32 byte offsets and sizes of every ABI v1 struct
-/// (`src/yuv/abi/h/yuv_abi_v1.h`, `doc/api-abi-0.3-design.md` sections 9 and
+/// (`src/yuv/abi/h/yuv_abi_v1.h`, `doc/api-abi-0.4-design.md` sections 9 and
 /// 10), as the Web runner stages them into WASM linear memory (YUV-51).
 ///
 /// The IO side never needs these: `dart:ffi` derives every offset from the

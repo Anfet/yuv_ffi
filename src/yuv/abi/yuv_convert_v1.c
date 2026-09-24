@@ -6,7 +6,7 @@
  * Conversion across the RGBA/BGRA/I420/NV12 matrix at identical geometry.
  *
  * RGBA8888 appears only on the source side: it is an accepted input encoding,
- * but 0.3.0 does not publish it as an output. A same-format pair is legal and
+ * but 0.4.0 does not publish it as an output. A same-format pair is legal and
  * means a stride-aware deep copy, which is why the source/destination overlap
  * check in the shared prologue matters most here.
  */

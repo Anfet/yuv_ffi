@@ -1,15 +1,15 @@
 ## 0.4.0
 
-Implemented against [the 0.4.0 design](doc/api-abi-0.4-design.md). See the README's
-"Migrating from `0.3.0`" section for a full method-by-method mapping.
+First published release after `0.2.4`. Implemented against [the 0.4.0 design](doc/api-abi-0.4-design.md).
+See the README's "Migrating from `0.2.4`" section for a full method-by-method mapping.
 
 ### Breaking changes
 
 - Replaced the public storage format with `YuvPixelFormat` (`i420`, `nv12`, `bgra8888` with stable wire IDs). `YuvImage.format` now returns `YuvPixelFormat`; the old `YuvFileFormat` enum is deprecated and kept only for the `nv21` legacy entry points. A legacy `nv21`-built image reports `format == YuvPixelFormat.nv12`.
-- Added the full `apply*` (in-place, capability-gated, returns `identical(this)`) and `to*` (independent result) method surface to the `YuvImage` interface. Every 0.3.0 instance method still compiles: it moved into the deprecated `DeprecatedYuvImageApi` extension and forwards to its 0.4.0 replacement, preserving 0.3.0's exact dispatch semantics (no `YuvFfi.initialize()` requirement) and byte behavior, including the historical `nv21` UV order and `swapNv()`'s in-place two-step convert-then-swap. Any external `implements YuvImage` class must add the new required interface members to keep compiling.
+- Added the full `apply*` (in-place, capability-gated, returns `identical(this)`) and `to*` (independent result) method surface to the `YuvImage` interface. Legacy `0.2.4` instance methods remain available through the deprecated `DeprecatedYuvImageApi` extension, preserving their dispatch semantics (no `YuvFfi.initialize()` requirement) and byte behavior, including the historical `nv21` UV order and `swapNv()`'s in-place two-step convert-then-swap. Any external `implements YuvImage` class must add the new required interface members to keep compiling.
 - Changed the default I420 chroma pixel stride from `2` to `1`. Code that relied on the old gapped default must now pass `uvPixelStride: 2` explicitly to `YuvImage.i420(...)`.
 - Added `encodeTo(sink)` and the static `YuvImage.decode(stream)`. `save`/`load` moved to the deprecated extension: `save` forwards to `encodeTo` with identical bytes; `load` mutates in place through a package-private atomic state-replacement path and throws `UnsupportedError` without mutating on a foreign `implements YuvImage` (the same fallback shape as `swapNv()`).
-- Codec now writes and reads only wire format v2 (`formatId` from `YuvPixelFormat.wireId` instead of a string `format` field). A v1 payload (the frozen `0.3.0` wire shape) is rejected with `FormatException` on read; there is no v1 writer and no automatic migration. To retain old frames, a `0.3.0` app must first persist format, dimensions, plane strides, and bytes in its own intermediate representation; after upgrading, recreate the image and write v2 with `encodeTo`.
+- Codec now writes and reads only wire format v2 (`formatId` from `YuvPixelFormat.wireId` instead of a string `format` field). A v1 payload written by published `0.2.4` is rejected with `FormatException` on read; there is no v1 writer and no automatic migration. To retain old frames, a `0.2.4` app must first load each frame and persist format, dimensions, plane strides, and bytes in its own intermediate representation; after upgrading, recreate the image and write v2 with `encodeTo`. Do not use a v1 re-save as the intermediate record: `0.2.4` may append zero padding to its output.
 - `YuvFfi.ensureInitialized()` is deprecated in favor of `YuvFfi.initialize()`, which now returns a `YuvCapabilities` snapshot instead of `void`. A negative `capabilities.supports(...)` result, or calling an unsupported operation directly, throws `UnsupportedError` before any allocation, native dispatch, or revision change. Each isolate still initializes independently.
 - Image plane getters (`yPlane`, `uPlane`, `vPlane`, `planes`) expose live, directly writable storage. A direct write through them (or `setPixel`/`assignFrom`) is not detected automatically and needs an explicit `markDirty()` call afterwards to refresh revision-keyed caches such as `YuvImageWidget`. `apply*` and `applyPlanes(...)` already advance the revision themselves. `applyPlanes(...)` atomically validates, copies, and replaces the full plane set in one step; every previously obtained plane reference is stale after it succeeds.
 - Added typed error handling: `YuvNativeException` now carries a `YuvOperation` and message instead of a bare status/string pair; ABI status codes and loader failures are consistently `ArgumentError`, `UnsupportedError`, or `YuvNativeException` per the design's contract, and a failed operation always leaves bytes, format, geometry and revision unchanged.
@@ -20,19 +20,22 @@ Implemented against [the 0.4.0 design](doc/api-abi-0.4-design.md). See the READM
 
 - Web remains a partial WASM backend: a successful `YuvFfi.initialize()` means the WASM runtime loaded, not that every operation available on native is supported. Query `capabilities.supports(...)` rather than assuming parity.
 - `applyChromaSwap()` is valid only on an NV12-formatted image on every backend; convert first with `applyFormat(YuvPixelFormat.nv12)` if the source isn't already NV.
-- The example app's demo code (`main.dart`, `ext.dart`, `widgets/impl/*`) now targets `apply*`/`to*`/`YuvFfi.initialize()`. Its `integration_test/*` suite intentionally still exercises the deprecated `0.3.0` surface where that is the test's actual subject (back-compat/legacy-dispatch contracts).
+- The example app's demo code (`main.dart`, `ext.dart`, `widgets/impl/*`) now targets `apply*`/`to*`/`YuvFfi.initialize()`. Its `integration_test/*` suite intentionally still exercises the deprecated legacy surface where that is the test's actual subject (back-compat/legacy-dispatch contracts).
 
-## 0.3.0
+### Native ABI and platform work included in 0.4.0
 
-### Breaking changes
+This work was developed on the unpublished `release/0.3.0` Git branch. It is part of
+the published `0.2.4` → `0.4.0` upgrade, not a separate pub.dev release.
+
+#### Breaking changes
 
 - Moved frame revision off the public interface; implementations that cannot report mutations no longer participate in revision-keyed caching.
 - Removed the `getBytes` alignment tail and the orphan NV21 RGB declaration from the native surface.
-- Removed the legacy processing ABI. The published native library and the WASM module export the eleven `yuv_*_v1` processing symbols and nothing else: the 40 per-format `yuv420_*`, `nv21_*` and `bgra8888_*` entry points, `nvXX_to_nvYY` and the `YUVDef` descriptor are gone from the headers, the generated FFI bindings and the binaries. A consumer that called those symbols directly through its own FFI lookup must move to the versioned ABI; the public Dart API, including the deprecated `nv21` name and its established `(U,V)` sample order, is unchanged.
+- Removed the legacy processing ABI. The published native library and the WASM module export the eleven `yuv_*_v1` processing symbols and nothing else: the 40 per-format `yuv420_*`, `nv21_*` and `bgra8888_*` entry points, `nvXX_to_nvYY` and the `YUVDef` descriptor are gone from the headers, the generated FFI bindings and the binaries. A consumer that called those symbols directly through its own FFI lookup must move to the versioned ABI; the legacy `nv21` entry points retain their established `(U,V)` sample order.
 - Raised the minimum supported SDK to Dart `^3.10.0` / Flutter `>=3.38.0`.
 - Excluded the 32-bit `x86` Android ABI from the plugin's native build (`armeabi-v7a`, `arm64-v8a`, `x86_64` only). Flutter has shipped no `x86` native binaries since 3.35 and Google Play never accepted `x86` as a supported ABI for Flutter apps; it only ever mattered for legacy 32-bit emulator images, which the ABI v1 struct layout (a fixed 64-bit `sizeof(void*)` layout) cannot support. A consuming app that still explicitly requests `x86` (e.g. via its own `abiFilters` or an old x86 emulator image) will no longer build against this plugin.
 
-### Changes
+#### Changes
 
 - Routed every public native-backend and Web-backend operation through the versioned `yuv_*_v1` ABI. The per-format `yuv420_*`, `nv21_*` and `bgra8888_*` entry points, and `nvXX_to_nvYY`, are no longer called from Dart on either backend.
 - Moved the Web backend onto the same ABI v1 descriptors the native backend uses: it stages `YuvConstFrameV1`/`YuvMutableFrameV1` and the versioned options structs in WASM linear memory at the wasm32 layout the C header declares, and maps `YuvStatus` through the shared status contract. Web and native now share one transport, one format mapping and one padding-preservation rule, so an operation behaves the same on both. Web remains a partial WASM backend.
@@ -56,15 +59,9 @@ Implemented against [the 0.4.0 design](doc/api-abi-0.4-design.md). See the READM
 - Narrowed `ffigen` to the ABI the package actually uses and switched the native build to an explicit source list.
 - Enabled optimization for native builds and SIMD for the WASM artifacts, and rebuilt those artifacts from the fixed C sources.
 - Added a Web reference conversion matrix and an independent `test_pattern_512` reference, and made the reference matrix skip honestly when no native library is present.
-- Documented the native C ABI and proposed public Dart API contract. The pending Dart API portion was carried forward to [the 0.4.0 design](doc/api-abi-0.4-design.md).
+- Documented the native C ABI and public Dart API contract in [the 0.4.0 design](doc/api-abi-0.4-design.md).
 - Upgraded `ffigen` to `^21.0.0`, `ffi` to `^2.2.0`, `build_runner` to `^2.15.1`, `flutter_lints` to `^6.0.0` and `image` (dev) to `^4.10.1`, and regenerated the native bindings; the output is formatting-only (ffigen's newer, more compact function-signature style), with the same symbols and struct layout confirmed by `tool/verify_bindings_audit.dart`.
 - Added a dedicated Android CI build job that exercises the plugin's `externalNativeBuild`/CMake wiring through a real `flutter build apk` (YUV-24).
-
-### Notes
-
-- Web remains a partial WASM backend and is not at feature parity with the native backends.
-- The `nv21` API label keeps its historical `(U,V)` byte order; 0.3.0 did not rename or deprecate it in code.
-- The versioned status-returning native ABI is implemented. The proposed public Dart API and codec v2 were deferred to 0.4.0.
 
 ## 0.2.4
 
