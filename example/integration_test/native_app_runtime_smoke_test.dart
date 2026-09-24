@@ -32,7 +32,7 @@ void main() {
     expect(kIsWeb, isFalse, reason: 'this gate covers native packaging; the Web backend is proven by the WASM suites');
 
     // Fails loudly rather than skipping: see the library doc above.
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     const width = 4;
     const height = 4;
@@ -53,15 +53,15 @@ void main() {
     // A conversion and an in-place effect exercise two different symbol groups:
     // a pod target that forwarded the conversion sources but not the effect
     // ones would pass on the conversion alone.
-    final image = YuvImage.i420(width, height)..fromRgba8888(rgba);
-    final bgra = image.toBgra8888();
+    final image = YuvImage.i420(width, height)..applyRgbaBytes(rgba);
+    final bgra = image.toBgraBytes();
 
-    expect(bgra, hasLength(width * height * 4), reason: 'toBgra8888 must return a tightly packed buffer');
+    expect(bgra, hasLength(width * height * 4), reason: 'toBgraBytes must return a tightly packed buffer');
     expect(bgra.any((byte) => byte != 0), isTrue, reason: 'a conversion that produced only zeroes means the native symbols did not run');
 
-    final before = Uint8List.fromList(image.getBytes());
-    image.negate();
-    expect(image.getBytes(), isNot(orderedEquals(before)), reason: 'negate() must change the planes, or the native effect symbol did not run');
+    final before = Uint8List.fromList(image.toBytes());
+    image.applyNegate();
+    expect(image.toBytes(), isNot(orderedEquals(before)), reason: 'applyNegate() must change the planes, or the native effect symbol did not run');
 
     // Recorded so a CI log names the platform that produced this evidence; a
     // green run with no line here would be a run that never executed.

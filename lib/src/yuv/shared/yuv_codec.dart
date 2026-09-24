@@ -57,8 +57,9 @@ class YuvValidatedImageDraft {
 /// Version 1 (the frozen 0.3.0 wire shape: string `format`, no `formatId`) is
 /// read only far enough to recognize and reject it -- there is no v1 writer
 /// and no automatic migration. An application holding 0.3.0-era serialized
-/// frames must decode and re-encode them with a 0.3.0 build of this package
-/// before upgrading; the current build refuses to read them at all.
+/// frames must first be read by a 0.3.0 app into an application-owned
+/// intermediate representation (format, dimensions, plane strides, and bytes).
+/// After upgrading, recreate the image from that representation and encode v2.
 ///
 /// Every malformed, truncated or unsupported payload throws a
 /// [FormatException]. Nothing here relies on `assert`, which would disappear in
@@ -139,8 +140,9 @@ abstract final class YuvCodec {
   /// Only version 2 is accepted. A version-1 payload -- the frozen 0.3.0 wire
   /// shape, keyed by a string `format` name instead of a stable `formatId` --
   /// is rejected with [FormatException] rather than transparently migrated;
-  /// there is no v1 writer. Re-encode 0.3.0-era frames with a 0.3.0 build of
-  /// this package before decoding them here.
+  /// there is no v1 writer. A 0.3.0 app must first preserve the decoded frame
+  /// in an application-owned intermediate representation; a 0.4.0 app then
+  /// recreates it and writes v2.
   static Future<YuvValidatedImageDraft> decodeStream(Stream<List<int>> stream) async {
     final reader = _StreamReader(stream);
     try {
@@ -258,10 +260,10 @@ abstract final class YuvCodec {
           '(pixelStride $pixelStride)',
         );
       }
-      if (format == YuvFileFormat.nv21 && i == 1 && pixelStride != YuvGeometry.nvChromaPixelStride) {
+      if (format == YuvFileFormat.nv21 && i == 1 && pixelStride < YuvGeometry.nvChromaPixelStride) {
         throw FormatException(
-          'Malformed yuv_ffi payload: interleaved NV chroma requires a pixel stride of '
-          'exactly ${YuvGeometry.nvChromaPixelStride}, plane $i declares $pixelStride',
+          'Malformed yuv_ffi payload: interleaved NV chroma requires a pixel stride of at least '
+          '${YuvGeometry.nvChromaPixelStride}, plane $i declares $pixelStride',
         );
       }
       if (format == YuvFileFormat.i420 && i > 0) {
@@ -296,7 +298,16 @@ abstract final class YuvCodec {
     }
 
     try {
-      YuvGeometry.validateImage(format: format, width: width, height: height, planes: planes);
+      // Codec v2 preserves caller-declared strides. A semi-planar payload with
+      // a chroma pixel stride above two is the public nv12 layout with a real
+      // gap, not malformed legacy nv21 data.
+      YuvGeometry.validateImage(
+        format: format,
+        width: width,
+        height: height,
+        planes: planes,
+        allowLargerNvChromaStride: format == YuvFileFormat.nv21,
+      );
     } on ArgumentError catch (error) {
       throw FormatException('Malformed yuv_ffi payload: ${error.message}');
     }

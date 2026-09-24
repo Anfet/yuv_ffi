@@ -76,6 +76,20 @@ void main() {
       }
     });
 
+    test('round-trips a gapped NV12 chroma layout', () async {
+      final source = YuvImage.nv12(4, 4, uvPixelStride: 3);
+      for (int i = 0; i < source.uPlane.bytes.length; i++) {
+        source.uPlane.bytes[i] = i + 1;
+      }
+      final payload = await collect(source.encodeTo);
+
+      final decoded = await YuvImage.decode(asStream(payload));
+
+      expect(decoded.format, YuvPixelFormat.nv12);
+      expect(decoded.uPlane.pixelStride, 3);
+      expect(decoded.uPlane.bytes, orderedEquals(source.uPlane.bytes));
+    });
+
     test('returns a new, independent image and never mutates the source', () async {
       final source = YuvImage.bgra(2, 2);
       source.yPlane.bytes[0] = 42;
@@ -123,6 +137,18 @@ void main() {
       await target.load(asStream(payload));
 
       expect(target.revision, before + 1);
+    });
+
+    test('preserves a gapped NV12 chroma layout', () async {
+      final source = YuvImage.nv12(4, 4, uvPixelStride: 3);
+      final payload = await collect(source.encodeTo);
+      final target = YuvImage.i420(2, 2);
+
+      // ignore: deprecated_member_use_from_same_package
+      await target.load(asStream(payload));
+
+      expect(target.format, YuvPixelFormat.nv12);
+      expect(target.uPlane.pixelStride, 3);
     });
 
     test('a rejected payload leaves format, geometry, bytes and revision untouched', () async {

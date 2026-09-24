@@ -248,3 +248,6 @@ class _CollectingSink implements Sink<List<int>> {
   @override
   void close() {}
 }
+
+// ignore_for_file: deprecated_member_use
+// This suite specifies the retained 0.3.0 save/load compatibility contract.

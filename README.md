@@ -140,9 +140,11 @@ Two behavioral notes when migrating:
 - `swapNv()`'s old two-step "convert then swap" behavior for a non-NV source is not a single
   `0.4.0` method: call `applyFormat(YuvPixelFormat.nv12)` then `applyChromaSwap()` explicitly.
 - Frames serialized with `0.3.0` (`save`/`load`, wire format v1) are not readable by `0.4.0`'s
-  `decode`/`load`: decode a v1 payload with a `0.3.0` build of this package and re-encode it with
-  `encodeTo`/`save` before upgrading the data, since `0.4.0` only ever writes v2 and rejects v1 on
-  read with a `FormatException`.
+  `decode`/`load`. Migrate them in two releases: while the app still uses `0.3.0`, read each v1
+  frame and persist its format, width, height, per-plane row/pixel strides, and raw plane bytes in
+  an application-owned intermediate representation. After upgrading to `0.4.0`, recreate the image
+  from that representation with the matching named factory and `YuvPlane` values, then write v2 via
+  `encodeTo`. A `0.3.0` re-save is still v1; `0.4.0` rejects v1 on read with `FormatException`.
 
 Adding the full `0.4.0` `apply*`/`to*` surface to the `YuvImage` interface is a breaking change for
 any external `implements YuvImage` class: such a class must implement every new required member
@@ -328,4 +330,4 @@ flutter pub run ffigen --config ffigen.yaml
 
 ## License
 
-[MIT](./LICENSE)
+[MIT License](https://opensource.org/license/mit/)

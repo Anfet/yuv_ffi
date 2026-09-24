@@ -1,4 +1,4 @@
-/// Rotation angles supported by [YuvImage.rotate].
+/// Rotation angles supported by [YuvImage.applyRotation].
 enum YuvImageRotation {
   /// 0° rotation.
   rotation0(0),

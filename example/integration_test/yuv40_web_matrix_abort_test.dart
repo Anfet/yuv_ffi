@@ -34,7 +34,7 @@ void main() {
   testWidgets('F-010 BGRA to NV21 abort boundary', (tester) async {
     expect(kIsWeb, isTrue, reason: 'YUV-40 must run in Chrome.');
     _marker('before ensureInitialized');
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
     _marker('after ensureInitialized');
 
     final sourcePng = await rootBundle.load(_sourceAssetPath);
@@ -44,22 +44,22 @@ void main() {
     // Control: same browser harness, loader, source and BGRA allocation, but
     // a conversion known to return to Dart before the suspect call.
     final control = _bgra(source);
-    _marker('control before toYuvI420');
-    control.toYuvI420();
-    _marker('control after toYuvI420 format=${control.format.name} planes=${control.planes.length}');
+    _marker('control before applyFormat(i420)');
+    control.applyFormat(YuvPixelFormat.i420);
+    _marker('control after applyFormat(i420) format=${control.format.name} planes=${control.planes.length}');
 
     if (_variant == 'after-nv21-to-i420') {
       final predecessor = _nv21(source);
-      _marker('predecessor before toYuvI420');
-      predecessor.toYuvI420();
-      _marker('predecessor after toYuvI420 format=${predecessor.format.name} planes=${predecessor.planes.length}');
+      _marker('predecessor before applyFormat(i420)');
+      predecessor.applyFormat(YuvPixelFormat.i420);
+      _marker('predecessor after applyFormat(i420) format=${predecessor.format.name} planes=${predecessor.planes.length}');
     }
 
     final candidate = _bgra(source);
     _marker('candidate after BGRA construction yBytes=${candidate.yPlane.bytes.length}');
-    _marker('candidate before toYuvNv21');
+    _marker('candidate before applyFormat(nv12)');
     try {
-      candidate.toYuvNv21();
+      candidate.applyFormat(YuvPixelFormat.nv12);
     } catch (error, stackTrace) {
       final line = 'YUV-40 candidate caught $error\n$stackTrace';
       debugPrint(line);
@@ -67,7 +67,7 @@ void main() {
       rethrow;
     }
     _marker(
-      'candidate after toYuvNv21 format=${candidate.format.name} planes=${candidate.planes.length} yBytes=${candidate.yPlane.bytes.length} uvBytes=${candidate.uPlane.bytes.length}',
+      'candidate after applyFormat(nv12) format=${candidate.format.name} planes=${candidate.planes.length} yBytes=${candidate.yPlane.bytes.length} uvBytes=${candidate.uPlane.bytes.length}',
     );
   }, timeout: const Timeout(Duration(minutes: 2)));
 }
@@ -77,7 +77,7 @@ YuvImage _bgra(RgbaFrame source) =>
 
 YuvImage _nv21(RgbaFrame source) {
   final i420 = rgbaToI420(source);
-  return YuvImage.nv21(
+  return YuvImage.nv12(
     source.width,
     source.height,
     planes: <YuvPlane>[

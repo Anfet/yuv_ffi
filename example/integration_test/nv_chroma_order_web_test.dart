@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -38,7 +36,7 @@ void main() {
   testWidgets('nv12 and nv21 store identical hand-written chroma bytes on the real WASM backend', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     final nv12Labeled = YuvImage.nv12(w, h)..applyPlanes([buildYPlane(), buildUvPlane()]);
     // ignore: deprecated_member_use
@@ -54,7 +52,7 @@ void main() {
   testWidgets('chroma byte order survives an NV12 -> BGRA -> NV12 round trip on the real WASM backend', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     final image = YuvImage.nv12(w, h)..applyPlanes([buildYPlane(), buildUvPlane()]);
 

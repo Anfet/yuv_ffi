@@ -112,7 +112,7 @@ void main() {
   testWidgets('the real asset-loaded module still initializes after the fakes above', (tester) async {
     YuvWasmLoader.debugReset();
 
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     expect(YuvWasmLoader.moduleIfInitialized, isNotNull);
   });
@@ -179,11 +179,11 @@ void main() {
 
     await failRealInjection();
 
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     // A recovered loader has to give a usable module, not merely a non-null
     // one: this crosses into WASM and back.
     final image = YuvImage.bgra(2, 2);
-    expect(image.toBgra8888(), hasLength(2 * 2 * 4));
+    expect(image.toBgraBytes(), hasLength(2 * 2 * 4));
   });
 }

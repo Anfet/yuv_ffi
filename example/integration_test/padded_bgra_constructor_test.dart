@@ -18,13 +18,14 @@ void main() {
   YuvPlane plane(int height, int rowStride, [int pixelStride = 4]) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
 
   setUpAll(() async {
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
   });
 
   testWidgets('specialized and generic constructors agree on a padded plane', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]);
+    // ignore: deprecated_member_use
     final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)]);
 
     for (final image in <YuvImage>[specialized, generic]) {
@@ -38,6 +39,7 @@ void main() {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
+    // ignore: deprecated_member_use
     expect(() => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
   });
 
@@ -75,6 +77,8 @@ void main() {
     expect(copied.yPlane.bytes.length, 32);
     expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
 
+    // The deprecated option specifically preserves the source padding.
+    // ignore: deprecated_member_use
     final blank = image.copy(blank: true);
     expect(blank.yPlane.rowStride, 16);
     expect(blank.yPlane.bytes.length, 32);
@@ -85,6 +89,7 @@ void main() {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 8)]);
+    // ignore: deprecated_member_use
     final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 8)]);
 
     for (final image in <YuvImage>[specialized, generic]) {
@@ -108,13 +113,15 @@ void main() {
     expect(copied.yPlane.bytes.length, 16);
     expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
 
+    // The deprecated option specifically preserves the source padding.
+    // ignore: deprecated_member_use
     final blank = image.copy(blank: true);
     expect(blank.yPlane.rowStride, 8);
     expect(blank.yPlane.bytes.length, 16);
     expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
   });
 
-  testWidgets('toBgra8888 on a tight image returns exactly the plane content', (tester) async {
+  testWidgets('toBgraBytes on a tight image returns exactly the plane content', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     final source = plane(2, 8);
@@ -123,7 +130,7 @@ void main() {
     }
     final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
 
-    final bytes = image.toBgra8888();
+    final bytes = image.toBgraBytes();
     expect(bytes.length, 16);
     expect(bytes, orderedEquals(source.bytes));
   });

@@ -126,7 +126,7 @@ class YuvPlane {
 
   /// Replaces this plane content with [other].
   ///
-  /// [other] must hold exactly [bytes.length] bytes, so the documented full
+  /// [other] must hold exactly `bytes.length` bytes, so the documented full
   /// overwrite really happens. A shorter input would leave a stale tail and a
   /// longer one would not fit.
   ///

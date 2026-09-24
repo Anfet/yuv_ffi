@@ -12,7 +12,7 @@
 | [x] | REL-04 | DONE | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
 | [x] | REL-05 | DONE | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
 | [x] | REL-06 | DONE | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
-| [ ] | REL-07 | TODO | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
+| [x] | REL-07 | DONE | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
 | [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
 | [x] | REL-09 | DONE | 2 · Terra | 01, 08 | R2 | Capabilities операций и форматов. |
 | [x] | REL-10 | DONE | 2 · Terra | 08, 09 | R2 | Типизированные ошибки ABI/loader. |
@@ -28,7 +28,7 @@
 | [x] | REL-20 | DONE | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
 | [ ] | REL-21 | TODO | 3 · Luna | 06, 16 | — | Миграция `example/` на `apply*`/`to*` API. |
 
-**Итого после независимого ревью доработок (2026-09-24):** 15 DONE, 5 TODO (REL-07, REL-14, REL-16, REL-17, REL-21), 0 REVIEW, 0 IN PROGRESS, 1 BLOCKED (REL-18), 0 READY, 0 ARCH REQUIRED. Первичное ревью ниже сохранено как исторический снимок; последующие вердикты добавлены к карточкам задач.
+**Итого после приёмки REL-07 (2026-09-24):** 16 DONE, 4 TODO (REL-14, REL-16, REL-17, REL-21), 0 REVIEW, 0 IN PROGRESS, 1 BLOCKED (REL-18), 0 READY, 0 ARCH REQUIRED. Первичное ревью ниже сохранено как исторический снимок; последующие вердикты добавлены к карточкам задач.
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Первичное независимое ревью всех DONE и REVIEW (2026-09-23)
@@ -240,6 +240,10 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 **Доработка исполнителя (2026-09-24):** добавлен `test/fixtures/codec_v1_i420_2x2_fixture.dart` с точными байтами, выданными `YuvCodec.encode` исторического 0.3.0 commit `42c2ae1` (отдельный detached worktree, command `flutter test --no-pub test/emit_v1_fixture_test.dart`). Новый migration test сначала подтверждает `FormatException` при прямом `YuvImage.decode` v1 fixture, затем моделирует приложение: извлекает format, dimensions, row/pixel strides и bytes в собственную запись, восстанавливает `YuvImage`, пишет через `encodeTo` и читает v2 через `YuvImage.decode`. Сверены metadata и все bytes каждой плоскости. Focused codec/decode suite — 55 passed, static analyze — No issues found.
 
 **Независимое ревью (2026-09-24) — TODO:** fixture соответствует историческому v1 encoder, а текущие 55 focused тестов проходят. Однако `_extractV1ForApplicationMigration` вручную разбирает v1 внутри теста версии 0.4.0: он не вызывает публичный `YuvImage.load()` версии 0.3.0 и не сохраняет промежуточную запись для чтения после обновления. Проверить первым этапом в checkout `42c2ae1` загрузку fixture через `load()` и экспорт format, dimensions, высот/strides и bytes в устойчивый промежуточный файл. Вторым этапом в 0.4.0 прочитать этот файл, восстановить образ, записать v2 через `encodeTo` и сверить round-trip. Сохранить отдельный тест отказа прямого чтения v1; реализация codec v2 замечаний не вызвала.
+
+**Доработка исполнителя (2026-09-24) — REVIEW:** в отдельном checkout `42c2ae1` запущен `flutter test --no-pub test/export_v1_migration_030_test.dart` (1/1). Сценарий сохранён в `tool/migration/export_v1_migration_030_test.dart`: исторический v1 payload загружается публичным `YuvImage.load()`, затем `save()` подтверждает точное совпадение байтов и выводит JSON с форматом, размерами, высотой, row/pixel stride и байтами каждой плоскости. Выведенная запись сохранена как `test/fixtures/codec_v1_i420_2x2_intermediate.json`. В тесте 0.4.0 удалён ручной parser v1: запись читается из файла, образ восстанавливается, `encodeTo` пишет v2, а `YuvImage.decode` подтверждает формат, размеры, высоты/strides и все байты. Отдельный тест прямого отказа v1 остался. Focused codec/REL-20 suite: 55/55; анализ обоих изменённых Dart-файлов: No issues found. Native C и generated bindings не менялись.
+
+**Независимое ревью (2026-09-24) — ПРИНЯТО:** ревьюер сам создал detached worktree на `42c2ae1` (`version: 0.3.0`) и запустил там `tool/migration/export_v1_migration_030_test.dart`: 1/1, `load()` → `save()` байт-в-байт совпадает с fixture, выведенный JSON побайтно равен `test/fixtures/codec_v1_i420_2x2_intermediate.json`. На 0.4.0: focused codec/REL-20 — 55/55, полный `flutter test --no-pub` — 637/637, `flutter analyze` codec, тестов, fixtures и `tool/migration` — No issues found, `dart format` — без изменений. Негативный контроль: замена V-байта в промежуточном JSON (`6` → `7`) роняет migration test (`Expected [6], Actual [7]`), файл восстановлен. Прямой отказ v1 проверяется отдельным тестом. README §migration и CHANGELOG описывают двухэтапный перенос и то, что повторный `save` на 0.3.0 снова пишет v1. Ревьюер поправил Dartdoc fixture: там была ссылка на несуществующий `test/emit_v1_fixture_test.dart`. Некритично: `tool/migration/` не указан в `.pubignore` и попадёт в архив пакета; решить в REL-14 вместе с составом архива.
 
 ## Инициализация и отображение
 

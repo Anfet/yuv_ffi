@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Web acceptance for YUV-08: `toBgra8888()` on a padded BGRA source must
+/// Web acceptance for YUV-08: `toBgraBytes()` on a padded BGRA source must
 /// return exactly `width * height * 4` tightly packed bytes, never the padded
 /// plane verbatim.
 ///
-/// `lib/src/yuv/impl/web/yuv_web.dart`'s `toBgra8888()` used to return
+/// `lib/src/yuv/impl/web/yuv_web.dart`'s old `toBgra8888()` used to return
 /// `yPlane.bytes` unconditionally for the BGRA format, which is only correct
 /// when the plane's `rowStride` already equals `width * 4`. When the source
 /// plane carries row padding (`rowStride > width * 4`), that violated the
@@ -26,10 +26,10 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
   });
 
-  testWidgets('toBgra8888 repacks a padded BGRA plane into exactly width*height*4 tight bytes', (tester) async {
+  testWidgets('toBgraBytes repacks a padded BGRA plane into exactly width*height*4 tight bytes', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     const width = 5;
@@ -43,9 +43,9 @@ void main() {
 
     final image = YuvImage.bgra(width, height, planes: <YuvPlane>[paddedPlane]);
 
-    final result = image.toBgra8888();
+    final result = image.toBgraBytes();
 
-    expect(result.length, width * height * 4, reason: 'toBgra8888 must always return exactly width*height*4 bytes');
+    expect(result.length, width * height * 4, reason: 'toBgraBytes must always return exactly width*height*4 bytes');
     expect(
       result,
       orderedEquals(expectedTight),
@@ -57,7 +57,7 @@ void main() {
     expect(image.yPlane.bytes, orderedEquals(paddedSnapshot));
   });
 
-  testWidgets('toBgra8888 on a tight BGRA plane (rowStride == width*4) returns the tight bytes unchanged', (tester) async {
+  testWidgets('toBgraBytes on a tight BGRA plane (rowStride == width*4) returns the tight bytes unchanged', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     const width = 4;
@@ -70,7 +70,7 @@ void main() {
 
     final image = YuvImage.bgra(width, height, planes: <YuvPlane>[tightPlane]);
 
-    final result = image.toBgra8888();
+    final result = image.toBgraBytes();
 
     expect(result.length, width * height * 4);
     expect(result, orderedEquals(expectedTight));

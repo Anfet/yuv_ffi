@@ -415,3 +415,6 @@ class _ForeignImage implements YuvImage {
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
+
+// ignore_for_file: deprecated_member_use
+// This suite includes explicit cache/revision assertions for the legacy dispatch adapter.

@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:yuv_ffi/src/yuv/shared/yuv_codec.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
@@ -185,7 +186,13 @@ abstract interface class YuvImage {
   /// (for example `0.3.0`-era version 1) payload.
   static Future<YuvImage> decode(Stream<List<int>> stream) async {
     final draft = await YuvCodec.decodeStream(stream);
-    return YuvImageImpl(draft.format, draft.width, draft.height, planes: draft.planes);
+    return YuvImageImpl(
+      draft.format,
+      draft.width,
+      draft.height,
+      planes: draft.planes,
+      allowLargerNvChromaStride: draft.format == YuvFileFormat.nv21 && draft.planes[1].pixelStride > YuvGeometry.nvChromaPixelStride,
+    );
   }
 
   /// Converts to Flutter [ui.Image].

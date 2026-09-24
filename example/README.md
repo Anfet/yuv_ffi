@@ -1,16 +1,7 @@
-# yuv_ffi_example
+# yuv_ffi example
 
-Demonstrates how to use the yuv_ffi plugin.
+This runnable Flutter app demonstrates the current `yuv_ffi` API, including
+camera previews, image transforms, effects, and face detection.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+For package setup, API migration, and platform/backend limitations, see the
+[package README](../README.md).

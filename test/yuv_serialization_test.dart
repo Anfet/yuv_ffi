@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_codec.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
+
+import 'fixtures/codec_v1_i420_2x2_fixture.dart';
 
 /// Verifies YUV-07: the serialization format is versioned, transactional and
 /// identical on every backend.
@@ -46,6 +49,128 @@ void main() {
   ]);
 
   group('round-trip', () {
+    test('writes the fixed v2 I420 golden payload', () {
+      final planes = <YuvPlane>[
+        YuvPlane(2, 2, 1, Uint8List.fromList(<int>[1, 2, 3, 4])),
+        YuvPlane(1, 1, 1, Uint8List.fromList(<int>[5])),
+        YuvPlane(1, 1, 1, Uint8List.fromList(<int>[6])),
+      ];
+
+      final encoded = YuvCodec.encode(format: YuvFileFormat.i420, width: 2, height: 2, planes: planes);
+
+      expect(
+        encoded,
+        orderedEquals(<int>[
+          47,
+          0,
+          0,
+          0,
+          123,
+          34,
+          118,
+          101,
+          114,
+          115,
+          105,
+          111,
+          110,
+          34,
+          58,
+          50,
+          44,
+          34,
+          102,
+          111,
+          114,
+          109,
+          97,
+          116,
+          73,
+          100,
+          34,
+          58,
+          49,
+          44,
+          34,
+          119,
+          105,
+          100,
+          116,
+          104,
+          34,
+          58,
+          50,
+          44,
+          34,
+          104,
+          101,
+          105,
+          103,
+          104,
+          116,
+          34,
+          58,
+          50,
+          125,
+          3,
+          2,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          1,
+          2,
+          3,
+          4,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          5,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          6,
+        ]),
+      );
+    });
+
     for (final format in YuvFileFormat.values) {
       test('preserves format, dimensions, strides and bytes for ${format.name}', () async {
         final source = YuvImage(format, 8, 8);
@@ -251,6 +376,46 @@ void main() {
       expect(image.format, YuvPixelFormat.i420);
       expect(image.width, 8);
       expect(image.getBytes(), orderedEquals(before));
+    });
+  });
+
+  group('application-owned v1 migration', () {
+    test('a genuine historical v1 fixture is rejected by the 0.4 decoder', () async {
+      await expectLater(YuvImage.decode(asStream(historicalV1I4202x2)), throwsFormatException);
+    });
+
+    test('restores the intermediate file exported through 0.3.0 load() and writes v2', () async {
+      final intermediate = await _readApplicationMigrationRecord();
+
+      expect(intermediate.format, YuvPixelFormat.i420);
+      expect(intermediate.width, 2);
+      expect(intermediate.height, 2);
+      expect(intermediate.planes.map((plane) => plane.height), orderedEquals(<int>[2, 1, 1]));
+      expect(intermediate.planes.map((plane) => plane.rowStride), orderedEquals(<int>[2, 1, 1]));
+      expect(intermediate.planes.map((plane) => plane.pixelStride), orderedEquals(<int>[1, 1, 1]));
+      expect(intermediate.planes[0].bytes, orderedEquals(<int>[1, 2, 3, 4]));
+      expect(intermediate.planes[1].bytes, orderedEquals(<int>[5]));
+      expect(intermediate.planes[2].bytes, orderedEquals(<int>[6]));
+
+      final restored = _restoreFromApplicationMigration(intermediate);
+      final chunks = <List<int>>[];
+      await restored.encodeTo(_CollectingSink(chunks));
+      final encoded = Uint8List.fromList(chunks.expand((chunk) => chunk).toList());
+      final headerLength = ByteData.sublistView(encoded).getUint32(0, Endian.little);
+      final header = jsonDecode(utf8.decode(encoded.sublist(4, 4 + headerLength))) as Map<String, dynamic>;
+      expect(header['version'], 2);
+      expect(header['formatId'], YuvPixelFormat.i420.wireId);
+      final decoded = await YuvImage.decode(asStream(encoded));
+
+      expect(decoded.format, intermediate.format);
+      expect(decoded.width, intermediate.width);
+      expect(decoded.height, intermediate.height);
+      expect(decoded.planes.map((plane) => plane.height), orderedEquals(<int>[2, 1, 1]));
+      expect(decoded.planes.map((plane) => plane.rowStride), orderedEquals(<int>[2, 1, 1]));
+      expect(decoded.planes.map((plane) => plane.pixelStride), orderedEquals(<int>[1, 1, 1]));
+      expect(decoded.planes[0].bytes, orderedEquals(<int>[1, 2, 3, 4]));
+      expect(decoded.planes[1].bytes, orderedEquals(<int>[5]));
+      expect(decoded.planes[2].bytes, orderedEquals(<int>[6]));
     });
   });
 
@@ -509,6 +674,45 @@ void main() {
       await expectLater(YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)), throwsFormatException);
     });
   });
+}
+
+/// Reads the application's durable record exported by public 0.3.0 load().
+Future<_V1MigrationRecord> _readApplicationMigrationRecord() async {
+  final json = jsonDecode(await File('test/fixtures/codec_v1_i420_2x2_intermediate.json').readAsString()) as Map<String, dynamic>;
+  if (json['migrationSchema'] != 1) {
+    throw FormatException('Unknown application migration record');
+  }
+  final format = switch (json['format']) {
+    'i420' => YuvPixelFormat.i420,
+    'nv21' => YuvPixelFormat.nv12,
+    'bgra8888' => YuvPixelFormat.bgra8888,
+    _ => throw FormatException('Unknown application migration format'),
+  };
+  final width = json['width'];
+  final height = json['height'];
+  if (width is! int || height is! int || width <= 0 || height <= 0) {
+    throw FormatException('Invalid application migration dimensions');
+  }
+  final planes = (json['planes'] as List<dynamic>).map((value) {
+    final plane = value as Map<String, dynamic>;
+    return YuvPlane(plane['height'] as int, plane['rowStride'] as int, plane['pixelStride'] as int, base64Decode(plane['bytesBase64'] as String));
+  }).toList();
+  return _V1MigrationRecord(format: format, width: width, height: height, planes: planes);
+}
+
+YuvImage _restoreFromApplicationMigration(_V1MigrationRecord record) => switch (record.format) {
+  YuvPixelFormat.i420 => YuvImage.i420(record.width, record.height, planes: record.planes),
+  YuvPixelFormat.nv12 => YuvImage.nv12(record.width, record.height, planes: record.planes),
+  YuvPixelFormat.bgra8888 => YuvImage.bgra(record.width, record.height, planes: record.planes),
+};
+
+class _V1MigrationRecord {
+  _V1MigrationRecord({required this.format, required this.width, required this.height, required this.planes});
+
+  final YuvPixelFormat format;
+  final int width;
+  final int height;
+  final List<YuvPlane> planes;
 }
 
 /// Builds a payload whose header is [header] and which declares no planes.

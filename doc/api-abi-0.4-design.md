@@ -320,9 +320,13 @@ The existing v1 byte stream is frozen exactly as implemented today:
 
 This layout documents existing 0.3.0 data only. The 0.4.0 decoder rejects
 `version: 1` with `FormatException`; there is no v1 writer or automatic
-migration. Applications retaining serialized 0.3.0 frames must decode and
-re-encode them with 0.3.0 before upgrading. Legacy `nv21` UV samples remain
-unchanged when converted by that older version.
+migration. Applications retaining serialized 0.3.0 frames need a two-release
+transfer: before the upgrade, the 0.3.0 app reads each v1 frame and persists
+its format, dimensions, plane row/pixel strides, and bytes in an
+application-owned intermediate representation. After the upgrade, the 0.4.0
+app recreates the image from that representation and writes v2. Re-saving with
+0.3.0 would still produce v1. Legacy `nv21` UV samples remain unchanged when
+restored by the application.
 
 ### Codec v2 writer and reader
 
@@ -974,7 +978,9 @@ design revision. Any needed native C change requires its own plan and approval.
 - The default I420 chroma pixel stride becomes 1. Code depending on the old
   gapped default must specify its stride explicitly.
 - Codec output changes from v1 to v2 and the decoder accepts v2 only. Existing
-  serialized v1 frames require migration while running 0.3.0.
+  serialized v1 frames require a two-release migration: extract format,
+  dimensions, plane strides, and bytes while running 0.3.0; reconstruct and
+  encode v2 only after upgrading.
 - Image plane getters remain live and mutable. Clients that edit those buffers
   must call `markDirty()` so revision-keyed caches refresh; replacement
   operations invalidate earlier plane handles.

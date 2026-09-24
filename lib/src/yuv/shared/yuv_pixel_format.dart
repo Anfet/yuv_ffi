@@ -1,6 +1,6 @@
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 
-/// Storage format of a [package:yuv_ffi/src/yuv/yuv.dart] image.
+/// Storage format of a `YuvImage`.
 ///
 /// Each value carries a stable [wireId] that never changes and is never
 /// derived from [Enum.index]: the index reflects declaration order and would
