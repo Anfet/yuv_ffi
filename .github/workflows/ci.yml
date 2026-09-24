@@ -374,6 +374,24 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # The emulator action executes each `script` line in a separate shell.
+      # Keep the ABI assertion and drive invocation in one script so failures
+      # and shell variables survive until the smoke has completed.
+      - name: Prepare ARMv7 native-bridge smoke script
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/armv7-native-bridge-smoke.sh" <<'BASH'
+          set -euo pipefail
+          abi_list="$(adb -s emulator-5554 shell getprop ro.product.cpu.abilist | tr -d '\r')"
+          printf 'Android native-bridge ABI list: %s\n' "$abi_list"
+          case ",$abi_list," in
+            *,armeabi-v7a,*) ;;
+            *) echo 'API 30 x86_64 image did not advertise armeabi-v7a support.' >&2; exit 1 ;;
+          esac
+          flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk -d emulator-5554 --no-pub
+          BASH
+          bash -n "$RUNNER_TEMP/armv7-native-bridge-smoke.sh"
+
       - name: App-runtime smoke (ARMv7 native bridge)
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -385,15 +403,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           working-directory: example
-          script: |
-            set -euo pipefail
-            abi_list="$(adb -s emulator-5554 shell getprop ro.product.cpu.abilist | tr -d '\r')"
-            printf 'Android native-bridge ABI list: %s\n' "$abi_list"
-            case ",$abi_list," in
-              *,armeabi-v7a,*) ;;
-              *) echo 'API 30 x86_64 image did not advertise armeabi-v7a support.' >&2; exit 1 ;;
-            esac
-            flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk -d emulator-5554 --no-pub
+          script: bash "$RUNNER_TEMP/armv7-native-bridge-smoke.sh"
 
   # YUV-06 requires mobile build evidence on both platforms. Android is covered
   # by android-native-build through the NDK. This job separately proves the
