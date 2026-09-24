@@ -38,7 +38,7 @@ void main() {
   });
 
   group('capability gate runs before any state change', () {
-    test('an apply* call throws UnsupportedError before YuvFfi.initialize() has completed', () {
+    test('a capability-gated call names YuvFfi.initialize() before it has completed', () {
       // No initialize() call in this test: the loader's capability cache is
       // still null, so every apply* must fail closed rather than assume
       // support.
@@ -47,7 +47,16 @@ void main() {
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
-      expect(() => image.applyGrayscale(), throwsA(isA<UnsupportedError>()));
+      expect(
+        () => image.applyGrayscale(),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (error) => error.message,
+            'message',
+            'YuvFfi.initialize() must complete before YuvOperation.grayscale can run; backend capability has not been determined yet.',
+          ),
+        ),
+      );
 
       // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), bytesBefore);

@@ -20,10 +20,18 @@ final class YuvFfi {
   /// On Web this must be awaited before any `YuvImage` operation: there is no
   /// lazy fallback, and an operation started earlier fails.
   ///
-  /// On IO/native it is recommended rather than required. Native operations can
-  /// still open the library lazily on first use, so calling this at startup
-  /// buys early, predictable diagnostics instead of a failure at the first
-  /// image operation.
+  /// On IO/native it must complete before the capability-gated `0.4.0` API:
+  /// every `apply*` method, [YuvImage.cropped], [YuvImage.rotated],
+  /// [YuvImage.toI420], [YuvImage.toNv12], and [YuvImage.toBgra]. Before this
+  /// call succeeds, those methods throw [UnsupportedError] because backend
+  /// capability has not been determined, not because the requested operation
+  /// is unsupported.
+  ///
+  /// IO/native retains its previous lazy behavior for constructors, plane
+  /// access, [YuvImage.copy], [YuvImage.applyPlanes], [YuvImage.toBytes],
+  /// [YuvImage.toBgraBytes], [YuvImage.toImage], [YuvImage.encodeTo],
+  /// [YuvImage.decode], [YuvImage.fromRgbaBytes], and the deprecated legacy
+  /// instance methods.
   ///
   /// ## Repeated calls
   ///

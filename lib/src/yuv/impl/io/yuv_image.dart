@@ -419,7 +419,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   void _requireCapability(YuvOperation operation, {required YuvPixelFormat sourceFormat, YuvPixelFormat? destinationFormat}) {
     final capabilities = _capabilities;
     if (capabilities == null) {
-      throw UnsupportedError('$operation is not supported: the backend has not finished YuvFfi.initialize() yet.');
+      throw UnsupportedError('YuvFfi.initialize() must complete before $operation can run; backend capability has not been determined yet.');
     }
     yuvRequireCapability(capabilities, operation, sourceFormat: sourceFormat, destinationFormat: destinationFormat);
   }

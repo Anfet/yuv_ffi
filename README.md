@@ -43,8 +43,8 @@ dependencies:
 ```dart
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-// Web needs this before any image operation; on IO/native it is recommended
-// but not required. Repeated calls are safe: success is cached, failure is not.
+// Required before the capability-gated 0.4.0 API on every platform.
+// Repeated calls are safe: success is cached, failure is not.
 final capabilities = await YuvFfi.initialize();
 
 final image = YuvImage.i420(1280, 720);
@@ -179,10 +179,16 @@ Processing backend note:
 
 ## Initialization
 
-Call package bootstrap once at app start. On Web this must complete before any `YuvImage`
-operation runs (there is no lazy fallback); on IO/native it is recommended but not required.
-Repeated calls are safe: a successful initialization is cached, a failed one is not, so the next
-call retries.
+Call package bootstrap once at app start. On every platform it must complete before the
+capability-gated `0.4.0` API: every `apply*` method, `cropped(...)`, `rotated(...)`, `toI420()`,
+`toNv12()`, and `toBgra()`. On IO/native, calling one of these before bootstrap throws
+`UnsupportedError` because the backend capability has not yet been determined; it does not mean
+the operation is unsupported.
+
+IO/native retains the pre-bootstrap lazy behavior for constructors, plane access, `copy`,
+`applyPlanes`, `toBytes`, `toBgraBytes`, `toImage`, `encodeTo`, `YuvImage.decode`,
+`YuvImage.fromRgbaBytes`, and the deprecated legacy instance methods. Repeated calls are safe: a
+successful initialization is cached, a failed one is not, so the next call retries.
 
 ```dart
 import 'package:flutter/widgets.dart';
