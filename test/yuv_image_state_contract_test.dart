@@ -126,6 +126,32 @@ void main() {
       }
     });
 
+    test('named factories migrate padded I420, NV12, and BGRA blank copies', () {
+      final sources = <YuvImage>[
+        YuvImage.i420(4, 4, planes: [YuvPlane(4, 10, 2), YuvPlane(2, 8, 3), YuvPlane(2, 8, 3)]),
+        YuvImage.nv12(4, 4, planes: [YuvPlane(4, 8, 1), YuvPlane(2, 8, 3)]),
+        YuvImage.bgra(2, 2, planes: [YuvPlane(2, 15, 5)]),
+      ];
+
+      for (final source in sources) {
+        for (final plane in source.planes) {
+          plane.bytes.fillRange(0, plane.bytes.length, 0x7F);
+        }
+
+        final blank = _blankWithSourceLayout(source);
+        source.yPlane.setPixel(0, 0, 0x11);
+
+        expect(blank.format, source.format);
+        expect(blank.width, source.width);
+        expect(blank.height, source.height);
+        expect(
+          blank.planes.map((plane) => (height: plane.height, rowStride: plane.rowStride, pixelStride: plane.pixelStride)),
+          orderedEquals(source.planes.map((plane) => (height: plane.height, rowStride: plane.rowStride, pixelStride: plane.pixelStride))),
+        );
+        expect(blank.planes.every((plane) => plane.bytes.every((byte) => byte == 0)), isTrue);
+      }
+    });
+
     test('copy preserves format, geometry and plane strides', () {
       final source = YuvImage.nv12(6, 4);
       final clone = source.copy();
@@ -173,4 +199,14 @@ void main() {
       expect(image.revision, before + 1);
     });
   });
+}
+
+YuvImage _blankWithSourceLayout(YuvImage source) {
+  final planes = [for (final plane in source.planes) YuvPlane(plane.height, plane.rowStride, plane.pixelStride)];
+
+  return switch (source.format) {
+    YuvPixelFormat.i420 => YuvImage.i420(source.width, source.height, planes: planes),
+    YuvPixelFormat.nv12 => YuvImage.nv12(source.width, source.height, planes: planes),
+    YuvPixelFormat.bgra8888 => YuvImage.bgra(source.width, source.height, planes: planes),
+  };
 }
