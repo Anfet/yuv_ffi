@@ -1,14 +1,14 @@
 # yuv_ffi 0.4.1 — открытые задачи
 
-Версия 0.4.0 уже опубликована; этот список относится к последующей работе. Ветка `release/0.4.1` создана, но версия пакета остаётся 0.4.0 до отдельной подготовки выпуска. AUD-03 принята; AUD-01 и AUD-02 ожидают доработки и CI-подтверждения.
+Версия 0.4.0 уже опубликована; этот список относится к последующей работе. Ветка `release/0.4.1` создана, но версия пакета остаётся 0.4.0 до отдельной подготовки выпуска. AUD-01, AUD-02 и AUD-03 приняты.
 
 ## AUD-01 — Проверить заявленную нижнюю границу SDK
 
-- Статус: TODO — локальный analyzer-gate пройден, но оформление подавлений и CI-приёмка не завершены; приоритет: P1; исполнитель: GPT-5.6 Terra; независимая приёмка: GPT-6 Sol.
+- Статус: DONE — адресные legacy-suppressions и CI-приёмка подтверждены; приоритет: P1; исполнитель: GPT-5.6 Terra; независимая приёмка: GPT-6 Sol.
 - Исходный факт: `pubspec.yaml` требует Dart `^3.10.0` и Flutter `>=3.38.0`. На Mac с Flutter 3.38.10 / Dart 3.10.9 до исправления `flutter analyze` пакета выдавал 794 `info` и завершался с кодом 1; errors/warnings не было.
 - Готово, когда: на Flutter 3.38.x воспроизводимо проходят согласованный штатный analyzer-gate и тесты пакета; минимальная версия добавлена в CI; намеренные legacy-проверки сохранены, а подавление диагностик адресное и объяснено.
-- Сделано: глобальные `deprecated_member_use_from_same_package` и `duplicate_ignore` удалены из `analysis_options.yaml`. Каждое сохранённое обращение к legacy API сопровождается точным `// ignore: deprecated_member_use_from_same_package` на этой строке; новые обращения в тех же файлах снова видны analyzer. `flutter analyze` на Flutter 3.38.10 / Dart 3.10.9: `No issues found`. CI matrix с 3.38.10 добавлена в `772f20a`; зелёный analyzer/test job на commit с этой правкой будет проверен при публикации.
-- Доработка 2026-09-24: все затронутые файлы отформатированы; DartDoc больше не разрывается suppressions. Обычные conversion, packaging и BGRA packing tests переведены на актуальный API, поэтому число точечных suppressions сокращено с 718 до 647. Legacy-вызовы оставлены в compatibility и layout-contract tests, где они составляют предмет проверки. Локально прошли `flutter analyze` и `flutter test test/conversions_test.dart test/yuv_bgra_pixel_gap_test.dart test/yuv_geometry_rejection_test.dart`. Требуется зелёный `analyze-and-test-vm (3.38.10)` на commit с исправлением.
+- Сделано: глобальные `deprecated_member_use_from_same_package` и `duplicate_ignore` удалены из `analysis_options.yaml`. Каждое сохранённое обращение к legacy API сопровождается точным `// ignore: deprecated_member_use_from_same_package` на этой строке; новые обращения в тех же файлах снова видны analyzer. `flutter analyze` на Flutter 3.38.10 / Dart 3.10.9: `No issues found`. CI matrix с 3.38.10 добавлена в `772f20a`. Все затронутые файлы отформатированы; DartDoc больше не разрывается suppressions. Обычные conversion, packaging и BGRA packing tests переведены на актуальный API, поэтому число точечных suppressions сокращено с 718 до 647. Legacy-вызовы оставлены только в compatibility и layout-contract tests, где они составляют предмет проверки.
+- Приёмка 2026-09-24: после исправления четырёх оставшихся native-contract тестов в `68a85f9`, GitHub Actions run 36018331214 успешно завершил `analyze-and-test-vm (3.38.10)` и `analyze-and-test-vm (3.44.9)`. Это подтверждает согласованный analyzer-gate и полный тестовый набор на заявленной нижней версии Flutter.
 
 ## AUD-02 — Устранить сбой первой iOS Simulator сборки
 
