@@ -26,8 +26,13 @@ From pub.dev:
 
 ```yaml
 dependencies:
-  yuv_ffi: ^0.4.0
+  yuv_ffi: ^0.4.1
 ```
+
+> `0.4.0` has been retracted from pub.dev; no retraction reason is recorded
+> here. Use `^0.4.1` for new dependencies. If an application lockfile already
+> pins `0.4.0`, keep the lockfile intact and, after `0.4.1` is published, run
+> `flutter pub upgrade yuv_ffi` to move that dependency deliberately.
 
 Or from Git:
 

@@ -1,3 +1,22 @@
+## 0.4.1
+
+### Release notes
+
+- `0.4.0` has been retracted from pub.dev. The reason for the retraction is not
+  recorded here.
+- This version is the replacement release metadata for `0.4.0`; it does not
+  imply publication, a Git tag, or a release until those steps are performed
+  separately.
+
+### Moving from a lockfile that pins 0.4.0
+
+- A consumer whose `pubspec.lock` already pins `yuv_ffi 0.4.0` can keep using
+  that resolved version, though pub reports its retracted status. Do not delete
+  the whole lockfile, because that can update unrelated dependencies.
+- After `0.4.1` is published, run `flutter pub upgrade yuv_ffi` to select the
+  newest compatible non-retracted version and commit the resulting lockfile for
+  an application package.
+
 ## 0.4.0
 
 First published release after `0.2.4`. Implemented against [the 0.4.0 design](doc/api-abi-0.4-design.md).
