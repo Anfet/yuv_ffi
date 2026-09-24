@@ -320,6 +320,81 @@ jobs:
           working-directory: example
           script: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart -d emulator-5554 --no-pub
 
+  # Android Emulator API 30 x86_64 images advertise ARMv7 through the native
+  # bridge. Build the whole Flutter app as ARMv7-only so Android cannot select
+  # an x86_64 fallback, then run the same no-skip smoke through that bridge.
+  # This is a real execution of the published 32-bit ARM library, while the
+  # x86_64 system image remains KVM-accelerated on the GitHub Linux host.
+  android-armv7-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: Build ARMv7-only app-runtime smoke APK
+        working-directory: example
+        run: >
+          flutter build apk --debug
+          --target=integration_test/native_app_runtime_smoke_test.dart
+          --target-platform android-arm
+
+      # Verify the test input before the emulator starts: a fat APK could run
+      # an x86_64 fallback and would not prove execution of the ARMv7 library.
+      - name: Verify ARMv7-only APK contents
+        working-directory: example
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk='build/app/outputs/flutter-apk/app-debug.apk'
+          test -s "$apk"
+          mapfile -t apk_abis < <(unzip -Z1 "$apk" | sed -n 's#^lib/\([^/]*\)/.*#\1#p' | sort -u)
+          test "${#apk_abis[@]}" -eq 1
+          test "${apk_abis[0]}" = 'armeabi-v7a'
+          unzip -Z1 "$apk" | grep --fixed-strings --line-regexp 'lib/armeabi-v7a/libyuv_ffi.so'
+
+      - name: Enable KVM permissions
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: App-runtime smoke (ARMv7 native bridge)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          # Android 11 x86_64 images support ARMv7 binaries through the native
+          # bridge. `arch: armeabi-v7a` is deliberately absent: the action has
+          # no such system-image architecture.
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          working-directory: example
+          script: |
+            set -euo pipefail
+            abi_list="$(adb -s emulator-5554 shell getprop ro.product.cpu.abilist | tr -d '\r')"
+            printf 'Android native-bridge ABI list: %s\n' "$abi_list"
+            case ",$abi_list," in
+              *,armeabi-v7a,*) ;;
+              *) echo 'API 30 x86_64 image did not advertise armeabi-v7a support.' >&2; exit 1 ;;
+            esac
+            flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk -d emulator-5554 --no-pub
+
   # YUV-06 requires mobile build evidence on both platforms. Android is covered
   # by android-native-build through the NDK. This job separately proves the
   # unsigned device build and the simulator's real app-runtime path. The latter
