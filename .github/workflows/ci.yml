@@ -261,12 +261,11 @@ jobs:
             --target=integration_test/native_app_runtime_smoke_test.dart \
             -d macos
 
-  # YUV-24: proves the plugin's Android build actually configures and builds
-  # the shared src/CMakeLists.txt source list through the NDK, not just that
-  # the Gradle file parses. android/build.gradle wires externalNativeBuild's
-  # cmake.path straight at ../src/CMakeLists.txt, so a real `flutter build apk`
-  # is what exercises the explicit source list on Android, the same list
-  # test/cmake_sources_test.dart keeps in sync with src/**/*.c on the host.
+  # YUV-24/YUV-06: proves Android builds the shared CMake source list through
+  # the NDK and then loads and invokes the packaged library in an emulator.
+  # android/build.gradle wires externalNativeBuild's cmake.path straight at
+  # ../src/CMakeLists.txt; the APK build exercises that list and the smoke
+  # closes the runtime gap a successful Gradle build alone cannot prove.
   android-native-build:
     runs-on: ubuntu-latest
     steps:
@@ -291,6 +290,31 @@ jobs:
       - name: Build example (android)
         working-directory: example
         run: flutter build apk --debug
+
+      # The action recommends this on Ubuntu hosted runners to make the
+      # x86_64 emulator fast. Its absence is a performance concern; the action
+      # can still run with software acceleration when virtualization is absent.
+      - name: Enable KVM permissions
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # A built APK proves the NDK source list compiles, but it does not prove
+      # Android can load the packaged library or resolve and call its symbols.
+      # Run the same no-skip app-runtime smoke used by the desktop and iOS jobs
+      # against an x86_64 emulator. The architecture is explicit here because
+      # the app runtime itself cannot report Android's ABI through Dart.
+      - name: App-runtime smoke (android emulator)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          working-directory: example
+          script: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart -d emulator-5554 --no-pub
 
   # YUV-06 requires mobile build evidence on both platforms. Android is covered
   # by android-native-build through the NDK. This job separately proves the
@@ -364,6 +388,12 @@ jobs:
 
   example-analyze-and-build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The declared lower Flutter bound needs an application build, not only
+        # package analysis and VM tests. Both entries build the same example.
+        flutter-version: ['3.38.10', '3.44.9']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -371,7 +401,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.9'
+          flutter-version: ${{ matrix.flutter-version }}
 
       - name: Flutter pub get (example)
         working-directory: example
@@ -418,14 +448,48 @@ jobs:
           echo "chromedriver: ${{ steps.chrome.outputs.chromedriver-version }}"
           "${{ steps.chrome.outputs.chromedriver-path }}" --version
 
+      - name: Enable Flutter web
+        run: flutter config --enable-web
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      # This validates the two assets that checkout supplied, before the
+      # build step below can replace them. `pub publish --dry-run` prints the
+      # archive's file list, so the two searches prove they are package inputs
+      # rather than merely files left in the repository.
+      - name: Verify published package contains committed WASM
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s assets/wasm/yuv_ffi.js
+          test -s assets/wasm/yuv_ffi.wasm
+          flutter pub publish --dry-run 2>&1 | tee "$RUNNER_TEMP/publish-dry-run.log"
+          grep --extended-regexp 'yuv_ffi\.js \(' "$RUNNER_TEMP/publish-dry-run.log"
+          grep --extended-regexp 'yuv_ffi\.wasm \(' "$RUNNER_TEMP/publish-dry-run.log"
+
+      # These suites install a fake Emscripten module through JS interop; they
+      # deliberately do not load the package asset bundle. A browser test is
+      # therefore the direct gate for their Web dispatch and staging contracts.
+      - name: Browser fake-module contracts
+        shell: bash
+        run: |
+          flutter test --platform chrome \
+            test/web/wasm_swap_nv_atomicity_test.dart \
+            test/web/yuv_web_capabilities_test.dart \
+            test/web/wasm_abi_v1_descriptor_staging_test.dart
+
       - name: Install Emscripten SDK
         shell: bash
         run: |
           git clone https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
-          "$HOME/emsdk/emsdk" install latest
-          "$HOME/emsdk/emsdk" activate latest
+          "$HOME/emsdk/emsdk" install 3.1.74
+          "$HOME/emsdk/emsdk" activate 3.1.74
 
-      - name: Build WASM artifacts
+      # Emscripten 3.1.74 is the locked reproduction input for this generated
+      # pair. A byte-for-byte diff makes an uncommitted or stale published
+      # module fail instead of testing only a replacement.
+      - name: Rebuild and compare WASM artifacts
         shell: bash
         run: |
           source "$HOME/emsdk/emsdk_env.sh"
@@ -433,9 +497,7 @@ jobs:
           sh ./tool/wasm/build_wasm.sh --profile release
           test -f assets/wasm/yuv_ffi.js
           test -f assets/wasm/yuv_ffi.wasm
-
-      - name: Enable Flutter web
-        run: flutter config --enable-web
+          git diff --exit-code -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
 
       - name: Flutter pub get (example)
         working-directory: example
