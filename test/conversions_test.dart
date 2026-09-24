@@ -170,7 +170,7 @@ void main() {
     expect(() => image.applyRgbaBytes(Uint8List(31 * 32 * 4)), throwsArgumentError);
   }, skip: !_nativeAvailable);
 
-  test('toBgra8888 repacks padded BGRA rowStride to tight buffer', () {
+  test('toBgraBytes repacks padded BGRA rowStride to tight buffer', () {
     const width = 2;
     const height = 2;
     const rowStride = 12; // width*4 + 4 padding bytes
@@ -189,7 +189,7 @@ void main() {
     expect(out, orderedEquals(expected));
   });
 
-  test('BGRA fromRgba8888 matches exact channel reorder', () {
+  test('BGRA applyRgbaBytes matches exact channel reorder', () {
     final image = YuvImage.bgra(_w, _h);
     image.applyRgbaBytes(rgba);
     final outBgra = image.toBgraBytes();
@@ -205,14 +205,18 @@ void main() {
   }, skip: !_nativeAvailable);
 
   test('NV21 round-trip RGBA -> NV21 -> BGRA keeps acceptable quality', () {
-    final image = YuvImage.nv12(_w, _h);
-    image.applyRgbaBytes(rgba);
-    final outBgra = image.toBgraBytes();
+    // This specifically retains coverage of the published nv21 entry point.
+    // ignore: deprecated_member_use_from_same_package
+    final image = YuvImage.nv21(_w, _h);
+    // ignore: deprecated_member_use_from_same_package
+    image.fromRgba8888(rgba);
+    // ignore: deprecated_member_use_from_same_package
+    final outBgra = image.toBgra8888();
     final err = _mae(outBgra, expectedBgra);
     expect(err, lessThan(50.0));
   }, skip: !_nativeAvailable);
 
-  test('I420 <-> NV21 conversion preserves image dimensions and can round-trip', () {
+  test('I420 <-> NV12 applyFormat preserves image dimensions and can round-trip', () {
     final i420 = YuvImage.i420(_w, _h);
     i420.applyRgbaBytes(rgba);
     final nv = i420.applyFormat(YuvPixelFormat.nv12);
@@ -229,7 +233,7 @@ void main() {
     expect(err, lessThan(20.0));
   }, skip: !_nativeAvailable);
 
-  test('toYuvBgra8888 returns BGRA image with expected shape', () {
+  test('applyFormat(bgra8888) returns BGRA image with expected shape', () {
     final nv = YuvImage.nv12(_w, _h);
     nv.applyRgbaBytes(rgba);
     final bgra = nv.applyFormat(YuvPixelFormat.bgra8888);
@@ -240,7 +244,7 @@ void main() {
     expect(bgra.yPlane.bytes.length, _w * _h * 4);
   }, skip: !_nativeAvailable);
 
-  test('swapNv is reversible after two swaps', () {
+  test('applyChromaSwap is reversible after two swaps', () {
     final image = YuvImage.nv12(_w, _h);
     image.applyRgbaBytes(rgba);
     final original = Uint8List.fromList(image.uPlane.bytes);
@@ -252,7 +256,7 @@ void main() {
     expect(restored.uPlane.bytes, orderedEquals(original));
   }, skip: !_nativeAvailable);
 
-  test('swapNv preserves Y and reverses every chroma pair exactly', () {
+  test('applyChromaSwap preserves Y and reverses every chroma pair exactly', () {
     const width = 4;
     const height = 4;
     final originalY = Uint8List.fromList([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]);
@@ -331,7 +335,7 @@ void main() {
     expect(image.uPlane.bytes.sublist(uvRowStride, uvRowStride + 4), orderedEquals(<int>[5, 6, 7, 8]));
   }, skip: !_nativeAvailable);
 
-  test('flipHorizontally on BGRA is exact', () {
+  test('applyFlipHorizontal on BGRA is exact', () {
     final image = YuvImage.bgra(_w, _h);
     image.applyRgbaBytes(rgba);
     image.applyFlipHorizontal();
@@ -340,7 +344,7 @@ void main() {
     expect(image.toBgraBytes(), orderedEquals(expected));
   }, skip: !_nativeAvailable);
 
-  test('flipVertically on BGRA is exact', () {
+  test('applyFlipVertical on BGRA is exact', () {
     final image = YuvImage.bgra(_w, _h);
     image.applyRgbaBytes(rgba);
     image.applyFlipVertical();
@@ -349,7 +353,7 @@ void main() {
     expect(image.toBgraBytes(), orderedEquals(expected));
   }, skip: !_nativeAvailable);
 
-  test('crop on BGRA is exact', () {
+  test('applyCrop on BGRA is exact', () {
     const left = 64;
     const top = 96;
     const cw = 256;
@@ -379,7 +383,7 @@ void main() {
     expect(image.toBgraBytes(), orderedEquals(before));
   }, skip: !_nativeAvailable);
 
-  test('rotate 90 on BGRA is exact', () {
+  test('applyRotation 90 on BGRA is exact', () {
     final image = YuvImage.bgra(_w, _h);
     image.applyRgbaBytes(rgba);
     image.applyRotation(YuvImageRotation.rotation90);
@@ -390,7 +394,7 @@ void main() {
     expect(image.toBgraBytes(), orderedEquals(expected));
   }, skip: !_nativeAvailable);
 
-  test('rotate 180 on BGRA is exact', () {
+  test('applyRotation 180 on BGRA is exact', () {
     final image = YuvImage.bgra(_w, _h);
     image.applyRgbaBytes(rgba);
     image.applyRotation(YuvImageRotation.rotation180);
@@ -401,7 +405,7 @@ void main() {
     expect(image.toBgraBytes(), orderedEquals(expected));
   }, skip: !_nativeAvailable);
 
-  test('rotate 270 on BGRA is exact', () {
+  test('applyRotation 270 on BGRA is exact', () {
     final image = YuvImage.bgra(_w, _h);
     image.applyRgbaBytes(rgba);
     image.applyRotation(YuvImageRotation.rotation270);
@@ -465,13 +469,14 @@ void main() {
 
     copied.yPlane.bytes[0] = copied.yPlane.bytes[0] ^ 0xFF;
     expect(copied.yPlane.bytes[0], isNot(image.yPlane.bytes[0]));
-    final blank = YuvImage.allocate(image.format, image.width, image.height);
+    // ignore: deprecated_member_use_from_same_package
+    final blank = image.copy(blank: true);
     for (final p in blank.planes) {
       expect(_allZero(p.bytes), isTrue);
     }
   }, skip: !_nativeAvailable);
 
-  test('save/load round-trip preserves i420 image bytes', () async {
+  test('encodeTo/decode round-trip preserves i420 image bytes', () async {
     final image = YuvImage.i420(_w, _h);
     image.applyRgbaBytes(rgba);
 
@@ -508,13 +513,13 @@ void main() {
     expect(i420.width, _w);
     expect(i420.height, _h);
     expect(i420.toBgraBytes().length, _w * _h * 4);
-    final nv21 = YuvImage.nv12(_w, _h)..applyRgbaBytes(rgba);
-    nv21.applyGaussianBlur(radius: 3, sigma: 2);
-    nv21.applyBoxBlur(radius: 5, region: rect);
-    nv21.applyMeanBlur(radius: 5, region: rect);
-    expect(nv21.width, _w);
-    expect(nv21.height, _h);
-    expect(nv21.toBgraBytes().length, _w * _h * 4);
+    final nv12 = YuvImage.nv12(_w, _h)..applyRgbaBytes(rgba);
+    nv12.applyGaussianBlur(radius: 3, sigma: 2);
+    nv12.applyBoxBlur(radius: 5, region: rect);
+    nv12.applyMeanBlur(radius: 5, region: rect);
+    expect(nv12.width, _w);
+    expect(nv12.height, _h);
+    expect(nv12.toBgraBytes().length, _w * _h * 4);
     final bgra = YuvImage.bgra(_w, _h)..applyRgbaBytes(rgba);
     bgra.applyGaussianBlur(radius: 3, sigma: 2);
     bgra.applyBoxBlur(radius: 5, region: rect);
@@ -536,7 +541,9 @@ void main() {
 
     test('specialized and generic constructors agree on a padded plane', () {
       final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]);
-      for (final image in <YuvImage>[specialized]) {
+      // ignore: deprecated_member_use_from_same_package
+      final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)]);
+      for (final image in <YuvImage>[specialized, generic]) {
         expect(image.yPlane.rowStride, 16);
         expect(image.yPlane.pixelStride, 4);
         expect(image.yPlane.bytes.length, 32);
@@ -568,9 +575,10 @@ void main() {
       final copied = image.copy();
       expect(copied.yPlane.rowStride, 16);
       expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
-      final blank = YuvImage.allocate(image.format, image.width, image.height);
-      expect(blank.yPlane.rowStride, 8, reason: 'YuvImage.allocate creates a tight blank image');
-      expect(blank.yPlane.bytes.length, 16);
+      // ignore: deprecated_member_use_from_same_package
+      final blank = image.copy(blank: true);
+      expect(blank.yPlane.rowStride, 16, reason: 'a blank copy must not silently drop the padding');
+      expect(blank.yPlane.bytes.length, 32);
       expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
     });
 
@@ -578,6 +586,11 @@ void main() {
       // A row that cannot hold width * 4 bytes is genuinely invalid, and both
       // entry points must reject it through the shared validator.
       expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
+      expect(
+        // ignore: deprecated_member_use_from_same_package
+        () => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]),
+        throwsArgumentError,
+      );
     });
   });
 
@@ -591,7 +604,8 @@ void main() {
       test('returns exactly the summed plane length for ${size.w}x${size.h}', () {
         for (final image in _imagesForEachFormat(size.w, size.h)) {
           final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
-          expect(image.toBytes(), hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
+          // ignore: deprecated_member_use_from_same_package
+          expect(image.getBytes(), hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
         }
       });
 
@@ -600,7 +614,8 @@ void main() {
           _fillPlanesWithPattern(image);
 
           expect(
-            image.toBytes(),
+            // ignore: deprecated_member_use_from_same_package
+            image.getBytes(),
             orderedEquals(_concatPlanesDirectly(image)),
             reason: '${image.format.name} ${size.w}x${size.h} must concatenate planes in format order',
           );
@@ -611,7 +626,8 @@ void main() {
     test('returns an independent copy in both directions', () {
       final image = YuvImage.i420(4, 4);
       _fillPlanesWithPattern(image);
-      final snapshot = image.toBytes();
+      // ignore: deprecated_member_use_from_same_package
+      final snapshot = image.getBytes();
       final planeByteBefore = image.yPlane.bytes[0];
 
       // Mutating the returned buffer must not reach back into the planes.
@@ -631,7 +647,8 @@ void main() {
       // Y: 3x3 = 9 bytes. Chroma: ceil(3/2) x ceil(3/2) = 2x2, one byte per
       // sample for I420's planar (not interleaved) U and V, 4 bytes each.
       expect(expectedLength, 17);
-      expect(image.toBytes(), hasLength(expectedLength));
+      // ignore: deprecated_member_use_from_same_package
+      expect(image.getBytes(), hasLength(expectedLength));
     });
   });
 }
@@ -641,7 +658,12 @@ void main() {
 ///
 /// The legacy `nv21` name keeps its current NV12-like UV byte order; these
 /// cases only concatenate planes and never reinterpret chroma.
-List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[YuvImage.bgra(w, h), YuvImage.i420(w, h), YuvImage.nv12(w, h)];
+List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[
+  YuvImage.bgra(w, h),
+  YuvImage.i420(w, h),
+  // ignore: deprecated_member_use_from_same_package
+  YuvImage.nv21(w, h),
+];
 
 /// Writes a per-plane pattern so a misordered or truncated concatenation cannot
 /// coincidentally match an all-zero buffer.
