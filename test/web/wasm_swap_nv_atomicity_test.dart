@@ -117,15 +117,24 @@ void main() {
     expect(kIsWeb, isTrue);
   });
 
-  // ignore: deprecated_member_use_from_same_package
-  for (final format in [YuvFileFormat.i420, YuvFileFormat.bgra8888]) {
-    test('a failing chroma swap after a successful conversion leaves a ${format.name} receiver untouched', () async {
+  final publicFormats = <YuvFileFormat, YuvPixelFormat>{
+    // ignore: deprecated_member_use_from_same_package
+    YuvFileFormat.i420: YuvPixelFormat.i420,
+    // ignore: deprecated_member_use_from_same_package
+    YuvFileFormat.bgra8888: YuvPixelFormat.bgra8888,
+  };
+
+  for (final entry in publicFormats.entries) {
+    final legacyFormat = entry.key;
+    final publicFormat = entry.value;
+
+    test('a failing chroma swap after a successful conversion leaves a ${legacyFormat.name} receiver untouched', () async {
       // Call 1 is yuv_convert_v1 and succeeds; call 2 is yuv_chroma_swap_v1
       // and fails. This is the exact sequence the review reproduced.
       final module = _statusModule([yuvStatusOk, yuvStatusInternalError]);
       await _useModule(module);
 
-      final image = _imageOf(format);
+      final image = _imageOf(legacyFormat);
       // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
@@ -134,7 +143,7 @@ void main() {
       expect(() => image.swapNv(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', YuvOperation.chromaSwap)));
 
       expect(_calls(module), [yuvSymbolConvertV1, yuvSymbolChromaSwapV1], reason: 'the conversion must have succeeded before the swap was attempted');
-      expect(image.format, format, reason: 'format changed although swapNv failed');
+      expect(image.format, publicFormat, reason: 'format changed although swapNv failed');
       // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), bytesBefore, reason: 'bytes changed although swapNv failed');
       expect(image.width, 8);
@@ -142,11 +151,11 @@ void main() {
       expect((image as YuvRevisionAware).internalRevision, revisionBefore, reason: 'revision advanced although swapNv failed');
     });
 
-    test('a failing conversion leaves a ${format.name} receiver untouched', () async {
+    test('a failing conversion leaves a ${legacyFormat.name} receiver untouched', () async {
       final module = _statusModule([yuvStatusInternalError]);
       await _useModule(module);
 
-      final image = _imageOf(format);
+      final image = _imageOf(legacyFormat);
       // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
@@ -155,7 +164,7 @@ void main() {
       expect(() => image.swapNv(), throwsA(isA<YuvNativeException>()));
 
       expect(_calls(module), [yuvSymbolConvertV1]);
-      expect(image.format, format);
+      expect(image.format, publicFormat);
       // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), bytesBefore);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore);
