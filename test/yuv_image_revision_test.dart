@@ -55,7 +55,9 @@ void main() {
       test('rotating by zero degrees', () {
         final image = YuvImage.bgra(4, 4);
         final before = image.revision;
-        image.applyRotation(YuvImageRotation.rotation0);
+
+        // ignore: deprecated_member_use_from_same_package
+        image.rotate(YuvImageRotation.rotation0);
 
         expect(image.revision, before);
       });
@@ -63,23 +65,30 @@ void main() {
       test('converting to the format the image already has', () {
         final bgra = YuvImage.bgra(4, 4);
         final bgraBefore = bgra.revision;
-        bgra.applyFormat(YuvPixelFormat.bgra8888);
+        // ignore: deprecated_member_use_from_same_package
+        bgra.toYuvBgra8888();
         expect(bgra.revision, bgraBefore);
 
         final i420 = YuvImage.i420(4, 4);
         final i420Before = i420.revision;
-        i420.applyFormat(YuvPixelFormat.i420);
+        // ignore: deprecated_member_use_from_same_package
+        i420.toYuvI420();
         expect(i420.revision, i420Before);
-        final nv21 = YuvImage.nv12(4, 4);
+
+        // ignore: deprecated_member_use_from_same_package
+        final nv21 = YuvImage.nv21(4, 4);
         final nv21Before = nv21.revision;
-        nv21.applyFormat(YuvPixelFormat.nv12);
+        // ignore: deprecated_member_use_from_same_package
+        nv21.toYuvNv21();
         expect(nv21.revision, nv21Before);
       });
 
       test('an empty crop', () {
         final image = YuvImage.bgra(8, 8);
         final before = image.revision;
-        image.applyCrop(const ui.Rect.fromLTWH(4, 4, 0, 0));
+
+        // ignore: deprecated_member_use_from_same_package
+        image.crop(const ui.Rect.fromLTWH(4, 4, 0, 0));
 
         expect(image.revision, before);
       });
@@ -92,20 +101,26 @@ void main() {
 
         test('in-place effects', () {
           for (final operation in <String>['grayscale', 'negate', 'blackwhite', 'flipHorizontally', 'flipVertically']) {
-            final image = YuvImage.i420(8, 8)..applyRgbaBytes(rgba(8, 8));
+            // ignore: deprecated_member_use_from_same_package
+            final image = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
             final before = image.revision;
 
             switch (operation) {
               case 'grayscale':
-                image.applyGrayscale();
+                // ignore: deprecated_member_use_from_same_package
+                image.grayscale();
               case 'negate':
-                image.applyNegate();
+                // ignore: deprecated_member_use_from_same_package
+                image.negate();
               case 'blackwhite':
-                image.applyBlackWhite();
+                // ignore: deprecated_member_use_from_same_package
+                image.blackwhite();
               case 'flipHorizontally':
-                image.applyFlipHorizontal();
+                // ignore: deprecated_member_use_from_same_package
+                image.flipHorizontally();
               case 'flipVertically':
-                image.applyFlipVertical();
+                // ignore: deprecated_member_use_from_same_package
+                image.flipVertically();
             }
 
             expect(image.revision, before + 1, reason: '$operation must advance the revision exactly once');
@@ -115,7 +130,9 @@ void main() {
         test('fromRgba8888', () {
           final image = YuvImage.i420(8, 8);
           final before = image.revision;
-          image.applyRgbaBytes(rgba(8, 8));
+
+          // ignore: deprecated_member_use_from_same_package
+          image.fromRgba8888(rgba(8, 8));
 
           expect(image.revision, before + 1);
         });
@@ -125,31 +142,42 @@ void main() {
           // the revision on its own.
           final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(2 * 16))]);
           final before = image.revision;
-          image.applyRgbaBytes(rgba(2, 2));
+
+          // ignore: deprecated_member_use_from_same_package
+          image.fromRgba8888(rgba(2, 2));
 
           expect(image.revision, before + 1);
         });
 
         test('a real crop', () {
-          final image = YuvImage.bgra(8, 8)..applyRgbaBytes(rgba(8, 8));
+          // ignore: deprecated_member_use_from_same_package
+          final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
           final before = image.revision;
-          image.applyCrop(const ui.Rect.fromLTWH(0, 0, 4, 4));
+
+          // ignore: deprecated_member_use_from_same_package
+          image.crop(const ui.Rect.fromLTWH(0, 0, 4, 4));
 
           expect(image.revision, before + 1);
         });
 
         test('a real rotate', () {
-          final image = YuvImage.bgra(8, 8)..applyRgbaBytes(rgba(8, 8));
+          // ignore: deprecated_member_use_from_same_package
+          final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
           final before = image.revision;
-          image.applyRotation(YuvImageRotation.rotation90);
+
+          // ignore: deprecated_member_use_from_same_package
+          image.rotate(YuvImageRotation.rotation90);
 
           expect(image.revision, before + 1);
         });
 
         test('a format conversion', () {
-          final image = YuvImage.i420(8, 8)..applyRgbaBytes(rgba(8, 8));
+          // ignore: deprecated_member_use_from_same_package
+          final image = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
           final before = image.revision;
-          image.applyFormat(YuvPixelFormat.nv12);
+
+          // ignore: deprecated_member_use_from_same_package
+          image.toYuvNv21();
 
           expect(image.revision, before + 1);
         });
@@ -157,13 +185,18 @@ void main() {
         test('swapNv advances exactly once even when it converts first', () {
           // swapNv() calls toYuvNv21() internally, which bumps on its own. One
           // public call must still count as one revision.
-          final alreadyNv = YuvImage.nv12(8, 8)..applyRgbaBytes(rgba(8, 8));
+          // ignore: deprecated_member_use_from_same_package
+          final alreadyNv = YuvImage.nv21(8, 8)..fromRgba8888(rgba(8, 8));
           final alreadyNvBefore = alreadyNv.revision;
-          alreadyNv.applyChromaSwap();
+          // ignore: deprecated_member_use_from_same_package
+          alreadyNv.swapNv();
           expect(alreadyNv.revision, alreadyNvBefore + 1, reason: 'no conversion needed');
-          final needsConversion = YuvImage.i420(8, 8)..applyRgbaBytes(rgba(8, 8));
+
+          // ignore: deprecated_member_use_from_same_package
+          final needsConversion = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
           final needsConversionBefore = needsConversion.revision;
-          needsConversion.applyChromaSwap();
+          // ignore: deprecated_member_use_from_same_package
+          needsConversion.swapNv();
           expect(needsConversion.revision, needsConversionBefore + 1, reason: 'an internal conversion must not double-count');
         });
       },
