@@ -62,13 +62,11 @@ android {
     defaultConfig {
         minSdkVersion 26
 
-        // Flutter has shipped no x86 (32-bit) native binaries since 3.35, and
-        // Google Play never accepted x86 as a supported ABI for Flutter apps;
-        // it only ever mattered for legacy 32-bit emulator images. Without
-        // this filter, Gradle still configures and runs the CMake build for
-        // x86 regardless of the consuming app's own abiFilters, and that
-        // build fails: the ABI v1 struct layout (src/yuv/abi/h/yuv_abi_v1.h)
-        // static-asserts a 64-bit sizeof(void*) (YUV-24).
+        // The plugin's supported Android ABI set is armeabi-v7a, arm64-v8a and
+        // x86_64; the legacy 32-bit x86 emulator ABI is intentionally excluded.
+        // This is not a 64-bit-pointer constraint: ABI v1 checks fixed offsets
+        // and sizes plus 8-byte alignment of uint64_t and double, and
+        // armeabi-v7a remains a supported 32-bit target.
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a", "x86_64"
         }

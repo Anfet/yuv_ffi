@@ -248,19 +248,23 @@ abstract interface class YuvImage {
 
   /// Applies a uniform mean blur in place and returns `this`.
   ///
-  /// [radius] `0` is a no-op. [region] restricts the blurred area to that
-  /// normalized rectangle; `null` blurs the whole frame.
+  /// [region] uses image-pixel coordinates, rounded outward to whole pixels
+  /// and clamped to the image bounds; `null` blurs the whole frame. [radius]
+  /// `0` is a no-op.
   YuvImage applyMeanBlur({required int radius, ui.Rect? region}) => throw UnimplementedError();
 
   /// Applies a normalized box blur in place and returns `this`.
   ///
-  /// [radius] `0` is a no-op. [region] restricts the blurred area to that
-  /// normalized rectangle; `null` blurs the whole frame.
+  /// [region] uses image-pixel coordinates, rounded outward to whole pixels
+  /// and clamped to the image bounds; `null` blurs the whole frame. [radius]
+  /// `0` is a no-op.
   YuvImage applyBoxBlur({required int radius, ui.Rect? region}) => throw UnimplementedError();
 
   /// Crops this image to [region] in place and returns `this`.
   ///
-  /// An empty effective (clamped, normalized) region is a no-op.
+  /// [region] uses image-pixel coordinates. Its near edges are rounded down,
+  /// far edges are rounded up, and the result is clamped to the image bounds.
+  /// An empty effective region is a no-op.
   YuvImage applyCrop(ui.Rect region) => throw UnimplementedError();
 
   /// Flips this image horizontally in place and returns `this`.

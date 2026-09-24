@@ -45,8 +45,8 @@ extension CameraImageExt on CameraImage {
         return YuvImage.i420(width, height, planes: planes);
 
       case ImageFormatGroup.nv21:
-        // Deliberately not YuvImage.nv12(): camera frames in this group carry
-        // NV21's UV byte order, which only the nv21 label preserves.
+        // The deprecated nv21 constructor is an alias for the same UV-ordered
+        // storage as nv12; both preserve these camera bytes as supplied.
         // ignore: deprecated_member_use
         return YuvImage.nv21(width, height, planes: planes);
       case ImageFormatGroup.bgra8888:

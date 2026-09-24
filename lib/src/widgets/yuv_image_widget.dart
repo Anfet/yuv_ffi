@@ -55,10 +55,9 @@ class YuvImageWidget extends StatelessWidget {
 /// provider was created: rebuilding around an untouched image reuses the decoded
 /// frame, while any mutation produces a different key and a fresh decode.
 ///
-/// A foreign `implements YuvImage` gets the pre-0.2.5 behaviour instead — every
-/// provider is a distinct key, so every rebuild re-converts. Such a class
-/// predates the revision seam and mutates without reporting it, so treating its
-/// unchanged revision as proof of an unchanged frame would serve a stale image.
+/// A foreign `implements YuvImage` without revision tracking gets a distinct
+/// key for each provider, so every rebuild re-converts. Such a class may mutate
+/// without reporting it, so identity alone cannot prove the frame is unchanged.
 /// Re-converting is a cost; showing the wrong frame is a defect, and only the
 /// cost is acceptable to trade in a patch release.
 class YuvImageProvider extends ImageProvider<YuvImageProvider> {

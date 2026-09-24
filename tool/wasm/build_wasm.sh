@@ -100,8 +100,8 @@ fi
 if [ "$PROFILE" = "release" ]; then
   OPT_LEVEL="-O3"
   # WebAssembly SIMD, so the conversion loops vectorize the same way they do on
-  # native targets. Supported by Chrome/Firefox/Safari since 2021; browsers
-  # older than that cannot instantiate a simd-enabled module at all.
+  # native targets. Safari added 128-bit WebAssembly SIMD in Safari 16.4;
+  # older Safari versions cannot instantiate a SIMD-enabled module.
   SIMD_FLAG="-msimd128"
 else
   OPT_LEVEL="-O0"

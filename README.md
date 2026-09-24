@@ -109,6 +109,8 @@ Exports from `package:yuv_ffi/yuv_ffi.dart`:
 - `YuvOperation`, `YuvCapabilities`
 - `YuvNativeException`
 - `YuvImageWidget`
+- `YuvImageProvider`
+- `YuvImageInvalidation` (extension for marking direct plane writes)
 - `YuvFfi` (`initialize()`)
 
 Main constructors:
@@ -260,6 +262,8 @@ Limitations:
 - Web backend is still in-progress and should be treated as non-final. Running
   on ABI v1 aligns the two backends' behavior; it does not by itself make Web
   feature-complete with native.
+- Release WASM builds enable 128-bit SIMD; Safari 16.4 or later is required to
+  instantiate those builds.
 - Web tests are maintained separately under `test/web/` and are intended for browser runner execution.
 
 ### Known limitations (explicit)
