@@ -38,6 +38,7 @@ void main() {
 
   group('nv12 keeps the historical NV21 UV byte order', () {
     test('a filled UV plane keeps the same (U, V) pair order as the legacy nv21 factory', () {
+      // ignore: deprecated_member_use_from_same_package
       final legacy = YuvImage.nv21(4, 4);
       final canonical = YuvImage.nv12(4, 4);
 
@@ -51,6 +52,7 @@ void main() {
 
     test('YuvImage.allocate(nv12, ...) produces the same interleaved layout as nv21', () {
       final allocated = YuvImage.allocate(YuvPixelFormat.nv12, 4, 4);
+      // ignore: deprecated_member_use_from_same_package
       final legacy = YuvImage.nv21(4, 4);
 
       expect(allocated.uPlane.pixelStride, legacy.uPlane.pixelStride);

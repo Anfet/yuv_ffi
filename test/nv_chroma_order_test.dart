@@ -36,12 +36,15 @@ void main() {
 
   group('NV chroma byte order', () {
     test('RGBA -> NV21 writes the same chroma order as BGRA -> NV21', () {
+      // ignore: deprecated_member_use_from_same_package
       final direct = YuvImage.nv21(w, h)..fromRgba8888(solidRedRgba());
 
       // The BGRA route reaches NV through yuv_convert_v1, which is the order
       // every other converter agrees on.
       final viaBgra = YuvImage.bgra(w, h)
+        // ignore: deprecated_member_use_from_same_package
         ..fromRgba8888(solidRedRgba())
+        // ignore: deprecated_member_use_from_same_package
         ..toYuvNv21();
 
       final directFirst = direct.uPlane.bytes[0];
@@ -68,6 +71,7 @@ void main() {
     });
 
     test('the interleaved plane stores (U, V), matching every reader', () {
+      // ignore: deprecated_member_use_from_same_package
       final image = YuvImage.nv21(w, h)..fromRgba8888(solidRedRgba());
 
       // Conversion out of NV reads byte 0 as U and byte 1 as V, so a writer
@@ -77,8 +81,11 @@ void main() {
     });
 
     test('RGBA -> NV21 -> I420 lands U and V in the correct planes', () {
+      // ignore: deprecated_member_use_from_same_package
       final image = YuvImage.nv21(w, h)
+        // ignore: deprecated_member_use_from_same_package
         ..fromRgba8888(solidRedRgba())
+        // ignore: deprecated_member_use_from_same_package
         ..toYuvI420();
 
       expect(image.uPlane.bytes[0], closeTo(expectedU, tolerance), reason: 'U plane must hold the U sample');
@@ -86,7 +93,9 @@ void main() {
     });
 
     test('RGBA -> NV21 -> BGRA round-trip preserves red', () {
+      // ignore: deprecated_member_use_from_same_package
       final image = YuvImage.nv21(w, h)..fromRgba8888(solidRedRgba());
+      // ignore: deprecated_member_use_from_same_package
       final bgra = image.toBgra8888();
 
       // BGRA byte order is B, G, R, A. Swapped chroma turns red into blue.

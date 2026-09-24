@@ -16,6 +16,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
+    // ignore: deprecated_member_use_from_same_package
     await YuvFfi.ensureInitialized();
   });
 
@@ -26,12 +27,18 @@ void main() {
       final rgba = _buildRgbaPattern(s.w, s.h);
       final expectedBgra = _rgbaToBgra(rgba);
 
+      // ignore: deprecated_member_use_from_same_package
       final i420 = YuvImage.i420(s.w, s.h)..fromRgba8888(rgba);
+      // ignore: deprecated_member_use_from_same_package
       final nv21 = YuvImage.nv21(s.w, s.h)..fromRgba8888(rgba);
+      // ignore: deprecated_member_use_from_same_package
       final bgra = YuvImage.bgra(s.w, s.h)..fromRgba8888(rgba);
 
+      // ignore: deprecated_member_use_from_same_package
       final i420Bgra = i420.toBgra8888();
+      // ignore: deprecated_member_use_from_same_package
       final nv21Bgra = nv21.toBgra8888();
+      // ignore: deprecated_member_use_from_same_package
       final bgraOut = bgra.toBgra8888();
 
       expect(i420Bgra.length, s.w * s.h * 4);
@@ -47,9 +54,11 @@ void main() {
     const w = 8;
     const h = 4;
     final bad = Uint8List(w * h * 4 - 1);
+    // ignore: deprecated_member_use_from_same_package
     final images = <YuvImage>[YuvImage.i420(w, h), YuvImage.nv21(w, h), YuvImage.bgra(w, h)];
 
     for (final image in images) {
+      // ignore: deprecated_member_use_from_same_package
       expect(() => image.fromRgba8888(bad), throwsArgumentError);
     }
   });
@@ -58,6 +67,7 @@ void main() {
     const w = 17;
     const h = 11;
     final rgba = _buildRgbaPattern(w, h);
+    // ignore: deprecated_member_use_from_same_package
     final baseline = YuvImage.i420(w, h)..fromRgba8888(rgba);
 
     final uvW = (w / 2).ceil();
@@ -81,6 +91,7 @@ void main() {
 
     final custom = YuvImage.i420(w, h, planes: [yPadded, uPadded, vPadded]);
 
+    // ignore: deprecated_member_use_from_same_package
     expect(custom.toBgra8888(), orderedEquals(baseline.toBgra8888()));
   });
 
@@ -88,6 +99,7 @@ void main() {
     const w = 19;
     const h = 13;
     final rgba = _buildRgbaPattern(w, h);
+    // ignore: deprecated_member_use_from_same_package
     final baseline = YuvImage.nv21(w, h)..fromRgba8888(rgba);
 
     final yPadded = _copyPlaneWithPadding(source: baseline.yPlane, logicalWidth: w, logicalHeight: h, dstRowStride: w + 11, dstPixelStride: 1);
@@ -99,8 +111,10 @@ void main() {
       dstPixelStride: 2,
     );
 
+    // ignore: deprecated_member_use_from_same_package
     final custom = YuvImage.nv21(w, h, planes: [yPadded, uvPadded]);
 
+    // ignore: deprecated_member_use_from_same_package
     expect(custom.toBgra8888(), orderedEquals(baseline.toBgra8888()));
   });
 
@@ -114,6 +128,7 @@ void main() {
     final u = Uint8List(uvH * (uvW * 2 + 2))..fillRange(0, uvH * (uvW * 2 + 2), 0xA5);
     final v = Uint8List.fromList(u);
     final image = YuvImage.i420(w, h, planes: [YuvPlane(h, w * 2 + 3, 2, y), YuvPlane(uvH, uvW * 2 + 2, 2, u), YuvPlane(uvH, uvW * 2 + 2, 2, v)])
+      // ignore: deprecated_member_use_from_same_package
       ..fromRgba8888(rgba);
 
     _expectPadding(image.yPlane, logicalWidth: w, sampleBytes: 1);
@@ -135,6 +150,7 @@ void main() {
         uv[offset + 1] = 180 + row;
       }
     }
+    // ignore: deprecated_member_use_from_same_package
     final image = YuvImage.nv21(w, h, planes: [YuvPlane(h, yStride, 1, y), YuvPlane((h + 1) ~/ 2, uvStride, 2, uv)])..swapNv();
 
     expect(image.yPlane.rowStride, yStride);
@@ -156,16 +172,22 @@ void main() {
     final rgba = _buildRgbaPattern(w, h);
     final sourceBgra = _rgbaToBgra(rgba);
 
+    // ignore: deprecated_member_use_from_same_package
     final fullClamp = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+    // ignore: deprecated_member_use_from_same_package
     fullClamp.crop(const ui.Rect.fromLTWH(-3.2, -2.4, 20.1, 20.8));
     expect(fullClamp.width, w);
     expect(fullClamp.height, h);
+    // ignore: deprecated_member_use_from_same_package
     expect(fullClamp.toBgra8888(), orderedEquals(sourceBgra));
 
+    // ignore: deprecated_member_use_from_same_package
     final partial = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+    // ignore: deprecated_member_use_from_same_package
     partial.crop(const ui.Rect.fromLTWH(6.2, 4.3, 8.8, 6.7));
     expect(partial.width, 3);
     expect(partial.height, 3);
+    // ignore: deprecated_member_use_from_same_package
     expect(partial.toBgra8888(), orderedEquals(_cropBgra(sourceBgra, w, 6, 4, 3, 3)));
   });
 
@@ -175,26 +197,40 @@ void main() {
     final rgba = _buildRgbaPattern(w, h);
 
     final images = <YuvImage>[
+      // ignore: deprecated_member_use_from_same_package
       YuvImage.i420(w, h)..fromRgba8888(rgba),
+      // ignore: deprecated_member_use_from_same_package
       YuvImage.nv21(w, h)..fromRgba8888(rgba),
+      // ignore: deprecated_member_use_from_same_package
       YuvImage.bgra(w, h)..fromRgba8888(rgba),
     ];
 
     for (final image in images) {
       image
+        // ignore: deprecated_member_use_from_same_package
         ..rotate(YuvImageRotation.rotation90)
+        // ignore: deprecated_member_use_from_same_package
         ..crop(const ui.Rect.fromLTWH(2, 1, 10, 7))
+        // ignore: deprecated_member_use_from_same_package
         ..flipHorizontally()
+        // ignore: deprecated_member_use_from_same_package
         ..flipVertically()
+        // ignore: deprecated_member_use_from_same_package
         ..boxBlur(radius: 2)
+        // ignore: deprecated_member_use_from_same_package
         ..meanBlur(radius: 2)
+        // ignore: deprecated_member_use_from_same_package
         ..gaussianBlur(radius: 1, sigma: 1)
+        // ignore: deprecated_member_use_from_same_package
         ..negate()
+        // ignore: deprecated_member_use_from_same_package
         ..grayscale()
+        // ignore: deprecated_member_use_from_same_package
         ..blackwhite();
 
       expect(image.width, 10);
       expect(image.height, 7);
+      // ignore: deprecated_member_use_from_same_package
       expect(image.toBgra8888().length, 10 * 7 * 4);
     }
   });
@@ -208,6 +244,7 @@ void main() {
 
     test('specialized and generic constructors agree on a padded plane', () {
       final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]);
+      // ignore: deprecated_member_use_from_same_package
       final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)]);
 
       for (final image in <YuvImage>[specialized, generic]) {
@@ -228,6 +265,7 @@ void main() {
       expect(copied.yPlane.rowStride, 16);
       expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
 
+      // ignore: deprecated_member_use_from_same_package
       final blank = image.copy(blank: true);
       expect(blank.yPlane.rowStride, 16);
       expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
@@ -235,6 +273,7 @@ void main() {
 
     test('an invalid padded layout throws ArgumentError, not a RangeError', () {
       expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
+      // ignore: deprecated_member_use_from_same_package
       expect(() => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
     });
   });
@@ -247,6 +286,7 @@ void main() {
         for (final image in _imagesForEachFormat(size.w, size.h)) {
           final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 
+          // ignore: deprecated_member_use_from_same_package
           expect(image.getBytes(), hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
         }
       });
@@ -256,6 +296,7 @@ void main() {
           _fillPlanesWithPattern(image);
 
           expect(
+            // ignore: deprecated_member_use_from_same_package
             image.getBytes(),
             orderedEquals(_concatPlanesDirectly(image)),
             reason: '${image.format.name} ${size.w}x${size.h} must concatenate planes in format order',
@@ -268,6 +309,7 @@ void main() {
       final image = YuvImage.i420(4, 4);
       _fillPlanesWithPattern(image);
 
+      // ignore: deprecated_member_use_from_same_package
       final snapshot = image.getBytes();
       final planeByteBefore = image.yPlane.bytes[0];
 
@@ -284,6 +326,7 @@ void main() {
       final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 
       expect(expectedLength, 25);
+      // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), hasLength(expectedLength));
     });
   });
@@ -377,6 +420,7 @@ YuvPlane _copyUvInterleavedPlaneWithPadding({
 ///
 /// The legacy `nv21` name keeps its current NV12-like UV byte order; these
 /// cases only concatenate planes and never reinterpret chroma.
+// ignore: deprecated_member_use_from_same_package
 List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[YuvImage.bgra(w, h), YuvImage.i420(w, h), YuvImage.nv21(w, h)];
 
 /// Writes a per-plane pattern so a misordered or truncated concatenation cannot

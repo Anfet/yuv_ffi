@@ -36,6 +36,7 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// receiver still gets a working (capability-gated) deprecated method rather
 /// than an outright failure. [legacySwapNv] is the one exception: its
 /// two-step convert-then-swap cannot be made atomic against an arbitrary
+// ignore: deprecated_member_use_from_same_package
 /// foreign implementation, so [DeprecatedYuvImageApi.swapNv] throws
 /// [UnsupportedError] without mutating when the receiver does not implement
 /// this adapter, the same fallback section 8 documents for the legacy
@@ -84,6 +85,7 @@ abstract interface class YuvLegacyDispatchAdapter {
   /// `0.3.0` `toYuvI420()`/`toYuvBgra8888()`/`toYuvNv21()`: converts this
   /// image to [target] in place and returns `this`; a conversion to the
   /// format this image already has is a no-op. No capability gate.
+  // ignore: deprecated_member_use_from_same_package
   YuvImage legacyConvertTo(YuvFileFormat target);
 
   /// Converts this image to canonical NV12 storage first if it is not

@@ -315,10 +315,6 @@ jobs:
         working-directory: example
         run: flutter pub get
 
-      - name: Build example (ios, no codesign)
-        working-directory: example
-        run: flutter build ios --debug --no-codesign
-
       # Flutter's first simulator build can invoke pod install and start the
       # app link before Pods_Runner has been materialized. Prepare that scheme
       # explicitly so a fresh checkout has one deterministic build path.
@@ -361,6 +357,10 @@ jobs:
             --target=integration_test/native_app_runtime_smoke_test.dart \
             -d '${{ steps.ios-simulator.outputs.id }}' \
             --no-pub
+
+      - name: Build example (ios device, no codesign)
+        working-directory: example
+        run: flutter build ios --debug --no-codesign
 
   example-analyze-and-build:
     runs-on: ubuntu-latest

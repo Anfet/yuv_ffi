@@ -52,8 +52,8 @@ export 'shared/yuv_deprecated_api.dart';
 abstract interface class YuvImage {
   /// Pixel format of the current image.
   ///
-  /// A legacy `nv21`-labeled image (created through the deprecated
-  /// [YuvImage.nv21] factory or [YuvImage] unnamed factory) reports
+  /// A legacy `nv21`-labeled image (created through the legacy `nv21`
+  /// or unnamed factory) reports
   /// [YuvPixelFormat.nv12] here: the truthful name for the same canonical
   /// semi-planar storage (section 4, lines ~112/144 of
   /// `doc/api-abi-0.4-design.md`).
@@ -116,7 +116,7 @@ abstract interface class YuvImage {
 
   /// Creates an NV12 image with the truthfully named semi-planar storage.
   ///
-  /// Canonical replacement for [YuvImage.nv21]: same interleaved chroma
+  /// Canonical replacement for the legacy `nv21` factory: same interleaved chroma
   /// storage, without claiming the legacy NV21 byte order.
   ///
   /// [width] and [height] are image dimensions in pixels.
@@ -191,6 +191,7 @@ abstract interface class YuvImage {
       draft.width,
       draft.height,
       planes: draft.planes,
+      // ignore: deprecated_member_use_from_same_package
       allowLargerNvChromaStride: draft.format == YuvFileFormat.nv21 && draft.planes[1].pixelStride > YuvGeometry.nvChromaPixelStride,
     );
   }

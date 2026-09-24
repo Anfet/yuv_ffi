@@ -17,6 +17,7 @@ void main() {
     );
 
     final image = YuvImage.i420(1, 1);
+    // ignore: deprecated_member_use_from_same_package
     await image.load(Stream<List<int>>.value(v1));
 
     expect(image.format.name, 'i420');
@@ -25,6 +26,7 @@ void main() {
     expect(image.planes.map((plane) => plane.bytes.length), orderedEquals(<int>[4, 1, 1]));
 
     final resaved = <List<int>>[];
+    // ignore: deprecated_member_use_from_same_package
     await image.save(_ListSink(resaved));
     expect(resaved.expand((chunk) => chunk), orderedEquals(v1));
 

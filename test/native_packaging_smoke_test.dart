@@ -26,7 +26,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 void main() {
   test('the native library opens by its installed name and performs a real conversion', () async {
     // Fails loudly rather than skipping: see the library doc above.
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     const width = 4;
     const height = 4;
@@ -46,8 +46,8 @@ void main() {
 
     // Exercises a real native code path end to end: RGBA in, planar YUV
     // conversion in C, BGRA back out.
-    final image = YuvImage.i420(width, height)..fromRgba8888(rgba);
-    final bgra = image.toBgra8888();
+    final image = YuvImage.i420(width, height)..applyRgbaBytes(rgba);
+    final bgra = image.toBgraBytes();
 
     expect(bgra.length, width * height * 4, reason: 'toBgra8888 must return a tightly packed buffer');
     expect(bgra.any((byte) => byte != 0), isTrue, reason: 'a conversion that produced only zeroes means the native symbols did not run');
@@ -55,9 +55,9 @@ void main() {
 
     // An in-place native effect must also resolve and mutate the image, which
     // proves the operation symbols are present — not just the conversion ones.
-    final before = Uint8List.fromList(image.getBytes());
-    image.negate();
-    expect(image.getBytes(), isNot(orderedEquals(before)), reason: 'negate() must change the planes, or the native effect symbol did not run');
+    final before = Uint8List.fromList(image.toBytes());
+    image.applyNegate();
+    expect(image.toBytes(), isNot(orderedEquals(before)), reason: 'applyNegate() must change the planes, or the native effect symbol did not run');
 
     // Printed so a CI log records which platform actually produced this
     // evidence; a green run with no line here would be a run that never

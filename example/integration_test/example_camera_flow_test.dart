@@ -25,12 +25,17 @@ void main() {
     expect(find.byType(CameraScreen), findsNothing, reason: 'camera frame should return to the demo screen');
 
     final imageWidgetFinder = find.byType(YuvImageWidget);
+    await _pumpUntil(tester, imageWidgetFinder, 'captured frame should be displayed in the demo');
     expect(imageWidgetFinder, findsOneWidget);
     final image = tester.widget<YuvImageWidget>(imageWidgetFinder).image;
+    expect(image.format, YuvPixelFormat.bgra8888, reason: 'iOS camera capture should preserve its packed BGRA format');
+    expect(image.yPlane.pixelStride, 4, reason: 'each packed BGRA pixel occupies four bytes');
 
     // Exercise the same awaited detector path used by the Face detection button.
-    await (tester.state(find.byType(demo.MyApp)) as dynamic).doFaceDetection();
+    final appState = tester.state(find.byType(demo.MyApp)) as dynamic;
+    await appState.doFaceDetection();
     expect(tester.takeException(), isNull);
+    expect(appState.faceBox, isNotNull, reason: 'the captured front-camera frame should contain the test operator’s face');
 
     final originalWidth = image.width;
     final originalHeight = image.height;

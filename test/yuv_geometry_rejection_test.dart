@@ -19,12 +19,15 @@ void main() {
       // BGRA always packs four bytes per pixel, so the caller's value is
       // replaced rather than honoured; the other formats use it verbatim and
       // must reject a degenerate one.
+      // ignore: deprecated_member_use_from_same_package
       final bgra = YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 0);
       expect(bgra.yPlane.pixelStride, 4, reason: 'BGRA must normalize the luma stride to four bytes');
       expect(bgra.yPlane.rowStride, 8 * 4);
-
+      // ignore: deprecated_member_use_from_same_package
       for (final format in const [YuvFileFormat.i420, YuvFileFormat.nv21]) {
+        // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, 8, 8, yPixelStride: 0), throwsArgumentError, reason: '${format.name} accepted yPixelStride 0');
+        // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, 8, 8, yPixelStride: -1), throwsArgumentError, reason: '${format.name} accepted a negative yPixelStride');
       }
     });
@@ -32,36 +35,42 @@ void main() {
     test('a degenerate chroma pixel stride never reaches an allocated plane', () {
       // Interleaved NV chroma is always a packed (U, V) pair, so a smaller
       // value is raised to two instead of producing an unusable plane.
+      // Legacy nv21 normalizes a degenerate chroma stride; nv12 correctly
+      // rejects it. This case records the retained compatibility contract.
+      // ignore: deprecated_member_use_from_same_package
       final nv = YuvImage.nv21(8, 8, uvPixelStride: 0);
       expect(nv.uPlane.pixelStride, 2, reason: 'NV must normalize the chroma stride to a packed pair');
 
       // I420 uses the caller's value directly for both chroma planes.
       expect(() => YuvImage.i420(8, 8, uvPixelStride: 0), throwsArgumentError);
+      // ignore: deprecated_member_use_from_same_package
       expect(() => YuvImage(YuvFileFormat.i420, 8, 8, uvPixelStride: 0), throwsArgumentError);
       expect(() => YuvImage.i420(8, 8, uvPixelStride: -2), throwsArgumentError);
     });
 
     test('valid default geometry still constructs', () {
+      // ignore: deprecated_member_use_from_same_package
       for (final format in YuvFileFormat.values) {
+        // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, 8, 8), returnsNormally, reason: '${format.name} rejected its own default geometry');
       }
     });
   });
 
   group('interleaved NV chroma requires a packed pair stride', () {
-    test('a chroma pixel stride other than two is rejected', () {
-      // The converters address chroma as a packed (U, V) pair, so a stride
-      // other than two has no meaning to them.
+    test('a padded chroma pixel stride is accepted, but an undersized one is rejected', () {
+      // The converters address chroma as a packed (U, V) pair. A larger
+      // stride preserves padding; a stride below two cannot hold a pair.
       expect(
-        () => YuvImage.nv21(8, 8, planes: [filled(8, 8), filled(4, 12, 3)]),
-        throwsArgumentError,
-        reason: 'pixelStride 3 reaches native code that assumes a packed pair',
+        () => YuvImage.nv12(8, 8, planes: [filled(8, 8), filled(4, 12, 3)]),
+        returnsNormally,
+        reason: 'pixelStride 3 preserves a padded packed-pair layout',
       );
-      expect(() => YuvImage.nv21(8, 8, planes: [filled(8, 8), filled(4, 4, 1)]), throwsArgumentError);
+      expect(() => YuvImage.nv12(8, 8, planes: [filled(8, 8), filled(4, 4, 1)]), throwsArgumentError);
     });
 
     test('a packed pair stride is accepted', () {
-      expect(() => YuvImage.nv21(8, 8, planes: [filled(8, 8), filled(4, 8, 2)]), returnsNormally);
+      expect(() => YuvImage.nv12(8, 8, planes: [filled(8, 8), filled(4, 8, 2)]), returnsNormally);
     });
   });
 
@@ -120,6 +129,7 @@ void main() {
       // saving an image whose geometry is already the malformed one is not
       // possible, so this test drives load() with a truncated payload.
       return () async* {
+        // ignore: deprecated_member_use_from_same_package
         await image.save(sink);
         final bytes = chunks.expand((c) => c).toList();
         // Truncate the payload so the plane table cannot be satisfied.
@@ -139,6 +149,7 @@ void main() {
 
       // YUV-07 pins this to FormatException; it was deliberately loose while
       // the reader could still surface RangeError or TypeError instead.
+      // ignore: deprecated_member_use_from_same_package
       await expectLater(image.load(malformedPayload(format: 'i420', width: 8, height: 8, planes: const [])), throwsFormatException);
 
       expect(image.width, before.width, reason: 'width was mutated by a failed load');
@@ -153,9 +164,11 @@ void main() {
       source.yPlane.bytes[0] = 42;
 
       final chunks = <List<int>>[];
+      // ignore: deprecated_member_use_from_same_package
       await source.save(_CollectingSink(chunks));
 
       final target = YuvImage.i420(2, 2);
+      // ignore: deprecated_member_use_from_same_package
       await target.load(Stream<List<int>>.fromIterable(chunks));
 
       expect(target.width, 8);
@@ -166,6 +179,7 @@ void main() {
   });
 
   group('padded BGRA survives a native effect', () {
+    // ignore: deprecated_member_use_from_same_package
     YuvImage paddedBgra() => YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [filled(8, 8 * 4 + 16, 4)]);
 
     test('blur operations accept a padded plane and leave its padding untouched', () {
@@ -177,9 +191,9 @@ void main() {
       // supported and its padding is contractually preserved (section 11).
       const rowStride = 8 * 4 + 16;
       for (final blur in <void Function(YuvImage)>[
-        (image) => image.gaussianBlur(radius: 1),
-        (image) => image.boxBlur(radius: 1),
-        (image) => image.meanBlur(radius: 1),
+        (image) => image.applyGaussianBlur(radius: 1, sigma: 1.0),
+        (image) => image.applyBoxBlur(radius: 1),
+        (image) => image.applyMeanBlur(radius: 1),
       ]) {
         final image = paddedBgra();
         // Canary the 16 padding bytes of every row, which no operation may
@@ -202,9 +216,9 @@ void main() {
     });
 
     test('a tight BGRA plane is still accepted by the same operations', () {
-      expect(() => YuvImage.bgra(8, 8).gaussianBlur(radius: 1), returnsNormally);
-      expect(() => YuvImage.bgra(8, 8).boxBlur(radius: 1), returnsNormally);
-      expect(() => YuvImage.bgra(8, 8).meanBlur(radius: 1), returnsNormally);
+      expect(() => YuvImage.bgra(8, 8).applyGaussianBlur(radius: 1, sigma: 1.0), returnsNormally);
+      expect(() => YuvImage.bgra(8, 8).applyBoxBlur(radius: 1), returnsNormally);
+      expect(() => YuvImage.bgra(8, 8).applyMeanBlur(radius: 1), returnsNormally);
     });
   }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
 }

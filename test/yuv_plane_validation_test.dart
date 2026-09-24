@@ -43,10 +43,15 @@ void main() {
 
   group('image dimensions', () {
     test('rejects zero and negative width/height for every format', () {
+      // ignore: deprecated_member_use_from_same_package
       for (final format in YuvFileFormat.values) {
+        // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, 0, 8), throwsArgumentError, reason: '${format.name} accepted width 0');
+        // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, 8, 0), throwsArgumentError, reason: '${format.name} accepted height 0');
+        // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, -8, 8), throwsArgumentError, reason: '${format.name} accepted negative width');
+        // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, 8, -8), throwsArgumentError, reason: '${format.name} accepted negative height');
       }
     });
@@ -58,8 +63,9 @@ void main() {
       expect(() => YuvImage.i420(100, 100, planes: [YuvPlane(1, 1)]), throwsArgumentError);
 
       expect(() => YuvImage.i420(8, 8, planes: [plane(8, 8), plane(4, 4)]), throwsArgumentError, reason: 'I420 needs 3 planes');
-      expect(() => YuvImage.nv21(8, 8, planes: [plane(8, 8)]), throwsArgumentError, reason: 'NV needs 2 planes');
+      expect(() => YuvImage.nv12(8, 8, planes: [plane(8, 8)]), throwsArgumentError, reason: 'NV needs 2 planes');
       expect(
+        // ignore: deprecated_member_use_from_same_package
         () => YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [plane(8, 32, 4), plane(4, 8, 2)]),
         throwsArgumentError,
         reason: 'BGRA needs exactly 1 plane',
@@ -90,14 +96,15 @@ void main() {
 
     test('rejects an NV chroma plane that cannot hold the final UV pair', () {
       // Interleaved chroma needs (uvWidth - 1) * pixelStride + 2 bytes per row.
-      expect(() => YuvImage.nv21(8, 8, planes: [plane(8, 8), YuvPlane(4, 7, 2, Uint8List(28))]), throwsArgumentError);
+      expect(() => YuvImage.nv12(8, 8, planes: [plane(8, 8), YuvPlane(4, 7, 2, Uint8List(28))]), throwsArgumentError);
     });
   });
 
   group('valid layouts still work', () {
     test('accepts tight I420, NV21 and BGRA', () {
       expect(YuvImage.i420(8, 8, planes: [plane(8, 8), plane(4, 4), plane(4, 4)]).planes.length, 3);
-      expect(YuvImage.nv21(8, 8, planes: [plane(8, 8), plane(4, 8, 2)]).planes.length, 2);
+      expect(YuvImage.nv12(8, 8, planes: [plane(8, 8), plane(4, 8, 2)]).planes.length, 2);
+      // ignore: deprecated_member_use_from_same_package
       expect(YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [plane(8, 32, 4)]).planes.length, 1);
     });
 
@@ -117,6 +124,7 @@ void main() {
       const width = 8;
       const height = 8;
       const paddedRowStride = width * 4 + 16;
+      // ignore: deprecated_member_use_from_same_package
       expect(() => YuvImage(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: [plane(height, paddedRowStride, 4)]), returnsNormally);
     });
 
@@ -127,7 +135,7 @@ void main() {
     test('accepts odd dimensions using ceil-sized chroma planes', () {
       // 3x5 -> chroma is ceil(3/2) x ceil(5/2) = 2x3.
       expect(() => YuvImage.i420(3, 5, planes: [plane(5, 3), plane(3, 2), plane(3, 2)]), returnsNormally);
-      expect(() => YuvImage.nv21(3, 5, planes: [plane(5, 3), plane(3, 4, 2)]), returnsNormally);
+      expect(() => YuvImage.nv12(3, 5, planes: [plane(5, 3), plane(3, 4, 2)]), returnsNormally);
       // 1x1 -> chroma is 1x1.
       expect(() => YuvImage.i420(1, 1, planes: [plane(1, 1), plane(1, 1), plane(1, 1)]), returnsNormally);
     });
@@ -138,6 +146,7 @@ void main() {
     });
 
     test('default constructors allocate self-consistent geometry', () {
+      // ignore: deprecated_member_use_from_same_package
       for (final format in YuvFileFormat.values) {
         for (final size in const <List<int>>[
           [1, 1],
@@ -145,8 +154,10 @@ void main() {
           [8, 8],
           [127, 255],
         ]) {
+          // ignore: deprecated_member_use_from_same_package
           final image = YuvImage(format, size[0], size[1]);
           expect(
+            // ignore: deprecated_member_use_from_same_package
             () => YuvImage(format, size[0], size[1], planes: image.planes),
             returnsNormally,
             reason: '${format.name} ${size[0]}x${size[1]} failed to re-validate its own planes',

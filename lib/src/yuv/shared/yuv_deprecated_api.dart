@@ -40,6 +40,7 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// breaking change requires every `YuvImage` implementer to provide -- so a
 /// pre-existing foreign implementation still gets a working (if
 /// capability-gated) deprecated method rather than an outright failure. The
+// ignore: deprecated_member_use_from_same_package
 /// two exceptions are [swapNv] and [load]: neither can be expressed as a call
 /// to a public `apply*`/`applyFormat` member on a foreign receiver -- swapNv's
 /// two-step convert-then-swap cannot be staged atomically (see its own doc),

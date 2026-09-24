@@ -15,6 +15,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
+    // ignore: deprecated_member_use_from_same_package
     await YuvFfi.ensureInitialized();
   });
 
@@ -24,7 +25,9 @@ void main() {
     final rgba = _buildRgbaPattern(w, h);
     final expectedBgra = _rgbaToBgra(rgba);
 
+    // ignore: deprecated_member_use_from_same_package
     final image = YuvImage.i420(w, h)..fromRgba8888(rgba);
+    // ignore: deprecated_member_use_from_same_package
     final outBgra = image.toBgra8888();
 
     expect(_mae(outBgra, expectedBgra), lessThan(20.0));
@@ -36,7 +39,9 @@ void main() {
     final rgba = _buildRgbaPattern(w, h);
     final expectedBgra = _rgbaToBgra(rgba);
 
+    // ignore: deprecated_member_use_from_same_package
     final image = YuvImage.nv21(w, h)..fromRgba8888(rgba);
+    // ignore: deprecated_member_use_from_same_package
     final outBgra = image.toBgra8888();
 
     expect(_mae(outBgra, expectedBgra), lessThan(55.0));
@@ -48,9 +53,13 @@ void main() {
     final rgba = _buildRgbaPattern(w, h);
     final expectedBgra = _rgbaToBgra(rgba);
 
+    // ignore: deprecated_member_use_from_same_package
     final i420 = YuvImage.i420(w, h)..fromRgba8888(rgba);
+    // ignore: deprecated_member_use_from_same_package
     final nv21 = i420.toYuvNv21();
+    // ignore: deprecated_member_use_from_same_package
     final back = nv21.toYuvI420();
+    // ignore: deprecated_member_use_from_same_package
     final outBgra = back.toBgra8888();
 
     expect(identical(nv21, i420), isTrue);
@@ -66,8 +75,10 @@ void main() {
     const w = 48;
     const h = 32;
     final rgba = _buildRgbaPattern(w, h);
+    // ignore: deprecated_member_use_from_same_package
     final nv21 = YuvImage.nv21(w, h)..fromRgba8888(rgba);
 
+    // ignore: deprecated_member_use_from_same_package
     final bgra = nv21.toYuvBgra8888();
     expect(identical(bgra, nv21), isTrue);
     expect(bgra.format, YuvPixelFormat.bgra8888);

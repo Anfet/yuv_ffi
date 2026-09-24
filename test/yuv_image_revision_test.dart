@@ -55,8 +55,7 @@ void main() {
       test('rotating by zero degrees', () {
         final image = YuvImage.bgra(4, 4);
         final before = image.revision;
-
-        image.rotate(YuvImageRotation.rotation0);
+        image.applyRotation(YuvImageRotation.rotation0);
 
         expect(image.revision, before);
       });
@@ -64,25 +63,23 @@ void main() {
       test('converting to the format the image already has', () {
         final bgra = YuvImage.bgra(4, 4);
         final bgraBefore = bgra.revision;
-        bgra.toYuvBgra8888();
+        bgra.applyFormat(YuvPixelFormat.bgra8888);
         expect(bgra.revision, bgraBefore);
 
         final i420 = YuvImage.i420(4, 4);
         final i420Before = i420.revision;
-        i420.toYuvI420();
+        i420.applyFormat(YuvPixelFormat.i420);
         expect(i420.revision, i420Before);
-
-        final nv21 = YuvImage.nv21(4, 4);
+        final nv21 = YuvImage.nv12(4, 4);
         final nv21Before = nv21.revision;
-        nv21.toYuvNv21();
+        nv21.applyFormat(YuvPixelFormat.nv12);
         expect(nv21.revision, nv21Before);
       });
 
       test('an empty crop', () {
         final image = YuvImage.bgra(8, 8);
         final before = image.revision;
-
-        image.crop(const ui.Rect.fromLTWH(4, 4, 0, 0));
+        image.applyCrop(const ui.Rect.fromLTWH(4, 4, 0, 0));
 
         expect(image.revision, before);
       });
@@ -95,20 +92,20 @@ void main() {
 
         test('in-place effects', () {
           for (final operation in <String>['grayscale', 'negate', 'blackwhite', 'flipHorizontally', 'flipVertically']) {
-            final image = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
+            final image = YuvImage.i420(8, 8)..applyRgbaBytes(rgba(8, 8));
             final before = image.revision;
 
             switch (operation) {
               case 'grayscale':
-                image.grayscale();
+                image.applyGrayscale();
               case 'negate':
-                image.negate();
+                image.applyNegate();
               case 'blackwhite':
-                image.blackwhite();
+                image.applyBlackWhite();
               case 'flipHorizontally':
-                image.flipHorizontally();
+                image.applyFlipHorizontal();
               case 'flipVertically':
-                image.flipVertically();
+                image.applyFlipVertical();
             }
 
             expect(image.revision, before + 1, reason: '$operation must advance the revision exactly once');
@@ -118,8 +115,7 @@ void main() {
         test('fromRgba8888', () {
           final image = YuvImage.i420(8, 8);
           final before = image.revision;
-
-          image.fromRgba8888(rgba(8, 8));
+          image.applyRgbaBytes(rgba(8, 8));
 
           expect(image.revision, before + 1);
         });
@@ -129,35 +125,31 @@ void main() {
           // the revision on its own.
           final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(2 * 16))]);
           final before = image.revision;
-
-          image.fromRgba8888(rgba(2, 2));
+          image.applyRgbaBytes(rgba(2, 2));
 
           expect(image.revision, before + 1);
         });
 
         test('a real crop', () {
-          final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
+          final image = YuvImage.bgra(8, 8)..applyRgbaBytes(rgba(8, 8));
           final before = image.revision;
-
-          image.crop(const ui.Rect.fromLTWH(0, 0, 4, 4));
+          image.applyCrop(const ui.Rect.fromLTWH(0, 0, 4, 4));
 
           expect(image.revision, before + 1);
         });
 
         test('a real rotate', () {
-          final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
+          final image = YuvImage.bgra(8, 8)..applyRgbaBytes(rgba(8, 8));
           final before = image.revision;
-
-          image.rotate(YuvImageRotation.rotation90);
+          image.applyRotation(YuvImageRotation.rotation90);
 
           expect(image.revision, before + 1);
         });
 
         test('a format conversion', () {
-          final image = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
+          final image = YuvImage.i420(8, 8)..applyRgbaBytes(rgba(8, 8));
           final before = image.revision;
-
-          image.toYuvNv21();
+          image.applyFormat(YuvPixelFormat.nv12);
 
           expect(image.revision, before + 1);
         });
@@ -165,14 +157,13 @@ void main() {
         test('swapNv advances exactly once even when it converts first', () {
           // swapNv() calls toYuvNv21() internally, which bumps on its own. One
           // public call must still count as one revision.
-          final alreadyNv = YuvImage.nv21(8, 8)..fromRgba8888(rgba(8, 8));
+          final alreadyNv = YuvImage.nv12(8, 8)..applyRgbaBytes(rgba(8, 8));
           final alreadyNvBefore = alreadyNv.revision;
-          alreadyNv.swapNv();
+          alreadyNv.applyChromaSwap();
           expect(alreadyNv.revision, alreadyNvBefore + 1, reason: 'no conversion needed');
-
-          final needsConversion = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
+          final needsConversion = YuvImage.i420(8, 8)..applyRgbaBytes(rgba(8, 8));
           final needsConversionBefore = needsConversion.revision;
-          needsConversion.swapNv();
+          needsConversion.applyChromaSwap();
           expect(needsConversion.revision, needsConversionBefore + 1, reason: 'an internal conversion must not double-count');
         });
       },

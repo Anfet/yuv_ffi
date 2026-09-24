@@ -12,13 +12,18 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 /// Every failure throws [ArgumentError] before any native allocation happens.
 abstract final class YuvGeometry {
   /// Number of planes required by [format].
+  // ignore: deprecated_member_use_from_same_package
   static int planeCountFor(YuvFileFormat format) => switch (format) {
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.bgra8888 => 1,
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.nv21 => 2,
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.i420 => 3,
   };
 
   /// Bytes per sample in the luma/packed plane of [format].
+  // ignore: deprecated_member_use_from_same_package
   static int _lumaSampleBytes(YuvFileFormat format) => format == YuvFileFormat.bgra8888 ? 4 : 1;
 
   /// Chroma plane height for [height] rows, rounded up for odd sizes.
@@ -67,6 +72,7 @@ abstract final class YuvGeometry {
   ///
   /// Throws [ArgumentError] when the geometry is inconsistent.
   static void validateImage({
+    // ignore: deprecated_member_use_from_same_package
     required YuvFileFormat format,
     required int width,
     required int height,
@@ -82,6 +88,7 @@ abstract final class YuvGeometry {
 
     validatePlane(plane: planes[0], label: 'yPlane', expectedHeight: height, expectedWidth: width, sampleBytes: _lumaSampleBytes(format));
 
+    // ignore: deprecated_member_use_from_same_package
     if (format == YuvFileFormat.bgra8888) {
       return;
     }
@@ -92,6 +99,7 @@ abstract final class YuvGeometry {
     // NV keeps one interleaved chroma plane; I420 keeps two planar ones. An
     // interleaved NV row holds a (U, V) pair per chroma sample, so its last
     // sample needs one extra byte beyond the luma-style minimum.
+    // ignore: deprecated_member_use_from_same_package
     if (format == YuvFileFormat.nv21) {
       // The converters index chroma as a packed pair, so a stride below two
       // cannot hold it and is always rejected. A stride above two is a pixel
@@ -136,6 +144,7 @@ abstract final class YuvGeometry {
   /// judge a plane from its metadata, before buffering the bytes that metadata
   /// describes.
   static ({int height, int minRowStride})? expectedPlaneMetadata({
+    // ignore: deprecated_member_use_from_same_package
     required YuvFileFormat format,
     required int width,
     required int height,
@@ -148,6 +157,7 @@ abstract final class YuvGeometry {
     if (planeIndex == 0) {
       return (height: height, minRowStride: (width - 1) * pixelStride + _lumaSampleBytes(format));
     }
+    // ignore: deprecated_member_use_from_same_package
     final sampleBytes = format == YuvFileFormat.nv21 ? nvChromaPixelStride : 1;
     return (height: chromaHeight(height), minRowStride: (chromaWidth(width) - 1) * pixelStride + sampleBytes);
   }

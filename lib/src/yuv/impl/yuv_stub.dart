@@ -23,12 +23,15 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   // I420 stores U and V as separate single-byte-per-sample planes, so the
   // default pixelStride is 1, unlike NV21's interleaved (U, V) pairs.
   YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
+    // ignore: deprecated_member_use_from_same_package
     : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+    // ignore: deprecated_member_use_from_same_package
     : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
 
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
+    // ignore: deprecated_member_use_from_same_package
     : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
 
   /// Truthfully named replacement for [YuvImageImpl.nv21]: same semi-planar
@@ -40,6 +43,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   /// [YuvGeometry.validateImage]'s `allowLargerNvChromaStride`.
   YuvImageImpl.nv12(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
     : _state = YuvImageState(
+        // ignore: deprecated_member_use_from_same_package
         YuvFileFormat.nv21,
         width,
         height,
@@ -50,6 +54,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       );
 
   YuvImageImpl(
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat format,
     int width,
     int height, {
@@ -83,6 +88,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   ///
   /// There is no backend to convert samples with here, so only the exact
   /// length is validated and, for BGRA, the bytes are reordered directly
+  // ignore: deprecated_member_use_from_same_package
   /// (matching [fromRgba8888]); a non-BGRA target has no conversion and stays
   /// zero-filled, consistent with this stub's no-op processing contract.
   factory YuvImageImpl.fromRgbaBytes(Uint8List bytes, {required int width, required int height, required YuvPixelFormat format}) {
@@ -166,6 +172,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       return;
     }
 
+    // ignore: deprecated_member_use_from_same_package
     if (_state.format == YuvFileFormat.bgra8888) {
       final bgra = Uint8List(bytes.length);
       for (int i = 0; i < bytes.length; i += 4) {
@@ -240,6 +247,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   }
 
   @override
+  // ignore: deprecated_member_use_from_same_package
   YuvImage legacyConvertTo(YuvFileFormat target) {
     // Replaces the planes with a freshly allocated, zeroed set for [target] at
     // the current geometry. There is no backend to convert samples with, so a
@@ -329,6 +337,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
 
   @override
   Uint8List toBgraBytes() {
+    // ignore: deprecated_member_use_from_same_package
     if (_state.format == YuvFileFormat.bgra8888) {
       return Uint8List.fromList(yPlane.bytes);
     }

@@ -84,6 +84,7 @@ void main() {
     test('does not affect the legacy nv21 factory: an explicit stride above 2 is still rejected there', () {
       YuvPlane filled(int height, int rowStride, int pixelStride) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
       expect(
+        // ignore: deprecated_member_use_from_same_package
         () => YuvImage.nv21(4, 4, planes: [filled(4, 4, 1), filled(2, 6, 3)]),
         throwsArgumentError,
         reason: 'the relaxed nv12 check must not leak into the legacy nv21 entry point',
@@ -112,6 +113,7 @@ void main() {
         // corruption of the gap bytes could only come from the operation
         // treating the plane as tightly packed instead of walking it through
         // its declared strides.
+        // ignore: deprecated_member_use_from_same_package
         image.grayscale();
 
         for (int row = 0; row < 2; row++) {

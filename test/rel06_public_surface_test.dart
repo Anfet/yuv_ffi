@@ -29,8 +29,10 @@ void main() {
     final YuvImage bgra = YuvImage.bgra(4, 4);
     final YuvImage allocated = YuvImage.allocate(YuvPixelFormat.i420, 4, 4);
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     final YuvImage nv21 = YuvImage.nv21(4, 4);
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     final YuvImage explicit = YuvImage(YuvFileFormat.i420, 4, 4);
 
     for (final image in <YuvImage>[i420, nv12, bgra, allocated, nv21, explicit]) {
@@ -58,20 +60,26 @@ void main() {
 
     // Plane aliases.
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     expect(image.y, same(image.yPlane));
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     expect(image.u, isNull);
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     expect(image.v, isNull);
 
     // Byte accessors.
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     expect(image.getBytes(), image.toBytes());
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     expect(image.toBgra8888(), image.toBgraBytes());
 
     // copy(blank:) with the deprecated named argument.
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     final blank = image.copy(blank: true);
     expect(blank.width, image.width);
 
@@ -87,6 +95,7 @@ void main() {
     // behavior against the fake library deterministically.
     try {
       // ignore: deprecated_member_use
+      // ignore: deprecated_member_use_from_same_package
       image.blackwhite();
     } catch (_) {
       // Expected on a host without a real native/WASM library.
@@ -98,6 +107,7 @@ void main() {
     expect(image.width, 4);
     expect(image.height, 4);
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     expect(image.y, same(image.yPlane));
   });
 }

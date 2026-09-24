@@ -19,7 +19,7 @@ void main() {
       final plane = YuvPlane(height, rowStride, pixelStride, source);
       final image = YuvImage.bgra(width, height, planes: [plane]);
 
-      final packed = image.toBgra8888();
+      final packed = image.toBgraBytes();
 
       expect(packed, [10, 11, 12, 13, 20, 21, 22, 23], reason: 'the gap byte between pixels must not leak into the tight result');
     });
@@ -49,7 +49,7 @@ void main() {
       final plane = YuvPlane(height, rowStride, pixelStride, source);
       final image = YuvImage.bgra(width, height, planes: [plane]);
 
-      final packed = image.toBgra8888();
+      final packed = image.toBgraBytes();
 
       expect(packed, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], reason: 'neither the per-pixel gap nor the row padding may appear');
     });
@@ -65,7 +65,7 @@ void main() {
       final plane = YuvPlane(height, rowStride, pixelStride, source);
       final image = YuvImage.bgra(width, height, planes: [plane]);
 
-      image.toBgra8888();
+      image.toBgraBytes();
 
       expect(image.yPlane.bytes, originalCopy, reason: 'packing into a tight buffer must not mutate the source plane');
     });
@@ -74,7 +74,7 @@ void main() {
       final image = YuvImage.bgra(2, 2);
       image.yPlane.assignFrom(Uint8List.fromList(List<int>.generate(16, (i) => i)));
 
-      expect(image.toBgra8888(), List<int>.generate(16, (i) => i));
+      expect(image.toBgraBytes(), List<int>.generate(16, (i) => i));
     });
   });
 }

@@ -400,6 +400,7 @@ void main() {
 
   setUpAll(() async {
     try {
+      // ignore: deprecated_member_use_from_same_package
       await YuvFfi.ensureInitialized();
     } catch (_) {
       // Widget tests can run without native backend initialization.

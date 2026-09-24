@@ -91,6 +91,7 @@ Future<void> _useModule(JSObject module) async {
   YuvWasmLoader.debugSetInitializer(({required String scriptPath, required String wasmPath, required String moduleFactoryName}) async {
     return YuvModule(module);
   });
+  // ignore: deprecated_member_use_from_same_package
   await YuvFfi.ensureInitialized();
 }
 
@@ -99,9 +100,13 @@ List<String> _calls(JSObject module) => [for (final c in module.getProperty<JSAr
 YuvPlane _plane(int height, int rowStride, int pixelStride, int fill) =>
     YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride)..fillRange(0, height * rowStride, fill));
 
+// ignore: deprecated_member_use_from_same_package
 YuvImage _imageOf(YuvFileFormat format) => switch (format) {
+  // ignore: deprecated_member_use_from_same_package
   YuvFileFormat.i420 => YuvImage.i420(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 4, 1, 0x50), _plane(4, 4, 1, 0x70)]),
+  // ignore: deprecated_member_use_from_same_package
   YuvFileFormat.bgra8888 => YuvImage.bgra(8, 8, planes: [_plane(8, 32, 4, 0x30)]),
+  // ignore: deprecated_member_use_from_same_package
   YuvFileFormat.nv21 => YuvImage.nv21(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 8, 2, 0x50)]),
 };
 
@@ -112,6 +117,7 @@ void main() {
     expect(kIsWeb, isTrue);
   });
 
+  // ignore: deprecated_member_use_from_same_package
   for (final format in [YuvFileFormat.i420, YuvFileFormat.bgra8888]) {
     test('a failing chroma swap after a successful conversion leaves a ${format.name} receiver untouched', () async {
       // Call 1 is yuv_convert_v1 and succeeds; call 2 is yuv_chroma_swap_v1
@@ -120,13 +126,16 @@ void main() {
       await _useModule(module);
 
       final image = _imageOf(format);
+      // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
+      // ignore: deprecated_member_use_from_same_package
       expect(() => image.swapNv(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', YuvOperation.chromaSwap)));
 
       expect(_calls(module), [yuvSymbolConvertV1, yuvSymbolChromaSwapV1], reason: 'the conversion must have succeeded before the swap was attempted');
       expect(image.format, format, reason: 'format changed although swapNv failed');
+      // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), bytesBefore, reason: 'bytes changed although swapNv failed');
       expect(image.width, 8);
       expect(image.height, 8);
@@ -138,13 +147,16 @@ void main() {
       await _useModule(module);
 
       final image = _imageOf(format);
+      // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
+      // ignore: deprecated_member_use_from_same_package
       expect(() => image.swapNv(), throwsA(isA<YuvNativeException>()));
 
       expect(_calls(module), [yuvSymbolConvertV1]);
       expect(image.format, format);
+      // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), bytesBefore);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore);
     });
@@ -156,14 +168,18 @@ void main() {
     final module = _statusModule([yuvStatusInternalError]);
     await _useModule(module);
 
+    // ignore: deprecated_member_use_from_same_package
     final image = _imageOf(YuvFileFormat.nv21);
+    // ignore: deprecated_member_use_from_same_package
     final bytesBefore = image.getBytes();
     final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
+    // ignore: deprecated_member_use_from_same_package
     expect(() => image.swapNv(), throwsA(isA<YuvNativeException>()));
 
     expect(_calls(module), [yuvSymbolChromaSwapV1], reason: 'an NV21 receiver needs no conversion');
     expect(image.format, YuvPixelFormat.nv12);
+    // ignore: deprecated_member_use_from_same_package
     expect(image.getBytes(), bytesBefore);
     expect((image as YuvRevisionAware).internalRevision, revisionBefore);
   });
@@ -174,9 +190,11 @@ void main() {
     final module = _statusModule([yuvStatusOk, yuvStatusOk]);
     await _useModule(module);
 
+    // ignore: deprecated_member_use_from_same_package
     final image = _imageOf(YuvFileFormat.i420);
     final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
+    // ignore: deprecated_member_use_from_same_package
     image.swapNv();
 
     expect(_calls(module), [yuvSymbolConvertV1, yuvSymbolChromaSwapV1]);

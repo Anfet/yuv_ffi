@@ -14,6 +14,7 @@ void main() {
     source.vPlane.bytes[0] = 6;
 
     final savedChunks = <List<int>>[];
+    // ignore: deprecated_member_use_from_same_package
     await source.save(_ListSink(savedChunks));
     final v1 = savedChunks.expand((chunk) => chunk).toList();
     expect(v1.length, 216);
@@ -21,6 +22,7 @@ void main() {
     print('REL07_024_V1_BASE64 ${base64Encode(v1)}');
 
     final loaded = YuvImage.i420(1, 1);
+    // ignore: deprecated_member_use_from_same_package
     await loaded.load(Stream<List<int>>.value(v1));
     expect(loaded.format.name, 'i420');
     expect(loaded.width, 2);

@@ -58,49 +58,62 @@ void main() {
 
   YuvImage i420() => YuvImage.i420(w, h);
 
+  // ignore: deprecated_member_use_from_same_package
   YuvImage nv21() => YuvImage.nv21(w, h);
 
   YuvImage bgra() => YuvImage.bgra(w, h);
 
   group('native allocation safety', () {
     test('blackwhite releases partial state when an inner allocation fails', () {
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('blackwhite(i420)', () => i420().blackwhite());
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('blackwhite(nv21)', () => nv21().blackwhite());
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('blackwhite(bgra)', () => bgra().blackwhite());
     });
 
     test('crop releases srcDef when destination allocation fails', () {
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('crop', () => i420().crop(const ui.Rect.fromLTWH(0, 0, 4, 4)));
     });
 
     test('rotate releases srcDef when destination allocation fails', () {
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('rotate', () => i420().rotate(YuvImageRotation.rotation90));
     });
 
     test('swapNv releases the source def when destination allocation fails', () {
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('swapNv', () => nv21().swapNv());
     });
 
     test('toBgra8888 releases def when the output buffer allocation fails', () {
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('toBgra8888', () => nv21().toBgra8888());
     });
 
     test('toYuvI420 releases def when destination allocation fails', () {
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('toYuvI420', () => nv21().toYuvI420());
     });
 
     test('toYuvNv21 releases def when destination allocation fails', () {
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('toYuvNv21', () => i420().toYuvNv21());
     });
 
     test('fromRgba8888 releases the rgba buffer when the def allocation fails', () {
       final rgba = Uint8List(w * h * 4);
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('fromRgba8888', () => i420().fromRgba8888(rgba));
     });
 
     test('boxBlur and meanBlur release def when the rect allocation fails', () {
       const rect = ui.Rect.fromLTWH(0, 0, 4, 4);
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('boxBlur', () => i420().boxBlur(radius: 1, rect: rect));
+      // ignore: deprecated_member_use_from_same_package
       expectNoLeakAtEveryAllocation('meanBlur', () => i420().meanBlur(radius: 1, rect: rect));
     });
 
@@ -108,14 +121,23 @@ void main() {
       final allocator = InstrumentedNativeAllocator();
       try {
         withNativeAllocator(allocator, () {
+          // ignore: deprecated_member_use_from_same_package
           i420().blackwhite();
+          // ignore: deprecated_member_use_from_same_package
           nv21().swapNv();
+          // ignore: deprecated_member_use_from_same_package
           i420().crop(const ui.Rect.fromLTWH(0, 0, 4, 4));
+          // ignore: deprecated_member_use_from_same_package
           i420().rotate(YuvImageRotation.rotation90);
+          // ignore: deprecated_member_use_from_same_package
           nv21().toBgra8888();
+          // ignore: deprecated_member_use_from_same_package
           nv21().toYuvI420();
+          // ignore: deprecated_member_use_from_same_package
           i420().toYuvNv21();
+          // ignore: deprecated_member_use_from_same_package
           i420().fromRgba8888(Uint8List(w * h * 4));
+          // ignore: deprecated_member_use_from_same_package
           i420().boxBlur(radius: 1, rect: const ui.Rect.fromLTWH(0, 0, 4, 4));
         });
         // A double free throws inside the allocator, so reaching here with a
@@ -132,6 +154,7 @@ void main() {
       try {
         withNativeAllocator(allocator, () {
           expect(
+            // ignore: deprecated_member_use_from_same_package
             () => i420().crop(const ui.Rect.fromLTWH(0, 0, 4, 4)),
             throwsA(predicate((e) => e.toString().contains('Injected allocation failure'))),
           );

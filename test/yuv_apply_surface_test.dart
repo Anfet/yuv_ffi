@@ -43,11 +43,13 @@ void main() {
       // still null, so every apply* must fail closed rather than assume
       // support.
       final image = YuvImage.i420(4, 4);
+      // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
       expect(() => image.applyGrayscale(), throwsA(isA<UnsupportedError>()));
 
+      // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), bytesBefore);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore);
     });
@@ -60,12 +62,14 @@ void main() {
       YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => fail('applyChromaSwap must not dispatch for a non-NV12 source');
 
       for (final image in <YuvImage>[YuvImage.i420(4, 4), YuvImage.bgra(4, 4)]) {
+        // ignore: deprecated_member_use_from_same_package
         final bytesBefore = image.getBytes();
         final formatBefore = image.format;
         final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
         expect(() => image.applyChromaSwap(), throwsA(isA<UnsupportedError>()));
 
+        // ignore: deprecated_member_use_from_same_package
         expect(image.getBytes(), bytesBefore);
         expect(image.format, formatBefore);
         expect((image as YuvRevisionAware).internalRevision, revisionBefore);
@@ -85,6 +89,7 @@ void main() {
       await YuvFfi.initialize();
 
       final image = YuvImage.i420(4, 4);
+      // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
@@ -96,6 +101,7 @@ void main() {
       // native call, using a deliberately failing invoke override.
       YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusInternalError;
       expect(() => image.applyGrayscale(), throwsA(isA<YuvNativeException>()));
+      // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), bytesBefore);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore);
     });
@@ -255,6 +261,7 @@ void main() {
       test('${entry.key} publishes nothing when native reports INTERNAL_ERROR', () async {
         await YuvFfi.initialize();
         final image = YuvImage.i420(8, 8);
+        // ignore: deprecated_member_use_from_same_package
         final bytesBefore = image.getBytes();
         final formatBefore = image.format;
         final widthBefore = image.width;
@@ -265,6 +272,7 @@ void main() {
 
         expect(() => entry.value(image), throwsA(isA<YuvNativeException>()));
 
+        // ignore: deprecated_member_use_from_same_package
         expect(image.getBytes(), bytesBefore, reason: 'bytes changed after a failed ${entry.key}');
         expect(image.format, formatBefore, reason: 'format changed after a failed ${entry.key}');
         expect(image.width, widthBefore);
@@ -276,6 +284,7 @@ void main() {
     test('applyChromaSwap publishes nothing when native reports INTERNAL_ERROR', () async {
       await YuvFfi.initialize();
       final image = YuvImage.nv12(8, 8);
+      // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
@@ -283,6 +292,7 @@ void main() {
 
       expect(() => image.applyChromaSwap(), throwsA(isA<YuvNativeException>()));
 
+      // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), bytesBefore);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore);
     });

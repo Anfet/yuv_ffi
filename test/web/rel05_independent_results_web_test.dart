@@ -26,6 +26,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
+    // ignore: deprecated_member_use_from_same_package
     await YuvFfi.ensureInitialized();
   });
 
@@ -45,6 +46,7 @@ void main() {
       const int w = 4;
       const int h = 4;
       final rgba = _solidRgba(w, h, r: 10, g: 20, b: 30);
+      // ignore: deprecated_member_use_from_same_package
       final bgra = YuvImage.bgra(w, h)..fromRgba8888(rgba);
 
       final i420 = bgra.toI420();
@@ -98,19 +100,26 @@ void main() {
       const int w = 4;
       const int h = 4;
       final rgba = _solidRgba(w, h, r: 1, g: 2, b: 3);
+      // ignore: deprecated_member_use_from_same_package
       final source = YuvImage.bgra(w, h)..fromRgba8888(rgba);
 
       final i420 = source.toI420();
       final nv12 = source.toNv12();
       final bgraCopy = source.toBgra();
+      // ignore: deprecated_member_use_from_same_package
       final i420Before = i420.getBytes();
+      // ignore: deprecated_member_use_from_same_package
       final nv12Before = nv12.getBytes();
+      // ignore: deprecated_member_use_from_same_package
       final bgraBefore = bgraCopy.getBytes();
 
       source.applyNegate();
 
+      // ignore: deprecated_member_use_from_same_package
       expect(i420.getBytes(), i420Before);
+      // ignore: deprecated_member_use_from_same_package
       expect(nv12.getBytes(), nv12Before);
+      // ignore: deprecated_member_use_from_same_package
       expect(bgraCopy.getBytes(), bgraBefore);
     });
 
@@ -118,16 +127,21 @@ void main() {
       const int w = 6;
       const int h = 6;
       final rgba = _solidRgba(w, h, r: 9, g: 8, b: 7);
+      // ignore: deprecated_member_use_from_same_package
       final source = YuvImage.bgra(w, h)..fromRgba8888(rgba);
 
       final crop = source.cropped(const ui.Rect.fromLTWH(1, 1, 3, 3));
       final rotate = source.rotated(YuvImageRotation.rotation90);
+      // ignore: deprecated_member_use_from_same_package
       final cropBefore = crop.getBytes();
+      // ignore: deprecated_member_use_from_same_package
       final rotateBefore = rotate.getBytes();
 
       source.applyNegate();
 
+      // ignore: deprecated_member_use_from_same_package
       expect(crop.getBytes(), cropBefore);
+      // ignore: deprecated_member_use_from_same_package
       expect(rotate.getBytes(), rotateBefore);
     });
   });

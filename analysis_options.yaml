@@ -7,12 +7,6 @@ analyzer:
   exclude:
     - lib/src/functions/bindings/yuv_ffi_bingings.dart
     - _tmp_*.dart
-  errors:
-    # The package deliberately calls its own deprecated 0.2.4 surface in the
-    # compatibility bridge and regression tests. Consumers still receive the
-    # deprecation warning; treating those internal calls as analyzer failures
-    # would make the declared Flutter 3.38 baseline impossible to validate.
-    deprecated_member_use_from_same_package: ignore
 
 formatter:
   page_width: 150

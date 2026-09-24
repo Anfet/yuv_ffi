@@ -144,54 +144,69 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
     case 'YuvImage.nv21':
       break;
     case 'fromRgba8888':
+      // ignore: deprecated_member_use_from_same_package
       image.fromRgba8888(frame.bytes);
       break;
     case 'toBgra8888':
+      // ignore: deprecated_member_use_from_same_package
       rawBytes = image.toBgra8888();
       break;
     case 'toYuvBgra8888':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, image.toYuvBgra8888);
       break;
     case 'toYuvI420':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, image.toYuvI420);
       break;
     case 'toYuvNv21':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, image.toYuvNv21);
       break;
     case 'swapNv':
       final swaps = parameters['swaps'] as int;
       for (var i = 0; i < swaps; i++) {
+        // ignore: deprecated_member_use_from_same_package
         _inPlace(entry, image, image.swapNv);
       }
       break;
     case 'crop':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, () => image.crop(_rect(parameters)));
       break;
     case 'rotate':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, () => image.rotate(_rotation(parameters['degreesClockwise'] as int)));
       break;
     case 'flipHorizontally':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, image.flipHorizontally);
       break;
     case 'flipVertically':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, image.flipVertically);
       break;
     case 'grayscale':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, image.grayscale);
       break;
     case 'blackwhite':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, image.blackwhite);
       break;
     case 'negate':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, image.negate);
       break;
     case 'gaussianBlur':
+      // ignore: deprecated_member_use_from_same_package
       _inPlace(entry, image, () => image.gaussianBlur(radius: parameters['radius'] as int, sigma: parameters['sigma'] as int));
       break;
     case 'boxBlur':
       _inPlace(
         entry,
         image,
+        // ignore: deprecated_member_use_from_same_package
         () => image.boxBlur(
           radius: parameters['radius'] as int,
           rect: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
@@ -202,6 +217,7 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
       _inPlace(
         entry,
         image,
+        // ignore: deprecated_member_use_from_same_package
         () => image.meanBlur(
           radius: parameters['radius'] as int,
           rect: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
@@ -209,22 +225,28 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
       );
       break;
     case 'copy':
+      // ignore: deprecated_member_use_from_same_package
       final copied = image.copy(blank: parameters['blank'] as bool);
       expect(identical(copied, image), isFalse, reason: '${entry['id']} copy must return a new image instance');
       expect(sha256Hex(frame.bytes), sourceFrameHash, reason: '${entry['id']} mutated source RGBA fixture');
       expect(_planesHash(image.planes), sourcePlaneHash, reason: '${entry['id']} mutated input during copy');
+      // ignore: deprecated_member_use_from_same_package
       return _CaseResult(image: copied, outputBytes: copied.toBgra8888(), rawBytes: copied.getBytes());
     case 'getBytes':
+      // ignore: deprecated_member_use_from_same_package
       rawBytes = image.getBytes();
       break;
     case 'save/load':
       final chunks = <List<int>>[];
+      // ignore: deprecated_member_use_from_same_package
       await image.save(_ListSink(chunks));
       final loaded = _newImage(format, width, height, _planesFor(format, frame, layout), false);
       final stream = parameters['stream'] == 'fragmented' ? _fragment(chunks) : chunks;
+      // ignore: deprecated_member_use_from_same_package
       await loaded.load(Stream<List<int>>.fromIterable(stream));
       expect(sha256Hex(frame.bytes), sourceFrameHash, reason: '${entry['id']} mutated source RGBA fixture');
       expect(_planesHash(image.planes), sourcePlaneHash, reason: '${entry['id']} mutated input during save');
+      // ignore: deprecated_member_use_from_same_package
       return _CaseResult(image: loaded, outputBytes: loaded.toBgra8888(), rawBytes: loaded.getBytes());
     case 'toImage':
       final decoded = await image.toImage();
@@ -243,6 +265,7 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
   if (operation == 'toBgra8888' || operation == 'getBytes' || operation == 'toImage') {
     expect(_planesHash(image.planes), sourcePlaneHash, reason: '${entry['id']} mutated input during read-only operation');
   }
+  // ignore: deprecated_member_use_from_same_package
   return _CaseResult(image: image, outputBytes: rawBytes ?? image.toBgra8888(), imageBytes: imageBytes, rawBytes: rawBytes);
 }
 
@@ -252,6 +275,7 @@ void _inPlace(Map<String, dynamic> entry, YuvImage image, YuvImage Function() op
 
 String _planesHash(Iterable<YuvPlane> planes) => sha256Hex(_concat(planes.map((plane) => plane.bytes)));
 
+// ignore: deprecated_member_use_from_same_package
 YuvImage _newImage(YuvFileFormat format, int width, int height, List<YuvPlane> planes, bool blank) {
   if (blank) {
     planes = _blankLogicalSamples(format, width, planes);
@@ -260,12 +284,16 @@ YuvImage _newImage(YuvFileFormat format, int width, int height, List<YuvPlane> p
     // Since YUV-15 the named BGRA constructor preserves the declared layout
     // just like the explicit-format one, so both blank and populated cases can
     // go through it.
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes),
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.i420 => YuvImage.i420(width, height, planes: planes),
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.nv21 => YuvImage.nv21(width, height, planes: planes),
   };
 }
 
+// ignore: deprecated_member_use_from_same_package
 List<YuvPlane> _blankLogicalSamples(YuvFileFormat format, int width, List<YuvPlane> planes) {
   final chromaWidth = (width + 1) ~/ 2;
   return List<YuvPlane>.generate(planes.length, (planeIndex) {
@@ -273,7 +301,9 @@ List<YuvPlane> _blankLogicalSamples(YuvFileFormat format, int width, List<YuvPla
     final bytes = Uint8List.fromList(plane.bytes);
     final logicalWidth = planeIndex == 0 ? width : chromaWidth;
     final sampleBytes = switch (format) {
+      // ignore: deprecated_member_use_from_same_package
       YuvFileFormat.bgra8888 => 4,
+      // ignore: deprecated_member_use_from_same_package
       YuvFileFormat.nv21 when planeIndex == 1 => 2,
       _ => 1,
     };
@@ -287,9 +317,13 @@ List<YuvPlane> _blankLogicalSamples(YuvFileFormat format, int width, List<YuvPla
   });
 }
 
+// ignore: deprecated_member_use_from_same_package
 YuvFileFormat _format(String value) => switch (value) {
+  // ignore: deprecated_member_use_from_same_package
   'bgra8888' => YuvFileFormat.bgra8888,
+  // ignore: deprecated_member_use_from_same_package
   'i420' => YuvFileFormat.i420,
+  // ignore: deprecated_member_use_from_same_package
   'nv21' => YuvFileFormat.nv21,
   _ => throw ArgumentError.value(value, 'format'),
 };
@@ -315,16 +349,21 @@ RgbaFrame _sourceFrame(RgbaFrame source, Map<String, dynamic> parameters) {
   return source.crop(crop['left'] as int, crop['top'] as int, crop['width'] as int, crop['height'] as int);
 }
 
+// ignore: deprecated_member_use_from_same_package
 List<YuvPlane> _planesFor(YuvFileFormat format, RgbaFrame frame, String layout) {
   final i420 = rgbaToI420(frame);
   final tight = switch (format) {
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.bgra8888 => <Uint8List>[frame.toBgra()],
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.i420 => <Uint8List>[i420.y, i420.u!, i420.v!],
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.nv21 => <Uint8List>[i420.y, i420ToNv21Uv(i420).uv!],
   };
   final chromaWidth = (frame.width + 1) ~/ 2;
   final chromaHeight = (frame.height + 1) ~/ 2;
   final strides = switch (format) {
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.bgra8888 => <int>[
       switch (layout) {
         'padded' => frame.width * 4 + 16,
@@ -332,6 +371,7 @@ List<YuvPlane> _planesFor(YuvFileFormat format, RgbaFrame frame, String layout) 
         _ => frame.width * 4,
       },
     ],
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.i420 => <int>[
       switch (layout) {
         'padded' => frame.width + 8,
@@ -349,6 +389,7 @@ List<YuvPlane> _planesFor(YuvFileFormat format, RgbaFrame frame, String layout) 
         _ => chromaWidth,
       },
     ],
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.nv21 => <int>[
       switch (layout) {
         'padded' => frame.width + 8,
@@ -362,14 +403,20 @@ List<YuvPlane> _planesFor(YuvFileFormat format, RgbaFrame frame, String layout) 
       },
     ],
   };
+  // ignore: deprecated_member_use_from_same_package
   final heights = format == YuvFileFormat.bgra8888
       ? <int>[frame.height]
+      // ignore: deprecated_member_use_from_same_package
       : <int>[frame.height, chromaHeight, if (format == YuvFileFormat.i420) chromaHeight];
+  // ignore: deprecated_member_use_from_same_package
   final useful = format == YuvFileFormat.bgra8888
       ? <int>[frame.width * 4]
+      // ignore: deprecated_member_use_from_same_package
       : <int>[frame.width, if (format == YuvFileFormat.nv21) chromaWidth * 2 else chromaWidth, if (format == YuvFileFormat.i420) chromaWidth];
+  // ignore: deprecated_member_use_from_same_package
   final pixelStrides = format == YuvFileFormat.bgra8888
       ? <int>[4]
+      // ignore: deprecated_member_use_from_same_package
       : <int>[1, if (format == YuvFileFormat.nv21) 2 else 1, if (format == YuvFileFormat.i420) 1];
   return List<YuvPlane>.generate(tight.length, (index) => _plane(tight[index], heights[index], strides[index], pixelStrides[index], useful[index]));
 }

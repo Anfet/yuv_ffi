@@ -19,7 +19,10 @@ extension CameraImageExt on CameraImage {
       final p = this.planes[i];
       final rows = (isPacked || i == 0) ? height : chromaRows;
       final columns = (isPacked || i == 0) ? width : chromaColumns;
-      final pixelStride = p.bytesPerPixel ?? 1;
+      // iOS camera frames are packed BGRA8888. `CameraPlane.bytesPerPixel`
+      // is not reliable there, while the native ABI requires the actual
+      // four-byte packed-pixel stride.
+      final pixelStride = isPacked ? 4 : p.bytesPerPixel ?? 1;
       final sampleBytes = isPacked
           ? pixelStride
           : format.group == ImageFormatGroup.nv21 && i > 0

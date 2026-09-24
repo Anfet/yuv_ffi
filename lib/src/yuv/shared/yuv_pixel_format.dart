@@ -33,6 +33,7 @@ enum YuvPixelFormat {
 }
 
 /// Internal bridge between the new [YuvPixelFormat] and the legacy
+// ignore: deprecated_member_use_from_same_package
 /// [YuvFileFormat] the current backends still key their state on.
 ///
 /// Not exported: callers on the public surface only ever see one format type
@@ -43,23 +44,32 @@ enum YuvPixelFormat {
 extension YuvPixelFormatLegacyBridge on YuvPixelFormat {
   /// The legacy format this value stores as.
   ///
+  // ignore: deprecated_member_use_from_same_package
   /// [YuvPixelFormat.nv12] maps to [YuvFileFormat.nv21]: today that is the
   /// only legacy value backed by semi-planar storage, and the truthful NV12
   /// label carries no different byte order of its own (section 14, Q1).
+  // ignore: deprecated_member_use_from_same_package
   YuvFileFormat get legacy => switch (this) {
+    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.i420 => YuvFileFormat.i420,
+    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.nv12 => YuvFileFormat.nv21,
+    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.bgra8888 => YuvFileFormat.bgra8888,
   };
 }
 
 /// Internal helper the other direction, from legacy storage to the new
 /// exported format identity.
+// ignore: deprecated_member_use_from_same_package
 extension YuvFileFormatPixelFormatBridge on YuvFileFormat {
   /// The [YuvPixelFormat] that names this legacy value's storage truthfully.
   YuvPixelFormat get pixelFormat => switch (this) {
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.i420 => YuvPixelFormat.i420,
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.nv21 => YuvPixelFormat.nv12,
+    // ignore: deprecated_member_use_from_same_package
     YuvFileFormat.bgra8888 => YuvPixelFormat.bgra8888,
   };
 }

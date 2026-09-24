@@ -65,6 +65,7 @@ class YuvImageState {
       return;
     }
 
+    // ignore: deprecated_member_use_from_same_package
     if (allowLargerNvChromaStride && _format == YuvFileFormat.nv21 && uvPixelStride < YuvGeometry.nvChromaPixelStride) {
       // The relaxed nv12 path never silently clamps a too-small stride the way
       // the legacy default allocation does (allocatePlanes below): an explicit
@@ -91,6 +92,7 @@ class YuvImageState {
   /// the planes without an owning state object -- notably the stub's format
   /// conversions, which replace planes in place.
   static List<YuvPlane> allocatePlanes({
+    // ignore: deprecated_member_use_from_same_package
     required YuvFileFormat format,
     required int width,
     required int height,
@@ -99,24 +101,29 @@ class YuvImageState {
   }) {
     // BGRA stores four bytes per pixel, so its packed plane never uses the
     // generic single-byte luma default.
+    // ignore: deprecated_member_use_from_same_package
     final lumaPixelStride = format == YuvFileFormat.bgra8888 ? 4 : yPixelStride;
     final yPlane = YuvPlane(height, width * lumaPixelStride, lumaPixelStride);
     final uvWidth = YuvGeometry.chromaWidth(width);
     final uvHeight = YuvGeometry.chromaHeight(height);
 
     switch (format) {
+      // ignore: deprecated_member_use_from_same_package
       case YuvFileFormat.nv21:
         // Interleaved chroma always stores a (U, V) pair per sample, so a
         // pixelStride below 2 cannot hold what native code writes.
         final nvPixelStride = uvPixelStride < YuvGeometry.nvChromaPixelStride ? YuvGeometry.nvChromaPixelStride : uvPixelStride;
         return [yPlane, YuvPlane(uvHeight, uvWidth * nvPixelStride, nvPixelStride)];
+      // ignore: deprecated_member_use_from_same_package
       case YuvFileFormat.i420:
         return [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride), YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
+      // ignore: deprecated_member_use_from_same_package
       case YuvFileFormat.bgra8888:
         return [yPlane];
     }
   }
 
+  // ignore: deprecated_member_use_from_same_package
   YuvFileFormat _format;
   int _width;
   int _height;
@@ -125,6 +132,7 @@ class YuvImageState {
   int _revision = 0;
 
   /// Current pixel format.
+  // ignore: deprecated_member_use_from_same_package
   YuvFileFormat get format => _format;
 
   /// Visible width in pixels.
@@ -188,6 +196,7 @@ class YuvImageState {
   /// together or not at all. [planes] is adopted as given -- callers that must
   /// not share buffers with the source pass copies.
   void replace({
+    // ignore: deprecated_member_use_from_same_package
     required YuvFileFormat format,
     required int width,
     required int height,
@@ -258,6 +267,7 @@ class YuvImageState {
       width: draft.width,
       height: draft.height,
       planes: draft.planes,
+      // ignore: deprecated_member_use_from_same_package
       allowLargerNvChromaStride: draft.format == YuvFileFormat.nv21 && draft.planes[1].pixelStride > YuvGeometry.nvChromaPixelStride,
     );
   }
@@ -275,6 +285,7 @@ class YuvImageState {
   /// to a backend call. Until those implementations are fixed (YUV-23) this is
   /// the boundary.
   void requireTightBgraFor(String operation) {
+    // ignore: deprecated_member_use_from_same_package
     if (_format != YuvFileFormat.bgra8888 || isTightBgra) {
       return;
     }

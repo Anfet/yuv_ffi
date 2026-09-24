@@ -18,6 +18,7 @@ void main() {
   /// Serializes [image] the way a caller would.
   Future<Uint8List> save(YuvImage image) async {
     final chunks = <List<int>>[];
+    // ignore: deprecated_member_use_from_same_package
     await image.save(_CollectingSink(chunks));
     final total = chunks.fold<int>(0, (sum, chunk) => sum + chunk.length);
     final out = Uint8List(total);
@@ -30,7 +31,9 @@ void main() {
   }
 
   /// A valid payload for an image whose planes carry a recognisable pattern.
+  // ignore: deprecated_member_use_from_same_package
   Future<Uint8List> validPayload({YuvFileFormat format = YuvFileFormat.i420, int width = 8, int height = 8}) async {
+    // ignore: deprecated_member_use_from_same_package
     final image = YuvImage(format, width, height);
     for (int i = 0; i < image.planes.length; i++) {
       final bytes = image.planes[i].bytes;
@@ -56,6 +59,7 @@ void main() {
         YuvPlane(1, 1, 1, Uint8List.fromList(<int>[6])),
       ];
 
+      // ignore: deprecated_member_use_from_same_package
       final encoded = YuvCodec.encode(format: YuvFileFormat.i420, width: 2, height: 2, planes: planes);
 
       expect(
@@ -171,8 +175,10 @@ void main() {
       );
     });
 
+    // ignore: deprecated_member_use_from_same_package
     for (final format in YuvFileFormat.values) {
       test('preserves format, dimensions, strides and bytes for ${format.name}', () async {
+        // ignore: deprecated_member_use_from_same_package
         final source = YuvImage(format, 8, 8);
         for (int i = 0; i < source.planes.length; i++) {
           final bytes = source.planes[i].bytes;
@@ -181,7 +187,9 @@ void main() {
           }
         }
 
+        // ignore: deprecated_member_use_from_same_package
         final target = YuvImage(format, 2, 2);
+        // ignore: deprecated_member_use_from_same_package
         await target.load(asStream(await save(source)));
 
         expect(target.format, source.format);
@@ -200,6 +208,7 @@ void main() {
       final payload = await validPayload();
       final target = YuvImage.i420(2, 2);
 
+      // ignore: deprecated_member_use_from_same_package
       await target.load(asFragmentedStream(payload));
 
       expect(target.width, 8);
@@ -210,6 +219,7 @@ void main() {
       final source = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(32))]);
       final target = YuvImage.bgra(1, 1);
 
+      // ignore: deprecated_member_use_from_same_package
       await target.load(asStream(await save(source)));
 
       expect(target.yPlane.rowStride, 16);
@@ -219,16 +229,19 @@ void main() {
 
   group('malformed payloads throw FormatException', () {
     test('an empty payload', () async {
+      // ignore: deprecated_member_use_from_same_package
       await expectLater(YuvImage.i420(2, 2).load(asStream(const <int>[])), throwsFormatException);
     });
 
     test('a truncated header', () async {
       final payload = await validPayload();
+      // ignore: deprecated_member_use_from_same_package
       await expectLater(YuvImage.i420(2, 2).load(asStream(payload.sublist(0, 3))), throwsFormatException);
     });
 
     test('a payload truncated midway through the planes', () async {
       final payload = await validPayload();
+      // ignore: deprecated_member_use_from_same_package
       await expectLater(YuvImage.i420(2, 2).load(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
     });
 
@@ -353,28 +366,36 @@ void main() {
         height: image.height,
         format: image.format,
         planeCount: image.planes.length,
+        // ignore: deprecated_member_use_from_same_package
         bytes: Uint8List.fromList(image.getBytes()),
       );
 
+      // ignore: deprecated_member_use_from_same_package
       final payload = await validPayload(format: YuvFileFormat.nv21, width: 16, height: 16);
+      // ignore: deprecated_member_use_from_same_package
       await expectLater(image.load(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
 
       expect(image.width, before.width);
       expect(image.height, before.height);
       expect(image.format, before.format);
       expect(image.planes.length, before.planeCount);
+      // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), orderedEquals(before.bytes), reason: 'plane bytes were mutated by a failed load');
     });
 
     test('after a payload with trailing garbage', () async {
       final image = YuvImage.i420(8, 8);
+      // ignore: deprecated_member_use_from_same_package
       final before = Uint8List.fromList(image.getBytes());
 
+      // ignore: deprecated_member_use_from_same_package
       final payload = await validPayload(format: YuvFileFormat.nv21, width: 16, height: 16);
+      // ignore: deprecated_member_use_from_same_package
       await expectLater(image.load(asStream(<int>[...payload, 1, 2, 3])), throwsFormatException);
 
       expect(image.format, YuvPixelFormat.i420);
       expect(image.width, 8);
+      // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), orderedEquals(before));
     });
   });
@@ -435,6 +456,7 @@ void main() {
     });
 
     test('the header key is formatId, keyed by wireId, never the legacy format name or enum index', () async {
+      // ignore: deprecated_member_use_from_same_package
       final payload = await validPayload(format: YuvFileFormat.nv21);
       final headerLength = ByteData.view(payload.buffer).getUint32(0, Endian.little);
       final header = jsonDecode(utf8.decode(payload.sublist(4, 4 + headerLength))) as Map<String, dynamic>;
@@ -450,6 +472,7 @@ void main() {
       final target = YuvImage.i420(2, 2);
       final before = target.revision;
 
+      // ignore: deprecated_member_use_from_same_package
       await target.load(asStream(payload));
 
       expect(target.revision, before + 1);
@@ -460,6 +483,7 @@ void main() {
       final target = YuvImage.i420(2, 2);
       final before = target.revision;
 
+      // ignore: deprecated_member_use_from_same_package
       await target.load(asFragmentedStream(payload));
 
       expect(target.revision, before + 1);
@@ -470,6 +494,7 @@ void main() {
       final target = YuvImage.i420(2, 2);
       final before = target.revision;
 
+      // ignore: deprecated_member_use_from_same_package
       await expectLater(target.load(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
 
       expect(target.revision, before, reason: 'a failed load must not look like a new frame');
@@ -480,6 +505,7 @@ void main() {
       final target = YuvImage.i420(2, 2);
       final before = target.revision;
 
+      // ignore: deprecated_member_use_from_same_package
       await expectLater(target.load(asStream(<int>[...payload, 7, 7, 7])), throwsFormatException);
 
       expect(target.revision, before);

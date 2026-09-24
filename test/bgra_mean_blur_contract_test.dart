@@ -29,6 +29,7 @@ void main() {
         bytes[i + 3] = (x * 19 + y * 23) & 0xFF;
       }
     }
+    // ignore: deprecated_member_use_from_same_package
     return YuvImage(YuvFileFormat.bgra8888, width, height, planes: [YuvPlane(height, width * 4, 4, bytes)]);
   }
 
@@ -40,6 +41,7 @@ void main() {
     final source = patternImage(32, 32);
     final original = Uint8List.fromList(source.yPlane.bytes);
 
+    // ignore: deprecated_member_use_from_same_package
     source.meanBlur(radius: 3, rect: const ui.Rect.fromLTRB(8, 8, 16, 16));
 
     final blurred = source.yPlane.bytes;
@@ -62,7 +64,9 @@ void main() {
       markTestSkipped('native library is not available on this host');
       return;
     }
+    // ignore: deprecated_member_use_from_same_package
     final first = patternImage(24, 24)..meanBlur(radius: 4, rect: const ui.Rect.fromLTRB(4, 4, 12, 12));
+    // ignore: deprecated_member_use_from_same_package
     final second = patternImage(24, 24)..meanBlur(radius: 4, rect: const ui.Rect.fromLTRB(4, 4, 12, 12));
 
     expect(first.yPlane.bytes, orderedEquals(second.yPlane.bytes));
@@ -79,6 +83,7 @@ void main() {
     final source = patternImage(16, 16);
     final original = Uint8List.fromList(source.yPlane.bytes);
 
+    // ignore: deprecated_member_use_from_same_package
     source.meanBlur(radius: 2);
 
     for (int i = 3; i < source.yPlane.bytes.length; i += 4) {
@@ -110,6 +115,7 @@ void main() {
         bytes[i + 3] = 0xFF;
       }
     }
+    // ignore: deprecated_member_use_from_same_package
     final image = YuvImage(YuvFileFormat.bgra8888, w, h, planes: [YuvPlane(h, w * 4, 4, bytes)])..meanBlur(radius: r);
 
     // The last column lies more than `radius` away from the split, so every
@@ -129,6 +135,7 @@ void main() {
     // average to the same value here, so this guards the weighting arithmetic
     // (division by the full kernel area) rather than the window itself.
     final bytes = Uint8List(12 * 12 * 4)..fillRange(0, 12 * 12 * 4, 0x40);
+    // ignore: deprecated_member_use_from_same_package
     final image = YuvImage(YuvFileFormat.bgra8888, 12, 12, planes: [YuvPlane(12, 12 * 4, 4, bytes)])..meanBlur(radius: 5);
 
     expect(image.yPlane.bytes.every((b) => b == 0x40), isTrue);
@@ -142,6 +149,7 @@ void main() {
     final image = patternImage(16, 16);
     final original = Uint8List.fromList(image.yPlane.bytes);
 
+    // ignore: deprecated_member_use_from_same_package
     image.meanBlur(radius: 3, rect: const ui.Rect.fromLTRB(8, 8, 8, 8));
 
     expect(image.yPlane.bytes, orderedEquals(original));
@@ -185,8 +193,10 @@ void main() {
     const width = 3000;
     const height = 2900;
     final bytes = Uint8List(width * height * 4)..fillRange(0, width * height * 4, 0xFF);
+    // ignore: deprecated_member_use_from_same_package
     final image = YuvImage(YuvFileFormat.bgra8888, width, height, planes: [YuvPlane(height, width * 4, 4, bytes)]);
 
+    // ignore: deprecated_member_use_from_same_package
     image.meanBlur(radius: 4);
 
     // Every channel of a flat white frame must still blur to 255.
@@ -206,11 +216,17 @@ void main() {
     // nativeAvailable, since validation happens in Dart before any native
     // call or allocation.
     final image = patternImage(8, 8);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => image.meanBlur(radius: -1), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => image.boxBlur(radius: -1), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => image.gaussianBlur(radius: -1), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => image.meanBlur(radius: 257), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => image.boxBlur(radius: 257), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => image.gaussianBlur(radius: 257), throwsArgumentError);
   });
 }

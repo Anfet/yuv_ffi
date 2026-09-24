@@ -21,6 +21,7 @@ class YuvValidatedImageDraft {
   YuvValidatedImageDraft({required this.format, required this.width, required this.height, required List<YuvPlane> planes})
     : planes = List<YuvPlane>.unmodifiable(planes);
 
+  // ignore: deprecated_member_use_from_same_package
   final YuvFileFormat format;
   final int width;
   final int height;
@@ -86,6 +87,7 @@ abstract final class YuvCodec {
   static final Map<int, YuvPixelFormat> _pixelFormatByWireId = <int, YuvPixelFormat>{for (final value in YuvPixelFormat.values) value.wireId: value};
 
   /// Encodes [format], [width], [height] and [planes] into one byte buffer.
+  // ignore: deprecated_member_use_from_same_package
   static Uint8List encode({required YuvFileFormat format, required int width, required int height, required List<YuvPlane> planes}) {
     final header = utf8.encode(
       jsonEncode(<String, Object>{'version': version, 'formatId': format.pixelFormat.wireId, 'width': width, 'height': height}),
@@ -260,12 +262,14 @@ abstract final class YuvCodec {
           '(pixelStride $pixelStride)',
         );
       }
+      // ignore: deprecated_member_use_from_same_package
       if (format == YuvFileFormat.nv21 && i == 1 && pixelStride < YuvGeometry.nvChromaPixelStride) {
         throw FormatException(
           'Malformed yuv_ffi payload: interleaved NV chroma requires a pixel stride of at least '
           '${YuvGeometry.nvChromaPixelStride}, plane $i declares $pixelStride',
         );
       }
+      // ignore: deprecated_member_use_from_same_package
       if (format == YuvFileFormat.i420 && i > 0) {
         // Native code walks both I420 chroma planes with one shared stride pair,
         // so a mismatch would make one of them be read with the other's
@@ -306,6 +310,7 @@ abstract final class YuvCodec {
         width: width,
         height: height,
         planes: planes,
+        // ignore: deprecated_member_use_from_same_package
         allowLargerNvChromaStride: format == YuvFileFormat.nv21,
       );
     } on ArgumentError catch (error) {

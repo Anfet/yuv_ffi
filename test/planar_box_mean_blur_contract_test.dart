@@ -29,6 +29,7 @@ void main() {
       u[i] = (i * 11) & 0xFF;
       v[i] = (i * 13) & 0xFF;
     }
+    // ignore: deprecated_member_use_from_same_package
     return YuvImage(YuvFileFormat.i420, width, height, planes: [YuvPlane(height, width, 1, y), YuvPlane(uvH, uvW, 1, u), YuvPlane(uvH, uvW, 1, v)]);
   }
 
@@ -55,7 +56,9 @@ void main() {
         v[row * uvRowStride + col * 2] = (i * 13) & 0xFF;
       }
     }
+    // ignore: deprecated_member_use_from_same_package
     return YuvImage(
+      // ignore: deprecated_member_use_from_same_package
       YuvFileFormat.i420,
       width,
       height,
@@ -73,6 +76,7 @@ void main() {
     for (int i = 0; i < uv.length; i++) {
       uv[i] = (i * 11) & 0xFF;
     }
+    // ignore: deprecated_member_use_from_same_package
     return YuvImage(YuvFileFormat.nv21, width, height, planes: [YuvPlane(height, width, 1, y), YuvPlane(uvH, uvW * 2, 2, uv)]);
   }
 
@@ -95,6 +99,7 @@ void main() {
         uv[row * uvRowStride + col] = ((row * uvW * 2 + col) * 11) & 0xFF;
       }
     }
+    // ignore: deprecated_member_use_from_same_package
     return YuvImage(YuvFileFormat.nv21, width, height, planes: [YuvPlane(height, yRowStride, 1, y), YuvPlane(uvH, uvRowStride, 2, uv)]);
   }
 
@@ -109,6 +114,7 @@ void main() {
       final beforeU = Uint8List.fromList(image.uPlane.bytes);
       final beforeV = Uint8List.fromList(image.vPlane.bytes);
 
+      // ignore: deprecated_member_use_from_same_package
       image.boxBlur(radius: 0);
 
       expect(image.yPlane.bytes, orderedEquals(beforeY));
@@ -124,6 +130,7 @@ void main() {
       final image = patternI420(16, 16);
       final before = Uint8List.fromList(image.yPlane.bytes);
 
+      // ignore: deprecated_member_use_from_same_package
       image.boxBlur(radius: 3, rect: const ui.Rect.fromLTRB(8, 8, 8, 8));
 
       expect(image.yPlane.bytes, orderedEquals(before));
@@ -137,6 +144,7 @@ void main() {
       final image = patternI420(16, 16);
       final before = Uint8List.fromList(image.yPlane.bytes);
 
+      // ignore: deprecated_member_use_from_same_package
       image.boxBlur(radius: 2, rect: const ui.Rect.fromLTRB(4, 4, 8, 8));
 
       for (int y = 0; y < 16; y++) {
@@ -153,7 +161,9 @@ void main() {
         markTestSkipped('native library is not available on this host');
         return;
       }
+      // ignore: deprecated_member_use_from_same_package
       final boxed = patternI420(20, 20)..boxBlur(radius: 3);
+      // ignore: deprecated_member_use_from_same_package
       final meaned = patternI420(20, 20)..meanBlur(radius: 3);
 
       expect(boxed.yPlane.bytes, orderedEquals(meaned.yPlane.bytes));
@@ -174,6 +184,7 @@ void main() {
       final beforeU = Uint8List.fromList(image.uPlane.bytes);
       final beforeV = Uint8List.fromList(image.vPlane.bytes);
 
+      // ignore: deprecated_member_use_from_same_package
       image.boxBlur(radius: 3);
 
       expect(image.uPlane.bytes, isNot(orderedEquals(beforeU)));
@@ -190,7 +201,9 @@ void main() {
       // pixelStride > 1 plane is a genuinely different code path from the
       // tight-stride cases above, not just a relabeling of the same bytes.
       const width = 16, height = 16;
+      // ignore: deprecated_member_use_from_same_package
       final tight = patternI420(width, height)..boxBlur(radius: 3);
+      // ignore: deprecated_member_use_from_same_package
       final padded = patternI420Padded(width, height)..boxBlur(radius: 3);
 
       final uvW = (width + 1) ~/ 2, uvH = (height + 1) ~/ 2;
@@ -221,6 +234,7 @@ void main() {
       final beforeY = Uint8List.fromList(image.yPlane.bytes);
       final beforeUv = Uint8List.fromList(image.uPlane.bytes);
 
+      // ignore: deprecated_member_use_from_same_package
       image.boxBlur(radius: 0);
 
       expect(image.yPlane.bytes, orderedEquals(beforeY));
@@ -235,6 +249,7 @@ void main() {
       final image = patternNv21(16, 16);
       final before = Uint8List.fromList(image.yPlane.bytes);
 
+      // ignore: deprecated_member_use_from_same_package
       image.boxBlur(radius: 3, rect: const ui.Rect.fromLTRB(8, 8, 8, 8));
 
       expect(image.yPlane.bytes, orderedEquals(before));
@@ -248,6 +263,7 @@ void main() {
       final image = patternNv21(16, 16);
       final before = Uint8List.fromList(image.yPlane.bytes);
 
+      // ignore: deprecated_member_use_from_same_package
       image.boxBlur(radius: 2, rect: const ui.Rect.fromLTRB(4, 4, 8, 8));
 
       for (int y = 0; y < 16; y++) {
@@ -264,7 +280,9 @@ void main() {
         markTestSkipped('native library is not available on this host');
         return;
       }
+      // ignore: deprecated_member_use_from_same_package
       final boxed = patternNv21(20, 20)..boxBlur(radius: 3);
+      // ignore: deprecated_member_use_from_same_package
       final meaned = patternNv21(20, 20)..meanBlur(radius: 3);
 
       expect(boxed.yPlane.bytes, orderedEquals(meaned.yPlane.bytes));
@@ -279,7 +297,9 @@ void main() {
       // Regression guard for the historical in-place chroma hazard: unpacking
       // into scratch planes and blurring those, rather than blurring the
       // interleaved plane in place, is what makes repeated runs deterministic.
+      // ignore: deprecated_member_use_from_same_package
       final a = patternNv21(24, 24)..boxBlur(radius: 4, rect: const ui.Rect.fromLTRB(4, 4, 20, 20));
+      // ignore: deprecated_member_use_from_same_package
       final b = patternNv21(24, 24)..boxBlur(radius: 4, rect: const ui.Rect.fromLTRB(4, 4, 20, 20));
 
       expect(a.yPlane.bytes, orderedEquals(b.yPlane.bytes));
@@ -298,7 +318,9 @@ void main() {
       // pixelStride of 2 (deinterleave/reinterleave), so this exercises an
       // additional row-stride pad on top of that.
       const width = 16, height = 16;
+      // ignore: deprecated_member_use_from_same_package
       final tight = patternNv21(width, height)..boxBlur(radius: 3);
+      // ignore: deprecated_member_use_from_same_package
       final padded = patternNv21Padded(width, height)..boxBlur(radius: 3);
 
       final uvW = (width + 1) ~/ 2, uvH = (height + 1) ~/ 2;
@@ -330,15 +352,23 @@ void main() {
     // of bounds; this does not need nativeAvailable, since validation
     // happens in Dart before any native call or allocation.
     final i420 = patternI420(8, 8);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => i420.boxBlur(radius: -1), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => i420.meanBlur(radius: -1), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => i420.boxBlur(radius: 257), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => i420.meanBlur(radius: 257), throwsArgumentError);
 
     final nv21 = patternNv21(8, 8);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => nv21.boxBlur(radius: -1), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => nv21.meanBlur(radius: -1), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => nv21.boxBlur(radius: 257), throwsArgumentError);
+    // ignore: deprecated_member_use_from_same_package
     expect(() => nv21.meanBlur(radius: 257), throwsArgumentError);
   });
 }

@@ -22,6 +22,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
+    // ignore: deprecated_member_use_from_same_package
     await YuvFfi.ensureInitialized();
   });
 
@@ -45,6 +46,7 @@ void main() {
     // corruption of the gap bytes could only come from the WASM kernel
     // treating the plane as tightly packed instead of walking it through its
     // declared strides.
+    // ignore: deprecated_member_use_from_same_package
     image.grayscale();
 
     for (int row = 0; row < 2; row++) {

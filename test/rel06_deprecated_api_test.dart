@@ -107,6 +107,7 @@ void main() {
       // below without an ignore comment.
       // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), image.toBytes());
+      // ignore: deprecated_member_use_from_same_package
       expect(image.toBgra8888(), image.toBgraBytes());
 
       // copy(blank:) still compiles with the deprecated named argument.
@@ -171,6 +172,7 @@ void main() {
       // ignore: deprecated_member_use_from_same_package
       legacy.blackwhite();
       modern.applyBlackWhite();
+      // ignore: deprecated_member_use_from_same_package
       expect(legacy.getBytes(), modern.getBytes());
       expect((legacy as YuvRevisionAware).internalRevision, legacyRevisionBefore + 1);
       expect((modern as YuvRevisionAware).internalRevision, modernRevisionBefore + 1);
@@ -185,6 +187,7 @@ void main() {
       // ignore: deprecated_member_use_from_same_package
       legacyGaussian.gaussianBlur(radius: 2, sigma: 3);
       modernGaussian.applyGaussianBlur(radius: 2, sigma: 3.0);
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyGaussian.getBytes(), modernGaussian.getBytes());
 
       final legacyBox = YuvImage.i420(4, 4);
@@ -192,6 +195,7 @@ void main() {
       // ignore: deprecated_member_use_from_same_package
       legacyBox.boxBlur(radius: 1);
       modernBox.applyBoxBlur(radius: 1);
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyBox.getBytes(), modernBox.getBytes());
 
       final legacyMean = YuvImage.i420(4, 4);
@@ -199,6 +203,7 @@ void main() {
       // ignore: deprecated_member_use_from_same_package
       legacyMean.meanBlur(radius: 1);
       modernMean.applyMeanBlur(radius: 1);
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyMean.getBytes(), modernMean.getBytes());
     });
 
@@ -213,6 +218,7 @@ void main() {
       modernCrop.applyCrop(const ui.Rect.fromLTWH(1, 1, 2, 2));
       expect(legacyCrop.width, modernCrop.width);
       expect(legacyCrop.height, modernCrop.height);
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyCrop.getBytes(), modernCrop.getBytes());
 
       final legacyFlipH = YuvImage.bgra(4, 4);
@@ -220,6 +226,7 @@ void main() {
       // ignore: deprecated_member_use_from_same_package
       legacyFlipH.flipHorizontally();
       modernFlipH.applyFlipHorizontal();
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyFlipH.getBytes(), modernFlipH.getBytes());
 
       final legacyFlipV = YuvImage.bgra(4, 4);
@@ -227,6 +234,7 @@ void main() {
       // ignore: deprecated_member_use_from_same_package
       legacyFlipV.flipVertically();
       modernFlipV.applyFlipVertical();
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyFlipV.getBytes(), modernFlipV.getBytes());
 
       final legacyRotate = YuvImage.bgra(4, 4);
@@ -236,6 +244,7 @@ void main() {
       modernRotate.applyRotation(YuvImageRotation.rotation90);
       expect(legacyRotate.width, modernRotate.width);
       expect(legacyRotate.height, modernRotate.height);
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyRotate.getBytes(), modernRotate.getBytes());
     });
 
@@ -253,6 +262,7 @@ void main() {
       // ignore: deprecated_member_use_from_same_package
       legacy.fromRgba8888(rgba);
       modern.applyRgbaBytes(rgba);
+      // ignore: deprecated_member_use_from_same_package
       expect(legacy.getBytes(), modern.getBytes());
     });
 
@@ -266,6 +276,7 @@ void main() {
       legacyToI420.toYuvI420();
       modernToI420.applyFormat(YuvPixelFormat.i420);
       expect(legacyToI420.format, modernToI420.format);
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyToI420.getBytes(), modernToI420.getBytes());
 
       final legacyToBgra = YuvImage.i420(4, 4);
@@ -274,6 +285,7 @@ void main() {
       legacyToBgra.toYuvBgra8888();
       modernToBgra.applyFormat(YuvPixelFormat.bgra8888);
       expect(legacyToBgra.format, modernToBgra.format);
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyToBgra.getBytes(), modernToBgra.getBytes());
 
       final legacyToNv21 = YuvImage.i420(4, 4);
@@ -282,6 +294,7 @@ void main() {
       legacyToNv21.toYuvNv21();
       modernToNv12.applyFormat(YuvPixelFormat.nv12);
       expect(legacyToNv21.format, modernToNv12.format);
+      // ignore: deprecated_member_use_from_same_package
       expect(legacyToNv21.getBytes(), modernToNv12.getBytes());
     });
 
@@ -289,6 +302,7 @@ void main() {
       final image = YuvImage.bgra(4, 4);
       // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), image.toBytes());
+      // ignore: deprecated_member_use_from_same_package
       expect(image.toBgra8888(), image.toBgraBytes());
     });
   });
@@ -352,6 +366,7 @@ void main() {
 
       // ignore: deprecated_member_use_from_same_package
       final YuvImage image = YuvImage.i420(4, 4);
+      // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final formatBefore = image.format;
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
@@ -363,6 +378,7 @@ void main() {
       // step has succeeded, so a failure partway through the deprecated
       // two-step path must leave the receiver exactly as it was -- not
       // "already converted to NV12, swap still pending".
+      // ignore: deprecated_member_use_from_same_package
       expect(image.getBytes(), bytesBefore);
       expect(image.format, formatBefore);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore);
@@ -406,6 +422,7 @@ void main() {
 
         expect(legacy.format, YuvPixelFormat.nv12);
         expect(modern.format, YuvPixelFormat.nv12);
+        // ignore: deprecated_member_use_from_same_package
         expect(legacy.getBytes(), modern.getBytes(), reason: 'swapNv() must preserve the historical two-step output bytes exactly');
       },
       skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
@@ -432,6 +449,7 @@ void main() {
         legacy.swapNv();
         modern.applyChromaSwap();
 
+        // ignore: deprecated_member_use_from_same_package
         expect(legacy.getBytes(), modern.getBytes());
       },
       skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
