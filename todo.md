@@ -22,13 +22,13 @@
 | [x] | REL-14 | DONE | 3 · Luna | — | R4 | Apple/CMake release metadata. |
 | [x] | REL-15 | DONE | 2 · Terra | — | R4 | Нижняя граница Flutter/Dart. |
 | [x] | REL-16 | DONE | 3 · Luna | 01–15, 19, 20 | R4 | README, Dartdoc, CHANGELOG. |
-| [ ] | REL-17 | TODO | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
-| [ ] | REL-18 | BLOCKED | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
+| [x] | REL-17 | DONE | 2 · Terra | 01–16 | R5 | Gates на итоговом SHA. |
+| [ ] | REL-18 | READY | 1 · Sol | 17 | R5 | Независимая приёмка 0.4.0. |
 | [x] | REL-19 | DONE | 2 · Terra | 06 | R3 | `format` → `YuvPixelFormat` на публичном интерфейсе. |
 | [x] | REL-20 | DONE | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
 | [x] | REL-21 | DONE | 3 · Luna | 06, 16 | — | Миграция `example/` на `apply*`/`to*` API. |
 
-**Итого после повторного ревью REL-17 (2026-09-24):** 19 DONE, 1 TODO (REL-17), 0 REVIEW, 0 IN PROGRESS, 1 BLOCKED (REL-18), 0 READY, 0 ARCH REQUIRED. Первичное ревью ниже сохранено как исторический снимок; последующие вердикты добавлены к карточкам задач.
+**Итого после независимого ревью REL-17 (2026-09-24):** 20 DONE, 0 TODO, 0 REVIEW, 0 IN PROGRESS, 0 BLOCKED, 1 READY (REL-18), 0 ARCH REQUIRED. Первичное ревью ниже сохранено как исторический снимок; последующие вердикты добавлены к карточкам задач.
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 **Итог повторного ревью REL-14/16/21:** приняты и закоммичены в `f28b248`. На чистом коммите `flutter pub publish --dry-run` завершился с exit 0: **0 warnings, 1 hint** (pub.dev считает предыдущей версией 0.2.4), архив не содержит `tool/migration/` и `todo*.md`. `example/` прошёл `flutter analyze --no-pub` и прямой Android integration test на Pixel 3 (`+1`, `All tests passed!`). REL-17 разблокирован, но его итоговые CI gates на новом SHA ещё не выполнены; REL-18 остаётся BLOCKED.
@@ -124,7 +124,7 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 | R2 · инициализация | REL-08, REL-09, REL-10 | R1 принят; весь поток C в `REVIEW` | Конкурентный запуск/повтор, точные IO/Web capabilities, каждый статус и атомарный отказ. |
 | R3 · публичное поведение | REL-04, REL-05, REL-06, REL-07, REL-11, REL-19, REL-20 | R1/R2 приняты; потоки F/G/H интегрированы | Мутация против независимых результатов, legacy compile/UV, публичный формат и decode, v2 golden и отказ v1, widget revision, IO/Web матрица. |
 | R4 · выпуск и документы | REL-14, REL-15, REL-16 | R3 принят; metadata, SDK и тексты в `REVIEW` | Package/version/CHANGELOG, podspec, минимальный SDK, компилируемые примеры и описание миграции/Web. |
-| R5 · финальная приёмка | REL-17, REL-18 | R3/R4 приняты; REL-17 в `REVIEW` | Итоговый SHA и платформенные gates; REL-18 проводит независимую оценку и фиксирует решение о готовности. |
+| R5 · финальная приёмка | REL-17, REL-18 | REL-17 принята; REL-18 в `READY` | Итоговый SHA и платформенные gates; REL-18 проводит независимую оценку и фиксирует решение о готовности. |
 
 Отдельный ревью-проход нужен при `REJECTED` только для исправленного пакета или затронутой им части следующего пакета. REL-18 не считается принятой автоматически после зелёных gates.
 
@@ -378,9 +378,27 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 
 **Повторное независимое ревью (2026-09-24) — ВОЗВРАЩЕНО В TODO:** formatter-check перепроверен независимо: 116 файлов, 0 изменений, exit 0. `git diff --exit-code` подтверждает отсутствие правки generated bindings; `git diff --check` чист. Фактического code diff в текущем дереве нет — изменён только отчёт в `todo.md`; HEAD остаётся `44da9a3`, а `origin/release/0.4.0` — `17771a9`. Последний GitHub CI run `35882819637` на старом SHA завершился failure; новых запусков на итоговом SHA нет. Поэтому Linux bindings regeneration, sanitizer, Linux/macOS runtime и iOS/macOS builds не подтверждены, а clean publish dry-run после итогового commit ещё не проведён. Для повторной передачи в REVIEW нужен зафиксированный SHA и таблица успешных/неуспешных CI jobs именно для него; REL-18 остаётся BLOCKED.
 
+**Итоговая доработка (2026-09-24) — REVIEW:** remediation зафиксирована и отправлена в `release/0.4.0` коммитом `8f763d58847be218eaaae7663ae6dc22dcc72637` (`Recorded REL-17 gate remediation`). На чистом SHA `flutter pub publish --dry-run` завершился с exit 0: **0 warnings, 1 version-history hint**. GitHub Actions run `35990741912` завершился success на этом же SHA: `analyze-and-test-vm` (analyze, native build, unit tests), `native-sanitizer-gate` (Debug/Release), `bindings-regeneration` (Linux regeneration, ABI audit, no drift), `linux-native-smoke` (packaging, example build, app-runtime), `example-analyze-and-build`, `android-native-build`, `ios-native-build` (no codesign), `macos-native-smoke` и `wasm-web-integration` (required integration gate и 119-case reference matrix). Предыдущий failure `35882819637` относится только к старому `17771a9`; не используется для оценки этого SHA. Передано в независимое REVIEW; REL-18 остаётся BLOCKED до приёмки REL-17.
+
+**Независимое ревью (2026-09-24) — ПРИНЯТО:** на момент проверки локальная и удалённая ветки совпадали на `8f763d58847be218eaaae7663ae6dc22dcc72637`; [CI run 35990741912](https://github.com/Anfet/yuv_ffi/actions/runs/35990741912) завершился success, все девять jobs имеют conclusion `success`. Логи Web matrix и Linux/macOS app-runtime содержат внутреннее `All tests passed`, а не только exit 0 `flutter drive`. Отдельный formatter-check: 116 файлов, 0 изменений. После тестового SHA изменяется только этот трекер, который исключён из publish archive; код пакета и результаты gates не меняются.
+
+| SHA | Платформа / gate | Команда / CI job | Фактический результат |
+| --- | --- | --- | --- |
+| `8f763d5` | Формат, локально | `dart format --output=none --set-exit-if-changed --line-length 150 lib test example/lib example/integration_test` | PASS: 116 файлов, 0 изменений |
+| `8f763d5` | Linux VM | `analyze-and-test-vm`: analyze, native build, unit tests | PASS: No issues; tests passed |
+| `8f763d5` | Linux native | `native-sanitizer-gate`: CMake/CTest Debug и Release | PASS: 111 executed cases, 0 failures в отчёте harness |
+| `8f763d5` | Linux bindings | `bindings-regeneration`: ffigen, ABI audit, `git diff --exit-code` | PASS: drift отсутствует |
+| `8f763d5` | Linux desktop | `linux-native-smoke`: package smoke, example build, app-runtime | PASS: нативная операция выполнена в app bundle, внутренняя сводка `All tests passed` |
+| `8f763d5` | macOS desktop | `macos-native-smoke`: package smoke, example build, app-runtime | PASS: нативная операция выполнена в app bundle, внутренняя сводка `All tests passed` |
+| `8f763d5` | Android / iOS | `android-native-build`, `ios-native-build` | PASS: APK и iOS no-codesign собраны; mobile runtime в этих jobs не проверяется |
+| `8f763d5` | Example / Web | `example-analyze-and-build`, `wasm-web-integration` | PASS: analyze/Web build, обязательные Web targets и 119-case reference matrix; лог матрицы — `All tests passed` |
+| `8f763d5` | Publish archive, локально на чистом commit | `flutter pub publish --dry-run` | PASS: 0 warnings, 1 version-history hint |
+
+Ограничения для REL-18: iOS/Android jobs подтверждают сборку, Linux/macOS — также app runtime; Apple sanitizers и полный набор `example/integration_test/*` не входят в этот CI. Web остаётся partial WASM backend. Зелёный REL-17 снимает зависимость REL-18, но сам по себе не разрешает тег и публикацию.
+
 ### REL-18 — Новая приёмка
 
-Независимо сверить реализацию с дизайном 0.4.0 и результатами REL-17. Приёмку 0.3.0 не переносить на новый API. **Приёмка:** отдельный отчёт с каждым blocker и решением о готовности к тегу/публикации; до этого задача остаётся BLOCKED.
+Независимо сверить реализацию с дизайном 0.4.0 и результатами REL-17. Приёмку 0.3.0 не переносить на новый API. **Приёмка:** отдельный отчёт с каждым blocker и решением о готовности к тегу/публикации. REL-17 принята; REL-18 готова к выполнению, но решение о релизе ещё не принято.
 
 ### REL-19 — `format` возвращает `YuvPixelFormat`
 
