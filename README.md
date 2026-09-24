@@ -203,8 +203,12 @@ Processing backend note:
 ## Initialization
 
 Call package bootstrap once at app start. On every platform it must complete before the
-capability-gated `0.4.0` API: every `apply*` method, `cropped(...)`, `rotated(...)`, `toI420()`,
-`toNv12()`, and `toBgra()`. On IO/native, calling one of these before bootstrap throws
+capability-gated `0.4.0` processing methods: `applyRgbaBytes`, `applyGrayscale`,
+`applyBlackWhite`, `applyNegate`, `applyGaussianBlur`, `applyMeanBlur`, `applyBoxBlur`,
+`applyCrop`, `applyFlipHorizontal`, `applyFlipVertical`, `applyRotation`, `applyFormat`,
+`applyChromaSwap`, `cropped(...)`, `rotated(...)`, `toI420()`, `toNv12()`, and `toBgra()`.
+`applyPlanes` is not capability-gated: it only validates and replaces Dart plane buffers, so it
+works before bootstrap. On IO/native, calling a capability-gated method before bootstrap throws
 `UnsupportedError` because the backend capability has not yet been determined; it does not mean
 the operation is unsupported.
 

@@ -63,6 +63,20 @@ void main() {
       expect((image as YuvRevisionAware).internalRevision, revisionBefore);
     });
 
+    test('applyPlanes replaces Dart plane buffers before YuvFfi.initialize()', () {
+      final image = YuvImage.i420(4, 4);
+      final replacement = <YuvPlane>[
+        YuvPlane(4, 4, 1, Uint8List(16)..fillRange(0, 16, 0x11)),
+        YuvPlane(2, 2, 1, Uint8List(4)..fillRange(0, 4, 0x22)),
+        YuvPlane(2, 2, 1, Uint8List(4)..fillRange(0, 4, 0x33)),
+      ];
+
+      expect(image.applyPlanes(replacement), same(image));
+      expect(image.yPlane.bytes.first, 0x11);
+      expect(image.uPlane.bytes.first, 0x22);
+      expect(image.vPlane.bytes.first, 0x33);
+    });
+
     test('applyChromaSwap on I420/BGRA rejects before dispatch, without converting or mutating', () async {
       await YuvFfi.initialize();
       // If the capability guard were bypassed and this reached the runner,

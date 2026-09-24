@@ -20,12 +20,20 @@ final class YuvFfi {
   /// On Web this must be awaited before any `YuvImage` operation: there is no
   /// lazy fallback, and an operation started earlier fails.
   ///
-  /// On IO/native it must complete before the capability-gated `0.4.0` API:
-  /// every `apply*` method, [YuvImage.cropped], [YuvImage.rotated],
-  /// [YuvImage.toI420], [YuvImage.toNv12], and [YuvImage.toBgra]. Before this
-  /// call succeeds, those methods throw [UnsupportedError] because backend
-  /// capability has not been determined, not because the requested operation
-  /// is unsupported.
+  /// On IO/native it must complete before the capability-gated `0.4.0`
+  /// processing methods: [YuvImage.applyRgbaBytes], [YuvImage.applyGrayscale],
+  /// [YuvImage.applyBlackWhite], [YuvImage.applyNegate],
+  /// [YuvImage.applyGaussianBlur], [YuvImage.applyMeanBlur],
+  /// [YuvImage.applyBoxBlur], [YuvImage.applyCrop],
+  /// [YuvImage.applyFlipHorizontal], [YuvImage.applyFlipVertical],
+  /// [YuvImage.applyRotation], [YuvImage.applyFormat],
+  /// [YuvImage.applyChromaSwap], [YuvImage.cropped], [YuvImage.rotated],
+  /// [YuvImage.toI420], [YuvImage.toNv12], and [YuvImage.toBgra].
+  /// [YuvImage.applyPlanes] is not capability-gated: it only validates and
+  /// replaces Dart plane buffers, so it works before bootstrap. Before this
+  /// call succeeds, a capability-gated method throws [UnsupportedError]
+  /// because backend capability has not been determined, not because the
+  /// requested operation is unsupported.
   ///
   /// IO/native retains its previous lazy behavior for constructors, plane
   /// access, [YuvImage.copy], [YuvImage.applyPlanes], [YuvImage.toBytes],
