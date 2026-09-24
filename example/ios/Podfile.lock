@@ -1,5 +1,10 @@
 PODS:
+  - camera_avfoundation (0.0.1):
+    - Flutter
   - Flutter (1.0.0)
+  - flutter_webrtc (1.6.2):
+    - Flutter
+    - WebRTC-SDK (= 150.7871.01)
   - google_mlkit_commons (0.11.0):
     - Flutter
     - MLKitVision
@@ -30,6 +35,10 @@ PODS:
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
   - GTMSessionFetcher/Core (3.5.0)
+  - image_picker_ios (0.0.1):
+    - Flutter
+  - integration_test (0.0.1):
+    - Flutter
   - MLImage (1.0.0-beta6)
   - MLKitCommon (12.0.0):
     - GoogleDataTransport (~> 10.0)
@@ -52,14 +61,23 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
+  - path_provider_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - PromisesObjC (2.4.1)
-  - yuv_ffi (0.0.1):
+  - WebRTC-SDK (150.7871.01)
+  - yuv_ffi (0.4.0):
     - Flutter
 
 DEPENDENCIES:
+  - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
   - Flutter (from `Flutter`)
+  - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
   - google_mlkit_commons (from `.symlinks/plugins/google_mlkit_commons/ios`)
   - google_mlkit_face_detection (from `.symlinks/plugins/google_mlkit_face_detection/ios`)
+  - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
+  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - yuv_ffi (from `.symlinks/plugins/yuv_ffi/ios`)
 
 SPEC REPOS:
@@ -75,19 +93,32 @@ SPEC REPOS:
     - MLKitVision
     - nanopb
     - PromisesObjC
+    - WebRTC-SDK
 
 EXTERNAL SOURCES:
+  camera_avfoundation:
+    :path: ".symlinks/plugins/camera_avfoundation/ios"
   Flutter:
     :path: Flutter
+  flutter_webrtc:
+    :path: ".symlinks/plugins/flutter_webrtc/ios"
   google_mlkit_commons:
     :path: ".symlinks/plugins/google_mlkit_commons/ios"
   google_mlkit_face_detection:
     :path: ".symlinks/plugins/google_mlkit_face_detection/ios"
+  image_picker_ios:
+    :path: ".symlinks/plugins/image_picker_ios/ios"
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
+  path_provider_foundation:
+    :path: ".symlinks/plugins/path_provider_foundation/darwin"
   yuv_ffi:
     :path: ".symlinks/plugins/yuv_ffi/ios"
 
 SPEC CHECKSUMS:
+  camera_avfoundation: be3be85408cd4126f250386828e9b1dfa40ab436
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  flutter_webrtc: 99283145164f482a16bf7122ef407b5d59d43158
   google_mlkit_commons: 2abe6a70e1824e431d16a51085cb475b672c8aab
   google_mlkit_face_detection: 754da2113a1952f063c7c5dc347ac6ae8934fb77
   GoogleDataTransport: a24e58982ab3ba2f64d79613e027fe7f57e88539
@@ -95,13 +126,17 @@ SPEC CHECKSUMS:
   GoogleToolboxForMac: d1a2cbf009c453f4d6ded37c105e2f67a32206d8
   GoogleUtilities: 4e0c2ad9fa0d0d18b5c4df8bf57b461cba35b0bb
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
+  image_picker_ios: 7fe1ff8e34c1790d6fff70a32484959f563a928a
+  integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
   MLImage: 0ad1c5f50edd027672d8b26b0fee78a8b4a0fc56
   MLKitCommon: 07c2c33ae5640e5380beaaa6e4b9c249a205542d
   MLKitFaceDetection: 2a593db4837db503ad3426b565e7aab045cefea5
   MLKitVision: 45e79d68845a2de77e2dd4d7f07947f0ed157b0e
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
+  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
-  yuv_ffi: 57496cc1d76a3c45be971ba7d2b90ec47254436f
+  WebRTC-SDK: 7dc931c64c00c735a614382f1a59cf65019c3c17
+  yuv_ffi: 6f8d6fcbf26a2db221e8f1a7373f0b9838e9d993
 
 PODFILE CHECKSUM: 9cf0f754fe8b1e9eeaf8bb178ca8d8e9c8d343d6
 
