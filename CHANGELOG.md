@@ -14,6 +14,7 @@ Implemented against [the 0.4.0 design](doc/api-abi-0.4-design.md). See the READM
 - Image plane getters (`yPlane`, `uPlane`, `vPlane`, `planes`) expose live, directly writable storage. A direct write through them (or `setPixel`/`assignFrom`) is not detected automatically and needs an explicit `markDirty()` call afterwards to refresh revision-keyed caches such as `YuvImageWidget`. `apply*` and `applyPlanes(...)` already advance the revision themselves. `applyPlanes(...)` atomically validates, copies, and replaces the full plane set in one step; every previously obtained plane reference is stale after it succeeds.
 - Added typed error handling: `YuvNativeException` now carries a `YuvOperation` and message instead of a bare status/string pair; ABI status codes and loader failures are consistently `ArgumentError`, `UnsupportedError`, or `YuvNativeException` per the design's contract, and a failed operation always leaves bytes, format, geometry and revision unchanged.
 - `YuvImageWidget`/`YuvImageProvider` now render through `toBgraBytes()` and cache by the image's revision instead of by identity alone, so a mutated `YuvImage` reused across rebuilds refreshes correctly.
+- Android camera frames whose final row omits unused row-stride padding are normalized before building `YuvPlane`, so the live preview and capture path can process the complete frame layout.
 
 ### Notes
 

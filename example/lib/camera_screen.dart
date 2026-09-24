@@ -89,6 +89,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     child: IconButton(
                       onPressed: takePicture,
                       icon: Icon(Icons.camera, color: Colors.white, size: 64),
+                      tooltip: 'Capture frame',
                     ),
                   ),
                 ),

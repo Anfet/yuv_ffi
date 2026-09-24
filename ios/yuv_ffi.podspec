@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
 yuv_ffi is a Flutter/Dart package for high-performance image processing on YUV/BGRA frames using native C + FFI. It provides format conversions, crop/rotate/flip, effects, blur, and plane-based APIs with row/pixel stride support.
                        DESC
   s.homepage         = 'https://github.com/Anfet/yuv_ffi'
-  s.license          = { :file => '../LICENSE' }
+  s.license          = { :type => 'MIT', :file => '../LICENSE' }
   s.author           = { 'Anfet' => 'oleg.toplionkin@gmail.com' }
 
   # This will ensure the source files in Classes/ are included in the native

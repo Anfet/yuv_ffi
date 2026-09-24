@@ -24,6 +24,7 @@ yuv_ffi.dll
 .vscode/
 _tmp**
 /tool/wasm/out/
+/tool/migration/
 /Agent Orchestration Protocol.md
 /dart-architecture-audit.md
 /failed-test-cases.md

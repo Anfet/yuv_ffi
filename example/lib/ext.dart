@@ -7,19 +7,34 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 extension CameraImageExt on CameraImage {
   YuvImage toYuvImage() {
     // Only the first plane spans the full image height; chroma planes of
-    // planar/semi-planar formats hold ceil(height / 2) rows. Each plane must
-    // also carry exactly `rows * bytesPerRow` bytes, because the conversion
-    // code walks planes by their declared geometry rather than by buffer size.
+    // planar/semi-planar formats hold ceil(height / 2) rows. Camera buffers
+    // may omit the unused padding after their last row, while YuvPlane stores
+    // a complete `rows * bytesPerRow` layout.
     final isPacked = format.group == ImageFormatGroup.bgra8888;
     final chromaRows = (height + 1) ~/ 2;
+    final chromaColumns = (width + 1) ~/ 2;
 
     final planes = <YuvPlane>[];
     for (int i = 0; i < this.planes.length; i++) {
       final p = this.planes[i];
       final rows = (isPacked || i == 0) ? height : chromaRows;
+      final columns = (isPacked || i == 0) ? width : chromaColumns;
+      final pixelStride = p.bytesPerPixel ?? 1;
+      final sampleBytes = isPacked
+          ? pixelStride
+          : format.group == ImageFormatGroup.nv21 && i > 0
+          ? pixelStride
+          : 1;
       final expectedLength = rows * p.bytesPerRow;
-      final bytes = p.bytes.length == expectedLength ? p.bytes : Uint8List.sublistView(p.bytes, 0, expectedLength);
-      planes.add(YuvPlane(rows, p.bytesPerRow, p.bytesPerPixel ?? 1, bytes));
+      final minimumLength = (rows - 1) * p.bytesPerRow + (columns - 1) * pixelStride + sampleBytes;
+      if (p.bytes.length < minimumLength) {
+        throw FormatException('Camera plane $i is truncated: expected at least $minimumLength bytes, got ${p.bytes.length}');
+      }
+
+      final bytes = Uint8List(expectedLength);
+      final copyLength = p.bytes.length < expectedLength ? p.bytes.length : expectedLength;
+      bytes.setRange(0, copyLength, p.bytes);
+      planes.add(YuvPlane(rows, p.bytesPerRow, pixelStride, bytes));
     }
 
     switch (format.group) {
