@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/camera_screen.dart';
 import 'package:yuv_ffi_example/ext.dart';
@@ -15,7 +14,7 @@ import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await YuvFfi.ensureInitialized();
+  await YuvFfi.initialize();
   runApp(const MyApp());
 }
 
@@ -88,29 +87,37 @@ class _MyAppState extends State<MyApp> {
                             ),
                             IconButton(
                               onPressed: () => flipImageVertically(),
-                              icon: Icon(MdiIcons.flipVertical, size: 32),
+                              icon: Icon(CupertinoIcons.arrow_up_arrow_down, size: 32),
                               tooltip: 'Flip vertically',
                             ),
                             IconButton(
                               onPressed: () => flitImageHorizontally(),
-                              icon: Icon(MdiIcons.flipHorizontal, size: 32),
+                              icon: Icon(CupertinoIcons.arrow_left_right, size: 32),
                               tooltip: 'Flip horizontally',
                             ),
                             IconButton(onPressed: () => cropImage(), icon: Icon(Icons.crop, size: 32), tooltip: 'crop image'),
                             IconButton(onPressed: () => grayscaleImage(), icon: Icon(CupertinoIcons.color_filter, size: 32), tooltip: 'Grayscale'),
+                            IconButton(onPressed: () => blackwhiteImage(), icon: Icon(Icons.filter_b_and_w, size: 32), tooltip: 'Black&White'),
+                            IconButton(onPressed: () => invertImage(), icon: Icon(Icons.invert_colors, size: 32), tooltip: 'Negate'),
+                            IconButton(onPressed: () => gaussianBlurImage(), icon: Icon(Icons.blur_on, size: 32), tooltip: 'Gaussian blur'),
+                            IconButton(onPressed: () => meanBlurImage(), icon: Icon(Icons.blur_linear, size: 32), tooltip: 'Mean blur'),
+                            IconButton(onPressed: () => boxBlurImage(), icon: Icon(Icons.crop_square, size: 32), tooltip: 'Box blur'),
+                            IconButton(onPressed: () => doFaceDetection(), icon: Icon(Icons.face_outlined, size: 32), tooltip: 'Face detection'),
                             IconButton(
-                              onPressed: () => blackwhiteImage(),
-                              icon: Icon(MdiIcons.imageFilterBlackWhite, size: 32),
-                              tooltip: 'Black&White',
+                              onPressed: () => toI420(),
+                              icon: Text('To i420', style: TextStyle(fontSize: 12)),
+                              tooltip: 'To i420',
                             ),
-                            IconButton(onPressed: () => invertImage(), icon: Icon(MdiIcons.invertColors, size: 32), tooltip: 'Negate'),
-                            IconButton(onPressed: () => gaussianBlurImage(), icon: Icon(MdiIcons.blur, size: 32), tooltip: 'Gaussian blur'),
-                            IconButton(onPressed: () => meanBlurImage(), icon: Icon(MdiIcons.blurLinear, size: 32), tooltip: 'Mean blur'),
-                            IconButton(onPressed: () => boxBlurImage(), icon: Icon(MdiIcons.box, size: 32), tooltip: 'Box blur'),
-                            IconButton(onPressed: () => doFaceDetection(), icon: Icon(MdiIcons.faceManOutline, size: 32), tooltip: 'Face detection'),
-                            IconButton(onPressed: () => toI420(), icon: Text('To i420', style: TextStyle(fontSize: 12)), tooltip: 'To i420'),
-                            IconButton(onPressed: () => toNV21(), icon: Text('To Nv21', style: TextStyle(fontSize: 12)), tooltip: 'To NV21'),
-                            IconButton(onPressed: () => toBGRA(), icon: Text('To BGRA', style: TextStyle(fontSize: 12)), tooltip: 'To BGRA8888'),
+                            IconButton(
+                              onPressed: () => toNV21(),
+                              icon: Text('To Nv21', style: TextStyle(fontSize: 12)),
+                              tooltip: 'To NV21',
+                            ),
+                            IconButton(
+                              onPressed: () => toBGRA(),
+                              icon: Text('To BGRA', style: TextStyle(fontSize: 12)),
+                              tooltip: 'To BGRA8888',
+                            ),
                           ],
                         ),
                       ),
@@ -119,10 +126,7 @@ class _MyAppState extends State<MyApp> {
                 ),
                 if (lastOpTiming != null) Positioned(right: 8, top: 8, child: Text('$lastOpTiming msec', style: baseStyle)),
                 if (image != null) Positioned(left: 8, top: 8, child: Text('$image', style: baseStyle)),
-                if (isLoading)
-                  Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                if (isLoading) Center(child: CircularProgressIndicator()),
               ],
             ),
           );
@@ -164,54 +168,54 @@ class _MyAppState extends State<MyApp> {
       isLoading = false;
       image = original!.copy();
 
-      // image = image!.toYuvI420();
-      // image = image!.toYuvNv21();
+      // image = image!.applyFormat(YuvPixelFormat.i420);
+      // image = image!.applyFormat(YuvPixelFormat.nv12);
 
       faceBox = null;
     });
   }
 
   void rotateClockWise() {
-    logTimed(() => requireImage.rotate(YuvImageRotation.rotation90), name: '$image rotateClockWise');
+    logTimed(() => requireImage.applyRotation(YuvImageRotation.rotation90), name: '$image rotateClockWise');
   }
 
   void rotateCouterClockwise() {
-    logTimed(() => requireImage.rotate(YuvImageRotation.rotation270), name: '$image rotateCouterClockwise');
+    logTimed(() => requireImage.applyRotation(YuvImageRotation.rotation270), name: '$image rotateCouterClockwise');
   }
 
   Future flipImageVertically() async {
-    logTimed(() async => requireImage.flipVertically(), name: '$image flipVertically');
+    logTimed(() async => requireImage.applyFlipVertical(), name: '$image flipVertically');
   }
 
   void flitImageHorizontally() {
-    logTimed(() => requireImage.flipHorizontally(), name: '$image flitHorizontally');
+    logTimed(() => requireImage.applyFlipHorizontal(), name: '$image flitHorizontally');
   }
 
   void cropImage() {
     var cropTarget = CropTarget.percented(top: .15, bottom: .75, left: .15, right: .85);
     var r = cropTarget.place(requireImage.size);
 
-    logTimed(() => requireImage.crop(r), name: '$image cropImage');
+    logTimed(() => requireImage.applyCrop(r), name: '$image cropImage');
   }
 
   void grayscaleImage() {
-    logTimed(() => requireImage.grayscale(), name: '$image grayscaleImage');
+    logTimed(() => requireImage.applyGrayscale(), name: '$image grayscaleImage');
   }
 
   void blackwhiteImage() {
-    logTimed(() => requireImage.blackwhite(), name: '$image blackwhiteImage');
+    logTimed(() => requireImage.applyBlackWhite(), name: '$image blackwhiteImage');
   }
 
   void invertImage() {
-    logTimed(() => requireImage.negate(), name: '$image invertImage');
+    logTimed(() => requireImage.applyNegate(), name: '$image invertImage');
   }
 
   void gaussianBlurImage() {
-    logTimed(() => requireImage.gaussianBlur(radius: 10, sigma: 10), name: '$image gaussianBlurImage');
+    logTimed(() => requireImage.applyGaussianBlur(radius: 10, sigma: 10), name: '$image gaussianBlurImage');
   }
 
   void meanBlurImage() {
-    logTimed(() => requireImage.meanBlur(radius: 10), name: '$image meanBlurImage');
+    logTimed(() => requireImage.applyMeanBlur(radius: 10), name: '$image meanBlurImage');
   }
 
   Future logTimed(FutureOr Function() execution, {String? name}) async {
@@ -224,7 +228,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void boxBlurImage() {
-    logTimed(() => requireImage.boxBlur(radius: 10), name: '$image boxBlurImage');
+    logTimed(() => requireImage.applyBoxBlur(radius: 10), name: '$image boxBlurImage');
   }
 
   Future loadImage() async {
@@ -247,7 +251,7 @@ class _MyAppState extends State<MyApp> {
 
     if (rgbaBytes == null) throw Exception('Could not decode image');
     setState(() {
-      image = YuvImage.bgra(img.width, img.height)..fromRgba8888(rgbaBytes.buffer.asUint8List());
+      image = YuvImage.bgra(img.width, img.height)..applyRgbaBytes(rgbaBytes.buffer.asUint8List());
       original = image!.copy();
       faceBox = null;
       isLoading = false;
@@ -259,8 +263,9 @@ class _MyAppState extends State<MyApp> {
       options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
     );
 
-    final yuvForMlInput =
-        (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? requireImage.copy().toYuvBgra8888() : requireImage.copy().toYuvNv21();
+    final yuvForMlInput = (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
+        ? requireImage.copy().applyFormat(YuvPixelFormat.bgra8888)
+        : requireImage.copy().applyFormat(YuvPixelFormat.nv12);
     final inputImage = yuvForMlInput.toInputImage();
 
     final faces = await detector.processImage(inputImage);
@@ -276,15 +281,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future toI420() async {
-    logTimed(() => requireImage.toYuvI420(), name: '$image toI420');
+    logTimed(() => requireImage.applyFormat(YuvPixelFormat.i420), name: '$image toI420');
   }
 
   Future toNV21() async {
-    logTimed(() => requireImage.toYuvNv21(), name: '$image toNV21');
+    logTimed(() => requireImage.applyFormat(YuvPixelFormat.nv12), name: '$image toNV21');
   }
 
   Future toBGRA() async {
-    logTimed(() => requireImage.toYuvBgra8888(), name: '$image toBGRA');
+    logTimed(() => requireImage.applyFormat(YuvPixelFormat.bgra8888), name: '$image toBGRA');
   }
 }
 

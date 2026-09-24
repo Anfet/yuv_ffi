@@ -16,19 +16,98 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.44.9'
 
-      - name: Flutter pub get
+      - name: Flutter pub get (root)
         run: flutter pub get
 
-      - name: Analyze
+      - name: Analyze (root)
         run: flutter analyze
+
+      # Since YUV-06 the loader opens the library by its installed name, so the
+      # build output is placed on the dynamic loader's search path instead of
+      # the old native/src/build/ build-tree path. Building into a throwaway
+      # directory and exporting LD_LIBRARY_PATH is what a real consumer's
+      # install looks like; keeping the old in-tree path would have hidden a
+      # packaging regression behind a green job.
+      - name: Build native library
+        shell: bash
+        run: |
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.so"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
 
       - name: Unit tests
         run: flutter test
 
-  wasm-web-smoke:
-    if: github.event_name == 'workflow_dispatch'
+  # YUV-34: required native memory-safety gate. Flutter reference tests prove
+  # wrong pixels; they cannot prove the absence of out-of-bounds access,
+  # uninitialized reads, integer UB, or leaks inside the C kernels. This job
+  # builds the C-only test_native harness (never the Flutter plugin build)
+  # with clang and ASan+UBSan (LSan is bundled into ASan on Linux), and fails
+  # on any sanitizer report or non-zero ctest exit -- no continue-on-error.
+  native-sanitizer-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Report toolchain versions
+        run: |
+          clang --version
+          cmake --version
+
+      # BUILD_TESTING=ON pulls in test_native/ (see root CMakeLists.txt); the
+      # generator is left at its Ubuntu default (Unix Makefiles), and the
+      # compiler is pinned to clang explicitly rather than relying on
+      # whatever cc/gcc the runner image defaults to, since the sanitizer
+      # flags in test_native/CMakeLists.txt are written for GCC/Clang and the
+      # required CI evidence should name one specific compiler.
+      - name: Configure
+        run: |
+          cmake -S . -B "$RUNNER_TEMP/sanitizer-build" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=clang
+
+      - name: Build
+        run: cmake --build "$RUNNER_TEMP/sanitizer-build" --config Debug
+
+      # --output-on-failure surfaces the sanitizer report inline in the job
+      # log; run twice (Debug is ctest's implicit default here, Release is
+      # asserted explicitly per the project rule that NDEBUG silences assert()
+      # and must not silently drop the harness's own checks).
+      - name: Run native test suite (Debug)
+        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build" -C Debug --output-on-failure
+
+      - name: Configure (Release)
+        run: |
+          cmake -S . -B "$RUNNER_TEMP/sanitizer-build-release" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=clang
+
+      - name: Build (Release)
+        run: cmake --build "$RUNNER_TEMP/sanitizer-build-release" --config Release
+
+      - name: Run native test suite (Release)
+        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build-release" -C Release --output-on-failure
+
+      # Prints the sanitizer safety gate's own executed-case count into the
+      # job log as required evidence, independent of ctest's per-test pass
+      # count (ctest reports one pass/fail per executable, not per case).
+      - name: Report executed case count
+        run: "$RUNNER_TEMP/sanitizer-build/test_native/abi_sanitizer_test"
+
+  # YUV-26: proves ffigen.yaml's allowlist is host-independent. libclang's
+  # system headers differ between Windows and Linux, so a `functions.include`
+  # / `structs.include` pattern that is accidentally too broad (or too
+  # narrow) can generate identically on one host and diverge on the other
+  # without either host reporting an error. Regenerating from a clean
+  # checkout and diffing against the committed file is a stronger proof of
+  # host-independence than re-deriving the expected symbol set by hand.
+  bindings-regeneration:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,7 +116,262 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.44.9'
+
+      - name: Install libclang
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      - name: Regenerate bindings
+        run: flutter pub run ffigen --config ffigen.yaml
+
+      - name: Audit generated bindings against Dart usage
+        run: dart run tool/verify_bindings_audit.dart
+
+      - name: Fail on any drift from the committed bindings
+        run: git diff --exit-code -- ffigen.yaml lib/src/functions/bindings/yuv_ffi_bingings.dart
+
+  # YUV-06: proves the package is loadable the way a real consumer loads it.
+  # Both jobs build from a clean checkout and then assert twice over: a VM
+  # smoke, which resolves the library by its installed name, and an app-runtime
+  # smoke through `flutter drive` against the built desktop application, which
+  # is the only place the loader's real per-platform branch runs. Neither suite
+  # skips when the library is missing — a skipped native run and a passing one
+  # used to look identical in the log, which is how broken Linux/macOS
+  # packaging stayed green.
+  linux-native-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      # Installed name on the loader search path, never the CMake build tree:
+      # native/src/build/libyuv_ffi.so does not exist in a published package.
+      - name: Build and install native library
+        shell: bash
+        run: |
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.so"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
+
+      - name: Packaging smoke
+        run: flutter test test/native_packaging_smoke_test.dart --reporter expanded
+
+      # The example app ships no linux/ runner directory, so the platform
+      # folder is scaffolded here rather than committed: `flutter config` only
+      # enables the toolchain, it does not create a missing platform.
+      - name: Build example (linux desktop)
+        working-directory: example
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev
+          flutter config --enable-linux-desktop
+          flutter create --platforms=linux .
+          flutter pub get
+          flutter build linux --release
+
+      # The VM smoke above resolves the library through LD_LIBRARY_PATH, which
+      # is not how an installed app finds it. This runs the same assertions
+      # inside the built application, where the plugin's own CMake install
+      # rules are what must place the .so next to the runner.
+      - name: App-runtime smoke (linux desktop)
+        working-directory: example
+        shell: bash
+        run: |
+          xvfb-run -a flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/native_app_runtime_smoke_test.dart \
+            -d linux
+
+  macos-native-smoke:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      # On Apple platforms the sources are linked into the pod target, so the
+      # symbols live in the running process and there is no file to open. The
+      # dylib built here is what `flutter test` (a plain VM process, not an app
+      # bundle) resolves through DYLD_LIBRARY_PATH.
+      - name: Build and install native library
+        shell: bash
+        run: |
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.dylib"
+          echo "DYLD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
+
+      - name: Packaging smoke
+        run: flutter test test/native_packaging_smoke_test.dart --reporter expanded
+
+      # Builds the macOS example through CocoaPods, which is what actually
+      # compiles macos/Classes/*.c. Before YUV-06 the pod target contained only
+      # a forwarder to a header, so no operation symbol was ever built here.
+      - name: Build example (macos desktop)
+        working-directory: example
+        shell: bash
+        run: |
+          flutter config --enable-macos-desktop
+          flutter create --platforms=macos .
+          flutter pub get
+          flutter build macos --release
+
+      # The required macOS evidence. The VM smoke above side-loads the dylib
+      # through DYLD_LIBRARY_PATH and therefore never reaches the branch a real
+      # app takes: `_openYuvLibrary` returns `DynamicLibrary.process()` on
+      # macOS because the sources are compiled into the pod target. A pod
+      # target that forwarded no operation sources at all — the pre-YUV-06
+      # state — still passed the VM smoke through the side-loaded dylib, so
+      # only this step can prove the pod target itself carries the symbols.
+      #
+      # DYLD_LIBRARY_PATH is deliberately NOT exported here: it is set for the
+      # job via GITHUB_ENV above, and leaving it visible would let the app fall
+      # back to the same side-loaded dylib and mask an empty pod target.
+      - name: App-runtime smoke (macos desktop)
+        working-directory: example
+        shell: bash
+        env:
+          DYLD_LIBRARY_PATH: ''
+        run: |
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/native_app_runtime_smoke_test.dart \
+            -d macos
+
+  # YUV-24: proves the plugin's Android build actually configures and builds
+  # the shared src/CMakeLists.txt source list through the NDK, not just that
+  # the Gradle file parses. android/build.gradle wires externalNativeBuild's
+  # cmake.path straight at ../src/CMakeLists.txt, so a real `flutter build apk`
+  # is what exercises the explicit source list on Android, the same list
+  # test/cmake_sources_test.dart keeps in sync with src/**/*.c on the host.
+  android-native-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: Build example (android)
+        working-directory: example
+        run: flutter build apk --debug
+
+  # YUV-06 requires mobile build evidence on both platforms. Android is covered
+  # by android-native-build through the NDK; iOS is covered here. Runtime on a
+  # real device or simulator is out of scope — what must not be missing is
+  # proof that the iOS pod target compiles, which is the half that broke on
+  # macOS: ios/Classes/*.c are the only route the shared C sources take into an
+  # Apple build, and nothing else in CI compiles them.
+  #
+  # --no-codesign is what makes this runnable without provisioning profiles; it
+  # skips signing only, not the compile and link of the pod target.
+  ios-native-build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: Build example (ios, no codesign)
+        working-directory: example
+        run: flutter build ios --debug --no-codesign
+
+  example-analyze-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: Analyze (example)
+        working-directory: example
+        run: flutter analyze
+
+      - name: Build Web (example)
+        working-directory: example
+        run: flutter build web
+
+  # The package WASM loader needs Flutter's asset bundle. `flutter test --platform
+  # chrome` does not serve that bundle, so every asset-dependent runtime test
+  # belongs in example/integration_test and runs through flutter drive.
+  wasm-web-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      # Both must come from the same install, or the driver refuses the session:
+      # the stable channel briefly shipped chromedriver 153 against Chrome 152,
+      # which failed with "This version of ChromeDriver only supports Chrome
+      # version 153". Pinning one version keeps the pair consistent.
+      - name: Setup Chrome and matching chromedriver
+        uses: browser-actions/setup-chrome@v1
+        id: chrome
+        with:
+          chrome-version: '152'
+          install-chromedriver: true
+          install-dependencies: true
+
+      - name: Report the browser/driver pair
+        shell: bash
+        run: |
+          echo "chrome:       ${{ steps.chrome.outputs.chrome-version }}"
+          echo "chromedriver: ${{ steps.chrome.outputs.chromedriver-version }}"
+          "${{ steps.chrome.outputs.chromedriver-path }}" --version
 
       - name: Install Emscripten SDK
         shell: bash
@@ -55,30 +389,103 @@ jobs:
           test -f assets/wasm/yuv_ffi.js
           test -f assets/wasm/yuv_ffi.wasm
 
-      - name: Flutter pub get
-        run: flutter pub get
-
       - name: Enable Flutter web
         run: flutter config --enable-web
 
-      - name: Web parity gate (Chrome)
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      # Every asset-dependent Web acceptance case runs here. `flutter drive`
+      # takes one target at a time, so the suites are driven in a loop rather
+      # than as a directory; an unset `set -e` would let a failing target pass
+      # the job, so each exit status is checked explicitly.
+      - name: Required Web integration gate
+        working-directory: example
         shell: bash
         run: |
-          required=(
-            test/web/yuv_web_wasm_test.dart
-            test/web/wasm_parity_conversions_test.dart
-            test/web/wasm_parity_transforms_test.dart
-            test/web/wasm_parity_edge_cases_test.dart
+          set -euo pipefail
+
+          chromedriver --port=4444 > /tmp/chromedriver.log 2>&1 &
+          chromedriver_pid=$!
+          trap 'cat /tmp/chromedriver.log; kill "$chromedriver_pid"' EXIT
+
+          for _ in $(seq 1 10); do
+            if curl --fail --silent http://127.0.0.1:4444/status > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4444/status > /dev/null
+
+          targets=(
+            integration_test/wasm_bootstrap_test.dart
+            integration_test/getbytes_contract_test.dart
+            integration_test/padded_bgra_constructor_test.dart
+            integration_test/image_cache_key_test.dart
+            integration_test/serialization_contract_test.dart
+            integration_test/wasm_loader_lifecycle_test.dart
+            integration_test/wasm_parity_edge_cases_test.dart
+            integration_test/nv_chroma_order_web_test.dart
+            integration_test/rel02_rel05_web_regression_test.dart
           )
 
-          for f in "${required[@]}"; do
-            if [ ! -f "$f" ]; then
-              echo "Required web parity test is missing: $f"
-              exit 1
+          failed=()
+          for target in "${targets[@]}"; do
+            echo "::group::$target"
+            if xvfb-run -a flutter drive \
+              --driver=test_driver/integration_test.dart \
+              --target="$target" \
+              -d web-server \
+              --browser-name=chrome \
+              --headless; then
+              echo "PASS $target"
+            else
+              echo "FAIL $target"
+              failed+=("$target")
             fi
+            echo "::endgroup::"
           done
 
-          for f in "${required[@]}"; do
-            echo "Running web test: $f"
-            xvfb-run -a flutter test -d chrome "$f"
+          if [ ${#failed[@]} -ne 0 ]; then
+            echo "Failed Web integration targets:"
+            printf '  %s\n' "${failed[@]}"
+            exit 1
+          fi
+
+      # YUV-18: the full reference matrix (119 cases over test_pattern_512.png).
+      # CI did not cover it at all -- the targets above are contract and
+      # lifecycle suites, none of which compare against the reference images,
+      # so a Web/native divergence like F-009 could only be caught by a manual
+      # run. This step closes that gap.
+      #
+      # Judged the same way as the gate above: by flutter drive's exit code.
+      # An earlier version of this step tried to assert on the suite's own
+      # "YUV-12 summary: executed=... failed=..." line, which was wrong --
+      # debugPrint output from the browser does not reach drive's stdout, so
+      # that line is never visible here even on a fully successful run, and
+      # every run would fail. Only the failure output (expect() messages and
+      # stack traces) is forwarded, which is what makes the exit code
+      # meaningful: a deliberately broken web assertion was verified to turn
+      # this job red (run 35832935455, FAIL wasm_bootstrap_test.dart).
+      #
+      # Consequence worth knowing: because the per-case debugPrint log is
+      # invisible here, a failing matrix tells you THAT cases failed, not
+      # which. Reproduce locally to get per-case ids.
+      - name: Web reference matrix (YUV-12/YUV-18)
+        working-directory: example
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          chromedriver --port=4444 > /tmp/chromedriver-matrix.log 2>&1 &
+          chromedriver_pid=$!
+          trap 'kill "$chromedriver_pid" 2>/dev/null || true' EXIT
+
+          for _ in $(seq 1 10); do
+            curl --fail --silent http://127.0.0.1:4444/status > /dev/null && break
+            sleep 1
           done
+          curl --fail --silent http://127.0.0.1:4444/status > /dev/null
+
+          xvfb-run -a flutter drive             --driver=test_driver/integration_test.dart             --target=integration_test/reference_web_conversions_test.dart             -d web-server             --browser-name=chrome             --headless

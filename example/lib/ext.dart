@@ -1,15 +1,50 @@
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 extension CameraImageExt on CameraImage {
   YuvImage toYuvImage() {
-    final planes = List.of(this.planes.map((p) => YuvPlane(height, p.bytesPerRow, p.bytesPerPixel ?? 1, p.bytes)));
+    // Only the first plane spans the full image height; chroma planes of
+    // planar/semi-planar formats hold ceil(height / 2) rows. Camera buffers
+    // may omit the unused padding after their last row, while YuvPlane stores
+    // a complete `rows * bytesPerRow` layout.
+    final isPacked = format.group == ImageFormatGroup.bgra8888;
+    final chromaRows = (height + 1) ~/ 2;
+    final chromaColumns = (width + 1) ~/ 2;
+
+    final planes = <YuvPlane>[];
+    for (int i = 0; i < this.planes.length; i++) {
+      final p = this.planes[i];
+      final rows = (isPacked || i == 0) ? height : chromaRows;
+      final columns = (isPacked || i == 0) ? width : chromaColumns;
+      final pixelStride = p.bytesPerPixel ?? 1;
+      final sampleBytes = isPacked
+          ? pixelStride
+          : format.group == ImageFormatGroup.nv21 && i > 0
+          ? pixelStride
+          : 1;
+      final expectedLength = rows * p.bytesPerRow;
+      final minimumLength = (rows - 1) * p.bytesPerRow + (columns - 1) * pixelStride + sampleBytes;
+      if (p.bytes.length < minimumLength) {
+        throw FormatException('Camera plane $i is truncated: expected at least $minimumLength bytes, got ${p.bytes.length}');
+      }
+
+      final bytes = Uint8List(expectedLength);
+      final copyLength = p.bytes.length < expectedLength ? p.bytes.length : expectedLength;
+      bytes.setRange(0, copyLength, p.bytes);
+      planes.add(YuvPlane(rows, p.bytesPerRow, pixelStride, bytes));
+    }
+
     switch (format.group) {
       case ImageFormatGroup.yuv420:
         return YuvImage.i420(width, height, planes: planes);
 
       case ImageFormatGroup.nv21:
+        // Deliberately not YuvImage.nv12(): camera frames in this group carry
+        // NV21's UV byte order, which only the nv21 label preserves.
+        // ignore: deprecated_member_use
         return YuvImage.nv21(width, height, planes: planes);
       case ImageFormatGroup.bgra8888:
         return YuvImage.bgra(width, height, planes: planes);
@@ -24,19 +59,19 @@ extension YuvImageToCameraExt on YuvImage {
   InputImage toInputImage() {
     InputImageFormat format;
     switch (this.format) {
-      case YuvFileFormat.i420:
+      case YuvPixelFormat.i420:
         format = InputImageFormat.yuv420;
         break;
-      case YuvFileFormat.nv21:
+      case YuvPixelFormat.nv12:
         format = InputImageFormat.nv21;
         break;
-      case YuvFileFormat.bgra8888:
+      case YuvPixelFormat.bgra8888:
         format = InputImageFormat.bgra8888;
         break;
     }
 
     final meta = InputImageMetadata(size: size, rotation: InputImageRotation.rotation0deg, format: format, bytesPerRow: planes.first.bytesPerRow);
 
-    return InputImage.fromBytes(bytes: getBytes(), metadata: meta);
+    return InputImage.fromBytes(bytes: toBytes(), metadata: meta);
   }
 }

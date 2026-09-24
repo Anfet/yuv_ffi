@@ -220,13 +220,13 @@ void main() {
 
     final nv = i420.toYuvNv21();
     expect(identical(nv, i420), isTrue);
-    expect(nv.format, YuvFileFormat.nv21);
+    expect(nv.format, YuvPixelFormat.nv12);
     expect(nv.width, _w);
     expect(nv.height, _h);
 
     final back = nv.toYuvI420();
     expect(identical(back, nv), isTrue);
-    expect(back.format, YuvFileFormat.i420);
+    expect(back.format, YuvPixelFormat.i420);
     expect(back.width, _w);
     expect(back.height, _h);
 
@@ -239,7 +239,7 @@ void main() {
     nv.fromRgba8888(rgba);
     final bgra = nv.toYuvBgra8888();
     expect(identical(bgra, nv), isTrue);
-    expect(bgra.format, YuvFileFormat.bgra8888);
+    expect(bgra.format, YuvPixelFormat.bgra8888);
     expect(bgra.width, _w);
     expect(bgra.height, _h);
     expect(bgra.yPlane.bytes.length, _w * _h * 4);
@@ -256,6 +256,84 @@ void main() {
     expect(identical(restored, swapped), isTrue);
 
     expect(restored.uPlane.bytes, orderedEquals(original));
+  }, skip: !_nativeAvailable);
+
+  test('swapNv preserves Y and reverses every chroma pair exactly', () {
+    const width = 4;
+    const height = 4;
+    final originalY = Uint8List.fromList([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]);
+    final originalChroma = Uint8List.fromList([1, 2, 3, 4, 5, 6, 7, 8]);
+    final image = YuvImage.nv21(width, height, planes: [YuvPlane(height, width, 1, originalY), YuvPlane(height ~/ 2, width, 2, originalChroma)]);
+
+    final swapped = image.swapNv();
+
+    expect(identical(swapped, image), isTrue);
+    expect(swapped.format, YuvPixelFormat.nv12);
+    expect(swapped.width, width);
+    expect(swapped.height, height);
+    expect(swapped.yPlane.bytes, orderedEquals(originalY));
+    expect(swapped.uPlane.bytes, orderedEquals(<int>[2, 1, 4, 3, 6, 5, 8, 7]));
+
+    final restored = swapped.swapNv();
+    expect(restored.yPlane.bytes, orderedEquals(originalY));
+    expect(restored.uPlane.bytes, orderedEquals(originalChroma));
+  }, skip: !_nativeAvailable);
+
+  test('swapNv preserves Y after conversion from I420', () {
+    const width = 4;
+    const height = 4;
+    final originalY = Uint8List.fromList([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]);
+    final image = YuvImage.i420(
+      width,
+      height,
+      planes: [
+        YuvPlane(height, width, 1, originalY),
+        YuvPlane(height ~/ 2, width ~/ 2, 1, Uint8List.fromList([1, 3, 5, 7])),
+        YuvPlane(height ~/ 2, width ~/ 2, 1, Uint8List.fromList([2, 4, 6, 8])),
+      ],
+    );
+
+    image.swapNv();
+
+    expect(image.format, YuvPixelFormat.nv12);
+    expect(image.width, width);
+    expect(image.height, height);
+    expect(image.yPlane.bytes, orderedEquals(originalY));
+    expect(image.uPlane.bytes, orderedEquals(<int>[2, 1, 4, 3, 6, 5, 8, 7]));
+  }, skip: !_nativeAvailable);
+
+  test('swapNv preserves padded Y layout after one and two swaps', () {
+    const width = 4;
+    const height = 4;
+    const yRowStride = 6;
+    const uvRowStride = 6;
+    final originalY = Uint8List.fromList([10, 11, 12, 13, 90, 91, 14, 15, 16, 17, 92, 93, 18, 19, 20, 21, 94, 95, 22, 23, 24, 25, 96, 97]);
+    final originalChroma = Uint8List.fromList([1, 2, 3, 4, 80, 81, 5, 6, 7, 8, 82, 83]);
+    final image = YuvImage.nv21(
+      width,
+      height,
+      planes: [YuvPlane(height, yRowStride, 1, originalY), YuvPlane(height ~/ 2, uvRowStride, 2, originalChroma)],
+    );
+    final sourceYPlane = image.yPlane;
+    final sourceChromaPlane = image.uPlane;
+
+    image.swapNv();
+
+    expect(identical(image.yPlane, sourceYPlane), isFalse);
+    expect(identical(image.yPlane.bytes, sourceYPlane.bytes), isFalse);
+    expect(identical(image.uPlane, sourceChromaPlane), isFalse);
+    expect(identical(image.uPlane.bytes, sourceChromaPlane.bytes), isFalse);
+    expect(image.yPlane.rowStride, yRowStride);
+    expect(image.yPlane.bytes, orderedEquals(originalY));
+    expect(image.uPlane.rowStride, uvRowStride);
+    expect(image.uPlane.bytes.sublist(0, 4), orderedEquals(<int>[2, 1, 4, 3]));
+    expect(image.uPlane.bytes.sublist(uvRowStride, uvRowStride + 4), orderedEquals(<int>[6, 5, 8, 7]));
+
+    image.swapNv();
+
+    expect(image.yPlane.bytes, orderedEquals(originalY));
+    expect(image.uPlane.bytes.sublist(0, 4), orderedEquals(<int>[1, 2, 3, 4]));
+    expect(image.uPlane.bytes.sublist(uvRowStride, uvRowStride + 4), orderedEquals(<int>[5, 6, 7, 8]));
   }, skip: !_nativeAvailable);
 
   test('flipHorizontally on BGRA is exact', () {
@@ -460,4 +538,149 @@ void main() {
     expect(bgra.height, _h);
     expect(bgra.toBgra8888().length, _w * _h * 4);
   }, skip: !_nativeAvailable);
+
+  // Like the getBytes group below, these cases only allocate planes in Dart and
+  // must run without a native library.
+  group('padded BGRA constructor contract', () {
+    /// Builds a plane whose buffer exactly matches its declared geometry.
+    YuvPlane plane(int height, int rowStride, [int pixelStride = 4]) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
+
+    test('F-004 diagnostic case: a valid padded plane is accepted', () {
+      expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]), returnsNormally);
+    });
+
+    test('specialized and generic constructors agree on a padded plane', () {
+      final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]);
+      final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)]);
+
+      for (final image in <YuvImage>[specialized, generic]) {
+        expect(image.yPlane.rowStride, 16);
+        expect(image.yPlane.pixelStride, 4);
+        expect(image.yPlane.bytes.length, 32);
+      }
+    });
+
+    test('a tight plane is still kept tight', () {
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 8)]);
+      expect(image.yPlane.rowStride, 8);
+      expect(image.yPlane.bytes.length, 16);
+    });
+
+    test('the constructor deep-copies instead of aliasing the caller plane', () {
+      final source = plane(2, 16);
+      source.bytes[0] = 42;
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+
+      source.bytes[0] = 200;
+      expect(image.yPlane.bytes[0], 42, reason: 'the image must not alias the caller buffer');
+    });
+
+    test('copy keeps padded metadata and blank copy zeros the whole allocation', () {
+      final source = plane(2, 16);
+      for (int i = 0; i < source.bytes.length; i++) {
+        source.bytes[i] = i + 1;
+      }
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+
+      final copied = image.copy();
+      expect(copied.yPlane.rowStride, 16);
+      expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
+
+      final blank = image.copy(blank: true);
+      expect(blank.yPlane.rowStride, 16, reason: 'a blank copy must not silently drop the padding');
+      expect(blank.yPlane.bytes.length, 32);
+      expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
+    });
+
+    test('an invalid padded layout throws ArgumentError, not a RangeError', () {
+      // A row that cannot hold width * 4 bytes is genuinely invalid, and both
+      // entry points must reject it through the shared validator.
+      expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
+      expect(() => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
+    });
+  });
+
+  // These cases only allocate planes in Dart, so they must run without a native
+  // library. Guarding them with `skip: !_nativeAvailable` would let the F-003
+  // regression pass unnoticed on a machine with no built binary.
+  group('getBytes contract', () {
+    const sizes = <({int w, int h})>[(w: 1, h: 1), (w: 3, h: 3), (w: 127, h: 255), (w: 512, h: 512)];
+
+    for (final size in sizes) {
+      test('returns exactly the summed plane length for ${size.w}x${size.h}', () {
+        for (final image in _imagesForEachFormat(size.w, size.h)) {
+          final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
+
+          expect(image.getBytes(), hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
+        }
+      });
+
+      test('equals a direct concatenation for ${size.w}x${size.h}', () {
+        for (final image in _imagesForEachFormat(size.w, size.h)) {
+          _fillPlanesWithPattern(image);
+
+          expect(
+            image.getBytes(),
+            orderedEquals(_concatPlanesDirectly(image)),
+            reason: '${image.format.name} ${size.w}x${size.h} must concatenate planes in format order',
+          );
+        }
+      });
+    }
+
+    test('returns an independent copy in both directions', () {
+      final image = YuvImage.i420(4, 4);
+      _fillPlanesWithPattern(image);
+
+      final snapshot = image.getBytes();
+      final planeByteBefore = image.yPlane.bytes[0];
+
+      // Mutating the returned buffer must not reach back into the planes.
+      snapshot[0] = snapshot[0] ^ 0xFF;
+      expect(image.yPlane.bytes[0], planeByteBefore);
+
+      // Mutating a plane must not retroactively change an earlier result.
+      final snapshotByteBefore = snapshot[1];
+      image.yPlane.bytes[1] = image.yPlane.bytes[1] ^ 0xFF;
+      expect(snapshot[1], snapshotByteBefore);
+    });
+
+    test('F-003 diagnostic case: i420 3x3 has no alignment tail', () {
+      final image = YuvImage.i420(3, 3);
+      final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
+
+      // Y: 3x3 = 9 bytes. Chroma: ceil(3/2) x ceil(3/2) = 2x2, one byte per
+      // sample for I420's planar (not interleaved) U and V, 4 bytes each.
+      expect(expectedLength, 17);
+      expect(image.getBytes(), hasLength(expectedLength));
+    });
+  });
+}
+
+/// Builds one image per public format, so a contract case covers BGRA, I420 and
+/// the legacy `nv21` name without repeating itself.
+///
+/// The legacy `nv21` name keeps its current NV12-like UV byte order; these
+/// cases only concatenate planes and never reinterpret chroma.
+List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[YuvImage.bgra(w, h), YuvImage.i420(w, h), YuvImage.nv21(w, h)];
+
+/// Writes a per-plane pattern so a misordered or truncated concatenation cannot
+/// coincidentally match an all-zero buffer.
+void _fillPlanesWithPattern(YuvImage image) {
+  for (int i = 0; i < image.planes.length; i++) {
+    final bytes = image.planes[i].bytes;
+    for (int j = 0; j < bytes.length; j++) {
+      bytes[j] = ((i + 1) * 37 + j) & 0xFF;
+    }
+  }
+}
+
+/// Expected value built by direct concatenation rather than by the other
+/// backend, so a shared defect cannot hide in both sides of the comparison.
+Uint8List _concatPlanesDirectly(YuvImage image) {
+  final out = <int>[];
+  for (final plane in image.planes) {
+    out.addAll(plane.bytes);
+  }
+  return Uint8List.fromList(out);
 }

@@ -4,14 +4,14 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'yuv_ffi'
-  s.version          = '0.0.1'
-  s.summary          = 'A new Flutter project.'
+  s.version          = '0.4.0'
+  s.summary          = 'High-performance YUV/BGRA image processing for Flutter via native C/FFI.'
   s.description      = <<-DESC
-A new Flutter project.
+yuv_ffi is a Flutter/Dart package for high-performance image processing on YUV/BGRA frames using native C + FFI. It provides format conversions, crop/rotate/flip, effects, blur, and plane-based APIs with row/pixel stride support.
                        DESC
-  s.homepage         = 'http://example.com'
-  s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.homepage         = 'https://github.com/Anfet/yuv_ffi'
+  s.license          = { :type => 'MIT', :file => '../LICENSE' }
+  s.author           = { 'Anfet' => 'oleg.toplionkin@gmail.com' }
 
   # This will ensure the source files in Classes/ are included in the native
   # builds of apps using this FFI plugin. Podspec does not support relative

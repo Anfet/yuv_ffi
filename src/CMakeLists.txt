@@ -3,14 +3,43 @@
 # the plugin to fail to compile for some customers of the plugin.
 cmake_minimum_required(VERSION 3.10)
 
-project(yuv_ffi_library VERSION 0.0.1 LANGUAGES C)
+project(yuv_ffi_library VERSION 0.4.0 LANGUAGES C)
 
-set_property(GLOBAL PROPERTY CMAKE_CONFIGURE_DEPENDS "yuv/*.c")
-
-# Собираем все исходники из папки yuv/
-file(GLOB_RECURSE SOURCES "yuv/*.c" "yuv_ffi.c" "**/*.c")
+# Explicit source list (rooted at CMAKE_CURRENT_SOURCE_DIR so paths are
+# correct whether this file is configured standalone or pulled in via
+# add_subdirectory from windows/, linux/ or android/build.gradle).
+#
+# This is deliberately NOT a file(GLOB_RECURSE ...): CONFIGURE_DEPENDS (the
+# only mechanism that would make a glob notice new files without a manual
+# cache clear) requires CMake 3.12, and this project intentionally keeps
+# cmake_minimum_required(VERSION 3.10) to support Android tooling that may
+# resolve an unpinned CMake 3.10.2. A plain glob without CONFIGURE_DEPENDS
+# would silently miss newly added sources until the cache is cleared, which
+# is worse than an explicit list.
+#
+# Adding a new .c file therefore requires adding it here. test/cmake_sources_test.dart
+# keeps this list honest: it fails if a source under src/ is missing from
+# this list, or if this list contains a name not on disk, or a duplicate.
+set(SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv_ffi.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/utils/checked_arithmetic.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/utils/validated_view.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_validate_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_kernel_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_convert_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_black_white_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_grayscale_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_negate_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_gaussian_blur_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_mean_blur_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_box_blur_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_crop_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_flip_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_rotate_v1.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/yuv/abi/yuv_chroma_swap_v1.c"
+)
 add_library(
-    yuv_ffi SHARED ${SOURCES} "yuv_ffi.c"
+    yuv_ffi SHARED ${SOURCES}
 )
 
 target_include_directories(
@@ -27,11 +56,35 @@ set_target_properties(yuv_ffi PROPERTIES
 
 target_compile_definitions(yuv_ffi PUBLIC DART_SHARED_LIB)
 
+# --- Optimization ---
+#
+# The conversion loops are the hot path of this plugin: a 1080p i420 -> BGRA8888
+# frame measures ~31 ms unoptimized and ~8.8 ms at -O3 on the same machine, so
+# the flag is worth roughly 3.6x on every operation.
+#
+# Flags are applied only to non-Debug configurations so that debug builds stay
+# steppable. Single-config generators (Ninja/Makefiles, used by Android and
+# Linux) report the type in CMAKE_BUILD_TYPE; multi-config generators (Visual
+# Studio, Xcode) resolve $<CONFIG> per build, so the generator expression covers
+# both without branching on the generator.
+if (MSVC)
+    target_compile_options(yuv_ffi PRIVATE $<$<NOT:$<CONFIG:Debug>>:/O2>)
+else ()
+    target_compile_options(yuv_ffi PRIVATE $<$<NOT:$<CONFIG:Debug>>:-O3>)
+endif ()
+
+# Baseline SIMD only. `-march=native` is deliberately NOT used: it targets the
+# build machine, and a binary built on a newer CPU crashes on an older one.
+# arm64 always has NEON and x86_64 always has SSE2, so the default baseline
+# already allows vectorization on every supported target.
+
 # --- Platform-specific linking ---
 
-# Android: link with liblog for __android_log_print
+# Android: liblog is no longer linked. The only user of __android_log_print was
+# src/yuv/utils/h/log.h, which YUV-52 removed together with the legacy
+# processing sources that included it; linking a library nothing references
+# would just misstate the target's dependencies.
 if (ANDROID)
-    target_link_libraries(yuv_ffi log)
     # Android 15: 16k page size support
     target_link_options(yuv_ffi PRIVATE "-Wl,-z,max-page-size=16384")
 

@@ -4,11 +4,7 @@ class _YuvCameraPreviewMobile extends StatefulWidget {
   final CameraController cameraController;
   final YuvImage Function(YuvImage image)? transform;
 
-  const _YuvCameraPreviewMobile({
-    super.key,
-    required this.cameraController,
-    this.transform,
-  });
+  const _YuvCameraPreviewMobile({super.key, required this.cameraController, this.transform});
 
   @override
   State<_YuvCameraPreviewMobile> createState() => _YuvCameraPreviewMobileState();
@@ -88,14 +84,12 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
 
     isProcessing = true;
     try {
-      final rotation = YuvImageRotation.values.firstWhere(
-        (e) => e.degrees == widget.cameraController.description.sensorOrientation.abs(),
-      );
+      final rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
       var yuv = image.toYuvImage();
       if (Platform.isAndroid) {
-        yuv = yuv.rotate(rotation.toZero());
+        yuv = yuv.applyRotation(rotation.toZero());
 
-        if (kYuvCameraPreviewFlipAndroid) yuv.flipHorizontally();
+        if (kYuvCameraPreviewFlipAndroid) yuv.applyFlipHorizontal();
       }
       yuv = widget.transform?.call(yuv) ?? yuv;
       streamController.add(yuv);

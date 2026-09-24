@@ -70,7 +70,7 @@ void main() {
 
     final bgra = nv21.toYuvBgra8888();
     expect(identical(bgra, nv21), isTrue);
-    expect(bgra.format, YuvFileFormat.bgra8888);
+    expect(bgra.format, YuvPixelFormat.bgra8888);
     expect(bgra.width, w);
     expect(bgra.height, h);
     expect(bgra.yPlane.bytes.length, w * h * 4);

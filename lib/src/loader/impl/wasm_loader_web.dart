@@ -5,7 +5,9 @@
 // intentional and isolated from non-web targets.
 import 'dart:async';
 import 'dart:html' as html;
-import 'package:yuv_ffi/src/web/js_util_compat.dart' as js_util;
+import 'dart:js_interop';
+
+import 'package:yuv_ffi/src/web/impl/js_util_compat_web.dart' as js_util;
 
 /// Holds a reference to an initialized Emscripten module object.
 ///
@@ -51,36 +53,107 @@ final class YuvWasmLoader {
   static Future<YuvModule>? _initFuture;
   static YuvModule? _module;
 
+  /// Number of times initialization actually started.
+  ///
+  /// A shared in-flight attempt counts once, which is what proves concurrent
+  /// callers do not each start their own initialization.
+  static int debugInitCount = 0;
+
+  static Future<YuvModule> Function({required String scriptPath, required String wasmPath, required String moduleFactoryName})? _initializerOverride;
+
+  /// Replaces the initializer so tests can count attempts and fail
+  /// deterministically without a real module. Not exported publicly.
+  static void debugSetInitializer(
+    Future<YuvModule> Function({required String scriptPath, required String wasmPath, required String moduleFactoryName})? initializer,
+  ) {
+    _initializerOverride = initializer;
+  }
+
+  /// Drops every cached initialization handle and the counter together.
+  static void debugReset() {
+    _initializerOverride = null;
+    _initFuture = null;
+    _module = null;
+    debugInitCount = 0;
+  }
+
+  /// Removes the injected loader script, if one is present.
+  ///
+  /// [debugReset] deliberately leaves the document alone: it clears this
+  /// class's own cached handles, and a script that already loaded is still
+  /// legitimately there. A test that wants to observe injection itself — the
+  /// failure path especially — needs the page returned to its pre-injection
+  /// state, which only this can do.
+  ///
+  /// Not exported publicly, like the rest of the debug surface.
+  static void debugRemoveInjectedScript() {
+    html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]')?.remove();
+  }
+
+  /// Whether an injected loader script is currently in the document.
+  ///
+  /// Exists so a test can assert the failure path really dropped the dead tag;
+  /// the marker attribute is what makes injection idempotent, so its absence
+  /// is the only direct evidence that a retry will inject again.
+  static bool get debugHasInjectedScript => html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]') != null;
+
   /// Returns initialized module if available in current process, otherwise null.
   static YuvModule? get moduleIfInitialized => _module;
 
-  /// Ensures the WASM runtime is initialized exactly once.
+  /// Ensures the WASM runtime is initialized.
   ///
-  /// Safe to call many times; all callers share the same in-flight/completed
-  /// initialization future.
+  /// Concurrent callers share one in-flight attempt, and a successful result is
+  /// cached for the life of the process.
+  ///
+  /// A failed attempt is not cached: the future is cleared so the next explicit
+  /// call starts a genuinely new attempt. On failure [moduleIfInitialized]
+  /// stays `null`, so a partially initialized module is never observable.
+  ///
+  /// Unlike the native backend, Web has no lazy fallback: this must be awaited
+  /// before any image operation. Configuration and runtime failures throw
+  /// [StateError]; any other error propagates unchanged with its original stack
+  /// trace.
   static Future<YuvModule> ensureInitialized({
     String scriptPath = defaultScriptPath,
     String wasmPath = defaultWasmPath,
     String moduleFactoryName = defaultFactoryName,
   }) {
-    return _initFuture ??= _initialize(
-      scriptPath: scriptPath,
-      wasmPath: wasmPath,
-      moduleFactoryName: moduleFactoryName,
-    );
+    final inFlight = _initFuture;
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    debugInitCount++;
+    final initializer = _initializerOverride ?? _initialize;
+    late final Future<YuvModule> attempt;
+    attempt = initializer(scriptPath: scriptPath, wasmPath: wasmPath, moduleFactoryName: moduleFactoryName)
+        .then((module) {
+          // Publishing the module here rather than only inside [_initialize] is
+          // what makes an injected initializer a complete stand-in for the real
+          // one: otherwise a test that installs a fake module would see
+          // `ensureInitialized()` succeed while [moduleIfInitialized] stayed null,
+          // and every operation after it would fail as "not initialized".
+          _module = module;
+          return module;
+        })
+        .onError<Object>((error, stackTrace) {
+          // Clear only if this attempt is still the current one. A later call may
+          // already have replaced it, and dropping that newer future would make
+          // concurrent callers wait on an attempt nobody owns any more.
+          if (identical(_initFuture, attempt)) {
+            _initFuture = null;
+          }
+          _module = null;
+          Error.throwWithStackTrace(error, stackTrace);
+        });
+    _initFuture = attempt;
+    return attempt;
   }
 
-  static Future<YuvModule> _initialize({
-    required String scriptPath,
-    required String wasmPath,
-    required String moduleFactoryName,
-  }) async {
+  static Future<YuvModule> _initialize({required String scriptPath, required String wasmPath, required String moduleFactoryName}) async {
     await _injectScriptOnce(scriptPath);
 
-    final factory = js_util.getProperty(
-      js_util.globalThis,
-      moduleFactoryName,
-    );
+    final factory = js_util.getProperty(js_util.globalThis, moduleFactoryName);
     if (factory == null) {
       throw StateError(
         'WASM module factory "$moduleFactoryName" was not found on globalThis. '
@@ -91,38 +164,41 @@ final class YuvWasmLoader {
     // Emscripten accepts an options object. We set `locateFile` so runtime
     // always resolves the `.wasm` binary from our package asset path.
     final moduleConfig = js_util.newObject();
-    js_util.setProperty(
-      moduleConfig,
-      'locateFile',
-      js_util.allowInterop((String requestedName, Object? scriptDirectory) {
-        if (requestedName.endsWith('.wasm')) {
-          return wasmPath;
-        }
-        final prefix = scriptDirectory is String ? scriptDirectory : '';
-        if (prefix.isNotEmpty) {
-          return '$prefix$requestedName';
-        }
-        return requestedName;
-      }),
-    );
+    String locateFile(JSString requestedName, JSAny? scriptDirectory) {
+      final requestedNameDart = requestedName.toDart;
+      if (requestedNameDart.endsWith('.wasm')) {
+        return wasmPath;
+      }
+      final scriptDirectoryDart = scriptDirectory?.dartify();
+      final prefix = scriptDirectoryDart is String ? scriptDirectoryDart : '';
+      if (prefix.isNotEmpty) {
+        return '$prefix$requestedNameDart';
+      }
+      return requestedNameDart;
+    }
 
-    final modulePromise = js_util.callMethod<Object>(
-      factory,
-      'call',
-      <Object?>[null, moduleConfig],
-    );
+    js_util.setProperty(moduleConfig, 'locateFile', locateFile.toJS);
 
-    final module = YuvModule(
-      await js_util.promiseToFuture<Object>(modulePromise),
-    );
-    _module = module;
-    return module;
+    final modulePromise = js_util.callMethod<Object>(factory, 'call', <Object?>[null, moduleConfig]);
+
+    // Publishing into `_module` is the caller's job (see `ensureInitialized`),
+    // so the injected-initializer path and this one behave identically.
+    return YuvModule(await js_util.promiseToFuture<Object>(modulePromise));
   }
 
+  /// Injects the Emscripten loader script, at most once per successful load.
+  ///
+  /// The marker attribute is what makes this idempotent, so a tag that failed to
+  /// load has to be taken back out of the document. Leaving it there would make
+  /// every later attempt find it, skip injection, and then fail looking for a
+  /// factory that no script ever defined — a retry that reports the wrong cause
+  /// and can never succeed. Only the error path removes it: a script that loaded
+  /// is exactly what the marker is meant to record.
+  ///
+  /// Concurrent callers cannot race here: [ensureInitialized] coalesces them onto
+  /// one in-flight attempt, so this runs alone.
   static Future<void> _injectScriptOnce(String scriptPath) async {
-    final existing = html.document.querySelector(
-      'script[data-yuv-ffi-wasm-loader="1"]',
-    );
+    final existing = html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]');
     if (existing != null) {
       return;
     }
@@ -142,11 +218,9 @@ final class YuvWasmLoader {
     });
     script.onError.listen((_) {
       if (!completer.isCompleted) {
-        completer.completeError(
-          StateError(
-            'Failed to load WASM loader script: $scriptPath',
-          ),
-        );
+        // Drop the dead tag first, so the next attempt injects a fresh one.
+        script.remove();
+        completer.completeError(StateError('Failed to load WASM loader script: $scriptPath'));
       }
     });
 

@@ -5,11 +5,7 @@ import 'package:flutter/widgets.dart';
 abstract class CropTarget {
   Rect place(Size size);
 
-  factory CropTarget.precise(
-    Size target, {
-    Offset offset = Offset.zero,
-    Alignment alignment = Alignment.topLeft,
-  }) =>
+  factory CropTarget.precise(Size target, {Offset offset = Offset.zero, Alignment alignment = Alignment.topLeft}) =>
       _CropTargetPrecise(target: target, offset: offset, alignment: alignment);
 
   factory CropTarget.percented({double left = 0.0, double top = 0.0, double right = 1.0, double bottom = 1.0}) =>
@@ -96,7 +92,11 @@ class _CropTargetSquare implements CropTarget {
     double dx = size.width * offset.dx;
     double dy = size.height * offset.dy;
     return Rect.fromLTRB(
-        (size.width - width) / 2 + dx, (size.height - height) / 2 + dy, (size.width + width) / 2 + dx, (size.height + height) / 2 + dy);
+      (size.width - width) / 2 + dx,
+      (size.height - height) / 2 + dy,
+      (size.width + width) / 2 + dx,
+      (size.height + height) / 2 + dy,
+    );
   }
 }
 
@@ -129,11 +129,7 @@ class _CropTargetPrecise implements CropTarget {
   final Offset offset;
   final Alignment alignment;
 
-  const _CropTargetPrecise({
-    required this.target,
-    this.offset = Offset.zero,
-    this.alignment = Alignment.topLeft,
-  });
+  const _CropTargetPrecise({required this.target, this.offset = Offset.zero, this.alignment = Alignment.topLeft});
 
   @override
   Rect place(Size size) {

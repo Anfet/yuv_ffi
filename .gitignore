@@ -31,3 +31,14 @@ build/
 yuv_ffi.dll
 .vscode/
 _tmp**
+
+# Output of the test-only YUV-40 diagnostic runner (tool/wasm/yuv40_web_matrix_probe.ps1)
+/tool/wasm/out/
+
+# Internal process/audit documents: local engineering journal, not part of
+# the published plugin.
+/Agent Orchestration Protocol.md
+/dart-architecture-audit.md
+/failed-test-cases.md
+/web-gate-blocker.md
+/native-primitives-research.md

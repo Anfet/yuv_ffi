@@ -5,7 +5,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.5.0'
+  sdk: '>=3.10.0'
 
 
 dependencies:
@@ -16,17 +16,43 @@ dependencies:
     path: ../
 
   cupertino_icons: ^1.0.8
-  material_design_icons_flutter: ^7.0.7296
   image_picker: ^1.1.2
   camera: ^0.11.0+2
-  flutter_webrtc: 0.12.8
+  flutter_webrtc: ^1.6.2+hotfix.3
   google_mlkit_face_detection: ^0.13.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Web parity runs here rather than under `flutter test --platform chrome`:
+  # that runner serves no asset bundle, so the WASM loader's asset path 404s.
+  # integration_test drives a real built app, where the bundle exists.
+  integration_test:
+    sdk: flutter
+
   flutter_lints: ^5.0.0
+
+  # YUV-12: the ported reference_web_conversions_test.dart reuses the same
+  # pure-Dart oracle helper as the native suite (test/helpers/reference/
+  # test_pattern_reference.dart), which depends on these two packages.
+  crypto: ^3.0.6
+  image: ^4.5.4
 
 flutter:
   uses-material-design: true
+  assets:
+    # YUV-12 reference fixtures. The example package cannot bundle assets
+    # from outside its own root (../test/...), so these are a build-time copy
+    # of test/reference/test_pattern_512/{manifest.json,artifacts/*.png} and
+    # test/assets/test_pattern_512.png. Only the PNG artifacts are copied:
+    # the native suite (test/reference_native_conversions_test.dart) never
+    # opens the raw .bin/.yuv blobs listed in the manifest — expected raw
+    # bytes are always recomputed in pure Dart via parametersForRaw() — so
+    # copying them here would just be ~2.8 MB of dead weight.
+    #
+    # See example/tool/copy_reference_fixtures.sh to regenerate this copy
+    # after the fixtures change upstream.
+    - assets/reference/test_pattern_512.png
+    - assets/reference/test_pattern_512/manifest.json
+    - assets/reference/test_pattern_512/artifacts/
