@@ -220,9 +220,8 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
 /// widget/provider layer correctly consumes that tight output, not to
 /// re-verify the packing logic itself.
 class _PaddedBgraImage implements YuvImage, YuvRevisionAware {
-  _PaddedBgraImage(this.width, this.height, {required int pixelStride, required int rowPadding})
-    : pixelStride = pixelStride,
-      _plane = YuvPlane(height, width * pixelStride + rowPadding, pixelStride) {
+  _PaddedBgraImage(this.width, this.height, {required this.pixelStride, required int rowPadding})
+    : _plane = YuvPlane(height, width * pixelStride + rowPadding, pixelStride) {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         final base = y * _plane.rowStride + x * pixelStride;
