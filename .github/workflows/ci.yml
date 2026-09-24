@@ -277,6 +277,10 @@ jobs:
         with:
           flutter-version: '3.44.9'
 
+      - name: Check app-runtime smoke formatting
+        working-directory: example
+        run: dart format --output=none --set-exit-if-changed integration_test/native_app_runtime_smoke_test.dart
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
