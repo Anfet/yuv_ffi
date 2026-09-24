@@ -89,11 +89,14 @@ fi
 
 mkdir -p "$OUT_DIR"
 
-# Build source list excluding build directories.
-# AGENTS policy requires build/ to be ignored for content retrieval/processing.
-SOURCE_COUNT="$(find src -type f -name '*.c' ! -path '*/build/*' | wc -l | tr -d ' ')"
+# Build the tracked source list in Git index order.  Emscripten preserves input
+# order in generated artifacts, so filesystem traversal made identical builds
+# differ between workstations and CI.  The pathspec excludes build/ directories
+# without retrieving their contents.
+SOURCE_PATHS="$(git ls-files -- 'src/*.c' 'src/**/*.c' ':!**/build/**')"
+SOURCE_COUNT="$(printf '%s\n' "$SOURCE_PATHS" | sed '/^$/d' | wc -l | tr -d ' ')"
 if [ "$SOURCE_COUNT" = "0" ]; then
-  echo "No C sources found under src/." >&2
+  echo "No tracked C sources found under src/." >&2
   exit 1
 fi
 
@@ -129,9 +132,8 @@ echo "Profile: $PROFILE"
 echo "OutDir:  $OUT_DIR"
 echo "Sources: $SOURCE_COUNT"
 
-# xargs is used to safely pass all source files to emcc.
-# We use NUL separators to avoid issues with spaces in paths.
-find src -type f -name '*.c' ! -path '*/build/*' -print0 | \
+# xargs receives Git's NUL-separated index paths, preserving paths with spaces.
+git ls-files -z -- 'src/*.c' 'src/**/*.c' ':!**/build/**' | \
   xargs -0 "$EMCC" \
     "$OPT_LEVEL" \
     $SIMD_FLAG \
@@ -144,6 +146,13 @@ find src -type f -name '*.c' ! -path '*/build/*' -print0 | \
     "-sEXPORTED_FUNCTIONS=$EXPORTED_FUNCTIONS" \
     "-sEXPORTED_RUNTIME_METHODS=$EXPORTED_RUNTIME_METHODS" \
     -o "$OUTPUT_JS"
+
+# Emscripten 3.1.74 leaves horizontal whitespace on generated JS lines. Strip
+# only that whitespace so the checked-in artifact passes Git's whitespace gate;
+# the WASM binary remains exactly as emitted by the compiler.
+NORMALIZED_JS="$OUTPUT_JS.normalized"
+sed 's/[[:blank:]]*$//' "$OUTPUT_JS" > "$NORMALIZED_JS"
+mv "$NORMALIZED_JS" "$OUTPUT_JS"
 
 echo "Build completed:"
 echo " - $OUTPUT_JS"
