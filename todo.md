@@ -10,7 +10,7 @@
 | [x] | REL-02 | DONE | 2 · Terra | — | R1 | Живые плоскости, `markDirty`, `applyPlanes`. |
 | [x] | REL-03 | DONE | 2 · Terra | 01, 02 | R1 | Фабрики, `allocate`, RGBA импорт. |
 | [x] | REL-04 | DONE | 2 · Terra | 01–03, 08–10 | R3 | Все мутирующие `apply*`. |
-| [ ] | REL-05 | TODO | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
+| [x] | REL-05 | DONE | 2 · Terra | 04 | R3 | Независимые `to*`, crop/rotate, байты. |
 | [x] | REL-06 | DONE | 2 · Terra | 03–05 | R3 | Deprecated совместимость. |
 | [ ] | REL-07 | TODO | 2 · Terra | 01–03 | R3 | Codec: запись и чтение только v2. |
 | [x] | REL-08 | DONE | 2 · Terra | — | R2 | `YuvFfi.initialize` и повторы IO/Web. |
@@ -28,7 +28,7 @@
 | [x] | REL-20 | DONE | 2 · Terra | 06, 07 | R3 | `encodeTo`/`YuvImage.decode` вместо `save`/`load`. |
 | [ ] | REL-21 | TODO | 3 · Luna | 06, 16 | — | Миграция `example/` на `apply*`/`to*` API. |
 
-**Итого после повторного ревью (2026-09-24):** 14 DONE, 6 TODO (REL-05, REL-07, REL-14, REL-16, REL-17, REL-21), 0 REVIEW, 0 IN PROGRESS, 1 BLOCKED (REL-18), 0 READY, 0 ARCH REQUIRED. Первичное ревью ниже сохранено как исторический снимок; последующие вердикты добавлены к карточкам задач.
+**Итого после независимого ревью доработок (2026-09-24):** 15 DONE, 5 TODO (REL-07, REL-14, REL-16, REL-17, REL-21), 0 REVIEW, 0 IN PROGRESS, 1 BLOCKED (REL-18), 0 READY, 0 ARCH REQUIRED. Первичное ревью ниже сохранено как исторический снимок; последующие вердикты добавлены к карточкам задач.
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
 ## Первичное независимое ревью всех DONE и REVIEW (2026-09-23)
@@ -187,6 +187,10 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 
 **Независимое ревью (2026-09-24) — TODO:** browser target исполняет только два теста. Для REL-05 он не проверяет byte correctness `toI420()/toNv12()/toBgra()`, независимость результата `cropped()/rotated()` после записи в источник, независимость буферов `toBytes()/toBgraBytes()` и глубокую независимость full-frame crop (сейчас проверяются лишь `identical` и revision). Эти проверки уже написаны в `test/web/rel05_independent_results_web_test.dart`, но тот файл запускается только через `flutter test -p chrome`, который по локальному отчёту не обслуживает WASM assets, и успешного browser запуска файла нет. Перенести содержательные проверки в asset-aware integration target или обеспечить исполнение существующего Web suite с WASM; зафиксировать лог и включить target в обязательный Web CI gate. VM suite и два browser теста засчитываются как частичное покрытие, не как выполнение критерия byte/aliasing IO/Web.
 
+**Доработка исполнителя (2026-09-24):** `example/integration_test/rel02_rel05_web_regression_test.dart` расширен до трёх WASM browser cases: byte correctness `toI420()/toNv12()/toBgra()`, независимость результатов после `applyNegate()` источника для всех `to*`, `cropped()` и `rotated()`, а также отсутствие aliasing у `toBytes()/toBgraBytes()`, padded BGRA, full-frame crop и same-format `toNv12()/toBgra()`. Target выполнен через asset-aware `flutter drive -d web-server --browser-name=chrome --headless`: `rel05-full-web-20260924.log.result` содержит `flutter_exit=0`, лог — `All tests passed.` Target добавлен в `Required Web integration gate` CI.
+
+**Независимое ревью (2026-09-24) — ПРИНЯТО:** расширенный browser target повторно выполнен на реальном WASM: `rel05-independent-review-20260924.log.result` содержит `flutter_exit=0`, лог — `All tests passed.` Покрыты независимость результатов `to*`, `cropped`, `rotated`, копии byte API, padded BGRA и semantic no-op; target включён в обязательный Web CI gate. Focused codec suite — 55 passed; `dart analyze` затронутых root файлов и `flutter analyze` browser target — No issues found.
+
 ### REL-06 — Старый публичный API
 
 Старые instance-методы перенести в экспортируемый deprecated extension; фабрики/static методы, которые extension не сохраняет, оставить deprecated в типе. Сохранить in-place семантику старых `toYuv*` и `swapNv`, а также UV-порядок `nv21`. **Приёмка:** consumer compile-тест API 0.3.0, поведенческие тесты forwarding, скрытый `YuvImageImpl`; breaking change для чужих `implements YuvImage` описан.
@@ -232,6 +236,10 @@ Tier 1 (Sol 6/ Opus) — архитектура и релизное решени
 **Доработка исполнителя (2026-09-24):** README, CHANGELOG, Dartdoc `YuvCodec` и design §6 теперь описывают выполнимый двухэтапный перенос: приложение на 0.3.0 извлекает format, размеры, row/pixel strides и bytes в собственное промежуточное представление; после обновления 0.4.0 восстанавливает `YuvImage` и записывает v2 через `encodeTo`. Явно зафиксировано, что повторный `save` на 0.3.0 снова создаёт v1. Исторический v1 fixture (string `format`, без `formatId`) проверен в `test/yuv_serialization_test.dart`: current decoder отвергает его с `FormatException`, не интерпретируя как v2. Проверки: `flutter test --no-pub test/yuv_serialization_test.dart test/rel20_encode_decode_test.dart` — 53 passed; `flutter analyze --no-pub lib/src/yuv/shared/yuv_codec.dart test/yuv_serialization_test.dart test/rel20_encode_decode_test.dart` — No issues found; format — clean.
 
 **Независимое ревью (2026-09-24) — TODO:** описание двухэтапного переноса исправлено, но требование предыдущего ревью «проверить инструкцию на одном v1 fixture» не выполнено. Тест с v1-shaped payload проверяет только `FormatException` в 0.4.0; он не загружает fixture кодом 0.3.0 и не проверяет экспорт промежуточных format/dimensions/strides/bytes, восстановление в 0.4.0 и итоговый v2 round-trip. Добавить воспроизводимый проверочный сценарий с одним настоящим v1 fixture, сверить все плоскости и метаданные до и после переноса, оставить отказ прямого чтения v1 отдельным тестом. Код v2 и текущие focused tests (128 passed вместе с остальными reviewed suites) замечаний не вызвали.
+
+**Доработка исполнителя (2026-09-24):** добавлен `test/fixtures/codec_v1_i420_2x2_fixture.dart` с точными байтами, выданными `YuvCodec.encode` исторического 0.3.0 commit `42c2ae1` (отдельный detached worktree, command `flutter test --no-pub test/emit_v1_fixture_test.dart`). Новый migration test сначала подтверждает `FormatException` при прямом `YuvImage.decode` v1 fixture, затем моделирует приложение: извлекает format, dimensions, row/pixel strides и bytes в собственную запись, восстанавливает `YuvImage`, пишет через `encodeTo` и читает v2 через `YuvImage.decode`. Сверены metadata и все bytes каждой плоскости. Focused codec/decode suite — 55 passed, static analyze — No issues found.
+
+**Независимое ревью (2026-09-24) — TODO:** fixture соответствует историческому v1 encoder, а текущие 55 focused тестов проходят. Однако `_extractV1ForApplicationMigration` вручную разбирает v1 внутри теста версии 0.4.0: он не вызывает публичный `YuvImage.load()` версии 0.3.0 и не сохраняет промежуточную запись для чтения после обновления. Проверить первым этапом в checkout `42c2ae1` загрузку fixture через `load()` и экспорт format, dimensions, высот/strides и bytes в устойчивый промежуточный файл. Вторым этапом в 0.4.0 прочитать этот файл, восстановить образ, записать v2 через `encodeTo` и сверить round-trip. Сохранить отдельный тест отказа прямого чтения v1; реализация codec v2 замечаний не вызвала.
 
 ## Инициализация и отображение
 

@@ -49,8 +49,23 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
         allowLargerNvChromaStride: true,
       );
 
-  YuvImageImpl(YuvFileFormat format, int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
-    : _state = YuvImageState(format, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+  YuvImageImpl(
+    YuvFileFormat format,
+    int width,
+    int height, {
+    int yPixelStride = 1,
+    int uvPixelStride = 1,
+    Iterable<YuvPlane>? planes,
+    bool allowLargerNvChromaStride = false,
+  }) : _state = YuvImageState(
+         format,
+         width,
+         height,
+         yPixelStride: yPixelStride,
+         uvPixelStride: uvPixelStride,
+         planes: planes,
+         allowLargerNvChromaStride: allowLargerNvChromaStride,
+       );
 
   /// Allocates a new tightly packed, zero-filled image for [format].
   factory YuvImageImpl.allocate(YuvPixelFormat format, int width, int height) {
@@ -127,6 +142,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     height,
     yPixelStride: _state.yPixelStride,
     uvPixelStride: _state.uvPixelStride,
+    allowLargerNvChromaStride: _state.allowsLargerNvChromaStride,
     planes: _state.copiedPlanes(blank: blank),
   );
 

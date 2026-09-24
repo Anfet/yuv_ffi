@@ -43,6 +43,17 @@ void main() {
     loader_io.debugResetLoader();
   });
 
+  test('copy() preserves a gapped NV12 layout and does not alias its planes', () {
+    final source = YuvImage.nv12(4, 4, uvPixelStride: 3);
+    source.uPlane.bytes[0] = 0x11;
+
+    final copy = source.copy();
+    source.uPlane.bytes[0] = 0x22;
+
+    expect(copy.uPlane.pixelStride, 3);
+    expect(copy.uPlane.bytes[0], 0x11);
+  });
+
   group('byte-level correctness (requires real native library)', () {
     test(
       'toI420() produces the exact planar bytes for a hand-computable RGBA source',

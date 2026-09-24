@@ -101,8 +101,23 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
     : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: planes);
 
-  YuvImageImpl(YuvFileFormat format, int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
-    : _state = YuvImageState(format, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+  YuvImageImpl(
+    YuvFileFormat format,
+    int width,
+    int height, {
+    int yPixelStride = 1,
+    int uvPixelStride = 1,
+    Iterable<YuvPlane>? planes,
+    bool allowLargerNvChromaStride = false,
+  }) : _state = YuvImageState(
+         format,
+         width,
+         height,
+         yPixelStride: yPixelStride,
+         uvPixelStride: uvPixelStride,
+         planes: planes,
+         allowLargerNvChromaStride: allowLargerNvChromaStride,
+       );
 
   /// Allocates a new tightly packed, zero-filled image for [format].
   ///
@@ -143,6 +158,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     planes: _state.copiedPlanes(blank: blank),
     yPixelStride: _state.yPixelStride,
     uvPixelStride: _state.uvPixelStride,
+    allowLargerNvChromaStride: _state.allowsLargerNvChromaStride,
   );
 
   @override
@@ -489,6 +505,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       _state.format,
       clamped.width,
       clamped.height,
+      allowLargerNvChromaStride: _state.allowsLargerNvChromaStride,
       planes: YuvAbiV1ImageTransport.planesOf(result: result, format: _state.format, width: clamped.width, height: clamped.height),
     );
   }
@@ -509,6 +526,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       _state.format,
       rotatedWidth,
       rotatedHeight,
+      allowLargerNvChromaStride: _state.allowsLargerNvChromaStride,
       planes: YuvAbiV1ImageTransport.planesOf(result: result, format: _state.format, width: rotatedWidth, height: rotatedHeight),
     );
   }
