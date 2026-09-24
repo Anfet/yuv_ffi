@@ -100,14 +100,11 @@ List<String> _calls(JSObject module) => [for (final c in module.getProperty<JSAr
 YuvPlane _plane(int height, int rowStride, int pixelStride, int fill) =>
     YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride)..fillRange(0, height * rowStride, fill));
 
-// ignore: deprecated_member_use_from_same_package
-YuvImage _imageOf(YuvFileFormat format) => switch (format) {
+YuvImage _imageOf(YuvPixelFormat format) => switch (format) {
+  YuvPixelFormat.i420 => YuvImage.i420(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 4, 1, 0x50), _plane(4, 4, 1, 0x70)]),
+  YuvPixelFormat.bgra8888 => YuvImage.bgra(8, 8, planes: [_plane(8, 32, 4, 0x30)]),
   // ignore: deprecated_member_use_from_same_package
-  YuvFileFormat.i420 => YuvImage.i420(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 4, 1, 0x50), _plane(4, 4, 1, 0x70)]),
-  // ignore: deprecated_member_use_from_same_package
-  YuvFileFormat.bgra8888 => YuvImage.bgra(8, 8, planes: [_plane(8, 32, 4, 0x30)]),
-  // ignore: deprecated_member_use_from_same_package
-  YuvFileFormat.nv21 => YuvImage.nv21(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 8, 2, 0x50)]),
+  YuvPixelFormat.nv12 => YuvImage.nv21(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 8, 2, 0x50)]),
 };
 
 void main() {
@@ -117,24 +114,16 @@ void main() {
     expect(kIsWeb, isTrue);
   });
 
-  final publicFormats = <YuvFileFormat, YuvPixelFormat>{
-    // ignore: deprecated_member_use_from_same_package
-    YuvFileFormat.i420: YuvPixelFormat.i420,
-    // ignore: deprecated_member_use_from_same_package
-    YuvFileFormat.bgra8888: YuvPixelFormat.bgra8888,
-  };
+  final publicFormats = [YuvPixelFormat.i420, YuvPixelFormat.bgra8888];
 
-  for (final entry in publicFormats.entries) {
-    final legacyFormat = entry.key;
-    final publicFormat = entry.value;
-
-    test('a failing chroma swap after a successful conversion leaves a ${legacyFormat.name} receiver untouched', () async {
+  for (final publicFormat in publicFormats) {
+    test('a failing chroma swap after a successful conversion leaves a ${publicFormat.name} receiver untouched', () async {
       // Call 1 is yuv_convert_v1 and succeeds; call 2 is yuv_chroma_swap_v1
       // and fails. This is the exact sequence the review reproduced.
       final module = _statusModule([yuvStatusOk, yuvStatusInternalError]);
       await _useModule(module);
 
-      final image = _imageOf(legacyFormat);
+      final image = _imageOf(publicFormat);
       // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
@@ -151,11 +140,11 @@ void main() {
       expect((image as YuvRevisionAware).internalRevision, revisionBefore, reason: 'revision advanced although swapNv failed');
     });
 
-    test('a failing conversion leaves a ${legacyFormat.name} receiver untouched', () async {
+    test('a failing conversion leaves a ${publicFormat.name} receiver untouched', () async {
       final module = _statusModule([yuvStatusInternalError]);
       await _useModule(module);
 
-      final image = _imageOf(legacyFormat);
+      final image = _imageOf(publicFormat);
       // ignore: deprecated_member_use_from_same_package
       final bytesBefore = image.getBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
@@ -177,8 +166,7 @@ void main() {
     final module = _statusModule([yuvStatusInternalError]);
     await _useModule(module);
 
-    // ignore: deprecated_member_use_from_same_package
-    final image = _imageOf(YuvFileFormat.nv21);
+    final image = _imageOf(YuvPixelFormat.nv12);
     // ignore: deprecated_member_use_from_same_package
     final bytesBefore = image.getBytes();
     final revisionBefore = (image as YuvRevisionAware).internalRevision;
@@ -199,8 +187,7 @@ void main() {
     final module = _statusModule([yuvStatusOk, yuvStatusOk]);
     await _useModule(module);
 
-    // ignore: deprecated_member_use_from_same_package
-    final image = _imageOf(YuvFileFormat.i420);
+    final image = _imageOf(YuvPixelFormat.i420);
     final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
     // ignore: deprecated_member_use_from_same_package
