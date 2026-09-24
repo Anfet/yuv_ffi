@@ -31,6 +31,8 @@
 **Итого после повторного ревью (2026-09-24):** 19 DONE, 0 TODO, 0 REVIEW, 0 IN PROGRESS, 1 BLOCKED (REL-18), 1 READY (REL-17), 0 ARCH REQUIRED. Первичное ревью ниже сохранено как исторический снимок; последующие вердикты добавлены к карточкам задач.
 `READY` означает определённый объём; `BLOCKED` — невыполненную зависимость. `DONE` возможен после отчёта исполнителя и независимой проверки, а не только после зелёных тестов.
 
+**Итог повторного ревью REL-14/16/21:** приняты и закоммичены в `f28b248`. На чистом коммите `flutter pub publish --dry-run` завершился с exit 0: **0 warnings, 1 hint** (pub.dev считает предыдущей версией 0.2.4), архив не содержит `tool/migration/` и `todo*.md`. `example/` прошёл `flutter analyze --no-pub` и прямой Android integration test на Pixel 3 (`+1`, `All tests passed!`). REL-17 разблокирован, но его итоговые CI gates на новом SHA ещё не выполнены; REL-18 остаётся BLOCKED.
+
 ## Первичное независимое ревью всех DONE и REVIEW (2026-09-23)
 
 Проверена текущая ветка `release/0.4.0` на `904991d` (после gate-коммита `17771a9`). Локально `flutter test --no-pub`: **630/630**, exit 0. `flutter analyze --no-pub`: **0 errors, 0 warnings, 200 info**, exit 1. `flutter pub publish --dry-run`: **1 warning, 1 hint**, exit 65. Внешний [CI run 35882819637](https://github.com/Anfet/yuv_ffi/actions/runs/35882819637) завершился failure; зелёные native/Apple/Android/required Web jobs не делают весь release gate зелёным. Временный воспроизводящий тест для gapped NV12 удалён после прогона; рабочее дерево до правки этого трекера было чистым.
