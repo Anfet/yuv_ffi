@@ -106,13 +106,24 @@ void main() {
       expect(clone.yPlane.getPixel(0, 0), 200);
     });
 
-    test('a blank copy keeps declared padding and zeroes the bytes', () {
-      final padded = YuvImage.bgra(2, 2, planes: [YuvPlane(2, 2 * 4 + 8, 4)]);
-      padded.yPlane.setPixel(0, 0, 77);
-      // ignore: deprecated_member_use_from_same_package
-      final blank = padded.copy(blank: true);
-      expect(blank.yPlane.rowStride, padded.yPlane.rowStride);
-      expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
+    test('a blank copy preserves padded I420, NV12, and BGRA layouts while zeroing bytes', () {
+      final images = <YuvImage>[
+        YuvImage.i420(4, 4, planes: [YuvPlane(4, 10, 2), YuvPlane(2, 8, 3), YuvPlane(2, 8, 3)]),
+        YuvImage.nv12(4, 4, planes: [YuvPlane(4, 8, 1), YuvPlane(2, 8, 3)]),
+        YuvImage.bgra(2, 2, planes: [YuvPlane(2, 15, 5)]),
+      ];
+
+      for (final image in images) {
+        image.yPlane.setPixel(0, 0, 77);
+        // ignore: deprecated_member_use_from_same_package
+        final blank = image.copy(blank: true);
+
+        expect(
+          blank.planes.map((plane) => (height: plane.height, rowStride: plane.rowStride, pixelStride: plane.pixelStride)),
+          orderedEquals(image.planes.map((plane) => (height: plane.height, rowStride: plane.rowStride, pixelStride: plane.pixelStride))),
+        );
+        expect(blank.planes.every((plane) => plane.bytes.every((byte) => byte == 0)), isTrue);
+      }
     });
 
     test('copy preserves format, geometry and plane strides', () {

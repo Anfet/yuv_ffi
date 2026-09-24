@@ -127,7 +127,7 @@ right-hand side below.
 | `image.getBytes()` | `image.toBytes()` |
 | `image.toBgra8888()` | `image.toBgraBytes()` |
 | `image.y` / `.u` / `.v` | `image.yPlane` / `.uPlane` / `.vPlane` |
-| `image.copy(blank: true)` | `YuvImage.allocate(format, width, height)` |
+| `image.copy(blank: true)` | For a tight layout, `YuvImage.allocate(format, width, height)`. For a padded or pixel-gapped layout, use the matching named factory with zeroed `YuvPlane`s that retain each source plane's `height`, `rowStride`, and `pixelStride`; `allocate` deliberately creates a tight layout. |
 | `image.save(sink)` | `image.encodeTo(sink)` |
 | `image.load(stream)` (mutates in place) | `YuvImage.decode(stream)` (returns a new image; nothing to mutate) |
 | `YuvImage.nv21(...)`, `YuvImage(YuvFileFormat.x, ...)` | `YuvImage.nv12(...)`, `YuvImage.i420(...)` / `.bgra(...)` / `.allocate(...)` |

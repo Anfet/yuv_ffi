@@ -130,7 +130,10 @@ abstract interface class YuvImage {
   /// [width] x [height].
   ///
   /// Unlike the named factories, this always produces tight planes with no
-  /// row or pixel padding: it is the replacement for `copy(blank: true)`.
+  /// row or pixel padding. It replaces `copy(blank: true)` only when the
+  /// former image was tight. To preserve a padded or pixel-gapped layout,
+  /// use the matching named factory with zeroed [YuvPlane] instances whose
+  /// `height`, `rowStride`, and `pixelStride` match the source planes.
   ///
   /// Throws [ArgumentError] for a non-positive dimension.
   factory YuvImage.allocate(YuvPixelFormat format, int width, int height) = YuvImageImpl.allocate;
@@ -149,9 +152,10 @@ abstract interface class YuvImage {
 
   /// Creates a copy as a new image instance.
   ///
-  /// If [blank] is `true`, returns an image with same geometry but zeroed
-  /// planes.
-  YuvImage copy({@Deprecated('Use YuvImage.allocate() for a blank image.') bool blank = false});
+  /// If [blank] is `true`, returns an image with the same geometry, plane
+  /// `rowStride`, and `pixelStride`, with zeroed bytes. Use
+  /// [YuvImage.allocate] only when a tight replacement layout is intended.
+  YuvImage copy({@Deprecated('Use YuvImage.allocate() for a tight blank image.') bool blank = false});
 
   /// Validates [planes] against this image's format and geometry, copies
   /// them in, and atomically replaces the current plane set.
