@@ -17,6 +17,7 @@ dart pub get
 dart test test/yuv_flip_v1_test.dart -r expanded
 dart test test/yuv_crop_v1_test.dart -r expanded
 dart test test/yuv_rotate_v1_test.dart -r expanded
+dart test test/yuv_grayscale_v1_test.dart -r expanded
 Pop-Location
 ```
 
@@ -32,6 +33,11 @@ NV12, plus BGRA crops and an I420 padded-source fallback check.
 The rotate test covers I420, NV12 and BGRA at 90, 180 and 270 degrees. It
 checks transposed destination geometry for quarter turns, every output byte
 and an FNV-1a checksum.
+
+The grayscale test covers I420, NV12 and BGRA with full-frame and odd-boundary
+ROI effects. It checks every output byte against an independent BT.601 oracle,
+preserves BGRA alpha, includes an I420 padded-source fallback, and reports an
+FNV-1a checksum after each timed batch.
 
 For C-02, use the same Release DLL setup and run:
 
