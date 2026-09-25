@@ -2,6 +2,8 @@
 #include "h/yuv_validate_v1.h"
 #include "h/yuv_kernel_v1.h"
 
+#include <string.h>
+
 /*
  * Clockwise rotation by exactly 0, 90, 180, or 270 degrees.
  *
@@ -46,6 +48,80 @@ static void yuv_rotate_v1_map(
             *outSourceY = destinationY;
             return;
     }
+}
+
+static int yuv_rotate_v1_plane_is_tightly_packed(
+    const YuvValidatedConstPlaneIn *source,
+    const YuvValidatedMutablePlaneIn *destination,
+    uint32_t sourceWidth,
+    uint32_t destinationWidth) {
+    uint64_t sourceRowBytes = (uint64_t)sourceWidth * source->sampleBytes;
+    uint64_t destinationRowBytes = (uint64_t)destinationWidth * destination->sampleBytes;
+    return source->pixelStride == source->sampleBytes && destination->pixelStride == destination->sampleBytes
+        && source->sampleBytes == destination->sampleBytes && source->rowStride == sourceRowBytes
+        && destination->rowStride == destinationRowBytes;
+}
+
+static int yuv_rotate_v1_tightly_packed(
+    const YuvValidatedConstFrameView *source,
+    const YuvValidatedMutableFrameView *destination,
+    uint32_t degrees) {
+    int transposed = degrees == 90 || degrees == 270;
+    for (uint32_t planeIndex = 0; planeIndex < source->planeCount; planeIndex++) {
+        uint32_t sourceWidth = source->width;
+        uint32_t sourceHeight = source->height;
+        if (planeIndex > 0) {
+            sourceWidth = (sourceWidth + 1) / 2;
+            sourceHeight = (sourceHeight + 1) / 2;
+        }
+        uint32_t destinationWidth = transposed ? sourceHeight : sourceWidth;
+        if (!yuv_rotate_v1_plane_is_tightly_packed(
+                &source->planes[planeIndex], &destination->planes[planeIndex], sourceWidth, destinationWidth)) {
+            return 0;
+        }
+    }
+
+    for (uint32_t planeIndex = 0; planeIndex < source->planeCount; planeIndex++) {
+        uint32_t sourceWidth = source->width;
+        uint32_t sourceHeight = source->height;
+        if (planeIndex > 0) {
+            sourceWidth = (sourceWidth + 1) / 2;
+            sourceHeight = (sourceHeight + 1) / 2;
+        }
+        uint32_t destinationWidth = transposed ? sourceHeight : sourceWidth;
+        uint32_t destinationHeight = transposed ? sourceWidth : sourceHeight;
+        uint32_t sampleBytes = source->planes[planeIndex].sampleBytes;
+        const uint8_t *sourceBytes = (const uint8_t *)source->planes[planeIndex].data;
+        uint8_t *destinationBytes = (uint8_t *)destination->planes[planeIndex].data;
+        for (uint32_t y = 0; y < destinationHeight; y++) {
+            for (uint32_t x = 0; x < destinationWidth; x++) {
+                uint32_t sourceX;
+                uint32_t sourceY;
+                switch (degrees) {
+                    case 90:
+                        sourceX = y;
+                        sourceY = sourceHeight - 1 - x;
+                        break;
+                    case 180:
+                        sourceX = sourceWidth - 1 - x;
+                        sourceY = sourceHeight - 1 - y;
+                        break;
+                    case 270:
+                        sourceX = sourceWidth - 1 - y;
+                        sourceY = x;
+                        break;
+                    default:
+                        sourceX = x;
+                        sourceY = y;
+                        break;
+                }
+                const uint8_t *from = sourceBytes + ((size_t)sourceY * sourceWidth + sourceX) * sampleBytes;
+                uint8_t *to = destinationBytes + ((size_t)y * destinationWidth + x) * sampleBytes;
+                memcpy(to, from, sampleBytes);
+            }
+        }
+    }
+    return 1;
 }
 
 FFI_PLUGIN_EXPORT YuvStatus yuv_rotate_v1(const YuvConstFrameV1 *source, YuvMutableFrameV1 *destination,
@@ -98,6 +174,11 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_rotate_v1(const YuvConstFrameV1 *source, YuvMuta
     context.sourceWidth = sourceView.width;
     context.sourceHeight = sourceView.height;
     context.degrees = options->rotationDegrees;
+
+    if ((!yuv_kernel_v1_is_420(sourceView.format) || blockAligned)
+        && yuv_rotate_v1_tightly_packed(&sourceView, &destinationView, context.degrees)) {
+        return YUV_STATUS_OK;
+    }
 
     yuv_kernel_v1_transform(&sourceView, &destinationView, yuv_rotate_v1_map, &context, blockAligned);
 

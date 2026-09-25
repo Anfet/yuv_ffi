@@ -2,8 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-04 | IN_PROGRESS | GPT-5.6 Terra · T2 | C-03 | Оптимизировать `yuv_rotate_v1`; затем повторить её Dart-тест |
-| [ ] | C-05 | BLOCKED | GPT-5.6 Terra · T2 | C-04 | Оптимизировать `yuv_grayscale_v1`; затем повторить её Dart-тест |
+| [ ] | C-05 | READY | GPT-5.6 Terra · T2 | C-04 | Оптимизировать `yuv_grayscale_v1`; затем повторить её Dart-тест |
 | [ ] | C-06 | BLOCKED | GPT-5.6 Terra · T2 | C-05 | Оптимизировать `yuv_black_white_v1`; затем повторить её Dart-тест |
 | [ ] | C-07 | BLOCKED | GPT-5.6 Terra · T2 | C-06 | Оптимизировать `yuv_negate_v1`; затем повторить её Dart-тест |
 | [ ] | C-08 | BLOCKED | GPT-6 Luna · T3 | C-07 | Оптимизировать `yuv_chroma_swap_v1`; Terra проверяет результат |
@@ -26,7 +25,6 @@
 
 | Готово | ID | Native C функция / основной файл | Сценарии одного теста | Исполнитель | Причина tier |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-04 | `yuv_rotate_v1` · `yuv_rotate_v1.c` | I420, NV12, BGRA; 90/180/270° | T2 · Terra | Перестановка размеров и chroma |
 | [ ] | C-05 | `yuv_grayscale_v1` · `yuv_grayscale_v1.c` | I420, NV12, BGRA; полный кадр и ROI | T2 · Terra | Общий effect helper и три формата |
 | [ ] | C-06 | `yuv_black_white_v1` · `yuv_black_white_v1.c` | I420, NV12, BGRA; порог, полный кадр и ROI | T2 · Terra | Порог, ROI и общий effect helper |
 | [ ] | C-07 | `yuv_negate_v1` · `yuv_negate_v1.c` | I420, NV12, BGRA; полный кадр и ROI | T2 · Terra | ROI и общий effect helper |
@@ -35,19 +33,19 @@
 | [ ] | C-10 | `yuv_mean_blur_v1` · `yuv_mean_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и точное округление |
 | [ ] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; несколько radius/sigma | T1 · Sol | Численные веса и точность результата |
 
-### C-04 — Ускорить `yuv_rotate_v1`
+### C-05 — Ускорить `yuv_grayscale_v1`
 
-**Статус:** IN_PROGRESS
+**Статус:** READY
 **Исполнитель:** GPT-5.6 Terra · T2, medium
-**Зависит от:** C-03 (принят, коммит `0f9f162`)
+**Зависит от:** C-04
 
-**Решение:** использовать отдельный адресный Dart FFI тест в `speed_00_dart_ffi/`; покрыть I420, NV12 и BGRA для 90/180/270 градусов, проверяя размеры результата и каждый sample. Снять текущий Windows Release baseline, изучить C-код поворота 0.2.4, затем оптимизировать только `yuv_rotate_v1` и необходимые helpers при сохранении phase-correct 4:2:0 semantics.
+**Решение:** добавить адресный Windows Dart FFI test в `speed_00_dart_ffi/` для I420/NV12/BGRA, полного кадра и ROI. Снять current Release baseline с batch timer, изучить соответствующие grayscale C реализации тега `0.2.4`, затем оптимизировать `yuv_grayscale_v1` и строго необходимые helpers, повторив те же сценарии.
 
-**Объём:** `src/yuv/abi/yuv_rotate_v1.c`, необходимые только этой функции helpers, `speed_00_dart_ffi/test/yuv_rotate_v1_test.dart` и краткая инструкция. ABI, соседние операции, validation/error behavior и padding semantics не менять. Для stride/layout случая, где fast path неприменим, оставить безопасный generic kernel.
+**Объём:** `src/yuv/abi/yuv_grayscale_v1.c`, helper(s) только если необходимы, `speed_00_dart_ffi/test/yuv_grayscale_v1_test.dart` и краткая инструкция. Не менять ABI, соседние функции, ROI/rounding/error semantics или stride/padding поведение. Если затронут shared effect helper, проверить и адресно измерить все его call sites.
 
-**Готово, когда:** один Dart test покрывает три формата и три угла; проверяет status, размеры, каждый output sample и checksum вне batch timer; записывает baseline/post timings и speedups; изучен legacy C; Windows Release и адресные проверки проходят; diff проверен. Если ускорение порядка 10× не достигнуто, проверить следующий вариант или зафиксировать подтверждённое ограничение.
+**Готово, когда:** тест проверяет status, каждый output sample и checksum вне таймера для всех шести format/scope cases; baseline/post timings и speedups записаны; legacy C изучен; Release Dart test и нужные validation проходят; diff проверен. Если ускорение порядка 10× не достигнуто, проверить следующий вариант либо описать ограничение.
 
-**Отчёт исполнителя:** файлы, legacy finding, алгоритм, точная команда, timings до/после по сценариям, speedups, correctness, ограничения.
+**Отчёт исполнителя:** файлы, legacy finding, алгоритм, exact commands, timings before/after по сценарию, speedups, oracle/correctness и ограничения.
 
 Для каждой строки:
 
