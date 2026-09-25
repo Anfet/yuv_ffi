@@ -80,3 +80,9 @@
 - `dart test test/yuv_flip_v1_test.dart -r expanded`: I420 1280×720, 20 warm-up и 200 вызовов; среднее 46,513.47 мкс/вызов; FNV-1a checksum `0xef3bff85fcdefd25`; все status и каждый output sample прошли проверки.
 - Независимый повтор: 46,162.96 мкс/вызов, тот же checksum; `dart format --output=none --set-exit-if-changed test/yuv_flip_v1_test.dart` — 0 изменений. Formatter сообщил, что корневой `flutter_lints` недоступен из отдельного Dart package; это не помешало форматированию или тесту.
 - Принято после независимой проверки. Коммит содержит реализацию, тест и этот completion record.
+
+# C-01 — Ускорен `yuv_flip_v1`
+
+- Исполнитель: GPT-5.6 Terra (T2). По C-коду тега `0.2.4` подтверждён быстрый прямой обход плоскостей: горизонтальное обращение samples, вертикальная перестановка строк. В ABI v1 добавлен плотный путь на `yuv_flip_v1.c`: горизонтально копируются samples в обратном порядке, вертикально строки через `memcpy`; odd 4:2:0 и stride/pixel gaps остаются на phase-correct общем ядре.
+- Адресный Dart FFI тест расширен до I420/NV12/BGRA × H/V, проверяет каждый output sample и checksum, таймер охватывает только вызовы функции. Windows Release до → после, мкс/вызов: I420 H 46,575 → 2,702 (17.24×), V 47,616 → 111.84 (425.9×); NV12 H 39,782 → 2,365 (16.82×), V 39,981 → 127.62 (313.3×); BGRA H 32,613 → 2,693 (12.11×), V 31,838 → 341.05 (93.4×). Все шесть oracle/checksum прошли; независимый повтор `dart test test/yuv_flip_v1_test.dart -r expanded` прошёл.
+- Принято после просмотра native diff и повторного теста. Изменены `src/yuv/abi/yuv_flip_v1.c`, `speed_00_dart_ffi/test/yuv_flip_v1_test.dart`, инструкция теста. Коммит: `cd09d99`.

@@ -18,7 +18,8 @@ dart test test/yuv_flip_v1_test.dart -r expanded
 Pop-Location
 ```
 
-`YUV_FFI_DLL` must name the exact Release DLL under test. The test creates a
-fixed 1280x720 I420 input, verifies the native status and output checksum,
-warms up the function, then reports measured native-call timings. Input setup,
-destination allocation and checksum calculation are outside the timed region.
+`YUV_FFI_DLL` must name the exact Release DLL under test. The test runs fixed
+1280x720 I420, NV12 and BGRA inputs in both directions, verifies the native
+status, every output sample and its checksum, warms up the function, then
+reports measured native-call timings. Input setup, destination allocation and
+correctness checks are outside the timed region.
