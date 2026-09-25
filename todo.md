@@ -2,7 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-06 | READY | GPT-5.6 Terra · T2 | C-05 | Оптимизировать `yuv_black_white_v1`; затем повторить её Dart-тест |
+| [ ] | C-06 | IN_PROGRESS | GPT-5.6 Terra · T2 | C-05 | Оптимизировать `yuv_black_white_v1`; затем повторить её Dart-тест |
 | [ ] | C-07 | BLOCKED | GPT-5.6 Terra · T2 | C-06 | Оптимизировать `yuv_negate_v1`; затем повторить её Dart-тест |
 | [ ] | C-08 | BLOCKED | GPT-6 Luna · T3 | C-07 | Оптимизировать `yuv_chroma_swap_v1`; Terra проверяет результат |
 | [ ] | C-09 | BLOCKED | GPT-6 Sol · T1 | C-08 | Оптимизировать `yuv_box_blur_v1`; затем повторить её Dart-тест |
@@ -33,9 +33,9 @@
 
 ### C-06 — Ускорить `yuv_black_white_v1`
 
-**Статус:** READY
+**Статус:** IN_PROGRESS
 **Исполнитель:** GPT-5.6 Terra · T2, medium
-**Зависит от:** C-05
+**Зависит от:** C-05 (принят, коммит `a97cc3d`)
 
 **Решение:** добавить адресный Windows Dart FFI test в `speed_00_dart_ffi/` для I420/NV12/BGRA, полного кадра и ROI. Входные samples должны включать видимый gray по обе стороны порога 128 и ровно 128. Снять current Release baseline с batch timer, изучить C black-white реализации тега `0.2.4`, затем оптимизировать `yuv_black_white_v1` и нужные helpers, повторив те же сценарии.
 
