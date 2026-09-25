@@ -2,8 +2,8 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-11 | IN_PROGRESS | GPT-6 Sol · T1 | C-10 (`77223ae`) | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
-| [ ] | OPT-13 | BLOCKED | GPT-6 Sol · T1 | C-11 accepted | Проверить blur buffers, separable Gaussian и Dart allocation/copy идеи |
+| [x] | C-11 | DONE | GPT-6 Sol · T1 | C-10 (`77223ae`) | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
+| [ ] | OPT-13 | IN_PROGRESS | GPT-6 Sol · T1 | C-11 (`COMMIT_HASH`) | Проверить blur buffers, separable Gaussian и Dart allocation/copy идеи |
 | [ ] | SPEED-12 | BLOCKED | GPT-5.6 Terra · T2 | C-01—C-11 | Свести результаты и выполнить нужные проверки корректности |
 
 Цель — ускорить текущую реализацию 11 экспортируемых функций ABI v1, сохранив результат и контракт 0.4.1. Регрессию скорости относительно 0.2.4 принимаем как исходное наблюдение: старую версию здесь не замеряем, но **обязательно изучаем её C-код как источник быстрых алгоритмических приёмов**. Ориентир для каждой функции — ускорение порядка 10× относительно её собственного времени до правки. Работа идёт последовательно: **один Dart-тест функции → время текущей реализации → разбор быстрого legacy кода → правка C-функции → повтор того же теста → вывод**.
@@ -20,11 +20,11 @@
 
 | Готово | ID | Native C функция / основной файл | Сценарии одного теста | Исполнитель | Причина tier |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; radius 1/3, sigma 1.0/1.5, full-frame/ROI | T1 · Sol | Точность двухмерного Gaussian oracle и ограниченный scratch |
+| [x] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; radius 1/3, sigma 1.0/1.5, full-frame/ROI | T1 · Sol | Точность двухмерного Gaussian oracle и ограниченный scratch |
 
 ### C-11 — Ускорить `yuv_gaussian_blur_v1`
 
-**Статус:** IN_PROGRESS
+**Статус:** DONE
 **Исполнитель:** GPT-6 Sol · T1, high numerical reasoning
 **Зависит от:** C-10 (принят, коммит `77223ae`)
 
@@ -66,9 +66,9 @@ ABI v1 и его требования к валидации, ошибкам, str
 
 ### OPT-13 — Проверить blur buffers и Dart plane copies
 
-**Статус:** BLOCKED до приёмки C-11
+**Статус:** IN_PROGRESS
 **Исполнитель:** GPT-6 Sol · T1; проверка заключения — GPT-5.6 Terra · T2
-**Зависит от:** C-11 (принят; hash будет записан перед назначением)
+**Зависит от:** C-11 (принят, commit `COMMIT_HASH`)
 
 #### Architect Decision
 
