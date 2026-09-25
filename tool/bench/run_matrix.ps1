@@ -148,6 +148,11 @@ $work = Join-Path ([IO.Path]::GetTempPath()) ("yuv_bench_driver_" + [Guid]::NewG
 New-Item -ItemType Directory -Force $work | Out-Null
 $roundsLog = "$OutCsv.rounds.log"
 
+# Create the output directory before the first child runs so that both the harness
+# (which appends its own rows) and the rounds log can write without racing on mkdir.
+$outDir = Split-Path -Parent $OutCsv
+if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Force $outDir | Out-Null }
+
 Write-Host "yuv_bench driver: $($selected.Count) scenarios x $($Sizes.Count) sizes x $($Targets.Count) targets x $($Rounds.Count) rounds"
 Write-Host "power plan: '$script:PowerPlan', affinity: $Affinity, out: $OutCsv"
 
@@ -203,6 +208,11 @@ function Invoke-Row($Target, [string] $Id, [string] $Size, [int] $Round) {
     $row = (Read-SharedText $outFile).Trim()
     if ($row -and -not $killReason) {
         $f = $row -split ','
+        $rowStatus = $f[15]
+        if ($rowStatus -like 'ERROR:*') {
+            Write-Host ("  r{0} {1,-9} {2,-10} {3,-18} {4,-24} {5} {6}" -f $Round, $Size, $Target.Version, $Id, $rowStatus, $f[16])
+            return $rowStatus
+        }
         Write-Host ("  r{0} {1,-9} {2,-10} {3,-18} {4,-24} median={5} {6}" -f $Round, $Size, $Target.Version, $Id, $f[15], $f[20], $f[16])
         return
     }
@@ -226,6 +236,7 @@ function Invoke-Row($Target, [string] $Id, [string] $Size, [int] $Round) {
 
 # --- Matrix ------------------------------------------------------------------------------
 
+$errorRows = 0
 try {
     foreach ($round in $Rounds) {
         $roundStart = Get-UtcStamp
@@ -233,7 +244,10 @@ try {
         foreach ($size in $Sizes) {
             foreach ($s in $selected) {
                 if ($s.Only1080 -and $size -ne '1920x1080') { continue }
-                foreach ($t in $Targets) { Invoke-Row $t $s.Id $size $round }
+                foreach ($t in $Targets) {
+                    $result = Invoke-Row $t $s.Id $size $round
+                    if ($result -like 'ERROR:*' -or $result -eq 'TIMEOUT') { $errorRows++ }
+                }
             }
         }
         $roundEnd = Get-UtcStamp
@@ -245,4 +259,8 @@ try {
     }
 } finally {
     Remove-Item -Recurse -Force $work -ErrorAction SilentlyContinue
+}
+if ($errorRows -gt 0) {
+    Write-Host "yuv_bench driver: $errorRows row(s) with ERROR or TIMEOUT status" -ForegroundColor Red
+    exit 1
 }
