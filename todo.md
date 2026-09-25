@@ -3,6 +3,7 @@
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
 | [ ] | C-11 | IN_PROGRESS | GPT-6 Sol · T1 | C-10 (`77223ae`) | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
+| [ ] | OPT-13 | BLOCKED | GPT-6 Sol · T1 | C-11 accepted | Проверить blur buffers, separable Gaussian и Dart allocation/copy идеи |
 | [ ] | SPEED-12 | BLOCKED | GPT-5.6 Terra · T2 | C-01—C-11 | Свести результаты и выполнить нужные проверки корректности |
 
 Цель — ускорить текущую реализацию 11 экспортируемых функций ABI v1, сохранив результат и контракт 0.4.1. Регрессию скорости относительно 0.2.4 принимаем как исходное наблюдение: старую версию здесь не замеряем, но **обязательно изучаем её C-код как источник быстрых алгоритмических приёмов**. Ориентир для каждой функции — ускорение порядка 10× относительно её собственного времени до правки. Работа идёт последовательно: **один Dart-тест функции → время текущей реализации → разбор быстрого legacy кода → правка C-функции → повтор того же теста → вывод**.
@@ -62,6 +63,37 @@
 ABI v1 и его требования к валидации, ошибкам, stride/padding, ROI, цвету и атомарности записи сохраняются. Оптимизация не должна подменять проверку результата.
 
 В ABI v1 нет отдельной native C функции «создать изображение»: конструкторы находятся на Dart-стороне. Если после ускорения C вызовов создание остаётся заметной частью времени, завести отдельную задачу по результату адресного профиля, не смешивая её с тестом native функции.
+
+### OPT-13 — Проверить blur buffers и Dart plane copies
+
+**Статус:** BLOCKED до приёмки C-11
+**Исполнитель:** GPT-6 Sol · T1; проверка заключения — GPT-5.6 Terra · T2
+**Зависит от:** C-11 (принят; hash будет записан перед назначением)
+
+#### Architect Decision
+
+Это отдельное исследование после завершения native blur функций. Не менять production source и не смягчать тестовые oracle, пока результаты не собраны и рассмотрены. Проверить четыре предложения: (1) размывать visible RGB один раз и переиспользовать значения для luma/chroma encode; сравнить full-frame RGB buffer с bounded row-buffer C-09/C-10; (2) проверить принятые integer separable box/mean rolling sums против точного 2D окна на всей выбранной radius/edge/ROI выборке; (3) сравнить separable Gaussian с ABI v1 2D double формулой, измерить speedup и распределение byte differences; (4) изучить реальные Dart destination allocation и plane-copy paths, сравнить `malloc`/`calloc` и row-copy при `pixelStride == sampleBytes`, только если можно сохранить padding и исключить использование неинициализированной памяти.
+
+#### Constraints
+
+OPT-13 не начинать до приёмки C-11. Текущие byte-oracle и ABI v1 остаются критерием. Для Gaussian измерить число/долю отличающихся bytes, max delta, координаты (border/interior/ROI/shared chroma) и проверить ±1 гипотезу; production C и тесты не ослаблять. Для Dart `malloc` отдельно учесть active bytes, row padding, error/no-write paths, zeroing contract и возможную выдачу неинициализированной памяти. Сравнивать те же inputs на Windows Dart tests и записать time/memory trade-offs. Допускаются временные prototypes в адресном test-пакете; production code не менять. Не менять C-09/C-10.
+
+#### Definition of Done
+
+- [ ] Найдены текущие Dart allocation и plane-copy call paths с точными файлами/функциями и перечнем bytes, которые обязаны быть initialized.
+- [ ] Сравнены full RGB buffer и bounded row-buffer для blur: времена и peak scratch memory на идентичном workload.
+- [ ] Integer separable box/mean проверены против byte-exact 2D oracle на форматах, границах, odd 4:2:0, ROI и радиусах.
+- [ ] Gaussian 1D candidate сравнен с точным 2D oracle по скорости и разнице каждого output byte; дан вывод, совместимо ли ±1 с действующими ожиданиями. Любое изменение tolerance только предложить, не вносить.
+- [ ] `malloc`/`calloc` и row-copy замерены на фактическом Dart пути; безопасность padding, validation failure и no-write cases подтверждена.
+- [ ] Отчёт даёт рекомендацию по каждому пункту и предлагает узкие implementation tasks, если выигрыш доказан; production source не изменён.
+
+#### Executor Report
+
+Ожидается после C-11 и отдельного assignment commit.
+
+#### Review
+
+Ожидает независимой проверки Terra.
 
 ## Завершение
 
