@@ -3,7 +3,7 @@
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
 | [x] | C-11 | DONE | GPT-6 Sol · T1 | C-10 (`77223ae`) | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
-| [ ] | OPT-13 | REVIEW | GPT-6 Sol · T1 | C-11 (`74a1496`) | Проверить blur buffers, separable Gaussian и Dart allocation/copy идеи |
+| [ ] | OPT-13 | REJECTED | GPT-6 Sol · T1 | C-11 (`74a1496`) | Дополнить проверку full-ABI Gaussian и Dart allocator guarantees |
 | [ ] | SPEED-12 | BLOCKED | GPT-5.6 Terra · T2 | C-01—C-11 | Свести результаты и выполнить нужные проверки корректности |
 
 Цель — ускорить текущую реализацию 11 экспортируемых функций ABI v1, сохранив результат и контракт 0.4.1. Регрессию скорости относительно 0.2.4 принимаем как исходное наблюдение: старую версию здесь не замеряем, но **обязательно изучаем её C-код как источник быстрых алгоритмических приёмов**. Ориентир для каждой функции — ускорение порядка 10× относительно её собственного времени до правки. Работа идёт последовательно: **один Dart-тест функции → время текущей реализации → разбор быстрого legacy кода → правка C-функции → повтор того же теста → вывод**.
@@ -66,7 +66,7 @@ ABI v1 и его требования к валидации, ошибкам, str
 
 ### OPT-13 — Проверить blur buffers и Dart plane copies
 
-**Статус:** REVIEW
+**Статус:** REJECTED
 **Исполнитель:** GPT-6 Sol · T1; проверка заключения — GPT-5.6 Terra · T2
 **Зависит от:** C-11 (принят, commit `74a1496`)
 
@@ -97,7 +97,13 @@ OPT-13 не начинать до приёмки C-11. Текущие byte-oracl
 
 #### Review
 
-Terra проверяет полноту доказательств и точность рекомендаций; затем решить, принимать ли исследование и создавать узкие follow-up карточки.
+**REJECT — GPT-5.6 Terra · T2.** C-09/C-10 integer rolling sums и scratch memory math подтверждены. Для `_seedPlaneFromSource` row-copy разрешён только если `source.pixelStride == sampleBytes` и `destination.pixelStride == sampleBytes`; `YuvAbiV1ImageTransport.applyTo` может копировать `planeWidth * sampleBytes` и сохранять row padding.
+
+Не закрывать OPT-13, пока не будут выполнены следующие проверки:
+
+1. Gaussian: сохранить воспроизводимый prototype/команды/raw timing и измерить полный native ABI 1D вариант на I420/NV12/BGRA, ROI/shared chroma, border, padded/non-contiguous stride, radius 0/256, sigma range, alpha, error atomicity и allocation failure. Отчёт включает byte-diff count/fraction/max delta/coordinate classes. До этого 1D остаётся кандидатом, ±1 tolerance не менять.
+2. Dart allocator: проверить `NativeAllocator` zeroed-memory contract и пути validation failure/no-write/padding для `malloc`; не предлагать общий переход с calloc. Отдельный partial malloc production task не открывать без доказанной выгоды и полной инициализации.
+3. Row-copy рекомендации сохранить как будущую узкую T2 карточку с требованием обоих tight pixel strides для seed copy и тестами pixel/row padding; не начинать implementation в рамках OPT-13.
 
 ## Завершение
 
