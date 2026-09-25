@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -9,6 +10,8 @@ const _operation = String.fromEnvironment('BLUR_OPERATION');
 const _packageSha = String.fromEnvironment('BLUR_PACKAGE_SHA');
 const _sourceSha = String.fromEnvironment('BLUR_SOURCE_SHA');
 const _buildParameters = String.fromEnvironment('BLUR_BUILD_PARAMETERS');
+const _variant = String.fromEnvironment('BLUR_VARIANT');
+const _candidateSourceSha = String.fromEnvironment('BLUR_CANDIDATE_SOURCE_SHA');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,6 +84,7 @@ Future<List<Map<String, Object>>> _run() async {
     final warmup = <double>[];
     final samples = <double>[];
     String? resultChecksum;
+    YuvImage? visualResult;
     for (var index = 0; index < 9; index++) {
       _stage('${entry.key} ${index < 2 ? 'warmup' : 'sample'} $index clone');
       final candidate = source.copy();
@@ -90,6 +94,9 @@ Future<List<Map<String, Object>>> _run() async {
       _stage('${entry.key} ${index < 2 ? 'warmup' : 'sample'} $index done');
       final elapsed = stopwatch.elapsedMicroseconds / 1000.0;
       final checksum = sha256.convert(candidate.toBytes()).toString();
+      if (entry.key == 'reference_1477x1065' && index == 8) {
+        visualResult = candidate;
+      }
       resultChecksum ??= checksum;
       if (checksum != resultChecksum) {
         throw StateError(
@@ -99,6 +106,9 @@ Future<List<Map<String, Object>>> _run() async {
       (index < 2 ? warmup : samples).add(elapsed);
     }
     final sorted = List<double>.from(samples)..sort();
+    if (_operation == 'gaussian' && visualResult != null) {
+      await _writeVisual(visualResult);
+    }
     datasets.add(<String, Object>{
       'id': entry.key,
       'width': entry.value.width,
@@ -129,10 +139,29 @@ Future<List<Map<String, Object>>> _run() async {
           'package_sha': _packageSha,
           'source_sha': _sourceSha,
           'build_parameters': _buildParameters,
+          'variant': _variant,
+          'candidate_source_sha256': _candidateSourceSha,
           ...dataset,
         },
       )
       .toList(growable: false);
+}
+
+Future<void> _writeVisual(YuvImage result) async {
+  final bytes = result.toBgraBytes();
+  final frame = image.Image.fromBytes(
+    width: result.width,
+    height: result.height,
+    bytes: bytes.buffer,
+    numChannels: 4,
+    order: image.ChannelOrder.bgra,
+  );
+  const channel = MethodChannel('blur_runner/files');
+  final directory = await channel.invokeMethod<String>('externalFilesDir');
+  if (directory == null) throw StateError('externalFilesDir unavailable');
+  final path = '$directory/blur03_gaussian_$_variant.png';
+  await File(path).writeAsBytes(image.encodePng(frame));
+  _stage('visual $path');
 }
 
 void _apply(YuvImage image) {

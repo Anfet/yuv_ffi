@@ -3,6 +3,7 @@
 param(
     [Parameter(Mandatory)] [ValidateSet('box', 'mean', 'gaussian')] [string] $Operation,
     [Parameter(Mandatory)] [string] $PackageSourcePath,
+    [string] $Variant = 'rgb',
     [string] $Serial = '8B1X11QLW',
     [int] $TimeoutSec = 600,
     [string] $OutDirectory = (Join-Path $PSScriptRoot '..\\..\\doc\\perf\\results\\blur_raw')
@@ -20,6 +21,12 @@ if (-not (Test-Path -LiteralPath (Join-Path $source 'pubspec.yaml'))) { throw "P
 if ((& adb -s $Serial get-state).Trim() -ne 'device') { throw "Android device $Serial is unavailable" }
 $packageSha = (& git -C $source rev-parse HEAD).Trim()
 $sourceSha = (& git -C $source rev-parse "HEAD:src").Trim()
+$nativeSource = @{
+    box = 'src/yuv/abi/yuv_box_blur_v1.c'
+    mean = 'src/yuv/abi/yuv_mean_blur_v1.c'
+    gaussian = 'src/yuv/abi/yuv_gaussian_blur_v1.c'
+}[$Operation]
+$candidateSourceSha = (Get-FileHash -LiteralPath (Join-Path $source $nativeSource) -Algorithm SHA256).Hash.ToLowerInvariant()
 $fixtureSha = (Get-FileHash -LiteralPath $fixture -Algorithm SHA256).Hash.ToLowerInvariant()
 $sourcePathYaml = $source.Replace('\\', '/')
 $buildParameters = "android-release-aot;operation=$Operation;radius=10;sigma=10;warmup=2;samples=7"
@@ -29,7 +36,7 @@ Copy-Item -LiteralPath $fixture -Destination $stagedFixture -Force
 Push-Location $runner
 try {
     & flutter pub get; if ($LASTEXITCODE) { throw 'flutter pub get failed' }
-    & flutter build apk --release "--dart-define=BLUR_OPERATION=$Operation" "--dart-define=BLUR_PACKAGE_SHA=$packageSha" "--dart-define=BLUR_SOURCE_SHA=$sourceSha" "--dart-define=BLUR_BUILD_PARAMETERS=$buildParameters"
+    & flutter build apk --release "--dart-define=BLUR_OPERATION=$Operation" "--dart-define=BLUR_PACKAGE_SHA=$packageSha" "--dart-define=BLUR_SOURCE_SHA=$sourceSha" "--dart-define=BLUR_BUILD_PARAMETERS=$buildParameters" "--dart-define=BLUR_VARIANT=$Variant" "--dart-define=BLUR_CANDIDATE_SOURCE_SHA=$candidateSourceSha"
     if ($LASTEXITCODE) { throw 'flutter build apk --release failed' }
     $apk = Join-Path $runner 'build\\app\\outputs\\flutter-apk\\app-release.apk'
     & adb -s $Serial install -r $apk; if ($LASTEXITCODE) { throw 'adb install -r failed' }

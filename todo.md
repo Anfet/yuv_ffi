@@ -20,7 +20,7 @@
 | BLUR-00 | DONE | Зафиксировать маленький Dart Release runner и два NV12-входа | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-01 | DONE | Box: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-02 | DONE | Mean: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
-| BLUR-03 | PLANNED | Gaussian: прямой Y/U/V с тем же 2D-ядром | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
+| BLUR-03 | REVIEW | Gaussian: прямой Y/U/V с тем же 2D-ядром | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
 | BLUR-04 | PLANNED | Gaussian: разделимые 1D-проходы и ограниченный scratch | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
 | OPT-14 | DEFERRED | Dart row-copy fast paths из OPT-13 | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 
@@ -41,6 +41,8 @@
 Зависит от BLUR-01 и использует тот же runner/вход. Повторить эксперимент только для `yuv_mean_blur_v1.c`, не подменяя его измерением Box. Сравнить Y-only и полный Y/U/V с текущим RGB на обоих размерах; оценить ≥25%, миллисекунды и визуальный результат. Production-перенос требует тех же ABI и layout проверок, что BLUR-01, с собственным адресным тестом Mean.
 
 ### BLUR-03 — Gaussian: цена RGB-конверсий
+
+Изолированный 2D кандидат измерен на Pixel 3 в Android Release/AOT, production C/ABI не менялись. Полный Y/U/V дал 938.257/147.677 ms против RGB 1427.865/225.534 ms на 1477×1065/720×360 (экономия 34.29%/34.52%); Y-only дал 829.745/129.841 ms. Контрольный Y/U/V прогон подтвердил близкие медианы и идентичные checksum. Raw 2+7, source SHA, три фактических PNG, видимое отличие Y-only и ограничения кандидата — в [BLUR-03 report](doc/perf/results/blur03_pixel3_gaussian_direct_yuv.md). Статус REVIEW до независимой проверки; production-перенос и BLUR-04 не начаты.
 
 Зависит от BLUR-00. В изолированном кандидате `yuv_gaussian_blur_v1.c` оставить 2D Gaussian, но считать его непосредственно по Y, U и V: Y `r=10, sigma=10`; U/V `r=5, sigma=5`. Это отдельно измеряет эффект отказа от RGB при той же сложности свёртки. Сравнить текущий RGB, Y-only и Y/U/V, обе размерности, raw/median/checksum/PNG. Явно записать, достаточен ли этот выигрыш для Gaussian; не объяснять им возможный выигрыш будущего разделимого ядра.
 

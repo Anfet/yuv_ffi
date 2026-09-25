@@ -1,0 +1,122 @@
+diff --git a/src/yuv/abi/yuv_gaussian_blur_v1.c b/src/yuv/abi/yuv_gaussian_blur_v1.c
+index 33dfc16..1b0f5e8 100644
+--- a/src/yuv/abi/yuv_gaussian_blur_v1.c
++++ b/src/yuv/abi/yuv_gaussian_blur_v1.c
+@@ -7,6 +7,8 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++#define BLUR03_CHROMA 1
++
+ static inline uint32_t yuv_gaussian_clamp(int64_t value, uint32_t extent) {
+     if (value < 0) {
+         return 0;
+@@ -87,6 +89,91 @@ static void yuv_gaussian_decode_row(
+     }
+ }
+ 
++/* BLUR-03 measurement candidate: tight, full-frame NV12 only. Other validated
++ * descriptors retain the production implementation below. */
++static int blur03_can_run_direct(
++    const YuvValidatedConstFrameView *source,
++    const YuvValidatedMutableFrameView *destination,
++    const YuvRegionV1 *region,
++    uint32_t radius) {
++    if (source->format != YUV_VIEW_FORMAT_NV12 ||
++        destination->format != YUV_VIEW_FORMAT_NV12 ||
++        region->enabled || radius != 10) {
++        return 0;
++    }
++    uint64_t chromaStride = (uint64_t)(source->width / 2 + source->width % 2) * 2;
++    return source->planes[0].pixelStride == 1 &&
++        destination->planes[0].pixelStride == 1 &&
++        source->planes[0].rowStride == source->width &&
++        destination->planes[0].rowStride == source->width &&
++        source->planes[1].pixelStride == 2 &&
++        destination->planes[1].pixelStride == 2 &&
++        source->planes[1].rowStride == chromaStride &&
++        destination->planes[1].rowStride == chromaStride;
++}
++
++static void blur03_direct_plane(
++    const uint8_t *source, uint8_t *destination,
++    uint32_t width, uint32_t height, uint32_t rowStride,
++    uint32_t pixelStride, uint32_t channel,
++    uint32_t radius, const double *weights, double total) {
++    uint32_t side = radius * 2 + 1;
++    for (uint32_t y = 0; y < height; y++) {
++        for (uint32_t x = 0; x < width; x++) {
++            double sum = 0.0;
++            for (int64_t dy = -(int64_t)radius; dy <= (int64_t)radius; dy++) {
++                uint32_t sampleY = yuv_gaussian_clamp((int64_t)y + dy, height);
++                const uint8_t *sourceRow = source + (size_t)sampleY * rowStride;
++                const double *weightRow = weights + (size_t)(dy + radius) * side;
++                for (int64_t dx = -(int64_t)radius; dx <= (int64_t)radius; dx++) {
++                    uint32_t sampleX = yuv_gaussian_clamp((int64_t)x + dx, width);
++                    sum += weightRow[dx + radius] *
++                        sourceRow[(size_t)sampleX * pixelStride + channel];
++                }
++            }
++            destination[(size_t)y * rowStride + (size_t)x * pixelStride + channel] =
++                yuv_gaussian_clip((int32_t)(sum / total + 0.5));
++        }
++    }
++}
++
++static YuvStatus blur03_run_direct(
++    const YuvValidatedConstFrameView *source,
++    const YuvValidatedMutableFrameView *destination,
++    const double *lumaWeights, double lumaTotal, int blurChroma) {
++    uint32_t chromaWidth = source->width / 2 + source->width % 2;
++    uint32_t chromaHeight = source->height / 2 + source->height % 2;
++    uint32_t chromaStride = chromaWidth * 2;
++    const uint8_t *sourceY = (const uint8_t *)source->planes[0].data;
++    uint8_t *destinationY = (uint8_t *)destination->planes[0].data;
++    const uint8_t *sourceUv = (const uint8_t *)source->planes[1].data;
++    uint8_t *destinationUv = (uint8_t *)destination->planes[1].data;
++
++    double chromaWeights[121];
++    double chromaTotal = 0.0;
++    if (blurChroma) {
++        for (int32_t dy = -5; dy <= 5; dy++) {
++            for (int32_t dx = -5; dx <= 5; dx++) {
++                double weight = exp(-((double)(dx * dx + dy * dy)) / 50.0);
++                chromaWeights[(dy + 5) * 11 + (dx + 5)] = weight;
++                chromaTotal += weight;
++            }
++        }
++    }
++
++    blur03_direct_plane(sourceY, destinationY, source->width, source->height,
++        source->width, 1, 0, 10, lumaWeights, lumaTotal);
++    if (blurChroma) {
++        blur03_direct_plane(sourceUv, destinationUv, chromaWidth, chromaHeight,
++            chromaStride, 2, 0, 5, chromaWeights, chromaTotal);
++        blur03_direct_plane(sourceUv, destinationUv, chromaWidth, chromaHeight,
++            chromaStride, 2, 1, 5, chromaWeights, chromaTotal);
++    } else {
++        memcpy(destinationUv, sourceUv, (size_t)chromaStride * chromaHeight);
++    }
++    return YUV_STATUS_OK;
++}
++
+ static YuvStatus yuv_gaussian_blur_v1_run(
+     const YuvValidatedConstFrameView *source,
+     const YuvValidatedMutableFrameView *destination,
+@@ -351,8 +438,14 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_gaussian_blur_v1(const YuvConstFrameV1 *source,
+         }
+     }
+ 
+-    YuvStatus status = yuv_gaussian_blur_v1_run(
+-        &sourceView, &destinationView, &region, options->radius, weights, total);
++    YuvStatus status;
++    if (blur03_can_run_direct(&sourceView, &destinationView, &region, options->radius) &&
++        options->sigma == 10.0) {
++        status = blur03_run_direct(&sourceView, &destinationView, weights, total, BLUR03_CHROMA);
++    } else {
++        status = yuv_gaussian_blur_v1_run(
++            &sourceView, &destinationView, &region, options->radius, weights, total);
++    }
+     free(weights);
+     return status;
+ }
