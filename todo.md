@@ -18,7 +18,7 @@
 | ID | Статус | Задача | Исполнитель | Проверка |
 | --- | --- | --- | --- | --- |
 | BLUR-00 | DONE | Зафиксировать маленький Dart Release runner и два NV12-входа | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
-| BLUR-01 | IN_PROGRESS | Box: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
+| BLUR-01 | DONE | Box: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-02 | PLANNED | Mean: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-03 | PLANNED | Gaussian: прямой Y/U/V с тем же 2D-ядром | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
 | BLUR-04 | PLANNED | Gaussian: разделимые 1D-проходы и ограниченный scratch | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
@@ -29,6 +29,8 @@
 Принято: минимальный Dart Release runner принимает `box`, `mean` или `gaussian`; PNG decode, NV12 подготовка и source clone вынесены из таймера. Все операции прошли на Pixel 3 для исходного 1477×1065 и детерминированного 720×360. Raw samples, медианы, spread, SHA и параметры записаны в [BLUR-00 report](doc/perf/results/blur_reference_pixel3_blur00.md) и `doc/perf/results/blur_raw/`. Flutter analyze runner прошёл. Baseline 720×360: Box 8.562 ms, Mean 8.644 ms, Gaussian 225.356 ms.
 
 ### BLUR-01 — Box без RGB
+
+Принято как измерительный эксперимент, без production-переноса: Y-only 12.738/1.676 ms и Y/U/V 17.967/2.548 ms для 1477×1065/720×360 против RGB 54.943/8.562 ms. Raw, checksum, ограничения кандидата и выводы — в [BLUR-01 report](doc/perf/results/blur01_pixel3_box_direct_yuv.md); три декодируемых изображения сохранены рядом. Production-вариант требует отдельной проверки padding/stride, odd geometry, ROI, BGRA и alias.
 
 Зависит от BLUR-00. В изолированной копии `yuv_box_blur_v1.c` проверить простейшую полноэкранную обработку packed `Y + UV`: сначала Y напрямую, затем U/V напрямую тем же integer sliding-sum с radius 5 для chroma. Не смешивать стоимость подготовки кадра с вызовом. Сравнить текущий RGB, Y-only и Y/U/V на обоих размерах: медиана, абсолютная экономия, процент, checksum и три PNG. Выигрыш ≥25% для полного Y/U/V делает вариант кандидатом; даже 4–5 мс на 720×360 записать отдельно. При переносе в production сохранять ABI/status, alias, stride/padding, ROI, odd 4:2:0, NV12 и BGRA fallback; проверить относящиеся контрактные тесты.
 

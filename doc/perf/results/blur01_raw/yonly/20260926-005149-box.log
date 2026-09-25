@@ -1,0 +1,46 @@
+--------- beginning of main
+09-26 00:51:50.423 I/flutter (28469): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+09-26 00:51:50.439 I/flutter (28469): [IMPORTANT:flutter/shell/platform/android/android_context_gl_impeller.cc(104)] Using the Impeller rendering backend (OpenGLES).
+09-26 00:51:50.485 I/flutter (28469): YUV_BLUR_STAGE:startup operation=box
+09-26 00:51:50.485 I/flutter (28469): YUV_BLUR_STAGE:initialize
+09-26 00:51:50.486 I/flutter (28469): YUV_BLUR_STAGE:load_png
+09-26 00:51:51.096 I/flutter (28469): YUV_BLUR_STAGE:prepare_nv21 reference_1477x1065
+09-26 00:51:51.491 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 warmup 0 clone
+09-26 00:51:51.507 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 warmup 0 done
+09-26 00:51:51.582 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 warmup 1 clone
+09-26 00:51:51.600 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 warmup 1 done
+09-26 00:51:51.676 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 2 clone
+09-26 00:51:51.692 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 2 done
+09-26 00:51:51.767 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 3 clone
+09-26 00:51:51.783 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 3 done
+09-26 00:51:51.860 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 4 clone
+09-26 00:51:51.875 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 4 done
+09-26 00:51:51.951 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 5 clone
+09-26 00:51:51.967 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 5 done
+09-26 00:51:52.044 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 6 clone
+09-26 00:51:52.059 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 6 done
+09-26 00:51:52.134 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 7 clone
+09-26 00:51:52.151 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 7 done
+09-26 00:51:52.227 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 8 clone
+09-26 00:51:52.243 I/flutter (28469): YUV_BLUR_STAGE:reference_1477x1065 sample 8 done
+09-26 00:51:52.318 I/flutter (28469): YUV_BLUR_STAGE:prepare_nv21 derived_720x360
+09-26 00:51:52.384 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 warmup 0 clone
+09-26 00:51:52.387 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 warmup 0 done
+09-26 00:51:52.399 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 warmup 1 clone
+09-26 00:51:52.403 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 warmup 1 done
+09-26 00:51:52.416 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 2 clone
+09-26 00:51:52.418 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 2 done
+09-26 00:51:52.430 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 3 clone
+09-26 00:51:52.433 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 3 done
+09-26 00:51:52.445 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 4 clone
+09-26 00:51:52.447 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 4 done
+09-26 00:51:52.460 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 5 clone
+09-26 00:51:52.462 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 5 done
+09-26 00:51:52.474 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 6 clone
+09-26 00:51:52.478 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 6 done
+09-26 00:51:52.491 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 7 clone
+09-26 00:51:52.493 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 7 done
+09-26 00:51:52.505 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 8 clone
+09-26 00:51:52.508 I/flutter (28469): YUV_BLUR_STAGE:derived_720x360 sample 8 done
+09-26 00:51:52.520 I/flutter (28469): YUV_BLUR_RESULT:{"schema":1,"operation":"box","radius":10,"warmup_count":2,"sample_count":7,"package_sha":"19e2516fc5c620559f9abe680bb8926a8c9efd6e","source_sha":"d4e9e54fd92a53ce204ecc36f0031c8db3e2085c","build_parameters":"android-release-aot;operation=box;radius=10;sigma=10;warmup=2;samples=7","id":"reference_1477x1065","width":1477,"height":1065,"public_format":"nv12","source_constructor":"YuvImage.nv21","selected_chroma_byte_order":"UV","packed_layout":"Y + interleaved UV chroma","source_sha256":"09ab1306d279f6b79bcc77dced485bc2d0691cf823aad82c0b5b1ad6f041cc78","result_sha256":"6f06f4c251f7aa1ef0d542f66e81e02e0b69266b11de29717b9dc70f3214b12f","warmup_ms":[13.045,11.225],"raw_ms":[12.738,11.247,12.806,11.237,12.846,11.121,12.789],"median_ms":12.738,"min_ms":11.121,"max_ms":12.846,"spread_ms":1.7249999999999996}
+09-26 00:51:52.520 I/flutter (28469): YUV_BLUR_RESULT:{"schema":1,"operation":"box","radius":10,"warmup_count":2,"sample_count":7,"package_sha":"19e2516fc5c620559f9abe680bb8926a8c9efd6e","source_sha":"d4e9e54fd92a53ce204ecc36f0031c8db3e2085c","build_parameters":"android-release-aot;operation=box;radius=10;sigma=10;warmup=2;samples=7","id":"derived_720x360","width":720,"height":360,"public_format":"nv12","source_constructor":"YuvImage.nv21","selected_chroma_byte_order":"UV","packed_layout":"Y + interleaved UV chroma","source_sha256":"1fada775114bc0f90a9fb1338acdfd302c281331598400c328fde897106a289e","result_sha256":"9c86fadcd676f00dfca41fb9782538141a2da40efbfe1333fc4ec1e5aed20b78","warmup_ms":[1.848,2.15],"raw_ms":[1.668,2.234,1.676,1.64,2.008,1.69,1.631],"median_ms":1.676,"min_ms":1.631,"max_ms":2.234,"spread_ms":0.603}
