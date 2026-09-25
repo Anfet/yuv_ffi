@@ -2,8 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-08 | IN_PROGRESS | GPT-6 Luna · T3 | C-07 (`2b11af7`) | Оптимизировать `yuv_chroma_swap_v1`; Terra проверяет результат |
-| [ ] | C-09 | BLOCKED | GPT-6 Sol · T1 | C-08 | Оптимизировать `yuv_box_blur_v1`; затем повторить её Dart-тест |
+| [ ] | C-09 | READY | GPT-6 Sol · T1 | C-08 (принят; hash будет в assignment commit) | Оптимизировать `yuv_box_blur_v1`; затем повторить её Dart-тест |
 | [ ] | C-10 | BLOCKED | GPT-6 Sol · T1 | C-09 | Оптимизировать `yuv_mean_blur_v1`; затем повторить её Dart-тест |
 | [ ] | C-11 | BLOCKED | GPT-6 Sol · T1 | C-10 | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
 | [ ] | SPEED-12 | BLOCKED | GPT-5.6 Terra · T2 | C-01—C-11 | Свести результаты и выполнить нужные проверки корректности |
@@ -22,32 +21,32 @@
 
 | Готово | ID | Native C функция / основной файл | Сценарии одного теста | Исполнитель | Причина tier |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-08 | `yuv_chroma_swap_v1` · `yuv_chroma_swap_v1.c` | NV12; полный кадр и padded/gapped layout; ROI rejection | T3 · Luna | Локальная операция над UV plane с готовым контрактом |
-| [ ] | C-09 | `yuv_box_blur_v1` · `yuv_box_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и границы радиуса |
+| [ ] | C-09 | `yuv_box_blur_v1` · `yuv_box_blur_v1.c` | I420, NV12, BGRA; radius 1/3, full-frame/ROI, odd geometry | T1 · Sol | Численно точный separable box blur без изменения общего ядра |
 | [ ] | C-10 | `yuv_mean_blur_v1` · `yuv_mean_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и точное округление |
 | [ ] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; несколько radius/sigma | T1 · Sol | Численные веса и точность результата |
 
-### C-08 — Ускорить `yuv_chroma_swap_v1`
+### C-09 — Ускорить `yuv_box_blur_v1`
 
-**Статус:** IN_PROGRESS
-**Исполнитель:** GPT-6 Luna · T3, small; проверка результата — GPT-5.6 Terra · T2
-**Зависит от:** C-07 (принят, коммит `2b11af7`)
+**Статус:** READY
+**Исполнитель:** GPT-6 Sol · T1, high numerical reasoning
+**Зависит от:** C-08 (принят; точный hash будет записан в assignment commit)
 
 #### Architect Decision
 
-Добавить один адресный Windows Dart FFI тест в `speed_00_dart_ffi/` для `yuv_chroma_swap_v1`: NV12 tight full-frame и padded/gapped layout. Проверить, что включённый ROI отклоняется согласно контракту. Измерить текущий Release код, изучить legacy C в теге `0.2.4`, затем оптимизировать только `yuv_chroma_swap_v1.c`. Исполнитель самостоятельно меняет native C в рамках этой карточки. Предпочесть прямой проход по UV samples с сохранением Y; generic helper оставить fallback для несовместимых layout/alias случаев.
+Добавить один адресный Windows Dart FFI тест в `speed_00_dart_ffi/` для `yuv_box_blur_v1`. Измерять radius 1 и 3 на I420, NV12 и BGRA; проверять full-frame и odd-boundary ROI, включая odd 4:2:0 geometry. Сначала снять Release baseline и прочитать legacy `0.2.4` реализации box blur. Оптимизировать только `yuv_box_blur_v1.c`, не трогая общий `yuv_kernel_v1_blur`: применить separable rolling sums без промежуточного округления, с edge replication; итог делить на полную площадь окна с тем же half-up округлением. Для ROI строить blurred values из полного source neighborhood, записывать только ROI и сохранять прежнее влияние на пересекающиеся shared-chroma blocks.
 
 #### Constraints
 
-Сохранить ABI v1, validation/error status, Y bytes, region-disabled-only behavior и stride/padding semantics. Включённый ROI обязан возвращать `YUV_STATUS_INVALID_ARGUMENT`, не изменяя destination. Таймер только вокруг вызова функции; входы повторяемы. Oracle, проверка каждого output sample и checksum выполняются вне timer. Не менять ABI, общий helper и соседние функции. Legacy код использовать как алгоритмический референс, не как оракул корректности; старую библиотеку не собирать и не мерить.
+Сохранить ABI v1, radius 0 no-op, reject radius >256, border clamp, sigma == 0, status/validation, alpha preservation, byte-exact output и error atomicity. Не менять ABI, shared helper, `yuv_mean_blur_v1`, `yuv_gaussian_blur_v1` или соседние операции. Scratch allocation/checks должны завершиться до первой записи в destination; overflow/allocation failure не должны частично менять destination. Legacy — алгоритмический ориентир, не oracle; старую библиотеку не собирать/мерить. Изменения C исполнитель вносит сам в пределах этой карточки.
 
 #### Definition of Done
 
-- [ ] Один Dart FFI тест проверяет full-frame NV12 и padded/gapped fallback по каждому output sample и checksum, а также ROI rejection и отсутствие записи при ошибке.
-- [ ] Зафиксированы baseline/post timings для тех же сценариев и вывод о speedup/узком месте.
-- [ ] Изучен legacy C `0.2.4`; приложен краткий вывод о применимом приёме.
-- [ ] Windows Release тест, форматирование, анализ и `git diff --check` проходят.
-- [ ] Исполнитель сообщает изменённые файлы, команды и измерения; Terra независимо проверяет C diff и повторяет тест.
+- [ ] Один Dart FFI тест покрывает I420/NV12/BGRA × radius 1/3; full-frame и odd-boundary ROI; odd 4:2:0 geometry; radius 0 и ошибочные параметры/status.
+- [ ] Каждый output byte сверяется с независимым Dart oracle, checksums совпадают; validation failures проверяют отсутствие destination writes.
+- [ ] Зафиксированы baseline/post времена для тех же сценариев и speedups; batch timer включает только native calls.
+- [ ] Изучены legacy C реализаций 0.2.4 и описано, что применено/отклонено.
+- [ ] Windows Release тест, форматирование, анализ и `git diff --check` проходят; shared blur consumers не изменены.
+- [ ] Исполнитель сообщает файлы, точные команды, timings/коэффициенты, correctness и ограничения; Terra независимо проверяет native diff и повторяет Dart test.
 
 #### Executor Report
 

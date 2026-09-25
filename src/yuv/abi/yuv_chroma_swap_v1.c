@@ -2,6 +2,8 @@
 #include "h/yuv_validate_v1.h"
 #include "h/yuv_kernel_v1.h"
 
+#include <string.h>
+
 /*
  * Swaps the U and V sample values of an NV12 frame without changing its format.
  * NV12 -> NV12 only, at identical geometry, and only over the whole frame.
@@ -45,6 +47,36 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_chroma_swap_v1(const YuvConstFrameV1 *source, Yu
         return regionStatus;
     }
 
+    const uint32_t chromaWidth = (destinationView.width + 1) / 2;
+    const uint32_t chromaHeight = (destinationView.height + 1) / 2;
+    const YuvValidatedConstPlaneIn *sourceY = &sourceView.planes[0];
+    const YuvValidatedMutablePlaneIn *destinationY = &destinationView.planes[0];
+    const YuvValidatedConstPlaneIn *sourceUv = &sourceView.planes[1];
+    const YuvValidatedMutablePlaneIn *destinationUv = &destinationView.planes[1];
+
+    if ((uint64_t)sourceView.width * sourceView.height <= SIZE_MAX &&
+        (uint64_t)chromaWidth * chromaHeight * 2 <= SIZE_MAX &&
+        sourceY->pixelStride == 1 && destinationY->pixelStride == 1 &&
+        sourceY->rowStride == sourceView.width && destinationY->rowStride == destinationView.width &&
+        sourceUv->pixelStride == 2 && destinationUv->pixelStride == 2 &&
+        sourceUv->rowStride == (uint64_t)chromaWidth * 2 &&
+        destinationUv->rowStride == (uint64_t)chromaWidth * 2) {
+        const size_t lumaBytes = (size_t)sourceView.width * sourceView.height;
+        const size_t chromaBytes = (size_t)chromaWidth * chromaHeight * 2;
+        const uint8_t *from = (const uint8_t *)sourceY->data;
+        uint8_t *to = (uint8_t *)destinationY->data;
+        memcpy(to, from, lumaBytes);
+
+        from = (const uint8_t *)sourceUv->data;
+        to = (uint8_t *)destinationUv->data;
+        for (size_t i = 0; i < chromaBytes; i += 2) {
+            const uint8_t u = from[i];
+            to[i] = from[i + 1];
+            to[i + 1] = u;
+        }
+        return YUV_STATUS_OK;
+    }
+
     /* Section 14 Q1: a channel-value effect on stored samples, not a format
      * conversion and not a visible-pixel operation. Y is copied byte for byte
      * and each UV pair is written back as (V,U); nothing is decoded to RGB,
@@ -61,8 +93,6 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_chroma_swap_v1(const YuvConstFrameV1 *source, Yu
         }
     }
 
-    uint32_t chromaWidth = (destinationView.width + 1) / 2;
-    uint32_t chromaHeight = (destinationView.height + 1) / 2;
     for (uint32_t y = 0; y < chromaHeight; y++) {
         for (uint32_t x = 0; x < chromaWidth; x++) {
             const uint8_t *from = yuv_kernel_v1_const_sample(&sourceView.planes[1], x, y);
