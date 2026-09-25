@@ -1,9 +1,14 @@
 # yuv_ffi — история проверок и принятых задач
 
-## BLUR-03 — REVIEW — Измерить Gaussian напрямую по Y и Y/U/V
+## BLUR-04 — DONE — Измерить разделимый Gaussian по Y/U/V
+
+- На Pixel 3 Release/AOT два независимых прогона разделимого Y/U/V Gaussian дали 186.225 ms для 1477×1065 и 28.783 ms для 720×360; прямой 2D Y/U/V — 937.816/147.547 ms. Ускорение 5.04×/5.13× при том же публичном вызове.
+- На этих входах выходные checksum разделимого и прямого 2D YUV совпали; raw NV12 большого кадра побайтно совпал (max delta 0, различий 0). Scratch: 242.3 KiB при 1477×1065/r10; оценка 15.66 MiB при 4000×3000/r256. Кандидат и область применимости описаны в [отчёте](doc/perf/results/blur04_pixel3_gaussian_separable.md); production C/ABI не менялись.
+
+## BLUR-03 — DONE — Измерить Gaussian напрямую по Y и Y/U/V
 
 - Изолированный 2D кандидат на Pixel 3, Android Release/AOT: для 1477×1065 RGB 1427.865 ms, Y-only 829.745 ms, Y/U/V 938.257 ms; для 720×360 225.534, 129.841 и 147.677 ms. Полный Y/U/V экономит 34.29%/34.52% при сохранённой 2D сложности. Повторный Y/U/V прогон дал близкие медианы 937.358/148.361 ms и те же checksum.
-- Два candidate patch, raw JSONL/logcat, source SHA и три фактических PNG сохранены в [отчёте](doc/perf/results/blur03_pixel3_gaussian_direct_yuv.md). Production C/ABI не менялись; визуальная семантика YUV отличается от RGB. Ожидается независимая проверка перед принятием, переносом или коммитом.
+- Два candidate patch, raw JSONL/logcat, source SHA и три фактических PNG сохранены в [отчёте](doc/perf/results/blur03_pixel3_gaussian_direct_yuv.md). Проверка принята как эксперимент; production C/ABI не менялись, production-перенос не принят. Визуальная семантика YUV отличается от RGB.
 
 ## BLUR-02 — Измерить Mean напрямую по Y и Y/U/V
 

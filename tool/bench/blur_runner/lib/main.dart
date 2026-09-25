@@ -108,6 +108,7 @@ Future<List<Map<String, Object>>> _run() async {
     final sorted = List<double>.from(samples)..sort();
     if (_operation == 'gaussian' && visualResult != null) {
       await _writeVisual(visualResult);
+      await _writeRawOutput(visualResult);
     }
     datasets.add(<String, Object>{
       'id': entry.key,
@@ -162,6 +163,15 @@ Future<void> _writeVisual(YuvImage result) async {
   final path = '$directory/blur03_gaussian_$_variant.png';
   await File(path).writeAsBytes(image.encodePng(frame));
   _stage('visual $path');
+}
+
+Future<void> _writeRawOutput(YuvImage result) async {
+  const channel = MethodChannel('blur_runner/files');
+  final directory = await channel.invokeMethod<String>('externalFilesDir');
+  if (directory == null) throw StateError('externalFilesDir unavailable');
+  final path = '$directory/blur04_gaussian_$_variant.nv12';
+  await File(path).writeAsBytes(result.toBytes());
+  _stage('raw_output $path');
 }
 
 void _apply(YuvImage image) {

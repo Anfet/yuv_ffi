@@ -3,7 +3,7 @@
 param(
     [Parameter(Mandatory)] [ValidateSet('box', 'mean', 'gaussian')] [string] $Operation,
     [Parameter(Mandatory)] [string] $PackageSourcePath,
-    [string] $Variant = 'rgb',
+    [ValidateSet('rgb', 'yonly', 'yuv', 'separable')] [string] $Variant = 'rgb',
     [string] $Serial = '8B1X11QLW',
     [int] $TimeoutSec = 600,
     [string] $OutDirectory = (Join-Path $PSScriptRoot '..\\..\\doc\\perf\\results\\blur_raw')
@@ -59,6 +59,16 @@ try {
     $json = @($results | ForEach-Object { $line = $_.ToString(); $line.Substring($line.IndexOf('YUV_BLUR_RESULT:') + 'YUV_BLUR_RESULT:'.Length) })
     $resultPath = Join-Path $OutDirectory "$stamp-$Operation.jsonl"
     [IO.File]::WriteAllLines($resultPath, $json, [Text.UTF8Encoding]::new($false))
+    if ($Operation -eq 'gaussian') {
+        $deviceFiles = "/sdcard/Android/data/$packageName/files"
+        $visualPath = Join-Path $OutDirectory "$stamp-gaussian-$Variant.png"
+        $rawOutputPath = Join-Path $OutDirectory "$stamp-gaussian-$Variant.nv12"
+        & adb -s $Serial pull "$deviceFiles/blur03_gaussian_$Variant.png" $visualPath | Out-Null
+        if ($LASTEXITCODE) { throw 'adb pull Gaussian visualization failed' }
+        & adb -s $Serial pull "$deviceFiles/blur04_gaussian_$Variant.nv12" $rawOutputPath | Out-Null
+        if ($LASTEXITCODE) { throw 'adb pull Gaussian raw output failed' }
+        Write-Host "visual=$visualPath"; Write-Host "raw_output=$rawOutputPath"
+    }
     Write-Host "fixture_sha256=$fixtureSha"; Write-Host "result=$resultPath"; Write-Host "raw_log=$rawPath"
 } finally {
     Pop-Location

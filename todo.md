@@ -20,8 +20,8 @@
 | BLUR-00 | DONE | Зафиксировать маленький Dart Release runner и два NV12-входа | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-01 | DONE | Box: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-02 | DONE | Mean: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
-| BLUR-03 | REVIEW | Gaussian: прямой Y/U/V с тем же 2D-ядром | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
-| BLUR-04 | PLANNED | Gaussian: разделимые 1D-проходы и ограниченный scratch | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
+| BLUR-03 | DONE | Gaussian: прямой Y/U/V с тем же 2D-ядром | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
+| BLUR-04 | DONE | Gaussian: разделимые 1D-проходы и ограниченный scratch | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
 | OPT-14 | DEFERRED | Dart row-copy fast paths из OPT-13 | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 
 ### BLUR-00 — один воспроизводимый прогон — DONE
@@ -42,13 +42,13 @@
 
 ### BLUR-03 — Gaussian: цена RGB-конверсий
 
-Изолированный 2D кандидат измерен на Pixel 3 в Android Release/AOT, production C/ABI не менялись. Полный Y/U/V дал 938.257/147.677 ms против RGB 1427.865/225.534 ms на 1477×1065/720×360 (экономия 34.29%/34.52%); Y-only дал 829.745/129.841 ms. Контрольный Y/U/V прогон подтвердил близкие медианы и идентичные checksum. Raw 2+7, source SHA, три фактических PNG, видимое отличие Y-only и ограничения кандидата — в [BLUR-03 report](doc/perf/results/blur03_pixel3_gaussian_direct_yuv.md). Статус REVIEW до независимой проверки; production-перенос и BLUR-04 не начаты.
+Изолированный 2D кандидат измерен и принят как эксперимент на Pixel 3 в Android Release/AOT; production C/ABI не менялись. Полный Y/U/V дал 938.257/147.677 ms против RGB 1427.865/225.534 ms на 1477×1065/720×360 (экономия 34.29%/34.52%); Y-only дал 829.745/129.841 ms. Контрольный Y/U/V прогон подтвердил близкие медианы и идентичные checksum. Raw 2+7, source SHA, три фактических PNG, видимое отличие Y-only и ограничения кандидата — в [BLUR-03 report](doc/perf/results/blur03_pixel3_gaussian_direct_yuv.md). Production-перенос не принят.
 
 Зависит от BLUR-00. В изолированном кандидате `yuv_gaussian_blur_v1.c` оставить 2D Gaussian, но считать его непосредственно по Y, U и V: Y `r=10, sigma=10`; U/V `r=5, sigma=5`. Это отдельно измеряет эффект отказа от RGB при той же сложности свёртки. Сравнить текущий RGB, Y-only и Y/U/V, обе размерности, raw/median/checksum/PNG. Явно записать, достаточен ли этот выигрыш для Gaussian; не объяснять им возможный выигрыш будущего разделимого ядра.
 
 ### BLUR-04 — Gaussian: алгоритм свёртки
 
-Зависит от BLUR-03. Спроектировать и замерить разделимые горизонтальный/вертикальный проходы по Y/U/V с ограниченным по строкам scratch. На тех же двух входах сравнить с прямым Y/U/V 2D из BLUR-03 и текущим RGB. Записать время, память при 1477×1065 и оценку при 4000×3000/r256, максимальное отличие байта от прямого 2D, число отличий, границы/ROI и визуальные PNG. Сформулировать, какую семантику и порог отличий стоит принять для production, затем отдельно решить перенос; прежний RGB byte-oracle автоматически не ослаблять.
+Проверено на Pixel 3, Release/AOT. Два независимых прогона по 2+7 образцов дали на 1477×1065 186.225 ms против 937.816 ms прямого 2D YUV и на 720×360 28.783 ms против 147.547 ms: ускорение 5.04×/5.13× (экономия 80.14%/80.49%). На обоих размерах checksum разделимого и прямого YUV результата совпал; полные 1477×1065 raw-буферы совпали побайтно (0 различий). Scratch для кадра 1477×1065/r10 — 248,136 B (242.3 KiB); формула для 4000×3000/r256 даёт 16,416,000 B (15.66 MiB). Точные samples, source SHA, raw NV12 и изображение — в [BLUR-04 report](doc/perf/results/blur04_pixel3_gaussian_separable.md). Кандидат ограничен tight full-frame NV12, r10/sigma10; production C/ABI и RGB byte-oracle не менялись. Перенос не входит в измерительный результат.
 
 ### OPT-14 — отложено
 

@@ -1,0 +1,114 @@
+diff --git a/src/yuv/abi/yuv_gaussian_blur_v1.c b/src/yuv/abi/yuv_gaussian_blur_v1.c
+index 33dfc16..c80957e 100644
+--- a/src/yuv/abi/yuv_gaussian_blur_v1.c
++++ b/src/yuv/abi/yuv_gaussian_blur_v1.c
+@@ -9,0 +10,2 @@
++#define BLUR03_CHROMA 1
++
+@@ -89,0 +92,100 @@ static void yuv_gaussian_decode_row(
++/* BLUR-03 measurement candidate: tight, full-frame NV12 only. Other validated
++ * descriptors retain the production implementation below. */
++static int blur03_can_run_direct(
++    const YuvValidatedConstFrameView *source,
++    const YuvValidatedMutableFrameView *destination,
++    const YuvRegionV1 *region,
++    uint32_t radius) {
++    if (source->format != YUV_VIEW_FORMAT_NV12 ||
++        destination->format != YUV_VIEW_FORMAT_NV12 ||
++        region->enabled || radius != 10) {
++        return 0;
++    }
++    uint64_t chromaStride = (uint64_t)(source->width / 2 + source->width % 2) * 2;
++    return source->planes[0].pixelStride == 1 &&
++        destination->planes[0].pixelStride == 1 &&
++        source->planes[0].rowStride == source->width &&
++        destination->planes[0].rowStride == source->width &&
++        source->planes[1].pixelStride == 2 &&
++        destination->planes[1].pixelStride == 2 &&
++        source->planes[1].rowStride == chromaStride &&
++        destination->planes[1].rowStride == chromaStride;
++}
++
++static void blur04_separable_plane(
++    const uint8_t *source, uint8_t *destination,
++    uint32_t width, uint32_t height, uint32_t rowStride,
++    uint32_t pixelStride, uint32_t channel, uint32_t radius,
++    double sigma, double *ring, uint32_t ringRows) {
++    double weights[513];
++    double total = 0.0;
++    double denominator = 2.0 * sigma * sigma;
++    for (int32_t offset = -(int32_t)radius; offset <= (int32_t)radius; offset++) {
++        double value = exp(-((double)offset * offset) / denominator);
++        weights[offset + (int32_t)radius] = value;
++        total += value;
++    }
++    uint32_t nextSourceY = 0;
++    for (uint32_t y = 0; y < height; y++) {
++        uint32_t maxNeeded = y + radius < height ? y + radius : height - 1;
++        while (nextSourceY <= maxNeeded) {
++            uint32_t sourceY = nextSourceY++;
++            double *horizontalRow = ring + (size_t)(sourceY % ringRows) * width;
++            const uint8_t *sourceRow = source + (size_t)sourceY * rowStride;
++            for (uint32_t x = 0; x < width; x++) {
++                double sum = 0.0;
++                for (int64_t dx = -(int64_t)radius; dx <= (int64_t)radius; dx++) {
++                    uint32_t sampleX = yuv_gaussian_clamp((int64_t)x + dx, width);
++                    sum += weights[dx + radius] *
++                        sourceRow[(size_t)sampleX * pixelStride + channel];
++                }
++                horizontalRow[x] = sum / total;
++            }
++        }
++        for (uint32_t x = 0; x < width; x++) {
++            double sum = 0.0;
++            for (int64_t dy = -(int64_t)radius; dy <= (int64_t)radius; dy++) {
++                uint32_t sampleY = yuv_gaussian_clamp((int64_t)y + dy, height);
++                const double *horizontalRow = ring + (size_t)(sampleY % ringRows) * width;
++                sum += weights[dy + radius] * horizontalRow[x];
++            }
++            destination[(size_t)y * rowStride + (size_t)x * pixelStride + channel] =
++                yuv_gaussian_clip((int32_t)(sum / total + 0.5));
++        }
++    }
++}
++
++static YuvStatus blur04_run_separable(
++    const YuvValidatedConstFrameView *source,
++    const YuvValidatedMutableFrameView *destination,
++    int blurChroma) {
++    uint32_t chromaWidth = source->width / 2 + source->width % 2;
++    uint32_t chromaHeight = source->height / 2 + source->height % 2;
++    uint32_t chromaStride = chromaWidth * 2;
++    const uint8_t *sourceY = (const uint8_t *)source->planes[0].data;
++    uint8_t *destinationY = (uint8_t *)destination->planes[0].data;
++    const uint8_t *sourceUv = (const uint8_t *)source->planes[1].data;
++    uint8_t *destinationUv = (uint8_t *)destination->planes[1].data;
++
++    uint32_t ringRows = source->height < 21 ? source->height : 21;
++    YuvSizeResult scratchCells = yuv_checked_mul(source->width, ringRows);
++    YuvSizeResult scratchBytes = scratchCells.success
++        ? yuv_checked_mul(scratchCells.value, sizeof(double)) : scratchCells;
++    if (!scratchBytes.success) return YUV_STATUS_OVERFLOW;
++    double *scratch = (double *)malloc(scratchBytes.value);
++    if (scratch == NULL) return YUV_STATUS_ALLOCATION_FAILED;
++    blur04_separable_plane(sourceY, destinationY, source->width, source->height,
++        source->width, 1, 0, 10, 10.0, scratch, ringRows);
++    if (blurChroma) {
++        uint32_t chromaRingRows = chromaHeight < 11 ? chromaHeight : 11;
++        blur04_separable_plane(sourceUv, destinationUv, chromaWidth, chromaHeight,
++            chromaStride, 2, 0, 5, 5.0, scratch, chromaRingRows);
++        blur04_separable_plane(sourceUv, destinationUv, chromaWidth, chromaHeight,
++            chromaStride, 2, 1, 5, 5.0, scratch, chromaRingRows);
++    } else {
++        memcpy(destinationUv, sourceUv, (size_t)chromaStride * chromaHeight);
++    }
++    free(scratch);
++    return YUV_STATUS_OK;
++}
++
+@@ -326,0 +429,5 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_gaussian_blur_v1(const YuvConstFrameV1 *source,
++    if (blur03_can_run_direct(&sourceView, &destinationView, &region, options->radius) &&
++        options->sigma == 10.0) {
++        return blur04_run_separable(&sourceView, &destinationView, BLUR03_CHROMA);
++    }
++
