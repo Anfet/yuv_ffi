@@ -2,8 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-10 | IN_PROGRESS | GPT-6 Sol · T1 | C-09 (`d089cd4`) | Оптимизировать `yuv_mean_blur_v1`; затем повторить её Dart-тест |
-| [ ] | C-11 | BLOCKED | GPT-6 Sol · T1 | C-10 | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
+| [ ] | C-11 | READY | GPT-6 Sol · T1 | C-10 (принят; hash будет в assignment commit) | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
 | [ ] | SPEED-12 | BLOCKED | GPT-5.6 Terra · T2 | C-01—C-11 | Свести результаты и выполнить нужные проверки корректности |
 
 Цель — ускорить текущую реализацию 11 экспортируемых функций ABI v1, сохранив результат и контракт 0.4.1. Регрессию скорости относительно 0.2.4 принимаем как исходное наблюдение: старую версию здесь не замеряем, но **обязательно изучаем её C-код как источник быстрых алгоритмических приёмов**. Ориентир для каждой функции — ускорение порядка 10× относительно её собственного времени до правки. Работа идёт последовательно: **один Dart-тест функции → время текущей реализации → разбор быстрого legacy кода → правка C-функции → повтор того же теста → вывод**.
@@ -20,31 +19,30 @@
 
 | Готово | ID | Native C функция / основной файл | Сценарии одного теста | Исполнитель | Причина tier |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-10 | `yuv_mean_blur_v1` · `yuv_mean_blur_v1.c` | I420, NV12, BGRA; radius 1/3, full-frame/ROI, odd geometry | T1 · Sol | Та же visible RGB арифметика и память, что в принятом box blur |
-| [ ] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; несколько radius/sigma | T1 · Sol | Численные веса и точность результата |
+| [ ] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; radius 1/3, sigma 1.0/1.5, full-frame/ROI | T1 · Sol | Точность двухмерного Gaussian oracle и ограниченный scratch |
 
-### C-10 — Ускорить `yuv_mean_blur_v1`
+### C-11 — Ускорить `yuv_gaussian_blur_v1`
 
-**Статус:** IN_PROGRESS
+**Статус:** READY
 **Исполнитель:** GPT-6 Sol · T1, high numerical reasoning
-**Зависит от:** C-09 (принят, коммит `d089cd4`)
+**Зависит от:** C-10 (принят; точный hash будет записан в assignment commit)
 
 #### Architect Decision
 
-Добавить один адресный Windows Dart FFI тест `speed_00_dart_ffi/test/yuv_mean_blur_v1_test.dart`. Измерять radius 1 и 3 на I420/NV12/BGRA, full-frame и odd-boundary ROI, odd 4:2:0 geometry. Сначала снять Release baseline и прочитать `0.2.4` mean blur C. Текущий ABI v1 mean использует тот же visible RGB uniform-window oracle, что box. Перенести принятую C-09 архитектуру separable rolling sums внутрь только `yuv_mean_blur_v1.c`: кольцо на `min(height, 2*radius+1)` строк, вертикальная сумма и две output rows; общий `yuv_kernel_v1_blur`, C-09 box implementation и Gaussian не менять. Точный box-test fixture/oracle можно использовать как шаблон; новый тест обязан independently test mean entry point и сравнить output с oracle (и при желании с box для тех же входов).
+Добавить один адресный Windows Dart FFI тест `speed_00_dart_ffi/test/yuv_gaussian_blur_v1_test.dart`. Измерять radius 1/sigma 1.0 и radius 3/sigma 1.5 на I420/NV12/BGRA, full-frame и odd-boundary ROI, odd 4:2:0 geometry. Сначала снять Release baseline и прочитать legacy `0.2.4` Gaussian реализации. Оптимизировать только `yuv_gaussian_blur_v1.c`: сохранить заданную ABI v1 двухмерную Gaussian weight формулу и порядок weighted accumulation, вычислять неизменный нормализующий `total` один раз, а не для каждого pixel; прочие локальные улучшения разрешены лишь при точном byte oracle. Не менять общий `yuv_kernel_v1_blur`, mean/box operations, ABI и соседей. Weight table и scratch allocation должны быть bounded/checked до первой destination write; не создавать full-frame scratch, растущий сверх принятого C-10 bounded-ring budget.
 
 #### Constraints
 
-Сохранить ABI v1, radius 0 behavior, reject radius >256, border clamp, sigma == 0, status/validation, alpha preservation, byte-exact output, ROI shared-chroma semantics и error atomicity. Не менять ABI/shared helpers/box/Gaussian functions. Scratch allocation/checks завершаются до destination writes; memory bound следует принятому C-09 row/radius-bounded дизайну, а не полному кадру. Legacy — алгоритмический референс, не oracle; старую библиотеку не собирать/мерить. Исполнитель меняет native C сам в пределах карточки.
+Сохранить ABI v1, radius 0 behavior, reject radius >256, border clamp, конечную sigma >0, status/validation, alpha preservation, exact half-up rounding, 2D weighting, ROI shared-chroma semantics и error atomicity. Не менять ABI/shared helpers/box/mean functions. Все allocations и overflow checks до destination writes. Legacy — алгоритмический референс, не oracle; старую библиотеку не собирать/мерить. Исполнитель меняет native C сам в пределах карточки.
 
 #### Definition of Done
 
-- [ ] Один Dart FFI test покрывает I420/NV12/BGRA × radius 1/3; full-frame/odd-boundary ROI; odd 4:2:0 geometry; radius 0, padded strides, invalid status/no writes.
-- [ ] Каждый output byte проверен независимым oracle; checksums и результат box blur совпадают при одинаковых параметрах.
-- [ ] Baseline/post timings измерены на тех же inputs/параметрах; вызовы timed отдельно от setup/oracle.
-- [ ] Изучены legacy C реализации 0.2.4 и обосновано, что из них применимо/не применимо к ABI v1.
-- [ ] Windows Release test, format/analyze/diff-check и относящиеся native blur tests проходят; shared kernel и C-09 не меняются.
-- [ ] Отчёт с файлами, командами, timings/speedups и ограничениями независимо проверен Terra.
+- [ ] Один Dart FFI test покрывает I420/NV12/BGRA × radius 1/3 с зафиксированной sigma; full-frame/odd-boundary ROI; odd 4:2:0 geometry; radius 0, padded strides, invalid sigma (0, отрицательная, NaN/Infinity) и no writes.
+- [ ] Каждый output byte совпадает с независимым Dart oracle для 2D Gaussian формулы; checksum и validation status проверены.
+- [ ] Baseline/post timings для идентичных inputs/параметров; вызовы timed отдельно от fixture/oracle.
+- [ ] Изучены legacy C реализации `0.2.4`; записано применённое/отклонённое ускорение с объяснением byte-exact ограничений.
+- [ ] Windows Release test, format/analyze/diff-check и относящиеся native blur tests проходят; общий kernel, mean и box не изменены.
+- [ ] Структурированный отчёт с DLL hashes, командами, timings/speedups и memory bound независимо проверен Terra.
 
 #### Executor Report
 
