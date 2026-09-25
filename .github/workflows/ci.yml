@@ -331,6 +331,16 @@ jobs:
     # (observed: APK installs fine, then the driver never reports back) runs
     # until GitHub's default 6h job timeout instead of failing fast.
     timeout-minutes: 25
+    # The driver/observatory handshake against the ARM-translated (native
+    # bridge) process on this GitHub-hosted x86_64 image is unreliable: across
+    # four independent runs on 2026-09-25 it succeeded once and hung three
+    # times (the hangs now fail fast via the timeout above instead of running
+    # to the job limit). ARMv7 runtime is separately verified on a physical
+    # device (see todo.md AUD-17); this job stays non-blocking so a flaky
+    # emulator handshake does not gate releases that already have that
+    # stronger evidence. Re-tighten this once the handshake proves reliable
+    # across several consecutive runs.
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
