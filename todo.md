@@ -3,7 +3,8 @@
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
 | [x] | C-11 | DONE | GPT-6 Sol · T1 | C-10 (`77223ae`) | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
-| [ ] | OPT-13 | REVIEW | GPT-6 Sol · T1 | C-11 (`74a1496`), Terra review (`4762a34`) | Повторно проверить дополненный full-ABI Gaussian prototype |
+| [x] | OPT-13 | DONE | GPT-6 Sol · T1 | C-11 (`74a1496`) | Проверить blur scratch, Gaussian separability и Dart plane copies |
+| [ ] | OPT-14 | READY | GPT-5.6 Terra · T2 | OPT-13 (`5e6ae5d`) | Добавить узкие row-copy fast paths, сохранив padding и stride semantics |
 | [ ] | SPEED-12 | BLOCKED | GPT-5.6 Terra · T2 | C-01—C-11 | Свести результаты и выполнить нужные проверки корректности |
 
 Цель — ускорить текущую реализацию 11 экспортируемых функций ABI v1, сохранив результат и контракт 0.4.1. Регрессию скорости относительно 0.2.4 принимаем как исходное наблюдение: старую версию здесь не замеряем, но **обязательно изучаем её C-код как источник быстрых алгоритмических приёмов**. Ориентир для каждой функции — ускорение порядка 10× относительно её собственного времени до правки. Работа идёт последовательно: **один Dart-тест функции → время текущей реализации → разбор быстрого legacy кода → правка C-функции → повтор того же теста → вывод**.
@@ -66,7 +67,7 @@ ABI v1 и его требования к валидации, ошибкам, str
 
 ### OPT-13 — Проверить blur buffers и Dart plane copies
 
-**Статус:** REVIEW
+**Статус:** DONE
 **Исполнитель:** GPT-6 Sol · T1; проверка заключения — GPT-5.6 Terra · T2
 **Зависит от:** C-11 (принят, commit `74a1496`)
 
@@ -80,12 +81,12 @@ OPT-13 стартовала после приёмки C-11 (`74a1496`). Теку
 
 #### Definition of Done
 
-- [ ] Найдены текущие Dart allocation и plane-copy call paths с точными файлами/функциями и перечнем bytes, которые обязаны быть initialized.
-- [ ] Сравнены full RGB buffer и bounded row-buffer для blur: времена и peak scratch memory на идентичном workload.
-- [ ] Integer separable box/mean проверены против byte-exact 2D oracle на форматах, границах, odd 4:2:0, ROI и радиусах.
-- [ ] Gaussian 1D candidate сравнен с точным 2D oracle по скорости и разнице каждого output byte; дан вывод, совместимо ли ±1 с действующими ожиданиями. Любое изменение tolerance только предложить, не вносить.
-- [ ] `malloc`/`calloc` и row-copy замерены на фактическом Dart пути; безопасность padding, validation failure и no-write cases подтверждена.
-- [ ] Отчёт даёт рекомендацию по каждому пункту и предлагает узкие implementation tasks, если выигрыш доказан; production source не изменён.
+- [x] Найдены текущие Dart allocation и plane-copy call paths с точными файлами/функциями и перечнем bytes, которые обязаны быть initialized.
+- [x] Сравнены full RGB buffer и bounded row-buffer для blur: времена и peak scratch memory на идентичном workload.
+- [x] Integer separable box/mean проверены против byte-exact 2D oracle на форматах, границах, odd 4:2:0, ROI и радиусах.
+- [x] Gaussian 1D candidate сравнен с точным 2D oracle по скорости и разнице каждого output byte; вывод о ±1 зафиксирован, tolerance не изменён.
+- [x] `malloc`/`calloc` и row-copy замерены на фактическом Dart пути; padding, validation failure и no-write cases проверены.
+- [x] Отчёт даёт рекомендацию по каждому пункту; production source не изменён.
 
 #### Executor Report
 
@@ -99,13 +100,29 @@ OPT-13 стартовала после приёмки C-11 (`74a1496`). Теку
 
 #### Review
 
-**REJECT — GPT-5.6 Terra · T2.** C-09/C-10 integer rolling sums и scratch memory math подтверждены. Для `_seedPlaneFromSource` row-copy разрешён только если `source.pixelStride == sampleBytes` и `destination.pixelStride == sampleBytes`; `YuvAbiV1ImageTransport.applyTo` может копировать `planeWidth * sampleBytes` и сохранять row padding.
+**ACCEPT — GPT-5.6 Terra · T2.** Full-ABI Gaussian prototype reproduced; selected byte suite and allocation fault injection passed. `malloc` is rejected because reserved descriptors and receiver padding can be published uninitialized. No production Gaussian change or ±1 tolerance is authorized. Create only the narrow row-copy implementation task below; keep calloc.
 
-Не закрывать OPT-13, пока не будут выполнены следующие проверки:
+### OPT-14 — Добавить row-copy fast paths в Dart plane copies
 
-1. Повторно проверить воспроизводимость сохранённого full-ABI prototype, численные/координатные отчёты, allocation-failure tests и timing commands; определить допустимый bounded scratch бюджет до возможной production задачи. ±1 tolerance не вводить.
-2. Подтвердить выводы Dart runner про initialized descriptors, padding и no-write/error behavior; общий allocator остаётся `calloc`.
-3. Row-copy рекомендации сохранить как будущую узкую T2 карточку с требованием обоих tight pixel strides для seed copy и тестами pixel/row padding; не начинать implementation в рамках OPT-13.
+**Статус:** READY
+**Исполнитель:** GPT-5.6 Terra · T2
+**Зависит от:** OPT-13 (принят, commit `5e6ae5d`)
+
+#### Architect Decision
+
+В `YuvAbiV1Runner._seedPlaneFromSource` копировать каждую активную строку одним диапазоном только если `sourcePixelStride == sampleBytes` и `destinationPixelStride == sampleBytes`; длина строки `planeWidth * sampleBytes`, row padding назначения не трогать. В `YuvAbiV1ImageTransport.applyTo`, когда `target.pixelStride == sampleBytes`, копировать ровно `planeWidth * sampleBytes` на каждую строку; сохранять row padding. При gaps оставить существующий sample-wise путь. Не менять allocator, FFI/ABI или web runner.
+
+#### Scope and Constraints
+
+Изменить только IO seed/copy paths в `lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart` и `lib/src/yuv/shared/yuv_abi_v1_image_transport.dart` плюс адресные тесты. Не копировать `rowStride` целиком при наличии padding; не читать неинициализированные bytes; не менять transactional/no-write semantics.
+
+#### Definition of Done
+
+- [ ] Tests cover tight, padded-row and gapped-pixel layouts for `_seedPlaneFromSource` and `applyTo`; row and pixel padding bytes remain unchanged/zero according to current contracts.
+- [ ] Test both qualifying and fallback stride conditions, including source-tight/destination-gapped and source-gapped/destination-tight seed cases.
+- [ ] Measure current Windows Dart path before/after on representative ROI and full-plane copy workloads; fixture setup/checksum stay outside the timed loop.
+- [ ] Relevant Flutter tests, format, analyze, and diff-check pass; error publication behavior remains unchanged.
+- [ ] Report files, commands, measured results, and any remaining limits; Terra review accepts.
 
 ## Завершение
 
