@@ -2,8 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-07 | IN_PROGRESS | GPT-5.6 Terra · T2 | C-06 | Оптимизировать `yuv_negate_v1`; затем повторить её Dart-тест |
-| [ ] | C-08 | BLOCKED | GPT-6 Luna · T3 | C-07 | Оптимизировать `yuv_chroma_swap_v1`; Terra проверяет результат |
+| [ ] | C-08 | READY | GPT-6 Luna · T3 | C-07 | Оптимизировать `yuv_chroma_swap_v1`; Terra проверяет результат |
 | [ ] | C-09 | BLOCKED | GPT-6 Sol · T1 | C-08 | Оптимизировать `yuv_box_blur_v1`; затем повторить её Dart-тест |
 | [ ] | C-10 | BLOCKED | GPT-6 Sol · T1 | C-09 | Оптимизировать `yuv_mean_blur_v1`; затем повторить её Dart-тест |
 | [ ] | C-11 | BLOCKED | GPT-6 Sol · T1 | C-10 | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
@@ -23,25 +22,40 @@
 
 | Готово | ID | Native C функция / основной файл | Сценарии одного теста | Исполнитель | Причина tier |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-07 | `yuv_negate_v1` · `yuv_negate_v1.c` | I420, NV12, BGRA; полный кадр и ROI | T2 · Terra | ROI и общий effect helper |
-| [ ] | C-08 | `yuv_chroma_swap_v1` · `yuv_chroma_swap_v1.c` | Только NV12; сохранность Y и обмен UV | T3 · Luna | Изолированный обмен UV при готовом контракте |
+| [ ] | C-08 | `yuv_chroma_swap_v1` · `yuv_chroma_swap_v1.c` | NV12; полный кадр, ROI и padded layout | T3 · Luna | Локальная операция над UV plane с готовым контрактом |
 | [ ] | C-09 | `yuv_box_blur_v1` · `yuv_box_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и границы радиуса |
 | [ ] | C-10 | `yuv_mean_blur_v1` · `yuv_mean_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и точное округление |
 | [ ] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; несколько radius/sigma | T1 · Sol | Численные веса и точность результата |
 
-### C-07 — Ускорить `yuv_negate_v1`
+### C-08 — Ускорить `yuv_chroma_swap_v1`
 
-**Статус:** IN_PROGRESS
-**Исполнитель:** GPT-5.6 Terra · T2, medium
-**Зависит от:** C-06 (принят, коммит `3a0ddce`)
+**Статус:** READY
+**Исполнитель:** GPT-6 Luna · T3, small; проверка результата — GPT-5.6 Terra · T2
+**Зависит от:** C-07 (принят; commit будет записан в следующем assignment commit)
 
-**Решение:** добавить один адресный Windows Dart FFI test в `speed_00_dart_ffi/` для I420/NV12/BGRA × full-frame/ROI. Снять current Release baseline батч-таймером; изучить negate native C тега `0.2.4`; оптимизировать только `yuv_negate_v1` и строго необходимые helpers, затем повторить тот же тест.
+#### Architect Decision
 
-**Объём:** `src/yuv/abi/yuv_negate_v1.c`, необходимые только функции helper(s), `speed_00_dart_ffi/test/yuv_negate_v1_test.dart`. Сохранить видимый RGB negate (255-channel), alpha, ROI/shared-chroma boundary, BT.601 rounding, validation/error и stride/padding semantics. Не менять ABI и соседние операции. При изменении общего helper — проверить всех его consumers.
+Добавить один адресный Windows Dart FFI тест в `speed_00_dart_ffi/` для `yuv_chroma_swap_v1`: NV12 full-frame, ROI и padded/gapped layout. Измерить текущий Release код, изучить legacy C в теге `0.2.4`, затем оптимизировать только `yuv_chroma_swap_v1.c`. Исполнитель самостоятельно меняет native C в рамках этой карточки. Предпочесть прямой проход по UV samples с сохранением Y; generic helper оставить fallback для несовместимых layout/alias случаев.
 
-**Готово, когда:** все шесть format/scope cases проверяют status, каждый output sample и checksum oracle вне timer; baseline/post timings и speedups записаны; изучен legacy C; Release Dart test проходит; diff проверен. Если ускорение порядка 10× не достигнуто, проверить следующий вариант или описать bottleneck.
+#### Constraints
 
-**Отчёт исполнителя:** файлы, legacy finding, алгоритм, exact commands, per-case timings до/после, speedups, correctness и ограничения.
+Сохранить ABI v1, validation/error status, Y bytes, ROI незатронутые байты и stride/padding semantics. Таймер только вокруг вызова функции; входы повторяемы. Oracle, проверка каждого output sample и checksum выполняются вне timer. Не менять ABI, общий helper и соседние функции. Legacy код использовать как алгоритмический референс, не как оракул корректности; старую библиотеку не собирать и не мерить.
+
+#### Definition of Done
+
+- [ ] Один Dart FFI тест проверяет full-frame NV12, ROI и padded/gapped fallback по каждому output sample и checksum.
+- [ ] Зафиксированы baseline/post timings для тех же сценариев и вывод о speedup/узком месте.
+- [ ] Изучен legacy C `0.2.4`; приложен краткий вывод о применимом приёме.
+- [ ] Windows Release тест, форматирование, анализ и `git diff --check` проходят.
+- [ ] Исполнитель сообщает изменённые файлы, команды и измерения; Terra независимо проверяет C diff и повторяет тест.
+
+#### Executor Report
+
+Ожидается после реализации.
+
+#### Review
+
+Ожидает независимой проверки Terra.
 
 Для каждой строки:
 
