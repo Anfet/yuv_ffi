@@ -3,7 +3,7 @@
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
 | [x] | C-11 | DONE | GPT-6 Sol · T1 | C-10 (`77223ae`) | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
-| [ ] | OPT-13 | WAITING_EXTERNAL | GPT-6 Sol · T1 | C-11 (`74a1496`) | Проверить blur buffers, separable Gaussian и Dart allocation/copy идеи |
+| [ ] | OPT-13 | REVIEW | GPT-6 Sol · T1 | C-11 (`74a1496`) | Проверить blur buffers, separable Gaussian и Dart allocation/copy идеи |
 | [ ] | SPEED-12 | BLOCKED | GPT-5.6 Terra · T2 | C-01—C-11 | Свести результаты и выполнить нужные проверки корректности |
 
 Цель — ускорить текущую реализацию 11 экспортируемых функций ABI v1, сохранив результат и контракт 0.4.1. Регрессию скорости относительно 0.2.4 принимаем как исходное наблюдение: старую версию здесь не замеряем, но **обязательно изучаем её C-код как источник быстрых алгоритмических приёмов**. Ориентир для каждой функции — ускорение порядка 10× относительно её собственного времени до правки. Работа идёт последовательно: **один Dart-тест функции → время текущей реализации → разбор быстрого legacy кода → правка C-функции → повтор того же теста → вывод**.
@@ -66,7 +66,7 @@ ABI v1 и его требования к валидации, ошибкам, str
 
 ### OPT-13 — Проверить blur buffers и Dart plane copies
 
-**Статус:** WAITING_EXTERNAL
+**Статус:** REVIEW
 **Исполнитель:** GPT-6 Sol · T1; проверка заключения — GPT-5.6 Terra · T2
 **Зависит от:** C-11 (принят, commit `74a1496`)
 
@@ -89,11 +89,15 @@ OPT-13 не начинать до приёмки C-11. Текущие byte-oracl
 
 #### Executor Report
 
-Ожидается после C-11 и отдельного assignment commit.
+- Box/mean уже используют integer separable rolling sums и повторное использование RGB результатов. Их текущие адресные тесты прошли 34/34 с ROI, borders, odd geometry, padded strides и большими радиусами; отдельная оптимизация этого алгоритма не нужна.
+- Full-height RGB ring против bounded ring в одинаковых Clang Release вариантах не дал стабильной разницы на 321×241/r3: примерно 9.5–11.1 против 9.5–11.7 ms/call, лидер зависел от порядка. На 4000×3000/r3 память около 48 MB против 144,392 bytes у C-11. Оставить bounded ring.
+- В packed BGRA 2D→1D prototype получил 3.4× при r3/321×241, 8.5× при r7/321×241 и 3.3× при r3/1920×1080. Dart separable prototype имел 0 byte diffs на 2,181,436 output bytes в 18 I420/NV12/BGRA full/ROI сценариях с r1/r3/r7 и нечётными размерами; дополнительные BGRA sigma 0.5/1/1.5/2.7/20 также дали 0 diffs. Выборка не доказывает универсальную byte equality: tolerance ±1 не вводить. Полноразмерный double intermediate потребует ~288 MB при 12 MP; оценка горизонтального ring при 4000/r256 — ~49 MB. Рекомендован временный ограниченный full-ABI прототип и тест расширенного oracle перед решением о production.
+- Runner использует `calloc` для descriptors и plane buffers; ROI seed копирует active samples, success copy-back переносит полные plane lengths. Временный allocator `malloc` только для больших planes с calloc для малых descriptors дал те же hashes; 3.1–5.5 vs 3.8–5.5 ms/call без устойчивого выигрыша. Глобальную замену на malloc не рекомендовать из-за padding/uninitialized bytes. Row copy при `pixelStride == sampleBytes` дал ~600→6.4 µs на 321×241 и ~44→0.8–1.1 ms на 1920×1080 BGRA с теми же checksums; padded 7×5 BGRA сохранил padding. Предложить отдельный T2 task для `_seedPlaneFromSource` и `YuvAbiV1ImageTransport.applyTo`, скопировать только `planeWidth * sampleBytes` на строку.
+- Окружение: Windows x64, Dart 3.12.2, Clang 16 `-O3`; C-11 DLL SHA-256 `4D89BDC2D41FE31DCD2DA2BBDEA6CB3AB6F8AC9F0DFC84B716A31B9D2207AA59`. Полные команды и caveats приведены в отчёте исполнителя; временные prototypes/DLL удалены, рабочее дерево не менялось. Gaussian full ABI 1D и `malloc` error/no-write cases требуют дополнительной проверки до любой production правки.
 
 #### Review
 
-Ожидает независимой проверки Terra.
+Terra проверяет полноту доказательств и точность рекомендаций; затем решить, принимать ли исследование и создавать узкие follow-up карточки.
 
 ## Завершение
 
