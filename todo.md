@@ -2,7 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-03 | READY | GPT-5.6 Terra · T2 | — | Оптимизировать `yuv_crop_v1`; затем повторить её Dart-тест |
+| [ ] | C-03 | IN_PROGRESS | GPT-5.6 Terra · T2 | C-02 | Оптимизировать `yuv_crop_v1`; затем повторить её Dart-тест |
 | [ ] | C-04 | BLOCKED | GPT-5.6 Terra · T2 | C-03 | Оптимизировать `yuv_rotate_v1`; затем повторить её Dart-тест |
 | [ ] | C-05 | BLOCKED | GPT-5.6 Terra · T2 | C-04 | Оптимизировать `yuv_grayscale_v1`; затем повторить её Dart-тест |
 | [ ] | C-06 | BLOCKED | GPT-5.6 Terra · T2 | C-05 | Оптимизировать `yuv_black_white_v1`; затем повторить её Dart-тест |
@@ -38,6 +38,20 @@
 | [ ] | C-09 | `yuv_box_blur_v1` · `yuv_box_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и границы радиуса |
 | [ ] | C-10 | `yuv_mean_blur_v1` · `yuv_mean_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и точное округление |
 | [ ] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; несколько radius/sigma | T1 · Sol | Численные веса и точность результата |
+
+### C-03 — Ускорить `yuv_crop_v1`
+
+**Статус:** IN_PROGRESS
+**Исполнитель:** GPT-5.6 Terra · T2, medium
+**Зависит от:** C-02 (принят, коммит `9adbdd2`)
+
+**Решение:** использовать адресный Dart FFI тест в `speed_00_dart_ffi/`; покрыть I420, NV12 и BGRA crop-ами изнутри кадра с чётным/нечётным origin и odd destination edge. Снять Windows Release baseline по всем сценариям и сверить каждый output sample с независимым oracle. Изучить crop исходники в теге `0.2.4`, затем оптимизировать только `yuv_crop_v1` и необходимые ему helpers.
+
+**Объём:** `src/yuv/abi/yuv_crop_v1.c`, необходимые только этой функции helpers, `speed_00_dart_ffi/test/yuv_crop_v1_test.dart` и краткая инструкция. ABI и соседние операции не менять. Сохранить chroma phase при odd origin/extent, validation/error semantics и правила padding. Если меняется общий helper, проверить затронутые функции.
+
+**Готово, когда:** один Dart test проверяет status, каждый output sample и checksum вне таймера; фиксирует baseline/post timings и speedup; legacy C изучен; Windows Release и относящиеся проверки проходят; diff проверен. Если ускорение порядка 10× не достигнуто, проверить следующий вариант или сообщить подтверждённое ограничение.
+
+**Отчёт исполнителя:** файлы, legacy finding, выбранный алгоритм, точные команды, timings до/после и коэффициенты, oracle результаты, ограничения.
 
 Для каждой строки:
 
