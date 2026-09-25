@@ -45,11 +45,10 @@ flag = 0). Matches the specification.
 
 ## Environment Controls (Before Running)
 
-1. **Power plan**: set to "High performance" or "Ultimate Performance".
+1. **Power plan**: verify it is "High performance" or "Ultimate Performance" before starting.
 
    ```powershell
    powercfg /getactivescheme          # verify current plan
-   powercfg /setactive SCHEME_MIN     # switch to High Performance
    ```
 
 2. **Close** other heavy applications (builds, indexer, Flutter tooling, browser with many tabs).
