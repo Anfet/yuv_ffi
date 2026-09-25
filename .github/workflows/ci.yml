@@ -346,12 +346,17 @@ jobs:
         working-directory: example
         run: flutter pub get
 
+      # `--target-platform android-arm` alone is not honored for debug builds:
+      # Flutter still assembles a universal debug APK with arm64-v8a/x86_64
+      # libraries alongside armeabi-v7a. `--split-per-abi` is what actually
+      # produces a single-ABI `app-armeabi-v7a-debug.apk`.
       - name: Build ARMv7-only app-runtime smoke APK
         working-directory: example
         run: >
           flutter build apk --debug
           --target=integration_test/native_app_runtime_smoke_test.dart
           --target-platform android-arm
+          --split-per-abi
 
       # Verify the test input before the emulator starts: a fat APK could run
       # an x86_64 fallback and would not prove execution of the ARMv7 library.
@@ -360,7 +365,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          apk='build/app/outputs/flutter-apk/app-debug.apk'
+          apk='build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk'
           test -s "$apk"
           mapfile -t apk_abis < <(unzip -Z1 "$apk" | sed -n 's#^lib/\([^/]*\)/.*#\1#p' | sort -u)
           test "${#apk_abis[@]}" -eq 1
@@ -388,7 +393,7 @@ jobs:
             *,armeabi-v7a,*) ;;
             *) echo 'API 30 x86_64 image did not advertise armeabi-v7a support.' >&2; exit 1 ;;
           esac
-          flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk -d emulator-5554 --no-pub
+          flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart --use-application-binary=build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk -d emulator-5554 --no-pub
           BASH
           bash -n "$RUNNER_TEMP/armv7-native-bridge-smoke.sh"
 
