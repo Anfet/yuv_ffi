@@ -2,18 +2,18 @@
 
 Status: stand definition for the 0.4.2 performance series (tracker: `todo.md`, section
 "0.4.2 — производительность ABI v1"). This document fixes *what* is measured, *on which bytes*, *with which
-build*, and *how* the numbers are reduced. It does not contain measurements: MEAS-01/02/03 produce the
-baseline matrices, PERF-02…31 the per-function `before → after → 0.2.4` tables, PERF-34/35/36 the repeats.
+build*, and *how* the numbers are reduced. It does not contain measurements: MEAS-01/02 make the platform
+runners ready, MEAS-03 records the baseline for the first operation selected at work start, and PERF-02…31 each produce a
+per-operation `0.2.4 → before → after` table on Windows, Pixel 3 and Web. PERF-34/35/36 audit those tables.
 
 Everything marked **verified** below was executed on the reference machine on 2026-09-25 while writing this
 document. PERF-01 also ships the executable native C harness and its matrix driver (`tool/bench/native/`,
 `tool/bench/run_matrix.ps1`, see [Native C benchmarks](#native-c-benchmarks)); it changed no library code.
-Everything marked **to be created** (the Dart-level bench, other platforms) is a specification for the MEAS-01
-executor.
+Everything marked **to be created** (the Dart-level bench, other platforms) belongs to MEAS-01/02.
 
 ## Toolchain
 
-Reference Windows machine (MEAS-01, PERF-02…31, PERF-34):
+Reference Windows machine (MEAS-01/03, PERF-02…31, PERF-34):
 
 | Item | Value |
 |---|---|
@@ -60,10 +60,10 @@ one side only. If a PERF card changes flags, that is a build change and gets its
 
 Other platforms (reference only; recorded again at their stages):
 
-- Android / Pixel 3 (MEAS-02, PERF-32/33/35): Android SDK `D:\.important\android-sdk`, NDK 21…28, JDK 17. The
+- Android / Pixel 3 (MEAS-02/03, PERF-02…33/35): Android SDK `D:\.important\android-sdk`, NDK 21…28, JDK 17. The
   plugin builds through `android/` → `src/CMakeLists.txt` (`-O3` for non-Debug). Build the release APK
   locally, not in CI.
-- Web (MEAS-03, PERF-36): `bash ./tool/wasm/build_wasm.sh` with emsdk on `PATH` (it must run under `bash`;
+- Web (MEAS-02/03, PERF-02…31/36): `bash ./tool/wasm/build_wasm.sh` with emsdk on `PATH` (it must run under `bash`;
   under `sh`/dash the `emcc.bat` fallback silently fails). The release profile uses `-O3`. Browser runs happen
   on the Mac runner, because local Chrome hangs on `loading`.
 
@@ -453,8 +453,9 @@ time.**
 - SHA-256 over the destination **active samples**, packed tight in plane order (Y‖U‖V, Y‖UV, BGRA),
   excluding row/pixel padding. With the tight layout this equals the full destination buffers. In C use
   Windows CNG (`BCryptHash`, `bcrypt.lib`); in Dart use `package:crypto`, which is already a dev dependency.
-- ABI v1 checksums must be **identical across all measurements of the same row**: MEAS-01, before/after of
-  every PERF card, PERF-34. Any change breaks byte-exactness and blocks acceptance.
+- ABI v1 checksums must be **identical across measurements of the same scenario and inputs**: each
+  per-operation MEAS card, the corresponding PERF before/after run, and any addressable final repeat.
+  Any change breaks byte-exactness and blocks acceptance.
 - 0.2.4 checksums are recorded for reproducibility only. They are expected to differ from ABI v1.
 - A padding canary check (all `0xCD` outside active samples) is part of the correctness tests, not of the
   timed matrix.
@@ -546,8 +547,9 @@ $Exe = "$B\bench_build\Release\yuv_bench.exe"
 & $Exe --list      # the 85 scenario IDs, each with its "1080p only" flag (the six *.R256 rows)
 
 # One row: one process, pinned to a P-core, high priority. The row goes to stdout and is appended to --out.
+$ScenarioId = 'FLIP.I420.V' # Example only; replace with the scenario chosen in the current MEAS card.
 & $Exe --version abi_v1 --dll "$B\abi_v1\build\Release\yuv_ffi.dll" --inputs "$B\inputs" `
-    --out "$B\results\meas01_windows.csv" --scenario CVT.I420.BGRA --size 1920x1080 --round 1 `
+    --out "$B\results\meas01_selected_smoke.csv" --scenario $ScenarioId --size 1920x1080 --round 1 `
     --sha $AbiSha --tree 9029ff28d9834c069f41159d122b36ed6d9d4968 --affinity 0x4 --priority high
 ```
 
@@ -570,16 +572,20 @@ only for same-format `CVT` rows.
 - **Driver hooks:** on stderr the harness prints `row-template: …` (a complete row with `@STATUS@`,
   `@REASON@`, `@FINISHED@` placeholders), then `ready`, then `calibrated t1_ms=… warmup=… n=…`.
 
-Matrix driver: every round × size × scenario, with the targets interleaved per row (0.2.4, then ABI v1). It
+Matrix driver: every selected round × size × scenario, with the targets interleaved per row (0.2.4, then ABI v1). It
 skips `*.R256` outside 1080p, enforces the watchdog described above, and writes `TIMEOUT`/`ERROR:crash` rows
 from the harness template when a child cannot write its own. Round start and end times go to
-`<OutCsv>.rounds.log`.
+`<OutCsv>.rounds.log`. The driver creates the output directory before starting children and verifies that each
+row printed by the harness was appended to the CSV. A failed CSV write aborts the run. After processing the
+matrix, the driver exits with code 1 if any row has `ERROR:*` or `TIMEOUT`; the single-row harness exit codes
+above remain unchanged.
 
 ```powershell
+$ScenarioPattern = 'FLIP.*.V' # Example only; replace with the current MEAS card's filter.
 & "$Repo\tool\bench\run_matrix.ps1" -Exe $Exe `
     -DllV024 "$B\v024\build\Release\yuv_ffi.dll" -DllAbiV1 "$B\abi_v1\build\Release\yuv_ffi.dll" `
-    -InputDir "$B\inputs" -OutCsv "$B\results\meas01_windows.csv" -IncludeMemcpyRef
-# Subsets: -Sizes 1920x1080 -Rounds 1 -Scenarios 'CVT.*','FLIP.*'   Preview only: -DryRun
+    -InputDir "$B\inputs" -OutCsv "$B\results\selected_operation_windows.csv" -Scenarios $ScenarioPattern
+# MEAS-01 smoke: add -Sizes 1920x1080 -Rounds 1 and use a separate output file. Preview only: -DryRun
 # PERF cards (before/after, both ABI v1):
 #   -Targets @(@{Version='abi_v1'; Dll=<before dll>; Sha=<parent>; Tree=<tree>},
 #              @{Version='abi_v1'; Dll=<after dll>;  Sha=<card>;   Tree=<tree>})
@@ -591,32 +597,45 @@ Verified on 2026-09-25, without collecting measurements:
 - Every generated input passes the SHA gate. A corrupted cache file is regenerated, and an unknown size is
   refused.
 - The driver writes 34-column rows for `OK`/`N/A` and, on a forced `-TimeoutSec 2`, a watchdog `TIMEOUT` row.
+- Independent PERF-01 acceptance: a fresh output path produced both CSV and rounds log; matched 0.2.4/ABI v1
+  checksums for `CVT.NV12.BGRA` and `FLIP.NV12.H`; a wrong DLL and forced watchdog returned exit code 1 with
+  their error rows retained. A read-only CSV and a directory passed as `-OutCsv` failed instead of reporting
+  success. `--list` returned 85/79 scenarios, and 12MP I420 `ref.memcpy` matched its input SHA-256.
 
 The 2026-09-25 regression evidence came from single-shot, un-warmed runs of an earlier ad-hoc harness (content
 `k·31`, not the seeded generator). Those numbers are hypotheses only and are not a baseline.
 
 ### Public Dart benchmarks (AOT release)
 
-**To be created by MEAS-01.** Use a throwaway Flutter Windows app **outside the repository**. Two entry files
-cover the two APIs. The app depends on each version through a path dependency on a worktree, so no example app
-or dependency set of either version is changed:
+**Implemented in MEAS-01.** `tool/bench/dart/bench_common.dart` contains the generator, input SHA gate,
+scenario parser, timing protocol and CSV writer. The two adapters call the published 0.2.4 and ABI v1
+public APIs. `build_dart_windows.ps1` builds separate throwaway Flutter Windows apps **outside the
+repository** from exact Git worktrees; `run_dart_windows.ps1` interleaves their release executables for
+the scenario IDs selected in the current MEAS card. The package working tree and example app are untouched:
 
 ```powershell
-git -C $Repo worktree add --detach "$B\wt-v024"   0.2.4
-git -C $Repo worktree add --detach "$B\wt-abi_v1" $AbiSha
-flutter create --platforms=windows --project-name yuv_bench "$B\dart_bench"
-# pubspec: dependencies: yuv_ffi: { path: <$B\wt-v024 or $B\wt-abi_v1> }, crypto
-# lib/bench_v024.dart / lib/bench_abi_v1.dart: same generator, protocol and CSV as the C harness
-Set-Location "$B\dart_bench"
-flutter build windows --release -t lib/bench_abi_v1.dart
-cmd /c start "" /wait /high /affinity 4 "$B\dart_bench\build\windows\x64\runner\Release\yuv_bench.exe" `
-    --scenario CVT.I420.BGRA --size 1920x1080 --round 1 --out "$B\results\meas01_windows.csv"
+$DartRoot = Join-Path $env:TEMP 'yuv_ffi_dart_bench'
+.\tool\bench\build_dart_windows.ps1 -Version v024 -OutRoot $DartRoot
+.\tool\bench\build_dart_windows.ps1 -Version abi_v1 -SourceRef $AbiSha -OutRoot $DartRoot
+.\tool\bench\run_dart_windows.ps1 `
+    -ExeV024 (Join-Path $DartRoot 'app_v024\build\windows\x64\runner\Release\yuv_bench.exe') `
+    -ExeAbiV1 (Join-Path $DartRoot 'app_abi_v1\build\windows\x64\runner\Release\yuv_bench.exe') `
+    -ScenarioIds 'FLIP.I420.V','FLIP.NV12.V','FLIP.BGRA.V' `
+    -OutCsv (Join-Path $DartRoot 'results\selected_operation_smoke.csv') `
+    -ShaAbiV1 $AbiSha -TreeAbiV1 '9029ff28d9834c069f41159d122b36ed6d9d4968'
 ```
 
-The Windows runner passes command-line arguments to `main(List<String> args)`. The bench writes the CSV
-itself and ends with `exit(0)`: do not rely on console output or on `flutter run` / `flutter drive` exit
-codes. Switching the version means changing the path dependency, running `flutter pub get`, and rebuilding.
-Afterwards clean up with `git -C $Repo worktree remove "$B\wt-v024"` (and the same for `wt-abi_v1`).
+The scenario IDs above are an example; choose the exact IDs when starting the MEAS card. Add
+`-Sizes '1920x1080','4000x3000' -Rounds 1,2,3` for its accepted baseline, with a new output path.
+For a later candidate SHA, pass that SHA to `-SourceRef` and use a new `-OutRoot`; the script refuses to
+silently reuse a worktree at another commit. The driver sets affinity/high priority, waits for each
+Windows GUI process, checks its exit code and CSV metadata, and writes a round log. Each build also
+writes `app_<version>/bench-manifest.json` with its commit, `src` tree, benchmark source hashes,
+Flutter/Dart/engine versions, native Release flags and executable path. The driver rejects a SHA,
+tree, path or benchmark source mismatch before measurement. A child that exits without a row gets
+an `ERROR:setup` or `ERROR:crash` fallback row; later scenarios still run. `*.R256` is skipped
+outside 1080p. After the run, `git worktree remove <source_v024 path>` and
+`git worktree remove <source_abi_v1 path>` unregister the temporary source checkouts.
 
 ### How to switch to 0.2.4
 
@@ -634,7 +653,7 @@ git -C $Repo switch release/0.4.2
 Never stash, reset or discard uncommitted changes you did not make just to switch versions. On 2026-09-25 the
 tree is **not** clean, so the checkout route is not available.
 
-### Other platforms (pointers for MEAS-02/03)
+### Other platforms (pointers for MEAS-02 and each per-operation MEAS card)
 
 - Pixel 3: build the release APK locally and install over the existing app with `adb -s <serial> install -r
   <apk>`. Never uninstall or clear data. Use the same generator, checksums, scenario IDs and CSV. Record the

@@ -22,16 +22,17 @@ image reports `format == YuvPixelFormat.nv12`.
 
 ## Installation
 
-From pub.dev:
+After the planned 0.4.2 release is published on pub.dev:
 
 ```yaml
 dependencies:
-  yuv_ffi: ^0.4.1
+  yuv_ffi: ^0.4.2
 ```
 
 > `0.4.0` has been retracted from pub.dev; no retraction reason is recorded
-> here. Use `^0.4.1` for new dependencies. If an application lockfile already
-> pins `0.4.0`, keep the lockfile intact and, after `0.4.1` is published, run
+> here. The 0.4.1 release candidate was cancelled without publication. After
+> `0.4.2` is published, use `^0.4.2` for new dependencies. If an application
+> lockfile already pins `0.4.0`, keep the lockfile intact and then run
 > `flutter pub upgrade yuv_ffi` to move that dependency deliberately.
 
 Or from Git:
@@ -171,7 +172,7 @@ any external `implements YuvImage` class: such a class must implement every new 
 
 ## Platform support
 
-- Android: native FFI (`armeabi-v7a`, `arm64-v8a`, `x86_64`; the 32-bit `x86` ABI is not built — Flutter has shipped no `x86` binaries since 3.35 and Google Play never accepted it as a supported ABI for Flutter apps). The `android-native-build` CI job is configured to build the example APK and run the conversion/effect app-runtime smoke on an API 35 x86_64 emulator. Local smoke checks passed on a clean API 35 x86_64 emulator and an Android 12 arm64-v8a device; the new CI step has not yet run on GitHub Actions.
+- Android: native FFI (`armeabi-v7a`, `arm64-v8a`, `x86_64`; the 32-bit `x86` ABI is not built — Flutter has shipped no `x86` binaries since 3.35 and Google Play never accepted it as a supported ABI for Flutter apps). The `android-native-build` CI job builds the example APK and runs the conversion/effect app-runtime smoke on an API 35 x86_64 emulator; this job passed in [CI run 36117003942](https://github.com/Anfet/yuv_ffi/actions/runs/36117003942). Local smoke checks passed on a clean API 35 x86_64 emulator and an Android 12 arm64-v8a device.
 - iOS: native FFI. CI (`ios-native-build`) builds simulator and device examples and runs the native app-runtime smoke on an iPhone simulator. A physical-device camera-flow check is not part of CI.
 - macOS: native FFI. CI (`macos-native-smoke`) builds the example and runs the app-runtime smoke; a local macOS 15.6.1 arm64 run also passed.
 - Windows: native FFI. A local build and app-runtime smoke (`flutter drive`) passed; Windows is not currently a CI target.

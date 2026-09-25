@@ -1,4 +1,32 @@
-# yuv_ffi — принятые задачи аудита 0.4.1
+# yuv_ffi — история проверок кандидата 0.4.1
+
+Кандидат 0.4.1 отменён до публикации и создания тега; следующая целевая версия — 0.4.2. Результаты ниже сохраняют фактическую версию и SHA на момент проверки и не являются приёмкой 0.4.2.
+
+## AUD-06 — Подготовить metadata и принять релизный кандидат
+
+- Принято release owner на SHA `d4cb31e` после закрытия AUD-13/14/17.
+- Версия `0.4.1` согласована в package metadata; чистый `flutter pub publish --dry-run` дал 0 warnings и ожидаемый hint о скачке от последней non-retracted версии `0.2.4`. Архив включал WASM JS/WASM и исключал `todo.md`, `todo-waitlist.md`, `COMPLETION.md`.
+- CI run `36114993161` имел общий success: 11/12 jobs прошли; `android-armv7-runtime` был non-blocking и нестабилен на GitHub-hosted emulator. Physical-device proof принят по AUD-17.
+- Публикация и Git tag не выполнялись. Повторные замечания новой предпроверки и gate на новом SHA ведутся в AUD-18—21.
+
+## AUD-13 — Проверять публикуемый WASM-артефакт в CI
+
+- Принято независимым review (Opus), 2026-09-25. Emscripten build использует стабильный список tracked C sources; CI нормализует mode перед byte-for-byte сравнением.
+- На run `36101900152` rebuild comparison и Web integration/reference gates прошли. На текущем принятом baseline run `36117003942` job `wasm-web-integration` также прошёл.
+- WASM assets присутствуют в dry-run archive. Результат подтверждает соответствие assets C sources и CI gate; полный Web parity не заявляется.
+
+## AUD-14 — Закрыть browser и платформенные сценарии
+
+- Принято независимым review (Opus), 2026-09-25. Web atomicity assertions используют публичный `YuvPixelFormat`; необходимые анализаторы прошли на Flutter 3.38.10 и 3.44.9.
+- CI run `36101986461` подтвердил browser fake-module contracts (41 tests) и Web reference matrix на одном SHA. Run `36117003942` на `35c516e` подтвердил green CI jobs для Web integration, обеих Flutter версий и example builds.
+- Частичный Web backend остаётся явно задокументированным. Полный native suite на ARM64 вынесен в неблокирующую AUD-23; Android ARMv7 runtime закрыт физическим device evidence в AUD-17.
+
+## AUD-17 — Подтвердить ARMv7 runtime
+
+- Принято release owner, 2026-09-25, по физическому runtime evidence; исполнение на ARMv7 GitHub-hosted emulator не является надёжным gate.
+- ARM-only APK с `libyuv_ffi.so` прошёл `flutter drive` smoke на Google Pixel 3 (`blueline`, ARM64 с нативной ARMv7 совместимостью): VM service подключился, `All tests passed`.
+- GitHub-hosted x86_64 emulator job нестабилен (примерно 1 успех из 4 наблюдавшихся прогонов) и помечен non-blocking; общий CI run `36117003942` завершился success при ошибке этого job. ARMv7 остаётся поддерживаемой ABI.
+- Известный предел: полный `flutter drive` через эмуляторный native bridge не подтверждён стабильно. Отдельная проверка полного native suite на ARM64 ведётся в AUD-23.
 
 ## AUD-01 — Нижняя граница SDK
 
@@ -73,6 +101,47 @@
 - Принято: `android-native-build` вызывает `reactivecircus/android-emulator-runner@v2` с `working-directory: example`, однострочным `flutter drive` и подготовкой KVM. Порядок formatter gate исправлен ранее в AUD-08.
 - Доказательство: [GitHub Actions run 36062365665](https://github.com/Anfet/yuv_ffi/actions/runs/36062365665) на `f8dfd61a0d4d75a4b5651599a71f39d8207607d5`: job `android-native-build` прошёл; лог показывает `Formatted 1 file (0 changed)`, ABI `x86_64` и `All tests passed` для app-runtime smoke. Рабочий Android путь после этого run не менялся. Полный CI на итоговом SHA остаётся выпускным gate в AUD-06.
 - Коммиты: `14b958e8afb54271a95b0d2692c12ef43ace5b51`, `955442b0791c4e8e034d532e3b1f34e1f0ab6fb7`.
+# AUD-18 — Актуализирован Android CI в README
+
+- Принято после независимой сверки README с CI workflow и run 36117003942; diff ограничен Android CI формулировкой, Android x86_64 smoke отделён от ARMv7 evidence.
+- Проверка: `git diff --check -- README.md` прошла.
+
+# AUD-19 — Синхронизирован tracked lockfile примера
+
+- На момент приёмки `example/pubspec.lock` фиксировал `yuv_ffi 0.4.1` и resolver Flutter 3.44.9; изменены пять транзитивных версий. Flutter 3.38.10 сохранял прежние разрешения этих зависимостей, оставлен один воспроизводимый lockfile. При переходе на 0.4.2 запись path-зависимости обновлена отдельно.
+- Проверки на Flutter 3.38.10 и 3.44.9: `flutter analyze` и `flutter build web --release` прошли; повторный `flutter pub get` на 3.44.9 не меняет lockfile. Web build выводит ожидаемые WASM dry-run предупреждения о `dart:html`. `pubspec.yaml` и constraints не менялись.
+
+# AUD-20 — Уточнены release notes кандидата 0.4.1
+
+- Принято: верхняя запись CHANGELOG перечисляет подтверждённые изменения и ограничения, не предполагает причину retraction 0.4.0 и сохраняет статус Web как partial WASM backend.
+- Проверка: `git diff --check`; `CHANGELOG.md` и `pubspec.yaml` остаются на версии 0.4.1.
+
+# AUD-22 — Проверен Web/WASM runtime на Flutter 3.38.10
+
+- Принято: asset-backed `flutter drive` прошёл в браузере на Flutter 3.38.10 / Dart 3.10.9 в чистом detached checkout `35c516e`; Chrome и ChromeDriver 152.0.7977.82. `wasm_bootstrap_test.dart` реально выполняет `YuvFfi.initialize()` и RGBA→BGRA→I420→BGRA; ChromeDriver сообщил `result: true`, без failure details.
+- Shared checkout не затронут; backend/API/CI не менялись. `git diff --check -- todo.md` прошёл.
+
+# AUD-23 — Зафиксировано ограничение ARM64 native suite
+
+- Принято как неблокирующая проверка с явным инфраструктурным ограничением: полного ARM64 Linux suite выполнить не удалось, так как доступная машина — Windows x64 без ARM64 Linux runner, CMake/CTest, QEMU или Docker/Podman. Android NDK не подменяет Linux ABI/sanitizer gate.
+- Записано 0/11 CTest targets, сохранённые sanitizer требования и воспроизводимая команда для ARM64 Linux host/QEMU. C/C/CMake и sanitizer gate не менялись.
+
+# AUD-24 — Проверен чистый Windows consumer
+
+- Принято: consumer вне репозитория использовал path dependency на чистую package-копию из `git archive` SHA `35c516e`; до сборки в ней отсутствовал DLL. `flutter build windows` успешно собрал приложение; DLL штатно собрана CMake из package source и bundled Flutter plugin path, ручное копирование не выполнялось.
+- `flutter drive` завершился `All tests passed` в consumer process и проверил initialize, conversion и negate. Исходная DLL из корня checkout не использовалась; код плагина/native C не менялся.
+
+# AUD-25 — Обновлён Android Gradle toolchain
+
+- Принято: Android wrapper обновлён до Gradle 8.14.3, AGP до 8.11.1, Kotlin Gradle Plugin до 2.2.20 — пороговых версий, о которых предупреждал Flutter.
+- `flutter build apk --debug` завершился успешно на Flutter 3.38.10 и 3.44.9 без Flutter dependency-validation warnings. Остались не связанные с toolchain javac deprecation/unchecked warnings от `camera_android_camerax` и ML Kit зависимостей.
+- Для проверки 3.38.10 временно выполнен `flutter pub get`, затем lockfile восстановлен resolver-ом 3.44.9; итоговый tracked `example/pubspec.lock` сохраняет AUD-19 разрешение. Изменений Android поведения, SDK/NDK или версии пакета нет.
+
+# MEAS-01 — Подготовлен Windows benchmark
+
+- Принято после независимого ревью и исправлений: добавлены публичный Dart AOT runner, сборка/драйвер, watchdog, fallback CSV для не записавших строку процессов, манифесты сборки и packed active-sample checksum.
+- Windows release smoke подтвердил 0.2.4 и ABI v1 для 1080p и 12 MP; ошибка строки сохраняет `ERROR:setup` и не останавливает следующие сценарии. `CVT.NV12.I420` checksum совпал с C-стендом для обеих версий. Детали и локальные CSV пути — `doc/perf/MEAS-01-run-instructions.md`.
+- Проверки: `dart analyze tool/bench/dart`, форматирование, PowerShell parse и `git diff --check` прошли. MEAS-02/03 и пооперационные baseline к этой приёмке не относились.
 
 # SPEED-00 — Подготовлен отдельный Dart FFI тест
 
@@ -114,45 +183,5 @@
 # C-06 — Ускорен `yuv_black_white_v1`
 
 - Исполнитель: GPT-5.6 Terra (T2). `0.2.4` black-white для YUV thresholded stored Y/neutralized chroma, а BGRA used different strict floating threshold; neither preserves ABI v1 visible-RGB inclusive `gray >= 128` plus ROI-boundary chroma semantics. Added local tight-packed direct path; alpha is preserved, padded/gapped/alias cases stay on generic effect path.
-- Dart FFI test checks I420/NV12/BGRA × full/ROI, visible gray 127/128/129, every output byte, checksum and padded I420 ROI fallback. Batch Windows Release мкс/вызов до → после (speedup): I420 full 178387.40→12302.80 (14.50×), ROI 142719.10→11180.20 (12.77×); NV12 full 155966.95→11965.70 (13.03×), ROI 122213.80→11334.85 (10.78×); BGRA full 61704.20→2321.85 (26.57×), ROI 47816.20→1617.75 (29.56×).
+- Dart FFI test checks I420/NV12/BGRA × full/ROI, visible gray 127/128/129, every output byte, checksum and padded I420 ROI fallback. Batch Windows Release mкс/вызов до → после (speedup): I420 full 178387.40→12302.80 (14.50×), ROI 142719.10→11180.20 (12.77×); NV12 full 155966.95→11965.70 (13.03×), ROI 122213.80→11334.85 (10.78×); BGRA full 61704.20→2321.85 (26.57×), ROI 47816.20→1617.75 (29.56×).
 - Принято после исправления comments, native diff review и независимого `dart test test/yuv_black_white_v1_test.dart -r expanded`: 7/7, oracle/checksums прошли; format/analyze без замечаний, `git diff --check` чисто. Task commit записан в Git history.
-
-# C-07 — Ускорен `yuv_negate_v1`
-
-- Исполнитель: GPT-5.6 Terra (T2). Legacy `0.2.4` изучен как алгоритмический ориентир; в ABI v1 добавлены локальные tight-packed fast paths: BGRA напрямую по пикселям, I420/NV12 с обработкой 2×2 блоков и корректным пересчётом shared chroma на ROI границе. Padded/gapped/alias layouts используют исходный generic kernel; ABI и общие helpers не менялись.
-- Адресный Windows Dart FFI тест проверяет I420/NV12/BGRA × full-frame/ROI, все output samples, независимый oracle/checksum и padded I420 ROI fallback. Batch Release мкс/вызов до → после (speedup): I420 full 170351.30→10379.25 (16.41×), ROI 138941.85→10651.50 (13.04×); NV12 full 146396.35→10568.95 (13.85×), ROI 117968.45→10861.80 (10.86×); BGRA full 56864.25→1103.05 (51.55×), ROI 45116.15→912.00 (49.47×).
-- Принято после просмотра native diff и независимого финального `dart test test/yuv_negate_v1_test.dart -r expanded`: 7/7; checksums совпали с отчётом, format/analyze и `git diff --check` прошли. Task commit записан в Git history.
-
-# C-08 — Ускорен `yuv_chroma_swap_v1`
-
-- Исполнитель: GPT-6 Luna (T3), независимая проверка — GPT-5.6 Terra (T2). В теге `0.2.4` отдельного swap нет; `nv21_to_nv12.c` меняет местами interleaved chroma samples при конверсии. ABI v1 получил tight NV12 path: непрерывное копирование Y и один проход по UV парам; padded/gapped layout остаётся на generic accessor fallback. ROI по контракту отвергается без записи в destination.
-- Один Windows Dart FFI тест проверяет 1280×720 tight и padded/gapped NV12 каждый output byte/checksum/padding, плюс ROI rejection/no writes. Измерения независимо повторены на базовом коммите и итоговой DLL тем же тестом (100 вызовов в batch): tight baseline 3,521,130 мкс total / 100 = 35,211.30 мкс/call; после 20,319 мкс total / 100 = 203.19 мкс/call (173.3×). Padded/gapped baseline 3,566,111 / 100 = 35,661.11 мкс/call; после 3,534,031 / 100 = 35,340.31 мкс/call (1.01×, в пределах шума). Baseline DLL SHA-256 `AAE97B5C9134DE853216E8431664793C74535E6637F7A0E9AF939E53E4010B28`; итоговая DLL `50556BE0E304D9DD13CAC4AE1AB6DDF3A8C225A3187791ECA438E5AF47357A24`.
-- Принято после просмотра C diff и независимого baseline rebuild из коммита перед C-08, Dart baseline/post прогонов, `dart analyze`, format и `git diff --check`. Все cases прошли с теми же checksums; временная DLL сборка legacy не выполнялась. Task commit записан в Git history.
-
-# C-09 — Ускорен `yuv_box_blur_v1`
-
-- Исполнитель: GPT-6 Sol (T1). По legacy `0.2.4` использован separable sliding-window приём; legacy округление между проходами, in-place запись и отдельная NV chroma семантика не переносились. Финальная ABI v1 реализация локальна в `yuv_box_blur_v1.c`: кольцо горизонтальных сумм на `min(height, 2*radius+1)` строк, вертикальные суммы и две выходные RGB строки; точный integer accumulation без промежуточного округления, edge replication и half-up деление на полную площадь. ROI читает полное окно source и пересчитывает только затронутую chroma, сохраняя odd-boundary поведение. Первоначальный full-frame scratch (192 MB на 12 MP) был отвергнут на review как мобильный memory риск и заменён bounded-ring вариантом до приёмки.
-- Scratch равен `width * (12 * min(height, 2r+1) + 24)` байт с проверенными размерами и всеми allocations до первой записи. Для 4000×3000/radius 256: 24,720,000 bytes (~23.6 MiB), вместо 192 MB.
-- Один Dart FFI test проверяет 12 сочетаний I420/NV12/BGRA × radius 1/3 × full/odd ROI, все output bytes и checksum; дополнительные cases: radius 0, odd/short frames с radius до 256, padded row/pixel strides и validation/no-write failures. Геометрия замеров 321×241, 3 warmup + 8 timed calls. До → после мкс/вызов (speedup): I420 r1 full 11544→2771 (4.17×), ROI 11978→3112 (3.85×), r3 full 28515→2927 (9.74×), ROI 23466→3168 (7.41×); NV12 r1 full 11329→2615 (4.33×), ROI 10306→3170 (3.25×), r3 full 26545→2636 (10.07×), ROI 22111→2896 (7.64×); BGRA r1 full 5329→1543 (3.45×), ROI 5197→1687 (3.08×), r3 full 13044→1553 (8.40×), ROI 9986→1712 (5.83×). Radius 1 remains below 10× because codec/write work dominates the small window.
-- Baseline DLL SHA-256 `509CE89DED16C433313A9456115C4B3C686D3487D0C52D26AF4C682FFF7090BE`; final DLL `A58DB25FC9EEF19F73C0630030514511A69C879F670E98FBB2931CDAC6623053`. Baseline independently rebuilt from the preceding commit produced the same 12 oracle checksums and comparable timings.
-- Принято после native diff review, исправления overflow-safe chroma bounds, независимого финального Dart прогона 17/17, format/analyze, `git diff --check` и Windows native `abi_blur_test.exe` + `abi_sanitizer_test.exe` (2/2; sanitizer instrumentation/allocation injection недоступны в этом Windows toolchain). Task commit записан в Git history.
-
-# C-10 — Ускорен `yuv_mean_blur_v1`
-
-- Исполнитель: GPT-6 Sol (T1). В legacy `0.2.4` найдены per-format mean implementations с другими radius, in-place writes, plane-specific YUV blur и integral image; их семантика не соответствует ABI v1. Принятая C-09 row/radius-bounded separable схема реализована локально в `yuv_mean_blur_v1.c`; C-09, Gaussian, shared kernel и ABI не менялись. Непромежуточное округление, edge replication, half-up divisor, BGRA alpha и odd-boundary ROI/chroma сохранены. Scratch: `width * (12 * min(height, 2r+1) + 24)` bytes, 24,720,000 bytes (~23.6 MiB) для 4000×3000/radius256; все allocations/checks до первой записи.
-- Один адресный test проверяет I420/NV12/BGRA × radius1/3 × full/ROI (12 сценариев), bytewise Dart oracle и equality с `yuv_box_blur_v1`; также radius0/256, short/odd frames, padded strides и invalid/no-write cases. Замеры 321×241, 3 warmup + 8 timed calls. До → после мкс/вызов (speedup): I420 r1 full 11697→2758 (4.24×), ROI 12190→3191 (3.82×), r3 full 27672→2762 (10.02×), ROI 22695→3128 (7.26×); NV12 r1 full 10619→2619 (4.05×), ROI 10423→2883 (3.62×), r3 full 26640→2631 (10.13×), ROI 20672→2905 (7.12×); BGRA r1 full 5081→1548 (3.28×), ROI 4767→1581 (3.02×), r3 full 13412→1554 (8.63×), ROI 9934→1587 (6.26×). Radius1 stays below ~10× because decode/write dominate the small 3×3 window.
-- Baseline DLL SHA-256 `C6C6EA71CB92BCE2B8930B79CF9985EE2DFDF4A489E86758064B1761A9108498`; final DLL `499484F798D367666B703C4CE5080CBBA7EC88DE2226F1E40231A8D4E753279B`. Baseline was independently rebuilt from the pre-C10 commit; all oracle checksums matched the executor's baseline report.
-- Принято после native diff review, независимого rebuild+baseline и final Release Dart теста 17/17, format/analyze/diff-check и Windows native blur/sanitizer harnesses (2/2; OS toolchain не включает ASan/UBSan и allocation injection). Task commit записан в Git history.
-
-# C-11 — Ускорен `yuv_gaussian_blur_v1`
-
-- Исполнитель: GPT-6 Sol (T1). Сохранили ABI v1 2D Gaussian формулу, порядок суммирования и byte-exact oracle; подготовили bounded decoded RGB row ring и output rows, вычисление веса/нормализующей суммы вынесли из пиксельного цикла. Явный `static inline` проверен отдельными измерениями, устойчивого выигрыша нет.
-- Windows Release тест при 321×241, 3 прогревах и 8 вызовах: I420 r1 full/ROI 106905→31619 / 105982→27213 мкс на 8 вызовов (3.38×/3.89×); r3 316769→113549 / 239609→80645 (2.79×/2.97×). NV12: r1 97676→30309 / 91759→25622 (3.22×/3.58×); r3 306342→112350 / 224284→73608 (2.73×/3.05×). BGRA: r1 47913→21272 / 42889→14760 (2.25×/2.91×); r3 153015→98860 / 108108→62913 (1.55×/1.72×). 10× не достигнуто: точный 2D oracle оставляет до 49 weighted RGB операций на пиксель.
-- Независимый повтор `dart test test/yuv_gaussian_blur_v1_test.dart -r expanded`: 17/17; oracle checksums и invalid/no-write проверки прошли. `dart format` и `dart analyze` прошли; `git diff --check` чисто. Отдельная пересборка baseline невозможна в текущем shell: CMake отсутствует в PATH; это не мешало проверке финального Release DLL и байтового oracle. Приёмка C-11; commit: COMMIT_HASH.
-
-\n\n# OPT-13 — Проверены blur buffers и Dart plane copies
-
-- GPT-6 Sol (T1) проверил алгоритмы и реальные Dart copy/allocation пути; GPT-5.6 Terra (T2) независимо принял отчёт. C-09/C-10 уже используют integer separable rolling sums; full-height RGB scratch не дал стабильного выигрыша и требует ~48 MB при 4000×3000/r3 против 144,392 bytes у C-11.
-- Full ABI separable Gaussian prototype совпал побайтно с ABI 2D baseline в 57 фиксированных случаях (2,713,814 bytes), 57 seeded-random случаях (2,713,814 bytes) и шести 1080p случаях (29,030,400 bytes); 0 diff/max delta, включая I420/NV12/BGRA, ROI/shared chroma, borders, padding, r0/r7/r256, sigma и alpha. 33/33 injected allocation failures вернули status 5 без записи. Скорость выросла примерно в 2.3–2.7× на 321×241 и 2.2–2.5× на 1080p; scratch 49.3 MB при 4000×3000/r256 против 10.35 MB у C-11. Поэтому production перенос ждёт отдельного memory design; ±1 tolerance не вводить.
-- Dart runner использует calloc: общий malloc публикует poisoned descriptors и до 2,651 неинициализированных padding bytes при успешном BGRA padded copy-back. Ошибочный статус не публикует результат. Allocator не менять. Построчное копирование дало большой локальный выигрыш; принят отдельный узкий READY task OPT-14 для двух IO paths при проверенных stride условиях.
-- Reproducible prototype/tests/raw logs: `%TEMP%\yuv_ffi_opt13_review_e7da923\README.md`, с командами в `build.ps1` и `run.ps1`. Исследование принято в `5e6ae5d`; production code не менялся.\n

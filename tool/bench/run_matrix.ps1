@@ -22,14 +22,15 @@
 
 .EXAMPLE
     $B = "$env:TEMP\yuv_ffi_bench"
+    $ScenarioPattern = 'FLIP.*.V' # Example; choose from the current MEAS card.
     .\tool\bench\run_matrix.ps1 -Exe "$B\bench_build\Release\yuv_bench.exe" `
         -DllV024 "$B\v024\build\Release\yuv_ffi.dll" -DllAbiV1 "$B\abi_v1\build\Release\yuv_ffi.dll" `
-        -InputDir "$B\inputs" -OutCsv "$B\results\meas01_windows.csv"
+        -InputDir "$B\inputs" -OutCsv "$B\results\selected_operation_windows.csv" -Scenarios $ScenarioPattern
 
 .EXAMPLE
-    # PERF card: before/after on ABI v1, one scenario family, one size.
-    .\tool\bench\run_matrix.ps1 -Exe $Exe -InputDir "$B\inputs" -OutCsv "$B\results\perf02.csv" `
-        -Sizes 1920x1080 -Scenarios 'CVT.*' -Targets @(
+    # Chosen PERF card: before/after on ABI v1, the same scenarios and sizes as its MEAS card.
+    .\tool\bench\run_matrix.ps1 -Exe $Exe -InputDir "$B\inputs" -OutCsv "$B\results\selected_operation_after.csv" `
+        -Scenarios $ScenarioPattern -Targets @(
             @{ Version = 'abi_v1'; Dll = "$B\before\build\Release\yuv_ffi.dll"; Sha = '<parent sha>'; Tree = '<parent src tree>' },
             @{ Version = 'abi_v1'; Dll = "$B\after\build\Release\yuv_ffi.dll";  Sha = '<card sha>';   Tree = '<card src tree>' })
 #>
@@ -152,6 +153,7 @@ $roundsLog = "$OutCsv.rounds.log"
 # (which appends its own rows) and the rounds log can write without racing on mkdir.
 $outDir = Split-Path -Parent $OutCsv
 if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Force $outDir | Out-Null }
+if (Test-Path -LiteralPath $OutCsv -PathType Container) { throw "OutCsv is a directory: $OutCsv" }
 
 Write-Host "yuv_bench driver: $($selected.Count) scenarios x $($Sizes.Count) sizes x $($Targets.Count) targets x $($Rounds.Count) rounds"
 Write-Host "power plan: '$script:PowerPlan', affinity: $Affinity, out: $OutCsv"
@@ -174,6 +176,7 @@ function Invoke-Row($Target, [string] $Id, [string] $Size, [int] $Round) {
     $outFile = Join-Path $work 'row.out'
     $errFile = Join-Path $work 'row.err'
     Remove-Item $outFile, $errFile -ErrorAction SilentlyContinue
+    $csvLengthBefore = if (Test-Path -LiteralPath $OutCsv -PathType Leaf) { (Get-Item -LiteralPath $OutCsv).Length } else { 0 }
     $started = Get-UtcStamp
     $p = Start-Process -FilePath $Exe -ArgumentList $argLine -NoNewWindow -PassThru `
         -RedirectStandardOutput $outFile -RedirectStandardError $errFile
@@ -207,6 +210,10 @@ function Invoke-Row($Target, [string] $Id, [string] $Size, [int] $Round) {
 
     $row = (Read-SharedText $outFile).Trim()
     if ($row -and -not $killReason) {
+        if (-not (Test-Path -LiteralPath $OutCsv -PathType Leaf) -or
+            (Get-Item -LiteralPath $OutCsv).Length -le $csvLengthBefore) {
+            throw "Harness returned a row but did not append it to OutCsv: $OutCsv"
+        }
         $f = $row -split ','
         $rowStatus = $f[15]
         if ($rowStatus -like 'ERROR:*') {

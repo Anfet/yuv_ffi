@@ -1,19 +1,35 @@
-## 0.4.1
+## 0.4.2
 
-### Release notes
+### Release notes (draft; not published)
 
 - `0.4.0` has been retracted from pub.dev. The reason for the retraction is not
   recorded here.
-- This version is the replacement release metadata for `0.4.0`; it does not
-  imply publication, a Git tag, or a release until those steps are performed
-  separately.
+- The `0.4.1` release candidate was cancelled before publication or tagging.
+  `0.4.2` is the next planned release. Its existing preparation includes rebuilt
+  Web JS/WASM assets and updated documentation for initialization and platform
+  support. The ABI v1 performance refactor is planned for this release and is
+  not yet complete.
+- Call `YuvFfi.initialize()` before using the capability-gated `0.4.0` API on
+  every platform, then use `YuvCapabilities` to determine available operations.
+
+### Known limitations
+
+- Web uses a partial WASM backend and is not feature-complete with native
+  backends. Flutter Web is supported through the JavaScript build; `flutter
+  build web --wasm` is currently unsupported. Release WASM builds require
+  Safari 16.4 or later.
+- The ARMv7 GitHub emulator runtime job is non-blocking because its driver
+  handshake is unreliable; the accepted ARMv7 runtime smoke ran on a physical
+  Pixel 3.
+- The full native and sanitizer suite has run on Linux x86_64. ARM64 has
+  app-runtime smoke coverage, but not the full native suite.
 
 ### Moving from a lockfile that pins 0.4.0
 
 - A consumer whose `pubspec.lock` already pins `yuv_ffi 0.4.0` can keep using
   that resolved version, though pub reports its retracted status. Do not delete
   the whole lockfile, because that can update unrelated dependencies.
-- After `0.4.1` is published, run `flutter pub upgrade yuv_ffi` to select the
+- After `0.4.2` is published, run `flutter pub upgrade yuv_ffi` to select the
   newest compatible non-retracted version and commit the resulting lockfile for
   an application package.
 

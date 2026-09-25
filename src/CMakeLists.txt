@@ -3,7 +3,7 @@
 # the plugin to fail to compile for some customers of the plugin.
 cmake_minimum_required(VERSION 3.10)
 
-project(yuv_ffi_library VERSION 0.4.1 LANGUAGES C)
+project(yuv_ffi_library VERSION 0.4.2 LANGUAGES C)
 
 # Explicit source list (rooted at CMAKE_CURRENT_SOURCE_DIR so paths are
 # correct whether this file is configured standalone or pulled in via

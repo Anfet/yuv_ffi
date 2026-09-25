@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'yuv_ffi'
-  s.version          = '0.4.1'
+  s.version          = '0.4.2'
   s.summary          = 'High-performance YUV/BGRA image processing for Flutter via native C/FFI.'
   s.description      = <<-DESC
 yuv_ffi is a Flutter/Dart package for high-performance image processing on YUV/BGRA frames using native C + FFI. It provides format conversions, crop/rotate/flip, effects, blur, and plane-based APIs with row/pixel stride support.
