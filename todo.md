@@ -2,7 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-07 | READY | GPT-5.6 Terra · T2 | C-06 | Оптимизировать `yuv_negate_v1`; затем повторить её Dart-тест |
+| [ ] | C-07 | IN_PROGRESS | GPT-5.6 Terra · T2 | C-06 | Оптимизировать `yuv_negate_v1`; затем повторить её Dart-тест |
 | [ ] | C-08 | BLOCKED | GPT-6 Luna · T3 | C-07 | Оптимизировать `yuv_chroma_swap_v1`; Terra проверяет результат |
 | [ ] | C-09 | BLOCKED | GPT-6 Sol · T1 | C-08 | Оптимизировать `yuv_box_blur_v1`; затем повторить её Dart-тест |
 | [ ] | C-10 | BLOCKED | GPT-6 Sol · T1 | C-09 | Оптимизировать `yuv_mean_blur_v1`; затем повторить её Dart-тест |
@@ -31,9 +31,9 @@
 
 ### C-07 — Ускорить `yuv_negate_v1`
 
-**Статус:** READY
+**Статус:** IN_PROGRESS
 **Исполнитель:** GPT-5.6 Terra · T2, medium
-**Зависит от:** C-06
+**Зависит от:** C-06 (принят, коммит `3a0ddce`)
 
 **Решение:** добавить один адресный Windows Dart FFI test в `speed_00_dart_ffi/` для I420/NV12/BGRA × full-frame/ROI. Снять current Release baseline батч-таймером; изучить negate native C тега `0.2.4`; оптимизировать только `yuv_negate_v1` и строго необходимые helpers, затем повторить тот же тест.
 
