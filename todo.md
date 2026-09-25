@@ -3,7 +3,7 @@
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
 | [x] | C-11 | DONE | GPT-6 Sol · T1 | C-10 (`77223ae`) | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
-| [ ] | OPT-13 | WAITING_EXTERNAL | GPT-6 Sol · T1 | C-11 (`74a1496`), Terra review (`4762a34`) | Дополнить проверку full-ABI Gaussian и Dart allocator guarantees |
+| [ ] | OPT-13 | REVIEW | GPT-6 Sol · T1 | C-11 (`74a1496`), Terra review (`4762a34`) | Повторно проверить дополненный full-ABI Gaussian prototype |
 | [ ] | SPEED-12 | BLOCKED | GPT-5.6 Terra · T2 | C-01—C-11 | Свести результаты и выполнить нужные проверки корректности |
 
 Цель — ускорить текущую реализацию 11 экспортируемых функций ABI v1, сохранив результат и контракт 0.4.1. Регрессию скорости относительно 0.2.4 принимаем как исходное наблюдение: старую версию здесь не замеряем, но **обязательно изучаем её C-код как источник быстрых алгоритмических приёмов**. Ориентир для каждой функции — ускорение порядка 10× относительно её собственного времени до правки. Работа идёт последовательно: **один Dart-тест функции → время текущей реализации → разбор быстрого legacy кода → правка C-функции → повтор того же теста → вывод**.
@@ -66,7 +66,7 @@ ABI v1 и его требования к валидации, ошибкам, str
 
 ### OPT-13 — Проверить blur buffers и Dart plane copies
 
-**Статус:** WAITING_EXTERNAL
+**Статус:** REVIEW
 **Исполнитель:** GPT-6 Sol · T1; проверка заключения — GPT-5.6 Terra · T2
 **Зависит от:** C-11 (принят, commit `74a1496`)
 
@@ -76,7 +76,7 @@ ABI v1 и его требования к валидации, ошибкам, str
 
 #### Constraints
 
-OPT-13 не начинать до приёмки C-11. Текущие byte-oracle и ABI v1 остаются критерием. Для Gaussian измерить число/долю отличающихся bytes, max delta, координаты (border/interior/ROI/shared chroma) и проверить ±1 гипотезу; production C и тесты не ослаблять. Для Dart `malloc` отдельно учесть active bytes, row padding, error/no-write paths, zeroing contract и возможную выдачу неинициализированной памяти. Сравнивать те же inputs на Windows Dart tests и записать time/memory trade-offs. Допускаются временные prototypes в адресном test-пакете; production code не менять. Не менять C-09/C-10.
+OPT-13 стартовала после приёмки C-11 (`74a1496`). Текущие byte-oracle и ABI v1 остаются критерием. Для Gaussian измерить число/долю отличающихся bytes, max delta, координаты (border/interior/ROI/shared chroma) и проверить ±1 гипотезу; production C и тесты не ослаблять. Для Dart `malloc` отдельно учесть active bytes, row padding, error/no-write paths, zeroing contract и возможную выдачу неинициализированной памяти. Сравнивать те же inputs на Windows Dart tests и записать time/memory trade-offs. Допускаются временные prototypes в адресном test-пакете; production code не менять. Не менять C-09/C-10.
 
 #### Definition of Done
 
@@ -93,7 +93,9 @@ OPT-13 не начинать до приёмки C-11. Текущие byte-oracl
 - Full-height RGB ring против bounded ring в одинаковых Clang Release вариантах не дал стабильной разницы на 321×241/r3: примерно 9.5–11.1 против 9.5–11.7 ms/call, лидер зависел от порядка. На 4000×3000/r3 память около 48 MB против 144,392 bytes у C-11. Оставить bounded ring.
 - В packed BGRA 2D→1D prototype получил 3.4× при r3/321×241, 8.5× при r7/321×241 и 3.3× при r3/1920×1080. Dart separable prototype имел 0 byte diffs на 2,181,436 output bytes в 18 I420/NV12/BGRA full/ROI сценариях с r1/r3/r7 и нечётными размерами; дополнительные BGRA sigma 0.5/1/1.5/2.7/20 также дали 0 diffs. Выборка не доказывает универсальную byte equality: tolerance ±1 не вводить. Полноразмерный double intermediate потребует ~288 MB при 12 MP; оценка горизонтального ring при 4000/r256 — ~49 MB. Рекомендован временный ограниченный full-ABI прототип и тест расширенного oracle перед решением о production.
 - Runner использует `calloc` для descriptors и plane buffers; ROI seed копирует active samples, success copy-back переносит полные plane lengths. Временный allocator `malloc` только для больших planes с calloc для малых descriptors дал те же hashes; 3.1–5.5 vs 3.8–5.5 ms/call без устойчивого выигрыша. Глобальную замену на malloc не рекомендовать из-за padding/uninitialized bytes. Row copy при `pixelStride == sampleBytes` дал ~600→6.4 µs на 321×241 и ~44→0.8–1.1 ms на 1920×1080 BGRA с теми же checksums; padded 7×5 BGRA сохранил padding. Предложить отдельный T2 task для `_seedPlaneFromSource` и `YuvAbiV1ImageTransport.applyTo`, скопировать только `planeWidth * sampleBytes` на строку.
-- Окружение: Windows x64, Dart 3.12.2, Clang 16 `-O3`; C-11 DLL SHA-256 `4D89BDC2D41FE31DCD2DA2BBDEA6CB3AB6F8AC9F0DFC84B716A31B9D2207AA59`. Полные команды и caveats приведены в отчёте исполнителя; временные prototypes/DLL удалены, рабочее дерево не менялось. Gaussian full ABI 1D и `malloc` error/no-write cases требуют дополнительной проверки до любой production правки.
+- Окружение: Windows x64, Dart 3.12.2, Clang 16 `-O3`; C-11 DLL SHA-256 `4D89BDC2D41FE31DCD2DA2BBDEA6CB3AB6F8AC9F0DFC84B716A31B9D2207AA59`. Первые эксперименты изолированно удалены; correction artifacts и raw logs сохранены в `%TEMP%\yuv_ffi_opt13_review_e7da923\README.md`, с командами в `build.ps1`/`run.ps1`. Исполнитель не изменил git working tree. Dart пути: `lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart` (`_seedPlaneFromSource`, `_copyDestinationPlanes`) и `lib/src/yuv/shared/yuv_abi_v1_image_transport.dart` (`applyTo`).
+- Correction по Terra review: полный ABI separable Gaussian probe — 57 случаев/2,713,814 байт, ещё 57 seeded-random/2,713,814 байт, плюс 6 случаев 1920×1080/29,030,400 байт; во всех 0 diffs, max delta 0. Проверены I420/NV12/BGRA, ROI/shared chroma, border, padded strides, r0/r7/r256, sigma 0.5–20 и alpha. Native fault-injection 33/33 allocation failures вернули status 5 без destination writes. Стандартный Gaussian тест — 17/17. Времена full ABI r3 на 321×241: около 2.3–2.7× быстрее; 1920×1080: 2.2–2.5×. Полный raw report и rerun artifacts: `%TEMP%\yuv_ffi_opt13_review_e7da923\README.md` (`build.ps1`, `run.ps1`). Prototype scratch при 4000×3000/r256 — 49.3 MB против C-11 10.35 MB; это исследование не разрешает перенос без memory решение.
+- Dart runner experiments: общий `malloc` оставил ненулевые unused descriptor/options reserved bytes. На реальном BGRA padded copy-back активные bytes совпали, но опубликованы 2,651 poisoned padding bytes; `calloc` сохраняет нули. Ошибочный статус не публикует destination. Не менять общий allocator. Row-copy рекомендация остаётся отдельной T2 идеей с tight pixel stride с обеих сторон для seed и сохранением padding в image transport.
 
 #### Review
 
@@ -101,8 +103,8 @@ OPT-13 не начинать до приёмки C-11. Текущие byte-oracl
 
 Не закрывать OPT-13, пока не будут выполнены следующие проверки:
 
-1. Gaussian: сохранить воспроизводимый prototype/команды/raw timing и измерить полный native ABI 1D вариант на I420/NV12/BGRA, ROI/shared chroma, border, padded/non-contiguous stride, radius 0/256, sigma range, alpha, error atomicity и allocation failure. Отчёт включает byte-diff count/fraction/max delta/coordinate classes. До этого 1D остаётся кандидатом, ±1 tolerance не менять.
-2. Dart allocator: проверить `NativeAllocator` zeroed-memory contract и пути validation failure/no-write/padding для `malloc`; не предлагать общий переход с calloc. Отдельный partial malloc production task не открывать без доказанной выгоды и полной инициализации.
+1. Повторно проверить воспроизводимость сохранённого full-ABI prototype, численные/координатные отчёты, allocation-failure tests и timing commands; определить допустимый bounded scratch бюджет до возможной production задачи. ±1 tolerance не вводить.
+2. Подтвердить выводы Dart runner про initialized descriptors, padding и no-write/error behavior; общий allocator остаётся `calloc`.
 3. Row-copy рекомендации сохранить как будущую узкую T2 карточку с требованием обоих tight pixel strides для seed copy и тестами pixel/row padding; не начинать implementation в рамках OPT-13.
 
 ## Завершение
