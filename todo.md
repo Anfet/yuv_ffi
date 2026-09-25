@@ -2,7 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-08 | READY | GPT-6 Luna · T3 | C-07 | Оптимизировать `yuv_chroma_swap_v1`; Terra проверяет результат |
+| [ ] | C-08 | IN_PROGRESS | GPT-6 Luna · T3 | C-07 (`2b11af7`) | Оптимизировать `yuv_chroma_swap_v1`; Terra проверяет результат |
 | [ ] | C-09 | BLOCKED | GPT-6 Sol · T1 | C-08 | Оптимизировать `yuv_box_blur_v1`; затем повторить её Dart-тест |
 | [ ] | C-10 | BLOCKED | GPT-6 Sol · T1 | C-09 | Оптимизировать `yuv_mean_blur_v1`; затем повторить её Dart-тест |
 | [ ] | C-11 | BLOCKED | GPT-6 Sol · T1 | C-10 | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
@@ -29,9 +29,9 @@
 
 ### C-08 — Ускорить `yuv_chroma_swap_v1`
 
-**Статус:** READY
+**Статус:** IN_PROGRESS
 **Исполнитель:** GPT-6 Luna · T3, small; проверка результата — GPT-5.6 Terra · T2
-**Зависит от:** C-07 (принят; commit будет записан в следующем assignment commit)
+**Зависит от:** C-07 (принят, коммит `2b11af7`)
 
 #### Architect Decision
 
