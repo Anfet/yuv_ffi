@@ -327,6 +327,10 @@ jobs:
   # x86_64 system image remains KVM-accelerated on the GitHub Linux host.
   android-armv7-runtime:
     runs-on: ubuntu-latest
+    # Without an explicit cap, a stuck `flutter drive` against the emulator
+    # (observed: APK installs fine, then the driver never reports back) runs
+    # until GitHub's default 6h job timeout instead of failing fast.
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -393,12 +397,18 @@ jobs:
             *,armeabi-v7a,*) ;;
             *) echo 'API 30 x86_64 image did not advertise armeabi-v7a support.' >&2; exit 1 ;;
           esac
-          flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart --use-application-binary=build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk -d emulator-5554 --no-pub
+          # `flutter drive` has been observed to install the APK successfully
+          # and then hang indefinitely with no further output instead of
+          # failing when the driver/observatory handshake does not complete.
+          # `timeout` turns that hang into a fast, diagnosable failure instead
+          # of relying solely on the job-level timeout-minutes to cut it off.
+          timeout --signal=KILL 12m flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart --use-application-binary=build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk -d emulator-5554 --no-pub
           BASH
           bash -n "$RUNNER_TEMP/armv7-native-bridge-smoke.sh"
 
       - name: App-runtime smoke (ARMv7 native bridge)
         uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 20
         with:
           # Android 11 x86_64 images support ARMv7 binaries through the native
           # bridge. `arch: armeabi-v7a` is deliberately absent: the action has
