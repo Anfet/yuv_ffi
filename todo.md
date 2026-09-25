@@ -2,7 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-09 | READY | GPT-6 Sol · T1 | C-08 (принят; hash будет в assignment commit) | Оптимизировать `yuv_box_blur_v1`; затем повторить её Dart-тест |
+| [ ] | C-09 | IN_PROGRESS | GPT-6 Sol · T1 | C-08 (`ae981fd`) | Оптимизировать `yuv_box_blur_v1`; затем повторить её Dart-тест |
 | [ ] | C-10 | BLOCKED | GPT-6 Sol · T1 | C-09 | Оптимизировать `yuv_mean_blur_v1`; затем повторить её Dart-тест |
 | [ ] | C-11 | BLOCKED | GPT-6 Sol · T1 | C-10 | Оптимизировать `yuv_gaussian_blur_v1`; затем повторить её Dart-тест |
 | [ ] | SPEED-12 | BLOCKED | GPT-5.6 Terra · T2 | C-01—C-11 | Свести результаты и выполнить нужные проверки корректности |
@@ -27,9 +27,9 @@
 
 ### C-09 — Ускорить `yuv_box_blur_v1`
 
-**Статус:** READY
+**Статус:** IN_PROGRESS
 **Исполнитель:** GPT-6 Sol · T1, high numerical reasoning
-**Зависит от:** C-08 (принят; точный hash будет записан в assignment commit)
+**Зависит от:** C-08 (принят, коммит `ae981fd`)
 
 #### Architect Decision
 
