@@ -1,5 +1,10 @@
 # yuv_ffi — история проверок и принятых задач
 
+## BLUR-02 — Измерить Mean напрямую по Y и Y/U/V
+
+- Принято как изолированный эксперимент: отдельный `yuv_mean_blur_v1.c` кандидат измерен на Pixel 3 без изменения production ABI/C. Контрольный Y/U/V повтор после idle дал на 720×360 RGB 8.644 ms, Y-only 1.648 ms, Y/U/V 2.538 ms; на 1477×1065: 54.374, 12.695 и 18.005 ms. Исходный шумный Y/U/V прогон сохранён в raw и не репрезентативен; source/diff и checksum исключили отдельный kernel или dispatch. Межсессионная вариативность не позволяет принять production threshold; production-перенос не принят.
+- Исходный source diff подтверждает, что текущие Box/Mean эквивалентны по kernel; candidate output SHA побайтно совпал с BLUR-01 для соответствующих Y-only/YUV вариантов, поэтому три проверенных PNG BLUR-01 переиспользованы. Raw и детали: `doc/perf/results/blur02_pixel3_mean_direct_yuv.md`.
+
 ## BLUR-00 — Подготовить Pixel 3 Release runner и baseline
 
 - Принято 2026-09-26. Добавлен отдельный Dart runner и PowerShell-скрипт, которые запускают одну выбранную публичную blur-операцию в Release и сохраняют raw logcat/JSONL; Pixel 3 проверен для всех трёх операций и двух размеров. PNG decode, packed `Y + UV` подготовка и source clone не входят в таймер.

@@ -19,7 +19,7 @@
 | --- | --- | --- | --- | --- |
 | BLUR-00 | DONE | Зафиксировать маленький Dart Release runner и два NV12-входа | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-01 | DONE | Box: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
-| BLUR-02 | PLANNED | Mean: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
+| BLUR-02 | DONE | Mean: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-03 | PLANNED | Gaussian: прямой Y/U/V с тем же 2D-ядром | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
 | BLUR-04 | PLANNED | Gaussian: разделимые 1D-проходы и ограниченный scratch | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
 | OPT-14 | DEFERRED | Dart row-copy fast paths из OPT-13 | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
@@ -35,6 +35,8 @@
 Зависит от BLUR-00. В изолированной копии `yuv_box_blur_v1.c` проверить простейшую полноэкранную обработку packed `Y + UV`: сначала Y напрямую, затем U/V напрямую тем же integer sliding-sum с radius 5 для chroma. Не смешивать стоимость подготовки кадра с вызовом. Сравнить текущий RGB, Y-only и Y/U/V на обоих размерах: медиана, абсолютная экономия, процент, checksum и три PNG. Выигрыш ≥25% для полного Y/U/V делает вариант кандидатом; даже 4–5 мс на 720×360 записать отдельно. При переносе в production сохранять ABI/status, alias, stride/padding, ROI, odd 4:2:0, NV12 и BGRA fallback; проверить относящиеся контрактные тесты.
 
 ### BLUR-02 — Mean без RGB
+
+Принято как изолированный эксперимент, без production-переноса: `yuv_mean_blur_v1.c` кандидат дал Y-only 12.695/1.648 ms и контрольный Y/U/V 18.005/2.538 ms для 1477×1065/720×360 против RGB 54.374/8.644 ms. Source/diff и контроль подтвердили одинаковое ядро с Box; шумный первый Y/U/V прогон сохранён как raw, но не использован для итогового сравнения. Raw, checksums и подтверждённое побайтное повторное использование изображений — в [BLUR-02 report](doc/perf/results/blur02_pixel3_mean_direct_yuv.md). Production-перенос не решён.
 
 Зависит от BLUR-01 и использует тот же runner/вход. Повторить эксперимент только для `yuv_mean_blur_v1.c`, не подменяя его измерением Box. Сравнить Y-only и полный Y/U/V с текущим RGB на обоих размерах; оценить ≥25%, миллисекунды и визуальный результат. Production-перенос требует тех же ABI и layout проверок, что BLUR-01, с собственным адресным тестом Mean.
 

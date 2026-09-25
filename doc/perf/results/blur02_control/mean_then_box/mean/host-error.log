@@ -1,0 +1,5 @@
+D:\.projects\yuv_ffi_blur02_yuv\tool\bench\run_blur_pixel3.ps1 : The term 'Get-FileHash' is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, ver
+ify that the path is correct and try again.
+    + CategoryInfo          : ObjectNotFound: (Get-FileHash:String) [run_blur_pixel3.ps1], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException,run_blur_pixel3.ps1
