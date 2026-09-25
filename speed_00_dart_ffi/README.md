@@ -23,3 +23,14 @@ Pop-Location
 status, every output sample and its checksum, warms up the function, then
 reports measured native-call timings. Input setup, destination allocation and
 correctness checks are outside the timed region.
+
+For C-02, use the same Release DLL setup and run:
+
+```powershell
+dart test test/yuv_convert_v1_test.dart -r expanded
+```
+
+The conversion test covers all twelve ABI v1 pairs on a fixed 1281x721 image.
+It checks every output byte against an independent Dart oracle and reports an
+FNV-1a checksum. Five warm-up calls precede one timed batch of thirty native
+calls per pair; fixture setup and correctness checks are outside the timer.
