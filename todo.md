@@ -22,7 +22,7 @@
 
 | Готово | ID | Native C функция / основной файл | Сценарии одного теста | Исполнитель | Причина tier |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-08 | `yuv_chroma_swap_v1` · `yuv_chroma_swap_v1.c` | NV12; полный кадр, ROI и padded layout | T3 · Luna | Локальная операция над UV plane с готовым контрактом |
+| [ ] | C-08 | `yuv_chroma_swap_v1` · `yuv_chroma_swap_v1.c` | NV12; полный кадр и padded/gapped layout; ROI rejection | T3 · Luna | Локальная операция над UV plane с готовым контрактом |
 | [ ] | C-09 | `yuv_box_blur_v1` · `yuv_box_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и границы радиуса |
 | [ ] | C-10 | `yuv_mean_blur_v1` · `yuv_mean_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и точное округление |
 | [ ] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; несколько radius/sigma | T1 · Sol | Численные веса и точность результата |
@@ -35,15 +35,15 @@
 
 #### Architect Decision
 
-Добавить один адресный Windows Dart FFI тест в `speed_00_dart_ffi/` для `yuv_chroma_swap_v1`: NV12 full-frame, ROI и padded/gapped layout. Измерить текущий Release код, изучить legacy C в теге `0.2.4`, затем оптимизировать только `yuv_chroma_swap_v1.c`. Исполнитель самостоятельно меняет native C в рамках этой карточки. Предпочесть прямой проход по UV samples с сохранением Y; generic helper оставить fallback для несовместимых layout/alias случаев.
+Добавить один адресный Windows Dart FFI тест в `speed_00_dart_ffi/` для `yuv_chroma_swap_v1`: NV12 tight full-frame и padded/gapped layout. Проверить, что включённый ROI отклоняется согласно контракту. Измерить текущий Release код, изучить legacy C в теге `0.2.4`, затем оптимизировать только `yuv_chroma_swap_v1.c`. Исполнитель самостоятельно меняет native C в рамках этой карточки. Предпочесть прямой проход по UV samples с сохранением Y; generic helper оставить fallback для несовместимых layout/alias случаев.
 
 #### Constraints
 
-Сохранить ABI v1, validation/error status, Y bytes, ROI незатронутые байты и stride/padding semantics. Таймер только вокруг вызова функции; входы повторяемы. Oracle, проверка каждого output sample и checksum выполняются вне timer. Не менять ABI, общий helper и соседние функции. Legacy код использовать как алгоритмический референс, не как оракул корректности; старую библиотеку не собирать и не мерить.
+Сохранить ABI v1, validation/error status, Y bytes, region-disabled-only behavior и stride/padding semantics. Включённый ROI обязан возвращать `YUV_STATUS_INVALID_ARGUMENT`, не изменяя destination. Таймер только вокруг вызова функции; входы повторяемы. Oracle, проверка каждого output sample и checksum выполняются вне timer. Не менять ABI, общий helper и соседние функции. Legacy код использовать как алгоритмический референс, не как оракул корректности; старую библиотеку не собирать и не мерить.
 
 #### Definition of Done
 
-- [ ] Один Dart FFI тест проверяет full-frame NV12, ROI и padded/gapped fallback по каждому output sample и checksum.
+- [ ] Один Dart FFI тест проверяет full-frame NV12 и padded/gapped fallback по каждому output sample и checksum, а также ROI rejection и отсутствие записи при ошибке.
 - [ ] Зафиксированы baseline/post timings для тех же сценариев и вывод о speedup/узком месте.
 - [ ] Изучен legacy C `0.2.4`; приложен краткий вывод о применимом приёме.
 - [ ] Windows Release тест, форматирование, анализ и `git diff --check` проходят.
