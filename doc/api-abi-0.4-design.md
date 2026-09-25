@@ -967,10 +967,11 @@ Rejecting valid odd crop origins is not part of the target API.
 ## 15. Implementation sequence
 
 Native ABI tasks YUV-33/36/26/31/32/22/23/34 formed the unpublished 0.3.0
-development baseline. The 0.4.0 implementation sequence in `todo.md` covered
-format identity and codec; public factories and plane ownership; mutation and
-pure operations; deprecated compatibility; initialization, capabilities and
-errors; documentation; then platform verification. No new native symbol or C
+development baseline. The 0.4.0 implementation sequence covered format
+identity and codec; public factories and plane ownership; mutation and pure
+operations; deprecated compatibility; initialization, capabilities and
+errors; documentation; then platform verification. The historical task list
+is no longer maintained in the active tracker. No new native symbol or C
 change is implied by this design revision. Any needed native C change requires
 its own plan and approval.
 
@@ -1009,3 +1010,33 @@ their user-facing impact.
   injected allocation failure, and Web unavailable capability.
 - Reference tests for every operation/format, padded strides, odd sizes, alpha,
   padding canaries, and the two decisions in section 14.
+
+## 18. Current CI verification
+
+The workflow is maintained in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
+Its current platform evidence is narrower than the complete design verification
+list above and must not be read as full backend parity:
+
+- `analyze-and-test-vm` runs analyzer and package tests on Flutter 3.38.10 and
+  3.44.9; the Linux native library is built and loaded for those tests.
+- `native-sanitizer-gate` runs the C ABI sanitizer suite in Debug and Release.
+- `bindings-regeneration` regenerates and audits ffigen output on Flutter 3.44.9.
+- `linux-native-smoke` and `macos-native-smoke` build the example and run
+  app-runtime conversion/effect smoke checks.
+- `android-native-build` is configured to build the Android example APK and run
+  the app-runtime conversion/effect smoke on an API 35 x86_64 emulator. The job
+  prints the emulator ABI before driving the test.
+- `ios-native-build` builds simulator and device examples and runs the app-runtime
+  smoke on an iPhone simulator. Physical-device camera validation is separate
+  from CI.
+- `wasm-web-integration` runs browser integration contracts and the 119-case
+  Web reference matrix using the actual WASM asset bundle. The reference cases
+  cover constructors, conversions, transforms, effects, blur, copying, and
+  serialization; this does not establish complete Web feature parity with
+  native backends. Asset-dependent browser tests live under
+  `example/integration_test/`; tests under `test/web/` either use VM
+  placeholders or exercise browser-only code with a fake module, so they are
+  not evidence for the asset-backed runtime path.
+
+This matrix describes the workflow at the time of the 0.4.1 maintenance pass;
+check the workflow itself for changes to targets or commands.

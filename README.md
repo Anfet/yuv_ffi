@@ -171,11 +171,11 @@ any external `implements YuvImage` class: such a class must implement every new 
 
 ## Platform support
 
-- Android: native FFI (`armeabi-v7a`, `arm64-v8a`, `x86_64`; the 32-bit `x86` ABI is not built — Flutter has shipped no `x86` binaries since 3.35 and Google Play never accepted it as a supported ABI for Flutter apps). Verified: plugin/example build via CI (`android-native-build`).
-- iOS: native FFI. Verified: plugin/example build only (`flutter build ios --debug --no-codesign`); no on-device/runtime smoke.
-- macOS: native FFI. Verified: build and app-runtime smoke (real conversion + effect call from a built app) on macOS 15.6.1 arm64.
-- Windows: native FFI. Verified: build and app-runtime smoke (`flutter drive`).
-- Linux: native FFI. Verified in CI build/smoke jobs; not re-run on a local Linux host.
+- Android: native FFI (`armeabi-v7a`, `arm64-v8a`, `x86_64`; the 32-bit `x86` ABI is not built — Flutter has shipped no `x86` binaries since 3.35 and Google Play never accepted it as a supported ABI for Flutter apps). The `android-native-build` CI job is configured to build the example APK and run the conversion/effect app-runtime smoke on an API 35 x86_64 emulator. Local smoke checks passed on a clean API 35 x86_64 emulator and an Android 12 arm64-v8a device; the new CI step has not yet run on GitHub Actions.
+- iOS: native FFI. CI (`ios-native-build`) builds simulator and device examples and runs the native app-runtime smoke on an iPhone simulator. A physical-device camera-flow check is not part of CI.
+- macOS: native FFI. CI (`macos-native-smoke`) builds the example and runs the app-runtime smoke; a local macOS 15.6.1 arm64 run also passed.
+- Windows: native FFI. A local build and app-runtime smoke (`flutter drive`) passed; Windows is not currently a CI target.
+- Linux: native FFI. CI (`linux-native-smoke`) builds the example and runs packaging and app-runtime smoke checks.
 - Web: package builds and uses a **partial WASM backend** (work in progress, not feature-complete).
   Flutter Web is supported through the standard JavaScript build: `flutter build web`. The Emscripten
   `.js`/`.wasm` package assets do not make the Flutter application a dart2wasm build. `flutter build
@@ -183,8 +183,9 @@ any external `implements YuvImage` class: such a class must implement every new 
   `dart:html` to inject the Emscripten loader script. Moving that loader to the Web APIs that dart2wasm
   supports is separate future work.
 
-macOS/Linux app-runtime and iOS build verification above reflect the YUV-06 result, accepted and
-covered by [CI run 35775516094](https://github.com/Anfet/yuv_ffi/actions/runs/35775516094).
+The CI targets above are defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Earlier
+YUV-06 evidence is recorded in [CI run 35775516094](https://github.com/Anfet/yuv_ffi/actions/runs/35775516094);
+the current workflow also runs the iOS simulator app-runtime smoke and separate Linux/macOS runtime jobs.
 
 ## Example camera preview notes
 
@@ -273,7 +274,10 @@ Limitations:
   feature-complete with native.
 - Release WASM builds enable 128-bit SIMD; Safari 16.4 or later is required to
   instantiate those builds.
-- Web tests are maintained separately under `test/web/` and are intended for browser runner execution.
+- Several Web suites under `test/web/` use passing placeholders on the VM; suites that import
+  browser-only APIs use `@TestOn('browser')` and are excluded from VM runs. Neither is asset-backed
+  WASM runtime evidence. Browser/WASM acceptance with the package asset bundle runs through
+  `flutter drive` from `example/integration_test/` in the `wasm-web-integration` CI job.
 
 ### Known limitations (explicit)
 
@@ -284,23 +288,28 @@ Limitations:
 
 ### Web parity matrix (v1)
 
-This matrix defines current parity targets and validation scope for Web WASM against native backends.
+The 119-case reference suite compares Web/WASM results with shared reference artifacts across the
+operations and layouts listed below. These checks cover the declared cases; they do not establish
+complete Web feature parity with native backends.
 
 - `Conversions`:
   scope: `applyRgbaBytes`, `applyFormat`, `toI420`/`toNv12`/`toBgra`, `toBgraBytes`
-  validation: round-trip quality thresholds and dimension checks
-  (`test/web/wasm_parity_conversions_test.dart`)
+  validation: reference comparison on the real Web/WASM asset bundle (part of the 119-case suite)
+  (`example/integration_test/reference_web_conversions_test.dart`, CI step `Web reference matrix (YUV-12/YUV-18)`)
 - `Geometry transforms`:
   scope: `applyCrop`, `applyRotation`, `applyFlipHorizontal`, `applyFlipVertical`
-  validation: exact/predictable BGRA checks
-  (`test/web/wasm_parity_transforms_test.dart`)
+  validation: crop/rotation/flip reference cases in the 119-case matrix. The additional
+  `wasm_parity_edge_cases_test.dart` checks only tight and padded `toBgraBytes()` packing; it does not
+  test transform edge cases.
 - `Effects/blur`:
   scope: `applyGrayscale`, `applyBlackWhite`, `applyNegate`, `applyBoxBlur`, `applyMeanBlur`, `applyGaussianBlur`
-  validation: web runtime smoke coverage (`test/web/yuv_web_wasm_test.dart`)
+  validation: reference cases in the 119-case matrix; the REL-02/REL-05 browser suite adds selected
+  ownership, conversion, and negate regression checks (`example/integration_test/rel02_rel05_web_regression_test.dart`).
 - `Edge cases`:
-  scope: odd sizes (`1x1`, `3x5`, `127x255`), custom rowStride/pixelStride,
-  out-of-bounds crop, transform chains
-  validation: dedicated edge-case coverage (`test/web/wasm_parity_edge_cases_test.dart`)
+  scope: reference cases include `1x1`, `3x5`, `127x255`, and `512x512` dimensions and tight,
+  padded, and custom-stride plane layouts. The matrix exercises individual crop/rotation/flip cases;
+  it does not claim out-of-bounds crop or transform-chain coverage. The separate edge-case test
+  validates only padded and tight BGRA byte packing.
 
 Acceptance intent:
 
@@ -334,8 +343,9 @@ flutter drive --driver=test_driver/integration_test.dart \
 ```
 
 `flutter test --platform chrome` does not serve the package asset bundle and
-must not be used for WASM runtime tests. The full Web reference matrix remains
-the YUV-12 scope and will run through this integration harness.
+must not be used for WASM runtime tests. The Web reference matrix runs in CI through this integration
+harness and currently contains 119 cases spanning constructors, conversions, transforms, effects,
+blur, copying, and serialization. It does not establish full Web feature parity with native backends.
 
 On Windows Git Bash, the build script auto-falls back to `emcc.bat`/`emcc.cmd`
 when plain `emcc` is not resolvable by `command -v`.
