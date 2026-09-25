@@ -6,8 +6,10 @@ build*, and *how* the numbers are reduced. It does not contain measurements: MEA
 baseline matrices, PERF-02…31 the per-function `before → after → 0.2.4` tables, PERF-34/35/36 the repeats.
 
 Everything marked **verified** below was executed on the reference machine on 2026-09-25 while writing this
-document. Everything marked **to be created** is a specification for the MEAS-01 executor; PERF-01 changed no
-code.
+document. PERF-01 also ships the executable native C harness and its matrix driver (`tool/bench/native/`,
+`tool/bench/run_matrix.ps1`, see [Native C benchmarks](#native-c-benchmarks)); it changed no library code.
+Everything marked **to be created** (the Dart-level bench, other platforms) is a specification for the MEAS-01
+executor.
 
 ## Toolchain
 
@@ -318,12 +320,53 @@ The bench fills it exactly as the 0.2.4 Dart `YUVDefClass` did, pointing at copi
 | Format | `y` | `u` | `v` | `yRowStride / yPixelStride` | `uvRowStride / uvPixelStride` |
 |---|---|---|---|---|---|
 | I420 | Y | U | V | `w / 1` | `cw / 1`. The 0.2.4 Dart default was a gapped `uvPixelStride = 2`; the tight value is used here so the bytes match ABI v1. The legacy kernels index through `yuv_index(x, y, rowStride, pixelStride)`. |
-| nv21 (= NV12 bytes, UV order) | Y | UV plane | `NULL` (checked: the 0.2.4 `nv21_*` kernels read the interleaved plane through `src->u` only) | `w / 1` | `2·cw / 2` |
+| nv21 (= the NV12 input bytes, unchanged) | Y | start of the interleaved plane | `NULL` (checked: the 0.2.4 `nv21_*` kernels read the interleaved plane through `src->u` only; the 0.2.4 Dart set `v` only for 3-plane images) | `w / 1` | `2·cw / 2` |
 | BGRA | pixels | `NULL` | `NULL` | `4w / 4` | `1 / 1` (unused) |
 
 Conversions that write packed BGRA (`yuv420_to_bgra8888`, `nv21_to_bgra8888`) write a tight `w·h·4` buffer.
-`from_rgba8888` reads a tight RGBA buffer. The legacy name `nv21` holds UV-ordered bytes, so the NV12 input
-buffer feeds it unchanged.
+`from_rgba8888` reads a tight RGBA buffer.
+
+#### Chroma byte order of the 0.2.4 `nv21_*` functions
+
+The legacy name `nv21` does **not** mean one byte order. The 0.2.4 sources (tag `0.2.4`, `src/` tree
+`eba076b4…`) disagree with each other, and several comments contradict the code next to them. The table
+records what each function's **code** does with byte `[2i]` and byte `[2i+1]` of the interleaved plane,
+checked line by line on 2026-09-25.
+
+| 0.2.4 function | Rows | What the code does with `[2i]`, `[2i+1]` | Effective order | Order-sensitive? |
+|---|---|---|---|---|
+| `nv21_to_bgra8888` | `CVT.NV12.BGRA` | reads `Uc = u[i+0]`, `Vc = u[i+1]`. Its header comment expects `u = vu + 1`, but the code, and the 0.2.4 Dart caller, pass the plane start. | **U,V** | yes, reader |
+| `nv21_to_i420` | `CVT.NV12.I420` | `dU = s[2i]`, `dV = s[2i+1]` (the comment says "V,U,V,U") | **U,V** | yes, reader |
+| `yuv420_i420_to_nv21` | `CVT.I420.NV12` | writes `[2i] = U`, `[2i+1] = V` | **U,V** | yes, writer |
+| `bgra8888_to_nv21` | `CVT.BGRA.NV12` | writes `[0] = U`, `[1] = V` | **U,V** | yes, writer |
+| `nv21_from_rgba8888` | `CVT.RGBA.NV12` | writes `[0] = V`, `[1] = U` | **V,U** | yes, writer. This is the only function with the opposite order. |
+| `nv21_gaussian_blur` | `GAUSS.NV12.*` | unpacks `[2i]` into a plane named `v`, `[2i+1]` into `u`, runs the same Gaussian over each, repacks to the same positions | named V,U | **no**: both bytes go through identical, independent processing and return to their own slots |
+| `nv21_box_blur` | `BOX.NV12.*` | same pattern as Gaussian (`[2i]` → `v`, `[2i+1]` → `u`), identical box pass on each | named V,U | **no** |
+| `nv21_mean_blur` | `MEAN.NV12.*` | `sumV += [2i]`, `sumU += [2i+1]`, written back to the same slots | named V,U | **no** |
+| `nv21_rotate` | `ROT.NV12.*` | copies the pair `[0]`, `[1]` to the same slots of the destination pair | none | no |
+| `nv21_crop_rect` | `CROP.NV12.*` | `memcpy` of whole pair rows | none | no |
+| `nv21_flip_horizontally` / `_vertically` | `FLIP.NV12.*` | swaps whole pairs / whole rows | none | no |
+| `nv21_grayscale`, `nv21_blackwhite` | `GRAY/BW.NV12.FULL` | `memset(…, 128)` over the plane | none | no |
+| `nv21_negate` | `NEG.NV12.FULL` | `256 − b` for every byte | none | no |
+| `nvXX_to_nvYY` | `SWAP.NV12` | `out[2i] = in[2i+1]`, `out[2i+1] = in[2i]` | none (a symmetric swap) | no |
+
+**Harness rule:** for every `nv21_*` call the harness passes the NV12 input plane **unchanged**, as mapped above.
+It applies no per-function reordering, for these reasons:
+
+- The two order-sensitive **readers** (`nv21_to_bgra8888`, `nv21_to_i420`) read U,V, which is exactly the NV12
+  order. The legacy call therefore sees the same image as `yuv_convert_v1` does.
+- For the order-agnostic kernels (blurs, geometry, effects, swap), neither the work done nor the output bytes
+  depend on which byte is called U. Pre-swapping would change nothing except the input hash, which must stay
+  equal to the verified NV12 checksum.
+- The **writers** do not read the input chroma. `nv21_from_rgba8888` stores V,U. The harness records its
+  output as produced: 0.2.4 checksums are informative only, and storing U into the other slot does not change
+  the work. A byte comparison with the ABI v1 NV12 output would need the pairs swapped outside the timer. The
+  harness does not do that.
+
+Verified with the harness on 2026-09-25, 1080p. The 0.2.4 and ABI v1 output checksums are **byte-identical** for
+`CVT.NV12.BGRA`, `CVT.NV12.I420`, `CVT.I420.NV12`, `FLIP.NV12.H`, `FLIP.NV12.V`, `ROT.NV12.90` and
+`CROP.NV12.EVEN`. The 0.2.4 `CVT.NV12.I420` output equals the reference `i420_1920x1080` input hash, and its
+`CVT.I420.NV12` output equals the reference `nv12_1920x1080` hash. Both are round trips of the verified inputs.
 
 ### Semantics that differ from 0.2.4
 
@@ -353,9 +396,14 @@ reference, never against 0.2.4 bytes.
 ### Per-iteration protocol (identical for both versions)
 
 1. **Restore:** `memcpy` the pristine input into the working source buffers. 0.2.4 mutates in place, and ABI v1
-   gets the same copy so that cache state is equal.
-2. **Pre-fill** every destination byte, including any padding, with `0xCD`. For 0.2.4 in-place rows the
-   destination is the source.
+   gets the same copy so that cache state is equal. After this step the source is clean for every row.
+2. **Pre-fill** every byte of a **separate** destination buffer, including any padding, with `0xCD`. Separate
+   destinations are: every ABI v1 row (ABI v1 is always out-of-place), every 0.2.4 out-of-place row (`CVT`,
+   `ROT`, `CROP`, `SWAP`), and `ref.memcpy`.
+   **Skip this step for 0.2.4 in-place rows** (`FLIP`, `GRAY`/`BW`/`NEG`, `BOX`/`MEAN`/`GAUSS`). There the
+   kernel writes into its own source, so no separate destination exists. Filling the source with `0xCD` would
+   destroy the input that step 1 has just restored, and the call would run on constant bytes. The output of
+   these rows is the restored-then-mutated source buffer.
 3. Timed call.
 4. Check the status: ABI v1 must return `YUV_STATUS_OK`, and any other status fails the row as
    `ERROR:<code>`. 0.2.4 returns `void`.
@@ -379,8 +427,12 @@ Iteration 1 is a calibration run with time `t1`. It always counts as warm-up.
 | 30 – 120 s | 0 | 3 | max |
 | > 120 s | — | 0 | row = `TIMEOUT(>120 s)`, `t1` recorded as a lower bound |
 
-The rule is applied per version and per row. The 120 s watchdog runs in the driver: each scenario is one child
-process, killed on timeout. Some current ABI v1 rows (e.g. `BOX/MEAN/GAUSS` at 12MP, and `*.R256` in general)
+The rule is applied per version and per row. Each scenario is one child process. The 120 s watchdog runs in
+the driver and bounds the calibration call: the child must finish it within 120 s of reporting `ready`
+(inputs built and verified), or the driver kills it and records `TIMEOUT`. A child that finishes a
+calibration longer than 120 s records `TIMEOUT` itself, with `t1` as a lower bound. Once calibrated, the
+child gets a budget of `2 · (warmup + N) · t1 + 60 s` for the rest of the row. Exceeding it records
+`ERROR:budget`. Some current ABI v1 rows (e.g. `BOX/MEAN/GAUSS` at 12MP, and `*.R256` in general)
 are expected to be very slow or to time out. A `TIMEOUT` is an honest "before" value. **Never extrapolate a
 time.**
 
@@ -411,7 +463,9 @@ time.**
 
 - AC power. Record the power plan with `powercfg /getactivescheme`, and use "High performance" or better.
 - Close other heavy applications. Do not run builds, indexing or Flutter tooling in parallel.
-- Run each child process at high priority, pinned to a single **P-core** logical CPU:
+- Run each child process at high priority, pinned to a single **P-core** logical CPU. The native harness
+  does this itself with `--affinity 0x4 --priority high` (`SetProcessAffinityMask`, `HIGH_PRIORITY_CLASS`)
+  before it builds any input, and records the mask in the CSV. For other executables (the Dart bench) use
   `cmd /c start "" /wait /high /affinity 4 <exe> <args>`. Mask `0x4` is logical CPU 2. On Raptor Lake the
   P-cores enumerate first; confirm with Sysinternals Coreinfo and record the mask used. Both versions are
   single-threaded, so one core is representative and avoids P/E-core migration noise.
@@ -467,35 +521,76 @@ native tests.
 
 ### Native C benchmarks
 
-**To be created by MEAS-01.** The harness source is not part of PERF-01. Proposed layout:
-`tool/bench/native/` in the repo, which needs the usual approval for edits outside `lib/`. The harness is
-**not** copied into the extracted 0.2.4 tree.
+Part of PERF-01. Files:
 
-- `gen_inputs.c`: the generator above, plus hash verification against the checksum table.
-- `bench_main.c`: CLI, iteration protocol, QPC timing, statistics, CSV, and SHA-256 via CNG.
-- `backend_abi_v1.c` and `backend_v024.c`: one `run(scenario, bufs)` adapter per version. The 0.2.4 adapter
-  declares the legacy prototypes itself and fills `YUVDef` as in the mapping table.
-- `CMakeLists.txt`: `-DYUV_BENCH_BACKEND=abi_v1|v024 -DYUV_SRC_DIR=<extracted src>`. It builds the library from
-  `YUV_SRC_DIR` via `add_subdirectory`, so the library gets exactly the Release flags above, and links the
-  harness against it. The harness executable gets the same `/O2 /Ob2 /MD /DNDEBUG`.
+- `tool/bench/native/bench_main.c` is the harness `yuv_bench.exe`. It contains the seeded generator and the
+  SHA-256 input gate (CNG), the 85-row scenario matrix, the ABI v1 and 0.2.4 call adapters, the iteration
+  protocol, QPC timing, the adaptive warm-up rule, statistics, and the CSV record. The 0.2.4 adapter
+  declares `YUVDef` and the legacy prototypes itself and fills `YUVDef` as in the mapping table.
+- `tool/bench/native/CMakeLists.txt` builds only the harness. The Release defaults are `/MD /O2 /Ob2
+  /DNDEBUG`, the same as the measured DLLs, with `/W4` and no warnings on MSVC 14.44. The harness includes
+  only the ABI v1 **type** header `src/yuv/abi/h/yuv_abi_v1.h` (override with `-DYUV_ABI_INCLUDE_DIR`). That
+  layout is wire-stable and asserted at compile time.
+- `tool/bench/run_matrix.ps1` is the matrix driver.
 
-Intended usage:
+The library under test is **loaded at run time** from `--dll` (`LoadLibraryExW` with
+`LOAD_WITH_ALTERED_SEARCH_PATH`). One harness build therefore measures both the 0.2.4 DLL and the ABI v1 DLL.
+Neither library is compiled into the harness, and the harness is never copied into an extracted tree. Each
+DLL is built from its own extracted `src/` exactly as in [How to build (Release)](#how-to-build-release).
 
 ```powershell
-foreach ($v in 'v024', 'abi_v1') {
-  & "$CMakeBin\cmake.exe" -S "$Repo\tool\bench\native" -B "$B\bench_$v" -G "Visual Studio 17 2022" -A x64 `
-      -DYUV_BENCH_BACKEND=$v -DYUV_SRC_DIR="$B\$v\src"
-  & "$CMakeBin\cmake.exe" --build "$B\bench_$v" --config Release
-}
-# one scenario, one process, pinned to a P-core, high priority:
-cmd /c start "" /wait /high /affinity 4 "$B\bench_abi_v1\Release\yuv_bench.exe" `
-    --scenario CVT.I420.BGRA --size 1920x1080 --level c --round 1 --out "$B\results\meas01_windows.csv"
+& "$CMakeBin\cmake.exe" -S "$Repo\tool\bench\native" -B "$B\bench_build" -G "Visual Studio 17 2022" -A x64
+& "$CMakeBin\cmake.exe" --build "$B\bench_build" --config Release
+$Exe = "$B\bench_build\Release\yuv_bench.exe"
+
+& $Exe --list      # the 85 scenario IDs, each with its "1080p only" flag (the six *.R256 rows)
+
+# One row: one process, pinned to a P-core, high priority. The row goes to stdout and is appended to --out.
+& $Exe --version abi_v1 --dll "$B\abi_v1\build\Release\yuv_ffi.dll" --inputs "$B\inputs" `
+    --out "$B\results\meas01_windows.csv" --scenario CVT.I420.BGRA --size 1920x1080 --round 1 `
+    --sha $AbiSha --tree 9029ff28d9834c069f41159d122b36ed6d9d4968 --affinity 0x4 --priority high
 ```
 
-The driver (`tool/bench/native/run_matrix.ps1`, to be created) loops over rounds 1..3 × every scenario ×
-{v024, abi_v1}, enforces the 120 s watchdog, and appends to one CSV. The executable and its `yuv_ffi.dll` sit
-in the same directory. The application directory comes first in the DLL search order, so each version loads
-its own library.
+Harness arguments: `--version v024|abi_v1|ref.memcpy`, `--dll`, `--inputs <dir>`, `--out <csv>`, `--scenario <ID>`,
+`--size WxH` (default `1920x1080`), `--round N`, plus the metadata columns `--sha`, `--tree`, `--machine`,
+`--power-plan`, `--compiler`, `--flags`, `--platform`, `--affinity`. `ref.memcpy` needs no DLL and is valid
+only for same-format `CVT` rows.
+
+- **Inputs:** `--inputs` is a cache directory, `<fmt>_<W>x<H>.bin` holding the tight concatenation. A cached
+  file is only a shortcut. Each run hashes the bytes it will use against the checksum table. A cached file
+  that fails is regenerated and overwritten, and regenerated bytes that still fail stop the row with
+  `ERROR:setup`. A size without a reference checksum is refused the same way.
+- **Row status:** `N/A` (with the reason from the scenario matrix: same-format convert, `ROT.*.0`, effect ROI,
+  and odd geometry on 0.2.4), `OK`, `TIMEOUT`, `ERROR:<YuvStatus>`, `ERROR:nondeterministic`, `ERROR:setup`.
+  Exit code 0 means a row was written with `OK`/`N/A`/`TIMEOUT`, 2 means an `ERROR` row, and 1 means a usage
+  error with no row.
+- **Warm-up column:** `warmup` counts the calibration run plus the extra warm-up runs.
+- **Median** of an even N is the mean of the two middle samples. **stdev** is the sample standard deviation
+  (divisor N − 1).
+- **Driver hooks:** on stderr the harness prints `row-template: …` (a complete row with `@STATUS@`,
+  `@REASON@`, `@FINISHED@` placeholders), then `ready`, then `calibrated t1_ms=… warmup=… n=…`.
+
+Matrix driver: every round × size × scenario, with the targets interleaved per row (0.2.4, then ABI v1). It
+skips `*.R256` outside 1080p, enforces the watchdog described above, and writes `TIMEOUT`/`ERROR:crash` rows
+from the harness template when a child cannot write its own. Round start and end times go to
+`<OutCsv>.rounds.log`.
+
+```powershell
+& "$Repo\tool\bench\run_matrix.ps1" -Exe $Exe `
+    -DllV024 "$B\v024\build\Release\yuv_ffi.dll" -DllAbiV1 "$B\abi_v1\build\Release\yuv_ffi.dll" `
+    -InputDir "$B\inputs" -OutCsv "$B\results\meas01_windows.csv" -IncludeMemcpyRef
+# Subsets: -Sizes 1920x1080 -Rounds 1 -Scenarios 'CVT.*','FLIP.*'   Preview only: -DryRun
+# PERF cards (before/after, both ABI v1):
+#   -Targets @(@{Version='abi_v1'; Dll=<before dll>; Sha=<parent>; Tree=<tree>},
+#              @{Version='abi_v1'; Dll=<after dll>;  Sha=<card>;   Tree=<tree>})
+```
+
+Verified on 2026-09-25, without collecting measurements:
+- The harness builds cleanly (Release x64).
+- `--list` yields 85 rows at 1080p and 79 at 12MP.
+- Every generated input passes the SHA gate. A corrupted cache file is regenerated, and an unknown size is
+  refused.
+- The driver writes 34-column rows for `OK`/`N/A` and, on a forced `-TimeoutSec 2`, a watchdog `TIMEOUT` row.
 
 The 2026-09-25 regression evidence came from single-shot, un-warmed runs of an earlier ad-hoc harness (content
 `k·31`, not the seeded generator). Those numbers are hypotheses only and are not a baseline.
