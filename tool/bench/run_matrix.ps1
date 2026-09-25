@@ -210,7 +210,7 @@ function Invoke-Row($Target, [string] $Id, [string] $Size, [int] $Round) {
         $f = $row -split ','
         $rowStatus = $f[15]
         if ($rowStatus -like 'ERROR:*') {
-            Write-Host ("  r{0} {1,-9} {2,-10} {3,-18} {4,-24} {5} {6}" -f $Round, $Size, $Target.Version, $Id, $rowStatus, $f[16])
+            Write-Host ("  r{0} {1,-9} {2,-10} {3,-18} {4,-24} {5}" -f $Round, $Size, $Target.Version, $Id, $rowStatus, $f[16])
             return $rowStatus
         }
         Write-Host ("  r{0} {1,-9} {2,-10} {3,-18} {4,-24} median={5} {6}" -f $Round, $Size, $Target.Version, $Id, $f[15], $f[20], $f[16])
@@ -232,6 +232,7 @@ function Invoke-Row($Target, [string] $Id, [string] $Size, [int] $Round) {
     }
     Add-CsvLine $line
     Write-Host ("  r{0} {1,-9} {2,-10} {3,-18} {4,-24} {5}" -f $Round, $Size, $Target.Version, $Id, $status, $reason)
+    return $status
 }
 
 # --- Matrix ------------------------------------------------------------------------------
