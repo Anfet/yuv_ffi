@@ -2,7 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-05 | READY | GPT-5.6 Terra · T2 | C-04 | Оптимизировать `yuv_grayscale_v1`; затем повторить её Dart-тест |
+| [ ] | C-05 | IN_PROGRESS | GPT-5.6 Terra · T2 | C-04 | Оптимизировать `yuv_grayscale_v1`; затем повторить её Dart-тест |
 | [ ] | C-06 | BLOCKED | GPT-5.6 Terra · T2 | C-05 | Оптимизировать `yuv_black_white_v1`; затем повторить её Dart-тест |
 | [ ] | C-07 | BLOCKED | GPT-5.6 Terra · T2 | C-06 | Оптимизировать `yuv_negate_v1`; затем повторить её Dart-тест |
 | [ ] | C-08 | BLOCKED | GPT-6 Luna · T3 | C-07 | Оптимизировать `yuv_chroma_swap_v1`; Terra проверяет результат |
@@ -35,9 +35,9 @@
 
 ### C-05 — Ускорить `yuv_grayscale_v1`
 
-**Статус:** READY
+**Статус:** IN_PROGRESS
 **Исполнитель:** GPT-5.6 Terra · T2, medium
-**Зависит от:** C-04
+**Зависит от:** C-04 (принят, коммит `5ad2c32`)
 
 **Решение:** добавить адресный Windows Dart FFI test в `speed_00_dart_ffi/` для I420/NV12/BGRA, полного кадра и ROI. Снять current Release baseline с batch timer, изучить соответствующие grayscale C реализации тега `0.2.4`, затем оптимизировать `yuv_grayscale_v1` и строго необходимые helpers, повторив те же сценарии.
 
