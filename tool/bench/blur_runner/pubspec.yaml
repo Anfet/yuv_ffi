@@ -1,0 +1,22 @@
+name: yuv_ffi_blur_runner
+description: Reproducible Android Release runner for one public Dart blur operation.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  crypto: ^3.0.6
+  flutter:
+    sdk: flutter
+  image: ^4.10.1
+  yuv_ffi:
+    path: ../../..
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/blur_reference_1477x1065.png

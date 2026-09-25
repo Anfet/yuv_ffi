@@ -1,4 +1,11 @@
-# yuv_ffi — история проверок кандидата 0.4.1
+# yuv_ffi — история проверок и принятых задач
+
+## BLUR-00 — Подготовить Pixel 3 Release runner и baseline
+
+- Принято 2026-09-26. Добавлен отдельный Dart runner и PowerShell-скрипт, которые запускают одну выбранную публичную blur-операцию в Release и сохраняют raw logcat/JSONL; Pixel 3 проверен для всех трёх операций и двух размеров. PNG decode, packed `Y + UV` подготовка и source clone не входят в таймер.
+- 720×360 медианы: Box 8.562 ms, Mean 8.644 ms, Gaussian 225.356 ms. Для 1477×1065: 54.943 ms, 54.374 ms и 1427.216 ms. Box/Mean output SHA совпадает ожидаемо: обе native функции реализуют один uniform kernel. `flutter analyze lib/main.dart` прошёл; подробные raw samples и ограничения формата записаны в `doc/perf/results/blur_reference_pixel3_blur00.md`.
+
+## История release candidate 0.4.1
 
 Кандидат 0.4.1 отменён до публикации и создания тега; следующая целевая версия — 0.4.2. Результаты ниже сохраняют фактическую версию и SHA на момент проверки и не являются приёмкой 0.4.2.
 
