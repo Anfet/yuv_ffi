@@ -15,6 +15,7 @@ $env:YUV_FFI_DLL = Join-Path $build 'Release\yuv_ffi.dll'
 Push-Location speed_00_dart_ffi
 dart pub get
 dart test test/yuv_flip_v1_test.dart -r expanded
+dart test test/yuv_crop_v1_test.dart -r expanded
 Pop-Location
 ```
 
@@ -23,6 +24,9 @@ Pop-Location
 status, every output sample and its checksum, warms up the function, then
 reports measured native-call timings. Input setup, destination allocation and
 correctness checks are outside the timed region.
+
+The crop test covers aligned, odd-origin and odd-edge crops for I420 and
+NV12, plus BGRA crops and an I420 padded-source fallback check.
 
 For C-02, use the same Release DLL setup and run:
 

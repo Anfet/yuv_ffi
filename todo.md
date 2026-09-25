@@ -2,8 +2,7 @@
 
 | Готово | ID | Статус | Владелец | Зависит от | Кратко |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-03 | IN_PROGRESS | GPT-5.6 Terra · T2 | C-02 | Оптимизировать `yuv_crop_v1`; затем повторить её Dart-тест |
-| [ ] | C-04 | BLOCKED | GPT-5.6 Terra · T2 | C-03 | Оптимизировать `yuv_rotate_v1`; затем повторить её Dart-тест |
+| [ ] | C-04 | IN_PROGRESS | GPT-5.6 Terra · T2 | C-03 | Оптимизировать `yuv_rotate_v1`; затем повторить её Dart-тест |
 | [ ] | C-05 | BLOCKED | GPT-5.6 Terra · T2 | C-04 | Оптимизировать `yuv_grayscale_v1`; затем повторить её Dart-тест |
 | [ ] | C-06 | BLOCKED | GPT-5.6 Terra · T2 | C-05 | Оптимизировать `yuv_black_white_v1`; затем повторить её Dart-тест |
 | [ ] | C-07 | BLOCKED | GPT-5.6 Terra · T2 | C-06 | Оптимизировать `yuv_negate_v1`; затем повторить её Dart-тест |
@@ -27,9 +26,6 @@
 
 | Готово | ID | Native C функция / основной файл | Сценарии одного теста | Исполнитель | Причина tier |
 | --- | --- | --- | --- | --- | --- |
-| [ ] | C-01 | `yuv_flip_v1` · `yuv_flip_v1.c` | I420, NV12, BGRA; horizontal и vertical | T2 · Terra | Фаза chroma при нечётной геометрии |
-| [ ] | C-02 | `yuv_convert_v1` · `yuv_convert_v1.c` | Допустимые пары I420/NV12/BGRA/RGBA; одинаковый и разный формат | T1 · Sol | Цветовые формулы и 12 пар форматов |
-| [ ] | C-03 | `yuv_crop_v1` · `yuv_crop_v1.c` | I420, NV12, BGRA; обычный и нечётный crop | T2 · Terra | ROI и chroma на нечётных границах |
 | [ ] | C-04 | `yuv_rotate_v1` · `yuv_rotate_v1.c` | I420, NV12, BGRA; 90/180/270° | T2 · Terra | Перестановка размеров и chroma |
 | [ ] | C-05 | `yuv_grayscale_v1` · `yuv_grayscale_v1.c` | I420, NV12, BGRA; полный кадр и ROI | T2 · Terra | Общий effect helper и три формата |
 | [ ] | C-06 | `yuv_black_white_v1` · `yuv_black_white_v1.c` | I420, NV12, BGRA; порог, полный кадр и ROI | T2 · Terra | Порог, ROI и общий effect helper |
@@ -39,19 +35,19 @@
 | [ ] | C-10 | `yuv_mean_blur_v1` · `yuv_mean_blur_v1.c` | I420, NV12, BGRA; несколько радиусов и ROI | T1 · Sol | Общее blur ядро и точное округление |
 | [ ] | C-11 | `yuv_gaussian_blur_v1` · `yuv_gaussian_blur_v1.c` | I420, NV12, BGRA; несколько radius/sigma | T1 · Sol | Численные веса и точность результата |
 
-### C-03 — Ускорить `yuv_crop_v1`
+### C-04 — Ускорить `yuv_rotate_v1`
 
 **Статус:** IN_PROGRESS
 **Исполнитель:** GPT-5.6 Terra · T2, medium
-**Зависит от:** C-02 (принят, коммит `9adbdd2`)
+**Зависит от:** C-03 (принят)
 
-**Решение:** использовать адресный Dart FFI тест в `speed_00_dart_ffi/`; покрыть I420, NV12 и BGRA crop-ами изнутри кадра с чётным/нечётным origin и odd destination edge. Снять Windows Release baseline по всем сценариям и сверить каждый output sample с независимым oracle. Изучить crop исходники в теге `0.2.4`, затем оптимизировать только `yuv_crop_v1` и необходимые ему helpers.
+**Решение:** использовать отдельный адресный Dart FFI тест в `speed_00_dart_ffi/`; покрыть I420, NV12 и BGRA для 90/180/270 градусов, проверяя размеры результата и каждый sample. Снять текущий Windows Release baseline, изучить C-код поворота 0.2.4, затем оптимизировать только `yuv_rotate_v1` и необходимые helpers при сохранении phase-correct 4:2:0 semantics.
 
-**Объём:** `src/yuv/abi/yuv_crop_v1.c`, необходимые только этой функции helpers, `speed_00_dart_ffi/test/yuv_crop_v1_test.dart` и краткая инструкция. ABI и соседние операции не менять. Сохранить chroma phase при odd origin/extent, validation/error semantics и правила padding. Если меняется общий helper, проверить затронутые функции.
+**Объём:** `src/yuv/abi/yuv_rotate_v1.c`, необходимые только этой функции helpers, `speed_00_dart_ffi/test/yuv_rotate_v1_test.dart` и краткая инструкция. ABI, соседние операции, validation/error behavior и padding semantics не менять. Для stride/layout случая, где fast path неприменим, оставить безопасный generic kernel.
 
-**Готово, когда:** один Dart test проверяет status, каждый output sample и checksum вне таймера; фиксирует baseline/post timings и speedup; legacy C изучен; Windows Release и относящиеся проверки проходят; diff проверен. Если ускорение порядка 10× не достигнуто, проверить следующий вариант или сообщить подтверждённое ограничение.
+**Готово, когда:** один Dart test покрывает три формата и три угла; проверяет status, размеры, каждый output sample и checksum вне batch timer; записывает baseline/post timings и speedups; изучен legacy C; Windows Release и адресные проверки проходят; diff проверен. Если ускорение порядка 10× не достигнуто, проверить следующий вариант или зафиксировать подтверждённое ограничение.
 
-**Отчёт исполнителя:** файлы, legacy finding, выбранный алгоритм, точные команды, timings до/после и коэффициенты, oracle результаты, ограничения.
+**Отчёт исполнителя:** файлы, legacy finding, алгоритм, точная команда, timings до/после по сценариям, speedups, correctness, ограничения.
 
 Для каждой строки:
 
