@@ -586,6 +586,12 @@ jobs:
           sh ./tool/wasm/build_wasm.sh --profile release
           test -f assets/wasm/yuv_ffi.js
           test -f assets/wasm/yuv_ffi.wasm
+          # emcc writes yuv_ffi.wasm with the executable bit set on this runner,
+          # which git sees as a mode-only diff against the tracked 100644 blob
+          # even when the bytes are identical. Restore the tracked mode before
+          # comparing, so the gate reports content drift, not the compiler's
+          # output permissions.
+          chmod 644 assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
           git diff --exit-code -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
 
       - name: Flutter pub get (example)
