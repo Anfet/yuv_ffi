@@ -145,6 +145,15 @@ abstract final class YuvAbiV1ImageTransport {
         continue;
       }
 
+      if (target.pixelStride == sampleBytes) {
+        for (int row = 0; row < planeHeight; row++) {
+          final int sourceRowStart = row * sourceRowStride;
+          final int destinationRowStart = row * target.rowStride;
+          destination.setRange(destinationRowStart, destinationRowStart + sourceRowStride, source, sourceRowStart);
+        }
+        continue;
+      }
+
       for (int row = 0; row < planeHeight; row++) {
         final int sourceRowStart = row * sourceRowStride;
         final int destinationRowStart = row * target.rowStride;

@@ -513,6 +513,16 @@ class YuvAbiV1Runner {
     required int planeHeight,
     required int sampleBytes,
   }) {
+    if (sourcePixelStride == sampleBytes && destinationPixelStride == sampleBytes) {
+      final int activeRowBytes = planeWidth * sampleBytes;
+      for (int row = 0; row < planeHeight; row++) {
+        final int destinationRowStart = row * destinationRowStride;
+        final int sourceRowStart = row * sourceRowStride;
+        destination.setRange(destinationRowStart, destinationRowStart + activeRowBytes, source, sourceRowStart);
+      }
+      return;
+    }
+
     for (int row = 0; row < planeHeight; row++) {
       final int destinationRowStart = row * destinationRowStride;
       final int sourceRowStart = row * sourceRowStride;

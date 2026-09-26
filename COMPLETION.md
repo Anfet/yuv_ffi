@@ -1,9 +1,9 @@
 # yuv_ffi — история проверок и принятых задач
 
-## OPT-14 — REVIEW — Проверить Dart row-copy fast paths
+## OPT-14 — DONE — Проверены и перенесены Dart row-copy fast paths
 
 - Изолированный Windows Dart эксперимент на padded BGRA 1920×1080 подтвердил гипотезу: ROI seed 49.403 → 27.190 ms, copy-back 45.194 → 11.844 ms. Кандидат применим только при плотном pixel stride и сохраняет row padding; pixel gaps остаются на прежнем sample-wise пути.
-- Контрактные тесты кандидата прошли для padded rows, pixel gaps и ROI seed; native library на этом хосте отсутствовала, поэтому native-dependent проверки были skipped. Production Dart/C/ABI не менялись. Детали: [OPT-14 report](doc/perf/results/opt14_windows_row_copy.md).
+- В production Dart добавлено построчное копирование для плотных пикселей в ROI seed и `applyTo`. Контрактные проверки padded rows, pixel gaps и ROI seed прошли (3 новых + 33 `abi_status_mapping_test.dart`, включая native-dependent тесты на этом хосте); адресный `flutter analyze` — без замечаний. Native C и ABI не менялись. Детали: [OPT-14 report](doc/perf/results/opt14_windows_row_copy.md).
 
 ## BLUR-04 — DONE — Измерить разделимый Gaussian по Y/U/V
 

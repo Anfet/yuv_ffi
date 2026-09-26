@@ -1,8 +1,8 @@
 # OPT-14 — Dart row-copy fast paths
 
-Статус: REVIEW. Эксперимент выполнен на Windows x64, Dart 3.12.2 и Flutter
-3.44.9, от базы `8e6e8bb`. Production source не менялся. Кандидатный
-[patch](opt14_row_copy_candidate.patch) применён только в отдельном worktree.
+Статус: DONE. Эксперимент выполнен на Windows x64, Dart 3.12.2 и Flutter
+3.44.9, от базы `8e6e8bb`. Кандидатный [patch](opt14_row_copy_candidate.patch)
+после проверки перенесён в production Dart.
 
 ## Гипотеза
 
@@ -53,6 +53,9 @@ receiver, сохранение row padding и fallback на gapped target. Вт�
 было доступной native `yuv_ffi` library; значения fast path от native кода не
 зависят, поскольку оба пути выполняются в Dart до/после вызова.
 
-Рекомендация: перенести ровно этот узкий patch с адресными тестами в
-production отдельной задачей. `calloc`, ABI, allocator и Web runner менять
-не нужно.
+После переноса прошли 3 адресных теста в `opt14_copy_contract_test.dart` (включая
+дополнительный тест padded source ROI seed), 33 теста в
+`abi_status_mapping_test.dart` и адресный `flutter analyze`. На текущем Windows
+хосте native-dependent тесты также выполнились. `calloc`, ABI, allocator и
+Web runner не менялись. Приведённые medians относятся к измерению кандидата;
+отдельного post-merge измерения полного публичного вызова пока нет.

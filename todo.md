@@ -2,7 +2,7 @@
 
 Цель: измерить, сколько дают обработка Y/U/V без RGB-конверсий и новый алгоритм Gaussian. Работать по одной native функции и одному Dart-прогону операции. Сравнение с 0.2.4, общая матрица платформ и Power Plan для этих задач не нужны.
 
-Прежний план и подробные выводы C-11/OPT-13 сохранены в [архиве](doc/perf/archive/native-refactor-todo-2026-09-26.md); остальные принятые C-задачи остаются в истории Git. OPT-13 показал перспективу разделимого Gaussian, но не переносил его в production из-за расхода памяти. Отдельный OPT-14 по Dart row-copy отложен до завершения blur.
+Прежний план и подробные выводы C-11/OPT-13 сохранены в [архиве](doc/perf/archive/native-refactor-todo-2026-09-26.md); остальные принятые C-задачи остаются в истории Git. OPT-13 показал перспективу разделимого Gaussian, но не переносил его в production из-за расхода памяти. OPT-14 перенесён в production после отдельной проверки Dart row-copy.
 
 ## Исходный кадр и правила замера
 
@@ -22,7 +22,7 @@
 | BLUR-02 | DONE | Mean: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-03 | DONE | Gaussian: прямой Y/U/V с тем же 2D-ядром | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
 | BLUR-04 | DONE | Gaussian: разделимые 1D-проходы и ограниченный scratch | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
-| OPT-14 | REVIEW | Dart row-copy fast paths из OPT-13 | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
+| OPT-14 | DONE | Dart row-copy fast paths из OPT-13 | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 
 ### BLUR-00 — один воспроизводимый прогон — DONE
 
@@ -50,6 +50,6 @@
 
 Проверено на Pixel 3, Release/AOT. Два независимых прогона по 2+7 образцов дали на 1477×1065 186.225 ms против 937.816 ms прямого 2D YUV и на 720×360 28.783 ms против 147.547 ms: ускорение 5.04×/5.13× (экономия 80.14%/80.49%). На обоих размерах checksum разделимого и прямого YUV результата совпал; полные 1477×1065 raw-буферы совпали побайтно (0 различий). Scratch для кадра 1477×1065/r10 — 248,136 B (242.3 KiB); формула для 4000×3000/r256 даёт 16,416,000 B (15.66 MiB). Точные samples, source SHA, raw NV12 и изображение — в [BLUR-04 report](doc/perf/results/blur04_pixel3_gaussian_separable.md). Кандидат ограничен tight full-frame NV12, r10/sigma10; production C/ABI и RGB byte-oracle не менялись. Перенос не входит в измерительный результат.
 
-### OPT-14 — отложено
+### OPT-14 — DONE
 
-Гипотеза подтверждена изолированным Windows Dart экспериментом, без production-переноса. Для padded BGRA 1920×1080 (`pixelStride=4`, `rowStride=7744`, 64 B row padding) medians: ROI seed 49.403 → 27.190 ms (1.82×), copy-back 45.194 → 11.844 ms (3.82×). Кандидат копирует активную строку ровно одним `setRange`, если pixel stride обеих сторон равен sample bytes; row padding не читает и не пишет. Gapped-pixel layouts остались на sample-wise fallback; адресные тесты подтвердили их bytes и padding. [Отчёт](doc/perf/results/opt14_windows_row_copy.md), candidate patch и команды сохранены. Статус REVIEW до решения о production-переносе.
+Гипотеза подтверждена изолированным Windows Dart экспериментом и узкий Dart patch перенесён в production. Для padded BGRA 1920×1080 (`pixelStride=4`, `rowStride=7744`, 64 B row padding) medians: ROI seed 49.403 → 27.190 ms (1.82×), copy-back 45.194 → 11.844 ms (3.82×). Это отдельные Dart пути, не полный вызов. Копируется только активная строка, padding не читается и не пишется; gapped-pixel layouts остались на sample-wise fallback. Контрактные проверки padded source/receiver и gapped source/receiver, `abi_status_mapping_test.dart` и адресный analyze прошли после переноса. [Отчёт](doc/perf/results/opt14_windows_row_copy.md) сохраняет измерение и исходный кандидат.
