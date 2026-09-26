@@ -1,4 +1,4 @@
-# BGRA-00 addendum — toBgra() vs toBgraBytes() on Windows 1080p
+# BGRA-00 addendum — toBgra() vs toBgraBytes() on Windows 1080p and Pixel 3 720×360
 
 Measured 26 September 2026 on `release/0.4.2` HEAD `3ca75a79f371f4f123dfc395c6dce9194e728c5e`.
 Closes the first gap independent review found in the original BGRA-00 report
@@ -90,7 +90,72 @@ job, not this addendum's.
 
 ## Pixel 3 720×360
 
-Pending — the coordinating session is running Pixel 3 measurements centrally across the BGRA
-cycle to avoid contention over the single physical device between parallel executors. This
-section will be filled in with real numbers (or an explicit failure reason, per the task's
-no-fabrication rule) once that centralized run completes, before this card moves to REVIEW.
+Run by the coordinating session on the real device (`8B1X11QLW`) to avoid contention over the
+single physical device between parallel executors, using
+[`example/integration_test/bgra00_stage_breakdown_pixel3_test.dart`](../../../example/integration_test/bgra00_stage_breakdown_pixel3_test.dart).
+That file documents, in its own header comment, why this is **not** a 4-stage breakdown the way
+the Windows runner is: `staging`/`dest_alloc_zero`/`kernel`/`copy_out` are internal steps of
+`YuvAbiV1Runner._run`, which is unexported from `package:yuv_ffi`'s public surface
+(`lib/yuv_ffi.dart`) — an on-device `integration_test` can only reach `YuvImage.toBgraBytes()`/
+`toBgra()`, which run all four steps as one call with no hook to time a step in isolation. So the
+Android side of this addendum has exactly one stage — **full_call** — for each of
+`toBgraBytes()` and `toBgra()`, not the five Windows has.
+
+`flutter drive`/`integration_test` run against 720×360 NV12/I420→BGRA, warm-up 5 + 30 timed
+samples per pair/call, byte-exact checked every run against an independent pure-Dart BT.601
+round-trip oracle (`example/integration_test/helpers/bgra_round_trip_oracle.dart`) via SHA-256,
+not the Windows runner's FNV-1a — a different but equally independent oracle, appropriate for a
+different harness. Result: **"All tests passed"**, checksum identical on every run,
+`1638d13f0aab5308d972d00d7611f1cdb928de29bafc4c06907e0793ac3ecf55`.
+
+| Pair | Call | median | min | max | n |
+| --- | --- | ---: | ---: | ---: | ---: |
+| NV12→BGRA | toBgraBytes() | 11.40 ms | 11.06 ms | 13.09 ms | 30 |
+| NV12→BGRA | toBgra() | 12.35 ms | 12.15 ms | 15.23 ms | 30 |
+| I420→BGRA | toBgraBytes() | 11.38 ms | 11.11 ms | 25.47 ms (single outlier; rest consistent with NV12) | 30 |
+| I420→BGRA | toBgra() | 12.30 ms | 12.07 ms | 14.20 ms | 30 |
+
+### Observation: the toBgra()-vs-toBgraBytes() gap is not negligible on this device
+
+On Windows (above), `wrap` was ~0.007–0.010 ms — 0.01–0.02% of `full_call`, indistinguishable from
+noise. On Pixel 3, `toBgra()` costs **~0.9–1.0 ms more than `toBgraBytes()`** on both pairs
+(NV12: 12.35 − 11.40 = 0.95 ms; I420: 12.30 − 11.38 = 0.92 ms), which is roughly **8% of the whole
+call** — far above anything the Windows measurement would predict. This report does not paper
+over that mismatch with the Windows conclusion ("toBgra_full_call ≈ full_call within noise"),
+because the Android numbers say otherwise for the *wrap-equivalent* delta specifically.
+
+Two things are true at once and should not be confused:
+
+- The **conversion path itself** (staging + dest_alloc + kernel + copy_out, i.e. what
+  `toBgraBytes()` measures) cannot be isolated on Android through the public API, so this report
+  cannot say whether Android's wrap step alone is ~1 ms or whether some of that gap is JIT/AOT
+  warm-up variance between two back-to-back calls that allocate a fresh source `YuvImage` each
+  time (`_buildSourceImage(...)..applyRgbaBytes(rgba)` runs once per sample for *both* loops in
+  the Pixel 3 test, so both loops pay an extra RGBA→YUV `applyRgbaBytes` conversion that the
+  Windows FFI runner's staged stages never had to do at all — the two harnesses are not measuring
+  identical work upstream of the BGRA conversion, which the next paragraph explains).
+- The Windows `wrap` proxy measured *only* `YuvPlane`+`YuvImageImpl` construction over
+  already-copied bytes — a few object allocations, no I/O. If Android's `YuvImageImpl`
+  construction path (`YuvImageState`'s constructor, invoked by both `toBgra()`'s wrap and,
+  identically, every other `YuvImageImpl` factory) is meaningfully more expensive on the Dart
+  AOT/ARM runtime than proxy-measured on Windows Dart-VM/JIT, or if `YuvImageState`'s constructor
+  does non-trivial validation this addendum's Windows proxy did not replicate byte-for-byte (the
+  proxy only replicates `YuvPlane`'s own constructor, not `YuvImageState`'s, which is a different,
+  unproxied class further inside `YuvImageImpl`), that would show up as exactly this kind of
+  platform-specific gap without being a measurement error on either side.
+
+**This is flagged as an open, unresolved discrepancy, not resolved here.** The Windows
+conclusion ("toBgra() does not have a materially different performance profile from
+toBgraBytes()") holds for Windows Dart-VM/JIT as measured; it does not extend to Android
+Flutter AOT/ARM, where the wrap-equivalent gap is measured, real, and an order of magnitude
+larger in relative terms (~8% vs ~0.02%). Whoever next touches `toBgra()`'s wrap step (most
+likely inside a future BGRA-05 rollup, since neither BGRA-00 nor any BGRA-01…04 card scopes a
+wrap-step optimization) should treat this Android number as the one that matters for a
+mobile-first target, not the Windows one, and should isolate `YuvImageState` construction cost on
+Android specifically before concluding wrap is safe to ignore there the way it is on Windows.
+
+Structural constraint (from the Pixel 3 test file's own header comment, not this addendum): a
+true staged Android breakdown would require either exporting `YuvAbiV1Runner` from the public
+package surface, or building an Android cross-compiled `dart:ffi` runner that opens the on-device
+`.so` directly the way the Windows runner opens `yuv_ffi.dll` — both are out of scope for a
+measurement-only task and are noted as open follow-up work, not attempted here.
