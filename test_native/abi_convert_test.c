@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "yuv/abi/h/yuv_ops_v1.h"
@@ -550,6 +551,269 @@ static void test_rejected_pairs(void) {
         yuv_convert_v1(&sourceFrame, &destinationFrame, &options), YUV_STATUS_UNSUPPORTED_FORMAT);
 }
 
+/* ============================================================================
+ * BGRA-01: NV12->BGRA byte-exact geometry/layout matrix
+ *
+ * A heap fixture with an independently configurable pixelStride/rowStride per
+ * plane, plus an optional +1 byte data offset -- the stack Frame fixture
+ * above hard-codes pixelStride to sampleBytes and caps geometry at 8x8, which
+ * cannot express the fast-path/generic-path selection (pixelStride ==
+ * 1/2/4 vs. gapped) or the 33x17 case this task's DoD asks for. The oracle
+ * here is transcribed independently again, not shared with the kernel or
+ * with test_yuv_to_bgra's oracle above, to keep the "two agreeing but wrong
+ * paths" failure mode catchable.
+ * ============================================================================ */
+
+typedef struct {
+    uint8_t *base;      /* raw allocation, possibly unaligned-offset */
+    uint8_t *data;      /* base + offset: what the descriptor points at */
+    uint64_t rowStride;
+    uint32_t pixelStride;
+    uint32_t sampleBytes;
+    uint64_t length;
+} GapPlane;
+
+/* pixelStride/rowStride are caller-chosen so tight, padded, and pixel-gapped
+ * layouts are all expressible; offset shifts the descriptor's `data` inside
+ * a slightly larger allocation to probe unaligned addresses. */
+static void gap_plane_init(GapPlane *plane, uint32_t width, uint32_t height, uint32_t pixelStride,
+    uint32_t sampleBytes, uint32_t rowPad, uint32_t offset, uint8_t canary) {
+    plane->pixelStride = pixelStride;
+    plane->sampleBytes = sampleBytes;
+    plane->rowStride = (uint64_t)width * pixelStride + rowPad;
+    plane->length = plane->rowStride * height;
+    plane->base = (uint8_t *)malloc((size_t)plane->length + offset);
+    if (plane->base == NULL) {
+        fprintf(stderr, "fatal: gap_plane_init malloc failed\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(plane->base, canary, (size_t)plane->length + offset);
+    plane->data = plane->base + offset;
+}
+
+static void gap_plane_free(GapPlane *plane) {
+    free(plane->base);
+    plane->base = NULL;
+    plane->data = NULL;
+}
+
+static uint8_t *gap_plane_sample(GapPlane *plane, uint32_t x, uint32_t y) {
+    return plane->data + (uint64_t)y * plane->rowStride + (uint64_t)x * plane->pixelStride;
+}
+
+static int gap_plane_padding_intact(GapPlane *plane, uint32_t width, uint32_t height, uint8_t canary) {
+    uint64_t span = (uint64_t)width * plane->pixelStride;
+    for (uint32_t y = 0; y < height; y++) {
+        for (uint64_t offset = span; offset < plane->rowStride; offset++) {
+            if (plane->data[y * plane->rowStride + offset] != canary) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+#define NV12_BGRA_CANARY 0xC9
+
+static int nv12_bgra_clip(int value) {
+    return value < 0 ? 0 : (value > 255 ? 255 : value);
+}
+
+/* Independent oracle: plain per-pixel BT.601 limited-range decode, no shared
+ * chroma term or fast/generic distinction -- exactly the pre-optimization
+ * shape, transcribed again rather than reused. */
+static void nv12_bgra_oracle_pixel(int y, int u, int v, int *b, int *g, int *r) {
+    int c = y - 16;
+    int d = u - 128;
+    int e = v - 128;
+    *b = nv12_bgra_clip((298 * c + 516 * d + 128) >> 8);
+    *g = nv12_bgra_clip((298 * c - 100 * d - 208 * e + 128) >> 8);
+    *r = nv12_bgra_clip((298 * c + 409 * e + 128) >> 8);
+}
+
+/* Deterministic but touches both clip extremes: corners hit Y/U/V at 0 and
+ * 255 so the clamp in both directions is exercised, not just the linear part
+ * of the formula. */
+static uint8_t nv12_bgra_y_value(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    if (x == 0 && y == 0) return 255;
+    if (x == width - 1 && y == height - 1) return 0;
+    return (uint8_t)((23 * x + 41 * y + 7) % 256);
+}
+
+static uint8_t nv12_bgra_u_value(uint32_t cx, uint32_t cy) {
+    if (cx == 0 && cy == 0) return 0;
+    return (uint8_t)((31 * cx + 19 * cy + 3) % 256);
+}
+
+static uint8_t nv12_bgra_v_value(uint32_t cx, uint32_t cy) {
+    if (cx == 0 && cy == 0) return 255;
+    return (uint8_t)((17 * cx + 53 * cy + 11) % 256);
+}
+
+typedef struct {
+    const char *name;
+    uint32_t width;
+    uint32_t height;
+} NV12BgraGeometry;
+
+typedef struct {
+    const char *name;
+    uint32_t yPad;
+    uint32_t yPs; /* Y pixelStride: 1 = tight, >1 = gapped */
+    uint32_t uvPad;
+    uint32_t uvPs; /* UV pixelStride: 2 = tight, >2 = gapped */
+    uint32_t dstPad;
+    uint32_t dstPs; /* BGRA pixelStride: 4 = tight, >4 = gapped */
+    uint32_t yOffset;
+    uint32_t uvOffset;
+    uint32_t dstOffset;
+} NV12BgraLayout;
+
+static void run_nv12_bgra_case(const NV12BgraGeometry *geometry, const NV12BgraLayout *layout) {
+    uint32_t width = geometry->width;
+    uint32_t height = geometry->height;
+    uint32_t cw = (width + 1u) / 2u;
+    uint32_t ch = (height + 1u) / 2u;
+
+    GapPlane yPlane;
+    GapPlane uvPlane;
+    GapPlane dstPlane;
+    gap_plane_init(&yPlane, width, height, layout->yPs, 1, layout->yPad, layout->yOffset, NV12_BGRA_CANARY);
+    gap_plane_init(&uvPlane, cw, ch, layout->uvPs, 2, layout->uvPad, layout->uvOffset, NV12_BGRA_CANARY);
+    gap_plane_init(&dstPlane, width, height, layout->dstPs, 4, layout->dstPad, layout->dstOffset, NV12_BGRA_CANARY);
+
+    for (uint32_t y = 0; y < height; y++) {
+        for (uint32_t x = 0; x < width; x++) {
+            *gap_plane_sample(&yPlane, x, y) = nv12_bgra_y_value(x, y, width, height);
+        }
+    }
+    for (uint32_t cy = 0; cy < ch; cy++) {
+        for (uint32_t cx = 0; cx < cw; cx++) {
+            uint8_t *uv = gap_plane_sample(&uvPlane, cx, cy);
+            uv[0] = nv12_bgra_u_value(cx, cy);
+            uv[1] = nv12_bgra_v_value(cx, cy);
+        }
+    }
+
+    YuvConstFrameV1 source;
+    memset(&source, 0, sizeof(source));
+    source.structSize = (uint32_t)sizeof(source);
+    source.abiVersion = YUV_ABI_VERSION_1;
+    source.format = YUV_FORMAT_NV12;
+    source.planeCount = 2;
+    source.width = width;
+    source.height = height;
+    source.colorMatrix = YUV_COLOR_MATRIX_BT601;
+    source.colorRange = YUV_COLOR_RANGE_LIMITED;
+    source.planes[0].data = yPlane.data;
+    source.planes[0].length = yPlane.length;
+    source.planes[0].rowStride = yPlane.rowStride;
+    source.planes[0].pixelStride = yPlane.pixelStride;
+    source.planes[0].sampleBytes = yPlane.sampleBytes;
+    source.planes[1].data = uvPlane.data;
+    source.planes[1].length = uvPlane.length;
+    source.planes[1].rowStride = uvPlane.rowStride;
+    source.planes[1].pixelStride = uvPlane.pixelStride;
+    source.planes[1].sampleBytes = uvPlane.sampleBytes;
+
+    YuvMutableFrameV1 destination;
+    memset(&destination, 0, sizeof(destination));
+    destination.structSize = (uint32_t)sizeof(destination);
+    destination.abiVersion = YUV_ABI_VERSION_1;
+    destination.format = YUV_FORMAT_BGRA8888;
+    destination.planeCount = 1;
+    destination.width = width;
+    destination.height = height;
+    destination.planes[0].data = dstPlane.data;
+    destination.planes[0].length = dstPlane.length;
+    destination.planes[0].rowStride = dstPlane.rowStride;
+    destination.planes[0].pixelStride = dstPlane.pixelStride;
+    destination.planes[0].sampleBytes = dstPlane.sampleBytes;
+
+    YuvConvertOptionsV1 options = convert_options();
+
+    char label[192];
+    snprintf(label, sizeof(label), "NV12->BGRA %s %ux%u [%s]", geometry->name, width, height, layout->name);
+    expect_status(label, yuv_convert_v1(&source, &destination, &options), YUV_STATUS_OK);
+
+    int ok = 1;
+    int alphaOk = 1;
+    for (uint32_t y = 0; y < height && ok; y++) {
+        for (uint32_t x = 0; x < width && ok; x++) {
+            uint32_t cx = x / 2u;
+            uint32_t cy = y / 2u;
+            int yy = nv12_bgra_y_value(x, y, width, height);
+            uint8_t *uv = gap_plane_sample(&uvPlane, cx, cy);
+            int expectedB, expectedG, expectedR;
+            nv12_bgra_oracle_pixel(yy, uv[0], uv[1], &expectedB, &expectedG, &expectedR);
+            uint8_t *sample = gap_plane_sample(&dstPlane, x, y);
+            if (sample[0] != expectedB || sample[1] != expectedG || sample[2] != expectedR) {
+                printf("  FAIL  (%u,%u) expected B=%d G=%d R=%d got B=%u G=%u R=%u\n", x, y, expectedB,
+                    expectedG, expectedR, sample[0], sample[1], sample[2]);
+                ok = 0;
+            }
+            if (sample[3] != 255) {
+                alphaOk = 0;
+            }
+        }
+    }
+    char subLabel[64];
+    snprintf(subLabel, sizeof(subLabel), "      %s matches the independent oracle", layout->name);
+    expect_true(subLabel, ok);
+    expect_true("      alpha is opaque", alphaOk);
+    expect_true("      Y padding/gaps intact", gap_plane_padding_intact(&yPlane, width, height, NV12_BGRA_CANARY));
+    expect_true("      UV padding/gaps intact", gap_plane_padding_intact(&uvPlane, cw, ch, NV12_BGRA_CANARY));
+    expect_true(
+        "      destination padding/gaps intact", gap_plane_padding_intact(&dstPlane, width, height, NV12_BGRA_CANARY));
+
+    gap_plane_free(&yPlane);
+    gap_plane_free(&uvPlane);
+    gap_plane_free(&dstPlane);
+}
+
+static void test_nv12_to_bgra_geometry_and_layout(void) {
+    printf("NV12->BGRA geometry/layout matrix (BGRA-01)\n");
+
+    const NV12BgraGeometry geometries[] = {
+        {"1x1", 1, 1},
+        {"2x2", 2, 2},
+        {"1x9", 1, 9},
+        {"9x1", 9, 1},
+        {"7x5", 7, 5},
+        {"8x6", 8, 6},
+        {"33x17", 33, 17},
+    };
+    const size_t geometryCount = sizeof(geometries) / sizeof(geometries[0]);
+
+    const NV12BgraLayout layouts[] = {
+        /* Both sides tight: the fast path (yPs=1, uvPs=2, dstPs=4). */
+        {"tight", 0, 1, 0, 2, 0, 4, 0, 0, 0},
+        /* Row-padded but still pixel-tight: fast path stays selected, row
+         * padding is exercised through rowStride on all three planes. */
+        {"row-padded", 5, 1, 6, 2, 9, 4, 0, 0, 0},
+        /* Pixel-gapped on every plane: forces the generic path throughout. */
+        {"pixel-gapped", 0, 2, 0, 3, 0, 5, 0, 0, 0},
+        /* Mixed: tight source, gapped destination -- generic path is chosen
+         * because dstPs != 4 even though yPs/uvPs alone would qualify. */
+        {"src-tight-dst-gapped", 0, 1, 0, 2, 0, 5, 0, 0, 0},
+        /* Mixed the other way: gapped source, tight destination -- generic
+         * path chosen because yPs != 1. */
+        {"src-gapped-dst-tight", 0, 2, 0, 3, 0, 4, 0, 0, 0},
+        /* Unaligned data: every plane's descriptor points 1 byte into its
+         * allocation, so a fast-path pointer increment cannot rely on any
+         * particular alignment. */
+        {"unaligned-tight", 0, 1, 0, 2, 0, 4, 1, 1, 1},
+        {"unaligned-gapped", 0, 2, 0, 3, 0, 5, 1, 1, 1},
+    };
+    const size_t layoutCount = sizeof(layouts) / sizeof(layouts[0]);
+
+    for (size_t g = 0; g < geometryCount; g++) {
+        for (size_t l = 0; l < layoutCount; l++) {
+            run_nv12_bgra_case(&geometries[g], &layouts[l]);
+        }
+    }
+}
+
 int main(void) {
     printf("=============================================================\n");
     printf("ABI v1 conversion tests (YUV-32)\n");
@@ -559,6 +823,7 @@ int main(void) {
     test_against_oracle();
     test_same_format_deep_copy();
     test_yuv_to_bgra();
+    test_nv12_to_bgra_geometry_and_layout();
     test_rejected_pairs();
 
     printf("-------------------------------------------------------------\n");
