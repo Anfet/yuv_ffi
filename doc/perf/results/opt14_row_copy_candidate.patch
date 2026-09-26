@@ -1,0 +1,41 @@
+diff --git a/lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart b/lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart
+index 81917a5..2263df1 100644
+--- a/lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart
++++ b/lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart
+@@ -513,6 +513,16 @@ class YuvAbiV1Runner {
+     required int planeHeight,
+     required int sampleBytes,
+   }) {
++    if (sourcePixelStride == sampleBytes && destinationPixelStride == sampleBytes) {
++      final int activeRowBytes = planeWidth * sampleBytes;
++      for (int row = 0; row < planeHeight; row++) {
++        final int destinationRowStart = row * destinationRowStride;
++        final int sourceRowStart = row * sourceRowStride;
++        destination.setRange(destinationRowStart, destinationRowStart + activeRowBytes, source, sourceRowStart);
++      }
++      return;
++    }
++
+     for (int row = 0; row < planeHeight; row++) {
+       final int destinationRowStart = row * destinationRowStride;
+       final int sourceRowStart = row * sourceRowStride;
+diff --git a/lib/src/yuv/shared/yuv_abi_v1_image_transport.dart b/lib/src/yuv/shared/yuv_abi_v1_image_transport.dart
+index c76305e..7eac1b1 100644
+--- a/lib/src/yuv/shared/yuv_abi_v1_image_transport.dart
++++ b/lib/src/yuv/shared/yuv_abi_v1_image_transport.dart
+@@ -145,6 +145,15 @@ abstract final class YuvAbiV1ImageTransport {
+         continue;
+       }
+ 
++      if (target.pixelStride == sampleBytes) {
++        for (int row = 0; row < planeHeight; row++) {
++          final int sourceRowStart = row * sourceRowStride;
++          final int destinationRowStart = row * target.rowStride;
++          destination.setRange(destinationRowStart, destinationRowStart + sourceRowStride, source, sourceRowStart);
++        }
++        continue;
++      }
++
+       for (int row = 0; row < planeHeight; row++) {
+         final int sourceRowStart = row * sourceRowStride;
+         final int destinationRowStart = row * target.rowStride;

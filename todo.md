@@ -22,7 +22,7 @@
 | BLUR-02 | DONE | Mean: прямой Y-only и Y/U/V вместо RGB | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 | BLUR-03 | DONE | Gaussian: прямой Y/U/V с тем же 2D-ядром | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
 | BLUR-04 | DONE | Gaussian: разделимые 1D-проходы и ограниченный scratch | T1 · GPT-6 Sol | T2 · GPT-5.6 Terra |
-| OPT-14 | DEFERRED | Dart row-copy fast paths из OPT-13 | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
+| OPT-14 | REVIEW | Dart row-copy fast paths из OPT-13 | T2 · GPT-5.6 Terra | T1 · GPT-6 Sol |
 
 ### BLUR-00 — один воспроизводимый прогон — DONE
 
@@ -52,4 +52,4 @@
 
 ### OPT-14 — отложено
 
-Узкий Dart row-copy fast path из архивного плана: `YuvAbiV1Runner._seedPlaneFromSource` и `YuvAbiV1ImageTransport.applyTo`, только при плотном pixel stride, без изменения padding и allocator. Вернуться к нему после blur, если профиль публичного вызова покажет заметную стоимость копирования.
+Гипотеза подтверждена изолированным Windows Dart экспериментом, без production-переноса. Для padded BGRA 1920×1080 (`pixelStride=4`, `rowStride=7744`, 64 B row padding) medians: ROI seed 49.403 → 27.190 ms (1.82×), copy-back 45.194 → 11.844 ms (3.82×). Кандидат копирует активную строку ровно одним `setRange`, если pixel stride обеих сторон равен sample bytes; row padding не читает и не пишет. Gapped-pixel layouts остались на sample-wise fallback; адресные тесты подтвердили их bytes и padding. [Отчёт](doc/perf/results/opt14_windows_row_copy.md), candidate patch и команды сохранены. Статус REVIEW до решения о production-переносе.

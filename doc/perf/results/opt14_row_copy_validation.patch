@@ -1,0 +1,73 @@
+diff --git a/test/opt14_copy_contract_test.dart b/test/opt14_copy_contract_test.dart
+new file mode 100644
+index 0000000..036331f
+--- /dev/null
++++ b/test/opt14_copy_contract_test.dart
+@@ -0,0 +1,67 @@
++import 'dart:typed_data';
++
++import 'package:flutter_test/flutter_test.dart';
++import 'package:yuv_ffi/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart';
++import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
++import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_image_transport.dart';
++import 'package:yuv_ffi/yuv_ffi.dart';
++
++void main() {
++  tearDown(() => YuvAbiV1Runner.debugInvokeOverride = null);
++
++  test('row-copy applyTo retains row padding and fallback retains pixel gaps', () {
++    const width = 3;
++    const height = 2;
++    final result = YuvAbiV1FrameResult([
++      Uint8List.fromList(<int>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]),
++    ]);
++    final padded = YuvPlane(height, 16, 4, Uint8List(32)..fillRange(0, 32, 0xA5));
++    YuvAbiV1ImageTransport.applyTo(result: result, planes: [padded], format: YuvFileFormat.bgra8888, width: width, height: height);
++    expect(padded.bytes.sublist(0, 12), result.planes.single.sublist(0, 12));
++    expect(padded.bytes.sublist(16, 28), result.planes.single.sublist(12, 24));
++    expect(padded.bytes.sublist(12, 16), everyElement(0xA5));
++    expect(padded.bytes.sublist(28, 32), everyElement(0xA5));
++
++    final gapped = YuvPlane(height, 20, 6, Uint8List(40)..fillRange(0, 40, 0xA5));
++    YuvAbiV1ImageTransport.applyTo(result: result, planes: [gapped], format: YuvFileFormat.bgra8888, width: width, height: height);
++    for (var row = 0; row < height; row++) {
++      for (var col = 0; col < width; col++) {
++        final sourceOffset = (row * width + col) * 4;
++        final targetOffset = row * 20 + col * 6;
++        expect(gapped.bytes.sublist(targetOffset, targetOffset + 4), result.planes.single.sublist(sourceOffset, sourceOffset + 4));
++        expect(gapped.bytes.sublist(targetOffset + 4, targetOffset + 6), everyElement(0xA5));
++      }
++      expect(gapped.bytes.sublist(row * 20 + 18, row * 20 + 20), everyElement(0xA5));
++    }
++  });
++
++  test('seed fallback reads gapped source samples without its gaps', () {
++    const width = 3;
++    const height = 2;
++    const sourceStride = 20;
++    final source = Uint8List(sourceStride * height)..fillRange(0, sourceStride * height, 0xEE);
++    for (var row = 0; row < height; row++) {
++      for (var col = 0; col < width; col++) {
++        source.fillRange(row * sourceStride + col * 6, row * sourceStride + col * 6 + 4, 0x10 + row * width + col);
++      }
++    }
++    YuvAbiV1Runner.debugInvokeOverride = (_, _, _) => 0;
++    final frame = YuvAbiV1Runner.grayscale(
++      source: YuvAbiV1FrameInput(
++        format: YuvAbiV1ImageTransport.abiFormat(YuvFileFormat.bgra8888),
++        width: width,
++        height: height,
++        planes: [YuvAbiV1PlaneInput(bytes: source, rowStride: sourceStride, pixelStride: 6)],
++      ),
++      region: const YuvAbiV1Region(left: 1, top: 0, right: 2, bottom: 1),
++    );
++    for (var row = 0; row < height; row++) {
++      for (var col = 0; col < width; col++) {
++        if (row == 0 && col == 1) continue;
++        final sourceOffset = row * sourceStride + col * 6;
++        final targetOffset = (row * width + col) * 4;
++        expect(frame.planes.single.sublist(targetOffset, targetOffset + 4), source.sublist(sourceOffset, sourceOffset + 4));
++      }
++    }
++  });
++}
