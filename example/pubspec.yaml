@@ -39,6 +39,13 @@ dev_dependencies:
   crypto: ^3.0.6
   image: ^4.5.4
 
+  # BGRA-04: bgra04_copy_out_candidates_pixel3_test.dart allocates a raw
+  # native buffer directly to compare copy-out candidates in isolation,
+  # mirroring speed_00_dart_ffi/test/bgra04_copy_out_bench_test.dart's use of
+  # dart:ffi + package:ffi. Declared explicitly rather than relied on as a
+  # transitive dependency of yuv_ffi.
+  ffi: ^2.2.0
+
 flutter:
   uses-material-design: true
   assets:
