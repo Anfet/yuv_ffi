@@ -433,8 +433,8 @@ class YuvAbiV1Runner {
   /// the destination from source..."). [seedFromSource] and [layout] always
   /// share geometry here -- every ROI-capable call uses
   /// [_sameGeometryDestination] -- but their row/pixel strides may still
-  /// differ, so seeding copies sample-by-sample through both planes' strides
-  /// rather than a raw byte copy.
+  /// differ, so seeding uses each plane's row/pixel stride and copies only
+  /// active samples.
   ///
   /// Transactional in the same sense as [_allocateConstFrame]: any throw
   /// partway through is caught, everything allocated so far is freed through
@@ -497,8 +497,9 @@ class YuvAbiV1Runner {
     return frame;
   }
 
-  /// Copies [source] into [destination] sample-by-sample, in logical
-  /// `(row, sample)` coordinates, using each side's own row/pixel stride.
+  /// Copies active samples from [source] into [destination], using each
+  /// side's own row/pixel stride. Dense pixels move one row at a time;
+  /// gapped pixels move sample by sample.
   /// Row and pixel padding in [destination] outside the copied samples is
   /// left as `calloc` zeroed it -- only the active `planeWidth x planeHeight`
   /// samples are the destination's seeded content.

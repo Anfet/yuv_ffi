@@ -1,5 +1,10 @@
 # yuv_ffi — история проверок и принятых задач
 
+## CVT-00 — DONE — Измерены текущие конвертации ABI v1
+
+- Windows x64 Flutter 3.44.9 Release/AOT на `3564f5f`, 1920×1080: все 12 поддерживаемых направлений прошли два отдельных прогона с 30 или 50 образцами и стабильными checksum. I420/NV12→BGRA: 43.3–44.2 мс, BGRA/RGBA→YUV: 20.7–23.3 мс, I420↔NV12: 10.3–11.8 мс медианы публичного вызова. [Отчёт и raw](doc/perf/results/conversion_windows_1080p_2026-09-26.md).
+- Приоритет дальнейшей работы: сначала отделить Dart staging от C kernel, затем адресно исследовать `yuv_convert_to_bgra`, `yuv_convert_relayout` и `yuv_convert_from_packed`. Задачи CVT-01…06 и предрелизная платформа-проверка PRE-00…07 занесены в [todo](todo.md).
+
 ## OPT-14 — DONE — Проверены и перенесены Dart row-copy fast paths
 
 - Изолированный Windows Dart эксперимент на padded BGRA 1920×1080 подтвердил гипотезу: ROI seed 49.403 → 27.190 ms, copy-back 45.194 → 11.844 ms. Кандидат применим только при плотном pixel stride и сохраняет row padding; pixel gaps остаются на прежнем sample-wise пути.

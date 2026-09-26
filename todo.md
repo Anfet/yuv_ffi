@@ -1,4 +1,4 @@
-# yuv_ffi 0.4.2 — скорость blur на Pixel 3
+# yuv_ffi 0.4.2 — оптимизация и предрелизная проверка
 
 Цель: измерить, сколько дают обработка Y/U/V без RGB-конверсий и новый алгоритм Gaussian. Работать по одной native функции и одному Dart-прогону операции. Сравнение с 0.2.4, общая матрица платформ и Power Plan для этих задач не нужны.
 
@@ -53,3 +53,32 @@
 ### OPT-14 — DONE
 
 Гипотеза подтверждена изолированным Windows Dart экспериментом и узкий Dart patch перенесён в production. Для padded BGRA 1920×1080 (`pixelStride=4`, `rowStride=7744`, 64 B row padding) medians: ROI seed 49.403 → 27.190 ms (1.82×), copy-back 45.194 → 11.844 ms (3.82×). Это отдельные Dart пути, не полный вызов. Копируется только активная строка, padding не читается и не пишется; gapped-pixel layouts остались на sample-wise fallback. Контрактные проверки padded source/receiver и gapped source/receiver, `abi_status_mapping_test.dart` и адресный analyze прошли после переноса. [Отчёт](doc/perf/results/opt14_windows_row_copy.md) сохраняет измерение и исходный кандидат.
+
+## Конвертации ABI v1
+
+Текущие Windows Release/AOT времена полного публичного вызова на 1920×1080 приведены в [отчёте CVT-00](doc/perf/results/conversion_windows_1080p_2026-09-26.md). На одном SHA два прогона дали для I420/NV12 → BGRA 43–44 мс, BGRA/RGBA → YUV 21–23 мс, I420 ↔ NV12 10–12 мс. Это не время одного native kernel. Дальше менять по одной функции, с адресным Dart тестом и до/после на одинаковом входе. После отчёта по принятой задаче — отдельный коммит.
+
+| ID | Статус | Исполнитель | Задача и критерий приёмки |
+| --- | --- | --- | --- |
+| CVT-00 | DONE | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | Зафиксировать текущие 12 направлений 1080p, два прогона, raw samples и checksum; [результат](doc/perf/results/conversion_windows_1080p_2026-09-26.md). |
+| CVT-01 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | Для NV12→BGRA, BGRA→NV12, I420↔NV12 и RGBA→BGRA разделить время публичного вызова на Dart staging/alloc/copy-out и `yuv_convert_v1` на тех же входах. Добавить 720×360, фиксировать SHA/медиану/память; по результату уточнить порядок C-задач. |
+| CVT-02 | TODO | T1 · GPT-6 Sol; проверка T2 · GPT-5.6 Terra | Оптимизировать только `yuv_convert_to_bgra` для NV12 и I420: убрать выбор формата из внутреннего цикла, переиспользовать chroma пары/строчные указатели. Сохранить byte-exact BT.601, alpha=255, odd geometry и stride; отдельно измерить оба направления на 720×360 и 1080p. |
+| CVT-03 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | Оптимизировать только `yuv_convert_relayout` для I420↔NV12: плотные строки через прямую interleave/deinterleave, gapped layouts через прежний контрактный путь. Сверить все активные байты, padding, odd geometry и медианы обеих сторон. |
+| CVT-04 | TODO | T1 · GPT-6 Sol; проверка T2 · GPT-5.6 Terra | После CVT-01 оптимизировать только `yuv_convert_from_packed` для BGRA/RGBA→I420/NV12: проверить цену арифметики и адресации в 2×2 блоке, сохранить порядок усреднения и целочисленное округление побайтно. Замерить четыре направления и пиковую память. |
+| CVT-05 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | Исследовать RGBA→BGRA отдельно: сейчас полный вызов 23.2–23.6 мс. Разделить стоимость конструктора/копий и перестановки каналов; затем оптимизировать только подтверждённый узкий участок, проверить alpha, row padding и checksum. |
+| CVT-06 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | Проверить, имеет ли смысл менять `yuv_convert_copy_plane` и same-format Dart deep copy (2–5 мс на 1080p). При отсутствии воспроизводимого выигрыша закрыть задачей с отрицательным результатом без кода. |
+
+## Предрелизные задачи
+
+Одна и та же чистая финальная ревизия должна пройти проверки ниже. Существующие CI jobs уже покрывают Android emulator, Linux/macOS desktop, iOS Simulator и браузерный WASM; задача — подтвердить на финальном SHA именно изменённые конвертации и blur, включая реальные loader/asset пути. Web остаётся частичным WASM backend. Отсутствие локальной Linux машины закрывается hosted CI, а не предположением по Windows.
+
+| ID | Статус | Исполнитель | Проверка и артефакт |
+| --- | --- | --- | --- |
+| PRE-00 | TODO | T1 · GPT-6 Sol; исполнение теста T2 · GPT-5.6 Terra | Подготовить маленький общий app-runtime smoke для оптимизированных NV12/I420/BGRA конвертаций и box/mean/Gaussian, с фиксированными входами/checksum, odd geometry и padded row. Встроить в существующие platform jobs без полной новой матрицы; Web использует собственный browser runner. |
+| PRE-01 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | Android: Pixel 3 arm64 Release/AOT на 720×360 и эталонном кадре, результат/время/checksum для конвертаций и blur; проверить фактический порядок chroma CameraX по байтам. Привязать к тому же SHA зелёные CI x86_64 и ARMv7 runtime jobs. |
+| PRE-02 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | Windows x64 Release: `flutter test` native/contract, примерное приложение и app-runtime smoke, 12 конвертаций/blur, padding/ROI. Сохранить версию toolchain, SHA, raw время и checksum; при возможности добавить отсутствующий Windows CI job. |
+| PRE-03 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | macOS desktop: чистая CocoaPods/Xcode сборка, `flutter drive` с реальным process-linked plugin без side-loaded dylib, адресные конвертации/blur и loader smoke. Записать архитектуру Mac runner и ссылку на CI job; отдельно проверить cold build. |
+| PRE-04 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | Web: пересобрать WASM asset из финального C, запустить Chrome `flutter drive` с asset bundle, имеющиеся reference 119 cases и адресные новые сценарии. Фиксировать поддерживаемые операции и расхождения с native как ограничения частичного backend. |
+| PRE-05 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | Linux x64 через hosted CI: чистая Release сборка `.so` и example, `native_packaging_smoke_test.dart`, `xvfb-run flutter drive` и PRE-00. Сохранить ссылку на зелёный run именно финального SHA; локальная Linux машина не требуется. |
+| PRE-06 | TODO | T2 · GPT-5.6 Terra; проверка T1 · GPT-6 Sol | iOS как объявленная шестая платформа: чистая сборка pod/Simulator, `flutter drive` app-runtime smoke и PRE-00, checksum/архитектура/CI run. Физическое устройство проверить при наличии, не подменяя его симулятором в отчёте. |
+| PRE-07 | TODO | T1 · GPT-6 Sol; проверка T2 · GPT-5.6 Terra | После platform gates сверить `CHANGELOG.md`/`pubspec.yaml`, выполнить корневой анализ/тесты, native sanitizers и `flutter pub publish --dry-run` на одном чистом финальном SHA. Свести ссылки на все runs и оставшиеся ограничения до решения о релизе; ничего не публиковать этой задачей. |
