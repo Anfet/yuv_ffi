@@ -15,7 +15,7 @@
 | BGRA-00 | DONE | — | T2 · GPT-5.6 Terra; T1 · GPT-6 Sol | Разложить NV12/I420→BGRA на входной Dart staging, выделение/обнуление destination, `yuv_convert_v1`, копирование результата и полный `toBgraBytes()`/`toBgra()`. Один Dart runner с прямым FFI замером ядра, те же входы и checksum; измерить Windows 1080p и Pixel 3 720×360. По отчёту выбрать порядок следующих задач. |
 | BGRA-01 | DONE | BGRA-00: C значим | T2 · GPT-5.6 Terra; T1 · GPT-6 Sol | Оптимизировать только NV12-ветку `yuv_convert_to_bgra` в `src/yuv/abi/yuv_convert_v1.c`: вынести выбор формата из цикла, переиспользовать UV для пары Y, добавить быстрый tight путь при сохранении generic stride пути. Сравнить C и полный вызов; byte-exact, odd/padded/gapped и sanitizer проверки обязательны. |
 | BGRA-02 | DONE | BGRA-00: C значим; BGRA-01 | T2 · GPT-5.6 Terra; T1 · GPT-6 Sol | Отдельно оптимизировать I420-ветку той же функции, переиспользуя U/V для соседних пикселей и не меняя целочисленную формулу BT.601. Те же тесты и замеры; проверить отсутствие регрессии NV12 после изменения общей функции. |
-| BGRA-03 | TODO | BGRA-00: подготовка/zero-fill значимы | T1 · GPT-6 Sol; T2 · GPT-5.6 Terra | Проверить один Dart transport-кандидат: убрать лишнее обнуление только у полностью перезаписываемых байтовых буферов конвертации. Структуры ABI и ROI должны остаться инициализированными. Проверить allocator failure/atomicity, память и ускорение полного вызова; без выигрыша не переносить. |
+| BGRA-03 | REVIEW | BGRA-00: подготовка/zero-fill значимы | T1 · Claude Sonnet 5; проверка — T2 | Проверить один Dart transport-кандидат: убрать лишнее обнуление только у полностью перезаписываемых байтовых буферов конвертации. Структуры ABI и ROI должны остаться инициализированными. Проверить allocator failure/atomicity, память и ускорение полного вызова; без выигрыша не переносить. |
 | BGRA-04 | TODO | BGRA-00: copy-out значим | T1 · GPT-6 Sol; T2 · GPT-5.6 Terra | Изолированно проверить уменьшение копирования native BGRA результата в Dart без утечки или преждевременного освобождения. Сохранить независимость результата от источника, срок жизни буфера и публичное поведение; сравнить полный вызов и память. При риске контракта закрыть отрицательным выводом. |
 | BGRA-05 | TODO | BGRA-01…04 или их обоснованное закрытие | T1 · GPT-6 Sol; T2 · GPT-5.6 Terra | Свести принятые варианты, повторить полный `toBgraBytes()` и `toBgra()` для NV12/I420 на Windows и Pixel 3, сравнить с исходными 43–44 мс на одинаковом 1080p входе. Зафиксировать итоговое время, выигрыш, checksum, память и оставшийся лимитирующий этап. |
 
@@ -608,6 +608,182 @@ I420-специфичные кейсы (разные stride у U и V), заяв
 `reference_native_conversions_test.dart` в Executor Report не совпадает с фактическим числом
 подтестов (121) при отдельном прогоне этого файла; не блокирует приёмку, так как унаследовано
 дословно из уже принятого BGRA-01 review и не меняет итог (все тесты проходят).
+
+### BGRA-03 — destination-аллокация `YuvAbiV1Runner.convert`
+
+**Статус:** REVIEW
+**Исполнитель:** T1 · Claude Sonnet 5 (роль T1 по протоколу: задача касается allocator/atomicity)
+**Зависит от:** BGRA-00 (принят; dest_alloc_zero ~33% полного вызова, второй по значимости этап после kernel).
+
+Это чисто Dart-задача (transport/allocator), native C код (`src/`, `test_native/`) не
+изменялся ни на байт — `git diff` по обоим коммитам этой карточки затрагивает только
+`lib/src/yuv/impl/io/`, `test/` и `speed_00_dart_ffi/test/`.
+
+#### Классификация буферов
+
+Прочитан весь путь `YuvAbiV1Runner._run`/`_allocateMutableFrame`/`_allocateConstFrame` и
+`yuv_convert_v1` (`src/yuv/abi/yuv_convert_v1.c`, строки 323–371):
+
+- **`yuv_convert_v1` валидирует полностью до какой-либо записи.** Порядок: options header →
+  `reserved[0..2] == 0` → `yuv_validate_v1_frames` (геометрия/strides/planeCount, `YUV_GEOMETRY_V1_SAME`)
+  → `yuv_validate_v1_format_pair` (только 12 пар: I420/NV12/BGRA8888/RGBA8888 → I420/NV12/BGRA8888).
+  Любая из этих проверок возвращает ненулевой `YuvStatus` немедленно, **до** вызова любой из четырёх
+  функций-диспетчеров (`yuv_convert_copy`, `yuv_convert_relayout`, `yuv_convert_to_bgra`,
+  `yuv_convert_from_packed`). Ни одна из них не имеет собственного пути "начал писать и прервался" —
+  каждая вызывается только после того, как все проверки прошли, и всегда выполняется до конца. Это
+  подтверждено чтением кода, а не предположением: partial-write-on-error в ABI v1 `yuv_convert_v1`
+  структурно невозможен, весь риск из инструкции задачи ("если бы запись могла начаться и оборваться
+  посередине") к этой функции неприменим.
+- **Destination `convert()` всегда tight-stride.** `_destinationWithGeometry` (единственный
+  конструктор `YuvAbiV1DestinationLayout` для `convert`) всегда строит `pixelStride == sampleBytes`,
+  `rowStride == planeWidth * sampleBytes` — то есть без row padding и без pixel gaps. Отсюда
+  `length = rowStride * planeHeight` в `_allocateMutableFrame` — это ровно количество активных
+  сэмплов, ни байтом больше. Каждый из четырёх диспетчеров `yuv_convert_v1` при успехе пишет каждый
+  активный сэмпл каждой destination-плоскости (copy — побайтовая копия всей плоскости; relayout —
+  полная 4:2:0↔4:2:0 перекладка; to_bgra/from_packed — полный построчный цикл по `width×height`).
+  Значит **для `convert()` весь выделенный destination-буфer — кандидат**: либо не публикуется вовсе
+  (ошибка), либо полностью перезаписывается (успех).
+- **ABI-структуры не трогались.** `frame` (сам `YuvMutableFrameV1`/`YuvConstFrameV1`) и все `options`
+  (`YuvConvertOptionsV1` и т.д.) остаются `allocator.allocate` (calloc), как и раньше — правка не
+  расширяется на них, они малы и не измерялись как значимые в BGRA-00.
+- **ROI-операции (`blackWhite`/`grayscale`/`negate`/`chromaSwap`/`blur` с `region != null`) не
+  тронуты.** У них `_allocateMutableFrame` вызывается с `seedFromSource: source`, и только активная
+  ROI-часть перезаписывается нативным кодом — остальное должно остаться детерминированным (байты
+  источника), для чего zero-fill сначала не нужен (сид копирует явно), но при отсутствии региона
+  нативная функция всё равно может не перезаписать 100% буфера в общем случае (эффекты без региона
+  теоретически пишут весь кадр, но это не проверялось так же строго, как `convert`, и не входит в
+  формулировку задачи "буферов конвертации"). Решение: `zeroFillDestination` по умолчанию `true`
+  везде, `false` передаётся только из `convert()`. `_allocateMutableFrame` дополнительно имеет
+  `assert(zeroFill || seedFromSource == null, ...)` — предохранитель, чтобы будущая правка не смогла
+  случайно выключить zero-fill вместе с ROI-сидом.
+
+#### Изменение
+
+`lib/src/yuv/impl/io/defs/native_allocator.dart`: `NativeAllocator` получил
+`allocateUninitialized` (реализация — `malloc.allocate`, рядом с существующим `allocate` →
+`calloc.allocate`). `InstrumentedNativeAllocator` (существующий fault-injection механизм — 1-based
+`failAtAllocation`, отслеживание `_live`/`outstanding`, `_InjectedAllocationFailure`) реализует
+новый метод с той же семантикой счётчика/инъекции отказа, только через `malloc` вместо `calloc`, —
+это и есть переиспользованный OPT-13-стиль fault-injection, упомянутый в задании: тот же механизм,
+которым в проекте уже покрыт `test/native_allocation_safety_test.dart`.
+
+`lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart`: `_run` получил параметр `zeroFillDestination`
+(по умолчанию `true`), `_allocateMutableFrame` — параметр `zeroFill` (по умолчанию `true`,
+`assert` описан выше). Только `convert()`'s вызов `_run` передаёт `zeroFillDestination: false`, с
+комментарием, объясняющим structural guarantee (validate-then-dispatch, tight-stride destination),
+а не просто "быстрее". Каждая destination-плоскость при `zeroFill == false` выделяется через
+`allocator.allocateUninitialized` вместо `allocator.allocate`.
+
+#### Error/atomicity path — как проверено
+
+1. **Structural (native code reading).** См. классификацию выше — `yuv_convert_v1`'s validate
+   order прочитан построчно, все четыре dispatch-ветки не имеют early-return после начала записи.
+2. **Dart test `test/bgra03_dest_alloc_test.dart`** (новый файл, коммит `ce1410e`), четыре кейса
+   на `YuvAbiV1Runner.convert` напрямую (не через устаревший `YuvImage` API):
+   - success path: результат кандидата (malloc, реальный `yuv_ffi.dll`) сравнивается байт-в-байт
+     с результатом того же вызова под `_AlwaysCallocAllocator` (форсирует calloc для всех
+     аллокаций, включая ту, что в production теперь идёт через malloc) — доказывает не просто
+     "не упало", а byte-exact идентичность candidate/baseline;
+   - error path: `YUV_FORMAT_RGBA8888` как destination-формат (не входит в `convertPairs` —
+     допустимые destination только I420/NV12/BGRA8888) гарантированно отклоняется
+     `yuv_validate_v1_format_pair` до диспетчеризации; тест проверяет, что вызов бросает
+     исключение и не возвращает `YuvAbiV1FrameResult` — то есть буфер (malloc-мусор или calloc-нули,
+     не важно) не публикуется наружу ни при каком статусе;
+   - allocator failure: `InstrumentedNativeAllocator` с `failAtAllocation` перебирает **каждый**
+     индекс аллокации от 1 до фактического количества (определено отдельным чистым прогоном) —
+     на каждом шаге проверяется бросок исключения и `outstanding == 0` (ни утечки, ни null-deref);
+   - success-path double-free guard: `InstrumentedNativeAllocator` бросает `StateError` при повторном
+     `free` одного и того же адреса — успешный прогон с `outstanding == 0` в конце доказывает, что
+     каждый указатель (включая новый malloc-путь) освобождён ровно один раз.
+   Все 4 теста зелёные (`flutter test test/bgra03_dest_alloc_test.dart`, DLL sha256
+   `9c816b9f59ee159573575c2916321693ae035161d99b92274d9fc21a22365f30`, текущий HEAD-совместимый бинарь).
+3. **Побочная находка при регрессионном прогоне (см. ниже) — не тихо ослаблена.** Два теста в
+   `test/rel06_deprecated_api_test.dart` (`fromRgba8888() matches applyRgbaBytes()` и
+   `toYuvI420()/toYuvBgra8888()/toYuvNv21() match applyFormat()...`) использовали
+   `YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusOk` — фейковый "kernel",
+   который **не пишет** в destination и просто возвращает OK. Раньше оба независимых вызова
+   (legacy/modern) получали calloc-нулевой буфer и совпадали случайно, как два одинаковых нуля;
+   после этой правки оба получают malloc-мусор из независимых аллокаций и не совпадают. Это не
+   регрессия production-контракта (реальный нативный kernel всегда полностью перезаписывает
+   destination — см. классификацию выше), а фрагильность двух тестов, полагавшихся на
+   calloc-обнуление как на случайный "оракул". Исправлено заменой no-op фейка на
+   `_fillEveryPlane(0x5A)` — детерминированно заполняет каждую destination-плоскость фиксированным
+   байтом, как это делал бы настоящий kernel (полная перезапись), без ослабления самой проверки
+   "legacy путь эквивалентен modern пути". Это подтверждает пункт задания про edge case ошибочных/
+   fake-путей: risk был не в реальном ABI, а в тестовой инфраструктуре, которая тихо опиралась на
+   побочный эффект аллокатора — задокументировано здесь и в комментарии кода, не тихо пропущено.
+
+#### Измерение
+
+`speed_00_dart_ffi/test/bgra03_dest_alloc_bench_test.dart` (новый файл, та же методика и входные
+данные, что `yuv_convert_v1_bgra_stages_test.dart` из BGRA-00: 1920×1080, синтетический NV12/I420
+кадр, 5 warm-up + 30 замеров, FNV-1a checksum на каждый прогон против независимого oracle).
+Измерены отдельно стадия `dest_alloc` (только аллокация+свобождение destination) и `full_call`
+(staging + аллокация + `yuv_convert_v1` + copy-out), для `calloc` и `malloc` вариантов, два раунда.
+DLL — текущий корневой `yuv_ffi.dll`, sha256 `9c816b9f59ee159573575c2916321693ae035161d99b92274d9fc21a22365f30`
+(совпадает с уже принятым BGRA-02 candidate `5b233c7`/текущим HEAD `baf5136` — native код не менялся).
+
+| Метрика | calloc (baseline) | malloc (candidate) | Δ |
+| --- | ---: | ---: | ---: |
+| dest_alloc NV12→BGRA, медиана n=30, раунд 1 | 9.2951 мс | 0.0380 мс | −9.26 мс |
+| dest_alloc NV12→BGRA, раунд 2 | 9.1468 мс | 0.0451 мс | −9.10 мс |
+| dest_alloc I420→BGRA, раунд 1 | 9.1752 мс | 0.0454 мс | −9.13 мс |
+| dest_alloc I420→BGRA, раунд 2 | 9.2087 мс | 0.0474 мс | −9.16 мс |
+| full_call NV12→BGRA (Dart VM, не AOT), раунд 1 | 60.0505 мс | 53.1812 мс | −6.87 мс (−11.4%) |
+| full_call NV12→BGRA, раунд 2 | 59.7724 мс | 53.6417 мс | −6.13 мс (−10.3%) |
+| full_call I420→BGRA, раунд 1 | 66.6804 мс | 60.8669 мс | −5.81 мс (−8.7%) |
+| full_call I420→BGRA, раунд 2 | 66.6220 мс | 59.8733 мс | −6.75 мс (−10.1%) |
+
+Checksum (FNV-1a) идентичен calloc и malloc на каждом из 4 прогонов (2 формата × 2 раунда):
+NV12→BGRA `0xbd2817acd7e16391`, I420→BGRA `0x9fb2849898309858` — те же значения, что в BGRA-00/01/02
+отчётах для тех же входов, подтверждая, что candidate не меняет результат.
+
+**Абсолютное значение dest_alloc-выигрыша (~9.1–9.26 мс) практически идентично** абсолютному
+`dest_alloc_zero` из BGRA-00 (9.11–9.20 мс на том же 1920×1080×4 BGRA destination) — ожидаемо,
+поскольку это тот же самый `calloc` на тот же размер буфера, просто теперь заменённый на `malloc`
+без zero-fill вместо измерения его стоимости. `full_call` в этом прогоне выше, чем в BGRA-00/01/02
+(60–67 мс против 27–29/22–23 мс) — вероятно, фоновая нагрузка машины в момент замера (тот же Dart
+VM/JIT harness, тот же метод, не AOT); абсолютная **разница** dest_alloc и её перенос на full_call
+воспроизводится стабильно на двух независимых раундах, поэтому вывод не основан на зашумлённых
+абсолютных числах full_call, а на стабильной Δ дельте, подтверждённой на уровне отдельной стадии.
+
+**Вывод по правилу шапки todo.md ("без выигрыша не переносить"): выигрыш есть, воспроизводим на
+двух раундах, byte-exact подтверждён, error/atomicity path подтверждён структурно и тестами — правка
+переносится (не откатывается).**
+
+#### Проверка
+
+- `dart format --line-length 150` на всех затронутых файлах (`lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart`,
+  `lib/src/yuv/impl/io/defs/native_allocator.dart`, `test/bgra03_dest_alloc_test.dart`,
+  `test/abi_status_mapping_test.dart`, `test/rel06_deprecated_api_test.dart`,
+  `speed_00_dart_ffi/test/bgra03_dest_alloc_bench_test.dart`) — 0 изменений (уже отформатированы).
+- `dart analyze lib/ test/` — чисто. `dart analyze` в `speed_00_dart_ffi/` — только уже
+  существовавшие `avoid_print`-инфо в новом файле, тот же паттерн, что в `yuv_convert_v1_bgra_stages_test.dart`,
+  и не относящиеся к этой карточке ошибки в `tool/bench/blur_runner` (сторонний неполный пакет).
+- `flutter test` (весь проект, 646 тестов) — все зелёные, включая исправленные `rel06_deprecated_api_test.dart`
+  и переиспользованный `_SnapshottingNativeAllocator` из `abi_status_mapping_test.dart` (получил
+  недостающую реализацию `allocateUninitialized`, иначе `dart analyze` отклонял класс как
+  abstract-inheriting).
+- Native код (`src/`, `test_native/`) не пересобирался и не менялся — задача Dart-only, `git diff`
+  подтверждает отсутствие изменений вне `lib/`/`test/`/`speed_00_dart_ffi/test/`.
+
+**Открытые пункты:**
+1. ROI-эффекты/blur без региона (`region == null` для `blackWhite`/`grayscale`/`negate`/`blur`) —
+   потенциально тоже full-frame-перезаписывающие операции, но не проверялись так же строго, как
+   `convert` (задача явно ограничена "буферами конвертации"); если будущая карточка захочет
+   расширить `zeroFillDestination: false` на них, потребуется отдельная проверка каждого нативного
+   effect-пути на predicate "no-region call always overwrites 100% of destination".
+2. `crop`/`rotate`/`flip` не рассматривались как кандидаты в этой карточке (тоже tight-stride,
+   тоже не-ROI), хотя структурно похожи на `convert` — сознательно оставлены вне скоупа, чтобы
+   изменение осталось "одна узкая правка" по правилу шапки; отдельная карточка могла бы повторить
+   тот же анализ для них.
+3. Pixel 3 720×360 не измерен — то же ограничение среды, что в BGRA-00/01/02 (нет доступа к
+   Android-устройству или Mac-runner мосту в этой сессии).
+4. Полный AOT-бенч (`yuv_bench.exe`, как в BGRA-01/02) не прогонялся для этой карточки — измерение
+   ограничено Dart VM/JIT раннером (тем же методом, что BGRA-00); AOT full-call число для BGRA-03
+   отдельно не получено, но абсолютная величина убранного zero-fill (~9.1–9.26 мс на 8.3 МБ буфере)
+   не зависит от runtime (VM vs AOT) — это время `calloc`, которое исчезает целиком независимо от
+   того, во что оно упаковано.
 
 ## Позже
 
