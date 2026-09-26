@@ -329,9 +329,9 @@ Windows-сборке пакета (не изолированный FFI-ранн�
 
 ### BGRA-02 — I420-ветка `yuv_convert_to_bgra`
 
-**Статус:** TODO — Architect Decision готов; старт после одобрения плана пользователем **и** приёмки BGRA-01 (отдельный коммит).
-**Исполнитель:** T2 · GPT-5.6 Terra; проверка — T1 · GPT-6 Sol.
-**Зависит от:** BGRA-00; BGRA-01 (принятая структура NV12-пути и общий helper записи пикселя).
+**Статус:** REVIEW — реализовано по одобренному Architect Decision, коммиты `d8d8f69` (тесты) и `5b233c7` (правка). Ожидает T1-review.
+**Исполнитель:** T2 · GPT-5.6 Terra (Claude Sonnet 5); проверка — T1 · GPT-6 Sol.
+**Зависит от:** BGRA-00; BGRA-01 (принятая структура NV12-пути и общий helper записи пикселя, коммит `d40103e`).
 
 #### Architect Decision
 
@@ -353,17 +353,168 @@ Windows-сборке пакета (не изолированный FFI-ранн�
 
 #### Definition of Done
 
-- [ ] Baseline I420→BGRA — на принятом коммите BGRA-01 (не на `d7e6a89`), та же сборка и тот же вход.
-- [ ] `abi_convert_test.c`: те же геометрии и layouts, что для NV12, плюс I420-специфика — разные `pixelStride` у U и V (например, U `ps=1`, V `ps=3`), разные `rowStride` у U и V, смешанный случай «Y tight, chroma gapped». Существующий I420→BGRA 4×4 тест проходит без изменений. Крайние значения, alpha, canary.
-- [ ] `abi_sanitizer_test.c` C-02: I420→BGRA с pixel gaps и exact-length аллокациями; полный `ctest` под ASan+UBSan на macOS/Linux (Debug + Release) и Windows `ctest`.
-- [ ] **Регрессия NV12:** после правки повторить NV12→BGRA byte-exact тесты и kernel/full_call замеры BGRA-01. Время NV12 не хуже принятого в BGRA-01 в пределах шума, checksum тот же. RGBA→BGRA checksum и время тоже без изменений.
-- [ ] Все 12 пар `yuv_convert_v1_test.dart` с прежними checksum; релевантные `flutter test`; format/analyze/diff-check.
-- [ ] Замер I420: kernel (stages kernel + `yuv_convert_v1_test.dart`) и полный вызов (stages full_call + `tool/bench/dart` `CVT.I420.BGRA`), raw samples, медиана, разброс, выигрыш в мс.
-- [ ] Отчёт, SHA DLL, отдельный коммит; T1-review принимает.
+- [x] Baseline I420→BGRA — на принятом коммите BGRA-01 (`d40103e`, не на `d7e6a89`), та же сборка (Windows MSVC Release, `Visual Studio 17 2022`/x64) и тот же вход (1920×1080 stages-раннер, 1281×721 `yuv_convert_v1_test.dart`, 1920×1080 AOT `tool/bench` через прямой вызов exe).
+- [x] `abi_convert_test.c`: те же 7 геометрий (1×1, 2×2, 1×9, 9×1, 7×5, 8×6, 33×17) и 10 layout'ов (tight, row-padded с разным padding на U/V, pixel-gapped, две **разные** пары U/V pixelStride, src-tight-dst-gapped, src-gapped-dst-tight, y-tight-chroma-gapped, unaligned-tight, unaligned-gapped), что даёт 70 комбинаций × 7 проверок = 490 новых проверок (336→826). Существующий I420→BGRA 4×4 тест (`test_yuv_to_bgra`) не тронут и проходит без изменений. Крайние значения (Y/U/V 0 и 255 в углах), alpha=255, canary на всех 4 планах (Y/U/V/dst) отдельно.
+- [x] `abi_sanitizer_test.c` C-02c: 11 новых I420→BGRA кейсов с pixel gaps и exact-length аллокациями (fast/generic even/odd/1×1, y/u/v/dst-gapped-only по отдельности, u-v-different-stride — случай, которого NV12 в принципе не может выразить). Полный `ctest` под ASan+UBSan на macOS (Debug + Release, прямой `clang` с флагами `CMakeLists.txt`, cmake по-прежнему недоступен на этом Mac — тот же обходной путь, что в BGRA-01) и Windows `ctest` (Debug + Release, `cmake`/`ctest` из VS2022, 11/11 целей).
+- [x] **Регрессия NV12:** NV12→BGRA byte-exact тесты (336 существующих проверок внутри 826) без изменений; kernel и full_call замеры BGRA-01 повторены — время в пределах шума, checksum идентичен (`0xbd2817acd7e16391` stages, `b08cec98...` AOT). RGBA→BGRA и остальные 9 пар матрицы — checksum и время без изменений (`yuv_convert_v1_test.dart`, 12 пар).
+- [x] Все 12 пар `yuv_convert_v1_test.dart` с прежними checksum (сверено построчно с BGRA-01 отчётом); релевантные `flutter test` (192+71, все зелёные на candidate DLL). `dart format`/`dart analyze`/`git diff --check` неприменимы к правке — Dart-файлы не менялись, только `src/yuv/abi/yuv_convert_v1.c` и два `test_native/*.c`; `git diff --check` по всем трём файлам чист.
+- [x] Замер I420: kernel (stages kernel + `yuv_convert_v1_test.dart`) и полный вызов (stages full_call + AOT bench exe напрямую с `--scenario CVT.I420.BGRA`, 3 раунда) — см. таблицу в Executor Report.
+- [x] Отчёт, SHA DLL, два отдельных коммита (`d8d8f69` тесты, `5b233c7` правка); ожидает T1-review.
 
 #### Executor Report
 
-Ожидается после приёмки BGRA-01.
+**Статус:** REVIEW
+**Исполнитель:** T2 · GPT-5.6 Terra (Claude Sonnet 5)
+
+Реализовано ровно по плану (п. 1–4 Architect Decision), вариант 2×2 (п. 5) не
+реализовывался — в BGRA-01 вариант B тоже не был реализован ("не пробовался",
+открытый пункт, не отрицательный результат по цифрам), поэтому условие "только
+если он был принят в BGRA-01" не выполняется и здесь его тоже не начинала.
+
+Изменения в `src/yuv/abi/yuv_convert_v1.c` (коммит `5b233c7`): в `yuv_convert_to_bgra`
+добавлена вторая ранняя ветка `source->format == YUV_VIEW_FORMAT_I420 →
+yuv_convert_i420_to_bgra(...)`, возврат сразу же после вызова. После этого в
+исходном цикле остался только packed RGBA→BGRA путь; `packed`-условие и
+I420/`else`-ветки чтения chroma внутри цикла удалены (были нужны только чтобы
+отличить I420 от NV12 от packed — обе YUV-ветки теперь ушли в отдельные
+функции), тело `for` для packed переписано без изменения его поведения (те же
+`from[2],from[1],from[0],from[3] -> to[0..3]`, тот же порядок байт).
+
+Новая `static void yuv_convert_i420_to_bgra(...)` — точная копия структуры
+`yuv_convert_nv12_to_bgra` из BGRA-01, с независимыми U/V планами вместо одной
+интерлейсенной UV: `yPs`, `uPs = planes[1].pixelStride`, `vPs =
+planes[2].pixelStride`, `dstPs` — локальные `const`; fast path при `yPs == 1 &&
+uPs == 1 && vPs == 1 && dstPs == 4` (все четыре условия по отдельности, а не
+через общий "все ps==1"), указатели `y += 2, u += 1, v += 1, to += 8`; generic
+path — та же адресация `(uint64_t)x * stride` для произвольных допустимых
+strides по каждому из трёх source-планов независимо. U и V читаются по одному
+разу на пару Y в обоих путях; хвост нечётной ширины — отдельным блоком с `cx =
+(width - 1) / 2`, как в BGRA-01. **`yuv_convert_store_bgra` и
+`yuv_convert_clip` не изменены ни на один байт** — новая функция вызывает их
+ровно так же, как `yuv_convert_nv12_to_bgra`; `yuv_convert_nv12_to_bgra` не
+тронута (проверено построчным сравнением: `git diff d40103e HEAD --
+src/yuv/abi/yuv_convert_v1.c` не задевает её тело). Блокер по правке общего
+helper (из инструкции задачи) не возник — необходимости менять его не было.
+
+**Baseline** (принятый коммит BGRA-01, `d40103e`): Windows x64 MSVC Release,
+CMake `Visual Studio 17 2022`/x64, `-DBUILD_TESTING=ON`. DLL SHA-256
+`F0B169814F22DE477D4B96AFAA2D0BAF85DDBAF9B11A35518E04DD77C6304D8F`.
+`abi_convert_test`: 336/0 (совпадает с принятым числом BGRA-01).
+`abi_sanitizer_test`: 190/0, executed cases 114 (совпадает с BGRA-01).
+
+**Candidate** (после правки, коммит `5b233c7`): тот же toolchain. DLL SHA-256
+`49C42903A0B6EF3CA62F8F0456E951A012556EB865222A52BDBE0680E9E74739`.
+`abi_convert_test`: 826/0 (336 существующих без изменений + 490 новых I420
+проверок: 7 геометрий × 10 layout'ов × 7 проверок). `abi_sanitizer_test`:
+201/0, executed cases 125 (190+11 — 11 новых C-02c I420 кейсов). Оба Debug и
+Release, Windows `ctest`: 11/11 целей зелёные в обеих конфигурациях.
+
+Все измерения — 1920×1080 (stages-раннер, Dart VM), 1281×721 нечётной ширины
+(`yuv_convert_v1_test.dart`), либо 1920×1080 Flutter AOT Release (`yuv_bench.exe`,
+собранный через `tool/bench/build_dart_windows.ps1 -Version abi_v1 -SourceRef
+<sha>` для baseline `d40103e` и candidate `5b233c7`, запущенный напрямую с
+`--scenario/--size/--round/--out/--sha/--tree` — обёртка `run_dart_windows.ps1`
+жёстко требует пару v0.2.4-vs-abi_v1 и не поддерживает сравнение двух abi_v1
+коммитов между собой, поэтому оба exe запущены напрямую с одинаковыми
+аргументами протокола, что даёт те же CSV-строки, что обёртка произвела бы).
+
+| Метрика | Baseline | Candidate | Выигрыш |
+| --- | ---: | ---: | ---: |
+| Kernel I420→BGRA, стадийный раннер, медиана n=30 (1920×1080) | 13.2980 мс | 7.5818–7.5860 мс (2 раунда) | −5.71…5.72 мс, **−42.9…43.0%** |
+| `yuv_convert_v1` I420→BGRA, us/call (1281×721, нечётная ширина) | 5934.67 мкс | 3400.06 мкс | **−42.7%** |
+| full_call стадийного раннера I420→BGRA (Dart VM, не AOT) | 28.3808 мс | 22.7515–22.8516 мс (2 раунда) | −5.53…5.63 мс, **−19.5…19.8%** |
+| **Полный публичный вызов**, Flutter AOT Release, `yuv_bench.exe` `CVT.I420.BGRA` (n=30, медиана, 3 раунда) | 43.3345 / 43.7990 / 43.8575 мс | 34.6370 / 34.5425 / 34.7370 мс | **≈ −21.0%** (медиана раундов: 43.80→34.64 мс, −9.16 мс) |
+| Kernel NV12→BGRA (регрессия), стадийный раннер | 7.9648 мс (тот же прогон, что BGRA-01 baseline) | 7.4793–7.5860 мс (2 раунда, тот же candidate DLL) | в пределах шума, соответствует BGRA-01 (−34.7% от исходного pre-BGRA-01 12.11 мс уже зафиксирован; здесь сравнение внутри BGRA-01→BGRA-02 показывает нет доп. регрессии) |
+| Полный вызов NV12→BGRA (регрессия), AOT `CVT.NV12.BGRA`, 3 раунда | 34.2380 / 34.6215 / 34.6595 мс | 34.4630 / 34.3405 / 34.1675 мс | без регрессии, разброс раундов перекрывается |
+
+Checksum (FNV-1a в Dart-раннерах, SHA-256 в AOT bench) идентичен baseline и
+candidate на каждой из проверок: стадийный раннер I420→BGRA `0x9fb2849898309858`,
+NV12→BGRA `0xbd2817acd7e16391`; `yuv_convert_v1_test.dart` — все 12 пар без
+изменения ни одного хэша (I420→I420 `0x939c3c5cf5e5a396` … RGBA→BGRA
+`0xdc396ecb1013c0a2`, построчно сверено с числами BGRA-01); AOT bench — I420→BGRA
+и NV12→BGRA оба `b08cec9880b62a1957c53397509216d6c086ce56af2d1095840bc3d846cdc59f`
+на всех 3 раундах, baseline и candidate.
+
+**Byte-exact тест** (`test_native/abi_convert_test.c`, коммит `d8d8f69`): новая
+функция `test_i420_to_bgra_geometry_and_layout` с независимым oracle (не
+переиспользует `yuv_convert_store_bgra` и не делит код с
+`test_nv12_to_bgra_geometry_and_layout`'s oracle), геометрии идентичны
+NV12-матрице BGRA-01 (1×1, 2×2, 1×9, 9×1, 7×5, 8×6, 33×17), 10 layout'ов —
+расширяет BGRA-01's 7 двумя I420-специфичными ("u-v-different-stride" и
+"-2": U/V получают **разные** значения pixelStride друг от друга, что
+интерлейсенный UV-план NV12 не может выразить в принципе) и одним
+DoD-указанным ("y-tight-chroma-gapped": Y tight, оба chroma gapped). 70
+комбинаций × 7 проверок = 490 проверок. Данные включают экстремумы 0/255 в
+углу кадра на всех трёх source-планах.
+
+**Sanitizer** (`test_native/abi_sanitizer_test.c`, коммит `d8d8f69`, группа
+C-02c): 11 новых I420→BGRA случаев с точными по размеру аллокациями (`malloc`
+ровно на `rowStride*height` на каждом из 4 планов, без запаса) — fast-path
+чётный/нечётный/1×1, generic-path чётный/нечётный/1×1, четыре случая с гэпом
+только на одной плоскости (Y/U/V/dst по отдельности — I420's независимые U и V
+позволяют это, в отличие от NV12's единой UV), и один случай с **разным**
+pixelStride у U и V одновременно. Прогнано на macOS 15.6.1 (arm64, Apple clang
+17.0.0) тем же способом, что BGRA-01 — прямой `clang` с флагами
+`CMakeLists.txt` (`-fsanitize=address -fsanitize=undefined -Wall -Wextra
+-Werror -Wstrict-prototypes -Wmissing-prototypes`), `cmake` по-прежнему
+недоступен ни в PATH Windows, ни на этом Mac (не появился с BGRA-01):
+  - `abi_convert_test`: Debug (`-O0 -g`) и Release (`-O2 -DNDEBUG`) — оба
+    `checks: 826, failures: 0`, exit 0, без сообщений ASan/UBSan (проверено
+    отдельным grep по stdout+stderr на "sanitizer"/"runtime error", не только
+    по exit code).
+  - `abi_sanitizer_test`: Debug и Release — оба `checks: 201, failures: 0,
+    executed cases: 125`, exit 0, без сообщений ASan/UBSan.
+  - Windows `ctest` (VS2022 cmake, `-DBUILD_TESTING=ON`): 11/11 целей зелёные
+    в Debug и Release, включая `abi_convert_tests` (826 проверок) и
+    `abi_sanitizer_tests` (201 проверку).
+  - Временная директория на Mac (`~/claude-work/yuv_ffi_bgra02`) удалена после
+    прогона, ничего не оставлено кроме уже существовавших от BGRA-01
+    артефактов (`yuv_ffi_bgra01_gate`, `build_sanitizer*.sh`), которые эта
+    задача не трогала.
+
+**Dart:** `yuv_convert_v1_test.dart` (12 пар) и
+`yuv_convert_v1_bgra_stages_test.dart` прошли с теми же checksum, что
+baseline, на двух независимых раундах каждый. `flutter test` по Windows-сборке
+пакета (candidate DLL временно установлена как корневой gitignored
+`yuv_ffi.dll`, ранее существовавший файл сохранён и восстановлен после
+прогона — SHA-256 до/после идентичен
+`9C816B9F59EE159573575C2916321693AE035161D99B92274D9FC21A22365F30`):
+`test/yuv_bgra_pixel_gap_test.dart`, `test/conversions_test.dart`,
+`test/native_stride_safety_test.dart`, `test/nv_chroma_order_test.dart`,
+`test/native_allocation_safety_test.dart` — 71 тестов;
+`test/reference_native_conversions_test.dart` — 192 теста отдельно (та же
+методика, что T1 использовала в BGRA-01 review). Итого 192+71, все зелёные —
+число в число как в BGRA-01. `dart format`/`dart analyze`/`git diff --check` —
+Dart-файлы в этой задаче не редактировались, только `src/yuv/abi/yuv_convert_v1.c`
+и два `test_native/*.c`; `git diff --check` по этим трём файлам чист (только
+штатные предупреждения git о LF→CRLF).
+
+**Из legacy `0.2.4` взято:** ничего сверх диагноза, который уже был в
+Architect Decision BGRA-01 ("нет dispatch внутри цикла, простая инкрементная
+адресация"); `git show 0.2.4:src/yuv/yuv420/yuv420_to_bgra.c` не читался
+повторно как источник кода — формула и структура полностью взяты из уже
+принятой `yuv_convert_nv12_to_bgra`, как и предписывает Architect Decision
+этой карточки ("Повторить принятую в BGRA-01 схему").
+
+**Pixel 3 720×360:** не измерено — нет доступа к Android-устройству в этой
+сессии (то же ограничение, что в BGRA-00 и BGRA-01).
+
+**Открытые пункты:**
+1. Sanitizer прогнан без cmake/ctest на macOS (тот же обходной путь, что в
+   BGRA-01) — флаги идентичны `CMakeLists.txt`, но T1 может потребовать
+   независимый прогон через настоящий `ctest`, если найдёт cmake на другой
+   машине.
+2. Вариант 2×2 (BGRA-01's "вариант B") не реализовывался и не измерялся — не
+   был принят в BGRA-01, поэтому условие плана для его реализации здесь не
+   выполнено.
+3. Pixel 3 720×360 не измерен.
+4. `run_dart_windows.ps1` не может напрямую сравнить два `abi_v1` коммита
+   между собой (жёстко требует v0.2.4 как один из двух таргетов) — числа
+   получены запуском обоих `yuv_bench.exe` напрямую с одинаковыми
+   `--sha/--tree/--out` аргументами, что даёт идентичные по формату CSV-строки,
+   но обёртку саму не удалось использовать без правки, которая была бы вне
+   скоупа этой карточки (правка `tool/bench/*.ps1` не входит в разрешённый
+   Constraints список файлов).
 
 #### Review
 
