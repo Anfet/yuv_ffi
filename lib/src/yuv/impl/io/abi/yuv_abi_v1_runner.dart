@@ -80,17 +80,42 @@ class YuvAbiV1Runner {
       // only runs after all of them pass). `_run` also never copies the
       // destination back (step 7) unless status is OK (step 6), so on any
       // error this buffer's content -- zeroed or not -- is never observed by
-      // the caller. On success, `destinationLayout` here is always built by
-      // `_destinationWithGeometry` with tight strides (pixelStride ==
-      // sampleBytes, rowStride == planeWidth * sampleBytes), so the
-      // allocated buffer has no row padding or pixel gaps; every one of its
-      // bytes is an active sample that the dispatched conversion function
-      // fully overwrites. Zero-filling it first is therefore throwaway work
-      // for this operation specifically -- unlike blur/effects, which can
-      // seed the destination from the source to preserve bytes outside an
-      // ROI, `convert` has no ROI and always replaces the whole frame.
-      zeroFillDestination: false,
+      // the caller. On success, every dispatch target fully overwrites every
+      // *active* sample of every destination plane -- but `convert()` is a
+      // public method that accepts whatever `destinationLayout` the caller
+      // passes in, not only the tight layout `toBgraBytes()`/`toBgra()`
+      // happen to build. A padded or gapped layout leaves bytes outside the
+      // active samples (row padding, pixel gaps) untouched by the native
+      // call, and `_copyDestinationPlanes` below copies the *whole* plane
+      // length, padding included -- so skipping zero-fill there would leak
+      // `malloc` garbage into the result instead of the deterministic zeros
+      // `calloc` used to produce (independent review,
+      // doc/perf/results/bgra_independent_review_2026-09-26.md, reproduced
+      // this with a real I420 2x2 -> BGRA rowStride=12 destination). Malloc
+      // is therefore only safe when every destination plane is verified
+      // tight for this specific `layout`, not assumed tight from the
+      // caller's identity.
+      zeroFillDestination: !_isTightLayout(destinationLayout),
     );
+  }
+
+  /// Whether every plane of [layout] is tight -- `pixelStride == sampleBytes`
+  /// and `rowStride == planeWidth * sampleBytes` -- meaning it has no row
+  /// padding and no pixel gaps, so every byte the allocator hands back is an
+  /// active sample. [YuvAbiV1Runner.convert] uses this to decide whether
+  /// skipping zero-fill (BGRA-03) is safe for the specific layout it was
+  /// given, rather than assuming it from the caller's identity: the public
+  /// `toBgraBytes()`/`toBgra()` surface always builds a tight layout, but
+  /// `convert()` itself accepts any [YuvAbiV1DestinationLayout] a caller
+  /// constructs.
+  static bool _isTightLayout(YuvAbiV1DestinationLayout layout) {
+    for (int planeIndex = 0; planeIndex < layout.planeRowStrides.length; planeIndex++) {
+      final int sampleBytes = yuvAbiV1SampleBytes(layout.format, planeIndex);
+      final int planeWidth = planeIndex == 0 ? layout.width : yuvAbiV1ChromaExtent(layout.width);
+      if (layout.planePixelStrides[planeIndex] != sampleBytes) return false;
+      if (layout.planeRowStrides[planeIndex] != planeWidth * sampleBytes) return false;
+    }
+    return true;
   }
 
   /// Runs `yuv_black_white_v1`. [region] selects the ROI, or `null` for the
@@ -461,9 +486,11 @@ class YuvAbiV1Runner {
   /// active samples.
   ///
   /// [zeroFill] (BGRA-03) lets a caller that has proven its destination is
-  /// always fully overwritten -- see [convert]'s call site -- skip the
-  /// zero-fill and allocate with `malloc` instead of `calloc`. It must never
-  /// be `false` together with a non-`null` [seedFromSource]: an ROI seed
+  /// always fully overwritten -- see [convert]'s call site and
+  /// [_isTightLayout], which it uses to check that proof holds for the
+  /// specific layout in hand, not just for the operation in general -- skip
+  /// the zero-fill and allocate with `malloc` instead of `calloc`. It must
+  /// never be `false` together with a non-`null` [seedFromSource]: an ROI seed
   /// only copies the active region, and `calloc`'s zero-fill is what makes
   /// the seeded plane's own row padding/pixel gaps deterministic, so this is
   /// asserted rather than silently overridden.

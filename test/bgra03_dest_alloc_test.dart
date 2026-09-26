@@ -123,6 +123,113 @@ void main() {
       }
     });
 
+    test('padded destination layout keeps row padding zeroed, not malloc garbage', () {
+      // Independent review, doc/perf/results/bgra_independent_review_2026-09-26.md:
+      // convert() is a public method that accepts whatever destinationLayout
+      // the caller passes, not only the tight layout toBgraBytes()/toBgra()
+      // build. A rowStride wider than the active row leaves padding bytes
+      // that yuv_convert_v1 never writes; if the allocator were malloc
+      // (uninitialized) here, _copyDestinationPlanes would copy that garbage
+      // straight into the result. Uses I420 2x2, the exact geometry the
+      // review reproduced the defect with, with destination rowStride=12
+      // against an active row of 8 bytes (2 px * 4 bytes/px).
+      final source = i420Source();
+      final paddedLayout = YuvAbiV1DestinationLayout(
+        format: yuvFormatBgra8888,
+        width: width,
+        height: height,
+        planeRowStrides: [width * 4 + 4],
+        planePixelStrides: [4],
+      );
+
+      final canaryAllocator = _CanaryUninitializedAllocator();
+      late YuvAbiV1FrameResult result;
+      withNativeAllocator(canaryAllocator, () {
+        result = YuvAbiV1Runner.convert(source: source, destinationLayout: paddedLayout);
+      });
+
+      final Uint8List plane = result.planes.single;
+      final int rowStride = width * 4 + 4;
+      final int activeRowBytes = width * 4;
+      for (int row = 0; row < height; row++) {
+        for (int col = activeRowBytes; col < rowStride; col++) {
+          expect(
+            plane[row * rowStride + col],
+            0,
+            reason: 'row $row padding byte $col must be zero, not the 0xA5 canary an uninitialized allocator would leave behind',
+          );
+        }
+      }
+    });
+
+    test('gapped destination layout keeps pixel gap bytes zeroed, not malloc garbage', () {
+      // Same defect, pixel-gap variant: pixelStride wider than sampleBytes
+      // leaves inter-pixel gap bytes that the native call never writes.
+      final source = i420Source();
+      const int gappedPixelStride = 6; // sampleBytes (4) + 2 gap bytes.
+      final gappedLayout = YuvAbiV1DestinationLayout(
+        format: yuvFormatBgra8888,
+        width: width,
+        height: height,
+        planeRowStrides: [width * gappedPixelStride],
+        planePixelStrides: [gappedPixelStride],
+      );
+
+      final canaryAllocator = _CanaryUninitializedAllocator();
+      late YuvAbiV1FrameResult result;
+      withNativeAllocator(canaryAllocator, () {
+        result = YuvAbiV1Runner.convert(source: source, destinationLayout: gappedLayout);
+      });
+
+      final Uint8List plane = result.planes.single;
+      final int rowStride = width * gappedPixelStride;
+      for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+          final int pixelStart = row * rowStride + col * gappedPixelStride;
+          for (int gapByte = 4; gapByte < gappedPixelStride; gapByte++) {
+            expect(
+              plane[pixelStart + gapByte],
+              0,
+              reason: 'pixel ($col,$row) gap byte $gapByte must be zero, not the 0xA5 canary an uninitialized allocator would leave behind',
+            );
+          }
+        }
+      }
+    });
+
+    test('tight destination layout still gets the malloc fast path (no zero-fill work)', () {
+      // The fix must not regress the BGRA-03 win for the case it was meant
+      // for: a genuinely tight layout (what toBgraBytes()/toBgra() build)
+      // should still route through allocateUninitialized, not allocate.
+      final source = i420Source();
+      final layout = bgraLayout();
+
+      final tracker = _AllocationKindTrackingAllocator();
+      withNativeAllocator(tracker, () {
+        YuvAbiV1Runner.convert(source: source, destinationLayout: layout);
+      });
+
+      expect(tracker.uninitializedCount, greaterThan(0), reason: 'tight layout must still use the malloc (uninitialized) fast path');
+    });
+
+    test('padded destination layout falls back to the zero-filled allocation path', () {
+      final source = i420Source();
+      final paddedLayout = YuvAbiV1DestinationLayout(
+        format: yuvFormatBgra8888,
+        width: width,
+        height: height,
+        planeRowStrides: [width * 4 + 4],
+        planePixelStrides: [4],
+      );
+
+      final tracker = _AllocationKindTrackingAllocator();
+      withNativeAllocator(tracker, () {
+        YuvAbiV1Runner.convert(source: source, destinationLayout: paddedLayout);
+      });
+
+      expect(tracker.uninitializedCount, 0, reason: 'padded destination layout must not use the uninitialized allocation path');
+    });
+
     test('success path frees every allocation exactly once under the instrumented allocator', () {
       final source = i420Source();
       final layout = bgraLayout();
@@ -157,6 +264,51 @@ class _AlwaysCallocAllocator implements NativeAllocator {
 
   @override
   Pointer<T> allocateUninitialized<T extends NativeType>(int byteCount) => _delegate.allocate<T>(byteCount);
+
+  @override
+  void free(Pointer<NativeType> pointer) => _delegate.free(pointer);
+}
+
+/// Fills every `allocateUninitialized` buffer with `0xA5` before handing it
+/// back, standing in for whatever garbage a real `malloc` might return, so a
+/// test can assert that padding/gap bytes are zero rather than merely "not
+/// crashing". `allocate` (calloc) is left at the real zero-filling
+/// implementation, matching production: this allocator's only job is to make
+/// the uninitialized path's garbage deterministic and observable.
+class _CanaryUninitializedAllocator implements NativeAllocator {
+  static const CallocNativeAllocator _delegate = CallocNativeAllocator();
+
+  @override
+  Pointer<T> allocate<T extends NativeType>(int byteCount) => _delegate.allocate<T>(byteCount);
+
+  @override
+  Pointer<T> allocateUninitialized<T extends NativeType>(int byteCount) {
+    final Pointer<T> pointer = _delegate.allocate<T>(byteCount);
+    pointer.cast<Uint8>().asTypedList(byteCount).fillRange(0, byteCount, 0xA5);
+    return pointer;
+  }
+
+  @override
+  void free(Pointer<NativeType> pointer) => _delegate.free(pointer);
+}
+
+/// Records how many destination-plane allocations went through
+/// `allocateUninitialized` (the malloc fast path) versus `allocate` (calloc),
+/// so a test can assert which path `convert()` picked for a given layout
+/// without depending on timing.
+class _AllocationKindTrackingAllocator implements NativeAllocator {
+  static const CallocNativeAllocator _delegate = CallocNativeAllocator();
+
+  int uninitializedCount = 0;
+
+  @override
+  Pointer<T> allocate<T extends NativeType>(int byteCount) => _delegate.allocate<T>(byteCount);
+
+  @override
+  Pointer<T> allocateUninitialized<T extends NativeType>(int byteCount) {
+    uninitializedCount++;
+    return _delegate.allocate<T>(byteCount);
+  }
 
   @override
   void free(Pointer<NativeType> pointer) => _delegate.free(pointer);
