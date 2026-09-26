@@ -93,6 +93,98 @@ copy_out). Ограничение проверки: в этой среде не 
 отсутствия diff в `src/yuv/` между базовым замером и HEAD, а не на слово
 исполнителя.
 
+### BGRA-01 — NV12-ветка `yuv_convert_to_bgra`
+
+**Статус:** TODO — Architect Decision готов; native C правится только после одобрения этого плана пользователем (AGENTS.md, «Native C code»).
+**Исполнитель:** T2 · GPT-5.6 Terra; проверка — T1 · GPT-6 Sol.
+**Зависит от:** BGRA-00 (принят, `d7e6a89`; kernel ~45% полного вызова, 12,11 мс NV12 на 1080p).
+**Порядок:** выполняется первой. BGRA-02 стартует только после приёмки BGRA-01 и его отдельного коммита.
+
+#### Architect Decision
+
+Причина медленности, установленная по коду `src/yuv/abi/yuv_convert_v1.c` (стр. 78–118): внутри пиксельного цикла на каждый пиксель проверяются `packed` и `source->format`, а stride читаются через `source->planes[k].pixelStride` / `destination->planes[0].pixelStride`. Запись `to[0..3]` идёт через `uint8_t *`, которая по правилам C может алиасить любые объекты, поэтому компилятор обязан перечитывать поля view-структур после каждого записанного байта и не может ни вынести проверки, ни векторизовать цикл. Legacy `0.2.4` (`src/yuv/nv21/nv21_to_bgra8888.c`) использует ту же попиксельную формулу без особых приёмов; быстрее он был за счёт отсутствия dispatch внутри цикла, `int`-индексации и tight destination. Он служит ориентиром, но не oracle; его NV21-порядок каналов не переносить.
+
+**Тир:** T2-исполнитель с T1-review подтверждён. Правка локальна (одна static-функция, без новых аллокаций и без изменения ABI), но затрагивает точную целочисленную арифметику, выбор fast/generic пути по stride и тонкости C: алиасинг `uint8_t *`, shift отрицательных `int32_t`, хвосты нечётной геометрии. Эти места должен независимо проверить T1. Повышать исполнителя до T1 не требуется: численный алгоритм не меняется, только порядок обхода.
+
+1. **Dispatch один раз.** В начале `yuv_convert_to_bgra` для `source->format == YUV_VIEW_FORMAT_NV12` вызывать новую локальную `static void yuv_convert_nv12_to_bgra(source, destination)` и возвращаться. Packed- и I420-ветки остаются в существующем цикле без изменений (I420 — задача BGRA-02). `yuv_convert_v1` и его порядок validation/dispatch (стр. 182–230) не меняются.
+2. **Инварианты в локальные `const`.** До цикла скопировать `width`, `height`, `yPs = planes[0].pixelStride`, `uvPs = planes[1].pixelStride`, `dstPs = destination->planes[0].pixelStride`. Строковые указатели считать один раз на строку через существующие `yuv_convert_const_at`/`yuv_convert_mutable_at` (они уже учитывают `rowStride` и row padding). Chroma-строка — `y / 2u`, как сейчас.
+3. **UV один раз на пару Y.** Цикл по `x` с шагом 2. На пару читать `u = uv[0]`, `v = uv[1]` и считать chroma-слагаемые ровно в текущей целочисленной форме: `d = u - 128`, `e = v - 128`, `bTerm = 516 * d + 128`, `gTerm = -100 * d - 208 * e + 128`, `rTerm = 409 * e + 128`. Для каждого из двух Y: `c298 = 298 * ((int32_t)yy - 16)`, `B = clip((c298 + bTerm) >> 8)`, `G = clip((c298 + gTerm) >> 8)`, `R = clip((c298 + rTerm) >> 8)`, `A = 255`. Это та же сумма, что `(298*c + 516*d + 128) >> 8`: все операнды — `int32_t`, диапазон значений меньше ±150 000, переполнения нет, поэтому перестановка слагаемых даёт те же целые, а `>>` применяется к тем же значениям. При нечётной ширине последний пиксель строки обрабатывать отдельным хвостом с `cx = (width - 1) / 2`; этот chroma-сэмпл существует, так как ширина chroma равна `(width + 1) / 2`.
+4. **Один общий `static inline` helper записи пикселя**, например `yuv_convert_store_bgra(uint8_t *to, int32_t c298, int32_t bTerm, int32_t gTerm, int32_t rTerm)`. Его вызывают и fast, и generic путь, поэтому формула существует в одном месте. `yuv_convert_clip` (стр. 68–76) сделать `static inline` без изменения логики (прецедент — `yuv_gaussian_blur_v1.c`). Запись 4 байт — по-байтово или через `uint8_t px[4]` + `memcpy(to, px, 4)`. Касты `*(uint32_t *)to` запрещены: это нарушение strict aliasing и невыровненная запись.
+5. **Fast path и generic fallback выбираются один раз на кадр.** Fast path берётся при `yPs == 1 && uvPs == 2 && dstPs == 4`: pixel-tight, `rowStride` любой, то есть row padding тоже идёт по fast path. В нём индексы простые, указатели сдвигаются на `y += 2`, `uv += 2`, `to += 8` без умножения на stride — это даёт компилятору шанс автовекторизации. Generic путь — тот же цикл по парам, но смещения считаются как `(uint64_t)x * stride`, как сейчас, для любых допустимых `pixelStride` (gapped). Условие выбора пути нельзя расширять за пределы этих трёх равенств.
+6. **Необязательный вариант B (2×2).** Обрабатывать две Y-строки на одну chroma-строку, чтобы chroma-слагаемые считались один раз на 4 пикселя, с хвостом при нечётной высоте. Реализовывать только после принятого варианта A (п. 1–5), мерить отдельно и оставлять только при воспроизводимом выигрыше kernel не меньше ~5% сверх A. Иначе записать как отрицательный результат.
+7. **Вне рамок:** SIMD intrinsics, новые `.c`/`.h` файлы, флаги компиляции/CMake, `restrict`, lookup-таблицы, меняющие арифметику, многопоточность. Каждое из этого — отдельная карточка.
+
+#### Constraints
+
+- ABI v1 без изменений: структуры, `YuvStatus` коды, порядок validation (options header → reserved → frames → format pair), таблица `convertPairs`, отсутствие записей в destination при ошибке. Public headers (`h/yuv_ops_v1.h`, `h/yuv_abi_v1.h`) и generated `lib/src/functions/bindings/yuv_ffi_bingings.dart` не трогать; ffigen не перегенерировать.
+- Формула BT.601 limited-range точная: коэффициенты 298/516/100/208/409, смещения −16/−128, `+128` и `>> 8` над `int32_t`, clip 0..255, B,G,R,A-порядок, `alpha = 255`. Никаких float, других коэффициентов, другого округления, fixed-point с иным масштабом. Разрешена только перестановка слагаемых из п. 3.
+- Правка ограничена `yuv_convert_to_bgra`, новой `yuv_convert_nv12_to_bgra` и локальными `static inline` helpers в `yuv_convert_v1.c`. Не трогать `yuv_convert_copy*`, `yuv_convert_relayout`, `yuv_convert_from_packed`, packed RGBA→BGRA и I420-ветки, `yuv_kernel_v1.*`, `yuv_validate_v1.*`, `validated_view.*`, другие ABI-функции.
+- Читать и писать только активные сэмплы: не трогать байты row padding и pixel gaps в destination, не читать за пределами `(planeWidth - 1) * pixelStride + sampleBytes` строки (гарантия validator'а). Нечётные width/height — без чтения несуществующего chroma.
+- Существующие тесты и oracle не ослаблять. Legacy `0.2.4` — только алгоритмический референс.
+- Изменения в `test_native/*.c` (новые кейсы тестов) входят в одобрение этого плана; production `.c` вне перечисленных функций — нет.
+
+#### Definition of Done
+
+- [ ] Baseline до правки на HEAD `d7e6a89`: собрать Windows MSVC Release `yuv_ffi.dll` (cmake из VS2022, в PATH его может не быть) и записать SHA-256 DLL и исходников. Снять kernel NV12→BGRA через `speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart` (стадия kernel и full_call, 3 раунда × 30) и `yuv_convert_v1_test.dart` (1281-wide, нечётная ширина, us/call и checksum).
+- [ ] Byte-exact native тест: расширить `test_native/abi_convert_test.c` проверкой NV12→BGRA против независимого oracle, записанного в тест (формула попиксельно, без переиспользования кода ядра). Геометрии: 1×1, 2×2, 1×N, N×1, 7×5, 8×6, 33×17. Layouts: tight; row-padded; pixel-gapped (Y `ps=2`, UV `ps=3`, dst `ps=5`); смешанные (source tight / dest gapped и наоборот — проверяют выбор fast/generic пути); невыровненный `data` (+1 байт). Данные включают крайние Y=0/255 и U,V=0/255, чтобы задеть clip с обеих сторон. Проверяется alpha=255 и неизменность canary в padding/gaps.
+- [ ] ROI в `yuv_convert_v1` нет (`YuvConvertOptionsV1` содержит только `reserved[3]`). Вместо ROI проверяется frame-view, начинающийся со смещения внутри большего буфера (ненулевой offset `data`, row padding). Если исполнитель найдёт Dart-путь, где `toBgra` вызывается на ROI/crop view, покрыть и его.
+- [ ] Sanitizer: добавить в `test_native/abi_sanitizer_test.c` (C-02) NV12→BGRA кейсы с pixel gaps и exact-length аллокациями для нечётных и чётных размеров. Прогнать весь `ctest` с ASan+UBSan: на Windows sanitizers отключены (`test_native/CMakeLists.txt`), поэтому прогон на macOS через mac-runner (cmake из Android SDK, `-DBUILD_TESTING=ON`, Debug и Release) или Linux-job `native-sanitizer-gate` из `.github/workflows/ci.yml`. Приложить вывод с числом executed cases. Windows `ctest` (Debug + Release) тоже зелёный.
+- [ ] Dart: `yuv_convert_v1_test.dart` и stages-тест проходят с **тем же checksum**, что до правки, для всех 12 пар (не только NV12→BGRA); релевантные `flutter test` пакета (`toBgra`/`toBgraBytes`, конвертация) зелёные; `dart format --line-length 150`/analyze для затронутых Dart тестов; `git diff --check`.
+- [ ] Замер после правки — на той же машине, в той же сборке и с тем же входом: (a) C kernel — стадия kernel stages-раннера + `yuv_convert_v1_test.dart`; (b) полный вызов — full_call stages-раннера и Flutter AOT harness `tool/bench/dart` (сценарий `CVT.NV12.BGRA`, как в `conversion_windows_1080p_2026-09-26.md`). Raw samples, медиана, min/max, абсолютный выигрыш в мс и доля от полного вызова. Выигрыш kernel не выдаётся за выигрыш полного вызова.
+- [ ] Регрессия соседей: I420→BGRA и RGBA→BGRA kernel не медленнее baseline (в пределах шума), checksum совпадает.
+- [ ] Вариант B (если пробовался): отдельные числа A и A+B, решение принять/отклонить.
+- [ ] Отчёт: SHA DLL до/после, команды, числа, что взято из legacy и что нет. Отдельный коммит; T1-review принимает. Pixel 3 720×360 — если доступен Android; иначе явно «не измерено».
+
+#### Executor Report
+
+Ожидается после одобрения плана и реализации.
+
+#### Review
+
+Ожидает T1 · GPT-6 Sol.
+
+### BGRA-02 — I420-ветка `yuv_convert_to_bgra`
+
+**Статус:** TODO — Architect Decision готов; старт после одобрения плана пользователем **и** приёмки BGRA-01 (отдельный коммит).
+**Исполнитель:** T2 · GPT-5.6 Terra; проверка — T1 · GPT-6 Sol.
+**Зависит от:** BGRA-00; BGRA-01 (принятая структура NV12-пути и общий helper записи пикселя).
+
+#### Architect Decision
+
+Повторить принятую в BGRA-01 схему для I420. Legacy-референс `git show 0.2.4:src/yuv/yuv420/yuv420_to_bgra.c` содержит ту же формулу без дополнительных приёмов.
+
+**Тир:** T2 подтверждён. Правка механически повторяет принятый образец; главный риск — перепутать независимые stride U/V или незаметно задеть общий helper. Оба риска ловятся тестами из DoD и T1-review.
+
+1. В dispatch `yuv_convert_to_bgra` добавить ветку `YUV_VIEW_FORMAT_I420 → static void yuv_convert_i420_to_bgra(source, destination)`. После этого в исходном цикле остаётся только packed RGBA→BGRA. Разрешено удалить ставшие недостижимыми 4:2:0-ветки из этого цикла (стр. 84–86 и 95–115 текущего кода) только удалением; packed-операторы (стр. 89–94) остаются поведенчески идентичными.
+2. Локальные `const`: `yPs`, `uPs = planes[1].pixelStride`, `vPs = planes[2].pixelStride`, `dstPs`, width/height. Указатели на строки U и V — один раз на строку, `y / 2u`.
+3. Пара Y на один `(u, v)`: `u = uRow[cx * uPs]`, `v = vRow[cx * vPs]`, те же `bTerm/gTerm/rTerm` и **тот же** helper записи из BGRA-01, без копии формулы; хвост нечётной ширины — как в BGRA-01.
+4. Fast path при `yPs == 1 && uPs == 1 && vPs == 1 && dstPs == 4`: указатели сдвигаются на `y += 2`, `u += 1`, `v += 1`, `to += 8`. Generic — через `(uint64_t)x * stride`. U и V в I420 — независимые планы с независимыми stride; условие fast path проверяет оба.
+5. Вариант 2×2 — только если он был принят в BGRA-01, и с тем же порогом отдельного выигрыша.
+
+#### Constraints
+
+- Все ограничения BGRA-01 (ABI, формула, active-only доступ, вне рамок) действуют без изменений.
+- **Общий helper записи/clip, принятый в BGRA-01, не менять.** Если изменение неизбежно, это повод остановиться и согласовать; в случае согласия NV12 полностью перепроверяется и перемеряется, как в DoD BGRA-01.
+- Функцию `yuv_convert_nv12_to_bgra` не трогать. Packed RGBA→BGRA меняется только удалением недостижимого кода из п. 1.
+
+#### Definition of Done
+
+- [ ] Baseline I420→BGRA — на принятом коммите BGRA-01 (не на `d7e6a89`), та же сборка и тот же вход.
+- [ ] `abi_convert_test.c`: те же геометрии и layouts, что для NV12, плюс I420-специфика — разные `pixelStride` у U и V (например, U `ps=1`, V `ps=3`), разные `rowStride` у U и V, смешанный случай «Y tight, chroma gapped». Существующий I420→BGRA 4×4 тест проходит без изменений. Крайние значения, alpha, canary.
+- [ ] `abi_sanitizer_test.c` C-02: I420→BGRA с pixel gaps и exact-length аллокациями; полный `ctest` под ASan+UBSan на macOS/Linux (Debug + Release) и Windows `ctest`.
+- [ ] **Регрессия NV12:** после правки повторить NV12→BGRA byte-exact тесты и kernel/full_call замеры BGRA-01. Время NV12 не хуже принятого в BGRA-01 в пределах шума, checksum тот же. RGBA→BGRA checksum и время тоже без изменений.
+- [ ] Все 12 пар `yuv_convert_v1_test.dart` с прежними checksum; релевантные `flutter test`; format/analyze/diff-check.
+- [ ] Замер I420: kernel (stages kernel + `yuv_convert_v1_test.dart`) и полный вызов (stages full_call + `tool/bench/dart` `CVT.I420.BGRA`), raw samples, медиана, разброс, выигрыш в мс.
+- [ ] Отчёт, SHA DLL, отдельный коммит; T1-review принимает.
+
+#### Executor Report
+
+Ожидается после приёмки BGRA-01.
+
+#### Review
+
+Ожидает T1 · GPT-6 Sol.
+
 ## Позже
 
 - [Предрелизные проверки Android, Windows, macOS, Web, Linux и iOS](doc/perf/prerelease-todo.md) выполняются после стабилизации конвертации на одном финальном SHA.
