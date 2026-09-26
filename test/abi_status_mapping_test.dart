@@ -819,6 +819,13 @@ class _SnapshottingNativeAllocator implements NativeAllocator {
   }
 
   @override
+  ffi.Pointer<T> allocateUninitialized<T extends ffi.NativeType>(int byteCount) {
+    final ffi.Pointer<T> pointer = pkg_ffi.malloc.allocate<T>(byteCount);
+    _byteCountByAddress[pointer.address] = byteCount;
+    return pointer;
+  }
+
+  @override
   void free(ffi.Pointer<ffi.NativeType> pointer) {
     final int? byteCount = _byteCountByAddress.remove(pointer.address);
     if (byteCount != null) {

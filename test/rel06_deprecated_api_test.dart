@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yuv_ffi/src/functions/bindings/yuv_ffi_bingings.dart';
 import 'package:yuv_ffi/src/loader/impl/loader_io.dart' as loader_io;
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/yuv_image.dart' show YuvImageImpl;
@@ -250,7 +251,12 @@ void main() {
 
     test('fromRgba8888() matches applyRgbaBytes()', () async {
       await YuvFfi.initialize();
-      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusOk;
+      // Fills every destination byte deterministically rather than leaving
+      // it whatever the allocator happened to hand back (BGRA-03: a
+      // convert-backed destination is no longer calloc-zeroed, so a no-op
+      // fake here must not rely on zero-fill as an implicit "both sides
+      // produced the same bytes" oracle).
+      YuvAbiV1Runner.debugInvokeOverride = _fillEveryPlane(0x5A);
 
       final legacy = YuvImage.bgra(4, 4);
       final modern = YuvImage.bgra(4, 4);
@@ -268,7 +274,10 @@ void main() {
 
     test('toYuvI420()/toYuvBgra8888()/toYuvNv21() match applyFormat() with the corresponding YuvPixelFormat', () async {
       await YuvFfi.initialize();
-      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusOk;
+      // Same reasoning as fromRgba8888()'s fake above: a real convert
+      // overwrites every destination byte, so the fake must too, rather
+      // than depending on the allocator's incidental zero-fill.
+      YuvAbiV1Runner.debugInvokeOverride = _fillEveryPlane(0x5A);
 
       final legacyToI420 = YuvImage.bgra(4, 4);
       final modernToI420 = YuvImage.bgra(4, 4);
@@ -698,4 +707,22 @@ class _RecordingForeignImage implements YuvImage {
 
   @override
   Uint8List toBgraBytes() => _plane.bytes;
+}
+
+/// A `debugInvokeOverride` fake that fills every destination plane with
+/// [fillByte], standing in for a real conversion kernel's guarantee (BGRA-03:
+/// `yuv_convert_v1`'s dispatch table only ever writes every active byte of a
+/// full-frame destination, never leaves any of it untouched). Two Dart calls
+/// through this fake with the same geometry/format therefore always produce
+/// the same destination bytes, which is what the "legacy call matches modern
+/// call" tests above compare -- unlike a no-op fake, this does not rely on
+/// the allocator's own zero-fill (or lack of it) as an accidental oracle.
+int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<ffi.NativeType>) _fillEveryPlane(int fillByte) {
+  return (src, dst, options) {
+    for (int i = 0; i < dst.ref.planeCount; i++) {
+      final plane = dst.ref.planes[i];
+      plane.data.asTypedList(plane.length).fillRange(0, plane.length, fillByte);
+    }
+    return yuvStatusOk;
+  };
 }
