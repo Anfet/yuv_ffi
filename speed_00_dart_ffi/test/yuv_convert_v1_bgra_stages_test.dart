@@ -14,9 +14,27 @@ import 'package:test/test.dart';
 // own so a later optimization task can be pointed at whichever stage the
 // measurement blames, instead of only at the full public call.
 //
+// toBgraBytes() stops after that copy-back (yuv_image.dart's toBgraBytes()
+// returns `result.planes[0]` directly). toBgra() additionally wraps the same
+// copied bytes into a public YuvImage: YuvAbiV1ImageTransport.planesOf()
+// builds a YuvPlane per result plane (no byte copy, it adopts the existing
+// Uint8List), then YuvImageImpl(...) constructs its YuvImageState around
+// that plane list. That wrap has its own stage below ("wrap"), measured
+// after copy_out, and "toBgra_full_call" is full_call + wrap end to end --
+// this is the missing "other public API" measurement independent review
+// asked for (doc/perf/results/bgra_independent_review_2026-09-26.md, BGRA-00
+// row: "Нет ... отдельного замера toBgra() в том же протоколе").
+//
 // This file does not call the yuv_ffi package; it drives the same ABI v1
 // struct layout yuv_convert_v1_test.dart uses, directly, to stay a read-only
-// measurement against the native library.
+// measurement against the native library. lib/'s YuvPlane/YuvImageImpl are
+// Flutter-dependent (yuv_plane.dart imports package:flutter/foundation.dart)
+// and this package has no Flutter dependency (see pubspec.yaml), so the wrap
+// stage below is a structurally faithful local proxy of YuvPlane's
+// constructor (same field assignment and the same length-validation branch
+// against height * rowStride) rather than the real class -- it is not the
+// BGRA conversion kernel, so it carries none of the risk a proxy of that
+// would.
 const _width = 1920;
 const _height = 1080;
 const _warmup = 5;
@@ -78,6 +96,38 @@ typedef _DartConvert = int Function(Pointer<_Frame>, Pointer<_Frame>, Pointer<_O
 
 const _names = ['unused', 'I420', 'NV12', 'BGRA'];
 
+/// Structural proxy for `lib/src/yuv/shared/yuv_plane.dart`'s `YuvPlane`:
+/// same constructor field assignment and the same
+/// `bytes.length != height * rowStride` validation branch, without the
+/// `package:flutter/foundation.dart` import that class carries (this
+/// package has no Flutter dependency; see pubspec.yaml). Used only to time
+/// the "wrap" stage of toBgra(), never as a stand-in for conversion output.
+final class _PlaneProxy {
+  _PlaneProxy(this.height, this.rowStride, this.pixelStride, Uint8List bytes) : bytes = bytes {
+    final expected = height * rowStride;
+    if (bytes.length != expected) {
+      throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected exactly $expected bytes');
+    }
+  }
+  final int height;
+  final int rowStride;
+  final int pixelStride;
+  final Uint8List bytes;
+}
+
+/// Structural proxy for `lib/src/yuv/impl/io/yuv_image.dart`'s
+/// `YuvImageImpl`: holds the format/geometry/plane fields a real instance
+/// would, without that class's Flutter-facing surface (revision tracking,
+/// `to*`/`apply*` methods) which toBgra()'s measured wrap step never
+/// exercises -- `_toIndependent` only constructs the object and returns it.
+final class _ImageProxy {
+  _ImageProxy(this.format, this.width, this.height, this.planes);
+  final int format;
+  final int width;
+  final int height;
+  final List<_PlaneProxy> planes;
+}
+
 void main() {
   final path = Platform.environment['YUV_FFI_DLL'];
   if (!Platform.isWindows || path == null || !File(path).existsSync()) {
@@ -110,8 +160,31 @@ void main() {
       // free), for direct comparison against the existing Flutter AOT
       // 43-44 ms full-call measurement.
       final fullCallSamples = <double>[];
+      // Stage F: toBgra()'s own extra step over toBgraBytes() -- wrap the
+      // already-copied Dart bytes into a public YuvImage
+      // (YuvAbiV1ImageTransport.planesOf() + YuvImageImpl(...), see
+      // yuv_image.dart's _toIndependent). No further byte copy: the plane
+      // wraps the same Uint8List timeCopyOutOnly/timeFullCall produced.
+      final wrapSamples = <double>[];
+      // Stage E+F: the full toBgra() call, for direct comparison against
+      // fullCallSamples (toBgraBytes()'s full call) in the same protocol.
+      final toBgraFullCallSamples = <double>[];
 
       late List<int> lastResult;
+      late _ImageProxy lastImage;
+
+      // [bytes] is the same Uint8List timeCopyOutOnly/timeFullCall already
+      // produced -- YuvAbiV1ImageTransport.planesOf() and YuvPlane's
+      // constructor adopt the runner's copied-out plane directly, with no
+      // further byte copy for a single-plane BGRA image (see planesOf: it
+      // wraps `result.planes[planeIndex]` as-is into a new YuvPlane).
+      double timeWrapOnly(Uint8List bytes) {
+        final sw = Stopwatch()..start();
+        final plane = _PlaneProxy(_height, _width * 4, 4, bytes);
+        lastImage = _ImageProxy(_formatBgra, _width, _height, [plane]);
+        sw.stop();
+        return sw.elapsedTicks * 1000000 / sw.frequency;
+      }
 
       double timeStagingOnly() {
         final sw = Stopwatch()..start();
@@ -163,6 +236,31 @@ void main() {
         return sw.elapsedTicks * 1000000 / sw.frequency;
       }
 
+      // toBgra()'s full call: identical A+B+C+D as timeFullCall(), plus the
+      // wrap stage (yuv_image.dart's _toIndependent constructs the
+      // YuvImageImpl only after YuvAbiV1Runner.convert returns), timed as
+      // one region so it is directly comparable to fullCallSamples.
+      double timeToBgraFullCall() {
+        final sw = Stopwatch()..start();
+        final source = _allocateSourceFrame(sourceFormat, sourceBytes);
+        final dest = _allocateDestinationFrame();
+        final options = calloc<_Options>();
+        options.ref
+          ..structSize = sizeOf<_Options>()
+          ..abiVersion = 1;
+        final status = convert(source.frame, dest.frame, options);
+        expect(status, 0);
+        final result = _copyDestinationBgra(dest.buffers.single);
+        final plane = _PlaneProxy(_height, _width * 4, 4, result);
+        lastImage = _ImageProxy(_formatBgra, _width, _height, [plane]);
+        sw.stop();
+        calloc.free(options);
+        _freeFrame(source.frame, source.buffers);
+        _freeFrame(dest.frame, dest.buffers);
+        lastResult = result;
+        return sw.elapsedTicks * 1000000 / sw.frequency;
+      }
+
       // Warm-up covers every stage and the full call so JIT/cache effects
       // land before the timed samples, matching yuv_convert_v1_test.dart.
       for (var i = 0; i < _warmup; i++) {
@@ -175,11 +273,13 @@ void main() {
           ..structSize = sizeOf<_Options>()
           ..abiVersion = 1;
         timeKernelOnly(source, dest, options);
-        timeCopyOutOnly(dest);
+        final copiedOut = _copyDestinationBgra(dest.buffers.single);
+        timeWrapOnly(copiedOut);
         calloc.free(options);
         _freeFrame(source.frame, source.buffers);
         _freeFrame(dest.frame, dest.buffers);
         timeFullCall();
+        timeToBgraFullCall();
       }
 
       for (var i = 0; i < _runs; i++) {
@@ -196,6 +296,14 @@ void main() {
         copyOutSamples.add(timeCopyOutOnly(dest));
         final actualHash = _checksum([lastResult]);
         if (actualHash != expectedHash) fail('$name byte mismatch at run $i');
+
+        // wrap is timed on the same already-copied bytes, right after
+        // copy_out, before that frame's native memory is freed -- matching
+        // toBgra()'s own order (convert, copy out, wrap, free).
+        wrapSamples.add(timeWrapOnly(lastResult as Uint8List));
+        final wrapHash = _checksum([lastImage.planes.single.bytes]);
+        if (wrapHash != expectedHash) fail('$name wrap byte mismatch at run $i');
+
         calloc.free(options);
         _freeFrame(source.frame, source.buffers);
         _freeFrame(dest.frame, dest.buffers);
@@ -203,6 +311,10 @@ void main() {
         fullCallSamples.add(timeFullCall());
         final fullHash = _checksum([lastResult]);
         if (fullHash != expectedHash) fail('$name full-call byte mismatch at run $i');
+
+        toBgraFullCallSamples.add(timeToBgraFullCall());
+        final toBgraHash = _checksum([lastImage.planes.single.bytes]);
+        if (toBgraHash != expectedHash) fail('$name toBgra full-call byte mismatch at run $i');
       }
 
       void report(String stage, List<double> samples) {
@@ -221,6 +333,8 @@ void main() {
       report('kernel', kernelSamples);
       report('copy_out', copyOutSamples);
       report('full_call', fullCallSamples);
+      report('wrap', wrapSamples);
+      report('toBgra_full_call', toBgraFullCallSamples);
       print('BGRA-00 $name checksum=0x${_hex64(expectedHash)}');
     });
   }

@@ -34,8 +34,11 @@
 
 ### BGRA-00 — Executor Report
 
-**Текущий статус:** TODO — см. независимое ревью выше; отчёт ниже сохранён как история Windows-этапа.
-**Исполнитель:** T2 · GPT-5.6 Terra
+**Текущий статус:** TODO — см. независимое ревью выше. `toBgra()` замер (см. addendum ниже) выполнен
+и закрывает первый пункт ревью; Pixel 3 720×360 остаётся невыполненным (ожидает централизованного
+прогона координирующей сессией — см. addendum). Исходный отчёт ниже сохранён как история
+Windows-этапа без изменений.
+**Исполнитель:** T2 · GPT-5.6 Terra (Windows-этап); addendum по `toBgra()` — T1 · Claude Sonnet 5.
 
 Полный отчёт, методика и три раунда raw данных:
 [bgra00_stage_breakdown_windows_1080p_2026-09-26.md](doc/perf/results/bgra00_stage_breakdown_windows_1080p_2026-09-26.md),
@@ -77,6 +80,63 @@ raw CSV — [bgra00_stage_breakdown_windows_1080p_raw.csv](doc/perf/results/bgra
   `dart format --line-length 150` применён; `dart test` — 2/2 passed, checksum совпадает на каждом
   из 3 раундов. `flutter analyze`/`flutter test` не запускались — задача не трогает `lib/` и
   `speed_00_dart_ffi` не зависит от Flutter.
+
+#### Addendum — `toBgra()` замер и попытка Pixel 3 (26.09.2026, T1 · Claude Sonnet 5)
+
+Закрывает первый пункт независимого ревью: "Нет ... отдельного замера `toBgra()` в том же
+протоколе". Второй пункт (Pixel 3 720×360) остаётся открытым по прямому указанию координирующей
+сессии, не по недоступности устройства — см. ниже.
+
+**`toBgra()` vs `toBgraBytes()`, тот же протокол.** `toBgra()` (`yuv_image.dart`'s
+`_toIndependent`) вызывает тот же `YuvAbiV1Runner.convert(...)` с тем же tight BGRA destination
+layout, что и `toBgraBytes()`, и затем оборачивает уже скопированные байты в публичный `YuvImage`:
+`YuvAbiV1ImageTransport.planesOf()` строит `YuvPlane` без нового копирования байт (для
+одноплоскостного BGRA), `YuvImageImpl(...)` строит `YuvImageState` вокруг этого списка. Добавила в
+[speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart](speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart)
+два новых этапа тем же протоколом (30 прогонов, 5 warmup, 3 раунда, FNV-1a byte-exact проверка
+каждого прогона): **wrap** (только конструирование `YuvPlane`+`YuvImageImpl` над уже скопированными
+байтами) и **toBgra_full_call** (staging+dest_alloc_zero+kernel+copy_out+wrap одним регионом, для
+прямого сравнения с существующим `full_call`). Пакет без зависимости от Flutter (`pubspec.yaml`),
+а настоящий `YuvPlane` импортирует `package:flutter/foundation.dart`, поэтому wrap измеряется через
+локальные `_PlaneProxy`/`_ImageProxy`, структурно повторяющие конструктор `YuvPlane` (то же
+присвоение полей и та же проверка `bytes.length != height * rowStride`) без Flutter-зависимости;
+сам конвертирующий путь (staging/dest_alloc/kernel/copy_out) не подменён и не проксирован.
+
+Полный отчёт и raw CSV:
+[bgra00_tobgra_vs_tobgrabytes_windows_1080p_2026-09-26.md](doc/perf/results/bgra00_tobgra_vs_tobgrabytes_windows_1080p_2026-09-26.md),
+[bgra00_stage_breakdown_windows_1080p_tobgra_raw.csv](doc/perf/results/bgra00_stage_breakdown_windows_1080p_tobgra_raw.csv).
+DLL переиспользован из BGRA-02 (SHA-256 `9C816B9F59EE159573575C2916321693AE035161D99B92274D9FC21A22365F30`,
+`git diff 5b233c7 HEAD -- src/` дал 0 строк — native не менялся, задача не трогает `src/`).
+
+| Pair | full_call (toBgraBytes) | wrap | toBgra_full_call |
+| --- | ---: | ---: | ---: |
+| NV12→BGRA (3 раунда) | 59.95 / 60.07 / 59.86 мс | 0.0086 / 0.0104 / 0.0072 мс | 59.92 / 59.91 / 59.65 мс |
+| I420→BGRA (3 раунда) | 66.31 / 66.90 / 67.33 мс | 0.0083 / 0.0085 / 0.0076 мс | 66.58 / 66.38 / 66.80 мс |
+
+wrap — ~0.01–0.02% от full_call, на 3-4 порядка меньше самого дешёвого из уже измеренных этапов
+(copy_out, ~2 мс). `toBgra_full_call` совпадает с `full_call` в пределах шума на всех 6
+сравнениях (макс. расхождение 0.75 мс, в сторону "toBgra быстрее" — то есть шум, не реальная
+стоимость). Checksum идентичен на каждом прогоне обоих этапов и обоих pairs
+(`0xbd2817acd7e16391` NV12, `0x9fb2849898309858` I420) — тот же, что в исходном отчёте.
+Абсолютные числа этого прогона (kernel ~44.6–51.3 мс) выше исходного отчёта (~12 мс) из-за нагрузки
+машины в моменте (см. подробности в addendum-отчёте) — это не регрессия: все три раунда сходятся
+друг с другом, а сравнение toBgra vs toBgraBytes идёт в рамках одного прогона на одной и той же
+загруженной машине, так что относительная величина не искажена.
+Проверено: `dart analyze` — чисто; `dart format --line-length 150` — без изменений; `dart test` —
+2/2 passed на всех 3 раундах.
+
+**Pixel 3 720×360 — по прямому указанию координирующей сессии НЕ прогонялся в этой сессии.**
+Устройство `8B1X11QLW` подтверждено доступным напрямую через `adb`/`flutter` с этой Windows-машины
+(без Mac-runner моста — тот мост используется в проекте для iOS/macOS сборок и Chrome-тестов, не
+для Android; ADB/Flutter для Pixel 3 в этом проекте всегда шли напрямую с Windows, см.
+`tool/bench/run_dart_android.ps1`, `tool/bench/run_blur_pixel3.ps1`, оба используют `adb -s
+8B1X11QLW` без промежуточного Mac-моста). `adb devices -l` в этой сессии подтвердил
+`8B1X11QLW device`. Координирующая сессия явно попросила не подключаться к устройству в этой
+задаче и прогнать все Pixel 3 замеры цикла централизованно, чтобы разные параллельные исполнители
+не конкурировали за одно физическое устройство. Числа для Pixel 3 720×360 ожидаются от
+координирующей сессии и будут вписаны в addendum-отчёт до перевода карточки в REVIEW — это не
+"не удалось", а "не пыталась по прямому указанию", зафиксировано явно, чтобы не путать с
+предыдущими отчётами, где причиной было реальное отсутствие доступа.
 
 #### Review
 
