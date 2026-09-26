@@ -161,48 +161,99 @@ static void yuv_convert_nv12_to_bgra(
     }
 }
 
+/* I420 -> BGRA. Dispatched once per frame from yuv_convert_to_bgra, mirroring
+ * yuv_convert_nv12_to_bgra's structure: the caller has already resolved the
+ * format, so this function only ever sees I420. U and V are independent
+ * planes here, each with its own pixelStride, so the fast path requires both
+ * to be pixel-tight (in addition to Y and the destination); row padding is
+ * allowed either way because rows are still addressed through rowStride.
+ * Both paths read one U/V sample per Y pair and share yuv_convert_store_bgra,
+ * the same helper NV12 uses -- the formula exists in exactly one place. */
+static void yuv_convert_i420_to_bgra(
+    const YuvValidatedConstFrameView *source, const YuvValidatedMutableFrameView *destination) {
+    const uint32_t width = source->width;
+    const uint32_t height = source->height;
+    const uint32_t yPs = source->planes[0].pixelStride;
+    const uint32_t uPs = source->planes[1].pixelStride;
+    const uint32_t vPs = source->planes[2].pixelStride;
+    const uint32_t dstPs = destination->planes[0].pixelStride;
+    const int fast = yPs == 1 && uPs == 1 && vPs == 1 && dstPs == 4;
+
+    for (uint32_t row = 0; row < height; row++) {
+        const uint8_t *yRow = yuv_convert_const_at(&source->planes[0], 0, row);
+        const uint8_t *uRow = yuv_convert_const_at(&source->planes[1], 0, row / 2u);
+        const uint8_t *vRow = yuv_convert_const_at(&source->planes[2], 0, row / 2u);
+        uint8_t *dstRow = yuv_convert_mutable_at(&destination->planes[0], 0, row);
+
+        if (fast) {
+            const uint8_t *y = yRow;
+            const uint8_t *u = uRow;
+            const uint8_t *v = vRow;
+            uint8_t *to = dstRow;
+            uint32_t x = 0;
+            for (; x + 1u < width; x += 2u, y += 2, u += 1, v += 1, to += 8) {
+                const int32_t d = (int32_t)u[0] - 128;
+                const int32_t e = (int32_t)v[0] - 128;
+                const int32_t bTerm = 516 * d + 128;
+                const int32_t gTerm = -100 * d - 208 * e + 128;
+                const int32_t rTerm = 409 * e + 128;
+                yuv_convert_store_bgra(to, 298 * ((int32_t)y[0] - 16), bTerm, gTerm, rTerm);
+                yuv_convert_store_bgra(to + 4, 298 * ((int32_t)y[1] - 16), bTerm, gTerm, rTerm);
+            }
+            if (x < width) {
+                const int32_t d = (int32_t)u[0] - 128;
+                const int32_t e = (int32_t)v[0] - 128;
+                yuv_convert_store_bgra(
+                    to, 298 * ((int32_t)y[0] - 16), 516 * d + 128, -100 * d - 208 * e + 128, 409 * e + 128);
+            }
+        } else {
+            uint32_t x = 0;
+            for (; x + 1u < width; x += 2u) {
+                const uint32_t cx = x / 2u;
+                const int32_t d = (int32_t)uRow[(uint64_t)cx * uPs] - 128;
+                const int32_t e = (int32_t)vRow[(uint64_t)cx * vPs] - 128;
+                const int32_t bTerm = 516 * d + 128;
+                const int32_t gTerm = -100 * d - 208 * e + 128;
+                const int32_t rTerm = 409 * e + 128;
+                const uint8_t y0 = yRow[(uint64_t)x * yPs];
+                const uint8_t y1 = yRow[(uint64_t)(x + 1u) * yPs];
+                yuv_convert_store_bgra(
+                    dstRow + (uint64_t)x * dstPs, 298 * ((int32_t)y0 - 16), bTerm, gTerm, rTerm);
+                yuv_convert_store_bgra(
+                    dstRow + (uint64_t)(x + 1u) * dstPs, 298 * ((int32_t)y1 - 16), bTerm, gTerm, rTerm);
+            }
+            if (x < width) {
+                const uint32_t cx = x / 2u;
+                const int32_t d = (int32_t)uRow[(uint64_t)cx * uPs] - 128;
+                const int32_t e = (int32_t)vRow[(uint64_t)cx * vPs] - 128;
+                const uint8_t y0 = yRow[(uint64_t)x * yPs];
+                yuv_convert_store_bgra(dstRow + (uint64_t)x * dstPs, 298 * ((int32_t)y0 - 16), 516 * d + 128,
+                    -100 * d - 208 * e + 128, 409 * e + 128);
+            }
+        }
+    }
+}
+
 static void yuv_convert_to_bgra(
     const YuvValidatedConstFrameView *source, const YuvValidatedMutableFrameView *destination) {
     if (source->format == YUV_VIEW_FORMAT_NV12) {
         yuv_convert_nv12_to_bgra(source, destination);
         return;
     }
-    const int packed = source->format == YUV_VIEW_FORMAT_RGBA8888;
+    if (source->format == YUV_VIEW_FORMAT_I420) {
+        yuv_convert_i420_to_bgra(source, destination);
+        return;
+    }
     for (uint32_t y = 0; y < source->height; y++) {
         const uint8_t *sourceRow = yuv_convert_const_at(&source->planes[0], 0, y);
         uint8_t *destinationRow = yuv_convert_mutable_at(&destination->planes[0], 0, y);
-        const uint8_t *chromaU = packed ? NULL : yuv_convert_const_at(&source->planes[1], 0, y / 2u);
-        const uint8_t *chromaV = !packed && source->format == YUV_VIEW_FORMAT_I420
-            ? yuv_convert_const_at(&source->planes[2], 0, y / 2u) : NULL;
         for (uint32_t x = 0; x < source->width; x++) {
             uint8_t *to = destinationRow + (uint64_t)x * destination->planes[0].pixelStride;
-            if (packed) {
-                const uint8_t *from = sourceRow + (uint64_t)x * source->planes[0].pixelStride;
-                to[0] = from[2];
-                to[1] = from[1];
-                to[2] = from[0];
-                to[3] = from[3];
-            } else {
-                const uint8_t yy = sourceRow[(uint64_t)x * source->planes[0].pixelStride];
-                const uint32_t cx = x / 2u;
-                int32_t u;
-                int32_t v;
-                if (source->format == YUV_VIEW_FORMAT_I420) {
-                    u = chromaU[(uint64_t)cx * source->planes[1].pixelStride];
-                    v = chromaV[(uint64_t)cx * source->planes[2].pixelStride];
-                } else {
-                    const uint8_t *uv = chromaU + (uint64_t)cx * source->planes[1].pixelStride;
-                    u = uv[0];
-                    v = uv[1];
-                }
-                const int32_t c = (int32_t)yy - 16;
-                const int32_t d = u - 128;
-                const int32_t e = v - 128;
-                to[0] = yuv_convert_clip((298 * c + 516 * d + 128) >> 8);
-                to[1] = yuv_convert_clip((298 * c - 100 * d - 208 * e + 128) >> 8);
-                to[2] = yuv_convert_clip((298 * c + 409 * e + 128) >> 8);
-                to[3] = 255;
-            }
+            const uint8_t *from = sourceRow + (uint64_t)x * source->planes[0].pixelStride;
+            to[0] = from[2];
+            to[1] = from[1];
+            to[2] = from[0];
+            to[3] = from[3];
         }
     }
 }
