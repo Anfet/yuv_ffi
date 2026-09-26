@@ -65,7 +65,7 @@ static void yuv_convert_relayout(
     }
 }
 
-static uint8_t yuv_convert_clip(int32_t value) {
+static inline uint8_t yuv_convert_clip(int32_t value) {
     if (value < 0) {
         return 0;
     }
@@ -75,8 +75,98 @@ static uint8_t yuv_convert_clip(int32_t value) {
     return (uint8_t)value;
 }
 
+/* Shared by every YUV->BGRA path (fast and generic, NV12 and I420) so the
+ * BT.601 limited-range formula exists in exactly one place. c298 is
+ * 298 * (Y - 16); bTerm/gTerm/rTerm are the chroma-derived additive terms
+ * (516*d+128, -100*d-208*e+128, 409*e+128) computed once per chroma sample by
+ * the caller and reused for both Y values that share it. This is the same
+ * sum as (298*c + 516*d + 128) >> 8 etc., just grouped so the chroma part is
+ * shared -- see the Architect Decision for why the regrouping cannot change
+ * the result (int32_t throughout, well under overflow range). Byte-by-byte
+ * writes, not a uint32_t cast: an aliased, possibly misaligned uint8_t* store
+ * of a wider type is undefined behavior under strict aliasing. */
+static inline void yuv_convert_store_bgra(
+    uint8_t *to, int32_t c298, int32_t bTerm, int32_t gTerm, int32_t rTerm) {
+    to[0] = yuv_convert_clip((c298 + bTerm) >> 8);
+    to[1] = yuv_convert_clip((c298 + gTerm) >> 8);
+    to[2] = yuv_convert_clip((c298 + rTerm) >> 8);
+    to[3] = 255;
+}
+
+/* NV12 -> BGRA. Dispatched once per frame from yuv_convert_to_bgra, not once
+ * per pixel: the caller has already resolved the format, so this function
+ * only ever sees NV12. Fast path applies when both source planes and the
+ * destination are pixel-tight (no per-pixel gaps); row padding is allowed
+ * either way because rows are still addressed through rowStride. Both paths
+ * read UV once per Y pair and share yuv_convert_store_bgra. */
+static void yuv_convert_nv12_to_bgra(
+    const YuvValidatedConstFrameView *source, const YuvValidatedMutableFrameView *destination) {
+    const uint32_t width = source->width;
+    const uint32_t height = source->height;
+    const uint32_t yPs = source->planes[0].pixelStride;
+    const uint32_t uvPs = source->planes[1].pixelStride;
+    const uint32_t dstPs = destination->planes[0].pixelStride;
+    const int fast = yPs == 1 && uvPs == 2 && dstPs == 4;
+
+    for (uint32_t row = 0; row < height; row++) {
+        const uint8_t *yRow = yuv_convert_const_at(&source->planes[0], 0, row);
+        const uint8_t *uvRow = yuv_convert_const_at(&source->planes[1], 0, row / 2u);
+        uint8_t *dstRow = yuv_convert_mutable_at(&destination->planes[0], 0, row);
+
+        if (fast) {
+            const uint8_t *y = yRow;
+            const uint8_t *uv = uvRow;
+            uint8_t *to = dstRow;
+            uint32_t x = 0;
+            for (; x + 1u < width; x += 2u, y += 2, uv += 2, to += 8) {
+                const int32_t d = (int32_t)uv[0] - 128;
+                const int32_t e = (int32_t)uv[1] - 128;
+                const int32_t bTerm = 516 * d + 128;
+                const int32_t gTerm = -100 * d - 208 * e + 128;
+                const int32_t rTerm = 409 * e + 128;
+                yuv_convert_store_bgra(to, 298 * ((int32_t)y[0] - 16), bTerm, gTerm, rTerm);
+                yuv_convert_store_bgra(to + 4, 298 * ((int32_t)y[1] - 16), bTerm, gTerm, rTerm);
+            }
+            if (x < width) {
+                const int32_t d = (int32_t)uv[0] - 128;
+                const int32_t e = (int32_t)uv[1] - 128;
+                yuv_convert_store_bgra(
+                    to, 298 * ((int32_t)y[0] - 16), 516 * d + 128, -100 * d - 208 * e + 128, 409 * e + 128);
+            }
+        } else {
+            uint32_t x = 0;
+            for (; x + 1u < width; x += 2u) {
+                const uint8_t *uv = uvRow + (uint64_t)(x / 2u) * uvPs;
+                const int32_t d = (int32_t)uv[0] - 128;
+                const int32_t e = (int32_t)uv[1] - 128;
+                const int32_t bTerm = 516 * d + 128;
+                const int32_t gTerm = -100 * d - 208 * e + 128;
+                const int32_t rTerm = 409 * e + 128;
+                const uint8_t y0 = yRow[(uint64_t)x * yPs];
+                const uint8_t y1 = yRow[(uint64_t)(x + 1u) * yPs];
+                yuv_convert_store_bgra(
+                    dstRow + (uint64_t)x * dstPs, 298 * ((int32_t)y0 - 16), bTerm, gTerm, rTerm);
+                yuv_convert_store_bgra(
+                    dstRow + (uint64_t)(x + 1u) * dstPs, 298 * ((int32_t)y1 - 16), bTerm, gTerm, rTerm);
+            }
+            if (x < width) {
+                const uint8_t *uv = uvRow + (uint64_t)(x / 2u) * uvPs;
+                const int32_t d = (int32_t)uv[0] - 128;
+                const int32_t e = (int32_t)uv[1] - 128;
+                const uint8_t y0 = yRow[(uint64_t)x * yPs];
+                yuv_convert_store_bgra(dstRow + (uint64_t)x * dstPs, 298 * ((int32_t)y0 - 16), 516 * d + 128,
+                    -100 * d - 208 * e + 128, 409 * e + 128);
+            }
+        }
+    }
+}
+
 static void yuv_convert_to_bgra(
     const YuvValidatedConstFrameView *source, const YuvValidatedMutableFrameView *destination) {
+    if (source->format == YUV_VIEW_FORMAT_NV12) {
+        yuv_convert_nv12_to_bgra(source, destination);
+        return;
+    }
     const int packed = source->format == YUV_VIEW_FORMAT_RGBA8888;
     for (uint32_t y = 0; y < source->height; y++) {
         const uint8_t *sourceRow = yuv_convert_const_at(&source->planes[0], 0, y);
