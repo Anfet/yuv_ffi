@@ -12,12 +12,62 @@
 
 | ID | Статус | Зависимость | Исполнитель; проверка | Конкретный результат |
 | --- | --- | --- | --- | --- |
-| BGRA-00 | TODO | — | T2 · GPT-5.6 Terra; T1 · GPT-6 Sol | Разложить NV12/I420→BGRA на входной Dart staging, выделение/обнуление destination, `yuv_convert_v1`, копирование результата и полный `toBgraBytes()`/`toBgra()`. Один Dart runner с прямым FFI замером ядра, те же входы и checksum; измерить Windows 1080p и Pixel 3 720×360. По отчёту выбрать порядок следующих задач. |
+| BGRA-00 | REVIEW | — | T2 · GPT-5.6 Terra; T1 · GPT-6 Sol | Разложить NV12/I420→BGRA на входной Dart staging, выделение/обнуление destination, `yuv_convert_v1`, копирование результата и полный `toBgraBytes()`/`toBgra()`. Один Dart runner с прямым FFI замером ядра, те же входы и checksum; измерить Windows 1080p и Pixel 3 720×360. По отчёту выбрать порядок следующих задач. |
 | BGRA-01 | TODO | BGRA-00: C значим | T2 · GPT-5.6 Terra; T1 · GPT-6 Sol | Оптимизировать только NV12-ветку `yuv_convert_to_bgra` в `src/yuv/abi/yuv_convert_v1.c`: вынести выбор формата из цикла, переиспользовать UV для пары Y, добавить быстрый tight путь при сохранении generic stride пути. Сравнить C и полный вызов; byte-exact, odd/padded/gapped и sanitizer проверки обязательны. |
 | BGRA-02 | TODO | BGRA-00: C значим; BGRA-01 | T2 · GPT-5.6 Terra; T1 · GPT-6 Sol | Отдельно оптимизировать I420-ветку той же функции, переиспользуя U/V для соседних пикселей и не меняя целочисленную формулу BT.601. Те же тесты и замеры; проверить отсутствие регрессии NV12 после изменения общей функции. |
 | BGRA-03 | TODO | BGRA-00: подготовка/zero-fill значимы | T1 · GPT-6 Sol; T2 · GPT-5.6 Terra | Проверить один Dart transport-кандидат: убрать лишнее обнуление только у полностью перезаписываемых байтовых буферов конвертации. Структуры ABI и ROI должны остаться инициализированными. Проверить allocator failure/atomicity, память и ускорение полного вызова; без выигрыша не переносить. |
 | BGRA-04 | TODO | BGRA-00: copy-out значим | T1 · GPT-6 Sol; T2 · GPT-5.6 Terra | Изолированно проверить уменьшение копирования native BGRA результата в Dart без утечки или преждевременного освобождения. Сохранить независимость результата от источника, срок жизни буфера и публичное поведение; сравнить полный вызов и память. При риске контракта закрыть отрицательным выводом. |
 | BGRA-05 | TODO | BGRA-01…04 или их обоснованное закрытие | T1 · GPT-6 Sol; T2 · GPT-5.6 Terra | Свести принятые варианты, повторить полный `toBgraBytes()` и `toBgra()` для NV12/I420 на Windows и Pixel 3, сравнить с исходными 43–44 мс на одинаковом 1080p входе. Зафиксировать итоговое время, выигрыш, checksum, память и оставшийся лимитирующий этап. |
+
+### BGRA-00 — Executor Report
+
+**Статус:** REVIEW
+**Исполнитель:** T2 · GPT-5.6 Terra
+
+Полный отчёт, методика и три раунда raw данных:
+[bgra00_stage_breakdown_windows_1080p_2026-09-26.md](doc/perf/results/bgra00_stage_breakdown_windows_1080p_2026-09-26.md),
+raw CSV — [bgra00_stage_breakdown_windows_1080p_raw.csv](doc/perf/results/bgra00_stage_breakdown_windows_1080p_raw.csv).
+Новый read-only Dart FFI runner:
+[speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart](speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart)
+(не трогает native C, только раскладывает вызов на этапы через тот же ABI v1 struct layout, что и
+существующий `yuv_convert_v1_test.dart`).
+
+- Собран нативный `yuv_ffi.dll` на текущем HEAD `dcb336db590e25b7aa6103c2a98f6c2538e4ac2c`
+  (release/0.4.2, native код не менялся с базового замера `3564f5f`), MSVC Release x64. SHA-256:
+  `8F45897E07E08FDB32B87524E15BE75CEAF2EFA9CF06CDD83C3A69EC12676ABE`.
+- Замерены 4 этапа `YuvAbiV1Runner._run` (staging источника, calloc+zero-fill destination,
+  сам `yuv_convert_v1`, копирование результата) отдельно и как полная последовательность, для
+  NV12→BGRA и I420→BGRA на 1920×1080, 30 замеров/этап, 3 раунда, byte-exact проверка каждого
+  прогона по FNV-1a checksum против независимого oracle.
+- Результат (медиана, округлено): kernel ~44.6–45.8% полного вызова, dest_alloc_zero (calloc
+  zero-fill 8.3 МБ destination) ~32.7–33.9%, staging ~13.7–14.4%, copy_out ~7.0–7.2%. Полный вызов
+  в этом раннере ~27.2–27.9 мс — это Dart VM/JIT (`dart test`), не Flutter AOT release, поэтому
+  абсолютное число не сравнимо напрямую с 43–44 мс из базового отчёта; сравнима именно доля
+  каждого этапа и абсолютное время самого kernel-вызова (native код одинаковый в обоих случаях).
+- Важная методологическая находка: первая версия раннера копировала байты Dart-циклом
+  (`buffer[i] = ...`) вместо bulk `asTypedList`/`setAll`, как делает сама библиотека — это дало
+  staging/copy_out в 5–45 раз медленнее реального пути и было отклонено до публикации; финальная
+  версия использует те же bulk typed-list операции, что `_allocateConstFrame`/
+  `_copyDestinationPlanes` в `lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart`.
+- Pixel 3 720×360 **не измерен** — в этой сессии нет доступа к Android-устройству или
+  Mac-runner мосту из другого проекта. Числа не выдуманы; замер остаётся открытым для исполнителя
+  с доступом к Pixel 3, той же методикой (`yuv_convert_v1_bgra_stages_test.dart`, минимальная
+  правка — вынести `_width`/`_height` в конфигурацию раннера или отдельный тест-файл).
+- Рекомендация по порядку: BGRA-01/BGRA-02 (native kernel, ~45% полного вызова, единственный этап
+  с уже известной конкретной неэффективностью — dispatch формата внутри пикселя цикла) первыми;
+  BGRA-03 (destination zero-fill, ~33%, подтверждено измерением как throwaway работа для
+  full-frame конверсии) — значим и должен идти по значимости перед BGRA-04, а не просто по
+  номеру карточки; BGRA-04 (copy-out, ~7% на этом tight/unpadded входе после уже принятого OPT-14)
+  — наименее значим на этом входе, но задачу стоит выполнить изолированно на padded/ROI входах
+  прежде чем закрывать отрицательным выводом.
+- Проверено: `dart analyze test/yuv_convert_v1_bgra_stages_test.dart` — чисто;
+  `dart format --line-length 150` применён; `dart test` — 2/2 passed, checksum совпадает на каждом
+  из 3 раундов. `flutter analyze`/`flutter test` не запускались — задача не трогает `lib/` и
+  `speed_00_dart_ffi` не зависит от Flutter.
+
+#### Review
+
+Ожидает независимой проверки T1 · GPT-6 Sol.
 
 ## Позже
 
