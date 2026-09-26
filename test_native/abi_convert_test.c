@@ -814,6 +814,234 @@ static void test_nv12_to_bgra_geometry_and_layout(void) {
     }
 }
 
+/* ============================================================================
+ * BGRA-02: I420->BGRA byte-exact geometry/layout matrix
+ *
+ * Same GapPlane fixture and oracle shape as BGRA-01's NV12 matrix above, but
+ * U and V are independent planes here, each with its own pixelStride and
+ * rowStride -- the layout table below varies them separately (not just
+ * together) so a bug that swaps U/V stride or reads V through U's stride is
+ * caught. The oracle is transcribed independently again, not shared with the
+ * NV12 oracle above or with the kernel.
+ * ============================================================================ */
+
+#define I420_BGRA_CANARY 0xCB
+
+static int i420_bgra_clip(int value) {
+    return value < 0 ? 0 : (value > 255 ? 255 : value);
+}
+
+static void i420_bgra_oracle_pixel(int y, int u, int v, int *b, int *g, int *r) {
+    int c = y - 16;
+    int d = u - 128;
+    int e = v - 128;
+    *b = i420_bgra_clip((298 * c + 516 * d + 128) >> 8);
+    *g = i420_bgra_clip((298 * c - 100 * d - 208 * e + 128) >> 8);
+    *r = i420_bgra_clip((298 * c + 409 * e + 128) >> 8);
+}
+
+static uint8_t i420_bgra_y_value(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    if (x == 0 && y == 0) return 255;
+    if (x == width - 1 && y == height - 1) return 0;
+    return (uint8_t)((23 * x + 41 * y + 7) % 256);
+}
+
+static uint8_t i420_bgra_u_value(uint32_t cx, uint32_t cy) {
+    if (cx == 0 && cy == 0) return 0;
+    return (uint8_t)((31 * cx + 19 * cy + 3) % 256);
+}
+
+static uint8_t i420_bgra_v_value(uint32_t cx, uint32_t cy) {
+    if (cx == 0 && cy == 0) return 255;
+    return (uint8_t)((17 * cx + 53 * cy + 11) % 256);
+}
+
+typedef struct {
+    const char *name;
+    uint32_t width;
+    uint32_t height;
+} I420BgraGeometry;
+
+typedef struct {
+    const char *name;
+    uint32_t yPad;
+    uint32_t yPs; /* Y pixelStride: 1 = tight, >1 = gapped */
+    uint32_t uPad;
+    uint32_t uPs; /* U pixelStride: 1 = tight, >1 = gapped */
+    uint32_t vPad;
+    uint32_t vPs; /* V pixelStride: 1 = tight, >1 = gapped */
+    uint32_t dstPad;
+    uint32_t dstPs; /* BGRA pixelStride: 4 = tight, >4 = gapped */
+    uint32_t yOffset;
+    uint32_t uOffset;
+    uint32_t vOffset;
+    uint32_t dstOffset;
+} I420BgraLayout;
+
+static void run_i420_bgra_case(const I420BgraGeometry *geometry, const I420BgraLayout *layout) {
+    uint32_t width = geometry->width;
+    uint32_t height = geometry->height;
+    uint32_t cw = (width + 1u) / 2u;
+    uint32_t ch = (height + 1u) / 2u;
+
+    GapPlane yPlane;
+    GapPlane uPlane;
+    GapPlane vPlane;
+    GapPlane dstPlane;
+    gap_plane_init(&yPlane, width, height, layout->yPs, 1, layout->yPad, layout->yOffset, I420_BGRA_CANARY);
+    gap_plane_init(&uPlane, cw, ch, layout->uPs, 1, layout->uPad, layout->uOffset, I420_BGRA_CANARY);
+    gap_plane_init(&vPlane, cw, ch, layout->vPs, 1, layout->vPad, layout->vOffset, I420_BGRA_CANARY);
+    gap_plane_init(&dstPlane, width, height, layout->dstPs, 4, layout->dstPad, layout->dstOffset, I420_BGRA_CANARY);
+
+    for (uint32_t y = 0; y < height; y++) {
+        for (uint32_t x = 0; x < width; x++) {
+            *gap_plane_sample(&yPlane, x, y) = i420_bgra_y_value(x, y, width, height);
+        }
+    }
+    for (uint32_t cy = 0; cy < ch; cy++) {
+        for (uint32_t cx = 0; cx < cw; cx++) {
+            *gap_plane_sample(&uPlane, cx, cy) = i420_bgra_u_value(cx, cy);
+            *gap_plane_sample(&vPlane, cx, cy) = i420_bgra_v_value(cx, cy);
+        }
+    }
+
+    YuvConstFrameV1 source;
+    memset(&source, 0, sizeof(source));
+    source.structSize = (uint32_t)sizeof(source);
+    source.abiVersion = YUV_ABI_VERSION_1;
+    source.format = YUV_FORMAT_I420;
+    source.planeCount = 3;
+    source.width = width;
+    source.height = height;
+    source.colorMatrix = YUV_COLOR_MATRIX_BT601;
+    source.colorRange = YUV_COLOR_RANGE_LIMITED;
+    source.planes[0].data = yPlane.data;
+    source.planes[0].length = yPlane.length;
+    source.planes[0].rowStride = yPlane.rowStride;
+    source.planes[0].pixelStride = yPlane.pixelStride;
+    source.planes[0].sampleBytes = yPlane.sampleBytes;
+    source.planes[1].data = uPlane.data;
+    source.planes[1].length = uPlane.length;
+    source.planes[1].rowStride = uPlane.rowStride;
+    source.planes[1].pixelStride = uPlane.pixelStride;
+    source.planes[1].sampleBytes = uPlane.sampleBytes;
+    source.planes[2].data = vPlane.data;
+    source.planes[2].length = vPlane.length;
+    source.planes[2].rowStride = vPlane.rowStride;
+    source.planes[2].pixelStride = vPlane.pixelStride;
+    source.planes[2].sampleBytes = vPlane.sampleBytes;
+
+    YuvMutableFrameV1 destination;
+    memset(&destination, 0, sizeof(destination));
+    destination.structSize = (uint32_t)sizeof(destination);
+    destination.abiVersion = YUV_ABI_VERSION_1;
+    destination.format = YUV_FORMAT_BGRA8888;
+    destination.planeCount = 1;
+    destination.width = width;
+    destination.height = height;
+    destination.planes[0].data = dstPlane.data;
+    destination.planes[0].length = dstPlane.length;
+    destination.planes[0].rowStride = dstPlane.rowStride;
+    destination.planes[0].pixelStride = dstPlane.pixelStride;
+    destination.planes[0].sampleBytes = dstPlane.sampleBytes;
+
+    YuvConvertOptionsV1 options = convert_options();
+
+    char label[192];
+    snprintf(label, sizeof(label), "I420->BGRA %s %ux%u [%s]", geometry->name, width, height, layout->name);
+    expect_status(label, yuv_convert_v1(&source, &destination, &options), YUV_STATUS_OK);
+
+    int ok = 1;
+    int alphaOk = 1;
+    for (uint32_t y = 0; y < height && ok; y++) {
+        for (uint32_t x = 0; x < width && ok; x++) {
+            uint32_t cx = x / 2u;
+            uint32_t cy = y / 2u;
+            int yy = i420_bgra_y_value(x, y, width, height);
+            int uu = *gap_plane_sample(&uPlane, cx, cy);
+            int vv = *gap_plane_sample(&vPlane, cx, cy);
+            int expectedB, expectedG, expectedR;
+            i420_bgra_oracle_pixel(yy, uu, vv, &expectedB, &expectedG, &expectedR);
+            uint8_t *sample = gap_plane_sample(&dstPlane, x, y);
+            if (sample[0] != expectedB || sample[1] != expectedG || sample[2] != expectedR) {
+                printf("  FAIL  (%u,%u) expected B=%d G=%d R=%d got B=%u G=%u R=%u\n", x, y, expectedB,
+                    expectedG, expectedR, sample[0], sample[1], sample[2]);
+                ok = 0;
+            }
+            if (sample[3] != 255) {
+                alphaOk = 0;
+            }
+        }
+    }
+    char subLabel[64];
+    snprintf(subLabel, sizeof(subLabel), "      %s matches the independent oracle", layout->name);
+    expect_true(subLabel, ok);
+    expect_true("      alpha is opaque", alphaOk);
+    expect_true("      Y padding/gaps intact", gap_plane_padding_intact(&yPlane, width, height, I420_BGRA_CANARY));
+    expect_true("      U padding/gaps intact", gap_plane_padding_intact(&uPlane, cw, ch, I420_BGRA_CANARY));
+    expect_true("      V padding/gaps intact", gap_plane_padding_intact(&vPlane, cw, ch, I420_BGRA_CANARY));
+    expect_true(
+        "      destination padding/gaps intact", gap_plane_padding_intact(&dstPlane, width, height, I420_BGRA_CANARY));
+
+    gap_plane_free(&yPlane);
+    gap_plane_free(&uPlane);
+    gap_plane_free(&vPlane);
+    gap_plane_free(&dstPlane);
+}
+
+static void test_i420_to_bgra_geometry_and_layout(void) {
+    printf("I420->BGRA geometry/layout matrix (BGRA-02)\n");
+
+    const I420BgraGeometry geometries[] = {
+        {"1x1", 1, 1},
+        {"2x2", 2, 2},
+        {"1x9", 1, 9},
+        {"9x1", 9, 1},
+        {"7x5", 7, 5},
+        {"8x6", 8, 6},
+        {"33x17", 33, 17},
+    };
+    const size_t geometryCount = sizeof(geometries) / sizeof(geometries[0]);
+
+    const I420BgraLayout layouts[] = {
+        /* Both sides tight: the fast path (yPs=uPs=vPs=1, dstPs=4). */
+        {"tight", 0, 1, 0, 1, 0, 1, 0, 4, 0, 0, 0, 0},
+        /* Row-padded but still pixel-tight: fast path stays selected, row
+         * padding is exercised through rowStride on all four planes, with
+         * different padding on U and V so their rowStride is not confused. */
+        {"row-padded", 5, 1, 4, 1, 7, 1, 9, 4, 0, 0, 0, 0},
+        /* Pixel-gapped on every plane: forces the generic path throughout. */
+        {"pixel-gapped", 0, 2, 0, 3, 0, 2, 0, 5, 0, 0, 0, 0},
+        /* U and V independently gapped with DIFFERENT pixelStride from each
+         * other (BGRA-02-specific: NV12 has one interleaved UV plane, I420
+         * has two independent ones, so this is the case that would catch a
+         * bug that reused U's stride for V or vice versa). */
+        {"u-v-different-stride", 0, 1, 0, 1, 0, 3, 0, 4, 0, 0, 0, 0},
+        {"u-v-different-stride-2", 0, 1, 0, 3, 0, 1, 0, 4, 0, 0, 0, 0},
+        /* Mixed: tight source, gapped destination -- generic path is chosen
+         * because dstPs != 4 even though yPs/uPs/vPs alone would qualify. */
+        {"src-tight-dst-gapped", 0, 1, 0, 1, 0, 1, 0, 5, 0, 0, 0, 0},
+        /* Mixed the other way: gapped source, tight destination -- generic
+         * path chosen because yPs != 1. */
+        {"src-gapped-dst-tight", 0, 2, 0, 2, 0, 2, 0, 4, 0, 0, 0, 0},
+        /* Y tight, chroma gapped (both U and V) -- explicitly called out in
+         * the DoD as the "mixed" case beyond BGRA-01's NV12 matrix. */
+        {"y-tight-chroma-gapped", 0, 1, 0, 2, 0, 2, 0, 4, 0, 0, 0, 0},
+        /* Unaligned data: every plane's descriptor points 1 byte into its
+         * allocation, so a fast-path pointer increment cannot rely on any
+         * particular alignment. */
+        {"unaligned-tight", 0, 1, 0, 1, 0, 1, 0, 4, 1, 1, 1, 1},
+        {"unaligned-gapped", 0, 2, 0, 3, 0, 2, 0, 5, 1, 1, 1, 1},
+    };
+    const size_t layoutCount = sizeof(layouts) / sizeof(layouts[0]);
+
+    for (size_t g = 0; g < geometryCount; g++) {
+        for (size_t l = 0; l < layoutCount; l++) {
+            run_i420_bgra_case(&geometries[g], &layouts[l]);
+        }
+    }
+}
+
 int main(void) {
     printf("=============================================================\n");
     printf("ABI v1 conversion tests (YUV-32)\n");
@@ -824,6 +1052,7 @@ int main(void) {
     test_same_format_deep_copy();
     test_yuv_to_bgra();
     test_nv12_to_bgra_geometry_and_layout();
+    test_i420_to_bgra_geometry_and_layout();
     test_rejected_pairs();
 
     printf("-------------------------------------------------------------\n");

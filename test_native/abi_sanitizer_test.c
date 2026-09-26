@@ -611,6 +611,151 @@ static void test_nv12_bgra_pixel_gaps(void) {
 }
 
 /* ============================================================================
+ * C-02c: I420->BGRA pixel-gapped, exact-length allocations (BGRA-02)
+ *
+ * Same shape as C-02b above, but U and V are independent planes with
+ * independently chosen pixelStride, so a case can gap only one of the two
+ * chroma planes -- the case NV12's single interleaved UV plane cannot
+ * express -- to catch a bug that mixes up U's and V's stride.
+ * ============================================================================ */
+
+typedef struct {
+    uint8_t *y;
+    uint8_t *u;
+    uint8_t *v;
+    uint8_t *dst;
+    uint64_t yRowStride;
+    uint64_t uRowStride;
+    uint64_t vRowStride;
+    uint64_t dstRowStride;
+} GapFrameI420;
+
+static void gap_frame_i420_init(GapFrameI420 *frame, uint32_t width, uint32_t height, uint32_t yPs, uint32_t uPs,
+    uint32_t vPs, uint32_t dstPs) {
+    uint32_t cw = (width + 1u) / 2u;
+    uint32_t ch = (height + 1u) / 2u;
+    frame->yRowStride = (uint64_t)width * yPs;
+    frame->uRowStride = (uint64_t)cw * uPs;
+    frame->vRowStride = (uint64_t)cw * vPs;
+    frame->dstRowStride = (uint64_t)width * dstPs;
+    uint64_t ySize = frame->yRowStride * height;
+    uint64_t uSize = frame->uRowStride * ch;
+    uint64_t vSize = frame->vRowStride * ch;
+    uint64_t dstSize = frame->dstRowStride * height;
+    frame->y = (uint8_t *)malloc((size_t)ySize);
+    frame->u = (uint8_t *)malloc((size_t)uSize);
+    frame->v = (uint8_t *)malloc((size_t)vSize);
+    frame->dst = (uint8_t *)malloc((size_t)dstSize);
+    if (frame->y == NULL || frame->u == NULL || frame->v == NULL || frame->dst == NULL) {
+        fprintf(stderr, "fatal: gap_frame_i420_init malloc failed\n");
+        exit(EXIT_FAILURE);
+    }
+    for (uint32_t row = 0; row < height; row++) {
+        for (uint32_t x = 0; x < width; x++) {
+            frame->y[row * frame->yRowStride + (uint64_t)x * yPs] = (uint8_t)(23 + 19 * x + 41 * row);
+        }
+    }
+    for (uint32_t row = 0; row < ch; row++) {
+        for (uint32_t x = 0; x < cw; x++) {
+            frame->u[row * frame->uRowStride + (uint64_t)x * uPs] = (uint8_t)(31 * x + 17 * row + 5);
+            frame->v[row * frame->vRowStride + (uint64_t)x * vPs] = (uint8_t)(13 * x + 29 * row + 9);
+        }
+    }
+    memset(frame->dst, 0, (size_t)dstSize);
+}
+
+static void gap_frame_i420_free(GapFrameI420 *frame) {
+    free(frame->y);
+    free(frame->u);
+    free(frame->v);
+    free(frame->dst);
+    frame->y = NULL;
+    frame->u = NULL;
+    frame->v = NULL;
+    frame->dst = NULL;
+}
+
+static void run_i420_bgra_gap_case(const char *name, uint32_t width, uint32_t height, uint32_t yPs, uint32_t uPs,
+    uint32_t vPs, uint32_t dstPs) {
+    GapFrameI420 frame;
+    gap_frame_i420_init(&frame, width, height, yPs, uPs, vPs, dstPs);
+
+    YuvConstFrameV1 source;
+    memset(&source, 0, sizeof(source));
+    source.structSize = (uint32_t)sizeof(source);
+    source.abiVersion = YUV_ABI_VERSION_1;
+    source.format = YUV_FORMAT_I420;
+    source.planeCount = 3;
+    source.width = width;
+    source.height = height;
+    source.colorMatrix = YUV_COLOR_MATRIX_BT601;
+    source.colorRange = YUV_COLOR_RANGE_LIMITED;
+    source.planes[0].data = frame.y;
+    source.planes[0].length = frame.yRowStride * height;
+    source.planes[0].rowStride = frame.yRowStride;
+    source.planes[0].pixelStride = yPs;
+    source.planes[0].sampleBytes = 1;
+    source.planes[1].data = frame.u;
+    source.planes[1].length = frame.uRowStride * ((height + 1u) / 2u);
+    source.planes[1].rowStride = frame.uRowStride;
+    source.planes[1].pixelStride = uPs;
+    source.planes[1].sampleBytes = 1;
+    source.planes[2].data = frame.v;
+    source.planes[2].length = frame.vRowStride * ((height + 1u) / 2u);
+    source.planes[2].rowStride = frame.vRowStride;
+    source.planes[2].pixelStride = vPs;
+    source.planes[2].sampleBytes = 1;
+
+    YuvMutableFrameV1 destination;
+    memset(&destination, 0, sizeof(destination));
+    destination.structSize = (uint32_t)sizeof(destination);
+    destination.abiVersion = YUV_ABI_VERSION_1;
+    destination.format = YUV_FORMAT_BGRA8888;
+    destination.planeCount = 1;
+    destination.width = width;
+    destination.height = height;
+    destination.planes[0].data = frame.dst;
+    destination.planes[0].length = frame.dstRowStride * height;
+    destination.planes[0].rowStride = frame.dstRowStride;
+    destination.planes[0].pixelStride = dstPs;
+    destination.planes[0].sampleBytes = 4;
+
+    YuvConvertOptionsV1 options = convert_options();
+    char label[128];
+    snprintf(label, sizeof(label), "C-02c I420->BGRA %s %ux%u yPs=%u uPs=%u vPs=%u dstPs=%u", name, width, height,
+        yPs, uPs, vPs, dstPs);
+    expect_status(label, yuv_convert_v1(&source, &destination, &options), YUV_STATUS_OK);
+    executedCases++;
+
+    gap_frame_i420_free(&frame);
+}
+
+static void test_i420_bgra_pixel_gaps(void) {
+    printf("C-02c: I420->BGRA pixel gaps, exact-length allocations\n");
+
+    /* Fast path (yPs=uPs=vPs=1, dstPs=4) at exact-fit, even and odd sizes. */
+    run_i420_bgra_gap_case("fast even", 8, 6, 1, 1, 1, 4);
+    run_i420_bgra_gap_case("fast odd", 7, 5, 1, 1, 1, 4);
+    run_i420_bgra_gap_case("fast 1x1", 1, 1, 1, 1, 1, 4);
+
+    /* Generic path: every plane pixel-gapped, even and odd sizes. */
+    run_i420_bgra_gap_case("gapped even", 8, 6, 2, 3, 2, 5);
+    run_i420_bgra_gap_case("gapped odd", 7, 5, 2, 3, 2, 5);
+    run_i420_bgra_gap_case("gapped 1x1", 1, 1, 2, 3, 2, 5);
+
+    /* Mixed: only one plane gapped at a time, so the fast-path condition's
+     * four-way AND is exercised on each operand independently. */
+    run_i420_bgra_gap_case("y-gapped-only", 9, 7, 3, 1, 1, 4);
+    run_i420_bgra_gap_case("u-gapped-only", 9, 7, 1, 4, 1, 4);
+    run_i420_bgra_gap_case("v-gapped-only", 9, 7, 1, 1, 4, 4);
+    run_i420_bgra_gap_case("dst-gapped-only", 9, 7, 1, 1, 1, 6);
+
+    /* U and V gapped with DIFFERENT pixelStride from each other -- the case
+     * NV12's single interleaved UV plane cannot express at all. */
+    run_i420_bgra_gap_case("u-v-different-stride", 9, 7, 1, 2, 3, 4);
+}
+
+/* ============================================================================
  * C-03: chroma swap (NV12 only)
  * ============================================================================ */
 
@@ -1284,6 +1429,8 @@ int main(void) {
     test_canary_probes_convert();
     printf("\n");
     test_nv12_bgra_pixel_gaps();
+    printf("\n");
+    test_i420_bgra_pixel_gaps();
     printf("\n");
     test_canary_probe_chroma_swap();
     printf("\n");
