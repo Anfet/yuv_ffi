@@ -3,12 +3,13 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
-/// Indirection over raw `calloc` used by the native backend.
+/// Indirection over raw `calloc`/`malloc` used by the native backend.
 ///
-/// Production code always uses [NativeAllocator.instance], which forwards to
-/// `calloc`. Tests may swap in a counting/failing implementation to verify that
-/// every successful allocation is released even when a later allocation in the
-/// same method throws.
+/// Production code always uses [NativeAllocator.instance], which forwards
+/// [allocate] to `calloc` and [allocateUninitialized] to `malloc`. Tests may
+/// swap in a counting/failing implementation to verify that every successful
+/// allocation is released even when a later allocation in the same method
+/// throws.
 abstract class NativeAllocator {
   /// Allocator used by the native backend.
   static NativeAllocator instance = const CallocNativeAllocator();
@@ -16,17 +17,30 @@ abstract class NativeAllocator {
   /// Allocates [byteCount] zeroed bytes.
   Pointer<T> allocate<T extends NativeType>(int byteCount);
 
-  /// Releases a pointer previously returned by [allocate].
+  /// Allocates [byteCount] bytes without zeroing them (BGRA-03: only for a
+  /// buffer the caller has proven is always fully overwritten before any of
+  /// its bytes are read back -- see
+  /// `YuvAbiV1Runner._allocateMutableFrame`'s `zeroFill` parameter). Falls
+  /// back to [allocate] on any allocator that has no cheaper uninitialized
+  /// path; callers must not rely on the returned memory being zeroed either
+  /// way.
+  Pointer<T> allocateUninitialized<T extends NativeType>(int byteCount);
+
+  /// Releases a pointer previously returned by [allocate] or
+  /// [allocateUninitialized].
   void free(Pointer<NativeType> pointer);
 }
 
-/// Default [NativeAllocator] backed by `package:ffi` `calloc`.
+/// Default [NativeAllocator] backed by `package:ffi` `calloc`/`malloc`.
 class CallocNativeAllocator implements NativeAllocator {
   /// Creates the default allocator.
   const CallocNativeAllocator();
 
   @override
   Pointer<T> allocate<T extends NativeType>(int byteCount) => calloc.allocate<T>(byteCount);
+
+  @override
+  Pointer<T> allocateUninitialized<T extends NativeType>(int byteCount) => malloc.allocate<T>(byteCount);
 
   @override
   void free(Pointer<NativeType> pointer) => calloc.free(pointer);
@@ -58,6 +72,17 @@ class InstrumentedNativeAllocator implements NativeAllocator {
       throw _InjectedAllocationFailure(allocationCount);
     }
     final pointer = calloc.allocate<T>(byteCount);
+    _live.add(pointer.address);
+    return pointer;
+  }
+
+  @override
+  Pointer<T> allocateUninitialized<T extends NativeType>(int byteCount) {
+    allocationCount++;
+    if (allocationCount == failAtAllocation) {
+      throw _InjectedAllocationFailure(allocationCount);
+    }
+    final pointer = malloc.allocate<T>(byteCount);
     _live.add(pointer.address);
     return pointer;
   }

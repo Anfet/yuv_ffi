@@ -72,6 +72,24 @@ class YuvAbiV1Runner {
       allocateOptions: (allocator) => _allocateConvertOptions(allocator).cast(),
       freeOptions: (allocator, options) => allocator.free(options.cast()),
       invoke: (src, dst, options) => ffiBingings.yuv_convert_v1(src, dst, options.cast()),
+      // BGRA-03: yuv_convert_v1 validates its options header, reserved
+      // bytes, frame geometry/strides, and the source/destination format
+      // pair before it ever dispatches into a conversion function (see
+      // yuv_convert_v1's structure: every check returns early on failure,
+      // and every dispatch target -- copy, relayout, to_bgra, from_packed --
+      // only runs after all of them pass). `_run` also never copies the
+      // destination back (step 7) unless status is OK (step 6), so on any
+      // error this buffer's content -- zeroed or not -- is never observed by
+      // the caller. On success, `destinationLayout` here is always built by
+      // `_destinationWithGeometry` with tight strides (pixelStride ==
+      // sampleBytes, rowStride == planeWidth * sampleBytes), so the
+      // allocated buffer has no row padding or pixel gaps; every one of its
+      // bytes is an active sample that the dispatched conversion function
+      // fully overwrites. Zero-filling it first is therefore throwaway work
+      // for this operation specifically -- unlike blur/effects, which can
+      // seed the destination from the source to preserve bytes outside an
+      // ROI, `convert` has no ROI and always replaces the whole frame.
+      zeroFillDestination: false,
     );
   }
 
@@ -294,6 +312,7 @@ class YuvAbiV1Runner {
     required void Function(NativeAllocator allocator, ffi.Pointer<ffi.NativeType> options) freeOptions,
     required int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<ffi.NativeType>) invoke,
     bool preserveOutsideRoi = false,
+    bool zeroFillDestination = true,
   }) {
     final int expectedPlaneCount = yuvAbiV1PlaneCount(source.format);
     if (source.planes.length != expectedPlaneCount) {
@@ -325,7 +344,12 @@ class YuvAbiV1Runner {
       // the ROI survive untouched (section 11: "ROI effects seed the
       // destination from source..."); every other operation replaces the
       // whole destination, so a zero-filled buffer is the correct seed.
-      destinationFrame = _allocateMutableFrame(allocator, destinationLayout, seedFromSource: preserveOutsideRoi ? source : null);
+      destinationFrame = _allocateMutableFrame(
+        allocator,
+        destinationLayout,
+        seedFromSource: preserveOutsideRoi ? source : null,
+        zeroFill: zeroFillDestination,
+      );
 
       // Step 4: allocate versioned options.
       options = allocateOptions(allocator);
@@ -423,18 +447,26 @@ class YuvAbiV1Runner {
   /// Allocates the destination frame struct and one native buffer per
   /// destination plane, per [layout].
   ///
-  /// When [seedFromSource] is `null`, each buffer is `calloc`-zeroed: every
-  /// non-ROI operation replaces the whole destination, so a zeroed buffer is
-  /// the correct starting state. When it is given (ROI effects/blur only --
-  /// callers pass it exactly when [preserveOutsideRoi] told [_run] the
-  /// operation has an enabled ROI), each buffer is instead seeded with
-  /// [seedFromSource]'s samples so bytes outside the ROI the native call
-  /// writes remain the source's exact values (section 11: "ROI effects seed
-  /// the destination from source..."). [seedFromSource] and [layout] always
-  /// share geometry here -- every ROI-capable call uses
+  /// When [seedFromSource] is `null`, each buffer is normally `calloc`-zeroed:
+  /// every non-ROI operation replaces the whole destination, so a zeroed
+  /// buffer is the correct starting state. When it is given (ROI
+  /// effects/blur only -- callers pass it exactly when [preserveOutsideRoi]
+  /// told [_run] the operation has an enabled ROI), each buffer is instead
+  /// seeded with [seedFromSource]'s samples so bytes outside the ROI the
+  /// native call writes remain the source's exact values (section 11: "ROI
+  /// effects seed the destination from source..."). [seedFromSource] and
+  /// [layout] always share geometry here -- every ROI-capable call uses
   /// [_sameGeometryDestination] -- but their row/pixel strides may still
   /// differ, so seeding uses each plane's row/pixel stride and copies only
   /// active samples.
+  ///
+  /// [zeroFill] (BGRA-03) lets a caller that has proven its destination is
+  /// always fully overwritten -- see [convert]'s call site -- skip the
+  /// zero-fill and allocate with `malloc` instead of `calloc`. It must never
+  /// be `false` together with a non-`null` [seedFromSource]: an ROI seed
+  /// only copies the active region, and `calloc`'s zero-fill is what makes
+  /// the seeded plane's own row padding/pixel gaps deterministic, so this is
+  /// asserted rather than silently overridden.
   ///
   /// Transactional in the same sense as [_allocateConstFrame]: any throw
   /// partway through is caught, everything allocated so far is freed through
@@ -443,7 +475,9 @@ class YuvAbiV1Runner {
     NativeAllocator allocator,
     YuvAbiV1DestinationLayout layout, {
     YuvAbiV1FrameInput? seedFromSource,
+    bool zeroFill = true,
   }) {
+    assert(zeroFill || seedFromSource == null, 'a seeded destination must stay zero-filled so its own padding/gaps are deterministic');
     final ffi.Pointer<YuvMutableFrameV1> frame = allocator.allocate<YuvMutableFrameV1>(ffi.sizeOf<YuvMutableFrameV1>());
     final int planeCount = yuvAbiV1PlaneCount(layout.format);
 
@@ -463,7 +497,7 @@ class YuvAbiV1Runner {
         final int planeHeight = i == 0 ? layout.height : yuvAbiV1ChromaExtent(layout.height);
         final int length = rowStride * planeHeight;
 
-        final ffi.Pointer<ffi.Uint8> data = allocator.allocate<ffi.Uint8>(length);
+        final ffi.Pointer<ffi.Uint8> data = zeroFill ? allocator.allocate<ffi.Uint8>(length) : allocator.allocateUninitialized<ffi.Uint8>(length);
         frame.ref.planes[i].data = data;
 
         final YuvMutablePlaneV1 target = frame.ref.planes[i];
