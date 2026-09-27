@@ -698,9 +698,31 @@ yaml.safe_load(open('.github/workflows/ci.yml'))"` — синтаксис вал
 `flutter pub get --no-example`, что отключает автоматическую workspace-резолюцию example и
 оставляет проверку минимума корневого пакета изолированной, как и задумано этим job'ом.
 Проверено локально (`flutter pub get --no-example` в корне — не резолвит `./example`, лог не
-содержит строки "Resolving dependencies in `./example`") и синтаксис YAML — валиден. Реальный
-CI-прогон новой ревизии на момент этой записи не завершён — следующее ревью должно подтвердить
-`analyze-and-test-vm (3.38.10)`/`(3.44.9)` по факту прогона, а не по этому заявлению.
+содержит строки "Resolving dependencies in `./example`") и синтаксис YAML — валиден. Запушено
+коммитом `febf2aa`.
+
+**Финальное подтверждение реальным CI-прогоном [`36314314982`](https://github.com/Anfet/yuv_ffi/actions/runs/36314314982)
+на `febf2aa` (проверено мной, главная сессия, не со слов исполнителя):**
+
+| Job | Результат |
+| --- | --- |
+| `linux-native-smoke` | **success** — GStreamer dev-пакеты решили сборку `flutter build linux --release` |
+| `macos-native-smoke` | **success** |
+| `example-analyze-and-build (3.41.0)` | **success** — новая нижняя граница матрицы совместима с Dart >=3.11.0 |
+| `example-analyze-and-build (3.44.9)` | **success** |
+| `analyze-and-test-vm (3.38.10)` | failure — но `--no-example` сработал: лог больше не резолвит
+`./example`, `flutter analyze` теперь дошёл до реального анализа и упал на 397 issues в
+`speed_00_dart_ffi/test/yuv_negate_v1_test.dart`/`yuv_rotate_v1_test.dart` (`package:test` не
+резолвится) и отсутствующем asset `tool/bench/blur_runner/pubspec.yaml` — тот самый неродственный
+дефект, который предыдущее ревью уже явно отделило от VIEW-01A ("не доказательство неисправности
+`camera_desktop`") |
+| `analyze-and-test-vm (3.44.9)` | failure — та же причина |
+| `wasm-web-integration` | failure — отдельный неродственный дефект (`host-error.log` в
+`doc/perf/results/blur02_control/`), тоже вне зоны VIEW-01A |
+
+Все job'ы, относящиеся к предмету карточки (Linux/macOS сборка `camera_desktop`, Dart SDK матрица
+example), зелёные на этой ревизии. Оставшиеся failures — предсуществующие дефекты CI вне зоны
+VIEW-01A, не введённые и не усугублённые этой карточкой.
 
 ## VIEW-01P — перенести потоковый презентер в публичный API плагина, COMPLETE
 
