@@ -36,6 +36,8 @@
   replaced and last `ui.Image`, never caching preview frames in `ImageCache`,
   and counting a frame only after it is drawn. Moved from the example app,
   which now uses the packaged widgets instead of its own copy.
+- The example app now requires Dart 3.11 or later to match `camera_desktop`
+  2.0.0. The package's minimum Dart SDK remains unchanged.
 
 ### Known limitations
 
