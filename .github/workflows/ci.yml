@@ -30,8 +30,14 @@ jobs:
       - name: Flutter pub get (root)
         run: flutter pub get --no-example
 
+      # A bare `flutter analyze` walks the whole directory tree regardless of
+      # --no-example above, so it still reaches example/ and fails there on
+      # the package resolution this job deliberately skipped. Scoping to the
+      # root package's own source and test directories is what this job is
+      # actually meant to check; example's own analyze runs separately in
+      # example-analyze-and-build, against its own, correctly resolved SDK.
       - name: Analyze (root)
-        run: flutter analyze
+        run: flutter analyze lib test
 
       # Since YUV-06 the loader opens the library by its installed name, so the
       # build output is placed on the dynamic loader's search path instead of
