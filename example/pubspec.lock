@@ -49,8 +49,16 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.19"
+  camera_desktop:
+    dependency: "direct main"
+    description:
+      name: camera_desktop
+      sha256: "280ce2b335f3a6d2bd4345c9906697d86de40065d52cd6090df28a8b52b32304"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   camera_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: camera_platform_interface
       sha256: "2f757024a48696ff4814a789b0bd90f5660c0fb25f393ab4564fb483327930e2"
@@ -644,5 +652,5 @@ packages:
     source: path
     version: "0.4.2"
 sdks:
-  dart: ">=3.10.0 <4.0.0"
+  dart: ">=3.11.0 <4.0.0"
   flutter: ">=3.38.0"

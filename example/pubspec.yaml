@@ -18,6 +18,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   image_picker: ^1.1.2
   camera: ^0.11.0+2
+  # VIEW-01A: desktop image-stream candidate. Federated `camera_platform_interface`
+  # implementation for Linux/macOS/Windows, BGRA8888 frames on all three; verified
+  # against a real Windows webcam. Wiring into the desktop preview is VIEW-01B.
+  camera_desktop: ^2.0.0
   flutter_webrtc: ^1.6.2+hotfix.3
   google_mlkit_face_detection: ^0.13.1
 
@@ -45,6 +49,11 @@ dev_dependencies:
   # dart:ffi + package:ffi. Declared explicitly rather than relied on as a
   # transitive dependency of yuv_ffi.
   ffi: ^2.2.0
+
+  # VIEW-01A: camera_image_to_yuv_image_padding_test.dart builds a
+  # CameraImageData/CameraImagePlane directly to test a padded BGRA
+  # bytesPerRow without a physical camera or camera_desktop's native code.
+  camera_platform_interface: ^2.10.0
 
 flutter:
   uses-material-design: true
