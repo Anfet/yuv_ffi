@@ -1,0 +1,13 @@
+# VIEW-01B desktop preview smoke, Windows 10, physical camera "Integrated Webcam", debug build (Dart asserts on), 2026-09-27
+# Command (from example/): flutter test integration_test/desktop_camera_preview_smoke_test.dart -d windows --dart-define=SMOKE_OUT=<dir>
+# Source: example/integration_test/desktop_camera_preview_smoke_test.dart
+
+00:00 +0: loading D:/.projects/yuv_ffi/example/integration_test/desktop_camera_preview_smoke_test.dart
+Building Windows application...                                    26,6s
+√ Built build\windows\x64\runner\Debug\example.exe
+00:00 +0: desktop preview shows the camera stream and captures the drawn frame
+[view01b_smoke] drawn distinct frames in 6010 ms: 173; fps labels: [13 fps, 28 fps, 30 fps, 27 fps]; imageCache current=0 live=0 pending=0
+[view01b_smoke] captured: bgra8888, 640:480 / 1
+[view01b_smoke] captured frame equals drawn frame #0 after the tap
+00:10 +1: (tearDownAll)
+00:10 +1: All tests passed!

@@ -18,15 +18,13 @@ dependencies:
   cupertino_icons: ^1.0.8
   image_picker: ^1.1.2
   camera: ^0.11.0+2
-  # VIEW-01A: desktop image-stream candidate. Federated `camera_platform_interface`
-  # implementation for Linux/macOS/Windows, BGRA8888 frames on all three; verified
-  # against a real Windows webcam. Wiring into the desktop preview is VIEW-01B.
+  # Desktop camera for the preview: federated `camera_platform_interface`
+  # implementation for Linux/macOS/Windows with BGRA8888 image-stream frames.
   camera_desktop: ^2.0.0
-  # VIEW-01A (second pass): used directly by camera_desktop_smoke_main.dart to
-  # call CameraPlatform.instance.onStreamedFrameAvailable, bypassing
+  # The desktop preview and camera_desktop_smoke_main.dart subscribe to
+  # CameraPlatform.instance.onStreamedFrameAvailable directly, bypassing
   # CameraController.startImageStream's Android/iOS-only assert on desktop.
   camera_platform_interface: ^2.10.0
-  flutter_webrtc: ^1.6.2+hotfix.3
   google_mlkit_face_detection: ^0.13.1
 
 dev_dependencies:

@@ -9,14 +9,13 @@ import 'impl/yuv_camera_preview_web.dart' if (dart.library.io) 'impl/yuv_camera_
 class YuvCameraPreview extends StatefulWidget {
   final CameraController? cameraController;
 
-  /// Called for every frame the preview accepts. On mobile and web the returned
-  /// image is what the preview shows; the desktop preview still shows
-  /// `RTCVideoView`. On mobile and web a frame that arrives while the previous
-  /// one is still being decoded or drawn is dropped without this call.
+  /// Called for every frame the preview accepts; the returned image is what the
+  /// preview shows. A frame that arrives while the previous one is still being
+  /// decoded or drawn is dropped without this call.
   ///
-  /// The frame passed in is only valid during the call: the desktop and web
-  /// previews reuse one instance and write the next frame into it. Keep a
-  /// frame beyond the call only through `image.copy()`.
+  /// The frame passed in is only valid during the call: the web preview reuses
+  /// one instance and writes the next frame into it. Keep a frame beyond the
+  /// call only through `image.copy()`.
   final YuvImage Function(YuvImage image)? transform;
   final Widget? child;
   final bool showDebugInfo;
@@ -31,7 +30,7 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
   late final Timer fpsTimer;
 
   /// Frames drawn during the last second, or `null` while the platform
-  /// preview has not reported a drawn frame; the desktop preview never does.
+  /// preview has not reported a drawn frame yet.
   late final ValueNotifier<int?> fpsTicker = ValueNotifier(null);
   late final ValueNotifier<String> infoTicker = ValueNotifier('');
   int? presentedFrames;
@@ -107,8 +106,7 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
   }
 
   // Counted on draw, not in infoTransformer: transform also runs for frames
-  // that never reach the screen (and on desktop for frames the preview does
-  // not show at all), so counting there reports the delivery rate.
+  // that never reach the screen, so counting there reports the delivery rate.
   void onFramePresented() => presentedFrames = (presentedFrames ?? 0) + 1;
 
   YuvImage infoTransformer(YuvImage image) {

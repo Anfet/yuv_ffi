@@ -1,9 +1,9 @@
 // VIEW-01A / VIEW-01B diagnostic tool. Not wired into `main.dart` and not part
 // of the demo app's UI; run it directly on a desktop platform with a physical
 // camera to reproduce the frame-stream smoke test recorded in
-// `todo.md` (VIEW-01A, second pass). Keep this file until VIEW-01B lands a
-// real desktop `camera_desktop` integration with its own test coverage, then
-// it can be deleted along with this note.
+// `todo.md` (VIEW-01A, second pass). The demo's desktop preview uses the same
+// stream path since VIEW-01B; this tool stays as a minimal, UI-free check of
+// the camera stream on a new machine or platform.
 //
 // Run (from `example/`):
 //   flutter run -t lib/camera_desktop_smoke_main.dart -d windows
@@ -21,8 +21,8 @@
 // `CameraPlatform.instance.onStreamedFrameAvailable` directly -- the same
 // call `startImageStream` would make -- so it streams real frames on desktop
 // without tripping that assert, while still using `CameraController` for
-// `initialize`/`dispose`/lifecycle. VIEW-01B's desktop preview should use the
-// same bypass rather than calling `controller.startImageStream()` directly.
+// `initialize`/`dispose`/lifecycle. The desktop preview
+// (`widgets/impl/yuv_camera_preview_desk.dart`) uses the same bypass.
 //
 // Verdict: the final line is `SMOKE COMPLETE` only if all five frames were
 // imported through `toYuvImage()`/`toBgraBytes()` without throwing and the

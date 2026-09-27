@@ -38,6 +38,11 @@
   which now uses the packaged widgets instead of its own copy.
 - The example app now requires Dart 3.11 or later to match `camera_desktop`
   2.0.0. The package's minimum Dart SDK remains unchanged.
+- Example desktop camera preview (Windows, macOS, Linux) now streams
+  `camera_desktop` BGRA frames through `YuvFramePresenter`, shows the frame
+  returned by `transform` and captures that same frame, replacing the
+  `flutter_webrtc` preview and its periodic snapshot decoding. The example no
+  longer depends on `flutter_webrtc`.
 
 ### Known limitations
 

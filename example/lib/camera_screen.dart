@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
@@ -18,9 +17,7 @@ class _CameraScreenState extends State<CameraScreen> {
   CameraController? cameraController;
 
   CameraController get controller => cameraController!;
-  bool get _isDesktopWithoutCameraPlugin =>
-      !kIsWeb && (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux);
-  bool get _isPreviewReady => _isDesktopWithoutCameraPlugin || cameraController?.value.isInitialized == true;
+  bool get _isPreviewReady => cameraController?.value.isInitialized == true;
 
   Object? cameraError;
   Completer<YuvImage?>? captureCompleter;
@@ -69,11 +66,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     }
 
                     if (_isPreviewReady) {
-                      return YuvCameraPreview(
-                        cameraController: _isDesktopWithoutCameraPlugin ? null : controller,
-                        showDebugInfo: true,
-                        transform: imageCapturer,
-                      );
+                      return YuvCameraPreview(cameraController: controller, showDebugInfo: true, transform: imageCapturer);
                     }
 
                     return Center(child: CircularProgressIndicator());
@@ -110,10 +103,6 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future initCamera() async {
     try {
-      if (_isDesktopWithoutCameraPlugin) {
-        return;
-      }
-
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
         cameraError = 'No cameras available on device';
@@ -126,7 +115,11 @@ class _CameraScreenState extends State<CameraScreen> {
     } catch (ex) {
       cameraError = '$ex';
     } finally {
-      setState(() {});
+      // The screen may be closed while the camera is looked up or initialized;
+      // dispose has then already released the controller.
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -152,9 +145,10 @@ class _CameraScreenState extends State<CameraScreen> {
 
   YuvImage imageCapturer(YuvImage image) {
     if (captureCompleter != null && !captureCompleter!.isCompleted) {
-      // The desktop and web previews write every next frame into the same
-      // instance, so completing with `image` itself would let the preview
-      // overwrite the captured result while takePicture waits and after pop.
+      // The web preview writes every next frame into the same instance, so
+      // completing with `image` itself would let the preview overwrite the
+      // captured result while takePicture waits and after pop. The returned
+      // `image` is the frame the preview shows next.
       captureCompleter!.complete(image.copy());
     }
 
