@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -10,6 +11,35 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 const String _testAssetPath = 'test/assets/test_pattern_512.png';
 const String _testAssetGoldenPath = 'goldens/yuv_image_widget_from_test_pattern.png';
 const Key _goldenBoundaryKey = ValueKey<String>('yuv-widget-golden-boundary');
+
+/// Opaque BGRA pixels, so the decoded RGBA bytes are not altered by alpha
+/// premultiplication.
+const List<int> _frameA = [10, 20, 30, 255];
+const List<int> _frameB = [200, 150, 100, 255];
+
+Uint8List _solidBgra(int width, int height, List<int> bgra) => Uint8List.fromList([for (int i = 0; i < width * height; i++) ...bgra]);
+
+Uint8List _solidRgba(int width, int height, List<int> bgra) => _solidBgra(width, height, [bgra[2], bgra[1], bgra[0], bgra[3]]);
+
+/// Resolves [provider] and completes with the decoded frame.
+///
+/// The provider starts loading synchronously inside `resolve`, so a mutation
+/// made right after this call lands in the provider's decode wait.
+Future<ui.Image> _decodeFrom(YuvImageProvider provider) {
+  final completer = Completer<ui.Image>();
+  provider
+      .resolve(ImageConfiguration.empty)
+      .addListener(ImageStreamListener((info, _) => completer.complete(info.image), onError: completer.completeError));
+  return completer.future;
+}
+
+Future<Uint8List> _rgbaOf(ui.Image image) async {
+  final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+  if (data == null) {
+    throw StateError('Decoded frame has no RGBA bytes');
+  }
+  return data.buffer.asUint8List();
+}
 
 Future<_FakeBgraImage> _loadFakeBgraFromAsset() async {
   final pngBytes = await File(_testAssetPath).readAsBytes();
@@ -38,12 +68,17 @@ Future<_FakeBgraImage> _loadFakeBgraFromAsset() async {
 /// reports nothing, is covered separately in
 /// `yuv_image_source_compatibility_test.dart`.
 class _FakeBgraImage implements YuvImage, YuvRevisionAware {
-  _FakeBgraImage(this.width, this.height, {required Uint8List bytes, bool shouldThrow = false})
+  _FakeBgraImage(this.width, this.height, {required Uint8List bytes, bool shouldThrow = false, _FakeBgraImage? origin})
     : _shouldThrow = shouldThrow,
+      _origin = origin,
       _bytes = bytes,
       _plane = YuvPlane(height, width * 4, 4, bytes);
 
   final bool _shouldThrow;
+
+  /// The image this one was copied from. The provider converts a copy of a
+  /// revision-tracked image, so conversions are counted on the origin.
+  final _FakeBgraImage? _origin;
   final Uint8List _bytes;
   final YuvPlane _plane;
 
@@ -101,8 +136,13 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   Uint8List getBytes() => _bytes;
 
   @override
-  YuvImage copy({bool blank = false}) =>
-      _FakeBgraImage(width, height, bytes: blank ? Uint8List(_bytes.length) : Uint8List.fromList(_bytes), shouldThrow: _shouldThrow);
+  YuvImage copy({bool blank = false}) => _FakeBgraImage(
+    width,
+    height,
+    bytes: blank ? Uint8List(_bytes.length) : Uint8List.fromList(_bytes),
+    shouldThrow: _shouldThrow,
+    origin: _origin ?? this,
+  );
 
   @override
   YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
@@ -204,7 +244,7 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
 
   @override
   Uint8List toBgraBytes() {
-    conversions++;
+    (_origin ?? this).conversions++;
     if (_shouldThrow) {
       throw UnsupportedError('fake decode failure');
     }
@@ -276,7 +316,11 @@ class _PaddedBgraImage implements YuvImage, YuvRevisionAware {
   Uint8List getBytes() => _plane.bytes;
 
   @override
-  YuvImage copy({bool blank = false}) => throw UnimplementedError();
+  YuvImage copy({bool blank = false}) {
+    final copied = _PaddedBgraImage(width, height, pixelStride: pixelStride, rowPadding: _plane.rowStride - width * pixelStride);
+    copied._plane.assignFrom(blank ? Uint8List(_plane.bytes.length) : _plane.bytes);
+    return copied;
+  }
 
   @override
   YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
@@ -584,6 +628,54 @@ void main() {
       final afterBytes = image.toBgraBytes();
       expect(afterBytes[0], 0xAB);
       expect(afterBytes, isNot(orderedEquals(beforeBytes)));
+    });
+  });
+
+  group('frame ownership', () {
+    setUp(() {
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+    });
+
+    testWidgets('the next frame written into a reused image does not change the frame already queued for decode', (tester) async {
+      // Mirrors the web TrackProcessor preview: one reused BGRA image, each new
+      // frame written through assignFrom + markDirty.
+      final image = YuvImage.bgra(2, 2);
+      image.yPlane.assignFrom(_solidBgra(2, 2, _frameA));
+      image.markDirty();
+
+      final queued = YuvImageProvider(image);
+      final pixels = await tester.runAsync(() async {
+        final decoded = _decodeFrom(queued);
+        // The provider has started loading but still waits before converting.
+        image.yPlane.assignFrom(_solidBgra(2, 2, _frameB));
+        image.markDirty();
+        return _rgbaOf(await decoded);
+      });
+
+      expect(pixels, orderedEquals(_solidRgba(2, 2, _frameA)), reason: 'the queued frame must be decoded as it was when loading started');
+
+      // The revision cache must still resolve the new frame to its own content.
+      final next = await tester.runAsync(() async => _rgbaOf(await _decodeFrom(YuvImageProvider(image))));
+      expect(next, orderedEquals(_solidRgba(2, 2, _frameB)));
+    });
+
+    testWidgets('an in-place resize during the decode wait does not fail or distort the queued frame', (tester) async {
+      final image = YuvImage.bgra(4, 2);
+      image.yPlane.assignFrom(_solidBgra(4, 2, _frameA));
+      image.markDirty();
+
+      final queued = YuvImageProvider(image);
+      final result = await tester.runAsync(() async {
+        final decoded = _decodeFrom(queued);
+        image.applyCrop(const Rect.fromLTWH(0, 0, 2, 2));
+        final frame = await decoded;
+        return (width: frame.width, height: frame.height, rgba: await _rgbaOf(frame));
+      });
+
+      expect(result?.width, 4);
+      expect(result?.height, 2);
+      expect(result?.rgba, orderedEquals(_solidRgba(4, 2, _frameA)));
     });
   });
 

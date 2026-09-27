@@ -12,6 +12,14 @@
 - Call `YuvFfi.initialize()` before using the capability-gated `0.4.0` API on
   every platform, then use `YuvCapabilities` to determine available operations.
 
+### Changes
+
+- `YuvImageProvider` copies this package's `YuvImage` when decoding starts, so
+  mutating or reusing the source image while the decode waits no longer changes
+  the frame already queued for display, and an in-place resize in that window
+  no longer fails the load. Cache hits take no copy. A foreign
+  `implements YuvImage` is still converted from the live instance.
+
 ### Known limitations
 
 - Web uses a partial WASM backend and is not feature-complete with native

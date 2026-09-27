@@ -60,6 +60,13 @@ class YuvImageWidget extends StatelessWidget {
 /// without reporting it, so identity alone cannot prove the frame is unchanged.
 /// Re-converting is a cost; showing the wrong frame is a defect, and only the
 /// cost is acceptable to trade in a patch release.
+///
+/// When decoding starts, the provider takes its own copy of this package's
+/// images, so the caller may mutate or reuse [image] right after the frame is
+/// handed over — for example, write the next camera frame into the same
+/// instance — without changing the frame already queued for display. A cache
+/// hit takes no copy. A foreign `implements YuvImage` is converted from the
+/// live instance and must not be mutated until its frame has been decoded.
 class YuvImageProvider extends ImageProvider<YuvImageProvider> {
   /// Source image.
   final YuvImage image;
@@ -104,19 +111,27 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
 
   Future<ImageInfo> _loadImageFrame(YuvImageProvider key) async {
     const bytesPerPixel = 4;
-    final expectedTotalBytes = image.width * image.height * bytesPerPixel;
     try {
+      // Runs synchronously inside loadImage, before the first await, so the
+      // copy holds the frame this key was resolved for. Converting the live
+      // image after the wait would decode whatever the caller wrote there
+      // meanwhile (a reused camera frame, an in-place crop) under this key.
+      // Only this package's own backends are copied: their copy() is a known
+      // deep copy, while a foreign copy() is unverified and may return a blank
+      // image, so a foreign image keeps being converted live as before.
+      final frame = YuvRevision.tracksOwnMutations(image) ? image.copy() : image;
+      final expectedTotalBytes = frame.width * frame.height * bytesPerPixel;
       // Allow one frame so placeholder can render before CPU-heavy conversion.
       await Future<void>.delayed(Duration.zero);
-      final bytes = image.toBgraBytes();
+      final bytes = frame.toBgraBytes();
       if (bytes.length != expectedTotalBytes) {
         throw StateError(
           'Invalid BGRA buffer size: got ${bytes.length}, expected $expectedTotalBytes '
-          'for ${image.width}x${image.height}',
+          'for ${frame.width}x${frame.height}',
         );
       }
       final imageCompleter = Completer<ui.Image>();
-      ui.decodeImageFromPixels(bytes, image.width, image.height, ui.PixelFormat.bgra8888, imageCompleter.complete);
+      ui.decodeImageFromPixels(bytes, frame.width, frame.height, ui.PixelFormat.bgra8888, imageCompleter.complete);
       final decoded = await imageCompleter.future;
       return ImageInfo(image: decoded, scale: 1.0);
     } catch (ex, stack) {

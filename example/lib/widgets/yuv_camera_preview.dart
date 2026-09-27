@@ -8,6 +8,13 @@ import 'impl/yuv_camera_preview_web.dart' if (dart.library.io) 'impl/yuv_camera_
 
 class YuvCameraPreview extends StatefulWidget {
   final CameraController? cameraController;
+
+  /// Called for every processed frame. On mobile and web the returned image is
+  /// what the preview shows; the desktop preview still shows `RTCVideoView`.
+  ///
+  /// The frame passed in is only valid during the call: the desktop and web
+  /// previews reuse one instance and write the next frame into it. Keep a
+  /// frame beyond the call only through `image.copy()`.
   final YuvImage Function(YuvImage image)? transform;
   final Widget? child;
   final bool showDebugInfo;
