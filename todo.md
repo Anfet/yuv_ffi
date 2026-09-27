@@ -765,8 +765,7 @@ desktop smoke проверена чтением кода, но физическ�
 `flutter test --dry-run` не упоминает example ни строкой).
 
 **Проверка:** `flutter analyze lib test` локально — "No issues found!"; синтаксис YAML — валиден
-(`python -c "import yaml; yaml.safe_load(...)"`, все 10 job распознаны). Реальный CI-прогон на
-этой правке — см. подтверждение ниже, добавленное после push.
+(`python -c "import yaml; yaml.safe_load(...)"`, все 10 job распознаны).
 
 **Дополнительно, по решению пользователя в этом же коммите:** `macos-native-smoke` переведён с
 GitHub-хостед `macos-latest` на зарегистрированный self-hosted раннер (`runs-on: [self-hosted,
@@ -774,7 +773,45 @@ macOS]`) — раннер `yuv-self-hosted` подтверждён `online`, `bu
 repos/Anfet/yuv_ffi/actions/runners` перед правкой. Быстрее облачного раннера и даёт доступ к
 реальной камере той же машины для будущих задач (например, физического smoke-прогона
 `camera_desktop_smoke_main.dart`, который пока не переносился на CI). Остальные job (`ubuntu-latest`)
-не менялись.
+не менялись. Push этого коммита (`a031f9c`) сделан пользователем лично — изменение `runs-on` на
+self-hosted было заблокировано инструментом безопасности сессии как расширяющее возможность
+выполнения кода на физической машине через push на эту ветку, коммит и push пользователь выполнил
+сам, осознавая это.
+
+**Финальное подтверждение реальным CI-прогоном [`36314860992`](https://github.com/Anfet/yuv_ffi/actions/runs/36314860992)
+на `125a2cd` (до self-hosted правки, `flutter analyze lib test` уже была в этом коммите) — проверено
+мной, главная сессия, построчным чтением логов через `gh api`, не со слов исполнителя:**
+
+| Job | Результат |
+| --- | --- |
+| `linux-native-smoke` | success |
+| `macos-native-smoke` | success (на этой ревизии ещё GitHub-хостед `macos-latest`) |
+| `example-analyze-and-build (3.41.0)` / `(3.44.9)` | success |
+| `analyze-and-test-vm (3.44.9)` | **success** — `flutter analyze lib test` дал "No issues found!",
+`example/` больше не в скоупе, регресс устранён |
+| `analyze-and-test-vm (3.38.10)` | failure — но НЕ на `example/`: `Analyzing 2 items...` (`lib`+`test`
+корневого пакета), `4 issues found` — все 4 это `info • 'YuvFileFormat' is deprecated...` в
+`test/opt14_copy_contract_test.dart` (строки 19, 26, 51, 82). Тот же файл на Dart SDK из Flutter
+3.44.9 даёт "No issues found!" на этих же строках — версия-зависимое поведение analyzer
+(deprecated-lint по `@Deprecated`-аннотации разрешается по-разному между версиями Dart SDK).
+`flutter analyze` по умолчанию возвращает exit 1 при любых issues, включая info, поэтому даже
+чисто информационное предупреждение валит job. **Предсуществующий дефект, не введённый и не
+усугублённый этой карточкой** — до правок `23ce012`/`125a2cd` этот job никогда не доходил до
+реального анализа кода (падал на резолюции `example/` раньше), поэтому это расхождение между
+версиями SDK никогда не проявлялось в CI. `test/opt14_copy_contract_test.dart` не относится к
+`camera_desktop`/example и не в зоне VIEW-01A; по решению пользователя не правился в рамках этой
+карточки — фиксируется как открытый пункт для отдельной задачи. |
+| `wasm-web-integration` | failure — тот же неродственный дефект, что и раньше |
+
+Все job, относящиеся к предмету карточки, зелёные на обеих версиях example-матрицы и на обоих
+Linux/macOS сборках. `analyze-and-test-vm (3.38.10)` — единственный оставшийся failure с точно
+установленной, задокументированной и признанной вне-скоуп причиной.
+
+**Открытый пункт для отдельной задачи (не блокирует VIEW-01A по явному решению пользователя):**
+`test/opt14_copy_contract_test.dart` использует deprecated `YuvFileFormat` (4 вызова) — на Dart SDK
+Flutter 3.38.10 это лишает `analyze-and-test-vm` job зелёного статуса на минимальной поддерживаемой
+версии. Исправление — заменить на `YuvPixelFormat` в этом тестовом файле — тривиально, но не входит
+в мандат VIEW-01A (не camera_desktop/example) и явно оставлено пользователем вне этой карточки.
 
 ## VIEW-01P — перенести потоковый презентер в публичный API плагина, COMPLETE
 
