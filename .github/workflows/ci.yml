@@ -216,7 +216,10 @@ jobs:
             -d linux
 
   macos-native-smoke:
-    runs-on: macos-latest
+    # Self-hosted (yuv-self-hosted) instead of the GitHub-hosted macos-latest
+    # runner: faster turnaround, and a physical Mac is what a later camera
+    # smoke on this job's host would need anyway.
+    runs-on: [self-hosted, macOS]
     steps:
       - name: Checkout
         uses: actions/checkout@v4

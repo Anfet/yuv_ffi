@@ -768,6 +768,14 @@ desktop smoke проверена чтением кода, но физическ�
 (`python -c "import yaml; yaml.safe_load(...)"`, все 10 job распознаны). Реальный CI-прогон на
 этой правке — см. подтверждение ниже, добавленное после push.
 
+**Дополнительно, по решению пользователя в этом же коммите:** `macos-native-smoke` переведён с
+GitHub-хостед `macos-latest` на зарегистрированный self-hosted раннер (`runs-on: [self-hosted,
+macOS]`) — раннер `yuv-self-hosted` подтверждён `online`, `busy: false` через `gh api
+repos/Anfet/yuv_ffi/actions/runners` перед правкой. Быстрее облачного раннера и даёт доступ к
+реальной камере той же машины для будущих задач (например, физического smoke-прогона
+`camera_desktop_smoke_main.dart`, который пока не переносился на CI). Остальные job (`ubuntu-latest`)
+не менялись.
+
 ## VIEW-01P — перенести потоковый презентер в публичный API плагина, COMPLETE
 
 **Исполнитель:** T2 · Claude Sonnet 5.
