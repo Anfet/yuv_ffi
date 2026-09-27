@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/camera_screen.dart';
 import 'package:yuv_ffi_example/ext.dart';
+import 'package:yuv_ffi_example/pack00_bench_screen.dart';
 import 'package:yuv_ffi_example/widgets/crop_targets.dart';
 import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
 
@@ -118,6 +119,11 @@ class _MyAppState extends State<MyApp> {
                               icon: Text('To BGRA', style: TextStyle(fontSize: 12)),
                               tooltip: 'To BGRA8888',
                             ),
+                            IconButton(
+                              onPressed: () => pack00Bench(context),
+                              icon: Text('PACK-00', style: TextStyle(fontSize: 12)),
+                              tooltip: 'PACK-00: full delivered->presented path, in this release build',
+                            ),
                           ],
                         ),
                       ),
@@ -157,6 +163,20 @@ class _MyAppState extends State<MyApp> {
       faceBox = null;
       isLoading = false;
     });
+  }
+
+  // PACK-00 in-app bench, temporary: opens a screen that reruns the VIEW-03
+  // delivered/dropped/accepted/presented measurement inside this app's real
+  // `--release` build, not `flutter drive --profile` (Flutter Driver refuses
+  // `--release` on non-web, so no integration_test has measured this path in
+  // release before). See `pack00_bench_screen.dart`.
+  Future pack00Bench(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const Pack00BenchScreen(),
+        settings: const RouteSettings(name: 'pack00-bench'),
+      ),
+    );
   }
 
   Future loadExisting() async {
