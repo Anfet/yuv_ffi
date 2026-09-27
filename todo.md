@@ -17,7 +17,7 @@
 | --- | --- | --- | --- | --- |
 | VIEW-00 | COMPLETE | — | T1 · Opus (2-й проход); T1 · Codex (независимое ревью 27.09.2026) | Владение кадром при декодировании и захвате проверено. Старый ключ не декодирует новую ревизию; захваченный кадр не меняется при повторном использовании исходного буфера. Приёмка — в секции ниже. |
 | VIEW-01 | COMPLETE | VIEW-00 | T1 · Opus (2-й проход); T1 · Codex (независимое ревью 27.09.2026) | Mobile/web превью ограничено одним кадром в обработке; ресурсы показа освобождаются, FPS считается после кадра отрисовки. Гонка старого web reader после перезапуска закрыта вторым проходом; приёмка — ниже. |
-| VIEW-01A | IN PROGRESS | VIEW-01 | T2 · Sonnet 5; T1 | Проверить `camera_desktop` как источник потока кадров для example на Windows/macOS/Linux: совместимость зависимостей, реальный `startImageStream` на Windows, формат BGRA, размеры и stride, импорт в `YuvImage`. Зафиксировать результат и ограничения до замены превью. |
+| VIEW-01A | REVIEW | VIEW-01 | T2 · Sonnet 5; T1 | Проверить `camera_desktop` как источник потока кадров для example на Windows/macOS/Linux: совместимость зависимостей, реальный `startImageStream` на Windows, формат BGRA, размеры и stride, импорт в `YuvImage`. Зафиксировать результат и ограничения до замены превью. |
 | VIEW-01P | REVIEW | VIEW-01 | T2 · Sonnet 5; T1 | Перенести `YuvFramePresenter` и `YuvFrameView` из example в публичный API плагина как независимый от камеры способ показа потока `YuvImage`. Перенести тесты владения и освобождения `ui.Image`, обновить импорты example и документацию контракта; поведение VIEW-01 сохранить. |
 | VIEW-01B | TODO | VIEW-01A, VIEW-01P | T1; T1 | Перевести desktop-превью example с `flutter_webrtc`/`RTCVideoView`/`captureFrame()` на `camera_desktop` и поток `CameraImage`: показывать результат `transform` через пакетный presenter, захватывать этот же результат, управлять пропуском кадров и ресурсами. Проверить Windows с камерой и сборки macOS/Linux; удалить неиспользуемую зависимость WebRTC. |
 | VIEW-02 | TODO | VIEW-00, VIEW-01, VIEW-01B | T1; T1 | Свести контракт `transform` и жизненный цикл mobile/web/desktop: при его наличии возвращённый кадр показывается в превью и доступен для захвата; без него показывается исходный кадр. Последовательно запускать, менять и останавливать поток; проверить смену контроллера, закрытие экрана во время `await`, ошибку камеры и повторный запуск без старых кадров и утечек. |
@@ -337,9 +337,9 @@ CHANGELOG не менялся: строка 0.4.2 первого прохода 
 Физический браузерный прогон не проводился; конкурирующие `_startStream`/`getUserMedia` и полный
 жизненный цикл остаются предметом VIEW-02.
 
-## VIEW-01A — проверить поток `camera_desktop` для example, TODO
+## VIEW-01A — проверить поток `camera_desktop` для example, REVIEW
 
-**Исполнитель:** T2; **независимое ревью:** T1. Работа перед VIEW-01B и VIEW-02; не менять native C,
+**Исполнитель:** T2 · Claude Sonnet 5; **независимое ревью:** T1. Работа перед VIEW-01B и VIEW-02; не менял native C,
 ABI v1 и платформенный код пакета `yuv_ffi`.
 
 - Начать с [camera_desktop 2.0.0](https://pub.dev/packages/camera_desktop/versions/2.0.0)
@@ -359,6 +359,112 @@ ABI v1 и платформенный код пакета `yuv_ffi`.
 **Приёмка:** короткий отчёт с версией пакета, командами, фактическими свойствами кадров,
 результатом теста stride и платформенных сборок; проверяющий подтверждает, что BGRA-кадр
 безопасно передаётся в существующий `YuvImage` API. Отдельный коммит отчёта после реализации.
+
+### Executor Report
+
+**Кандидат:** [camera_desktop 2.0.0](https://pub.dev/packages/camera_desktop/versions/2.0.0)
+(publisher hugo.ml, pub points 160/160). Реализует федеративный `CameraPlatform` для
+Linux/macOS/Windows (`GStreamer+V4L2` / `AVFoundation` / `Media Foundation IMFCaptureEngine`),
+`implements: camera` в своём `pubspec.yaml`, поэтому Flutter автоматически подставляет его как
+`CameraPlatform.instance`, когда example зависит и от `camera`, и от `camera_desktop`
+одновременно. Все три backend отдают BGRA8888, один плоский plane, `bytesPerRow` из native-кода
+(может быть больше `width * 4`). Официальный `camera_windows` не рассматривался: он не реализует
+`onStreamedFrameAvailable` (эта задача его и не предлагала).
+
+**Совместимость зависимостей** (`flutter pub get` в `example`, реально выполнено):
+`camera_desktop: ^2.0.0` разрешился вместе с существующим `camera: ^0.11.0+2` без конфликтов;
+единственная транзитивная зависимость `camera_desktop` — `camera_platform_interface: ^2.7.0`
+(в дереве уже была версия 2.10.0, тоже подошла). `pubspec.lock`, `example/windows/flutter/generated_plugin_registrant.cc`
+и `generated_plugins.cmake` обновились штатно (`camera_desktop` зарегистрирован рядом с
+`file_selector_windows`/`flutter_webrtc`).
+
+**Windows smoke — выполнен реально, есть физическая камера на этой машине**
+(`Get-PnpDevice -Class Camera` → «Integrated Webcam», Status OK). Собран `flutter build windows`
+(32,5 с, чисто) и временный smoke-экран (`flutter run -t <temp>.dart -d windows`), удалённый
+после проверки. Смок прошёл `availableCameras → initialize → startImageStream(через
+CameraPlatform.instance) → 5 кадров → stopImageStream → dispose` без исключений.
+
+Зафиксированные свойства реального кадра (640×480, `ResolutionPreset.medium`):
+- `availableCameras`: 1 устройство, `name="Integrated Webcam"`, `lensDirection=front`,
+  `sensorOrientation=0`;
+- `initialize`: `previewSize=Size(640.0, 480.0)`;
+- кадр: `width=640, height=480`, `format.group=ImageFormatGroup.bgra8888`, `format.raw=BGRA`;
+- `planes=1`; `plane[0].bytesPerRow=2560` (=640×4), `bytesPerPixel=4`, `bytes.length=1228800`
+  (=2560×480 — на этом разрешении паддинга не было, `bytesPerRow` точно совпал с
+  `width * bytesPerPixel`);
+- `CameraImage.toYuvImage()` — без исключений, `format=YuvPixelFormat.bgra8888`,
+  `size=Size(640.0, 480.0)`;
+- `toBgraBytes()` — длина 1228800, первый пиксель `[189,198,191,255]` (BGRA, каналы не
+  переставлены — совпадает по порядку с исходным BGRA-plane).
+
+**Блокирующая находка в `camera` 0.11.0+2, важна для VIEW-01B:**
+`CameraController.startImageStream`/`stopImageStream` содержат
+`assert(defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)`
+(`camera_controller.dart:488` и соседняя `stopImageStream`), независимо от того, какой
+`CameraPlatform.instance` зарегистрирован. В debug/profile assert бросает `AssertionError` и
+рвёт поток немедленно; в release он вырезается компилятором и код продолжает работать, потому
+что реальная логика идёт через `CameraPlatform.instance.onStreamedFrameAvailable(_cameraId)` —
+именно этот вызов и использует смок в обход `CameraController.startImageStream`. Для VIEW-01B
+это означает: либо не пользоваться `CameraController.startImageStream`/`stopImageStream`
+напрямую на desktop (звать `CameraPlatform.instance.onStreamedFrameAvailable`/`stopImageStream`
+эквивалент вручную, как сделал смок), либо принять, что debug/profile сборки на desktop будут
+падать на assert, а release — работать. Не блокирует смок (он обошёл assert), но блокирует
+дизайн `_YuvCameraPreviewDesktop` в VIEW-01B, если тот планирует звать штатный
+`controller.startImageStream`.
+
+**Padding строк — отдельным детерминированным тестом, без камеры:**
+`example/test/camera_image_to_yuv_image_padding_test.dart` строит `CameraImageData`/`CameraImagePlane`
+напрямую (3×2 BGRA, `bytesPerRow` на 8 байт больше `width * 4`, паддинг заполнен сентинелом `0xEE`)
+и прогоняет через `CameraImage.fromPlatformInterface` → `toYuvImage()` → `toBgraBytes()`.
+Проверено: `YuvPlane.bytesPerRow` сохраняет паддинг как есть (не подрезается), обе строки
+распаковываются в `toBgraBytes()` без сдвига столбцов и без утечки сентинела в пиксели — важно,
+поскольку реальное разрешение 640×480 паддинга не показало и не могло служить регрессионным
+тестом сам по себе.
+
+**Сборки macOS/Linux — не проверены, ограничение окружения.** Эта машина — Windows-хост без
+доступного macOS/Linux CI в этой сессии (память проекта: браузерные/Mac-специфичные проверки
+обычно гоняются через `mac-runner`, но CI на этой сессии не запускался и результат не
+изобретён). Совместимость зависимостей для этих платформ проверена только косвенно: пакет
+объявляет `linux`/`macos` в `flutter.plugin.platforms` своего `pubspec.yaml` с тем же
+`dartPluginClass`/`pluginClass=CameraDesktopPlugin`, и имеет полные native-исходники
+(`linux/`, `macos/` каталоги с GStreamer/AVFoundation кодом) в pub cache, но реальная сборка
+`flutter build linux`/`flutter build macos` не запускалась.
+
+**Итог по приёмке:** BGRA-кадр `camera_desktop` безопасно проходит в `YuvImage` API текущим
+`CameraImage.toYuvImage()` без изменений в нём; паддинг строк обрабатывается корректно.
+Windows runtime подтверждён на реальной камере. Блокирующая причина для VIEW-01B — не
+совместимость зависимостей (её нет), а контракт `camera` 0.11.0+2: `CameraController.startImageStream`
+не предназначен для desktop и его штатный вызов уронит debug/profile сборку assert'ом;
+исполнителю VIEW-01B нужно решить, обходить ли `CameraController` (как это делает смок) или
+знать про это ограничение заранее. macOS/Linux сборки — открытый пункт, не проверены в этой
+сессии.
+
+**Изменения:** `example/pubspec.yaml` — добавлены `camera_desktop: ^2.0.0` (dependencies) и
+`camera_platform_interface: ^2.10.0` (dev_dependencies, только для нового теста);
+`example/pubspec.lock`, `example/windows/flutter/generated_plugin_registrant.cc`,
+`example/windows/flutter/generated_plugins.cmake` — обновлены `flutter pub get`/`flutter build windows`.
+Временный smoke-файл (`camera_desktop_smoke_main.dart`) использован для реальной проверки на
+устройстве и удалён — задача не просила оставлять постоянный smoke-экран, а VIEW-01B будет
+строить реальную интеграцию. Постоянно оставлен только детерминированный тест паддинга.
+
+**Проверка:** `dart format --line-length 150` на затронутых файлах; `flutter analyze lib test --no-pub`
+в `example` и в корне — без замечаний; `flutter test -r compact --no-pub` в `example` — 7 passed
+(6 прежних + новый тест паддинга); `flutter test -r compact --no-pub` в корне — 663 passed;
+`flutter build windows --debug` в `example` — успешно, `camera_desktop` зарегистрирован в
+`generated_plugin_registrant.cc`; реальный smoke на Windows с физической камерой — пройден
+(результаты выше).
+
+**Открытые пункты:**
+1. macOS/Linux сборки не проверены — нет доступного CI/устройства в этой сессии.
+2. Паддинг не наблюдался на реальной камере при 640×480; синтетический тест закрывает эту
+   ветку кода, но реальный паддинг на другом разрешении/бэкенде не подтверждён на устройстве.
+3. `assert` в `camera` 0.11.0+2 `startImageStream`/`stopImageStream` — не мой код и не входит в
+   зону этой карточки, но исполнителю VIEW-01B нужно явно решить, как его обходить.
+4. Зеркальность: `camera_desktop` мирит Windows-текстуру через `Transform` в `buildPreview`
+   (не через `onStreamedFrameAvailable`), то есть кадры из image stream **не мирятся** на
+   Windows даже для фронтальной камеры — в отличие от текущего mobile-пути
+   (`kYuvCameraPreviewFlipAndroid`). VIEW-01B должен решить, нужно ли зеркалить BGRA-кадр из
+   потока отдельно для показа/захвата на Windows.
 
 ## VIEW-01P — перенести потоковый презентер в публичный API плагина, REVIEW
 
