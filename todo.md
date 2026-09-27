@@ -19,7 +19,7 @@
 | VIEW-01 | COMPLETE | VIEW-00 | T1 · Opus (2-й проход); T1 · Codex (независимое ревью 27.09.2026) | Mobile/web превью ограничено одним кадром в обработке; ресурсы показа освобождаются, FPS считается после кадра отрисовки. Гонка старого web reader после перезапуска закрыта вторым проходом; приёмка — ниже. |
 | VIEW-01A | COMPLETE | VIEW-01 | T2 · Sonnet 5 (4-й проход); T1 · Codex (независимое ревью 27.09.2026) | Windows BGRA image stream и импорт подтверждены; Linux/macOS сборки, обе версии example-матрицы и корневая job на Flutter 3.44.9 прошли в CI на `bed8cfb`. Корневая 3.38.10 и Web остаются отдельными известными дефектами. Приёмка — ниже. |
 | VIEW-01P | COMPLETE | VIEW-01 | T2 · Sonnet 5; T1 · Codex (независимое ревью 27.09.2026) | `YuvFramePresenter` и `YuvFrameView` перенесены в публичный API плагина; example использует пакетную реализацию, тесты владения и освобождения кадров перенесены и проходят. Приёмка — ниже. |
-| VIEW-01B | IN PROGRESS | VIEW-01A, VIEW-01P | T1 · Opus; T1 · Codex (независимое ревью) | Desktop-поток, захват, Windows smoke и сборки проверены. macOS camera entitlement и usage description добавлены по решению ревьюера; повторная сборка и статус — ниже. |
+| VIEW-01B | IN PROGRESS | VIEW-01A, VIEW-01P | T1 · Opus; T1 · Codex (независимое ревью) | Desktop-поток, захват, Windows smoke и сборки проверены. macOS camera entitlement и usage description добавлены; повторная macOS-сборка в CI на `c0402fa` — полностью success (все 11 шагов). Приёмка — ниже. |
 | VIEW-02 | TODO | VIEW-00, VIEW-01, VIEW-01B | T1; T1 | Свести контракт `transform` и жизненный цикл mobile/web/desktop: при его наличии возвращённый кадр показывается в превью и доступен для захвата; без него показывается исходный кадр. Последовательно запускать, менять и останавливать поток; проверить смену контроллера, закрытие экрана во время `await`, ошибку камеры и повторный запуск без старых кадров и утечек. |
 | VIEW-03 | TODO | VIEW-00…02 | T2; T1 | На Pixel 3 в profile/release сравнить до/после полный путь «получен кадр → показан кадр» на одинаковом размере и сценарии; отдельно записать время конвертации/декодирования, показанный FPS, пропуски и память. Зафиксировать raw-замеры и пределы метода; принять цикл только при сохранении корректного кадра и контролируемой памяти. |
 
@@ -1125,6 +1125,49 @@ macOS-регистрацией), run [`36320828648`](https://github.com/Anfet/yu
 
 **Проверка:** все три файла — валидный XML/plist (`python -c "import plistlib; plistlib.load(...)"`
 на каждом, без ошибок).
+
+**Повторная macOS-сборка в CI после правки entitlements** (по требованию решения ревьюера) заняла
+несколько итераций из-за не связанной с самой правкой инфраструктурной проблемы self-hosted
+раннера, зафиксированной здесь для будущих карточек:
+
+1. Первый прогон после push упал на `cmake: command not found` — раннер потерял сетевое
+   соединение (VPN-туннель на хосте временно ломал DNS-резолюцию до публичных доменов,
+   `api.github.com` не резолвился) и после восстановления сети/перезапуска процесса всё ещё не
+   подхватывал homebrew `cmake`.
+2. Диагностировано: файл `~/actions-runner/.path` (существующий, с корректным
+   `/opt/homebrew/bin`) **не читается** этим self-hosted раннером в режиме запуска через
+   `run.sh`/Login Items автозапуск — сборка продолжала падать на `cmake: command not found`
+   даже после перезапуска процесса и подтверждённого `online` статуса. Официально
+   задокументированный и рабочий механизм — файл `~/actions-runner/.env` (уже содержал
+   `JAVA_HOME`/`ANDROID_HOME`, использовавшиеся в других job); добавлена туда явная переменная
+   `PATH` с `/opt/homebrew/bin` — после перезапуска процесса `cmake`/`Build and install native
+   library`/`Packaging smoke` (dlopen-тест) стали проходить надёжно.
+3. Следующий фейл — `CocoaPods not installed or not in valid state` на шаге `Build example (macos
+   desktop)`: `pod` bin не входил в добавленный `PATH`. Добавлен `~/.rbenv/shims` в тот же `PATH`
+   в `.env` — `pod` нашёлся, но сообщил `CocoaPods is installed but broken` (`rbenv: pod: command
+   not found` при прямой проверке `pod --version` без `GEM_HOME`).
+4. Корневая причина последнего слоя: CocoaPods gems на этой машине установлены в `~/.gem`
+   (`GEM_HOME=/Users/oleg/.gem`), а не в стандартный rbenv gem-путь для Ruby 3.2.2 — без явного
+   `GEM_HOME` в окружении rbenv shim для `pod` не находил свою установку. Добавлена переменная
+   `GEM_HOME=/Users/oleg/.gem` в `~/actions-runner/.env`.
+5. После всех трёх правок `.env` (`PATH` с homebrew+rbenv+gem путями, `GEM_HOME`) и перезапуска
+   процесса раннера — прогон [`36335397335`](https://github.com/Anfet/yuv_ffi/actions/runs/36335397335)
+   на коммите `c0402fa` дал **`macos-native-smoke` полностью success**, все 11 шагов, включая
+   `Build and install native library`, `Packaging smoke`, `Build example (macos desktop)` и
+   `App-runtime smoke (macos desktop)`.
+
+Итоговое содержимое `~/actions-runner/.env` на self-hosted раннере `yuv-self-hosted`:
+```
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home
+ANDROID_HOME=/Users/oleg/storage/android/sdk
+PATH=/Users/oleg/.rbenv/shims:/Users/oleg/.rbenv/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/oleg/.gem/bin:/Users/oleg/.pub-cache/bin
+GEM_HOME=/Users/oleg/.gem
+```
+Для будущих self-hosted изменений: использовать `.env`, не `.path`, для добавления PATH/переменных
+окружения этому конкретному раннеру — `.path` наблюдаемо игнорируется в текущей конфигурации
+запуска. Реальный физический доступ к камере на macOS (клик в системном GUI-запросе разрешения)
+этим CI-прогоном не проверялся — сборка и app-runtime smoke подтверждают только запуск приложения
+с новыми entitlements, не факт клика "Allow" на диалоге TCC.
 
 ### Независимое ревью 27.09.2026 — TODO
 
