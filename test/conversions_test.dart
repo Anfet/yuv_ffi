@@ -312,6 +312,7 @@ void main() {
       width,
       height,
       planes: [YuvPlane(height, yRowStride, 1, originalY), YuvPlane(height ~/ 2, uvRowStride, 2, originalChroma)],
+      layout: YuvPlaneLayout.preserve,
     );
     final sourceYPlane = image.yPlane;
     final sourceChromaPlane = image.uPlane;
@@ -536,13 +537,13 @@ void main() {
     YuvPlane plane(int height, int rowStride, [int pixelStride = 4]) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
 
     test('F-004 diagnostic case: a valid padded plane is accepted', () {
-      expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]), returnsNormally);
+      expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)], layout: YuvPlaneLayout.preserve), returnsNormally);
     });
 
     test('specialized and generic constructors agree on a padded plane', () {
-      final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]);
+      final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)], layout: YuvPlaneLayout.preserve);
       // ignore: deprecated_member_use_from_same_package
-      final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)]);
+      final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)], layout: YuvPlaneLayout.preserve);
       for (final image in <YuvImage>[specialized, generic]) {
         expect(image.yPlane.rowStride, 16);
         expect(image.yPlane.pixelStride, 4);
@@ -570,7 +571,7 @@ void main() {
       for (int i = 0; i < source.bytes.length; i++) {
         source.bytes[i] = i + 1;
       }
-      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source], layout: YuvPlaneLayout.preserve);
 
       final copied = image.copy();
       expect(copied.yPlane.rowStride, 16);

@@ -14,6 +14,16 @@
 
 ### Changes
 
+- New public `YuvPlaneLayout` (`preserve`, `packed`) and a `layout` parameter on every `YuvImage`
+  factory that accepts caller-supplied `planes` (`i420`, `nv12`, `bgra`, the deprecated `nv21`/unnamed
+  constructor). **Behavior change:** `layout` defaults to `YuvPlaneLayout.packed`, so a factory called
+  with `planes:` and no explicit `layout:` now repacks a padded or pixel-gapped input to a tight
+  layout at construction time instead of preserving it byte-for-byte, as every factory did before this
+  release. Code that relies on the caller's exact `rowStride`/`pixelStride` surviving construction must
+  now pass `layout: YuvPlaneLayout.preserve` explicitly. `copy()`, `YuvImage.decode(...)` and every
+  internal adoption of a native/WASM operation's own result are unaffected: they always use
+  `.preserve` regardless of this default. `applyPlanes(...)` is also unaffected: it always keeps
+  whatever strides its argument declares.
 - New public `isTightlyPacked` getter and `pack()` method (`YuvImagePack`
   extension on `YuvImage`, exported from `package:yuv_ffi/yuv_ffi.dart`):
   `pack()` repacks an image's planes in place to remove row padding and, for

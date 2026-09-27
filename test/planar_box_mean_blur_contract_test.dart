@@ -63,6 +63,7 @@ void main() {
       width,
       height,
       planes: [YuvPlane(height, yRowStride, 2, y), YuvPlane(uvH, uvRowStride, 2, u), YuvPlane(uvH, uvRowStride, 2, v)],
+      layout: YuvPlaneLayout.preserve,
     );
   }
 
@@ -100,7 +101,13 @@ void main() {
       }
     }
     // ignore: deprecated_member_use_from_same_package
-    return YuvImage(YuvFileFormat.nv21, width, height, planes: [YuvPlane(height, yRowStride, 1, y), YuvPlane(uvH, uvRowStride, 2, uv)]);
+    return YuvImage(
+      YuvFileFormat.nv21,
+      width,
+      height,
+      planes: [YuvPlane(height, yRowStride, 1, y), YuvPlane(uvH, uvRowStride, 2, uv)],
+      layout: YuvPlaneLayout.preserve,
+    );
   }
 
   group('I420', () {

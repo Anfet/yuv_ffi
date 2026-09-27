@@ -6,6 +6,8 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane_bytes.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane_layout.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane_packing.dart';
 
 /// The format, geometry, plane and revision state every `YuvImageImpl` backend
 /// owns, with the accessor, allocation, copy and serialization logic that state
@@ -26,9 +28,13 @@ class YuvImageState {
   /// Creates state for [format] at [width] x [height].
   ///
   /// When [planes] is given it is deep-copied and validated against the format
-  /// geometry; the caller's layout, including row and pixel padding, is kept as
-  /// given rather than repacked. When it is `null`, one tightly packed plane per
-  /// format plane is allocated and zero-filled.
+  /// geometry, then adopted according to [layout] (PACK-01B): [YuvPlaneLayout.preserve]
+  /// keeps the caller's layout, including row and pixel padding, exactly as
+  /// given; [YuvPlaneLayout.packed] (the default) copies only the visible
+  /// samples into a tightly packed layout instead, as `YuvImagePack.pack()`
+  /// would. When [planes] is `null`, one tightly packed plane per format plane
+  /// is allocated and zero-filled -- [layout] is not consulted in that case,
+  /// since there is no caller layout to preserve.
   ///
   /// [allowLargerNvChromaStride] is the REL-03 `nv12` entry point's opt-in to a
   /// pixel stride above [YuvGeometry.nvChromaPixelStride] being real padding
@@ -49,6 +55,7 @@ class YuvImageState {
     int uvPixelStride = 1,
     Iterable<YuvPlane>? planes,
     bool allowLargerNvChromaStride = false,
+    YuvPlaneLayout layout = YuvPlaneLayout.packed,
   }) : _allowLargerNvChromaStride = allowLargerNvChromaStride {
     YuvGeometry.validateDimensions(_width, _height);
 
@@ -61,7 +68,9 @@ class YuvImageState {
         planes: copied,
         allowLargerNvChromaStride: allowLargerNvChromaStride,
       );
-      _planes = copied;
+      _planes = layout == YuvPlaneLayout.packed && !YuvPlanePacking.isTightlyPacked(_format, _width, _height, copied)
+          ? YuvPlanePacking.packAll(_format, _width, _height, copied)
+          : copied;
       return;
     }
 

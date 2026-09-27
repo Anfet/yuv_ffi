@@ -17,7 +17,7 @@ void main() {
       // Pixel 0: B0 G0 R0 A0 <gap>; pixel 1: B1 G1 R1 A1 <gap>.
       final source = Uint8List.fromList([10, 11, 12, 13, 0xEE, 20, 21, 22, 23, 0xEE]);
       final plane = YuvPlane(height, rowStride, pixelStride, source);
-      final image = YuvImage.bgra(width, height, planes: [plane]);
+      final image = YuvImage.bgra(width, height, planes: [plane], layout: YuvPlaneLayout.preserve);
 
       final packed = image.toBgraBytes();
 
@@ -47,7 +47,7 @@ void main() {
       source.setRange(row1 + 10, row1 + 13, [0xCC, 0xCC, 0xCC]);
 
       final plane = YuvPlane(height, rowStride, pixelStride, source);
-      final image = YuvImage.bgra(width, height, planes: [plane]);
+      final image = YuvImage.bgra(width, height, planes: [plane], layout: YuvPlaneLayout.preserve);
 
       final packed = image.toBgraBytes();
 
@@ -63,7 +63,7 @@ void main() {
       final source = Uint8List.fromList([10, 11, 12, 13, 0xEE, 20, 21, 22, 23, 0xEE]);
       final originalCopy = Uint8List.fromList(source);
       final plane = YuvPlane(height, rowStride, pixelStride, source);
-      final image = YuvImage.bgra(width, height, planes: [plane]);
+      final image = YuvImage.bgra(width, height, planes: [plane], layout: YuvPlaneLayout.preserve);
 
       image.toBgraBytes();
 

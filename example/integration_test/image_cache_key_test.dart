@@ -88,7 +88,7 @@ void main() {
 
       // This branch writes planes directly and returns early, so it has to bump
       // the revision itself rather than falling through to the shared path.
-      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(2 * 16))]);
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(2 * 16))], layout: YuvPlaneLayout.preserve);
       final before = image.revision;
 
       image.fromRgba8888(rgba(2, 2));

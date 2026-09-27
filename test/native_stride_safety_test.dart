@@ -246,7 +246,7 @@ void main() {
       }
 
       // ignore: deprecated_member_use_from_same_package
-      final image = YuvImage.nv21(width, height, planes: [filledPlane(height, width, 1, 0x77), chroma]);
+      final image = YuvImage.nv21(width, height, planes: [filledPlane(height, width, 1, 0x77), chroma], layout: YuvPlaneLayout.preserve);
 
       // ignore: deprecated_member_use_from_same_package
       image.swapNv();

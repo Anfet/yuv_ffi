@@ -24,9 +24,17 @@ void main() {
   testWidgets('specialized and generic constructors agree on a padded plane', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]);
+    final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)], layout: YuvPlaneLayout.preserve);
     // ignore: deprecated_member_use
-    final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)]);
+    final generic = YuvImage(
+      // ignore: deprecated_member_use
+      YuvFileFormat.bgra8888,
+      2,
+      2,
+      yPixelStride: 4,
+      planes: <YuvPlane>[plane(2, 16)],
+      layout: YuvPlaneLayout.preserve,
+    );
 
     for (final image in <YuvImage>[specialized, generic]) {
       expect(image.yPlane.rowStride, 16);
@@ -38,9 +46,12 @@ void main() {
   testWidgets('an invalid padded layout throws ArgumentError, not a RangeError', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
-    // ignore: deprecated_member_use
-    expect(() => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
+    expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)], layout: YuvPlaneLayout.preserve), throwsArgumentError);
+    expect(
+      // ignore: deprecated_member_use
+      () => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)], layout: YuvPlaneLayout.preserve),
+      throwsArgumentError,
+    );
   });
 
   testWidgets('constructing from a plane deep-copies bytes in both directions', (tester) async {
@@ -50,7 +61,7 @@ void main() {
     for (int i = 0; i < source.bytes.length; i++) {
       source.bytes[i] = i + 1;
     }
-    final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+    final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source], layout: YuvPlaneLayout.preserve);
     final snapshot = Uint8List.fromList(image.yPlane.bytes);
 
     // Mutating the source after construction must not leak into the image.
@@ -70,7 +81,7 @@ void main() {
     for (int i = 0; i < source.bytes.length; i++) {
       source.bytes[i] = i + 1;
     }
-    final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+    final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source], layout: YuvPlaneLayout.preserve);
 
     final copied = image.copy();
     expect(copied.yPlane.rowStride, 16);

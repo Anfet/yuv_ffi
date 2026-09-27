@@ -67,6 +67,7 @@ void main() {
           plane(rows: 3, rowStride: 4 + 8, columns: 4, pixelStride: 1, sampleBytes: 1, seed: 2),
           plane(rows: 3, rowStride: 4 + 8, columns: 4, pixelStride: 1, sampleBytes: 1, seed: 3),
         ],
+        layout: YuvPlaneLayout.preserve,
       );
       expect(image.isTightlyPacked, isFalse);
     });
@@ -81,6 +82,7 @@ void main() {
           plane(rows: 3, rowStride: 4 * 2, columns: 4, pixelStride: 2, sampleBytes: 1, seed: 2),
           plane(rows: 3, rowStride: 4 * 2, columns: 4, pixelStride: 2, sampleBytes: 1, seed: 3),
         ],
+        layout: YuvPlaneLayout.preserve,
       );
       expect(image.isTightlyPacked, isFalse);
     });
@@ -94,6 +96,7 @@ void main() {
           plane(rows: height, rowStride: width, columns: width, pixelStride: 1, sampleBytes: 1, seed: 1),
           plane(rows: 3, rowStride: 4 * 2 + 6, columns: 4, pixelStride: 2, sampleBytes: 2, seed: 2),
         ],
+        layout: YuvPlaneLayout.preserve,
       );
       expect(image.isTightlyPacked, isFalse);
     });
@@ -104,6 +107,7 @@ void main() {
         width,
         height,
         planes: [plane(rows: height, rowStride: width * 4 + 8, columns: width, pixelStride: 4, sampleBytes: 4, seed: 1)],
+        layout: YuvPlaneLayout.preserve,
       );
       expect(image.isTightlyPacked, isFalse);
     });
@@ -126,7 +130,7 @@ void main() {
       final yBefore = plane(rows: height, rowStride: width + 16, columns: width, pixelStride: 1, sampleBytes: 1, seed: 1);
       final uBefore = plane(rows: chromaHeight, rowStride: chromaWidth + 8, columns: chromaWidth, pixelStride: 1, sampleBytes: 1, seed: 101);
       final vBefore = plane(rows: chromaHeight, rowStride: chromaWidth + 8, columns: chromaWidth, pixelStride: 1, sampleBytes: 1, seed: 201);
-      final image = YuvImage.i420(width, height, planes: [yBefore, uBefore, vBefore]);
+      final image = YuvImage.i420(width, height, planes: [yBefore, uBefore, vBefore], layout: YuvPlaneLayout.preserve);
       final before = image.revision;
 
       final result = image.pack();
@@ -165,7 +169,7 @@ void main() {
         sampleBytes: 1,
         seed: 201,
       );
-      final image = YuvImage.i420(width, height, planes: [yBefore, uBefore, vBefore]);
+      final image = YuvImage.i420(width, height, planes: [yBefore, uBefore, vBefore], layout: YuvPlaneLayout.preserve);
 
       image.pack();
 
@@ -180,7 +184,7 @@ void main() {
       const chromaWidth = 4, chromaHeight = 3;
       final yBefore = plane(rows: height, rowStride: width, columns: width, pixelStride: 1, sampleBytes: 1, seed: 1);
       final uvBefore = plane(rows: chromaHeight, rowStride: chromaWidth * 2 + 6, columns: chromaWidth, pixelStride: 2, sampleBytes: 2, seed: 101);
-      final image = YuvImage.nv12(width, height, planes: [yBefore, uvBefore]);
+      final image = YuvImage.nv12(width, height, planes: [yBefore, uvBefore], layout: YuvPlaneLayout.preserve);
 
       image.pack();
 
@@ -193,7 +197,7 @@ void main() {
     test('BGRA with padded row stride packs to rowStride == width * 4', () {
       const width = 5, height = 4;
       final before = plane(rows: height, rowStride: width * 4 + 8, columns: width, pixelStride: 4, sampleBytes: 4, seed: 1);
-      final image = YuvImage.bgra(width, height, planes: [before]);
+      final image = YuvImage.bgra(width, height, planes: [before], layout: YuvPlaneLayout.preserve);
 
       image.pack();
 
@@ -208,7 +212,7 @@ void main() {
       final yBefore = plane(rows: height, rowStride: width + 9, columns: width, pixelStride: 1, sampleBytes: 1, seed: 3);
       final uBefore = plane(rows: chromaHeight, rowStride: chromaWidth + 5, columns: chromaWidth, pixelStride: 1, sampleBytes: 1, seed: 103);
       final vBefore = plane(rows: chromaHeight, rowStride: chromaWidth + 5, columns: chromaWidth, pixelStride: 1, sampleBytes: 1, seed: 203);
-      final image = YuvImage.i420(width, height, planes: [yBefore, uBefore, vBefore]);
+      final image = YuvImage.i420(width, height, planes: [yBefore, uBefore, vBefore], layout: YuvPlaneLayout.preserve);
 
       image.pack();
 
@@ -231,6 +235,7 @@ void main() {
           plane(rows: chromaHeight, rowStride: chromaWidth + 8, columns: chromaWidth, pixelStride: 1, sampleBytes: 1, seed: 101),
           plane(rows: chromaHeight, rowStride: chromaWidth + 8, columns: chromaWidth, pixelStride: 1, sampleBytes: 1, seed: 201),
         ],
+        layout: YuvPlaneLayout.preserve,
       );
 
       image.pack();

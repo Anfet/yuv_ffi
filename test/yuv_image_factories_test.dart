@@ -107,7 +107,7 @@ void main() {
           chroma[base + 4] = 40; // V1
           chroma[base + 5] = gapMarker; // gap
         }
-        final image = YuvImage.nv12(4, 4, planes: [YuvPlane(4, 4), YuvPlane(2, 6, 3, chroma)]);
+        final image = YuvImage.nv12(4, 4, planes: [YuvPlane(4, 4), YuvPlane(2, 6, 3, chroma)], layout: YuvPlaneLayout.preserve);
 
         // grayscale() is a pure effect: same format/geometry in and out, so any
         // corruption of the gap bytes could only come from the operation

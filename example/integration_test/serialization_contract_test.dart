@@ -105,7 +105,7 @@ void main() {
 
       await YuvFfi.ensureInitialized();
 
-      final source = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(32))]);
+      final source = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(32))], layout: YuvPlaneLayout.preserve);
       final target = YuvImage.bgra(1, 1);
 
       await target.load(asStream(await save(source)));

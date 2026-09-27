@@ -41,7 +41,7 @@ void main() {
     final paddedPlane = _plane(expectedTight, height: height, rowStride: paddedRowStride, usefulRowBytes: tightRowStride);
     final paddedSnapshot = Uint8List.fromList(paddedPlane.bytes);
 
-    final image = YuvImage.bgra(width, height, planes: <YuvPlane>[paddedPlane]);
+    final image = YuvImage.bgra(width, height, planes: <YuvPlane>[paddedPlane], layout: YuvPlaneLayout.preserve);
 
     final result = image.toBgraBytes();
 

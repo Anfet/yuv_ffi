@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:yuv_ffi/src/yuv/shared/yuv_codec.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane_layout.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
@@ -85,8 +86,14 @@ abstract interface class YuvImage {
   /// [width] and [height] are image dimensions in pixels.
   /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
   /// when [planes] is omitted.
-  /// If [planes] is provided, plane data is copied from it.
-  factory YuvImage.i420(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl.i420;
+  /// If [planes] is provided, plane data is copied from it, according to
+  /// [layout] (PACK-01B): [YuvPlaneLayout.packed] (the default) copies only
+  /// the visible samples into a tightly packed layout, discarding row padding
+  /// and any per-sample pixel gap; [YuvPlaneLayout.preserve] keeps the given
+  /// `rowStride`/`pixelStride` byte-for-byte. [layout] is ignored when
+  /// [planes] is omitted -- an allocated image is always tight already.
+  factory YuvImage.i420(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes, YuvPlaneLayout layout}) =
+      YuvImageImpl.i420;
 
   /// Creates an NV21-labeled image.
   ///
@@ -95,24 +102,36 @@ abstract interface class YuvImage {
   /// [width] and [height] are image dimensions in pixels.
   /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
   /// when [planes] is omitted.
-  /// If [planes] is provided, plane data is copied from it.
+  /// If [planes] is provided, plane data is copied from it, according to
+  /// [layout]; see [YuvImage.i420].
   @Deprecated('Legacy nv21 label contains UV bytes; use YuvImage.nv12().')
-  factory YuvImage.nv21(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl.nv21;
+  factory YuvImage.nv21(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes, YuvPlaneLayout layout}) =
+      YuvImageImpl.nv21;
 
   /// Creates a BGRA8888 image.
   ///
   /// [width] and [height] are image dimensions in pixels.
-  /// If [planes] is provided, plane data is copied from it.
-  factory YuvImage.bgra(int width, int height, {Iterable<YuvPlane>? planes}) = YuvImageImpl.bgra;
+  /// If [planes] is provided, plane data is copied from it, according to
+  /// [layout]; see [YuvImage.i420].
+  factory YuvImage.bgra(int width, int height, {Iterable<YuvPlane>? planes, YuvPlaneLayout layout}) = YuvImageImpl.bgra;
 
   /// Creates an image by explicit legacy [format].
   ///
   /// [width] and [height] are image dimensions in pixels.
   /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
   /// when [planes] is omitted.
-  /// If [planes] is provided, plane data is copied from it.
+  /// If [planes] is provided, plane data is copied from it, according to
+  /// [layout]; see [YuvImage.i420].
   @Deprecated('Use a named factory (YuvImage.i420, YuvImage.nv12, YuvImage.bgra) or YuvImage.allocate().')
-  factory YuvImage(YuvFileFormat format, int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl;
+  factory YuvImage(
+    YuvFileFormat format,
+    int width,
+    int height, {
+    int yPixelStride,
+    int uvPixelStride,
+    Iterable<YuvPlane>? planes,
+    YuvPlaneLayout layout,
+  }) = YuvImageImpl;
 
   /// Creates an NV12 image with the truthfully named semi-planar storage.
   ///
@@ -123,8 +142,13 @@ abstract interface class YuvImage {
   /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
   /// when [planes] is omitted; [uvPixelStride] defaults to `2`, matching the
   /// interleaved `(U, V)` pair every sample stores.
-  /// If [planes] is provided, plane data is copied from it.
-  factory YuvImage.nv12(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes}) = YuvImageImpl.nv12;
+  /// If [planes] is provided, plane data is copied from it, according to
+  /// [layout]; see [YuvImage.i420]. NV12's packed chroma stays `pixelStride ==
+  /// 2` under [YuvPlaneLayout.packed] -- native code addresses the
+  /// interleaved plane as a packed `(U, V)` pair, so only row padding is
+  /// removed, never the pair itself.
+  factory YuvImage.nv12(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes, YuvPlaneLayout layout}) =
+      YuvImageImpl.nv12;
 
   /// Allocates a new tightly packed, zero-filled image for [format] at
   /// [width] x [height].
@@ -197,6 +221,7 @@ abstract interface class YuvImage {
       planes: draft.planes,
       // ignore: deprecated_member_use_from_same_package
       allowLargerNvChromaStride: draft.format == YuvFileFormat.nv21 && draft.planes[1].pixelStride > YuvGeometry.nvChromaPixelStride,
+      layout: YuvPlaneLayout.preserve,
     );
   }
 

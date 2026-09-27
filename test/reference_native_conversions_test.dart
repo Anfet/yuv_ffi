@@ -283,13 +283,15 @@ YuvImage _newImage(YuvFileFormat format, int width, int height, List<YuvPlane> p
   return switch (format) {
     // Since YUV-15 the named BGRA constructor preserves the declared layout
     // just like the explicit-format one, so both blank and populated cases can
-    // go through it.
+    // go through it. This whole file exercises declared strides byte-for-byte
+    // (including custom/padded ones), so every case passes `.preserve`
+    // explicitly (PACK-01B changed the default to `.packed`).
     // ignore: deprecated_member_use_from_same_package
-    YuvFileFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes),
+    YuvFileFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
     // ignore: deprecated_member_use_from_same_package
-    YuvFileFormat.i420 => YuvImage.i420(width, height, planes: planes),
+    YuvFileFormat.i420 => YuvImage.i420(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
     // ignore: deprecated_member_use_from_same_package
-    YuvFileFormat.nv21 => YuvImage.nv21(width, height, planes: planes),
+    YuvFileFormat.nv21 => YuvImage.nv21(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
   };
 }
 

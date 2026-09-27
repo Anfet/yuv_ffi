@@ -47,7 +47,7 @@ void main() {
     await YuvFfi.ensureInitialized();
 
     final plane = YuvPlane(2, 16, 4, Uint8List(32));
-    final image = YuvImage.bgra(2, 2, planes: [plane]);
+    final image = YuvImage.bgra(2, 2, planes: [plane], layout: YuvPlaneLayout.preserve);
     _fillPlanesWithPattern(image);
 
     final expectedBytes = _concatPlanesDirectly(image);

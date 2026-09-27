@@ -18,6 +18,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_legacy_dispatch.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_plane_layout.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 import 'package:yuv_ffi/src/yuv_capabilities.dart';
@@ -44,13 +45,27 @@ import 'yuv_abi_v1_dispatch_web.dart';
 class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapter {
   // I420 stores U and V as separate single-byte-per-sample planes, so the
   // default pixelStride is 1, unlike NV21's interleaved (U, V) pairs.
-  YuvImageImpl.i420(int width, int height, {int yPixelStride = 1, int uvPixelStride = 1, Iterable<YuvPlane>? planes})
+  YuvImageImpl.i420(
+    int width,
+    int height, {
+    int yPixelStride = 1,
+    int uvPixelStride = 1,
+    Iterable<YuvPlane>? planes,
+    YuvPlaneLayout layout = YuvPlaneLayout.packed,
+  })
     // ignore: deprecated_member_use_from_same_package
-    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
 
-  YuvImageImpl.nv21(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
+  YuvImageImpl.nv21(
+    int width,
+    int height, {
+    int yPixelStride = 1,
+    int uvPixelStride = 2,
+    Iterable<YuvPlane>? planes,
+    YuvPlaneLayout layout = YuvPlaneLayout.packed,
+  })
     // ignore: deprecated_member_use_from_same_package
-    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes);
+    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
 
   /// Truthfully named replacement for [YuvImageImpl.nv21]: same semi-planar
   /// storage, same default interleaved chroma pixel stride of 2.
@@ -59,21 +74,28 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   /// pair minimum is honored as a real pixel gap rather than being folded into
   /// the legacy constructor's own validation; see
   /// [YuvGeometry.validateImage]'s `allowLargerNvChromaStride`.
-  YuvImageImpl.nv12(int width, int height, {int yPixelStride = 1, int uvPixelStride = 2, Iterable<YuvPlane>? planes})
-    : _state = YuvImageState(
-        // ignore: deprecated_member_use_from_same_package
-        YuvFileFormat.nv21,
-        width,
-        height,
-        yPixelStride: yPixelStride,
-        uvPixelStride: uvPixelStride,
-        planes: planes,
-        allowLargerNvChromaStride: true,
-      );
+  YuvImageImpl.nv12(
+    int width,
+    int height, {
+    int yPixelStride = 1,
+    int uvPixelStride = 2,
+    Iterable<YuvPlane>? planes,
+    YuvPlaneLayout layout = YuvPlaneLayout.packed,
+  }) : _state = YuvImageState(
+         // ignore: deprecated_member_use_from_same_package
+         YuvFileFormat.nv21,
+         width,
+         height,
+         yPixelStride: yPixelStride,
+         uvPixelStride: uvPixelStride,
+         planes: planes,
+         allowLargerNvChromaStride: true,
+         layout: layout,
+       );
 
-  YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes})
+  YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes, YuvPlaneLayout layout = YuvPlaneLayout.packed})
     // ignore: deprecated_member_use_from_same_package
-    : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes);
+    : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes, layout: layout);
 
   YuvImageImpl(
     // ignore: deprecated_member_use_from_same_package
@@ -84,6 +106,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     int uvPixelStride = 1,
     Iterable<YuvPlane>? planes,
     bool allowLargerNvChromaStride = false,
+    YuvPlaneLayout layout = YuvPlaneLayout.packed,
   }) : _state = YuvImageState(
          format,
          width,
@@ -92,6 +115,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
          uvPixelStride: uvPixelStride,
          planes: planes,
          allowLargerNvChromaStride: allowLargerNvChromaStride,
+         layout: layout,
        );
 
   /// Allocates a new tightly packed, zero-filled image for [format].
@@ -102,6 +126,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       width,
       height,
       planes: YuvImageState.allocatePlanes(format: legacy, width: width, height: height),
+      layout: YuvPlaneLayout.preserve,
     );
   }
 
@@ -162,6 +187,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     uvPixelStride: _state.uvPixelStride,
     allowLargerNvChromaStride: _state.allowsLargerNvChromaStride,
     planes: _state.copiedPlanes(blank: blank),
+    layout: YuvPlaneLayout.preserve,
   );
 
   @override
@@ -562,6 +588,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       clamped.height,
       allowLargerNvChromaStride: _state.allowsLargerNvChromaStride,
       planes: YuvAbiV1ImageTransport.planesOf(result: result, format: _state.format, width: clamped.width, height: clamped.height),
+      layout: YuvPlaneLayout.preserve,
     );
   }
 
@@ -581,6 +608,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       rotatedHeight,
       allowLargerNvChromaStride: _state.allowsLargerNvChromaStride,
       planes: YuvAbiV1ImageTransport.planesOf(result: result, format: _state.format, width: rotatedWidth, height: rotatedHeight),
+      layout: YuvPlaneLayout.preserve,
     );
   }
 
@@ -614,6 +642,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       width,
       height,
       planes: YuvAbiV1ImageTransport.planesOf(result: result, format: target, width: width, height: height),
+      layout: YuvPlaneLayout.preserve,
     );
   }
 

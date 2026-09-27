@@ -112,8 +112,9 @@ void main() {
       // YUV-15 supersedes the earlier YUV-04 behaviour here: the constructor
       // used to repack a padded plane into a tight buffer, which destroyed the
       // caller's layout. Producing a tight buffer is the job of toBgra8888();
-      // the constructor deep-copies the plane exactly as declared.
-      final image = YuvImage.bgra(8, 8, planes: [plane(8, 32 + 16, 4)]);
+      // the constructor deep-copies the plane exactly as declared when passed
+      // YuvPlaneLayout.preserve (PACK-01B changed the default to `.packed`).
+      final image = YuvImage.bgra(8, 8, planes: [plane(8, 32 + 16, 4)], layout: YuvPlaneLayout.preserve);
       expect(image.yPlane.rowStride, 32 + 16);
       expect(image.yPlane.pixelStride, 4);
       expect(image.yPlane.bytes.length, 8 * (32 + 16));

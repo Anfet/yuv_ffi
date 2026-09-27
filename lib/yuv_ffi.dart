@@ -12,6 +12,7 @@ export 'src/yuv/shared/yuv_revision.dart' show YuvImageInvalidation;
 // PACK-01A must not add required members to `YuvImage`.
 export 'src/yuv/shared/yuv_pack.dart' show YuvImagePack;
 export 'src/yuv/shared/yuv_plane.dart';
+export 'src/yuv/shared/yuv_plane_layout.dart';
 export 'src/yuv/shared/yuv_image_rotation.dart';
 export 'src/yuv/shared/yuv_file_format.dart';
 export 'src/yuv/shared/yuv_native_status.dart' show YuvNativeException;

@@ -216,7 +216,7 @@ void main() {
         }
 
         // ignore: deprecated_member_use_from_same_package
-        final image = YuvImage(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: [padded])..negate();
+        final image = YuvImage(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: [padded], layout: YuvPlaneLayout.preserve)..negate();
 
         expect(image.yPlane.rowStride, rowStride, reason: 'the row stride was repacked');
         for (int row = 0; row < height; row++) {
@@ -242,7 +242,7 @@ void main() {
         }
 
         // ignore: deprecated_member_use_from_same_package
-        final image = YuvImage.nv21(width, height, planes: [plane(height, width, 1, 0), chroma]);
+        final image = YuvImage.nv21(width, height, planes: [plane(height, width, 1, 0), chroma], layout: YuvPlaneLayout.preserve);
         // ignore: deprecated_member_use_from_same_package
         image.fromRgba8888(Uint8List(width * height * 4)..fillRange(0, width * height * 4, 0x80));
 

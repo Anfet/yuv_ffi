@@ -62,17 +62,21 @@ extension CameraImageExt on CameraImage {
       }
     }
 
+    // This method already decides packed vs. padded above (kYuvCameraPreviewPackPlanes),
+    // byte-for-byte; PACK-01B's factory default would otherwise silently
+    // repack the padded branch a second time; here layout is always
+    // `.preserve` regardless of that default.
     switch (format.group) {
       case ImageFormatGroup.yuv420:
-        return YuvImage.i420(width, height, planes: planes);
+        return YuvImage.i420(width, height, planes: planes, layout: YuvPlaneLayout.preserve);
 
       case ImageFormatGroup.nv21:
         // The deprecated nv21 constructor is an alias for the same UV-ordered
         // storage as nv12; both preserve these camera bytes as supplied.
         // ignore: deprecated_member_use
-        return YuvImage.nv21(width, height, planes: planes);
+        return YuvImage.nv21(width, height, planes: planes, layout: YuvPlaneLayout.preserve);
       case ImageFormatGroup.bgra8888:
-        return YuvImage.bgra(width, height, planes: planes);
+        return YuvImage.bgra(width, height, planes: planes, layout: YuvPlaneLayout.preserve);
       case ImageFormatGroup.unknown:
       case ImageFormatGroup.jpeg:
         throw FormatException('Unsupported format for CameraImage to YuvImage; ${format.group}');

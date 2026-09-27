@@ -159,7 +159,7 @@ void main() {
           }
         }
         final plane = YuvPlane(h, rowStride, pixelStride, backing);
-        final padded = YuvImage.bgra(w, h, planes: [plane]);
+        final padded = YuvImage.bgra(w, h, planes: [plane], layout: YuvPlaneLayout.preserve);
 
         final tightBytes = padded.toBgraBytes();
 
@@ -204,7 +204,7 @@ void main() {
           }
         }
         final plane = YuvPlane(h, rowStride, pixelStride, backing);
-        final padded = YuvImage.bgra(w, h, planes: [plane]);
+        final padded = YuvImage.bgra(w, h, planes: [plane], layout: YuvPlaneLayout.preserve);
         final expectedBefore = padded.toBgraBytes();
 
         final cropResult = padded.cropped(const ui.Rect.fromLTWH(1, 1, 2, 2));

@@ -89,7 +89,7 @@ void main() {
         backing.setRange(offset, offset + 4, <int>[40, 80, 160, 255]);
       }
     }
-    final padded = YuvImage.bgra(width, height, planes: <YuvPlane>[YuvPlane(height, rowStride, 4, backing)]);
+    final padded = YuvImage.bgra(width, height, planes: <YuvPlane>[YuvPlane(height, rowStride, 4, backing)], layout: YuvPlaneLayout.preserve);
 
     final packed = padded.toBgraBytes();
     expect(packed.length, width * height * 4);

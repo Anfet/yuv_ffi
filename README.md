@@ -110,6 +110,8 @@ Exports from `package:yuv_ffi/yuv_ffi.dart`:
 
 - `YuvImage` (plus the deprecated legacy extension, `DeprecatedYuvImageApi`)
 - `YuvPlane`
+- `YuvPlaneLayout` (`preserve`, `packed`) — factory construction option, see below
+- `YuvImagePack` (extension: `isTightlyPacked`, `pack()`)
 - `YuvPixelFormat` (`i420`, `nv12`, `bgra8888`) and the deprecated `YuvFileFormat`
 - `YuvImageRotation`
 - `YuvOperation`, `YuvCapabilities`
@@ -126,6 +128,35 @@ Main constructors:
 - `YuvImage.bgra(width, height, ...)`
 - `YuvImage.allocate(format, width, height)` — blank, tightly packed image
 - `YuvImage.fromRgbaBytes(bytes, width:, height:, format:)` — convert RGBA8888 input into a new image
+
+### Plane layout: `preserve` vs. `packed`
+
+Every factory that accepts caller-supplied `planes` (`YuvImage.i420`, `.nv12`, `.bgra`, the
+deprecated `.nv21`/unnamed constructor) takes an optional `layout: YuvPlaneLayout`, defaulting to
+`YuvPlaneLayout.packed`:
+
+- `YuvPlaneLayout.packed` (default) copies only the visible samples into a tightly packed layout at
+  construction time: no row padding, and — per format — no per-sample pixel gap. I420 chroma reported
+  at `pixelStride == 2` (some Android camera frames report I420 U/V this way even though the format
+  name implies fully planar storage) is de-interleaved down to `pixelStride == 1`. NV12's interleaved
+  UV plane keeps `pixelStride == 2`: native code addresses it as a packed `(U, V)` pair, so only row
+  padding is removed there, not the pair itself.
+- `YuvPlaneLayout.preserve` keeps the caller's `rowStride`/`pixelStride` and every padding byte
+  exactly as given — the behavior every factory had before this option existed.
+
+`layout` only affects construction; it is not a permanent property of the resulting image.
+`applyPlanes(...)` still accepts and keeps whatever strides its argument declares, regardless of
+which layout the receiver was built with. `copy()` and `YuvImage.decode(...)` always preserve the
+source/file layout, independent of this default.
+
+Measured on a real Pixel 3 (PACK-00): dense I420 packing, including the chroma de-interleave, cut
+`applyRotation` from 15.0 ms to 4.5 ms and raised the shown frame rate from 15.7 to 19.3 FPS in one
+paired release-mode run — the reason `packed` is the default rather than `preserve`.
+
+To repack an existing image (built with `preserve`, or received from another layer) in place, use the
+`YuvImagePack` extension: `image.pack()` (a no-op when `image.isTightlyPacked` is already `true`).
+There is no `unpack()` or `toPacked()`; for an independent packed copy use `image.copy().pack()`. The
+row padding and pixel gap bytes `pack()` discards cannot be recovered afterward.
 
 ## Migrating from `0.2.4`
 

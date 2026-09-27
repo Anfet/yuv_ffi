@@ -3,7 +3,7 @@
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | — | VIEW-03 | REVIEW | T1 | Claude | VIEW-00…02 | Замеры пути кадра ожидают отдельного решения; абсолютные profile-цифры rotate пересмотрены в PACK-00 по release-замеру. |
-| — | PACK-01B | TODO | T2 | Не назначен | PACK-01A | Добавить фабрикам `layout: preserve/packed`, по умолчанию упаковывать переданные плоскости; `copy()` и `decode()` сохраняют layout. |
+| — | PACK-01B | REVIEW | T2 | Claude (главная сессия) | PACK-01A | `layout: preserve/packed` добавлен всем фабрикам; см. отчёт ниже. |
 | — | PACK-01C | TODO | T2 | Не назначен | PACK-01B | Включить плотный импорт камеры в example без повторной упаковки в конструкторе. |
 | — | PACK-01D | TODO | T2 | Не назначен | PACK-01C | Формировать на границе ML Kit настоящие NV21-байты для Android и плотный BGRA для iOS. |
 
@@ -370,8 +370,80 @@ strided-совместимыми; менять native C эти карточки 
 
 ### PACK-01B — опция layout для фабрик `YuvImage`
 
-**Статус:** TODO. **Тир / режим:** T2 / STANDARD. **Исполнитель:** не назначен (Terra или Sonnet).
+**Статус:** REVIEW. **Тир / режим:** T2 / STANDARD. **Исполнитель:** Claude (главная сессия, по
+решению пользователя — без делегирования T2-субагенту).
 **Ревью:** независимый T1. **Зависимость:** PACK-01A принят. **Отказов:** 0.
+
+### Executor Report
+
+Native C, ABI v1 и generated bindings не тронуты. Новый файл
+[`lib/src/yuv/shared/yuv_plane_layout.dart`](lib/src/yuv/shared/yuv_plane_layout.dart) с публичным
+`enum YuvPlaneLayout { preserve, packed }`, экспортирован из `lib/yuv_ffi.dart`. Общая упаковочная
+логика PACK-01A вынесена из `yuv_pack.dart` в новый `lib/src/yuv/shared/yuv_plane_packing.dart`
+(`YuvPlanePacking`, static-методы, ключ по legacy `YuvFileFormat`/`width`/`height`, без зависимости от
+живого `YuvImage`) — так конструктор `YuvImageState` может упаковывать переданные плоскости до того,
+как объект `YuvImage` вообще существует. `YuvImagePack.pack()`/`isTightlyPacked` теперь делегируют в
+`YuvPlanePacking`, публичный контракт PACK-01A не изменился (все 13 его тестов прошли без правок).
+
+**Реализация.** `YuvImageState`'s конструктор получил `layout` (по умолчанию `.packed`): при
+`planes != null` копия валидируется как раньше, затем, если `layout == .packed` и копия ещё не
+плотная, строится полный упакованный набор через `YuvPlanePacking.packAll` перед сохранением в
+`_planes`. `layout` не участвует, когда `planes` не переданы (аллокация и так плотная). `layout`
+проброшен через все три бэкенда (`io`, `web`, `stub`) — именованные конструкторы `.i420`/`.nv21`/
+`.nv12`/`.bgra`, общий конструктор, `YuvImage.allocate` (`.preserve`, аллокация и так плотная),
+`copy()` (`.preserve`), и все "result-adoption" точки, где native/WASM результат уже гарантированно
+плотный (`cropped()`, `rotated()`, `_toIndependent()` в io/web) — везде `.preserve`, так как
+переупаковывать уже плотный результат было бы лишней копией. `YuvImage.decode()` в `yuv.dart` тоже
+`.preserve` — decode обязан отражать формат файла, не текущее умолчание конструктора.
+
+**Публичный интерфейс.** `layout` добавлен опциональным именованным параметром во все фабрики
+`YuvImage` (`i420`, `nv12`, `bgra`, deprecated `nv21`/безымянный конструктор) в `yuv.dart` — не
+обязательный член интерфейса, значит стороннего `implements YuvImage` эта карточка не ломает (как и
+PACK-01A).
+
+**Приёмка (новый `test/yuv_plane_layout_test.dart`, 13 тестов):** `.preserve` держит паддинг/gap
+байт-в-байт на I420 (включая chroma `pixelStride=2`), NV12, BGRA, и глубоко копирует, не алиасит
+источник; `.packed` (и по умолчанию, и явно) упаковывает те же кейсы идентично PACK-01A, NV12
+interleaved UV остаётся на `pixelStride=2`; уже плотный источник не переаллоцируется; `layout`
+игнорируется без `planes`; `copy(blank:)`, `copy()`, `encodeTo()`/`decode()` сохраняют layout
+источника независимо от нового умолчания.
+
+**Существующие тесты, полагавшиеся на старое умолчание.** 22 теста в 9 файлах корня
+(`conversions_test.dart`, `io_abi_v1_public_contract_test.dart`, `planar_box_mean_blur_contract_test.dart`,
+`reference_native_conversions_test.dart`, `native_stride_safety_test.dart`, `rel05_independent_results_test.dart`,
+`yuv_bgra_pixel_gap_test.dart`, `yuv_geometry_rejection_test.dart`, `yuv_image_factories_test.dart`,
+`yuv_plane_validation_test.dart`, `yuv_serialization_test.dart`, `yuv_pack_test.dart`) явно строили
+padded/gapped плоскости, чтобы проверить, что операция уважает их layout — переведены на явный
+`layout: YuvPlaneLayout.preserve`, ни одна проверка не ослаблена (сравнил каждый diff: тест по-прежнему
+утверждает то же самое про паддинг, только явно просит его сохранить). Отдельно поймал и починил тот
+же паттерн в `example/lib/ext.dart` (иначе camera preview PACK-00 эксперимент начал бы молча
+двойно упаковывать padded-ветку) и в 7 файлах `example/integration_test/` (device/Web-only, не
+прогоняются этим окружением, но чинил всё равно — иначе они бы красными легли при первом реальном
+запуске: `padded_bgra_constructor_test.dart`, `reference_web_conversions_test.dart`,
+`rel02_rel05_web_regression_test.dart`, `wasm_parity_edge_cases_test.dart`, `serialization_contract_test.dart`,
+`image_cache_key_test.dart`, `getbytes_contract_test.dart`).
+
+**README/CHANGELOG.** Новый раздел README "Plane layout: preserve vs. packed" с объяснением умолчания,
+PACK-00 цифрами и таблицей экспортов; `CHANGELOG.md` дополнен явным "Behavior change" пунктом под
+черновой записью `0.4.2` (версия `pubspec.yaml` не менялась — релиз не опубликован).
+
+**Проверка:** `dart format --line-length 150` на всех изменённых/новых файлах; `flutter analyze` в
+корне (`lib test`) и в example (весь каталог, включая `integration_test/`) — без замечаний;
+`flutter test` в корне — 696 passed (683 после PACK-01A + 13 новых); `flutter test` в example — 64
+passed (без изменений числа тестов, два теста, сломанных новым умолчанием в `ext.dart`, почищены).
+
+**Открытые пункты:**
+1. Device-бенч не запускался этой карточкой — конструкторный путь использует тот же алгоритм
+   упаковки, что PACK-00 уже измерил, но отдельного повторного device-прогона на этот именно код
+   путь (через фабрики, а не напрямую через `pack()`) не было; решение архитектора это и не требовало
+   для PACK-01B.
+2. `example/integration_test/`-правки не верифицированы прогоном (нужен браузер/устройство) —
+   исправлены по инспекции кода и по аналогии с уже проверенными изменениями в `test/`; отмечаю как
+   риск для ревьюера.
+3. PACK-01C, по мандату, должна включить плотный импорт камеры по умолчанию в `example/lib/ext.dart`
+   без повторной упаковки в конструкторе — текущая правка в `ext.dart` (добавление `.preserve`)
+   сохраняет прежнее поведение (padded/packed выбор через `kYuvCameraPreviewPackPlanes`), не
+   предвосхищает решение PACK-01C.
 
 **Решение и границы.** Добавить публичный `YuvPlaneLayout { preserve, packed }` и необязательный
 `layout` во все фабрики, принимающие `planes`: I420, NV12, BGRA и legacy NV21/unnamed.

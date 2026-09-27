@@ -114,7 +114,7 @@ void main() {
       // YUV-15 supersedes the earlier YUV-04 behaviour: a valid padded plane is
       // deep-copied as declared instead of being repacked tightly at
       // construction time. toBgra8888() is what produces a tight buffer.
-      final image = YuvImage.bgra(8, 8, planes: [filled(8, 32 + 16, 4)]);
+      final image = YuvImage.bgra(8, 8, planes: [filled(8, 32 + 16, 4)], layout: YuvPlaneLayout.preserve);
       expect(image.planes.length, 1);
       expect(image.yPlane.rowStride, 32 + 16);
     });
@@ -186,7 +186,8 @@ void main() {
 
   group('padded BGRA survives a native effect', () {
     // ignore: deprecated_member_use_from_same_package
-    YuvImage paddedBgra() => YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [filled(8, 8 * 4 + 16, 4)]);
+    YuvImage paddedBgra() =>
+        YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [filled(8, 8 * 4 + 16, 4)], layout: YuvPlaneLayout.preserve);
 
     test('blur operations accept a padded plane and leave its padding untouched', () {
       // Until YUV-50 these threw: the legacy per-format kernels allocated a
