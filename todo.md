@@ -767,16 +767,30 @@ desktop smoke проверена чтением кода, но физическ�
 **Проверка:** `flutter analyze lib test` локально — "No issues found!"; синтаксис YAML — валиден
 (`python -c "import yaml; yaml.safe_load(...)"`, все 10 job распознаны).
 
-**Дополнительно, по решению пользователя в этом же коммите:** `macos-native-smoke` переведён с
-GitHub-хостед `macos-latest` на зарегистрированный self-hosted раннер (`runs-on: [self-hosted,
-macOS]`) — раннер `yuv-self-hosted` подтверждён `online`, `busy: false` через `gh api
-repos/Anfet/yuv_ffi/actions/runners` перед правкой. Быстрее облачного раннера и даёт доступ к
-реальной камере той же машины для будущих задач (например, физического smoke-прогона
-`camera_desktop_smoke_main.dart`, который пока не переносился на CI). Остальные job (`ubuntu-latest`)
-не менялись. Push этого коммита (`a031f9c`) сделан пользователем лично — изменение `runs-on` на
-self-hosted было заблокировано инструментом безопасности сессии как расширяющее возможность
-выполнения кода на физической машине через push на эту ветку, коммит и push пользователь выполнил
-сам, осознавая это.
+**Дополнительно, по решению пользователя, — эксперимент со self-hosted раннером (откачен):**
+`macos-native-smoke` был временно переведён с GitHub-хостед `macos-latest` на зарегистрированный
+self-hosted раннер (`runs-on: [self-hosted, macOS]`, коммит `a031f9c`, запушен пользователем лично —
+изменение `runs-on` на self-hosted было заблокировано инструментом безопасности сессии как
+расширяющее возможность выполнения кода на физической машине через push на эту ветку). Раннер
+`yuv-self-hosted` был `online`, `busy: false`.
+
+Первый прогон упал на `cmake: command not found` — раннер стартовал до того, как PATH получил
+`/opt/homebrew/bin`. После перезапуска процесса раннера пользователем `cmake` нашёлся, native
+`.dylib` собрался (`test -f libyuv_ffi.dylib` прошёл), но следующий шаг `flutter test
+test/native_packaging_smoke_test.dart` упал на `dlopen`: `DYLD_LIBRARY_PATH` корректно доходит до
+окружения шага (подтверждено в логе job'а — значение присутствует), но dyld всё равно не находит
+`libyuv_ffi.dylib` ни по одному из системных путей. На этой машине включён SIP
+(`csrutil status` → `enabled`), который на некоторых конфигурациях стрипует `DYLD_*` переменные для
+процессов Dart VM; тот же CI-шаг с той же переменной успешен на GitHub-хостед `macos-latest`.
+Точная причина различия между self-hosted и GitHub-хостед dyld-поведением не установлена в этой
+сессии — только симптом (dlopen fails despite DYLD_LIBRARY_PATH present) и правдоподобная гипотеза
+(SIP/hardened-runtime взаимодействие с DYLD-переменными).
+
+**По решению пользователя `macos-native-smoke` возвращён на `macos-latest`** (не блокировать
+VIEW-01A на нерешённой self-hosted проблеме); self-hosted раннер для этого job — отдельная будущая
+задача, требующая либо `DYLD_FALLBACK_LIBRARY_PATH`, либо копирования `.dylib` в путь без
+SIP-ограничений (например `/usr/local/lib`), либо иного решения конфликта. Остальные `ubuntu-latest`
+job не менялись и self-hosted не касались.
 
 **Финальное подтверждение реальным CI-прогоном [`36314860992`](https://github.com/Anfet/yuv_ffi/actions/runs/36314860992)
 на `125a2cd` (до self-hosted правки, `flutter analyze lib test` уже была в этом коммите) — проверено

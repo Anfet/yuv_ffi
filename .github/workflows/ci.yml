@@ -216,10 +216,14 @@ jobs:
             -d linux
 
   macos-native-smoke:
-    # Self-hosted (yuv-self-hosted) instead of the GitHub-hosted macos-latest
-    # runner: faster turnaround, and a physical Mac is what a later camera
-    # smoke on this job's host would need anyway.
-    runs-on: [self-hosted, macOS]
+    # Reverted from the self-hosted (yuv-self-hosted) runner back to
+    # GitHub-hosted macos-latest: with SIP enabled on that physical Mac,
+    # DYLD_LIBRARY_PATH reaches the step's environment (confirmed in the job
+    # log) but dyld still fails to resolve libyuv_ffi.dylib for the Dart VM
+    # process, while the identical setup succeeds on macos-latest. Moving
+    # this job to self-hosted again needs that dyld/SIP interaction solved
+    # first, as a separate task.
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
