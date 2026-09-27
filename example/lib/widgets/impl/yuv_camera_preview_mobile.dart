@@ -112,9 +112,23 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
   }
 
   void onNewImageAvailable(CameraImage image, int generation) {
+    // VIEW-03 measurement only: null in production, so this is a single
+    // field read plus a virtual call, never a per-frame allocation.
+    final debugEvent = debugYuvCameraPreviewMobileEvent;
+    if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.delivered, debugYuvCameraPreviewMobileClock.elapsed);
+
     // Dropped before the planes are copied: while a frame is still decoding or
     // waiting to be drawn, converting this one would only queue work behind it.
-    if (!mounted || generation != streamGeneration || presenter.isBusy) {
+    if (!mounted || generation != streamGeneration) {
+      if (debugEvent != null) {
+        debugEvent(DebugYuvCameraPreviewMobileEventKind.droppedBeforeTransform, debugYuvCameraPreviewMobileClock.elapsed, reason: 'stale');
+      }
+      return;
+    }
+    if (presenter.isBusy) {
+      if (debugEvent != null) {
+        debugEvent(DebugYuvCameraPreviewMobileEventKind.droppedBeforeTransform, debugYuvCameraPreviewMobileClock.elapsed, reason: 'busy');
+      }
       return;
     }
 
@@ -122,8 +136,10 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
     try {
       final rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
       var yuv = image.toYuvImage();
+      if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.yuvImageReady, debugYuvCameraPreviewMobileClock.elapsed);
       if (_previewPlatform() == TargetPlatform.android) {
         yuv = yuv.applyRotation(rotation.toZero());
+        if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.rotationApplied, debugYuvCameraPreviewMobileClock.elapsed);
 
         if (kYuvCameraPreviewFlipAndroid) yuv.applyFlipHorizontal();
       }
@@ -133,6 +149,7 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
       return;
     }
 
+    if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.acceptedForTransform, debugYuvCameraPreviewMobileClock.elapsed);
     presentCameraFrame(presenter, frame, widget.transform);
   }
 

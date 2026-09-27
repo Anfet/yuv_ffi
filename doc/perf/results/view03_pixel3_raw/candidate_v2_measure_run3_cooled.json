@@ -1,1 +1,0 @@
-{"card":"VIEW-03","device":"pixel3","phase":"measure","platform":"android","measured_seconds":10.085282,"frames_accepted":63,"frames_presented":63,"dropped_by_presenter":0,"display_fps":6.246726665650004,"accepted_to_shown_us":{"n":62.0,"median_ms":41.17,"p95_ms":52.929,"min_ms":15.586,"max_ms":56.355}}

@@ -2,38 +2,64 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:camera/camera.dart';
-import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'package:yuv_ffi_example/ext.dart';
+import 'package:yuv_ffi_example/widgets/impl/yuv_camera_preview_io.dart';
 import 'package:yuv_ffi_example/widgets/yuv_camera_preview.dart';
 
 /// VIEW-03: full "frame delivered by the platform -> frame shown" path on a
-/// real Pixel 3 camera, through the same public [YuvCameraPreview] contract
-/// `CameraScreen` uses (`transform` -> [YuvFramePresenter.present] ->
-/// `onFramePresented`).
+/// real Pixel 3 camera, measured inside the mobile preview's one existing
+/// platform subscription (`_YuvCameraPreviewMobile.onNewImageAvailable`).
 ///
-/// ## What "before/after" means here
+/// ## Why the second-pass measurement was rejected
 ///
-/// The task asks to compare the full path before/after the VIEW-00..02 cycle.
-/// That comparison cannot run as one test file on both revisions: before
-/// VIEW-01, `YuvCameraPreview` had no `onFramePresented`/`onStreamStopped`
-/// contract at all (`transform` was the only hook, and the FPS counter it fed
-/// counted conversions, not draws -- see VIEW-01's executor report for why
-/// that number was wrong and completed.md for the full history). Adding those
-/// callbacks to the pre-cycle widget to make it comparable would mean
-/// benchmarking a patched baseline, not the code that actually shipped before
-/// VIEW-00..02.
+/// The second pass split delivered/accepted/presented across three separate
+/// test runs (the platform's `onStreamedFrameAvailable` cannot be listened to
+/// a second time without stealing the stream from the widget under test).
+/// The independent review rejected that: `delivered` under an idle listener
+/// with no preview work running is not the same signal as `delivered` while
+/// the real subscription's callback is doing YUV conversion, rotation and
+/// feeding `YuvFramePresenter`, so the ~78% "drop" figure computed from two
+/// different runs did not actually prove anything about drops inside a
+/// running preview. It also flagged a real gap the second pass never
+/// explained: at 6.25-6.55 shown fps, the period between two `presented`
+/// events is ~153-160 ms, while the measured `transform -> presented`
+/// latency was only 33-41 ms -- over 110 ms unaccounted for.
 ///
-/// So this file is the **candidate** measurement (current HEAD, after
-/// VIEW-00..02). The **before** side is `view03_frame_path_pixel3_baseline_test.dart`
-/// (kept in `doc/perf/results/view03_pixel3_raw/` as the exact source used
-/// against commit `9d14f83`, since that commit's `YuvCameraPreview` no longer
-/// exists on this branch and the file cannot live in `example/integration_test/`
-/// without failing analysis against the current widget).
+/// ## What this file does instead
+///
+/// [debugYuvCameraPreviewMobileEvent] (`yuv_camera_preview_io.dart`, example-only,
+/// `null` outside a measurement run) is set once, before pumping the widget,
+/// and raised from inside the mobile preview's single real subscription at
+/// four points, all sharing one clock ([debugYuvCameraPreviewMobileClock]):
+///
+/// - `delivered`: the instant `onNewImageAvailable` is entered, before
+///   `mounted`/generation/`isBusy` are even checked.
+/// - `droppedBeforeTransform` (with `reason: 'stale'` or `'busy'`): the frame
+///   was dropped before `transform` ever ran.
+/// - `yuvImageReady`: `CameraImage.toYuvImage()` (the plane copy from
+///   platform data, `example/lib/ext.dart`) has just returned, before any
+///   rotation/flip -- isolates plane-copy cost from rotation cost, per the
+///   architect's decision to measure YUV preparation and rotation
+///   separately.
+/// - `acceptedForTransform`: rotation/flip have also run, and
+///   `presentCameraFrame` (which calls `transform`) is about to be called --
+///   this isolates the whole YUV-preparation/rotation stretch, which the
+///   second pass's timer started *after*, per the independent review's
+///   point about that gap.
+///
+/// `presented` reuses the existing public `onFramePresented` callback, read
+/// against the same clock from inside this test -- no second hook needed for
+/// an event the public API already exposes.
+///
+/// This is the *same* subscription `YuvCameraPreview` uses for real preview
+/// work: the hook only records a timestamp, it does not skip, delay or
+/// duplicate anything on the frame's actual path, so delivered/dropped/
+/// accepted here are true counts of one live, working preview, not of an
+/// idle listener.
 ///
 /// ## Methodology
 ///
@@ -42,86 +68,25 @@ import 'package:yuv_ffi_example/widgets/yuv_camera_preview.dart';
 /// causal experiment in `doc/perf/results/bgra_review_2026-09-27.md` (screen
 /// on/off caused a 4x swing on this same device), the runner must record
 /// `adb shell dumpsys power | grep -E "mWakefulness|mScreenOn"` immediately
-/// before starting the drive and keep the screen on throughout -- this file
-/// cannot enforce that from inside the app, so it is a documented run
-/// precondition, not part of the JSON output.
+/// before starting the drive and keep the screen on throughout.
 ///
-/// Three counts answer different questions, per the independent review's
-/// condition 2, because `_YuvCameraPreviewMobile` drops frames *before*
-/// calling `transform`:
-///
-/// - **delivered**: a new platform frame arrived (`CameraPlatform.instance.
-///   onStreamedFrameAvailable` fired). Measured by the **second** `testWidgets`
-///   below, in isolation, with no `YuvCameraPreview`/presenter in the tree at
-///   all -- `MethodChannelCamera.onStreamedFrameAvailable` is not safe to call
-///   a second time on the same camera while something else already listens
-///   to it: each call replaces the platform interface's one internal
-///   `StreamController` and re-subscribes its one native listener, so a
-///   second caller *steals* the stream away from an existing subscriber
-///   rather than observing it alongside it (confirmed by trying exactly that
-///   in-tree and getting `frames_delivered: 0` for the widget's own
-///   subscription). There is no way to observe this stream a second time
-///   without taking it over, so "delivered" cannot be measured in the same
-///   run as "accepted"/"presented" -- it is measured under the identical
-///   camera, resolution and warm-up, immediately before or after, instead.
-/// - **accepted**: `transform` was called for a frame (i.e. the preview's own
-///   busy-gate let it through). Timestamped by [DateTime.now] at the *start*
-///   of `transform`, before any conversion runs inside it. Measured by the
-///   first `testWidgets`, through the public `YuvCameraPreview` contract.
-/// - **presented**: `onFramePresented` fired, i.e. the frame `transform`
-///   returned was actually decoded and drawn. Same run as `accepted`.
-///
-/// `accepted - presented` is the count [YuvFramePresenter] itself dropped (a
-/// decode in flight when a newer frame arrived) and is measured directly.
-/// `delivered - accepted` -- what the mobile preview's own gate drops before
-/// `transform` ever runs -- can only be estimated by comparing the delivered
-/// rate of the second run against the accepted rate of the first, not
-/// computed frame-for-frame; the report must say so and must not present a
-/// single combined "drop rate", which is what the previous version of this
-/// file got wrong by counting `accepted` as if it were `delivered`.
-///
-/// The `accepted_to_shown_us` latency pairs the *last* `accepted` timestamp
-/// with the next `presented` event: since the preview accepts at most one
-/// frame at a time (the whole point of [YuvFramePresenter]), the pending
-/// accepted timestamp when `onFramePresented` fires always belongs to the
-/// frame that was just drawn -- there is never a second accepted frame
-/// in flight to confuse the pairing. This starts the clock at the true start
-/// of `transform`, before any conversion, per the independent review's
-/// condition 1 -- the previous version of this file started it only after
-/// `transform` had already finished converting the frame.
-///
-/// Conversion cost (`toBgraBytes()`, the same call `YuvFramePresenter.present()`
-/// runs right after `transform` returns) is measured by the **third**
-/// `testWidgets` below, also with no `YuvCameraPreview` in the tree: calling
-/// `toBgraBytes()` a second time inside `transform` would add work the real
-/// preview never does, which is what the previous version of this file did
-/// and the independent review flagged.
+/// `flutter drive` refuses `--release` on non-web devices ("Use --profile
+/// mode for testing application performance"); `--profile` is the practical
+/// ceiling for this tool, as for every earlier Pixel 3 card.
 ///
 /// Run (from `example/`), screen on and unlocked:
 /// ```
-/// adb shell dumpsys power | grep -E "mWakefulness|mScreenOn"
 /// flutter drive --driver=test_driver/integration_test.dart \
 ///   --target=integration_test/view03_frame_path_pixel3_test.dart \
 ///   -d 8B1X11QLW --profile
-/// ```
-/// `flutter drive` refuses `--release` on non-web devices
-/// ("Use --profile mode for testing application performance"); `--profile`
-/// is the practical ceiling for this tool, as for every earlier Pixel 3 card.
-///
-/// Memory is read from outside the test process, immediately after the run
-/// while the app is still on the preview screen (this file holds it there for
-/// `holdForMemorySeconds` after measuring):
-/// ```
-/// adb shell dumpsys meminfo com.example.yuv_ffi_example
 /// ```
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   const warmupSeconds = 3;
   const measureSeconds = 10;
-  const holdForMemorySeconds = 8;
 
-  testWidgets('VIEW-03 Pixel 3: accepted/presented frame counts and the accepted-to-shown path', (tester) async {
+  testWidgets('VIEW-03 Pixel 3: delivered/dropped/accepted/presented in one running subscription', (tester) async {
     expect(kIsWeb, isFalse, reason: 'this measurement is for the mobile preview path on a physical device');
     await YuvFfi.initialize();
 
@@ -132,35 +97,84 @@ void main() {
     await controller.initialize();
     addTearDown(controller.dispose);
 
+    debugYuvCameraPreviewMobileClock
+      ..reset()
+      ..start();
+    addTearDown(() {
+      debugYuvCameraPreviewMobileEvent = null;
+      debugYuvCameraPreviewMobileClock.stop();
+    });
+
+    var warmedUp = false;
+    var delivered = 0;
+    var droppedStale = 0;
+    var droppedBusy = 0;
     var accepted = 0;
     var presented = 0;
-    var warmedUp = false;
-    final pathUs = <double>[];
-    DateTime? lastAcceptedAt;
+    Duration? lastDeliveredAt;
+    Duration? lastAcceptedAt;
+    Duration? lastYuvImageReadyAt;
+    Duration? lastRotationAppliedAt;
+    final toYuvImageUs = <double>[]; // delivered -> yuvImageReady (CameraImage.toYuvImage(): plane copy)
+    final rotationUs = <double>[]; // yuvImageReady -> rotationApplied (applyRotation alone)
+    final flipUs = <double>[]; // rotationApplied -> acceptedForTransform (applyFlipHorizontal alone)
+    final acceptedToPresentedUs = <double>[]; // acceptedForTransform -> presented (transform + decode + draw)
+    final presentedGapUs = <double>[]; // presented(N) -> presented(N+1): the true display period
+    Duration? lastPresentedAt;
 
-    YuvImage onFrame(YuvImage image) {
-      if (warmedUp) {
-        accepted++;
-        lastAcceptedAt = DateTime.now();
+    debugYuvCameraPreviewMobileEvent = (kind, at, {reason}) {
+      if (!warmedUp) return;
+      switch (kind) {
+        case DebugYuvCameraPreviewMobileEventKind.delivered:
+          delivered++;
+          lastDeliveredAt = at;
+        case DebugYuvCameraPreviewMobileEventKind.droppedBeforeTransform:
+          if (reason == 'busy') {
+            droppedBusy++;
+          } else {
+            droppedStale++;
+          }
+        case DebugYuvCameraPreviewMobileEventKind.yuvImageReady:
+          lastYuvImageReadyAt = at;
+          final deliveredAt = lastDeliveredAt;
+          if (deliveredAt != null) {
+            toYuvImageUs.add((at - deliveredAt).inMicroseconds.toDouble());
+          }
+        case DebugYuvCameraPreviewMobileEventKind.rotationApplied:
+          lastRotationAppliedAt = at;
+          final yuvImageReadyAt = lastYuvImageReadyAt;
+          if (yuvImageReadyAt != null) {
+            rotationUs.add((at - yuvImageReadyAt).inMicroseconds.toDouble());
+          }
+        case DebugYuvCameraPreviewMobileEventKind.acceptedForTransform:
+          accepted++;
+          lastAcceptedAt = at;
+          final rotationAppliedAt = lastRotationAppliedAt;
+          if (rotationAppliedAt != null) {
+            flipUs.add((at - rotationAppliedAt).inMicroseconds.toDouble());
+          }
       }
-      return image;
-    }
+    };
 
     void onPresented() {
+      final at = debugYuvCameraPreviewMobileClock.elapsed;
+      if (!warmedUp) return;
+      presented++;
       final acceptedAt = lastAcceptedAt;
-      if (warmedUp) {
-        presented++;
-        if (acceptedAt != null) {
-          pathUs.add(DateTime.now().difference(acceptedAt).inMicroseconds.toDouble());
-        }
+      if (acceptedAt != null) {
+        acceptedToPresentedUs.add((at - acceptedAt).inMicroseconds.toDouble());
       }
-      lastAcceptedAt = null;
+      final previousPresentedAt = lastPresentedAt;
+      if (previousPresentedAt != null) {
+        presentedGapUs.add((at - previousPresentedAt).inMicroseconds.toDouble());
+      }
+      lastPresentedAt = at;
     }
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: YuvCameraPreview(cameraController: controller, transform: onFrame, onFramePresented: onPresented),
+          body: YuvCameraPreview(cameraController: controller, onFramePresented: onPresented),
         ),
       ),
     );
@@ -174,10 +188,21 @@ void main() {
       await tester.pump();
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
     }
+    delivered = 0;
+    droppedStale = 0;
+    droppedBusy = 0;
     accepted = 0;
     presented = 0;
-    pathUs.clear();
+    toYuvImageUs.clear();
+    rotationUs.clear();
+    flipUs.clear();
+    acceptedToPresentedUs.clear();
+    presentedGapUs.clear();
+    lastDeliveredAt = null;
+    lastYuvImageReadyAt = null;
+    lastRotationAppliedAt = null;
     lastAcceptedAt = null;
+    lastPresentedAt = null;
     warmedUp = true;
 
     stopwatch
@@ -191,155 +216,32 @@ void main() {
 
     final measuredSeconds = stopwatch.elapsed.inMicroseconds / 1000000;
     final displayFps = presented / measuredSeconds;
-    // What the presenter itself dropped (a decode/draw in flight when a
-    // newer accepted frame arrived); the preview's own pre-transform drops
-    // are not observable here, see the file-level doc comment.
-    final droppedByPresenter = accepted - presented;
 
     debugPrint(
       jsonEncode({
         'card': 'VIEW-03',
         'device': 'pixel3',
-        'phase': 'measure',
+        'phase': 'single_subscription_measure',
         'platform': Platform.operatingSystem,
         'measured_seconds': measuredSeconds,
+        'frames_delivered': delivered,
+        'dropped_stale': droppedStale,
+        'dropped_busy': droppedBusy,
         'frames_accepted': accepted,
         'frames_presented': presented,
-        'dropped_by_presenter': droppedByPresenter,
         'display_fps': displayFps,
-        'accepted_to_shown_us': _summary(pathUs),
+        'delivery_rate_hz': delivered / measuredSeconds,
+        'to_yuv_image_us': _summary(toYuvImageUs),
+        'rotation_us': _summary(rotationUs),
+        'flip_us': _summary(flipUs),
+        'accepted_to_presented_us': _summary(acceptedToPresentedUs),
+        'presented_gap_us': _summary(presentedGapUs),
       }),
     );
 
     expect(presented, greaterThan(0), reason: 'no frame reached onFramePresented; the preview never drew anything during the measured window');
-
-    // Held here, camera still streaming, so `adb shell dumpsys meminfo` run
-    // from the host right after this test finishes still sees the live
-    // preview state rather than a torn-down widget tree.
-    final holdStopwatch = Stopwatch()..start();
-    while (holdStopwatch.elapsed < const Duration(seconds: holdForMemorySeconds)) {
-      await tester.pump();
-      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
-    }
-
-    debugPrint(jsonEncode({'card': 'VIEW-03', 'device': 'pixel3', 'phase': 'ready_for_meminfo'}));
+    expect(delivered, greaterThan(0), reason: 'the platform never delivered a frame during the measured window');
   }, timeout: const Timeout(Duration(minutes: 2)));
-
-  testWidgets('VIEW-03 Pixel 3 diagnostic: platform frame delivery rate in isolation', (tester) async {
-    // Separate from the path measurement above, with no YuvCameraPreview or
-    // YuvFramePresenter in the tree: CameraPlatform.instance.
-    // onStreamedFrameAvailable is single-listener (see the file-level doc
-    // comment), so this run is the only listener on this camera for its
-    // whole duration, under the same resolution/warm-up as the path run.
-    expect(kIsWeb, isFalse);
-    await YuvFfi.initialize();
-
-    final cameras = await availableCameras();
-    expect(cameras, isNotEmpty, reason: 'a physical camera must be available on the driving device');
-    final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.front, orElse: () => cameras.first);
-    final controller = CameraController(camera, ResolutionPreset.medium, enableAudio: false, fps: 30);
-    await controller.initialize();
-    addTearDown(controller.dispose);
-
-    var delivered = 0;
-    var warmedUp = false;
-
-    final subscription = CameraPlatform.instance.onStreamedFrameAvailable(controller.cameraId).listen((_) {
-      if (warmedUp) delivered++;
-    });
-    addTearDown(subscription.cancel);
-
-    final warmupStopwatch = Stopwatch()..start();
-    while (warmupStopwatch.elapsed < const Duration(seconds: warmupSeconds)) {
-      await tester.pump();
-      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
-    }
-    delivered = 0;
-    warmedUp = true;
-
-    final measureStopwatch = Stopwatch()..start();
-    while (measureStopwatch.elapsed < const Duration(seconds: measureSeconds)) {
-      await tester.pump();
-      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
-    }
-    warmedUp = false;
-
-    final measuredSeconds = measureStopwatch.elapsed.inMicroseconds / 1000000;
-
-    debugPrint(
-      jsonEncode({
-        'card': 'VIEW-03',
-        'device': 'pixel3',
-        'phase': 'delivery_diagnostic',
-        'platform': Platform.operatingSystem,
-        'measured_seconds': measuredSeconds,
-        'frames_delivered': delivered,
-        'delivery_rate_hz': delivered / measuredSeconds,
-      }),
-    );
-
-    expect(delivered, greaterThan(0), reason: 'no frame was delivered by the platform during the diagnostic window');
-  }, timeout: const Timeout(Duration(minutes: 1)));
-
-  testWidgets('VIEW-03 Pixel 3 diagnostic: BGRA conversion cost in isolation', (tester) async {
-    // Separate from the path measurement above: this is the only place
-    // toBgraBytes() runs here, so it cannot add a second conversion to a
-    // frame the real preview also converts inside YuvFramePresenter.present().
-    expect(kIsWeb, isFalse);
-    await YuvFfi.initialize();
-
-    final cameras = await availableCameras();
-    expect(cameras, isNotEmpty, reason: 'a physical camera must be available on the driving device');
-    final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.front, orElse: () => cameras.first);
-    final controller = CameraController(camera, ResolutionPreset.medium, enableAudio: false, fps: 30);
-    await controller.initialize();
-    addTearDown(controller.dispose);
-
-    const targetSamples = 30;
-    final conversionUs = <double>[];
-    final frequency = Stopwatch().frequency;
-    var warmedUp = false;
-    var warmupSeen = 0;
-
-    final subscription = CameraPlatform.instance.onStreamedFrameAvailable(controller.cameraId).listen((data) {
-      if (!warmedUp) {
-        warmupSeen++;
-        if (warmupSeen >= 5) warmedUp = true;
-        return;
-      }
-      if (conversionUs.length >= targetSamples) return;
-
-      final rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == camera.sensorOrientation.abs());
-      var yuv = CameraImage.fromPlatformInterface(data).toYuvImage();
-      if (Platform.isAndroid) {
-        yuv = yuv.applyRotation(rotation.toZero());
-      }
-
-      final sw = Stopwatch()..start();
-      yuv.toBgraBytes();
-      sw.stop();
-      conversionUs.add(sw.elapsedTicks * 1000000 / frequency);
-    });
-    addTearDown(subscription.cancel);
-
-    final stopwatch = Stopwatch()..start();
-    while (conversionUs.length < targetSamples && stopwatch.elapsed < const Duration(seconds: 30)) {
-      await tester.pump();
-      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
-    }
-
-    debugPrint(
-      jsonEncode({
-        'card': 'VIEW-03',
-        'device': 'pixel3',
-        'phase': 'conversion_diagnostic',
-        'platform': Platform.operatingSystem,
-        'conversion_us': _summary(conversionUs),
-      }),
-    );
-
-    expect(conversionUs, isNotEmpty, reason: 'no frame was converted during the diagnostic window');
-  }, timeout: const Timeout(Duration(minutes: 1)));
 }
 
 Map<String, double> _summary(List<double> samplesUs) {
