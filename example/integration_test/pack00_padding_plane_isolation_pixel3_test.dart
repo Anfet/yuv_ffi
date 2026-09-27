@@ -200,7 +200,7 @@ void main() {
         'captured_chroma_pixel_stride': uPlane.pixelStride,
         'chroma_width': chromaWidth,
         'tight_y_bytes_per_row': width * yPlane.pixelStride,
-        'tight_chroma_bytes_per_row': chromaWidth * uPlane.pixelStride,
+        'tight_chroma_bytes_per_row': chromaWidth,
         'import_all_planes_us': {
           'n': importAllPlanesUs.length.toDouble(),
           'median_ms': importAllPlanesUs[importAllPlanesUs.length ~/ 2] / 1000,
