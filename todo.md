@@ -854,6 +854,28 @@ Flutter 3.38.10 это лишает `analyze-and-test-vm` job зелёного �
 версии. Исправление — заменить на `YuvPixelFormat` в этом тестовом файле — тривиально, но не входит
 в мандат VIEW-01A (не camera_desktop/example) и явно оставлено пользователем вне этой карточки.
 
+**Повторное финальное подтверждение реальным CI-прогоном [`36319292390`](https://github.com/Anfet/yuv_ffi/actions/runs/36319292390)
+на `bed8cfb` (self-hosted `macos-native-smoke` с фиксом `cp .dylib`) — проверено мной, главная
+сессия, построчным чтением статуса шагов через `gh api`:**
+
+| Job | Результат |
+| --- | --- |
+| `macos-native-smoke` | **success**, все шаги, включая `Build and install native library` и
+`Packaging smoke` (тот самый `dlopen`-тест, что раньше падал на self-hosted) — впервые зелёный на
+self-hosted раннере `yuv-self-hosted` |
+| `linux-native-smoke` | success |
+| `example-analyze-and-build (3.41.0)` / `(3.44.9)` | success |
+| `analyze-and-test-vm (3.44.9)` | success |
+| `analyze-and-test-vm (3.38.10)` | failure — тот же задокументированный вне-скоуп дефект
+(`YuvFileFormat` deprecation) |
+| `wasm-web-integration` | failure — тот же неродственный дефект |
+
+Self-hosted эксперимент доведён до рабочего состояния в рамках этой же карточки: причина сбоя
+(SIP стрипает `DYLD_*` для дочернего Dart VM test-процесса) диагностирована напрямую на машине
+через `mac-runner` за минуты, а не через повторные CI-циклы; фикс (копия `.dylib` в путь
+безусловного поиска dyld) подтверждён и локально, и в реальном CI. Все job, относящиеся к предмету
+VIEW-01A, зелёные на self-hosted `macos-native-smoke` и `ubuntu-latest` job.
+
 ## VIEW-01P — перенести потоковый презентер в публичный API плагина, COMPLETE
 
 **Исполнитель:** T2 · Claude Sonnet 5.
