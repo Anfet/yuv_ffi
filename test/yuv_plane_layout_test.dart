@@ -170,6 +170,28 @@ void main() {
       expect(image.uPlane.bytes, orderedEquals(tightU.bytes));
       expect(image.vPlane.bytes, orderedEquals(tightV.bytes));
     });
+
+    test('an already-tight source is still deep-copied, not aliased', () {
+      final source = plane(rows: 2, rowStride: 8, columns: 2, pixelStride: 4, sampleBytes: 4, seed: 1);
+      final image = YuvImage.bgra(2, 2, planes: [source]);
+
+      source.bytes[0] = 0xFF;
+
+      expect(image.yPlane.bytes[0], isNot(0xFF), reason: 'the packed path must not alias an already-tight caller plane');
+    });
+
+    test('an invalid plane is rejected before any copy or packing, for both layouts', () {
+      // Wrong plane count for I420 (2 instead of 3): YuvGeometry.validateImage
+      // must reject this by reading the caller's planes directly, before
+      // .packed's packAll or .preserve's deep copy ever runs.
+      final tooFewPlanes = [
+        plane(rows: 4, rowStride: 4, columns: 4, pixelStride: 1, sampleBytes: 1, seed: 1),
+        plane(rows: 2, rowStride: 2, columns: 2, pixelStride: 1, sampleBytes: 1, seed: 2),
+      ];
+
+      expect(() => YuvImage.i420(4, 4, planes: tooFewPlanes, layout: YuvPlaneLayout.packed), throwsArgumentError);
+      expect(() => YuvImage.i420(4, 4, planes: tooFewPlanes, layout: YuvPlaneLayout.preserve), throwsArgumentError);
+    });
   });
 
   group('layout is ignored when planes is omitted -- an allocated image is always tight', () {

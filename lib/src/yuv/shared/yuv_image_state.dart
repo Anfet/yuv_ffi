@@ -27,14 +27,20 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane_packing.dart';
 class YuvImageState {
   /// Creates state for [format] at [width] x [height].
   ///
-  /// When [planes] is given it is deep-copied and validated against the format
-  /// geometry, then adopted according to [layout] (PACK-01B): [YuvPlaneLayout.preserve]
-  /// keeps the caller's layout, including row and pixel padding, exactly as
-  /// given; [YuvPlaneLayout.packed] (the default) copies only the visible
-  /// samples into a tightly packed layout instead, as `YuvImagePack.pack()`
-  /// would. When [planes] is `null`, one tightly packed plane per format plane
-  /// is allocated and zero-filled -- [layout] is not consulted in that case,
-  /// since there is no caller layout to preserve.
+  /// When [planes] is given, it is validated against the format geometry
+  /// first -- reading only, never copying or mutating the caller's planes --
+  /// then adopted according to [layout] (PACK-01B): [YuvPlaneLayout.preserve]
+  /// deep-copies the caller's layout, including row and pixel padding, exactly
+  /// as given. [YuvPlaneLayout.packed] (the default) copies only the visible
+  /// samples straight out of the caller's own planes into a tightly packed
+  /// layout instead, as `YuvImagePack.pack()` would -- there is no
+  /// intermediate padded deep copy: a plane that is already tight is deep-
+  /// copied once (the cheap [YuvPlanePacking.packPlane] fast path), and one
+  /// that is not is packed directly from the validated caller plane, so at
+  /// most one copy of each plane's bytes is ever made. When [planes] is
+  /// `null`, one tightly packed plane per format plane is allocated and
+  /// zero-filled -- [layout] is not consulted in that case, since there is no
+  /// caller layout to preserve.
   ///
   /// [allowLargerNvChromaStride] is the REL-03 `nv12` entry point's opt-in to a
   /// pixel stride above [YuvGeometry.nvChromaPixelStride] being real padding
@@ -60,17 +66,11 @@ class YuvImageState {
     YuvGeometry.validateDimensions(_width, _height);
 
     if (planes != null) {
-      final copied = List<YuvPlane>.of(planes.map((plane) => plane.copy()));
-      YuvGeometry.validateImage(
-        format: _format,
-        width: _width,
-        height: _height,
-        planes: copied,
-        allowLargerNvChromaStride: allowLargerNvChromaStride,
-      );
-      _planes = layout == YuvPlaneLayout.packed && !YuvPlanePacking.isTightlyPacked(_format, _width, _height, copied)
-          ? YuvPlanePacking.packAll(_format, _width, _height, copied)
-          : copied;
+      final given = planes is List<YuvPlane> ? planes : List<YuvPlane>.of(planes);
+      YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: given, allowLargerNvChromaStride: allowLargerNvChromaStride);
+      _planes = layout == YuvPlaneLayout.packed
+          ? YuvPlanePacking.packAll(_format, _width, _height, given)
+          : List<YuvPlane>.of(given.map((plane) => plane.copy()));
       return;
     }
 
