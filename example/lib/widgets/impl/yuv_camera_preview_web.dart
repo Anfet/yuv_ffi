@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi_example/widgets/frame_read_loop.dart';
 import 'package:yuv_ffi_example/widgets/yuv_frame_presenter.dart';
 import 'js_util_compat_web.dart' as js_util;
 
@@ -51,8 +52,9 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
   Uint8List? _rgbaBuffer;
   YuvImage? _reusableBgraFrame;
   bool _running = false;
-  // Bumped by _stopLoop. A TrackProcessor frame still awaiting copyTo when the
-  // stream stops or restarts carries the old value and is discarded on resume.
+  // Bumped by _stopLoop. Each TrackProcessor read loop captures the value its
+  // reader was created under; a read or copyTo that completes after the stream
+  // stopped or restarted carries the old value and its frame or error is dropped.
   int _streamGeneration = 0;
   bool _isProcessing = false;
   Object? _lastError;
@@ -173,9 +175,10 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
         js_util.jsify({'track': track}),
       ]);
       final readable = js_util.getProperty<Object>(processor, 'readable');
-      _trackReader = js_util.callMethod<Object>(readable, 'getReader', const []);
+      final reader = js_util.callMethod<Object>(readable, 'getReader', const []);
+      _trackReader = reader;
       debugPrint('[YuvCameraPreviewWeb] Using MediaStreamTrackProcessor + VideoFrame.copyTo');
-      unawaited(_trackReadLoop());
+      _trackReadLoop(reader, _streamGeneration).ignore();
       return true;
     } catch (e) {
       debugPrint('[YuvCameraPreviewWeb] TrackProcessor init failed, fallback to scheduler: $e');
@@ -184,47 +187,36 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
     }
   }
 
-  Future<void> _trackReadLoop() async {
-    final reader = _trackReader;
-    if (reader == null) {
-      return;
-    }
-
-    while (_running) {
-      try {
+  // [generation] is the one [reader] was created under. A read still pending
+  // when the stream stops may resolve after the next stream has started, so
+  // its frame and error are judged by this value, not by the live state.
+  Future<void> _trackReadLoop(Object reader, int generation) {
+    return runFrameReadLoop<Object>(
+      read: () async {
         final readResult = await js_util.promiseToFuture<Object>(js_util.callMethod<Object>(reader, 'read', const []));
-
-        final done = js_util.getProperty<bool?>(readResult, 'done') ?? false;
-        if (done) {
-          break;
-        }
-
-        final frame = js_util.getProperty<Object?>(readResult, 'value');
-        if (frame == null) {
-          continue;
-        }
-
+        return (done: js_util.getProperty<bool?>(readResult, 'done') ?? false, frame: js_util.getProperty<Object?>(readResult, 'value'));
+      },
+      isCurrent: () => generation == _streamGeneration,
+      onFrame: (frame) async {
         if (_isProcessing || _presenter.isBusy) {
           js_util.callMethod<void>(frame, 'close', const []);
-          continue;
+          return;
         }
-
-        await _processVideoFrame(frame, _streamGeneration);
-      } catch (e) {
-        if (_running) {
-          debugPrint('[YuvCameraPreviewWeb] Track read loop error: $e');
-          _lastError = e;
-          if (mounted) {
-            setState(() {});
-          }
+        await _processVideoFrame(frame, generation);
+      },
+      close: (frame) => js_util.callMethod<void>(frame, 'close', const []),
+      onError: (error) {
+        debugPrint('[YuvCameraPreviewWeb] Track read loop error: $error');
+        _lastError = error;
+        if (mounted) {
+          setState(() {});
         }
-        break;
-      }
-    }
+      },
+    );
   }
 
   Future<void> _processVideoFrame(Object frame, int generation) async {
-    if (!mounted || !_running || _isProcessing) {
+    if (!mounted || generation != _streamGeneration || _isProcessing) {
       js_util.callMethod<void>(frame, 'close', const []);
       return;
     }
