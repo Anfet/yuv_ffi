@@ -41,10 +41,17 @@ class _Pack00BenchScreenState extends State<Pack00BenchScreen> {
     _runBoth();
   }
 
+  /// [kYuvCameraPreviewPackPlanes] as it was before this screen started
+  /// toggling it for the A/B comparison, so leaving this screen restores the
+  /// normal mobile preview's real default (dense import since PACK-01C)
+  /// instead of hardcoding the value that default happened to be when this
+  /// bench was written.
+  final bool _packPlanesBeforeBench = kYuvCameraPreviewPackPlanes;
+
   @override
   void dispose() {
     debugYuvCameraPreviewMobileEvent = null;
-    kYuvCameraPreviewPackPlanes = false;
+    kYuvCameraPreviewPackPlanes = _packPlanesBeforeBench;
     controller?.dispose();
     super.dispose();
   }
@@ -59,7 +66,7 @@ class _Pack00BenchScreenState extends State<Pack00BenchScreen> {
     } catch (ex) {
       if (mounted) setState(() => error = ex);
     } finally {
-      kYuvCameraPreviewPackPlanes = false;
+      kYuvCameraPreviewPackPlanes = _packPlanesBeforeBench;
       if (mounted) setState(() => running = false);
     }
   }
