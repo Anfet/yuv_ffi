@@ -19,7 +19,7 @@
 | VIEW-01 | COMPLETE | VIEW-00 | T1 · Opus (2-й проход); T1 · Codex (независимое ревью 27.09.2026) | Mobile/web превью ограничено одним кадром в обработке; ресурсы показа освобождаются, FPS считается после кадра отрисовки. Гонка старого web reader после перезапуска закрыта вторым проходом; приёмка — ниже. |
 | VIEW-01A | COMPLETE | VIEW-01 | T2 · Sonnet 5 (4-й проход); T1 · Codex (независимое ревью 27.09.2026) | Windows BGRA image stream и импорт подтверждены; Linux/macOS сборки, обе версии example-матрицы и корневая job на Flutter 3.44.9 прошли в CI на `bed8cfb`. Корневая 3.38.10 и Web остаются отдельными известными дефектами. Приёмка — ниже. |
 | VIEW-01P | COMPLETE | VIEW-01 | T2 · Sonnet 5; T1 · Codex (независимое ревью 27.09.2026) | `YuvFramePresenter` и `YuvFrameView` перенесены в публичный API плагина; example использует пакетную реализацию, тесты владения и освобождения кадров перенесены и проходят. Приёмка — ниже. |
-| VIEW-01B | REVIEW | VIEW-01A, VIEW-01P | T1 · Opus; T1 (независимое ревью) | Desktop-превью example переведено на поток `camera_desktop` через `CameraPlatform` (в обход assert `startImageStream`) и пакетный `YuvFramePresenter`; показывается и захватывается результат `transform`, поколение потока и сериализация остановки защищают смену камеры, перезапуск и `dispose`. `flutter_webrtc` удалён. Windows smoke с камерой пройден, macOS/Linux собраны в CI; отчёт — ниже. |
+| VIEW-01B | TODO | VIEW-01A, VIEW-01P | T1 · Opus; T1 · Codex (независимое ревью 27.09.2026) | Desktop-поток, захват, Windows smoke и сборки проверены. macOS Runner не запрашивает доступ к камере: добавить usage description и camera entitlement в DebugProfile/Release, затем повторить macOS-сборку. Решение и отчёт — ниже. |
 | VIEW-02 | TODO | VIEW-00, VIEW-01, VIEW-01B | T1; T1 | Свести контракт `transform` и жизненный цикл mobile/web/desktop: при его наличии возвращённый кадр показывается в превью и доступен для захвата; без него показывается исходный кадр. Последовательно запускать, менять и останавливать поток; проверить смену контроллера, закрытие экрана во время `await`, ошибку камеры и повторный запуск без старых кадров и утечек. |
 | VIEW-03 | TODO | VIEW-00…02 | T2; T1 | На Pixel 3 в profile/release сравнить до/после полный путь «получен кадр → показан кадр» на одинаковом размере и сценарии; отдельно записать время конвертации/декодирования, показанный FPS, пропуски и память. Зафиксировать raw-замеры и пределы метода; принять цикл только при сохранении корректного кадра и контролируемой памяти. |
 
@@ -967,7 +967,7 @@ example отсутствует, счёт совпадает с ожидание�
 в example тоже прошёл. `flutter analyze lib test --no-pub` в пакете и example — без замечаний.
 Платформенный путь камеры и производительность не входят в приёмку переноса.
 
-## VIEW-01B — перевести desktop-превью example на `camera_desktop`, REVIEW
+## VIEW-01B — перевести desktop-превью example на `camera_desktop`, TODO
 
 **Исполнитель:** T1; **независимое ревью:** T1. Старт после принятия VIEW-01A и VIEW-01P.
 
@@ -1110,6 +1110,27 @@ macOS-регистрацией), run [`36320828648`](https://github.com/Anfet/yu
 4. Повторное нажатие «Capture» до кадра по-прежнему заменяет `captureCompleter` — жизненный цикл VIEW-02.
 5. `ios/Podfile.lock`, `macos/Podfile.lock` содержат устаревшие записи `flutter_webrtc` (см. выше);
    обновлять вместе с переездом на SwiftPM отдельно.
+
+### Независимое ревью 27.09.2026 — TODO
+
+Проверены `b62a038`, `316c187`, `c380020`, `623b4a8`, сохранённый Windows smoke,
+10 desktop widget-тестов (локально проходят) и CI run
+[`36320828648`](https://github.com/Anfet/yuv_ffi/actions/runs/36320828648) на `c380020`.
+macOS/Linux сборки example и app-runtime smoke в CI прошли; это не проверка физической
+камеры. Windows smoke подтвердил 173 разных нарисованных кадра за 6 секунд и побайтное
+совпадение захваченного кадра с нарисованным. Код подписки через `CameraPlatform`, сброса
+поколения и освобождения presenter соответствует тестируемому контракту.
+
+**Решение по macOS:** добавить `NSCameraUsageDescription` в
+`example/macos/Runner/Info.plist` с понятным текстом для пользователя и
+`com.apple.security.device.camera = true` в обоих файлах
+`DebugProfile.entitlements` и `Release.entitlements`. Runner уже работает в sandbox;
+без этих ключей физический доступ к камере не готов. `NSMicrophoneUsageDescription` и
+`com.apple.security.device.audio-input` для текущего example не нужны:
+`CameraController` создаётся с `enableAudio: false`, запись звука не используется.
+После правки повторить macOS-сборку; физический macOS smoke провести при доступном
+GUI и подтверждённом системном разрешении. До этого VIEW-01B не принимать как готовую
+desktop-интеграцию на всех трёх платформах.
 
 ## Позже
 
