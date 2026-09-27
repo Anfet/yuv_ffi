@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
@@ -76,23 +74,29 @@ abstract final class YuvPlanePacking {
       return source.copy();
     }
 
-    final packed = Uint8List(rows * tightRowStride);
+    // The no-`bytes` constructor allocates a plane's own zero-filled backing
+    // buffer directly; writing samples straight into `packed.bytes` fills
+    // that one allocation in place, rather than filling a separate scratch
+    // Uint8List that YuvPlane's public constructor would then copy from --
+    // exactly one allocation and one write pass per plane, not two.
+    final packed = YuvPlane(rows, tightRowStride, sampleBytes);
+    final destination = packed.bytes;
     final sourceBytes = source.bytes;
     for (var row = 0; row < rows; row++) {
       final sourceRowStart = row * source.rowStride;
       final destRowStart = row * tightRowStride;
       if (source.pixelStride == sampleBytes) {
-        packed.setRange(destRowStart, destRowStart + tightRowStride, sourceBytes, sourceRowStart);
+        destination.setRange(destRowStart, destRowStart + tightRowStride, sourceBytes, sourceRowStart);
         continue;
       }
       for (var col = 0; col < columns; col++) {
         final sourceSampleStart = sourceRowStart + col * source.pixelStride;
         final destSampleStart = destRowStart + col * sampleBytes;
         for (var b = 0; b < sampleBytes; b++) {
-          packed[destSampleStart + b] = sourceBytes[sourceSampleStart + b];
+          destination[destSampleStart + b] = sourceBytes[sourceSampleStart + b];
         }
       }
     }
-    return YuvPlane(rows, tightRowStride, sampleBytes, packed);
+    return packed;
   }
 }
