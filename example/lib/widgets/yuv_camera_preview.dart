@@ -9,8 +9,10 @@ import 'impl/yuv_camera_preview_web.dart' if (dart.library.io) 'impl/yuv_camera_
 class YuvCameraPreview extends StatefulWidget {
   final CameraController? cameraController;
 
-  /// Called for every processed frame. On mobile and web the returned image is
-  /// what the preview shows; the desktop preview still shows `RTCVideoView`.
+  /// Called for every frame the preview accepts. On mobile and web the returned
+  /// image is what the preview shows; the desktop preview still shows
+  /// `RTCVideoView`. On mobile and web a frame that arrives while the previous
+  /// one is still being decoded or drawn is dropped without this call.
   ///
   /// The frame passed in is only valid during the call: the desktop and web
   /// previews reuse one instance and write the next frame into it. Keep a
@@ -27,9 +29,12 @@ class YuvCameraPreview extends StatefulWidget {
 
 class _YuvCameraPreviewState extends State<YuvCameraPreview> {
   late final Timer fpsTimer;
-  late final ValueNotifier<int> fpsTicker = ValueNotifier(0);
+
+  /// Frames drawn during the last second, or `null` while the platform
+  /// preview has not reported a drawn frame; the desktop preview never does.
+  late final ValueNotifier<int?> fpsTicker = ValueNotifier(null);
   late final ValueNotifier<String> infoTicker = ValueNotifier('');
-  int dynamicFps = 0;
+  int? presentedFrames;
 
   @override
   void initState() {
@@ -40,6 +45,7 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
   @override
   void dispose() {
     infoTicker.dispose();
+    fpsTicker.dispose();
     fpsTimer.cancel();
     super.dispose();
   }
@@ -57,7 +63,12 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
       fit: StackFit.expand,
       children: [
         Positioned.fill(
-          child: impl.buildYuvCameraPreview(key: widget.key, cameraController: widget.cameraController, transform: infoTransformer),
+          child: impl.buildYuvCameraPreview(
+            key: widget.key,
+            cameraController: widget.cameraController,
+            transform: infoTransformer,
+            onFramePresented: onFramePresented,
+          ),
         ),
         if (widget.showDebugInfo)
           Positioned(
@@ -77,7 +88,7 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
             child: ValueListenableBuilder(
               valueListenable: fpsTicker,
               builder: (context, fps, _) {
-                return Text('$fps fps', style: baseStyle);
+                return fps == null ? const SizedBox.shrink() : Text('$fps fps', style: baseStyle);
               },
             ),
           ),
@@ -87,12 +98,20 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
   }
 
   void onTimerTick(Timer timer) {
-    fpsTicker.value = dynamicFps;
-    dynamicFps = 0;
+    final frames = presentedFrames;
+    if (frames == null) {
+      return;
+    }
+    fpsTicker.value = frames;
+    presentedFrames = 0;
   }
 
+  // Counted on draw, not in infoTransformer: transform also runs for frames
+  // that never reach the screen (and on desktop for frames the preview does
+  // not show at all), so counting there reports the delivery rate.
+  void onFramePresented() => presentedFrames = (presentedFrames ?? 0) + 1;
+
   YuvImage infoTransformer(YuvImage image) {
-    dynamicFps++;
     infoTicker.value = image.toString();
     return widget.transform?.call(image) ?? image;
   }

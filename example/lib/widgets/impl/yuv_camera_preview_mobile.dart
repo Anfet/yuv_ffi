@@ -3,16 +3,21 @@ part of 'yuv_camera_preview_io.dart';
 class _YuvCameraPreviewMobile extends StatefulWidget {
   final CameraController cameraController;
   final YuvImage Function(YuvImage image)? transform;
+  final VoidCallback? onFramePresented;
 
-  const _YuvCameraPreviewMobile({super.key, required this.cameraController, this.transform});
+  const _YuvCameraPreviewMobile({super.key, required this.cameraController, this.transform, this.onFramePresented});
 
   @override
   State<_YuvCameraPreviewMobile> createState() => _YuvCameraPreviewMobileState();
 }
 
 class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
-  final StreamController<YuvImage?> streamController = StreamController<YuvImage?>.broadcast();
-  bool isProcessing = false;
+  late final YuvFramePresenter presenter = YuvFramePresenter(onFramePresented: () => widget.onFramePresented?.call());
+
+  // The camera keeps delivering frames until stopImageStream completes, and
+  // the callback cannot be detached earlier; frames tagged with an older
+  // generation belong to a stopped or replaced stream and are ignored.
+  int streamGeneration = 0;
 
   @override
   void initState() {
@@ -23,6 +28,8 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
   @override
   void didUpdateWidget(covariant _YuvCameraPreviewMobile oldWidget) {
     if (oldWidget.cameraController != widget.cameraController) {
+      streamGeneration++;
+      presenter.reset();
       var oldController = oldWidget.cameraController;
       if (oldController.value.isInitialized && oldController.value.isStreamingImages) {
         oldController.stopImageStream().ignore();
@@ -40,29 +47,18 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
 
   @override
   void dispose() {
+    streamGeneration++;
     if (widget.cameraController.value.isStreamingImages) {
       widget.cameraController.stopImageStream().ignore();
     }
 
-    streamController.close();
+    presenter.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<YuvImage?>(
-      stream: streamController.stream,
-      initialData: null,
-      builder: (context, snapshot) {
-        final yuv = snapshot.data;
-        return yuv != null
-            ? AspectRatio(
-                aspectRatio: yuv.width / yuv.height,
-                child: YuvImageWidget(image: yuv),
-              )
-            : const SizedBox();
-      },
-    );
+    return YuvFrameView(presenter: presenter);
   }
 
   Future<void> subscribeToImageStream() async {
@@ -74,15 +70,17 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
       throw ArgumentError('CameraController should not be streaming images in initialization');
     }
 
-    await widget.cameraController.startImageStream(onNewImageAvailable);
+    final generation = streamGeneration;
+    await widget.cameraController.startImageStream((image) => onNewImageAvailable(image, generation));
   }
 
-  Future<void> onNewImageAvailable(CameraImage image) async {
-    if (isProcessing) {
+  void onNewImageAvailable(CameraImage image, int generation) {
+    // Dropped before the planes are copied: while a frame is still decoding or
+    // waiting to be drawn, converting this one would only queue work behind it.
+    if (!mounted || generation != streamGeneration || presenter.isBusy) {
       return;
     }
 
-    isProcessing = true;
     try {
       final rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
       var yuv = image.toYuvImage();
@@ -92,11 +90,9 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
         if (kYuvCameraPreviewFlipAndroid) yuv.applyFlipHorizontal();
       }
       yuv = widget.transform?.call(yuv) ?? yuv;
-      streamController.add(yuv);
+      presenter.present(yuv);
     } catch (ex) {
       debugPrint('_YuvCameraPreviewMobile stream error: $ex');
-    } finally {
-      isProcessing = false;
     }
   }
 }

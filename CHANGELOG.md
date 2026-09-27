@@ -24,6 +24,11 @@
   cache — now fails that load with a `StateError` instead of decoding the newer
   frame under the key of the old one. Create a new provider for the new frame;
   `YuvImageWidget` already does so on every build.
+- Example camera preview (mobile and Web): at most one frame is decoded or
+  waiting to be drawn at a time, frames arriving meanwhile are dropped, the
+  replaced frame is disposed at once instead of staying in `ImageCache`, frames
+  of a stopped or replaced stream are no longer shown, and the debug FPS counts
+  drawn frames rather than received ones. `YuvImageWidget` is unchanged.
 
 ### Known limitations
 

@@ -8,6 +8,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
+import 'package:yuv_ffi_example/widgets/yuv_frame_presenter.dart';
 
 part 'yuv_camera_preview_desk.dart';
 part 'yuv_camera_preview_mobile.dart';
@@ -17,12 +18,19 @@ part 'yuv_camera_preview_mobile.dart';
 /// This flag enables automatic horizontal flip for Android image stream path.
 bool kYuvCameraPreviewFlipAndroid = true;
 
-Widget buildYuvCameraPreview({Key? key, CameraController? cameraController, YuvImage Function(YuvImage image)? transform}) {
+/// [onFramePresented] fires once per frame drawn from the image stream. The
+/// desktop preview draws through `RTCVideoView` and never calls it.
+Widget buildYuvCameraPreview({
+  Key? key,
+  CameraController? cameraController,
+  YuvImage Function(YuvImage image)? transform,
+  VoidCallback? onFramePresented,
+}) {
   if (Platform.isAndroid || Platform.isIOS) {
     if (cameraController == null) {
       throw ArgumentError('CameraController is required on mobile platforms');
     }
-    return _YuvCameraPreviewMobile(key: key, cameraController: cameraController, transform: transform);
+    return _YuvCameraPreviewMobile(key: key, cameraController: cameraController, transform: transform, onFramePresented: onFramePresented);
   }
 
   if (Platform.isFuchsia || Platform.isLinux || Platform.isMacOS || Platform.isWindows) {

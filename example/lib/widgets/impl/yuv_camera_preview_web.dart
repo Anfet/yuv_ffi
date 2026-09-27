@@ -8,27 +8,35 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi_example/widgets/yuv_frame_presenter.dart';
 import 'js_util_compat_web.dart' as js_util;
 
-Widget buildYuvCameraPreview({Key? key, CameraController? cameraController, YuvImage Function(YuvImage image)? transform}) {
+/// [onFramePresented] fires once per frame drawn from the camera stream.
+Widget buildYuvCameraPreview({
+  Key? key,
+  CameraController? cameraController,
+  YuvImage Function(YuvImage image)? transform,
+  VoidCallback? onFramePresented,
+}) {
   if (cameraController == null) {
     throw ArgumentError('CameraController is required on web platform');
   }
-  return _YuvCameraPreviewWeb(key: key, cameraController: cameraController, transform: transform);
+  return _YuvCameraPreviewWeb(key: key, cameraController: cameraController, transform: transform, onFramePresented: onFramePresented);
 }
 
 class _YuvCameraPreviewWeb extends StatefulWidget {
   final CameraController cameraController;
   final YuvImage Function(YuvImage image)? transform;
+  final VoidCallback? onFramePresented;
 
-  const _YuvCameraPreviewWeb({super.key, required this.cameraController, this.transform});
+  const _YuvCameraPreviewWeb({super.key, required this.cameraController, this.transform, this.onFramePresented});
 
   @override
   State<_YuvCameraPreviewWeb> createState() => _YuvCameraPreviewWebState();
 }
 
 class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
-  final StreamController<YuvImage?> _streamController = StreamController<YuvImage?>.broadcast();
+  late final YuvFramePresenter _presenter = YuvFramePresenter(onFramePresented: () => widget.onFramePresented?.call());
 
   late final html.VideoElement _videoElement;
   late final html.CanvasElement _canvasElement;
@@ -43,6 +51,9 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
   Uint8List? _rgbaBuffer;
   YuvImage? _reusableBgraFrame;
   bool _running = false;
+  // Bumped by _stopLoop. A TrackProcessor frame still awaiting copyTo when the
+  // stream stops or restarts carries the old value and is discarded on resume.
+  int _streamGeneration = 0;
   bool _isProcessing = false;
   Object? _lastError;
   bool _loggedSchedulerPath = false;
@@ -76,7 +87,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
   void dispose() {
     _stopLoop();
     _stopMediaTracks();
-    _streamController.close();
+    _presenter.dispose();
     super.dispose();
   }
 
@@ -86,25 +97,14 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       return Center(child: Text('Web camera error: $_lastError', textAlign: TextAlign.center));
     }
 
-    return StreamBuilder<YuvImage?>(
-      stream: _streamController.stream,
-      initialData: null,
-      builder: (context, snapshot) {
-        final yuv = snapshot.data;
-        return yuv == null
-            ? const SizedBox.shrink()
-            : AspectRatio(
-                aspectRatio: yuv.width / yuv.height,
-                child: YuvImageWidget(image: yuv),
-              );
-      },
-    );
+    return YuvFrameView(presenter: _presenter);
   }
 
   Future<void> _restartStream() async {
     debugPrint('[YuvCameraPreviewWeb] Restarting stream');
     _stopLoop();
     _stopMediaTracks();
+    _presenter.reset();
     _lastError = null;
     _loggedSchedulerPath = false;
     _loggedFrameDrop = false;
@@ -204,12 +204,12 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
           continue;
         }
 
-        if (_isProcessing) {
+        if (_isProcessing || _presenter.isBusy) {
           js_util.callMethod<void>(frame, 'close', const []);
           continue;
         }
 
-        await _processVideoFrame(frame);
+        await _processVideoFrame(frame, _streamGeneration);
       } catch (e) {
         if (_running) {
           debugPrint('[YuvCameraPreviewWeb] Track read loop error: $e');
@@ -223,7 +223,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
     }
   }
 
-  Future<void> _processVideoFrame(Object frame) async {
+  Future<void> _processVideoFrame(Object frame, int generation) async {
     if (!mounted || !_running || _isProcessing) {
       js_util.callMethod<void>(frame, 'close', const []);
       return;
@@ -259,6 +259,9 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       } else {
         await js_util.promiseToFuture<Object>(js_util.callMethod<Object>(frame, 'copyTo', [_rgbaBuffer!, _copyToOptionsRgba]));
       }
+      if (!mounted || generation != _streamGeneration) {
+        return;
+      }
       var yuv = _reusableBgraFrame;
       if (yuv == null || yuv.width != width || yuv.height != height) {
         yuv = YuvImage.bgra(width, height);
@@ -272,7 +275,8 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       }
       yuv = widget.transform?.call(yuv) ?? yuv;
 
-      _streamController.add(yuv);
+      // Converts before returning, so the next frame may reuse the instance.
+      _presenter.present(yuv);
     } finally {
       _isProcessing = false;
       js_util.callMethod<void>(frame, 'close', const []);
@@ -332,7 +336,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
 
   void _onFrameTick() {
     // If frame processing is still running, intentionally drop this frame.
-    if (_isProcessing) {
+    if (_isProcessing || _presenter.isBusy) {
       if (!_loggedFrameDrop) {
         debugPrint('[YuvCameraPreviewWeb] Dropping frames while busy');
         _loggedFrameDrop = true;
@@ -375,7 +379,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       var yuv = YuvImage.bgra(width, height)..applyRgbaBytes(rgbaBytes);
       yuv = widget.transform?.call(yuv) ?? yuv;
 
-      _streamController.add(yuv);
+      _presenter.present(yuv);
     } catch (e) {
       debugPrint('[YuvCameraPreviewWeb] Canvas frame processing error: $e');
       _lastError = e;
@@ -390,6 +394,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
 
   void _stopLoop() {
     _running = false;
+    _streamGeneration++;
     _reusableBgraFrame = null;
 
     final reader = _trackReader;
