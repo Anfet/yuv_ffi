@@ -19,7 +19,7 @@
 | VIEW-01 | COMPLETE | VIEW-00 | T1 · Opus (2-й проход); T1 · Codex (независимое ревью 27.09.2026) | Mobile/web превью ограничено одним кадром в обработке; ресурсы показа освобождаются, FPS считается после кадра отрисовки. Гонка старого web reader после перезапуска закрыта вторым проходом; приёмка — ниже. |
 | VIEW-01A | COMPLETE | VIEW-01 | T2 · Sonnet 5 (4-й проход); T1 · Codex (независимое ревью 27.09.2026) | Windows BGRA image stream и импорт подтверждены; Linux/macOS сборки, обе версии example-матрицы и корневая job на Flutter 3.44.9 прошли в CI на `bed8cfb`. Корневая 3.38.10 и Web остаются отдельными известными дефектами. Приёмка — ниже. |
 | VIEW-01P | COMPLETE | VIEW-01 | T2 · Sonnet 5; T1 · Codex (независимое ревью 27.09.2026) | `YuvFramePresenter` и `YuvFrameView` перенесены в публичный API плагина; example использует пакетную реализацию, тесты владения и освобождения кадров перенесены и проходят. Приёмка — ниже. |
-| VIEW-01B | TODO | VIEW-01A, VIEW-01P | T1 · Opus; T1 · Codex (независимое ревью 27.09.2026) | Desktop-поток, захват, Windows smoke и сборки проверены. macOS Runner не запрашивает доступ к камере: добавить usage description и camera entitlement в DebugProfile/Release, затем повторить macOS-сборку. Решение и отчёт — ниже. |
+| VIEW-01B | IN PROGRESS | VIEW-01A, VIEW-01P | T1 · Opus; T1 · Codex (независимое ревью) | Desktop-поток, захват, Windows smoke и сборки проверены. macOS camera entitlement и usage description добавлены по решению ревьюера; повторная сборка и статус — ниже. |
 | VIEW-02 | TODO | VIEW-00, VIEW-01, VIEW-01B | T1; T1 | Свести контракт `transform` и жизненный цикл mobile/web/desktop: при его наличии возвращённый кадр показывается в превью и доступен для захвата; без него показывается исходный кадр. Последовательно запускать, менять и останавливать поток; проверить смену контроллера, закрытие экрана во время `await`, ошибку камеры и повторный запуск без старых кадров и утечек. |
 | VIEW-03 | TODO | VIEW-00…02 | T2; T1 | На Pixel 3 в profile/release сравнить до/после полный путь «получен кадр → показан кадр» на одинаковом размере и сценарии; отдельно записать время конвертации/декодирования, показанный FPS, пропуски и память. Зафиксировать raw-замеры и пределы метода; принять цикл только при сохранении корректного кадра и контролируемой памяти. |
 
@@ -1110,6 +1110,21 @@ macOS-регистрацией), run [`36320828648`](https://github.com/Anfet/yu
 4. Повторное нажатие «Capture» до кадра по-прежнему заменяет `captureCompleter` — жизненный цикл VIEW-02.
 5. `ios/Podfile.lock`, `macos/Podfile.lock` содержат устаревшие записи `flutter_webrtc` (см. выше);
    обновлять вместе с переездом на SwiftPM отдельно.
+
+### Executor Report — ответ на решение ревьюера по macOS camera permission (главная сессия)
+
+Внёс решение ревьюера дословно, без отклонений:
+- `example/macos/Runner/Info.plist` — добавлен `NSCameraUsageDescription` (текст на английском,
+  соответствует документационному языку example: объясняет назначение доступа для пользователя).
+- `example/macos/Runner/DebugProfile.entitlements` и `Release.entitlements` — добавлен
+  `com.apple.security.device.camera = true` в оба файла, как явно указано в решении (Debug сборка
+  уже используется в Windows/реальном smoke-паттерне этой карточки, Release — для итоговой сборки).
+- Микрофонные ключи (`NSMicrophoneUsageDescription`, `com.apple.security.device.audio-input`)
+  сознательно не добавлены: перепроверил сам — `example/lib/camera_screen.dart:118` создаёт
+  `CameraController(..., enableAudio: false, ...)`, подтверждает обоснование ревьюера.
+
+**Проверка:** все три файла — валидный XML/plist (`python -c "import plistlib; plistlib.load(...)"`
+на каждом, без ошибок).
 
 ### Независимое ревью 27.09.2026 — TODO
 
