@@ -22,6 +22,10 @@ class _CameraScreenState extends State<CameraScreen> {
   Object? cameraError;
   Completer<YuvImage?>? captureCompleter;
 
+  // A copy of the frame the preview is about to show while a capture waits.
+  // It becomes the capture only once the preview reports it drawn.
+  YuvImage? captureCandidate;
+
   @override
   void initState() {
     initCamera();
@@ -32,10 +36,7 @@ class _CameraScreenState extends State<CameraScreen> {
   void dispose() {
     // The preview is gone and no frame will arrive; a capture still waiting
     // would otherwise never complete.
-    final capture = captureCompleter;
-    if (capture != null && !capture.isCompleted) {
-      capture.complete(null);
-    }
+    cancelCapture();
     cameraController?.dispose();
     super.dispose();
   }
@@ -72,7 +73,13 @@ class _CameraScreenState extends State<CameraScreen> {
                     }
 
                     if (_isPreviewReady) {
-                      return YuvCameraPreview(cameraController: controller, showDebugInfo: true, transform: imageCapturer);
+                      return YuvCameraPreview(
+                        cameraController: controller,
+                        showDebugInfo: true,
+                        transform: imageCapturer,
+                        onFramePresented: confirmCapture,
+                        onStreamStopped: cancelCapture,
+                      );
                     }
 
                     return Center(child: CircularProgressIndicator());
@@ -161,14 +168,34 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   YuvImage imageCapturer(YuvImage image) {
-    if (captureCompleter != null && !captureCompleter!.isCompleted) {
-      // The web preview writes every next frame into the same instance, so
-      // completing with `image` itself would let the preview overwrite the
-      // captured result while takePicture waits and after pop. The returned
-      // `image` is the frame the preview shows next.
-      captureCompleter!.complete(image.copy());
+    if (captureCompleter?.isCompleted == false) {
+      // Not completed here: the frame may still be dropped before it is drawn
+      // (stream stopped, decode failed). A candidate of a dropped frame is
+      // replaced by the next one. Copied because the web preview writes every
+      // next frame into the same instance.
+      captureCandidate = image.copy();
     }
 
     return image;
+  }
+
+  // The frame from the latest imageCapturer call is on screen now.
+  void confirmCapture() {
+    final candidate = captureCandidate;
+    final capture = captureCompleter;
+    captureCandidate = null;
+    if (candidate != null && capture != null && !capture.isCompleted) {
+      capture.complete(candidate);
+    }
+  }
+
+  // The stream stopped or the screen closed before a candidate was drawn:
+  // the capture ends without a frame rather than returning one never shown.
+  void cancelCapture() {
+    captureCandidate = null;
+    final capture = captureCompleter;
+    if (capture != null && !capture.isCompleted) {
+      capture.complete(null);
+    }
   }
 }

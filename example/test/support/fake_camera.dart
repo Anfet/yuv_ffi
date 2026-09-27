@@ -45,8 +45,8 @@ int shadeOfYuv(YuvImage image) => image.toBgraBytes()[0];
 
 /// Stands in for the camera plugin: one single-subscription frame stream per
 /// `onStreamedFrameAvailable` call, whose cancel is the native stop. Serves
-/// both `CameraController.startImageStream` (mobile) and the direct
-/// subscription of the desktop preview.
+/// the direct subscriptions of the mobile and desktop previews; [emitError]
+/// is a camera error after the stream started.
 ///
 /// Like camera_desktop and the mobile plugins it keeps one active stream per
 /// camera; a second listen on a camera whose previous stream is still

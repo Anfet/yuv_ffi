@@ -53,6 +53,12 @@
   camera error stops the stream on every platform instead of leaving the
   camera running. `CameraScreen` no longer orphans a capture on a second tap
   or on close.
+- Example `CameraScreen` now returns a captured frame only after the preview
+  has drawn it, and a capture pending when the stream stops or fails ends
+  without a frame; `YuvCameraPreview` reports both through the new
+  `onFramePresented` and `onStreamStopped` callbacks. The mobile preview now
+  stops the stream and shows a camera error that arrives after the stream has
+  started, instead of leaving it uncaught with the camera running.
 
 ### Known limitations
 

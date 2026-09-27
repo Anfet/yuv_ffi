@@ -23,10 +23,37 @@ class YuvCameraPreview extends StatefulWidget {
   /// An error thrown here is reported through `FlutterError.reportError` and
   /// drops only that frame; the stream keeps running.
   final YuvImage Function(YuvImage image)? transform;
+
+  /// Called once the frame returned by the latest [transform] call has been
+  /// drawn. [transform] runs only when no earlier frame is in flight, so each
+  /// call answers the [transform] call right before it. A frame dropped after
+  /// [transform] — its stream stopped or replaced, its decode failed — is
+  /// never reported here, and the next [transform] call starts a new frame.
+  ///
+  /// Together with [transform] this tells which frame the user actually saw,
+  /// e.g. to capture it: keep a `copy()` in [transform], confirm it here.
+  final VoidCallback? onFramePresented;
+
+  /// Called when the preview stops showing frames of its stream while it
+  /// stays on screen: the controller was replaced, or a camera error ended
+  /// or prevented the stream. A frame in flight at that moment is dropped and
+  /// never reaches [onFramePresented]. Not called on dispose.
+  ///
+  /// May be called while the widget tree is being built, so it must not call
+  /// `setState` synchronously.
+  final VoidCallback? onStreamStopped;
   final Widget? child;
   final bool showDebugInfo;
 
-  const YuvCameraPreview({super.key, this.cameraController, this.transform, this.child, this.showDebugInfo = false});
+  const YuvCameraPreview({
+    super.key,
+    this.cameraController,
+    this.transform,
+    this.onFramePresented,
+    this.onStreamStopped,
+    this.child,
+    this.showDebugInfo = false,
+  });
 
   @override
   State<YuvCameraPreview> createState() => _YuvCameraPreviewState();
@@ -73,6 +100,7 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
             cameraController: widget.cameraController,
             transform: infoTransformer,
             onFramePresented: onFramePresented,
+            onStreamStopped: widget.onStreamStopped,
           ),
         ),
         if (widget.showDebugInfo)
@@ -113,7 +141,10 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
 
   // Counted on draw, not in infoTransformer: transform also runs for frames
   // that never reach the screen, so counting there reports the delivery rate.
-  void onFramePresented() => presentedFrames = (presentedFrames ?? 0) + 1;
+  void onFramePresented() {
+    presentedFrames = (presentedFrames ?? 0) + 1;
+    widget.onFramePresented?.call();
+  }
 
   YuvImage infoTransformer(YuvImage image) {
     infoTicker.value = image.toString();

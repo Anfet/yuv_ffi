@@ -1,11 +1,21 @@
 part of 'yuv_camera_preview_io.dart';
 
+/// Android/iOS preview fed by the image stream of [cameraController].
+///
+/// `camera` 0.11.0+2 `CameraController.startImageStream` only subscribes to
+/// `CameraPlatform.instance.onStreamedFrameAvailable(cameraId)`, and does so
+/// without `onError`: a camera error after the start would reach the zone as
+/// an uncaught error and leave the stream running. The preview makes that
+/// subscription itself, as the desktop preview does, stops the stream on an
+/// error by cancelling it, and shows the error. The controller still owns
+/// `initialize` and `dispose`; its `isStreamingImages` stays `false`.
 class _YuvCameraPreviewMobile extends StatefulWidget {
   final CameraController cameraController;
   final YuvImage Function(YuvImage image)? transform;
   final VoidCallback? onFramePresented;
+  final VoidCallback? onStreamStopped;
 
-  const _YuvCameraPreviewMobile({super.key, required this.cameraController, this.transform, this.onFramePresented});
+  const _YuvCameraPreviewMobile({super.key, required this.cameraController, this.transform, this.onFramePresented, this.onStreamStopped});
 
   @override
   State<_YuvCameraPreviewMobile> createState() => _YuvCameraPreviewMobileState();
@@ -14,21 +24,14 @@ class _YuvCameraPreviewMobile extends StatefulWidget {
 class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
   late final YuvFramePresenter presenter = YuvFramePresenter(onFramePresented: () => widget.onFramePresented?.call());
 
-  // The camera keeps delivering frames until stopImageStream completes, and
-  // the callback cannot be detached earlier; frames, a pending start and a
-  // start error tagged with an older generation belong to a stopped or
-  // replaced stream and are ignored.
+  // Bumped on every stop; frames, a pending start and a stream error tagged
+  // with an older value belong to a stopped or replaced stream.
   int streamGeneration = 0;
-
-  // The controller whose image stream this preview started, and that start,
-  // completing with whether it succeeded. Tracked here rather than read from
-  // isStreamingImages, which a start still in progress does not report yet.
-  CameraController? streamingController;
-  Future<bool> streamStarted = Future.value(false);
+  StreamSubscription<CameraImageData>? subscription;
 
   // The platform keeps one frame stream per camera and stops it
-  // asynchronously, so a restart waits for the previous stop instead of
-  // racing it with a second listener on the same camera.
+  // asynchronously in onCancel, so a restart waits for the previous stop
+  // instead of racing it with a second listener on the same camera.
   Future<void> previousStop = Future<void>.value();
   Object? lastError;
 
@@ -45,6 +48,7 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
       stopStream();
       presenter.reset();
       lastError = null;
+      widget.onStreamStopped?.call();
       startStream().ignore();
     }
   }
@@ -80,42 +84,31 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
     }
 
     if (!controller.value.isInitialized) {
-      setState(() => lastError = StateError('CameraController should be initialized'));
+      onStreamError(StateError('CameraController should be initialized'), generation);
       return;
     }
 
-    streamingController = controller;
-    streamStarted = controller
-        .startImageStream((image) => onNewImageAvailable(image, generation))
-        .then(
-          (_) => true,
-          onError: (Object error) {
-            onStartError(error, generation);
-            return false;
-          },
-        );
+    try {
+      subscription = CameraPlatform.instance
+          .onStreamedFrameAvailable(controller.cameraId)
+          .listen(
+            (data) => onNewImageAvailable(CameraImage.fromPlatformInterface(data), generation),
+            onError: (Object error) => onStreamError(error, generation),
+          );
+    } catch (error) {
+      onStreamError(error, generation);
+    }
   }
 
   void stopStream() {
     streamGeneration++;
-    final controller = streamingController;
-    if (controller == null) {
-      return;
+    final current = subscription;
+    subscription = null;
+    // Cancelled synchronously: the owner may dispose the controller right
+    // after this preview (CameraScreen does), and the stop is already issued.
+    if (current != null) {
+      previousStop = current.cancel().catchError((Object error) => debugPrint('_YuvCameraPreviewMobile stop error: $error'));
     }
-
-    streamingController = null;
-    // Stopped right away once the start went through: the owner may dispose
-    // the controller right after this preview (CameraScreen does), and
-    // stopImageStream refuses a disposed controller. A start still in
-    // progress is stopped when it completes.
-    final stop = controller.value.isStreamingImages
-        ? controller.stopImageStream()
-        : streamStarted.then<void>((started) async {
-            if (started) {
-              await controller.stopImageStream();
-            }
-          });
-    previousStop = stop.catchError((Object error) => debugPrint('_YuvCameraPreviewMobile stop error: $error'));
   }
 
   void onNewImageAvailable(CameraImage image, int generation) {
@@ -143,12 +136,16 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
     presentCameraFrame(presenter, frame, widget.transform);
   }
 
-  void onStartError(Object error, int generation) {
+  // A camera error of the current stream, at start or after it: shown instead
+  // of the preview, with the stream stopped rather than left running behind it.
+  void onStreamError(Object error, int generation) {
     if (!mounted || generation != streamGeneration) {
-      debugPrint('_YuvCameraPreviewMobile start error of a stopped stream: $error');
+      debugPrint('_YuvCameraPreviewMobile error of a stopped stream: $error');
       return;
     }
-    streamingController = null;
+    stopStream();
+    presenter.reset();
     setState(() => lastError = error);
+    widget.onStreamStopped?.call();
   }
 }

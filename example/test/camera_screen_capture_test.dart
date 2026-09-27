@@ -20,8 +20,8 @@ void _writeFrame(YuvImage frame, List<int> bgra) {
 void main() {
   // No camera is needed: on the test host `availableCameras` never answers, so
   // the screen stays on its progress indicator, while capture itself only goes
-  // through `takePicture` and the preview's `transform` callback, which the
-  // test calls the way the preview would.
+  // through `takePicture` and the preview's `transform` and `onFramePresented`
+  // callbacks, which the test calls the way the preview would.
   testWidgets('a frame captured from the reused web/desktop preview frame is not changed by the frames written after it', (tester) async {
     Future<Object?>? popped;
     await tester.pumpWidget(
@@ -48,10 +48,12 @@ void main() {
     _writeFrame(reused, _frameA);
 
     // The same order as a tap on "Capture": takePicture waits for the next
-    // frame, the preview hands frame A to transform, then keeps writing.
+    // frame, the preview hands frame A to transform, draws it, then keeps
+    // writing.
     final Future<void> capture = screen.takePicture();
     final returned = screen.imageCapturer(reused) as YuvImage;
     expect(identical(returned, reused), isTrue, reason: 'the preview must keep showing its own frame');
+    screen.confirmCapture();
 
     _writeFrame(reused, _frameB);
     await tester.pump(const Duration(milliseconds: 250));

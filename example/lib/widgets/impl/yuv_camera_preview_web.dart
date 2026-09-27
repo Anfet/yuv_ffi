@@ -14,24 +14,34 @@ import 'package:yuv_ffi_example/widgets/stream_start.dart';
 import 'js_util_compat_web.dart' as js_util;
 
 /// [onFramePresented] fires once per frame drawn from the camera stream.
+/// [onStreamStopped] fires when the stream stops while the preview stays on
+/// screen: the controller was replaced or a camera error ended the stream.
 Widget buildYuvCameraPreview({
   Key? key,
   CameraController? cameraController,
   YuvImage Function(YuvImage image)? transform,
   VoidCallback? onFramePresented,
+  VoidCallback? onStreamStopped,
 }) {
   if (cameraController == null) {
     throw ArgumentError('CameraController is required on web platform');
   }
-  return _YuvCameraPreviewWeb(key: key, cameraController: cameraController, transform: transform, onFramePresented: onFramePresented);
+  return _YuvCameraPreviewWeb(
+    key: key,
+    cameraController: cameraController,
+    transform: transform,
+    onFramePresented: onFramePresented,
+    onStreamStopped: onStreamStopped,
+  );
 }
 
 class _YuvCameraPreviewWeb extends StatefulWidget {
   final CameraController cameraController;
   final YuvImage Function(YuvImage image)? transform;
   final VoidCallback? onFramePresented;
+  final VoidCallback? onStreamStopped;
 
-  const _YuvCameraPreviewWeb({super.key, required this.cameraController, this.transform, this.onFramePresented});
+  const _YuvCameraPreviewWeb({super.key, required this.cameraController, this.transform, this.onFramePresented, this.onStreamStopped});
 
   @override
   State<_YuvCameraPreviewWeb> createState() => _YuvCameraPreviewWebState();
@@ -114,6 +124,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
     _loggedFrameDrop = false;
     _copyToUseBgra = true;
     _loggedCopyToFormatFallback = false;
+    widget.onStreamStopped?.call();
     if (mounted) {
       setState(() {});
     }
@@ -171,6 +182,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
     _lastError = error;
     if (mounted) {
       setState(() {});
+      widget.onStreamStopped?.call();
     }
   }
 

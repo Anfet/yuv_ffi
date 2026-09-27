@@ -18,8 +18,9 @@ class _YuvCameraPreviewDesktop extends StatefulWidget {
   final CameraController cameraController;
   final YuvImage Function(YuvImage image)? transform;
   final VoidCallback? onFramePresented;
+  final VoidCallback? onStreamStopped;
 
-  const _YuvCameraPreviewDesktop({super.key, required this.cameraController, this.transform, this.onFramePresented});
+  const _YuvCameraPreviewDesktop({super.key, required this.cameraController, this.transform, this.onFramePresented, this.onStreamStopped});
 
   @override
   State<_YuvCameraPreviewDesktop> createState() => _YuvCameraPreviewDesktopState();
@@ -52,6 +53,7 @@ class _YuvCameraPreviewDesktopState extends State<_YuvCameraPreviewDesktop> {
       stopStream();
       presenter.reset();
       lastError = null;
+      widget.onStreamStopped?.call();
       startStream().ignore();
     }
   }
@@ -88,6 +90,7 @@ class _YuvCameraPreviewDesktopState extends State<_YuvCameraPreviewDesktop> {
 
     if (!controller.value.isInitialized) {
       setState(() => lastError = StateError('CameraController should be initialized'));
+      widget.onStreamStopped?.call();
       return;
     }
 
@@ -132,5 +135,6 @@ class _YuvCameraPreviewDesktopState extends State<_YuvCameraPreviewDesktop> {
     stopStream();
     presenter.reset();
     setState(() => lastError = error);
+    widget.onStreamStopped?.call();
   }
 }
