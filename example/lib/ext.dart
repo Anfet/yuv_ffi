@@ -142,22 +142,76 @@ YuvPlane _packPlane({
 }
 
 extension YuvImageToCameraExt on YuvImage {
+  /// Builds an [InputImage] whose bytes match what its declared
+  /// [InputImageMetadata.format] actually promises.
+  ///
+  /// PACK-01D: `google_mlkit_commons` 0.11.0's Android byte-array path only
+  /// recognizes NV21, YV12 and YUV_420_888 (`InputImageFormat.yuv420`, despite
+  /// the name, is iOS-only -- see that enum's own doc comments) -- not
+  /// arbitrary separate I420 planes and not this package's UV-ordered `nv12`.
+  /// Labelling either of those `yuv420`/`nv21` without also rearranging the
+  /// bytes fed a decoder metadata that lied about the layout it was reading,
+  /// silently corrupting every chroma sample. This builds one tight `Y` plane
+  /// followed by one tight interleaved chroma plane in **V, U** order (true
+  /// NV21) from either source format, de-interleaving/repacking around
+  /// whatever row padding or pixel gap the source planes declare, and labels
+  /// the result [InputImageFormat.nv21]. iOS gets a tight packed BGRA buffer
+  /// (`bytesPerRow == width * 4`), the only geometry `bgra8888` promises.
   InputImage toInputImage() {
-    InputImageFormat format;
-    switch (this.format) {
+    switch (format) {
       case YuvPixelFormat.i420:
-        format = InputImageFormat.yuv420;
-        break;
       case YuvPixelFormat.nv12:
-        format = InputImageFormat.nv21;
-        break;
+        final bytes = _toNv21Bytes();
+        final meta = InputImageMetadata(size: size, rotation: InputImageRotation.rotation0deg, format: InputImageFormat.nv21, bytesPerRow: width);
+        return InputImage.fromBytes(bytes: bytes, metadata: meta);
+
       case YuvPixelFormat.bgra8888:
-        format = InputImageFormat.bgra8888;
-        break;
+        // pack() is a no-op copy when already tight, so this only allocates
+        // a second time for a genuinely padded source.
+        final tight = copy().pack();
+        final meta = InputImageMetadata(
+          size: size,
+          rotation: InputImageRotation.rotation0deg,
+          format: InputImageFormat.bgra8888,
+          bytesPerRow: width * 4,
+        );
+        return InputImage.fromBytes(bytes: tight.yPlane.bytes, metadata: meta);
+    }
+  }
+
+  /// Builds `Y + VU` bytes (true NV21 order) from this image's planes,
+  /// regardless of whether it is I420 (separate `U`/`V` planes) or this
+  /// package's `nv12` (one `U`-before-`V` interleaved chroma plane), and
+  /// regardless of any row padding or pixel gap those planes declare.
+  ///
+  /// Packs a copy first so every plane below is tight (I420 chroma at
+  /// `pixelStride == 1`, `nv12`'s interleaved chroma at `pixelStride == 2`),
+  /// leaving only the U/V byte order left to fix up here.
+  Uint8List _toNv21Bytes() {
+    final tight = copy().pack();
+    final chromaWidth = (width + 1) ~/ 2;
+    final chromaHeight = (height + 1) ~/ 2;
+    final tightY = tight.yPlane.bytes;
+
+    final vu = Uint8List(chromaHeight * chromaWidth * 2);
+    if (tight.format == YuvPixelFormat.nv12) {
+      final uv = tight.uPlane.bytes;
+      for (var i = 0; i < chromaWidth * chromaHeight; i++) {
+        vu[i * 2] = uv[i * 2 + 1]; // V
+        vu[i * 2 + 1] = uv[i * 2]; // U
+      }
+    } else {
+      final u = tight.uPlane.bytes;
+      final v = tight.vPlane.bytes;
+      for (var i = 0; i < chromaWidth * chromaHeight; i++) {
+        vu[i * 2] = v[i];
+        vu[i * 2 + 1] = u[i];
+      }
     }
 
-    final meta = InputImageMetadata(size: size, rotation: InputImageRotation.rotation0deg, format: format, bytesPerRow: planes.first.bytesPerRow);
-
-    return InputImage.fromBytes(bytes: toBytes(), metadata: meta);
+    final result = Uint8List(tightY.length + vu.length);
+    result.setRange(0, tightY.length, tightY);
+    result.setRange(tightY.length, result.length, vu);
+    return result;
   }
 }
