@@ -8,6 +8,9 @@ export 'src/yuv/yuv.dart';
 // adding required members to `YuvImage` would break every external
 // `implements YuvImage` on a patch update.
 export 'src/yuv/shared/yuv_revision.dart' show YuvImageInvalidation;
+// `isTightlyPacked` and `pack()` are extension members for the same reason:
+// PACK-01A must not add required members to `YuvImage`.
+export 'src/yuv/shared/yuv_pack.dart' show YuvImagePack;
 export 'src/yuv/shared/yuv_plane.dart';
 export 'src/yuv/shared/yuv_image_rotation.dart';
 export 'src/yuv/shared/yuv_file_format.dart';

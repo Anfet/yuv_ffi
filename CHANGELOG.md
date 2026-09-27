@@ -14,6 +14,17 @@
 
 ### Changes
 
+- New public `isTightlyPacked` getter and `pack()` method (`YuvImagePack`
+  extension on `YuvImage`, exported from `package:yuv_ffi/yuv_ffi.dart`):
+  `pack()` repacks an image's planes in place to remove row padding and, for
+  I420 chroma, a per-sample pixel gap (some Android devices report I420 U/V at
+  `pixelStride == 2`), while NV12's interleaved UV plane keeps `pixelStride ==
+  2` since native code addresses it as a packed `(U, V)` pair. A no-op on an
+  already tightly packed image; otherwise builds and validates a full
+  replacement plane set before publishing it through `applyPlanes()`, so a
+  partially packed state is never visible and the revision advances exactly
+  once. PACK-00 measured dense I420 packing at 3.3x faster `applyRotation` on
+  a real Pixel 3 device.
 - `YuvImageProvider` copies this package's `YuvImage` when decoding starts, so
   mutating or reusing the source image while the decode waits no longer changes
   the frame already queued for display, and an in-place resize in that window

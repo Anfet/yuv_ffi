@@ -3,7 +3,7 @@
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | — | VIEW-03 | REVIEW | T1 | Claude | VIEW-00…02 | Замеры пути кадра ожидают отдельного решения; абсолютные profile-цифры rotate пересмотрены в PACK-00 по release-замеру. |
-| — | PACK-01A | TODO | T2 | Не назначен | PACK-00 | Добавить `isTightlyPacked` и мутирующий `pack()` без хранения старого layout; сохранить явный strided-путь. |
+| — | PACK-01A | REVIEW | T2 | Claude (главная сессия) | PACK-00 | `isTightlyPacked`/`pack()` добавлены как extension; см. отчёт ниже. |
 | — | PACK-01B | TODO | T2 | Не назначен | PACK-01A | Добавить фабрикам `layout: preserve/packed`, по умолчанию упаковывать переданные плоскости; `copy()` и `decode()` сохраняют layout. |
 | — | PACK-01C | TODO | T2 | Не назначен | PACK-01B | Включить плотный импорт камеры в example без повторной упаковки в конструкторе. |
 | — | PACK-01D | TODO | T2 | Не назначен | PACK-01C | Формировать на границе ML Kit настоящие NV21-байты для Android и плотный BGRA для iOS. |
@@ -371,8 +371,62 @@ strided-совместимыми; менять native C эти карточки 
 
 ### PACK-01A — определить плотный layout и добавить `pack()`
 
-**Статус:** TODO. **Тир / режим:** T2 / STANDARD. **Исполнитель:** не назначен (Terra или Sonnet).
+**Статус:** REVIEW. **Тир / режим:** T2 / STANDARD. **Исполнитель:** Claude (главная сессия, по
+решению пользователя — без делегирования T2-субагенту).
 **Ревью:** независимый T1. **Зависимость:** PACK-00 принят. **Отказов:** 0.
+
+### Executor Report
+
+Native C, ABI v1 и generated bindings не тронуты. Новый файл
+[`lib/src/yuv/shared/yuv_pack.dart`](lib/src/yuv/shared/yuv_pack.dart) с `YuvImagePack` — extension
+на `YuvImage`, экспортирован из `lib/yuv_ffi.dart` (тот же паттерн, что `YuvImageInvalidation` для
+`revision`/`markDirty`: extension, а не interface-член, чтобы не ломать сторонний `implements
+YuvImage`). Новый тест [`test/yuv_pack_test.dart`](test/yuv_pack_test.dart), 13 тестов, весь файл без
+`YuvFfi.initialize()` — `pack()` не вызывает native/WASM напрямую, публикует через уже существующий
+`applyPlanes()`.
+
+**`isTightlyPacked`.** Вычисляется по формату/геометрии, без обращения к native: I420 Y/U/V — шаг 1
+(`sampleBytes`), NV12 Y — 1, interleaved UV — `YuvGeometry.nvChromaPixelStride` (2), BGRA — 4.
+Row stride плоскости должен равняться `columns * sampleBytes`, где `columns` — `width` для
+luma/packed-плоскости и `YuvGeometry.chromaWidth(width)` (округление вверх) для chroma-плоскости.
+Оба геометрических хелпера уже существовали в `YuvGeometry` (chromaWidth/chromaHeight/
+nvChromaPixelStride) — переиспользованы, не продублированы.
+
+**`pack()`.** Строит полный набор новых плоскостей (`_packPlane` копирует построчно; при полном
+совпадении strides делает дешёвый `copy()` без цикла по сэмплам) и один раз вызывает
+`applyPlanes()`, которая уже валидирует копию перед публикацией и продвигает revision ровно один
+раз (YUV-20/REL-02) — атомарность и no-op-обнаружение получены переиспользованием существующего
+контракта, не реализованы заново. При уже плотном layout `pack()` возвращает `this` без вызова
+`applyPlanes()` вовсе, revision не растёт.
+
+**De-interleaving для I420 chroma `pixelStride=2`.** Прямое применение находки PACK-00: `_packPlane`
+копирует только первый `sampleBytes` байт из каждого `pixelStride`-широкого слота источника, поэтому
+чужой канал (V-байт внутри объявленной U-плоскости на этом типе устройств) не попадает в результат.
+NV12 interleaved UV специально остаётся на `pixelStride=2` — native адресует пару `(U, V)` как единое
+целое (`YuvGeometry.nvChromaPixelStride`), `pixelStride=1` расколол бы пару, а не убрал padding.
+
+**Приёмка (адресные тесты, все в `test/yuv_pack_test.dart`):** I420 с U/V `pixelStride=2` (де-интерливинг
+подтверждён явной проверкой `pixelStride == 1` после `pack()`), NV12 padded UV (подтверждён
+`pixelStride == 2` после), BGRA padded row, odd width/height (chroma round-up), уже плотный
+случай (no-op, revision не растёт), равенство видимых сэмплов на каждом кейсе, сохранение
+формата/размера/числа плоскостей, атомарность `applyPlanes()` при некорректном наборе плоскостей
+(revision и байты не меняются на отклонённом вызове). Публичный импорт extension проверен: `import
+'package:yuv_ffi/yuv_ffi.dart'` без внутренних путей.
+
+**Проверка:** `dart format --line-length 150` на изменённых/новых файлах; `flutter analyze lib test
+--no-pub` в корне и в example — без замечаний; `flutter test` в корне — 683 passed (670 прежних + 13
+новых, без изменений в существующих тестах); example-анализ не задет публичным экспортом.
+`CHANGELOG.md` дополнен под черновой записью `0.4.2` (версия `pubspec.yaml` не менялась — релиз
+остаётся неопубликованным).
+
+**Открытые пункты:**
+1. Device-бенч не запускался этой карточкой (см. решение архитектора: "без device-бенча" —
+   мандат PACK-01C). `pack()` использует тот же алгоритм копирования, что PACK-00 уже измерил на
+   Pixel 3 (де-интерливинг I420 chroma), но не тот же код путь один-в-один — числовое повторение
+   не входило в приёмку этой карточки.
+2. Сторонний `implements YuvImage` не проверен интеграционным тестом за пределами `test/
+   rel06_deprecated_api_test.dart`-подобного стиля; extension-механизм гарантирует отсутствие
+   нового обязательного члена компилятором, отдельный тест на сторонний класс не писался.
 
 **Решение и границы.** Добавить публичные `isTightlyPacked` и `pack()` как extension на `YuvImage`,
 доступный через `package:yuv_ffi/yuv_ffi.dart`: это не добавляет обязательных членов сторонним
