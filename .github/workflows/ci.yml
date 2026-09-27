@@ -22,8 +22,13 @@ jobs:
         with:
           flutter-version: ${{ matrix.flutter-version }}
 
+      # `example/pubspec.yaml` declares `yuv_ffi: {path: ../}`, which pub's
+      # automatic workspace discovery pulls into this resolution unless
+      # --no-example opts it out. This job checks the root package's own
+      # declared lower bound (3.38.10 here); example's own, higher SDK
+      # minimum is covered separately by example-analyze-and-build.
       - name: Flutter pub get (root)
-        run: flutter pub get
+        run: flutter pub get --no-example
 
       - name: Analyze (root)
         run: flutter analyze
