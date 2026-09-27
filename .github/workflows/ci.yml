@@ -175,12 +175,17 @@ jobs:
       # The example app ships no linux/ runner directory, so the platform
       # folder is scaffolded here rather than committed: `flutter config` only
       # enables the toolchain, it does not create a missing platform.
+      #
+      # VIEW-01A: camera_desktop's linux/CMakeLists.txt does
+      # `pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-app-1.0
+      # gstreamer-video-1.0)`. libgstreamer1.0-dev provides the first .pc file;
+      # libgstreamer-plugins-base1.0-dev provides the app and video ones.
       - name: Build example (linux desktop)
         working-directory: example
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgtk-3-dev
+          sudo apt-get install -y ninja-build libgtk-3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
           flutter config --enable-linux-desktop
           flutter create --platforms=linux .
           flutter pub get
@@ -507,7 +512,14 @@ jobs:
       matrix:
         # The declared lower Flutter bound needs an application build, not only
         # package analysis and VM tests. Both entries build the same example.
-        flutter-version: ['3.38.10', '3.44.9']
+        #
+        # VIEW-01A: example/pubspec.yaml requires Dart >=3.11.0 (camera_desktop
+        # 2.0.0's own constraint). 3.38.10 ships Dart 3.10.9 and fails `pub get`
+        # here, so the low end of this matrix is 3.41.0 -- the first stable
+        # Flutter release carrying Dart 3.11.0 -- rather than the package's own
+        # minimum-SDK floor used by analyze-and-test-vm below, which never
+        # touches example.
+        flutter-version: ['3.41.0', '3.44.9']
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -23,7 +23,15 @@
 // without tripping that assert, while still using `CameraController` for
 // `initialize`/`dispose`/lifecycle. VIEW-01B's desktop preview should use the
 // same bypass rather than calling `controller.startImageStream()` directly.
+//
+// Verdict: the final line is `SMOKE COMPLETE` only if all five frames were
+// imported through `toYuvImage()`/`toBgraBytes()` without throwing and the
+// stream was stopped cleanly afterwards; any other outcome (conversion
+// failure, stream error, timeout, no camera) prints `SMOKE FAILED` with the
+// reason and calls `exit(1)`, so a rerun gives an unambiguous result even
+// when only the process exit code is checked.
 import 'dart:async';
+import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
@@ -85,6 +93,21 @@ class _SmokeBodyState extends State<_SmokeBody> {
     _running = true;
     int? cameraId;
     StreamSubscription<CameraImageData>? subscription;
+    // Tracks the two conditions the smoke exists to prove: five frames
+    // imported through `toYuvImage()`/`toBgraBytes()` without throwing, and a
+    // clean stop of the stream. Either one failing must flip the final
+    // verdict -- neither used to affect it, which is the false positive this
+    // pass fixes.
+    var framesImported = 0;
+    const targetFrames = 5;
+    var streamStoppedCleanly = false;
+    String? failureReason;
+
+    void fail(String reason) {
+      failureReason ??= reason;
+      _append('SMOKE FAILED: $reason');
+    }
+
     try {
       final cameras = await availableCameras();
       _append('availableCameras: ${cameras.length}');
@@ -92,7 +115,7 @@ class _SmokeBodyState extends State<_SmokeBody> {
         _append('  ${c.name} lensDirection=${c.lensDirection} sensorOrientation=${c.sensorOrientation}');
       }
       if (cameras.isEmpty) {
-        _append('No camera available; stopping.');
+        fail('No camera available.');
         return;
       }
 
@@ -105,8 +128,6 @@ class _SmokeBodyState extends State<_SmokeBody> {
       final initEvent = await initialized;
       _append('initializeCamera -> previewSize=${initEvent.previewWidth}x${initEvent.previewHeight}');
 
-      var framesSeen = 0;
-      const targetFrames = 5;
       final framesDone = Completer<void>();
 
       // The bypass described in the file header: this is exactly what
@@ -119,11 +140,11 @@ class _SmokeBodyState extends State<_SmokeBody> {
               if (framesDone.isCompleted) {
                 return;
               }
-              framesSeen++;
+              final frameNumber = framesImported + 1;
               final image = CameraImage.fromPlatformInterface(data);
               final plane = image.planes.first;
               _append(
-                'frame $framesSeen: ${image.width}x${image.height} '
+                'frame $frameNumber: ${image.width}x${image.height} '
                 'format=${image.format.group} raw=${image.format.raw} '
                 'planes=${image.planes.length} bytesPerRow=${plane.bytesPerRow} '
                 'bytesPerPixel=${plane.bytesPerPixel} bufferLength=${plane.bytes.length}',
@@ -136,16 +157,21 @@ class _SmokeBodyState extends State<_SmokeBody> {
                   'toYuvImage/toBgraBytes ok: format=${yuv.format} '
                   'firstPixel=${bgra.sublist(0, 4)}',
                 );
+                framesImported++;
               } catch (e) {
-                _append('toYuvImage/toBgraBytes FAILED: $e');
+                fail('toYuvImage/toBgraBytes threw on frame $frameNumber: $e');
+                if (!framesDone.isCompleted) {
+                  framesDone.complete();
+                }
+                return;
               }
 
-              if (framesSeen >= targetFrames && !framesDone.isCompleted) {
+              if (framesImported >= targetFrames && !framesDone.isCompleted) {
                 framesDone.complete();
               }
             },
             onError: (Object e) {
-              _append('onStreamedFrameAvailable error: $e');
+              fail('onStreamedFrameAvailable error: $e');
               if (!framesDone.isCompleted) {
                 framesDone.complete();
               }
@@ -154,16 +180,24 @@ class _SmokeBodyState extends State<_SmokeBody> {
 
       await framesDone.future.timeout(
         const Duration(seconds: 10),
-        onTimeout: () => _append('Timed out waiting for $targetFrames frames (got $framesSeen).'),
+        onTimeout: () => fail('Timed out waiting for $targetFrames frames (got $framesImported).'),
       );
 
-      // Mirrors CameraController.stopImageStream's body (cancel the
-      // subscription) without its Android/iOS-only assert.
-      await subscription.cancel();
-      subscription = null;
-      _append('stream stopped, subscription cancelled');
+      if (framesImported < targetFrames) {
+        // A conversion failure or stream error above already completed
+        // `framesDone` and called `fail`; this only catches the case where
+        // the completer resolved for some other reason without enough frames.
+        fail('Only $framesImported/$targetFrames frames imported successfully.');
+      } else {
+        // Mirrors CameraController.stopImageStream's body (cancel the
+        // subscription) without its Android/iOS-only assert.
+        await subscription.cancel();
+        subscription = null;
+        streamStoppedCleanly = true;
+        _append('stream stopped, subscription cancelled');
+      }
     } catch (e, st) {
-      _append('SMOKE FAILED: $e');
+      fail('Unhandled exception: $e');
       debugPrint('$st');
     } finally {
       await subscription?.cancel();
@@ -171,7 +205,22 @@ class _SmokeBodyState extends State<_SmokeBody> {
         await CameraPlatform.instance.dispose(cameraId);
         _append('dispose($cameraId) done');
       }
-      _append('SMOKE COMPLETE');
+
+      final success = failureReason == null && framesImported >= targetFrames && streamStoppedCleanly;
+      if (success) {
+        _append('SMOKE COMPLETE ($framesImported/$targetFrames frames, clean stop)');
+      } else {
+        _append(
+          'SMOKE FAILED: '
+          '${failureReason ?? "verdict conditions not met ($framesImported/$targetFrames frames, "
+                  "streamStoppedCleanly=$streamStoppedCleanly)"}',
+        );
+        // A manual `flutter run` still shows the log above; `exit(1)` matters
+        // for a CI/scripted invocation, where only the process's exit code is
+        // checked and the on-screen list is never read. This tool only
+        // targets desktop platforms (see file header), so no platform guard.
+        exit(1);
+      }
     }
   }
 
