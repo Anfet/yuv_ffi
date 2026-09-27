@@ -29,6 +29,13 @@
   replaced frame is disposed at once instead of staying in `ImageCache`, frames
   of a stopped or replaced stream are no longer shown, and the debug FPS counts
   drawn frames rather than received ones. `YuvImageWidget` is unchanged.
+- New public widgets `YuvFramePresenter` and `YuvFrameView`, exported from
+  `package:yuv_ffi/yuv_ffi.dart`: a camera-independent way to show a stream of
+  `YuvImage` frames, keeping at most one frame in flight, converting each
+  frame's own BGRA bytes synchronously before `present` returns, disposing the
+  replaced and last `ui.Image`, never caching preview frames in `ImageCache`,
+  and counting a frame only after it is drawn. Moved from the example app,
+  which now uses the packaged widgets instead of its own copy.
 
 ### Known limitations
 

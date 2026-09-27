@@ -8,7 +8,6 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
-import 'package:yuv_ffi_example/widgets/yuv_frame_presenter.dart';
 
 part 'yuv_camera_preview_desk.dart';
 part 'yuv_camera_preview_mobile.dart';

@@ -9,7 +9,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/widgets/frame_read_loop.dart';
-import 'package:yuv_ffi_example/widgets/yuv_frame_presenter.dart';
 import 'js_util_compat_web.dart' as js_util;
 
 /// [onFramePresented] fires once per frame drawn from the camera stream.

@@ -1,27 +1,39 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
-import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi/src/yuv/yuv.dart';
 
-/// Shows a live camera stream frame by frame, keeping at most one frame in
-/// flight and owning the decoded image it displays.
+/// Shows a live stream of [YuvImage] frames one at a time, keeping at most one
+/// frame in flight and owning the decoded image it displays.
 ///
 /// A frame is in flight from [present] until it has been decoded and drawn
-/// once. While [isBusy], the preview drops incoming frames instead of queueing
-/// them, so under overload intermediate frames are skipped and the screen
-/// always shows the latest frame that finished. The previous [image] is
-/// disposed as soon as the next one replaces it; nothing goes through the
-/// global `ImageCache`, which would keep every shown frame until LRU eviction.
+/// once. While [isBusy], [present] returns `false` and drops the incoming
+/// frame instead of queueing it, so under overload intermediate frames are
+/// skipped and the screen always shows the latest frame that finished. The
+/// previous [image] is disposed as soon as the next one replaces it; nothing
+/// goes through the global `ImageCache`, which would keep every shown frame
+/// until LRU eviction.
+///
+/// [present] converts [YuvImage] to its own BGRA bytes synchronously, before
+/// returning, so the caller keeps ownership of the passed-in [YuvImage] and
+/// may mutate or reuse it — for example, write the next camera frame into the
+/// same instance — right after `present` returns. The decoded [ui.Image] this
+/// presenter produces belongs to the presenter: [image] hands out the live
+/// handle, and the caller must not dispose it; take a `clone()` to keep a
+/// frame past the next [present]/[reset]/[dispose].
 ///
 /// [onFramePresented] fires once per frame actually drawn, so a frame rate
-/// derived from it is the display rate, not the camera delivery rate.
+/// derived from it is the display rate, not the frame arrival rate.
 ///
 /// [reset] and [dispose] stop presentation: a decode still running for an
 /// earlier frame is discarded and never reaches the screen or the callback.
 ///
-/// [YuvImageWidget] remains the way to show a single, standalone image.
+/// Use [YuvImageWidget] instead to show a single, standalone image; this
+/// class is for a stream of frames where only the latest one matters and
+/// intermediate frames may be dropped under load.
 class YuvFramePresenter extends ChangeNotifier {
   /// Called after a presented frame has been drawn.
   final VoidCallback? onFramePresented;
@@ -94,7 +106,7 @@ class YuvFramePresenter extends ChangeNotifier {
       decoded = await _decodeBgra(bytes, width, height);
     } catch (error, stack) {
       FlutterError.reportError(
-        FlutterErrorDetails(exception: error, stack: stack, library: 'yuv_ffi_example', context: ErrorDescription('decoding a preview frame')),
+        FlutterErrorDetails(exception: error, stack: stack, library: 'yuv_ffi', context: ErrorDescription('decoding a preview frame')),
       );
       _isBusy = false;
       return;

@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'package:yuv_ffi_example/widgets/yuv_frame_presenter.dart';
 
 const int _width = 8;
 const int _height = 6;
