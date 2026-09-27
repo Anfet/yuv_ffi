@@ -19,7 +19,7 @@
 | VIEW-01 | COMPLETE | VIEW-00 | T1 · Opus (2-й проход); T1 · Codex (независимое ревью 27.09.2026) | Mobile/web превью ограничено одним кадром в обработке; ресурсы показа освобождаются, FPS считается после кадра отрисовки. Гонка старого web reader после перезапуска закрыта вторым проходом; приёмка — ниже. |
 | VIEW-01A | COMPLETE | VIEW-01 | T2 · Sonnet 5 (4-й проход); T1 · Codex (независимое ревью 27.09.2026) | Windows BGRA image stream и импорт подтверждены; Linux/macOS сборки, обе версии example-матрицы и корневая job на Flutter 3.44.9 прошли в CI на `bed8cfb`. Корневая 3.38.10 и Web остаются отдельными известными дефектами. Приёмка — ниже. |
 | VIEW-01P | COMPLETE | VIEW-01 | T2 · Sonnet 5; T1 · Codex (независимое ревью 27.09.2026) | `YuvFramePresenter` и `YuvFrameView` перенесены в публичный API плагина; example использует пакетную реализацию, тесты владения и освобождения кадров перенесены и проходят. Приёмка — ниже. |
-| VIEW-01B | TODO | VIEW-01A, VIEW-01P | T1; T1 | Перевести desktop-превью example с `flutter_webrtc`/`RTCVideoView`/`captureFrame()` на `camera_desktop` и поток `CameraImage`: показывать результат `transform` через пакетный presenter, захватывать этот же результат, управлять пропуском кадров и ресурсами. Проверить Windows с камерой и сборки macOS/Linux; удалить неиспользуемую зависимость WebRTC. |
+| VIEW-01B | REVIEW | VIEW-01A, VIEW-01P | T1 · Opus; T1 (независимое ревью) | Desktop-превью example переведено на поток `camera_desktop` через `CameraPlatform` (в обход assert `startImageStream`) и пакетный `YuvFramePresenter`; показывается и захватывается результат `transform`, поколение потока и сериализация остановки защищают смену камеры, перезапуск и `dispose`. `flutter_webrtc` удалён. Windows smoke с камерой пройден, macOS/Linux собраны в CI; отчёт — ниже. |
 | VIEW-02 | TODO | VIEW-00, VIEW-01, VIEW-01B | T1; T1 | Свести контракт `transform` и жизненный цикл mobile/web/desktop: при его наличии возвращённый кадр показывается в превью и доступен для захвата; без него показывается исходный кадр. Последовательно запускать, менять и останавливать поток; проверить смену контроллера, закрытие экрана во время `await`, ошибку камеры и повторный запуск без старых кадров и утечек. |
 | VIEW-03 | TODO | VIEW-00…02 | T2; T1 | На Pixel 3 в profile/release сравнить до/после полный путь «получен кадр → показан кадр» на одинаковом размере и сценарии; отдельно записать время конвертации/декодирования, показанный FPS, пропуски и память. Зафиксировать raw-замеры и пределы метода; принять цикл только при сохранении корректного кадра и контролируемой памяти. |
 
@@ -967,7 +967,7 @@ example отсутствует, счёт совпадает с ожидание�
 в example тоже прошёл. `flutter analyze lib test --no-pub` в пакете и example — без замечаний.
 Платформенный путь камеры и производительность не входят в приёмку переноса.
 
-## VIEW-01B — перевести desktop-превью example на `camera_desktop`, TODO
+## VIEW-01B — перевести desktop-превью example на `camera_desktop`, REVIEW
 
 **Исполнитель:** T1; **независимое ревью:** T1. Старт после принятия VIEW-01A и VIEW-01P.
 
@@ -990,6 +990,126 @@ example отсутствует, счёт совпадает с ожидание�
 нет роста очереди и сохранённых `ui.Image` при длительном превью; тесты и анализ example проходят.
 Отчёт включает фактические проверки по платформам и известные ограничения, затем независимое
 ревью и отдельный коммит.
+
+### Executor Report
+
+**Исполнитель:** T1 · Claude Opus 5.5. **Коммиты правки:** `b62a038` (код, тесты, smoke, CHANGELOG),
+`316c187` (фикс закрытия `CameraScreen` во время поиска камер + тест), `c380020` (перегенерированная
+macOS-регистрация плагинов); статус и отчёт — отдельным коммитом. Native C, ABI v1, `lib/` пакета
+(`YuvFramePresenter` в том числе) и CI-workflow не тронуты.
+
+**Архитектура.**
+
+- *Обход assert.* `_YuvCameraPreviewDesktop` получает `CameraController` (как mobile) и сам
+  подписывается на `CameraPlatform.instance.onStreamedFrameAvailable(controller.cameraId)` — ровно то,
+  что делает тело `CameraController.startImageStream`, без его Android/iOS assert. Остановка —
+  `subscription.cancel()`: `camera_desktop` в `onCancel` шлёт native `stopImageStream` и снимает FFI-поллер.
+  `initialize`/`dispose` остаются за контроллером, `isStreamingImages` на desktop остаётся `false`.
+  Отдельную обёртку не вводил: это одна подписка и один `cancel`, всё поведение описано в dartdoc класса.
+- *Презентер.* Паттерн mobile из VIEW-01: кадр отбрасывается до `toYuvImage()` (копирования плоскости),
+  если `presenter.isBusy`, поколение не текущее или виджет размонтирован; далее
+  `CameraImage.fromPlatformInterface(data).toYuvImage()` → `transform` → `presenter.present(результат ?? исходный)`.
+  Показ — `YuvFrameView`. Ошибка потока текущего поколения показывается текстом, как раньше.
+- *Жизненный цикл.* `streamGeneration` повышается при каждой остановке (смена контроллера, `dispose`);
+  подписка, ожидающий старт и ошибки несут поколение, под которым созданы. `camera_desktop` держит один
+  активный поток на камеру и останавливает native асинхронно, поэтому новый старт сначала ждёт
+  `cancel()` предыдущей подписки (`previousStop`) и после `await` сверяет поколение: старт, устаревший за
+  время ожидания, не подписывается. Смена контроллера — `presenter.reset()` (кадр в декоде не показывается),
+  `dispose` — остановка потока и `presenter.dispose()`.
+- *`CameraScreen`.* Ветка «desktop без camera-плагина» удалена: камера открывается через `availableCameras` →
+  `CameraController` на всех платформах (на desktop это `camera_desktop`). Захват не менялся:
+  `imageCapturer` — это `transform`, он копирует кадр (`copy()`) и возвращает его же, то есть захватывается
+  ровно кадр, который превью затем показывает. Добавлены проверки `mounted` после `availableCameras()`
+  (иначе контроллер, созданный после `dispose`, не освобождался — найдено при ревью собственного diff,
+  коммит `316c187`) и перед `setState` в `finally` (закрытие экрана во время `initialize`).
+- *Зеркальность.* Кадры потока на Windows не зеркалятся (VIEW-01A, п. 4); показываются и захватываются как
+  есть — так же, как прежний `RTCVideoView(mirror: false)`. Отдельного флага не добавлял.
+- *WebRTC.* `flutter_webrtc` больше нигде в example не использовался — удалён из `pubspec.yaml`;
+  `pubspec.lock` и Windows-регистрация (`generated_plugin_registrant.cc`, `generated_plugins.cmake`)
+  перегенерированы `flutter pub get`. macOS `GeneratedPluginRegistrant.swift` на Windows не генерируется —
+  перегенерирован `flutter pub get` на Mac (mac-runner, Flutter 3.44.9): `+camera_desktop`,
+  `-flutter_webrtc`, `-path_provider` (транзитивная зависимость WebRTC). Linux-регистрация в репозитории не
+  хранится. `ios/Podfile.lock` и `macos/Podfile.lock` намеренно **не** обновлял: `pod install` на Flutter
+  3.44 заодно выкидывает `camera_avfoundation`, `image_picker_ios`, `integration_test`,
+  `file_selector_macos` (переезд этих плагинов на Swift Package Manager) — это изменение тулчейна, не
+  этой карточки; упоминание `flutter_webrtc` в lock-файлах исчезнет при следующем `pod install`.
+- `camera_desktop_smoke_main.dart` оставлен как диагностический инструмент без UI, обновлена только шапка.
+
+**Тесты** (`example/test/desktop_camera_preview_test.dart`, 10 шт., без камеры): fake `CameraPlatform`
+(extends, ставится в `CameraPlatform.instance`) моделирует `camera_desktop` — single-subscription поток на
+каждый `onStreamedFrameAvailable`, `cancel` = native stop с управляемым `Completer`, учёт пересечения двух
+потоков одной камеры; реальные `CameraController`, `YuvImage.bgra`, декод движка и `YuvFrameView`. На
+VM-хосте Windows/macOS/Linux `buildYuvCameraPreview` выбирает именно desktop-ветку.
+1. Кадр (с `bytesPerRow` > `width*4`) → `transform` → показ: порядок событий `transform:40, presented`,
+   на экране результат `transform` (215), не исходник; без `transform` — исходный кадр. Подписка идёт
+   через `CameraPlatform`, `isStreamingImages == false`.
+2. Перегрузка: кадры, пришедшие во время декода и до отрисовки, отброшены до `transform`; после отрисовки
+   следующий принимается; `ImageCache` пуст.
+3. Смена камеры с кадром в декоде и кадром в очереди старого потока: старый поток остановлен, ни один его
+   кадр не показан, кадр из очереди не дошёл до `transform`; новый поток показывается.
+4. Перезапуск той же камеры, пока её native stop не завершён: новая подписка только после остановки,
+   пересечения потоков нет, запускается только последний запрошенный поток.
+5. `dispose` с кадром в декоде: поток остановлен, поздний кадр не вызывает `transform`, счётчик показа 0.
+6. Превью закрыто, пока старт ждёт остановки прежнего потока: подписки нет.
+7. Ошибка потока показывается, после смены камеры очищается.
+8. `CameraScreen` целиком: камера открывается через `CameraController`/fake, нажатие «Capture frame» →
+   следующий кадр (90) показан и захвачен, последующий кадр (100) показан, но в захват не попал; после
+   `pop` поток остановлен, камера освобождена.
+9. `CameraScreen` закрыт во время `initialize`: нет `setState` после `dispose`, камера освобождена, поток не
+   стартовал.
+10. `CameraScreen` закрыт во время `availableCameras`: камера не создаётся.
+
+Негативный контроль (файлы восстановлены, хэши совпали): без проверки `isBusy` — падают 2, 3; без проверок
+поколения и `reset` — 3, 4; только без проверок поколения — 4; без ожидания `previousStop` — 4, 6; без
+остановки в `dispose` — 5; показ исходника вместо результата `transform` — 1; без `mounted` в `finally` — 9;
+без `mounted` после `availableCameras` — 10. Прежний `camera_screen_capture_test.dart` (повторно
+используемый web-кадр) проходит без изменений.
+
+**Ручной smoke на Windows с камерой** (Windows 10, «Integrated Webcam», debug-сборка — assert'ы Dart
+активны, обход подтверждён на деле). Новый integration-тест
+`example/integration_test/desktop_camera_preview_smoke_test.dart` гоняет реальное демо-приложение:
+«Take photo» → `CameraScreen` → 6 с живого превью → «Capture frame» → возврат в демо. Команда (из `example/`):
+`flutter test integration_test/desktop_camera_preview_smoke_test.dart -d windows --dart-define=SMOKE_OUT=<dir>`.
+Лог — [`example/doc/view01b-desktop-preview-smoke-2026-09-27.txt`](example/doc/view01b-desktop-preview-smoke-2026-09-27.txt):
+173 разных отрисованных кадра за 6010 мс (~29 кадров/с), подпись FPS 27–30 (13 в первую, неполную
+секунду), `ImageCache` current/live/pending = 0/0/0; захваченный кадр `bgra8888 640×480` побайтно равен
+первому кадру, отрисованному превью после нажатия. PNG показанного и захваченного кадров просмотрены
+вручную: реальная сцена, цвета без перестановки каналов, ориентация прямая. PNG в репозиторий не
+добавлены (снимок комнаты). Демо-путь face detection на Windows не проверялся (ML Kit — только mobile).
+
+**macOS/Linux.** CI run [`36320582956`](https://github.com/Anfet/yuv_ffi/actions/runs/36320582956) на
+`b62a038`: `linux-native-smoke` (включая `Build example (linux desktop)` и app-runtime smoke) — success;
+`macos-native-smoke` на self-hosted (включая `Build example (macos desktop)` и app-runtime smoke) —
+success; `example-analyze-and-build` 3.41.0 и 3.44.9 — success; `analyze-and-test-vm (3.44.9)` — success.
+`analyze-and-test-vm (3.38.10)` — failure на тех же 4 `YuvFileFormat` deprecation в
+`test/opt14_copy_contract_test.dart` (проверено по логу), `wasm-web-integration` — прежний известный
+дефект; оба вне карточки. Повтор на финальном SHA кода `c380020` (с перегенерированной
+macOS-регистрацией), run [`36320828648`](https://github.com/Anfet/yuv_ffi/actions/runs/36320828648):
+`macos-native-smoke`, `linux-native-smoke`, `ios-native-build`, `android-native-build`, обе
+`example-analyze-and-build`, `analyze-and-test-vm (3.44.9)` — success; красные те же
+`analyze-and-test-vm (3.38.10)`, `wasm-web-integration` и `android-armv7-runtime` (последний красный и на
+предыдущих прогонах `bed8cfb`/`496a3ba`, до этой карточки). Статус и отчёт этой карточки — локальный
+коммит поверх `c380020`, отдельного CI не требует.
+Камера на macOS/Linux физически **не проверялась**: CI без камеры подтверждает только сборку и запуск
+приложения.
+
+**Проверка:** `dart format --line-length 150` на затронутых файлах; `flutter analyze lib test --no-pub` в
+`example` и в корне — без замечаний (плюс новый integration-тест); `flutter test` в `example` — 17 passed
+(7 прежних + 10 новых); `flutter test` в корне — 663 passed.
+
+**Открытые пункты:**
+1. **macOS runtime камеры не заработает без конфигурации Runner:** в `example/macos/Runner/*.entitlements`
+   нет `com.apple.security.device.camera` (приложение в sandbox), в `Info.plist` нет
+   `NSCameraUsageDescription` (README `camera_desktop` требует оба). Это близко к конфигурации
+   подписи/entitlements, которую без явного запроса не меняю — нужно решение пользователя; после него
+   smoke можно повторить на Mac с FaceTime HD Camera (нужен GUI-клик на системный запрос доступа).
+2. Linux runtime камеры не проверен (нет устройства); Windows-кадры без паддинга строк, паддинг покрыт
+   синтетикой (тест 1 и тест VIEW-01A).
+3. Зеркальность фронтальной камеры на desktop не выравнивалась с mobile (`kYuvCameraPreviewFlipAndroid`) —
+   показ и захват совпадают, но изображение не «зеркало». Если нужно, это решение VIEW-02.
+4. Повторное нажатие «Capture» до кадра по-прежнему заменяет `captureCompleter` — жизненный цикл VIEW-02.
+5. `ios/Podfile.lock`, `macos/Podfile.lock` содержат устаревшие записи `flutter_webrtc` (см. выше);
+   обновлять вместе с переездом на SwiftPM отдельно.
 
 ## Позже
 
