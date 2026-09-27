@@ -33,6 +33,16 @@ Future<ui.Image> _decodeFrom(YuvImageProvider provider) {
   return completer.future;
 }
 
+/// Resolves [provider] and completes with its decoded RGBA bytes, or with the
+/// load error, so a test can tell a wrong frame from a refused one.
+Future<Object> _outcomeOf(YuvImageProvider provider) async {
+  try {
+    return await _rgbaOf(await _decodeFrom(provider));
+  } catch (error) {
+    return error;
+  }
+}
+
 Future<Uint8List> _rgbaOf(ui.Image image) async {
   final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
   if (data == null) {
@@ -676,6 +686,44 @@ void main() {
       expect(result?.width, 4);
       expect(result?.height, 2);
       expect(result?.rgba, orderedEquals(_solidRgba(4, 2, _frameA)));
+    });
+
+    testWidgets('a provider created for frame A and first resolved after the image moved to B does not decode B under the key of A', (tester) async {
+      final image = YuvImage.bgra(2, 2);
+      image.yPlane.assignFrom(_solidBgra(2, 2, _frameA));
+      image.markDirty();
+
+      final stale = YuvImageProvider(image);
+      image.yPlane.assignFrom(_solidBgra(2, 2, _frameB));
+      image.markDirty();
+
+      final outcome = await tester.runAsync(() => _outcomeOf(stale));
+
+      expect(outcome, isA<StateError>(), reason: 'decoding now would put the pixels of B under the key of A');
+      expect(PaintingBinding.instance.imageCache.containsKey(stale), isFalse, reason: 'the failed load must not stay cached under the key of A');
+
+      final current = await tester.runAsync(() async => _rgbaOf(await _decodeFrom(YuvImageProvider(image))));
+      expect(current, orderedEquals(_solidRgba(2, 2, _frameB)));
+    });
+
+    testWidgets('re-resolving a provider after its frame was evicted does not decode a newer frame under the old key', (tester) async {
+      final image = YuvImage.bgra(2, 2);
+      image.yPlane.assignFrom(_solidBgra(2, 2, _frameA));
+      image.markDirty();
+
+      final provider = YuvImageProvider(image);
+      final first = await tester.runAsync(() async => _rgbaOf(await _decodeFrom(provider)));
+      expect(first, orderedEquals(_solidRgba(2, 2, _frameA)));
+
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+      image.yPlane.assignFrom(_solidBgra(2, 2, _frameB));
+      image.markDirty();
+
+      final outcome = await tester.runAsync(() => _outcomeOf(provider));
+
+      expect(outcome, isA<StateError>(), reason: 'decoding now would put the pixels of B under the key of A');
+      expect(PaintingBinding.instance.imageCache.containsKey(provider), isFalse, reason: 'the failed load must not stay cached under the key of A');
     });
   });
 

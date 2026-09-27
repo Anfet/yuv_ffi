@@ -67,6 +67,12 @@ class YuvImageWidget extends StatelessWidget {
 /// instance — without changing the frame already queued for display. A cache
 /// hit takes no copy. A foreign `implements YuvImage` is converted from the
 /// live instance and must not be mutated until its frame has been decoded.
+///
+/// A provider only ever decodes the frame it was created for. If this
+/// package's image was mutated before the provider first loaded — or before a
+/// reload after its frame left the image cache — the load fails with a
+/// [StateError] instead of showing the newer frame under the old key. Create
+/// a new provider for the new frame; [YuvImageWidget] does so on every build.
 class YuvImageProvider extends ImageProvider<YuvImageProvider> {
   /// Source image.
   final YuvImage image;
@@ -112,6 +118,15 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
   Future<ImageInfo> _loadImageFrame(YuvImageProvider key) async {
     const bytesPerPixel = 4;
     try {
+      // The key holds the revision seen in the constructor, but loading starts
+      // only on the first resolve, or again after the frame left the cache. If
+      // the image has moved on by then, its content belongs to another key and
+      // decoding it here would show that frame under this one. The content of
+      // this key is gone, so the load fails rather than guessing. Copying in
+      // the constructor instead would cost a full frame copy on every rebuild,
+      // cache hits included.
+      final liveRevision = _revision == null ? null : YuvRevision.revisionOf(image);
+      final isStale = liveRevision != _revision;
       // Runs synchronously inside loadImage, before the first await, so the
       // copy holds the frame this key was resolved for. Converting the live
       // image after the wait would decode whatever the caller wrote there
@@ -119,10 +134,19 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
       // Only this package's own backends are copied: their copy() is a known
       // deep copy, while a foreign copy() is unverified and may return a blank
       // image, so a foreign image keeps being converted live as before.
-      final frame = YuvRevision.tracksOwnMutations(image) ? image.copy() : image;
+      final frame = _revision != null && !isStale ? image.copy() : image;
       final expectedTotalBytes = frame.width * frame.height * bytesPerPixel;
       // Allow one frame so placeholder can render before CPU-heavy conversion.
       await Future<void>.delayed(Duration.zero);
+      // Thrown only after the wait: the image cache stores this load's entry
+      // after loadImage returns, so a synchronous throw would reach the evict
+      // below first and leave the failed entry cached under this key.
+      if (isStale) {
+        throw StateError(
+          'YuvImageProvider was created for revision $_revision, but the image was at '
+          'revision $liveRevision when loading started; create a new provider for the current frame',
+        );
+      }
       final bytes = frame.toBgraBytes();
       if (bytes.length != expectedTotalBytes) {
         throw StateError(

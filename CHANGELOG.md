@@ -19,6 +19,11 @@
   the frame already queued for display, and an in-place resize in that window
   no longer fails the load. Cache hits take no copy. A foreign
   `implements YuvImage` is still converted from the live instance.
+- A `YuvImageProvider` whose image was mutated after the provider was created —
+  before its first load, or before a reload after its frame left the image
+  cache — now fails that load with a `StateError` instead of decoding the newer
+  frame under the key of the old one. Create a new provider for the new frame;
+  `YuvImageWidget` already does so on every build.
 
 ### Known limitations
 
