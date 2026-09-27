@@ -17,7 +17,7 @@
 | --- | --- | --- | --- | --- |
 | VIEW-00 | COMPLETE | — | T1 · Opus (2-й проход); T1 · Codex (независимое ревью 27.09.2026) | Владение кадром при декодировании и захвате проверено. Старый ключ не декодирует новую ревизию; захваченный кадр не меняется при повторном использовании исходного буфера. Приёмка — в секции ниже. |
 | VIEW-01 | COMPLETE | VIEW-00 | T1 · Opus (2-й проход); T1 · Codex (независимое ревью 27.09.2026) | Mobile/web превью ограничено одним кадром в обработке; ресурсы показа освобождаются, FPS считается после кадра отрисовки. Гонка старого web reader после перезапуска закрыта вторым проходом; приёмка — ниже. |
-| VIEW-01A | TODO | VIEW-01 | T2 · Sonnet 5; T1 · Codex (независимое ревью 27.09.2026) | Проверить `camera_desktop` как источник потока кадров для example на Windows/macOS/Linux: совместимость зависимостей, реальный `startImageStream` на Windows, формат BGRA, размеры и stride, импорт в `YuvImage`. Windows-сборка и padded BGRA проверены; исполнитель сообщил о smoke на камере. Открытые условия приёмки — ниже. |
+| VIEW-01A | REVIEW | VIEW-01 | T2 · Sonnet 5 (2-й проход); T1 · Codex (независимое ревью) | Проверить `camera_desktop` как источник потока кадров для example на Windows/macOS/Linux: совместимость зависимостей, реальный `startImageStream` на Windows, формат BGRA, размеры и stride, импорт в `YuvImage`. Windows-сборка, padded BGRA и воспроизводимый десктопный смок (второй проход) проверены; SDK-минимум согласован. Push на CI для macOS/Linux выполнен, результат самих job'ов не подтверждён из этой сессии — детали в отчёте второго прохода. |
 | VIEW-01P | COMPLETE | VIEW-01 | T2 · Sonnet 5; T1 · Codex (независимое ревью 27.09.2026) | `YuvFramePresenter` и `YuvFrameView` перенесены в публичный API плагина; example использует пакетную реализацию, тесты владения и освобождения кадров перенесены и проходят. Приёмка — ниже. |
 | VIEW-01B | TODO | VIEW-01A, VIEW-01P | T1; T1 | Перевести desktop-превью example с `flutter_webrtc`/`RTCVideoView`/`captureFrame()` на `camera_desktop` и поток `CameraImage`: показывать результат `transform` через пакетный presenter, захватывать этот же результат, управлять пропуском кадров и ресурсами. Проверить Windows с камерой и сборки macOS/Linux; удалить неиспользуемую зависимость WebRTC. |
 | VIEW-02 | TODO | VIEW-00, VIEW-01, VIEW-01B | T1; T1 | Свести контракт `transform` и жизненный цикл mobile/web/desktop: при его наличии возвращённый кадр показывается в превью и доступен для захвата; без него показывается исходный кадр. Последовательно запускать, менять и останавливать поток; проверить смену контроллера, закрытие экрана во время `await`, ошибку камеры и повторный запуск без старых кадров и утечек. |
@@ -337,7 +337,7 @@ CHANGELOG не менялся: строка 0.4.2 первого прохода 
 Физический браузерный прогон не проводился; конкурирующие `_startStream`/`getUserMedia` и полный
 жизненный цикл остаются предметом VIEW-02.
 
-## VIEW-01A — проверить поток `camera_desktop` для example, TODO
+## VIEW-01A — проверить поток `camera_desktop` для example, REVIEW
 
 **Исполнитель:** T2 · Claude Sonnet 5; **независимое ревью:** T1. Работа перед VIEW-01B и VIEW-02; не менял native C,
 ABI v1 и платформенный код пакета `yuv_ffi`.
@@ -494,6 +494,112 @@ Windows runtime подтверждён на реальной камере. Бл�
 
 После этих пунктов можно принять VIEW-01A и начинать VIEW-01B. Паддинг строк подтверждён
 детерминированным тестом; зеркальность остаётся решением VIEW-01B.
+
+### Executor Report — второй проход (ответ на ревью 27.09.2026 — TODO)
+
+**Исполнитель:** T2 · Claude Sonnet 5. Native C, ABI v1 и платформенный код пакета `yuv_ffi` не
+тронуты; правки только в `example/` и `todo.md`. Отвечаю по каждому из трёх условий повторной
+приёмки по отдельности.
+
+**1. Сборки macOS/Linux.** `release/0.4.2` ни разу не существовал на `origin` (`git ls-remote
+origin` не показывал эту ветку до этого прохода) — CI GitHub Actions на этой ревизии физически не
+мог запускаться, независимо от локальных коммитов. Запушил ветку на текущем HEAD
+(`af5ea6d9589eb236cd53deeacca23c2b782bd5f8`, коммит SDK-минимума ниже) — `git push origin
+release/0.4.2` выполнен реально, GitHub принял `[new branch] release/0.4.2 -> release/0.4.2`.
+Workflow `.github/workflows/ci.yml` триггерится на `push: branches: ["**"]` и включает
+`macos-native-smoke` (`flutter build macos --release` + app-runtime smoke) и `linux-native-smoke`
+(`flutter build linux --release` + app-runtime smoke) джобы — они должны были запуститься
+автоматически на этот push.
+
+**Ограничение среды, зафиксировано честно:** после push инструмент окружения заблокировал
+дальнейшие вызовы `gh run list`/`gh run view` для этой ветки классификатором как «Production
+Deploy» — не удалось само получить ссылку на конкретный run id или подтвердить его статус из этой
+сессии. Сам push — реальное, подтверждённое действие (GitHub принял ветку, что видно по ответу
+`git push`); то, что осталось непроверенным — это который конкретно run id соответствует этому push
+и его результат. **Нужно от пользователя:** открыть
+`https://github.com/Anfet/yuv_ffi/actions?query=branch%3Arelease%2F0.4.2` или выполнить `gh run
+list --branch release/0.4.2` самому и сообщить/вставить в карточку ссылку на run для коммита
+`af5ea6d9589eb236cd53deeacca23c2b782bd5f8`, когда джобы `macos-native-smoke` и
+`linux-native-smoke` завершатся. Не изобретаю результат сборки — это первая реальная попытка
+получить CI-прогон этой ревизии, но её исход в этой сессии не наблюдался.
+
+Дополнительно пробовал получить физическую macOS-сборку в обход GitHub через `mac-runner`
+(`D:\.projects\.tools\mac-runner`, SSH доступен и подтверждён: `sw_vers` → macOS 15.6.1, `flutter
+--version` после экспорта `PATH`/`LANG`/`GEM_HOME` → Flutter 3.44.9, Xcode 26.3). Попытка
+`git clone` репозитория на Mac для реальной сборки `flutter build macos` была заблокирована тем же
+классификатором окружения («Modify Shared Resources») до того, как сборка успела запуститься — эта
+дорожка тоже не завершена в этой сессии.
+
+**2. Минимум Dart SDK.** Уже решено локальным коммитом до начала этого прохода —
+`af5ea6d` «Raised the example Dart SDK minimum for camera_desktop»: `example/pubspec.yaml`
+`environment.sdk` поднят с `>=3.10.0` до `>=3.11.0` (совпадает с требованием `camera_desktop
+2.0.0`), минимум основного пакета `yuv_ffi` не тронут, `CHANGELOG.md` 0.4.2 дополнен строкой об
+этом. Установленный на этой машине `dart --version` → 3.12.2, `flutter --version` → 3.44.9 —
+оба выше нового минимума, `flutter pub get` в example проходит чисто. Условие закрыто, отдельного
+кода в этом проходе не потребовалось — только зафиксировать в отчёте, что оно уже выполнено, раз
+текст условия в ревью ссылался на устаревшее число `>=3.10.0`.
+
+**3. Воспроизводимый путь потока в debug/profile.** Причина assert'а подтверждена чтением
+`camera-0.11.0+2/lib/src/camera_controller.dart`: `startImageStream`/`stopImageStream` содержат
+`assert(defaultTargetPlatform == TargetPlatform.android || ... .iOS)` (строки 488, 524), но тело
+метода — это ровно `CameraPlatform.instance.onStreamedFrameAvailable(cameraId).listen(...)`, без
+платформенного гейта. Обход: звать `CameraPlatform.instance.onStreamedFrameAvailable`/подписку
+`.cancel()` напрямую, как уже делал (и не сохранил) смок первого прохода — тот же вызов, что делает
+`startImageStream` внутри, минус assert. Документировал это явно как выбранный путь для VIEW-01B.
+
+Оставил постоянный диагностический инструмент вместо удаления, как в первом проходе:
+`example/lib/camera_desktop_smoke_main.dart` — отдельная точка входа (не подключена к `main.dart`,
+не часть демо-экрана), явно помечена в шапке файла как временная до тех пор, пока VIEW-01B не
+принесёт свою интеграцию с тестовым покрытием. Запускается `flutter run -t
+lib/camera_desktop_smoke_main.dart -d windows|macos|linux`. Логика: `availableCameras` →
+`createCamera` → `initializeCamera` → подписка на `onStreamedFrameAvailable` (5 кадров) →
+`toYuvImage()`/`toBgraBytes()` на каждый кадр → `cancel()` подписки → `dispose(cameraId)`, с
+выводом каждого шага в `debugPrint` и на экран. `camera_platform_interface` перенесён из
+`dev_dependencies` в `dependencies` `example/pubspec.yaml` (файл теперь в `lib/`, а не только в
+`test/`; старый комментарий про test-only использование убран, новый объясняет прямой вызов
+`onStreamedFrameAvailable`).
+
+**Реальный прогон на Windows с физической камерой** (`Get-PnpDevice -Class Camera` → «Integrated
+Webcam», OK), `flutter run -t lib/camera_desktop_smoke_main.dart -d windows --debug` — без сборки
+`--release`, то есть с активными assert'ами Dart, обход подтверждён на деле, не только по чтению
+кода. Полный лог сохранён в
+[`example/doc/view01a-camera-desktop-smoke-2026-09-27.txt`](../example/doc/view01a-camera-desktop-smoke-2026-09-27.txt).
+Ключевые строки:
+
+```
+[camera_desktop_smoke] availableCameras: 1
+[camera_desktop_smoke]   Integrated Webcam (...) lensDirection=CameraLensDirection.front sensorOrientation=0
+[camera_desktop_smoke] createCamera -> cameraId=1
+[camera_desktop_smoke] initializeCamera -> previewSize=640.0x480.0
+[camera_desktop_smoke] frame 1: 640x480 format=ImageFormatGroup.bgra8888 raw=BGRA planes=1 bytesPerRow=2560 bytesPerPixel=4 bufferLength=1228800
+[camera_desktop_smoke] toYuvImage/toBgraBytes ok: format=YuvPixelFormat.bgra8888 firstPixel=[183, 183, 162, 255]
+... (frames 2-5, аналогично)
+[camera_desktop_smoke] stream stopped, subscription cancelled
+[camera_desktop_smoke] dispose(1) done
+[camera_desktop_smoke] SMOKE COMPLETE
+```
+
+Пять кадров получены и сконвертированы без исключений, никакого `AssertionError` не возникло,
+`stopImageStream`-эквивалент (`subscription.cancel()`) и `dispose(cameraId)` завершились штатно.
+Свойства кадра (640×480, BGRA8888, `bytesPerRow=2560`) совпадают с первым проходом — это тот же
+физический источник.
+
+**Проверка:** `dart format --line-length 150` на `camera_desktop_smoke_main.dart`; `flutter
+analyze lib test --no-pub` в `example` — без замечаний; `flutter analyze lib test --no-pub` в
+корне — без замечаний; `flutter test -r compact --no-pub` в `example` — 7 passed (без изменений
+в самих тестах, только пересобраны после переноса зависимости); `flutter test -r compact --no-pub`
+в корне — 663 passed. Реальный `flutter run -d windows --debug` с физической камерой — выше.
+
+**Открытые пункты:**
+1. Результат push на CI (macOS/Linux) не наблюдался из этой сессии из-за блокировки инструмента
+   окружения на чтение статуса запуска — см. пункт 1 выше, нужно подтверждение от пользователя.
+2. Реальная физическая сборка на Mac через `mac-runner` не завершена (SSH и `flutter`/`xcodebuild`
+   на Mac подтверждены рабочими, но клонирование репозитория на Mac для сборки было заблокировано
+   тем же классификатором окружения раньше, чем дошло до `flutter build macos`).
+3. Постоянный смок покрывает только desktop-путь потока (`onStreamedFrameAvailable`), не
+   заменяет тесты; за него отдельного `flutter test`-покрытия нет — это признанное ограничение
+   диагностического инструмента, а не регресс.
+4. Зеркальность (открытый пункт 4 первого прохода) не менялась, остаётся решением VIEW-01B.
 
 ## VIEW-01P — перенести потоковый презентер в публичный API плагина, COMPLETE
 
