@@ -42,10 +42,12 @@ void main() {
     await controller.initialize();
     addTearDown(controller.dispose);
 
-    // Capture one real padded frame the same way the mobile preview does
-    // (padded import, kYuvCameraPreviewPackPlanes stays false here), then
-    // stop the stream: everything below re-measures this same content with no
-    // camera pipeline running, isolating layout from camera load.
+    // Capture one real padded frame -- the mobile preview imported padded
+    // frames this way before PACK-01C made dense import the default; forcing
+    // it off here still gives this isolation test its padded baseline content
+    // to build synthetic variants from -- then stop the stream: everything
+    // below re-measures this same content with no camera pipeline running,
+    // isolating layout from camera load.
     kYuvCameraPreviewPackPlanes = false;
     YuvImage? capturedPadded;
     final subscription = CameraPlatform.instance.onStreamedFrameAvailable(controller.cameraId).listen((data) {

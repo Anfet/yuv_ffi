@@ -12,8 +12,14 @@ import 'package:yuv_ffi_example/ext.dart';
 /// alignment). This test does not depend on `camera_desktop` or a physical
 /// camera: it builds the same [CameraImageData] shape the platform interface
 /// hands to [CameraImage.fromPlatformInterface] and exercises the
-/// `isPacked` branch of [CameraImageExt.toYuvImage] with a padded stride.
+/// `isPacked` branch of [CameraImageExt.toYuvImage] with a padded stride,
+/// forcing [kYuvCameraPreviewPackPlanes] off (PACK-01C made dense import the
+/// default) to specifically cover the padded-preserving path this test is
+/// named for.
 void main() {
+  setUp(() => kYuvCameraPreviewPackPlanes = false);
+  tearDown(() => kYuvCameraPreviewPackPlanes = true);
+
   test('toYuvImage keeps a padded BGRA row stride without shifting pixels', () {
     const width = 3;
     const height = 2;

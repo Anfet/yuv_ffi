@@ -4,13 +4,20 @@ import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// PACK-00 experiment switch only: when `true`, [CameraImageExt.toYuvImage]
-/// copies each plane into a tightly packed buffer (no row padding) instead of
-/// preserving the camera's reported `bytesPerRow`. Defaults to `false` (the
-/// existing padded-preserving behavior) until PACK-00's measurement and
-/// independent review decide whether packing belongs in the public contract;
-/// flipping it does not change `YuvImage`'s constructor or native code.
-bool kYuvCameraPreviewPackPlanes = false;
+/// PACK-01C: when `true` (the default), [CameraImageExt.toYuvImage] copies
+/// each plane into a tightly packed buffer (no row padding, and -- for I420
+/// chroma reported at `pixelStride == 2` -- no per-sample pixel gap) instead
+/// of preserving the camera's reported `bytesPerRow`. PACK-00 measured this at
+/// 3.3x faster `applyRotation` and +23% shown FPS on a real Pixel 3 in a
+/// release build, which is why the normal mobile preview now imports densely
+/// by default. Set to `false` to reproduce the previous padded-preserving
+/// import, e.g. for the padded/packed A/B comparison in
+/// `Pack00BenchScreen`/PACK-00's device tests. Flipping it does not change
+/// `YuvImage`'s constructor or native code -- both variants are built here in
+/// `_packPlane`/the padded branch below, then handed to the factory with
+/// `layout: YuvPlaneLayout.preserve` so the factory's own packing default
+/// never runs a second time over either one.
+bool kYuvCameraPreviewPackPlanes = true;
 
 extension CameraImageExt on CameraImage {
   YuvImage toYuvImage() {

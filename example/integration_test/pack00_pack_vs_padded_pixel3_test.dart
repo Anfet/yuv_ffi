@@ -12,10 +12,10 @@ import 'package:yuv_ffi_example/ext.dart';
 import 'package:yuv_ffi_example/widgets/impl/yuv_camera_preview_io.dart';
 import 'package:yuv_ffi_example/widgets/yuv_camera_preview.dart';
 
-/// PACK-00: compares the current padded camera import
-/// ([kYuvCameraPreviewPackPlanes] = `false`, the shipped default) against a
-/// tightly packed import (`true`, no row padding, PACK-00's experimental
-/// switch) of the same real Pixel 3 camera frames, inside one running
+/// PACK-00: compares the padded camera import
+/// ([kYuvCameraPreviewPackPlanes] = `false`) against the tightly packed
+/// import (`true` -- the default since PACK-01C; no row padding, PACK-00's
+/// experimental switch) of the same real Pixel 3 camera frames, inside one running
 /// `_YuvCameraPreviewMobile` subscription -- the same VIEW-03 methodology and
 /// diagnostic hook (`debugYuvCameraPreviewMobileEvent`,
 /// `example/lib/widgets/impl/yuv_camera_preview_io.dart`), so delivered,

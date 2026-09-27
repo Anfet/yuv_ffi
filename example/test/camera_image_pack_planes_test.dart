@@ -6,14 +6,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
 
-/// PACK-00: [kYuvCameraPreviewPackPlanes] switches [CameraImageExt.toYuvImage]
-/// between preserving the camera's padded `bytesPerRow` (the existing,
-/// default behavior, covered by `camera_image_to_yuv_image_padding_test.dart`)
-/// and copying only the visible samples into a tight buffer. This file proves
-/// the two paths agree on every visible sample they import, for the plane
-/// shapes the experiment cares about: I420 with a gapped U/V stride, NV12
-/// (interleaved UV), BGRA8888, odd width/height (chroma rounds up), and a
-/// source buffer that omits the padding after its last row.
+/// PACK-00/PACK-01C: [kYuvCameraPreviewPackPlanes] switches
+/// [CameraImageExt.toYuvImage] between copying only the visible samples into
+/// a tight buffer (the default since PACK-01C) and preserving the camera's
+/// padded `bytesPerRow` (covered by `camera_image_to_yuv_image_padding_test.dart`).
+/// This file proves the two paths agree on every visible sample they import,
+/// for the plane shapes the experiment cares about: I420 with a gapped U/V
+/// stride, NV12 (interleaved UV), BGRA8888, odd width/height (chroma rounds
+/// up), and a source buffer that omits the padding after its last row.
 ///
 /// The derived [YuvImage.toBgraBytes] / [YuvImage.applyRotation] agreement is
 /// exercised separately, in the root package's
