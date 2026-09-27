@@ -66,8 +66,15 @@ class _Pack00BenchScreenState extends State<Pack00BenchScreen> {
     } catch (ex) {
       if (mounted) setState(() => error = ex);
     } finally {
-      kYuvCameraPreviewPackPlanes = _packPlanesBeforeBench;
-      if (mounted) setState(() => running = false);
+      // dispose() already restored the flag if this screen was closed while
+      // a run was still pending; doing it again here regardless of mounted
+      // would race a second bench instance opened in the meantime -- this
+      // finally can resolve after that instance already started its own
+      // runs, and would stomp on whatever value it is mid-comparison with.
+      if (mounted) {
+        kYuvCameraPreviewPackPlanes = _packPlanesBeforeBench;
+        setState(() => running = false);
+      }
     }
   }
 

@@ -71,4 +71,50 @@ void main() {
 
     expect(kYuvCameraPreviewPackPlanes, isTrue, reason: 'must restore the value from before this screen ran, not hardcode false');
   });
+
+  testWidgets('a first screen closed mid-run must not stomp a second screen\'s flag when its stale finally resolves later', (tester) async {
+    // Second review's exact race: the first screen's _runBoth is not
+    // cancelled by dispose(), only detached from the tree. Its still-
+    // pending Future.delayed eventually fires regardless, throws out of
+    // the now-unmounted setState it resumes into, and that gets caught by
+    // _runBoth's own catch/finally -- which, without the mounted guard,
+    // would overwrite the flag a second, unrelated screen is mid-comparison
+    // with. Pre-screen value `true` for the first screen makes a stomp
+    // unambiguous: the second screen's own schedule has the flag at
+    // `false` (mid padded run) at the exact tick the first screen's stale
+    // timer fires.
+    kYuvCameraPreviewPackPlanes = true;
+
+    await pumpBenchScreen(tester);
+    expect(kYuvCameraPreviewPackPlanes, isFalse, reason: 'first screen\'s first run (padded) sets it to false');
+
+    // Close the first screen a fraction of a second into its first run's
+    // warmup, long before its pending delay resolves: dispose() restores
+    // the flag to `true` (what it was before the first screen opened).
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(const SizedBox());
+    expect(kYuvCameraPreviewPackPlanes, isTrue);
+
+    // Open a second screen right after. Its pre-screen value is also
+    // `true` (what the first screen's dispose() just restored), so its
+    // first (padded) run sets the flag to `false` again.
+    await pumpBenchScreen(tester);
+    expect(kYuvCameraPreviewPackPlanes, isFalse, reason: 'second screen\'s first run (padded) sets it to false too');
+
+    // Advance to just past 13s from the *first* screen's original start
+    // (0.1s before this second screen even existed): that is when its
+    // stale run-0 Future.delayed resolves. At that same moment the second
+    // screen, started ~0.1s later, is still inside its own first (padded)
+    // run -- flag must still read false. The buggy version's stale
+    // finally would force it back to the first screen's `true` here.
+    await tester.pump(const Duration(milliseconds: 12950));
+    expect(
+      kYuvCameraPreviewPackPlanes,
+      isFalse,
+      reason: 'the first screen\'s stale finally must not resurrect its own pre-screen value over the second screen\'s in-flight run',
+    );
+
+    await runBothRunsToCompletion(tester);
+    expect(kYuvCameraPreviewPackPlanes, isTrue, reason: 'second screen restores its own pre-screen value (true) on natural completion');
+  });
 }
