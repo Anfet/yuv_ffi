@@ -76,21 +76,31 @@ void main() {
     /// Builds a variant of [source]'s content with [padY]/[padChroma]
     /// controlling whether that plane keeps the captured padded row stride
     /// (`true`) or is repacked tight (`false`). Both variants hold the exact
-    /// same visible samples -- only row stride differs -- so a speed
-    /// difference is attributable to layout alone.
+    /// same visible samples -- only layout differs -- so a speed difference
+    /// is attributable to layout alone.
+    ///
+    /// A tight I420 chroma plane must have `pixelStride == 1`
+    /// (`yuv_rotate_v1_plane_is_tightly_packed` in the native rotate kernel
+    /// requires it for the fast path). This device's captured [uPlane]/[vPlane]
+    /// report `pixelStride == 2` (the same physically interleaved chroma
+    /// buffer NV12/NV21 uses, split a byte apart into separate U/V
+    /// `Image.Plane`s) -- so building "tight" here means *de-interleaving*
+    /// down to `sampleBytes` per sample, not merely dropping row padding
+    /// while keeping the source's pixel stride. An earlier version of this
+    /// test kept the source pixel stride for the "tight" variant too, which
+    /// silently never reached the native fast path in either variant and
+    /// made padded and tight measure the same operation.
     YuvImage buildVariant({required bool padY, required bool padChroma}) {
       YuvPlane project(YuvPlane plane, int columns, bool keepPadding) {
         if (keepPadding) return plane.copy();
-        final tight = Uint8List(plane.height * columns * plane.pixelStride);
+        const sampleBytes = 1; // I420 Y/U/V is always one byte per sample.
+        final tight = Uint8List(plane.height * columns * sampleBytes);
         for (var row = 0; row < plane.height; row++) {
           for (var col = 0; col < columns; col++) {
-            for (var b = 0; b < plane.pixelStride; b++) {
-              tight[row * columns * plane.pixelStride + col * plane.pixelStride + b] =
-                  plane.bytes[row * plane.rowStride + col * plane.pixelStride + b];
-            }
+            tight[row * columns + col] = plane.bytes[row * plane.rowStride + col * plane.pixelStride];
           }
         }
-        return YuvPlane(plane.height, columns * plane.pixelStride, plane.pixelStride, tight);
+        return YuvPlane(plane.height, columns * sampleBytes, sampleBytes, tight);
       }
 
       final chromaWidth = (width + 1) ~/ 2;
@@ -132,18 +142,20 @@ void main() {
       };
     }
 
-    // Import cost: repacking the captured padded content into a tight plane,
+    // Import cost: repacking (de-interleaving, for this device's chroma
+    // pixelStride 2) the captured padded content into a tight plane,
     // measured directly (not inferred from earlier "~1-2 ms" assumptions).
+    // Mirrors `buildVariant.project` above -- see its doc comment for why
+    // this drops the source pixelStride down to 1 rather than keeping it.
     YuvPlane packPlane(YuvPlane plane, int columns) {
-      final tight = Uint8List(plane.height * columns * plane.pixelStride);
+      const sampleBytes = 1;
+      final tight = Uint8List(plane.height * columns * sampleBytes);
       for (var row = 0; row < plane.height; row++) {
         for (var col = 0; col < columns; col++) {
-          for (var b = 0; b < plane.pixelStride; b++) {
-            tight[row * columns * plane.pixelStride + col * plane.pixelStride + b] = plane.bytes[row * plane.rowStride + col * plane.pixelStride + b];
-          }
+          tight[row * columns + col] = plane.bytes[row * plane.rowStride + col * plane.pixelStride];
         }
       }
-      return YuvPlane(plane.height, columns * plane.pixelStride, plane.pixelStride, tight);
+      return YuvPlane(plane.height, columns * sampleBytes, sampleBytes, tight);
     }
 
     final chromaWidth = (width + 1) ~/ 2;

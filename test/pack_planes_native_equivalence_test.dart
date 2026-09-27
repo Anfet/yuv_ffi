@@ -116,6 +116,75 @@ void main() {
       expectSameNativeOutput(padded, packed);
     });
 
+    test('I420 with a padded chroma source reported at pixelStride 2 (real Pixel 3 geometry) '
+        'de-interleaves to pixelStride 1, not just a tighter row stride', () {
+      // Matches doc/perf/results/pack00_pixel3_raw/isolation_geometry.json:
+      // this device's `ImageFormatGroup.yuv420` reports separate U and V
+      // planes, each with `bytesPerPixel == 2` -- physically the same
+      // interleaved chroma buffer NV12/NV21 uses, split a byte apart. A
+      // packed import that only tightened the row stride while keeping
+      // pixelStride 2 would still carry every other byte belonging to the
+      // *other* channel into what `YuvImage.i420` declares a pure U or V
+      // plane, and would never reach the native rotate kernel's
+      // tightly-packed fast path (`yuv_rotate_v1_plane_is_tightly_packed`
+      // requires `pixelStride == sampleBytes`).
+      const width = 8;
+      const height = 6;
+      const chromaWidth = (width + 1) ~/ 2;
+      const chromaHeight = (height + 1) ~/ 2;
+      const paddedChromaPixelStride = 2;
+
+      // U's samples sit at even byte offsets, V's at odd -- one byte apart.
+      final paddedU = plane(
+        rows: chromaHeight,
+        rowStride: chromaWidth * paddedChromaPixelStride + 8,
+        columns: chromaWidth,
+        pixelStride: paddedChromaPixelStride,
+        sampleBytes: 1,
+        seed: 301,
+      );
+      final paddedV = plane(
+        rows: chromaHeight,
+        rowStride: chromaWidth * paddedChromaPixelStride + 8,
+        columns: chromaWidth,
+        pixelStride: paddedChromaPixelStride,
+        sampleBytes: 1,
+        seed: 401,
+      );
+      final padded = YuvImage.i420(
+        width,
+        height,
+        planes: [
+          plane(rows: height, rowStride: width + 16, columns: width, pixelStride: 1, sampleBytes: 1, seed: 1),
+          paddedU,
+          paddedV,
+        ],
+      );
+
+      // The de-interleaved, tightly packed equivalent: pixelStride 1,
+      // rowStride == chromaWidth, holding the same visible U/V samples.
+      final packedU = YuvPlane(chromaHeight, chromaWidth, 1, Uint8List(chromaHeight * chromaWidth));
+      final packedV = YuvPlane(chromaHeight, chromaWidth, 1, Uint8List(chromaHeight * chromaWidth));
+      for (var row = 0; row < chromaHeight; row++) {
+        for (var col = 0; col < chromaWidth; col++) {
+          packedU.bytes[row * chromaWidth + col] = paddedU.bytes[row * paddedU.rowStride + col * paddedChromaPixelStride];
+          packedV.bytes[row * chromaWidth + col] = paddedV.bytes[row * paddedV.rowStride + col * paddedChromaPixelStride];
+        }
+      }
+      final packed = YuvImage.i420(
+        width,
+        height,
+        planes: [
+          tightPlane(rows: height, columns: width, pixelStride: 1, sampleBytes: 1, seed: 1),
+          packedU,
+          packedV,
+        ],
+      );
+
+      expect(packed.uPlane.pixelStride, 1, reason: 'packed chroma must be pixelStride 1, not the source\'s 2 -- required for the native fast path');
+      expectSameNativeOutput(padded, packed);
+    });
+
     test('NV12, even geometry, gapped Y and UV stride', () {
       const width = 8;
       const height = 6;

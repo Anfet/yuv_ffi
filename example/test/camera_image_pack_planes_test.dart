@@ -59,13 +59,28 @@ void main() {
   /// Builds the same [CameraImageData] once, then converts it with
   /// [kYuvCameraPreviewPackPlanes] both off and on, asserting every visible
   /// sample of every plane is byte-identical between the two -- packing must
-  /// only drop padding, never reorder or corrupt a sample.
+  /// only drop padding (and, where the source pixel stride is wider than a
+  /// sample, de-interleave down to it), never reorder or corrupt a sample.
+  ///
+  /// [planeSourcePixelStrides] is each plane's *input* pixel stride, as the
+  /// camera reports it (`CameraImagePlane.bytesPerPixel`); [planeSampleBytes]
+  /// is how many bytes one visible sample actually occupies -- equal to the
+  /// source pixel stride for a planar Y/U/V sample or an already-interleaved
+  /// NV12/NV21 UV pair or packed BGRA8888 pixel, but *narrower* than it for
+  /// Android's `ImageFormatGroup.yuv420` on devices that expose separate U
+  /// and V planes with `bytesPerPixel == 2` each (the same physically
+  /// interleaved chroma buffer NV12/NV21 uses, split into two `Image.Plane`s
+  /// a single byte apart) -- the case that motivated this parameter split.
+  /// The packed plane's own pixel stride is always [planeSampleBytes], never
+  /// the source's.
   void expectSameVisibleSamples(
     CameraImageData data, {
     required List<int> planeRows,
     required List<int> planeColumns,
-    required List<int> planePixelStrides,
+    required List<int> planeSourcePixelStrides,
+    List<int>? planeSampleBytes,
   }) {
+    final sampleBytes = planeSampleBytes ?? planeSourcePixelStrides;
     kYuvCameraPreviewPackPlanes = false;
     final padded = buildFromCameraData(data);
     kYuvCameraPreviewPackPlanes = true;
@@ -75,13 +90,19 @@ void main() {
     for (var i = 0; i < padded.planes.length; i++) {
       final rows = planeRows[i];
       final columns = planeColumns[i];
-      final pixelStride = planePixelStrides[i];
-      expect(packed.planes[i].bytesPerRow, columns * pixelStride, reason: 'plane $i: packed row stride must equal columns * pixelStride');
+      final sourcePixelStride = planeSourcePixelStrides[i];
+      final destPixelStride = sampleBytes[i];
+      expect(packed.planes[i].bytesPerRow, columns * destPixelStride, reason: 'plane $i: packed row stride must equal columns * sampleBytes');
+      expect(
+        packed.planes[i].pixelStride,
+        destPixelStride,
+        reason: 'plane $i: packed pixel stride must equal sampleBytes, not the source pixel stride',
+      );
       for (var row = 0; row < rows; row++) {
         for (var col = 0; col < columns; col++) {
-          for (var b = 0; b < pixelStride; b++) {
-            final paddedByte = padded.planes[i].bytes[row * padded.planes[i].bytesPerRow + col * pixelStride + b];
-            final packedByte = packed.planes[i].bytes[row * packed.planes[i].bytesPerRow + col * pixelStride + b];
+          for (var b = 0; b < destPixelStride; b++) {
+            final paddedByte = padded.planes[i].bytes[row * padded.planes[i].bytesPerRow + col * sourcePixelStride + b];
+            final packedByte = packed.planes[i].bytes[row * packed.planes[i].bytesPerRow + col * destPixelStride + b];
             expect(packedByte, paddedByte, reason: 'plane $i row $row col $col byte $b differs between padded and packed import');
           }
         }
@@ -131,7 +152,7 @@ void main() {
         data,
         planeRows: [height, chromaHeight, chromaHeight],
         planeColumns: [width, chromaWidth, chromaWidth],
-        planePixelStrides: [1, 1, 1],
+        planeSourcePixelStrides: [1, 1, 1],
       );
     });
 
@@ -176,7 +197,7 @@ void main() {
         data,
         planeRows: [height, chromaHeight, chromaHeight],
         planeColumns: [width, chromaWidth, chromaWidth],
-        planePixelStrides: [1, 1, 1],
+        planeSourcePixelStrides: [1, 1, 1],
       );
     });
 
@@ -218,7 +239,66 @@ void main() {
         data,
         planeRows: [height, chromaHeight, chromaHeight],
         planeColumns: [width, chromaWidth, chromaWidth],
-        planePixelStrides: [1, 1, 1],
+        planeSourcePixelStrides: [1, 1, 1],
+      );
+    });
+
+    test('separate U/V planes reported with bytesPerPixel 2, matching a real Pixel 3 camera frame', () {
+      // Some Android devices label `ImageFormatGroup.yuv420` frames with two
+      // separate `Image.Plane`s for U and V, yet each plane's
+      // `bytesPerPixel` is 2, not 1 -- the same physically interleaved
+      // chroma buffer NV12/NV21 uses, split a single byte apart into "U" and
+      // "V" views instead of the fully planar layout the format name
+      // suggests. A tight import that merely drops row padding but keeps
+      // this pixel stride would leave every other byte belonging to the
+      // *other* channel inside what should be a pure U or V plane -- this
+      // proves the packed import actually de-interleaves down to
+      // pixelStride 1, not just tightens the row stride.
+      const width = 8;
+      const height = 6;
+      const yRowStride = width + 16;
+      const chromaWidth = (width + 1) ~/ 2;
+      const chromaHeight = (height + 1) ~/ 2;
+      const chromaPixelStride = 2;
+      const chromaRowStride = chromaWidth * chromaPixelStride + 8; // gapped, interleaved-width stride
+
+      final yBytes = paddedPlaneBytes(rows: height, rowStride: yRowStride, columns: width, pixelStride: 1, sampleBytes: 1, seed: 1);
+      // U's samples sit at even byte offsets, V's at odd -- one byte apart,
+      // as the plugin reports them on this class of device.
+      final uBytes = paddedPlaneBytes(
+        rows: chromaHeight,
+        rowStride: chromaRowStride,
+        columns: chromaWidth,
+        pixelStride: chromaPixelStride,
+        sampleBytes: 1,
+        seed: 101,
+      );
+      final vBytes = paddedPlaneBytes(
+        rows: chromaHeight,
+        rowStride: chromaRowStride,
+        columns: chromaWidth,
+        pixelStride: chromaPixelStride,
+        sampleBytes: 1,
+        seed: 201,
+      );
+
+      final data = CameraImageData(
+        format: const CameraImageFormat(ImageFormatGroup.yuv420, raw: 'YUV420'),
+        width: width,
+        height: height,
+        planes: [
+          CameraImagePlane(bytes: yBytes, bytesPerRow: yRowStride, bytesPerPixel: 1, width: width, height: height),
+          CameraImagePlane(bytes: uBytes, bytesPerRow: chromaRowStride, bytesPerPixel: chromaPixelStride, width: chromaWidth, height: chromaHeight),
+          CameraImagePlane(bytes: vBytes, bytesPerRow: chromaRowStride, bytesPerPixel: chromaPixelStride, width: chromaWidth, height: chromaHeight),
+        ],
+      );
+
+      expectSameVisibleSamples(
+        data,
+        planeRows: [height, chromaHeight, chromaHeight],
+        planeColumns: [width, chromaWidth, chromaWidth],
+        planeSourcePixelStrides: [1, chromaPixelStride, chromaPixelStride],
+        planeSampleBytes: const [1, 1, 1],
       );
     });
   });
@@ -245,7 +325,7 @@ void main() {
         ],
       );
 
-      expectSameVisibleSamples(data, planeRows: [height, chromaHeight], planeColumns: [width, chromaWidth], planePixelStrides: [1, 2]);
+      expectSameVisibleSamples(data, planeRows: [height, chromaHeight], planeColumns: [width, chromaWidth], planeSourcePixelStrides: [1, 2]);
     });
 
     test('odd width and height', () {
@@ -269,7 +349,7 @@ void main() {
         ],
       );
 
-      expectSameVisibleSamples(data, planeRows: [height, chromaHeight], planeColumns: [width, chromaWidth], planePixelStrides: [1, 2]);
+      expectSameVisibleSamples(data, planeRows: [height, chromaHeight], planeColumns: [width, chromaWidth], planeSourcePixelStrides: [1, 2]);
     });
   });
 
@@ -288,7 +368,7 @@ void main() {
         planes: [CameraImagePlane(bytes: bytes, bytesPerRow: rowStride, bytesPerPixel: 4, width: width, height: height)],
       );
 
-      expectSameVisibleSamples(data, planeRows: [height], planeColumns: [width], planePixelStrides: [4]);
+      expectSameVisibleSamples(data, planeRows: [height], planeColumns: [width], planeSourcePixelStrides: [4]);
     });
 
     test('padded row stride, odd width', () {
@@ -305,7 +385,7 @@ void main() {
         planes: [CameraImagePlane(bytes: bytes, bytesPerRow: rowStride, bytesPerPixel: 4, width: width, height: height)],
       );
 
-      expectSameVisibleSamples(data, planeRows: [height], planeColumns: [width], planePixelStrides: [4]);
+      expectSameVisibleSamples(data, planeRows: [height], planeColumns: [width], planeSourcePixelStrides: [4]);
     });
   });
 

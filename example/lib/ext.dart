@@ -49,7 +49,7 @@ extension CameraImageExt on CameraImage {
             rows: rows,
             columns: columns,
             sourceRowStride: sourceRowStride,
-            pixelStride: pixelStride,
+            sourcePixelStride: pixelStride,
             sampleBytes: sampleBytes,
           ),
         );
@@ -81,37 +81,53 @@ extension CameraImageExt on CameraImage {
 }
 
 /// Copies [rows] * [columns] visible samples of one plane out of [source],
-/// which is laid out with [sourceRowStride] bytes per row and [pixelStride]
-/// bytes between neighboring samples, into a new [YuvPlane] with row stride
-/// `columns * pixelStride` -- i.e. no row padding and no inter-sample gap.
+/// which is laid out with [sourceRowStride] bytes per row and
+/// [sourcePixelStride] bytes between neighboring samples, into a new
+/// [YuvPlane] with **no row padding and no inter-sample gap**: row stride
+/// `columns * sampleBytes` and pixel stride `sampleBytes`.
 ///
-/// [sampleBytes] is how many leading bytes of each [pixelStride]-wide slot are
-/// copied (1 for planar Y/U/V, [pixelStride] itself for interleaved NV12/NV21
-/// UV pairs and packed BGRA8888), so trailing gap bytes inside a pixel slot
-/// (there are none in the formats this project stores, but the copy stays
-/// correct if one is ever added) are never carried into the tight output.
+/// [sampleBytes] is how many leading bytes of each [sourcePixelStride]-wide
+/// source slot are copied (1 for a planar Y/U/V sample, [sourcePixelStride]
+/// itself for an interleaved NV12/NV21 UV pair or packed BGRA8888 pixel,
+/// where the destination pixel stride must stay equal to the source's).
+///
+/// When [sourcePixelStride] is wider than [sampleBytes] -- Android's
+/// `ImageFormatGroup.yuv420` reports separate U and V planes on some devices
+/// with `bytesPerPixel == 2` each, i.e. the same interleaved chroma buffer
+/// NV12/NV21 uses, just exposed as two `Image.Plane`s with a 1-byte pixel
+/// offset between them, not one -- this **de-interleaves**: every other
+/// source byte, the one belonging to this plane's channel, is kept, and the
+/// stride-1 byte in between (the other channel's sample) is dropped. A tight
+/// output that merely repeated the source's pixel stride would still leave
+/// alternating bytes belonging to the other channel in what should be a pure
+/// U or V plane, and native code that assumes `pixelStride == sampleBytes`
+/// for planar I420 chroma would then read the wrong bytes.
 YuvPlane _packPlane({
   required Uint8List source,
   required int rows,
   required int columns,
   required int sourceRowStride,
-  required int pixelStride,
+  required int sourcePixelStride,
   required int sampleBytes,
 }) {
-  final tightRowStride = columns * pixelStride;
+  final tightRowStride = columns * sampleBytes;
   final packed = Uint8List(rows * tightRowStride);
   for (var row = 0; row < rows; row++) {
     final sourceRowStart = row * sourceRowStride;
     final destRowStart = row * tightRowStride;
-    if (sampleBytes == pixelStride) {
+    if (sourcePixelStride == sampleBytes) {
       packed.setRange(destRowStart, destRowStart + tightRowStride, source, sourceRowStart);
       continue;
     }
     for (var col = 0; col < columns; col++) {
-      packed[destRowStart + col * pixelStride] = source[sourceRowStart + col * pixelStride];
+      final sourceSampleStart = sourceRowStart + col * sourcePixelStride;
+      final destSampleStart = destRowStart + col * sampleBytes;
+      for (var b = 0; b < sampleBytes; b++) {
+        packed[destSampleStart + b] = source[sourceSampleStart + b];
+      }
     }
   }
-  return YuvPlane(rows, tightRowStride, pixelStride, packed);
+  return YuvPlane(rows, tightRowStride, sampleBytes, packed);
 }
 
 extension YuvImageToCameraExt on YuvImage {
