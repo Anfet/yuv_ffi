@@ -1,0 +1,86 @@
+Resolving dependencies...
+Downloading packages...
+  async 2.11.0 (2.13.1 available)
+  boolean_selector 2.1.1 (2.1.2 available)
+  camera 0.11.0+2 (0.12.1 available)
+  camera_android_camerax 0.6.10+3 (0.7.5 available)
+  camera_avfoundation 0.9.19 (0.11.0 available)
+  camera_platform_interface 2.10.0 (2.14.0 available)
+  camera_web 0.3.5 (0.3.5+6 available)
+  clock 1.1.2 (1.1.3 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  cupertino_icons 1.0.8 (1.0.9 available)
+  file_selector_linux 0.9.3+2 (0.9.4+1 available)
+  file_selector_macos 0.9.4+2 (0.9.5+1 available)
+  file_selector_platform_interface 2.6.2 (2.7.0 available)
+  file_selector_windows 0.9.3+4 (0.9.3+6 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.26 (2.0.35 available)
+  google_mlkit_commons 0.11.0 (0.13.0 available)
+  google_mlkit_face_detection 0.13.1 (0.15.1 available)
+  http_parser 4.0.2 (4.1.2 available)
+  image_picker 1.1.2 (1.2.3 available)
+  image_picker_android 0.8.12+21 (0.8.13+23 available)
+  image_picker_for_web 3.0.6 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+8 available)
+  image_picker_linux 0.2.1+2 (0.2.2 available)
+  image_picker_macos 0.2.1+2 (0.2.2+1 available)
+  image_picker_platform_interface 2.10.1 (2.11.1 available)
+  image_picker_windows 0.2.1+1 (0.2.2 available)
+  lints 5.0.0 (6.1.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.18.0 (1.19.0 available)
+  mime 2.0.0 (2.1.0 available)
+  path_provider 2.1.5 (2.1.6 available)
+  path_provider_android 2.2.15 (2.3.1 available)
+  path_provider_foundation 2.4.1 (2.6.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  platform 3.1.6 (3.2.0 available)
+  source_span 1.10.0 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  string_scanner 1.2.0 (1.4.1 available)
+  synchronized 3.3.0+3 (3.4.2 available)
+  term_glyph 1.2.1 (1.2.2 available)
+  test_api 0.7.11 (0.7.14 available)
+  vector_math 2.2.0 (2.4.3 available)
+  vm_service 14.2.5 (15.3.0 available)
+Got dependencies!
+47 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Launching lib/camera_desktop_smoke_main.dart on Windows in debug mode...
+Building Windows application...                                    14,5s
+√ Built build\windows\x64\runner\Debug\example.exe
+Syncing files to device Windows...                              
+[camera_desktop_smoke] availableCameras: 1
+[camera_desktop_smoke]   Integrated Webcam (\\?\usb#vid_0bda&pid_555d&mi_00#6&23f925db&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\global) lensDirection=CameraLensDirection.front sensorOrientation=0
+[camera_desktop_smoke] createCamera -> cameraId=1
+Syncing files to device Windows...                                 108ms
+
+Flutter run key commands.
+r Hot reload. 
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+A Dart VM Service on Windows is available at: http://127.0.0.1:53052/qtC5TS4yo3Q=/
+The Flutter DevTools debugger and profiler on Windows is available at: http://127.0.0.1:53052/qtC5TS4yo3Q=/devtools/?uri=ws://127.0.0.1:53052/qtC5TS4yo3Q=/ws
+[camera_desktop_smoke] initializeCamera -> previewSize=640.0x480.0
+[camera_desktop_smoke] frame 1: 640x480 format=ImageFormatGroup.bgra8888 raw=BGRA planes=1 bytesPerRow=2560 bytesPerPixel=4 bufferLength=1228800
+[camera_desktop_smoke] toYuvImage/toBgraBytes ok: format=YuvPixelFormat.bgra8888 firstPixel=[183, 183, 162, 255]
+[camera_desktop_smoke] frame 2: 640x480 format=ImageFormatGroup.bgra8888 raw=BGRA planes=1 bytesPerRow=2560 bytesPerPixel=4 bufferLength=1228800
+[camera_desktop_smoke] toYuvImage/toBgraBytes ok: format=YuvPixelFormat.bgra8888 firstPixel=[181, 181, 163, 255]
+[camera_desktop_smoke] frame 3: 640x480 format=ImageFormatGroup.bgra8888 raw=BGRA planes=1 bytesPerRow=2560 bytesPerPixel=4 bufferLength=1228800
+[camera_desktop_smoke] toYuvImage/toBgraBytes ok: format=YuvPixelFormat.bgra8888 firstPixel=[164, 175, 155, 255]
+[camera_desktop_smoke] frame 4: 640x480 format=ImageFormatGroup.bgra8888 raw=BGRA planes=1 bytesPerRow=2560 bytesPerPixel=4 bufferLength=1228800
+[camera_desktop_smoke] toYuvImage/toBgraBytes ok: format=YuvPixelFormat.bgra8888 firstPixel=[163, 166, 150, 255]
+[camera_desktop_smoke] frame 5: 640x480 format=ImageFormatGroup.bgra8888 raw=BGRA planes=1 bytesPerRow=2560 bytesPerPixel=4 bufferLength=1228800
+[camera_desktop_smoke] toYuvImage/toBgraBytes ok: format=YuvPixelFormat.bgra8888 firstPixel=[153, 160, 143, 255]
+[camera_desktop_smoke] stream stopped, subscription cancelled
+[camera_desktop_smoke] dispose(1) done
+[camera_desktop_smoke] SMOKE COMPLETE
+Lost connection to device.
