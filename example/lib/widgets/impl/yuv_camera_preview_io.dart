@@ -3,10 +3,12 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
+import 'package:yuv_ffi_example/widgets/present_camera_frame.dart';
 
 part 'yuv_camera_preview_desk.dart';
 part 'yuv_camera_preview_mobile.dart';
@@ -29,13 +31,31 @@ Widget buildYuvCameraPreview({
     throw ArgumentError('CameraController is required on mobile and desktop platforms');
   }
 
-  if (Platform.isAndroid || Platform.isIOS) {
-    return _YuvCameraPreviewMobile(key: key, cameraController: cameraController, transform: transform, onFramePresented: onFramePresented);
+  switch (_previewPlatform()) {
+    case TargetPlatform.android || TargetPlatform.iOS:
+      return _YuvCameraPreviewMobile(key: key, cameraController: cameraController, transform: transform, onFramePresented: onFramePresented);
+    case TargetPlatform.linux || TargetPlatform.macOS || TargetPlatform.windows:
+      return _YuvCameraPreviewDesktop(key: key, cameraController: cameraController, transform: transform, onFramePresented: onFramePresented);
+    case _:
+      throw UnsupportedError('Platform not supported');
   }
+}
 
-  if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
-    return _YuvCameraPreviewDesktop(key: key, cameraController: cameraController, transform: transform, onFramePresented: onFramePresented);
+// The host decides, not defaultTargetPlatform, which reports Android in every
+// `flutter test` process. A debug override set by a test wins, so the mobile
+// path, whose CameraController.startImageStream asserts on that override, can
+// run on a desktop test host; release builds ignore it like Flutter does.
+TargetPlatform? _previewPlatform() {
+  final override = debugDefaultTargetPlatformOverride;
+  if (kDebugMode && override != null) {
+    return override;
   }
-
-  throw UnsupportedError('Platform not supported');
+  return switch (Platform.operatingSystem) {
+    'android' => TargetPlatform.android,
+    'ios' => TargetPlatform.iOS,
+    'linux' => TargetPlatform.linux,
+    'macos' => TargetPlatform.macOS,
+    'windows' => TargetPlatform.windows,
+    _ => null,
+  };
 }

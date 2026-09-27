@@ -10,12 +10,18 @@ class YuvCameraPreview extends StatefulWidget {
   final CameraController? cameraController;
 
   /// Called for every frame the preview accepts; the returned image is what the
-  /// preview shows. A frame that arrives while the previous one is still being
-  /// decoded or drawn is dropped without this call.
+  /// preview shows, on mobile, web and desktop alike. Without [transform] the
+  /// camera frame itself is shown. A frame that arrives while the previous one
+  /// is still being decoded or drawn is dropped without this call, and so is
+  /// every frame of a stream that was stopped or replaced.
   ///
-  /// The frame passed in is only valid during the call: the web preview reuses
-  /// one instance and writes the next frame into it. Keep a frame beyond the
-  /// call only through `image.copy()`.
+  /// To capture what the preview shows, keep the frame this callback returns.
+  /// Both frames are only valid during the call: the web preview reuses one
+  /// instance and writes the next frame into it. Keep a frame beyond the call
+  /// only through `copy()`.
+  ///
+  /// An error thrown here is reported through `FlutterError.reportError` and
+  /// drops only that frame; the stream keeps running.
   final YuvImage Function(YuvImage image)? transform;
   final Widget? child;
   final bool showDebugInfo;

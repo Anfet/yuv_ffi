@@ -112,19 +112,25 @@ class _YuvCameraPreviewDesktopState extends State<_YuvCameraPreviewDesktop> {
       return;
     }
 
+    final YuvImage frame;
     try {
-      var yuv = CameraImage.fromPlatformInterface(data).toYuvImage();
-      yuv = widget.transform?.call(yuv) ?? yuv;
-      presenter.present(yuv);
+      frame = CameraImage.fromPlatformInterface(data).toYuvImage();
     } catch (ex) {
       debugPrint('_YuvCameraPreviewDesktop stream error: $ex');
+      return;
     }
+
+    presentCameraFrame(presenter, frame, widget.transform);
   }
 
   void onStreamError(Object error, int generation) {
     if (!mounted || generation != streamGeneration) {
       return;
     }
+    // Stopped rather than left running behind the error text: the camera would
+    // stay on and keep delivering frames nobody can see.
+    stopStream();
+    presenter.reset();
     setState(() => lastError = error);
   }
 }

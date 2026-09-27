@@ -9,6 +9,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/widgets/frame_read_loop.dart';
+import 'package:yuv_ffi_example/widgets/present_camera_frame.dart';
+import 'package:yuv_ffi_example/widgets/stream_start.dart';
 import 'js_util_compat_web.dart' as js_util;
 
 /// [onFramePresented] fires once per frame drawn from the camera stream.
@@ -51,9 +53,10 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
   Uint8List? _rgbaBuffer;
   YuvImage? _reusableBgraFrame;
   bool _running = false;
-  // Bumped by _stopLoop. Each TrackProcessor read loop captures the value its
-  // reader was created under; a read or copyTo that completes after the stream
-  // stopped or restarted carries the old value and its frame or error is dropped.
+  // Bumped by _stopLoop. Each start and each TrackProcessor read loop captures
+  // the value it began under; a getUserMedia, play, read or copyTo that
+  // completes after the stream stopped or restarted carries the old value and
+  // its stream, frame or error is dropped.
   int _streamGeneration = 0;
   bool _isProcessing = false;
   Object? _lastError;
@@ -117,36 +120,57 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
     await _startStream();
   }
 
-  Future<void> _startStream() async {
-    try {
-      final constraints = <String, dynamic>{
-        'audio': false,
-        'video': <String, dynamic>{'facingMode': _facingModeFromLens(widget.cameraController.description.lensDirection)},
-      };
+  // getUserMedia may wait on the permission prompt for as long as the user
+  // likes; the preview can be closed or restarted meanwhile, so everything
+  // after each await is bound to the generation this start began under.
+  Future<void> _startStream() {
+    final generation = _streamGeneration;
+    final facingMode = _facingModeFromLens(widget.cameraController.description.lensDirection);
+    return runStreamStart<html.MediaStream>(
+      open: () async {
+        final stream = await html.window.navigator.mediaDevices?.getUserMedia(<String, dynamic>{
+          'audio': false,
+          'video': <String, dynamic>{'facingMode': facingMode},
+        });
+        if (stream == null) {
+          throw StateError('Could not access user media stream');
+        }
+        return stream;
+      },
+      isCurrent: () => mounted && generation == _streamGeneration,
+      release: (stream) {
+        debugPrint('[YuvCameraPreviewWeb] Releasing the camera stream of a stopped start');
+        for (final track in stream.getTracks()) {
+          track.stop();
+        }
+      },
+      attach: (stream) async {
+        _mediaStream = stream;
+        _videoElement.srcObject = stream;
+        await _videoElement.play();
+      },
+      onStarted: () {
+        debugPrint('[YuvCameraPreviewWeb] Camera stream started. facingMode=$facingMode');
+        _running = true;
+        if (!_tryStartTrackProcessor()) {
+          debugPrint('[YuvCameraPreviewWeb] Using scheduler pipeline fallback');
+          _scheduleNextTick();
+        }
+      },
+      onError: _failStream,
+    );
+  }
 
-      _mediaStream = await html.window.navigator.mediaDevices?.getUserMedia(constraints);
-      if (_mediaStream == null) {
-        throw StateError('Could not access user media stream');
-      }
-
-      _videoElement.srcObject = _mediaStream;
-      await _videoElement.play();
-      debugPrint(
-        '[YuvCameraPreviewWeb] Camera stream started. facingMode='
-        '${_facingModeFromLens(widget.cameraController.description.lensDirection)}',
-      );
-
-      _running = true;
-      if (!_tryStartTrackProcessor()) {
-        debugPrint('[YuvCameraPreviewWeb] Using scheduler pipeline fallback');
-        _scheduleNextTick();
-      }
-    } catch (e) {
-      debugPrint('[YuvCameraPreviewWeb] Stream start error: $e');
-      _lastError = e;
-      if (mounted) {
-        setState(() {});
-      }
+  // A camera error of the current stream: shown instead of the preview, with
+  // the loop and the camera tracks stopped rather than left running behind it.
+  void _failStream(Object error) {
+    debugPrint('[YuvCameraPreviewWeb] Camera stream error: $error');
+    _stopLoop();
+    _stopMediaTracks();
+    _presenter.reset();
+    _lastError = error;
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -204,13 +228,7 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
         await _processVideoFrame(frame, generation);
       },
       close: (frame) => js_util.callMethod<void>(frame, 'close', const []),
-      onError: (error) {
-        debugPrint('[YuvCameraPreviewWeb] Track read loop error: $error');
-        _lastError = error;
-        if (mounted) {
-          setState(() {});
-        }
-      },
+      onError: _failStream,
     );
   }
 
@@ -264,10 +282,9 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       } else {
         yuv.applyRgbaBytes(_rgbaBuffer!);
       }
-      yuv = widget.transform?.call(yuv) ?? yuv;
 
       // Converts before returning, so the next frame may reuse the instance.
-      _presenter.present(yuv);
+      presentCameraFrame(_presenter, yuv, widget.transform);
     } finally {
       _isProcessing = false;
       js_util.callMethod<void>(frame, 'close', const []);
@@ -367,17 +384,10 @@ class _YuvCameraPreviewWebState extends State<_YuvCameraPreviewWeb> {
       final rgba = imageData.data;
       final rgbaBytes = Uint8List.sublistView(rgba);
 
-      var yuv = YuvImage.bgra(width, height)..applyRgbaBytes(rgbaBytes);
-      yuv = widget.transform?.call(yuv) ?? yuv;
-
-      _presenter.present(yuv);
+      final frame = YuvImage.bgra(width, height)..applyRgbaBytes(rgbaBytes);
+      presentCameraFrame(_presenter, frame, widget.transform);
     } catch (e) {
-      debugPrint('[YuvCameraPreviewWeb] Canvas frame processing error: $e');
-      _lastError = e;
-      if (mounted) {
-        setState(() {});
-      }
-      _stopLoop();
+      _failStream(e);
     } finally {
       _isProcessing = false;
     }

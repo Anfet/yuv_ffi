@@ -43,6 +43,16 @@
   returned by `transform` and captures that same frame, replacing the
   `flutter_webrtc` preview and its periodic snapshot decoding. The example no
   longer depends on `flutter_webrtc`.
+- Example camera preview now follows one `transform` contract on mobile, Web
+  and desktop: the returned frame is shown, the camera frame without
+  `transform`, and a throwing `transform` drops only its frame and is reported
+  instead of stopping the Web stream. Stream lifecycle was aligned as well: a
+  restart waits for the previous stop on mobile, as on desktop; start errors
+  and an uninitialized controller are shown instead of thrown; the Web preview
+  releases a camera stream that arrives after it was closed or restarted; a
+  camera error stops the stream on every platform instead of leaving the
+  camera running. `CameraScreen` no longer orphans a capture on a second tap
+  or on close.
 
 ### Known limitations
 

@@ -30,6 +30,12 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   void dispose() {
+    // The preview is gone and no frame will arrive; a capture still waiting
+    // would otherwise never complete.
+    final capture = captureCompleter;
+    if (capture != null && !capture.isCompleted) {
+      capture.complete(null);
+    }
     cameraController?.dispose();
     super.dispose();
   }
@@ -129,6 +135,12 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> takePicture() async {
+    // A second tap before the frame arrives joins the pending capture; a new
+    // completer would leave the first one waiting forever.
+    if (captureCompleter?.isCompleted == false) {
+      return;
+    }
+
     try {
       Completer<YuvImage?> capturer = captureCompleter = Completer();
       var yuv = await capturer.future;
