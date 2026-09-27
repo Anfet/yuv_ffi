@@ -216,14 +216,17 @@ jobs:
             -d linux
 
   macos-native-smoke:
-    # Reverted from the self-hosted (yuv-self-hosted) runner back to
-    # GitHub-hosted macos-latest: with SIP enabled on that physical Mac,
-    # DYLD_LIBRARY_PATH reaches the step's environment (confirmed in the job
-    # log) but dyld still fails to resolve libyuv_ffi.dylib for the Dart VM
-    # process, while the identical setup succeeds on macos-latest. Moving
-    # this job to self-hosted again needs that dyld/SIP interaction solved
-    # first, as a separate task.
-    runs-on: macos-latest
+    # Self-hosted (yuv-self-hosted): faster than the GitHub-hosted macos-latest
+    # runner, and gives a physical Mac for a later camera smoke on this job's
+    # host. With SIP enabled on that Mac, dyld ignores DYLD_LIBRARY_PATH and
+    # DYLD_FALLBACK_LIBRARY_PATH for the Dart VM's child test process (confirmed
+    # by reproducing the failure directly on the runner's own host outside CI:
+    # the dlopen search list it prints never even includes the DYLD_* directory).
+    # Copying the built dylib next to the Dart SDK's own binaries is one of the
+    # unconditional relative-to-executable search paths dlopen always tries, so
+    # it resolves regardless of what SIP strips from the environment; confirmed
+    # working on the same host before wiring it into this job.
+    runs-on: [self-hosted, macOS]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -239,7 +242,10 @@ jobs:
       # On Apple platforms the sources are linked into the pod target, so the
       # symbols live in the running process and there is no file to open. The
       # dylib built here is what `flutter test` (a plain VM process, not an app
-      # bundle) resolves through DYLD_LIBRARY_PATH.
+      # bundle) resolves. DYLD_LIBRARY_PATH is kept for hosts where it works
+      # (e.g. GitHub-hosted macos-latest); the copy next to the Dart SDK is
+      # what actually resolves it on this self-hosted runner, where SIP strips
+      # DYLD_* from the child test process.
       - name: Build and install native library
         shell: bash
         run: |
@@ -247,6 +253,8 @@ jobs:
           cmake --build "$RUNNER_TEMP/native-build" --config Release
           test -f "$RUNNER_TEMP/native-build/libyuv_ffi.dylib"
           echo "DYLD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
+          cp "$RUNNER_TEMP/native-build/libyuv_ffi.dylib" \
+            "$FLUTTER_ROOT/bin/cache/artifacts/engine/darwin-x64/libyuv_ffi.dylib"
 
       - name: Packaging smoke
         run: flutter test test/native_packaging_smoke_test.dart --reporter expanded

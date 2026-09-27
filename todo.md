@@ -792,6 +792,33 @@ VIEW-01A на нерешённой self-hosted проблеме); self-hosted р
 SIP-ограничений (например `/usr/local/lib`), либо иного решения конфликта. Остальные `ubuntu-latest`
 job не менялись и self-hosted не касались.
 
+**Диагностика вне CI (по запросу пользователя, напрямую на self-hosted машине через mac-runner) и
+второй возврат на self-hosted с рабочим фиксом.** Воспроизвёл сбой локально за секунды вместо
+ожидания полного CI-цикла: собрал `.dylib` тем же `cmake`, экспортировал `DYLD_LIBRARY_PATH` на
+её директорию, прогнал `flutter test test/native_packaging_smoke_test.dart` — тот же `dlopen`
+failure, и список путей, которые пробует dyld, **не содержит** директорию из `DYLD_LIBRARY_PATH`
+вообще. Проверил `DYLD_FALLBACK_LIBRARY_PATH` — тот же результат. `codesign -d --entitlements`
+на `dart` бинарнике показал `com.apple.security.cs.allow-dyld-environment-variables: true`, то
+есть сам главный процесс entitled корректно; проблема — в дочернем VM-процессе для теста, где SIP,
+по всей видимости, всё равно стрипает `DYLD_*`.
+
+Проверил альтернативу: скопировал собранный `.dylib` напрямую в
+`$FLUTTER_ROOT/bin/cache/artifacts/engine/darwin-x64/libyuv_ffi.dylib` — один из путей, которые
+`dlopen` пробует безусловно, относительно исполняемого файла, без каких-либо переменных
+окружения (виден в самом списке ошибки `dlopen`). Тест прошёл: `flutter test
+test/native_packaging_smoke_test.dart` → `All tests passed!`. Диагностический артефакт удалён
+после проверки (`rm .../libyuv_ffi.dylib`, `rm -rf /tmp/native-build-diag`), не оставлен в
+пользовательском Flutter SDK кэше.
+
+По решению пользователя `macos-native-smoke` возвращён на self-hosted `[self-hosted, macOS]`
+второй раз, с добавленным шагом `cp` собранной `.dylib` в `$FLUTTER_ROOT/bin/cache/artifacts/
+engine/darwin-x64/libyuv_ffi.dylib` рядом с уже существующим `DYLD_LIBRARY_PATH` (оставлен для
+хостов, где переменная реально работает, например GitHub-хостед `macos-latest`, если job туда
+вернётся снова). Комментарий в `ci.yml` описывает найденную причину и то, что фикс подтверждён
+эмпирически на том же хосте до включения в CI. Синтаксис YAML — валиден (10 job распознаны).
+Push этой правки, как и первого self-hosted изменения, снова подпадает под правило безопасности
+сессии (расширяет `runs-on` на self-hosted) — коммит и push пользователь делает лично.
+
 **Финальное подтверждение реальным CI-прогоном [`36314860992`](https://github.com/Anfet/yuv_ffi/actions/runs/36314860992)
 на `125a2cd` (до self-hosted правки, `flutter analyze lib test` уже была в этом коммите) — проверено
 мной, главная сессия, построчным чтением логов через `gh api`, не со слов исполнителя:**
