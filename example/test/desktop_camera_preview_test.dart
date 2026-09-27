@@ -69,6 +69,11 @@ class _FakeDesktopCamera extends CameraPlatform {
   /// When set, `initializeCamera` waits for it.
   Completer<void>? initializeGate;
 
+  /// When set, `availableCameras` waits for it.
+  Completer<void>? lookupGate;
+
+  int createdCameras = 0;
+
   bool isStreaming(int cameraId) => _activeStreams.containsKey(cameraId);
 
   /// Delivers [frame] to the stream currently listened to on [cameraId], if any.
@@ -77,12 +82,16 @@ class _FakeDesktopCamera extends CameraPlatform {
   void emitError(int cameraId, Object error) => _activeStreams[cameraId]?.addError(error);
 
   @override
-  Future<List<CameraDescription>> availableCameras() async => const [
-    CameraDescription(name: 'fake-desktop-camera', lensDirection: CameraLensDirection.front, sensorOrientation: 0),
-  ];
+  Future<List<CameraDescription>> availableCameras() async {
+    await lookupGate?.future;
+    return const [CameraDescription(name: 'fake-desktop-camera', lensDirection: CameraLensDirection.front, sensorOrientation: 0)];
+  }
 
   @override
-  Future<int> createCameraWithSettings(CameraDescription cameraDescription, MediaSettings? mediaSettings) async => _nextCameraId++;
+  Future<int> createCameraWithSettings(CameraDescription cameraDescription, MediaSettings? mediaSettings) async {
+    createdCameras++;
+    return _nextCameraId++;
+  }
 
   @override
   Future<void> initializeCamera(int cameraId, {ImageFormatGroup imageFormatGroup = ImageFormatGroup.unknown}) async {
@@ -472,6 +481,21 @@ void main() {
       expect(tester.takeException(), isNull, reason: 'no setState after dispose');
       expect(platform.disposedCameras, [1]);
       expect(platform.listens, isEmpty, reason: 'a closed screen never starts the stream');
+    });
+
+    testWidgets('closing the screen while cameras are looked up opens no camera', (tester) async {
+      final gate = platform.lookupGate = Completer<void>();
+      await openCameraScreen(tester);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+      gate.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(platform.createdCameras, 0, reason: 'a controller created after dispose would never be released');
+      expect(platform.listens, isEmpty);
     });
   });
 }

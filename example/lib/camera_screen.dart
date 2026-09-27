@@ -104,6 +104,11 @@ class _CameraScreenState extends State<CameraScreen> {
   Future initCamera() async {
     try {
       final cameras = await availableCameras();
+      // Closed during the lookup: dispose ran before a controller existed, so
+      // one created now would never be released.
+      if (!mounted) {
+        return;
+      }
       if (cameras.isEmpty) {
         cameraError = 'No cameras available on device';
         return;
