@@ -32,6 +32,16 @@ _tmp**
 /todo.md
 /todo-waitlist.md
 /COMPLETION.md
+/doc/archive/
+/todo*.md
+/pre-release-todo.md
+/completed.md
+/scratch_rt_check/
+/test/tmp_verify/
+/test/probe/baseline/
+/tool/bench/
+/tool/ci/
+/tool/probe/
 /doc/perf/archive/
 /tool/bench/fixtures/
 /native-primitives-research.md

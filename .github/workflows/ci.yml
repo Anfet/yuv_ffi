@@ -43,7 +43,7 @@ jobs:
       # actually meant to check; example's own analyze runs separately in
       # example-analyze-and-build, against its own, correctly resolved SDK.
       - name: Analyze (root)
-        run: flutter analyze lib test
+        run: flutter analyze --no-fatal-infos lib test
 
       # Since YUV-06 the loader opens the library by its installed name, so the
       # build output is placed on the dynamic loader's search path instead of

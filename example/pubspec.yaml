@@ -69,3 +69,4 @@ flutter:
     - assets/reference/test_pattern_512.png
     - assets/reference/test_pattern_512/manifest.json
     - assets/reference/test_pattern_512/artifacts/
+    - assets/probe/golden.json

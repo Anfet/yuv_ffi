@@ -46,3 +46,14 @@ for png in "$SOURCE_FIXTURE_DIR"/artifacts/*.png; do
 done
 
 echo "Copied fixtures to $DEST_DIR"
+
+PROBE_SOURCE_DIR="$REPO_ROOT/test/probe"
+PROBE_DEST_DIR="$EXAMPLE_DIR/integration_test/helpers/probe"
+PROBE_GOLDEN_DEST="$EXAMPLE_DIR/assets/probe"
+
+rm -rf "$PROBE_DEST_DIR"
+mkdir -p "$PROBE_DEST_DIR" "$PROBE_GOLDEN_DEST"
+cp -R "$PROBE_SOURCE_DIR"/. "$PROBE_DEST_DIR"/
+cp "$PROBE_SOURCE_DIR/golden.json" "$PROBE_GOLDEN_DEST/golden.json"
+
+echo "Copied operation probes to $PROBE_DEST_DIR and $PROBE_GOLDEN_DEST"
