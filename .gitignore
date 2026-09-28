@@ -1,6 +1,10 @@
 # Miscellaneous
 *.class
 *.log
+!doc/archive/release-0.4.2/ra25-pixel3/raw/arm64.stdout.log
+!doc/archive/release-0.4.2/ra25-pixel3/raw/arm64.stderr.log
+!doc/archive/release-0.4.2/ra25-pixel3/raw/armv7.stdout.log
+!doc/archive/release-0.4.2/ra25-pixel3/raw/armv7.stderr.log
 *.pyc
 *.swp
 .DS_Store
