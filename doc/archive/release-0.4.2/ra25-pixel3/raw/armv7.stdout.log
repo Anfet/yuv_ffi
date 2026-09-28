@@ -1,0 +1,95 @@
+Resolving dependencies...
+Downloading packages...
+  async 2.11.0 (2.13.1 available)
+  boolean_selector 2.1.1 (2.1.2 available)
+  camera 0.11.0+2 (0.12.1 available)
+  camera_android_camerax 0.6.10+3 (0.7.5 available)
+  camera_avfoundation 0.9.19 (0.11.0 available)
+  camera_platform_interface 2.10.0 (2.14.0 available)
+  camera_web 0.3.5 (0.3.5+6 available)
+  clock 1.1.2 (1.1.3 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  cupertino_icons 1.0.8 (1.0.9 available)
+  file_selector_linux 0.9.3+2 (0.9.4+1 available)
+  file_selector_macos 0.9.4+2 (0.9.5+1 available)
+  file_selector_platform_interface 2.6.2 (2.7.0 available)
+  file_selector_windows 0.9.3+4 (0.9.3+6 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.26 (2.0.35 available)
+  google_mlkit_commons 0.11.0 (0.13.0 available)
+  google_mlkit_face_detection 0.13.1 (0.15.1 available)
+  http_parser 4.0.2 (4.1.2 available)
+  image_picker 1.1.2 (1.2.3 available)
+  image_picker_android 0.8.12+21 (0.8.13+23 available)
+  image_picker_for_web 3.0.6 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+8 available)
+  image_picker_linux 0.2.1+2 (0.2.2 available)
+  image_picker_macos 0.2.1+2 (0.2.2+1 available)
+  image_picker_platform_interface 2.10.1 (2.11.1 available)
+  image_picker_windows 0.2.1+1 (0.2.2 available)
+  lints 5.0.0 (6.1.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.18.0 (1.19.0 available)
+  mime 2.0.0 (2.1.0 available)
+  platform 3.1.6 (3.2.0 available)
+  source_span 1.10.0 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  string_scanner 1.2.0 (1.4.1 available)
+  term_glyph 1.2.1 (1.2.2 available)
+  test_api 0.7.11 (0.7.14 available)
+  vector_math 2.2.0 (2.4.3 available)
+  vm_service 14.2.5 (15.3.0 available)
+Got dependencies!
+41 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleRelease'...                        
+
+D:\.projects\yuv_ffi\example\android>if "Windows_NT" == "Windows_NT" setlocal
+
+D:\.projects\yuv_ffi\example\android>set DEFAULT_JVM_OPTS= 
+
+D:\.projects\yuv_ffi\example\android>set DIRNAME=D:\.projects\yuv_ffi\example\android\ 
+
+D:\.projects\yuv_ffi\example\android>if "D:\.projects\yuv_ffi\example\android\" == "" set DIRNAME=. 
+
+D:\.projects\yuv_ffi\example\android>set APP_BASE_NAME=gradlew 
+
+D:\.projects\yuv_ffi\example\android>set APP_HOME=D:\.projects\yuv_ffi\example\android\ 
+
+D:\.projects\yuv_ffi\example\android>if defined JAVA_HOME goto findJavaFromJavaHome 
+
+D:\.projects\yuv_ffi\example\android>set JAVA_HOME=D:\.important\jdk-17.0.12 
+
+D:\.projects\yuv_ffi\example\android>set JAVA_EXE=D:\.important\jdk-17.0.12/bin/java.exe 
+
+D:\.projects\yuv_ffi\example\android>if exist "D:\.important\jdk-17.0.12/bin/java.exe" goto init 
+
+D:\.projects\yuv_ffi\example\android>if not "Windows_NT" == "Windows_NT" goto win9xME_args 
+
+D:\.projects\yuv_ffi\example\android>if "@eval[2+2]" == "4" goto 4NT_args 
+
+D:\.projects\yuv_ffi\example\android>set CMD_LINE_ARGS= 
+
+D:\.projects\yuv_ffi\example\android>set _SKIP=2 
+
+D:\.projects\yuv_ffi\example\android>if "x-q" == "x" goto execute 
+
+D:\.projects\yuv_ffi\example\android>set CMD_LINE_ARGS=-q -Ptarget-platform=android-arm -Ptarget=probe/release_probe.dart -Pbase-application-name=android.app.Application -Pdart-defines=UkEyNV9HSVRfU0hBPTFlZjcxYjY4NTQwYzcxMzNmMmUyMjNjZDAzMjBiMmNiMTU1ZWNiZDU=,UkEyNV9SVU5fSUQ9Zjc4ZGZjNWJmMWMzNDM3MjkzYTUxMGE5Y2ZhMzkwMmU=,UkEyNV9FWFBFQ1RFRF9BQkk9YXJtZWFiaS12N2E=,RkxVVFRFUl9WRVJTSU9OPTMuNDQuOQ==,RkxVVFRFUl9DSEFOTkVMPXN0YWJsZQ==,RkxVVFRFUl9HSVRfVVJMPWh0dHBzOi8vZ2l0aHViLmNvbS9mbHV0dGVyL2ZsdXR0ZXIuZ2l0,RkxVVFRFUl9GUkFNRVdPUktfUkVWSVNJT049NmIxODJkMmM3NQ==,RkxVVFRFUl9FTkdJTkVfUkVWSVNJT049NWEyYTZhNDJjYw==,RkxVVFRFUl9EQVJUX1ZFUlNJT049My4xMi4y -Pdart-obfuscation=false -Ptrack-widget-creation=true -Ptree-shake-icons=true -Psplit-per-abi=true assembleRelease 
+
+D:\.projects\yuv_ffi\example\android>goto execute 
+
+D:\.projects\yuv_ffi\example\android>set CLASSPATH=D:\.projects\yuv_ffi\example\android\\gradle\wrapper\gradle-wrapper.jar 
+
+D:\.projects\yuv_ffi\example\android>"D:\.important\jdk-17.0.12/bin/java.exe"    "-Dorg.gradle.appname=gradlew" -classpath "D:\.projects\yuv_ffi\example\android\\gradle\wrapper\gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain -q -Ptarget-platform=android-arm -Ptarget=probe/release_probe.dart -Pbase-application-name=android.app.Application -Pdart-defines=UkEyNV9HSVRfU0hBPTFlZjcxYjY4NTQwYzcxMzNmMmUyMjNjZDAzMjBiMmNiMTU1ZWNiZDU=,UkEyNV9SVU5fSUQ9Zjc4ZGZjNWJmMWMzNDM3MjkzYTUxMGE5Y2ZhMzkwMmU=,UkEyNV9FWFBFQ1RFRF9BQkk9YXJtZWFiaS12N2E=,RkxVVFRFUl9WRVJTSU9OPTMuNDQuOQ==,RkxVVFRFUl9DSEFOTkVMPXN0YWJsZQ==,RkxVVFRFUl9HSVRfVVJMPWh0dHBzOi8vZ2l0aHViLmNvbS9mbHV0dGVyL2ZsdXR0ZXIuZ2l0,RkxVVFRFUl9GUkFNRVdPUktfUkVWSVNJT049NmIxODJkMmM3NQ==,RkxVVFRFUl9FTkdJTkVfUkVWSVNJT049NWEyYTZhNDJjYw==,RkxVVFRFUl9EQVJUX1ZFUlNJT049My4xMi4y -Pdart-obfuscation=false -Ptrack-widget-creation=true -Ptree-shake-icons=true -Psplit-per-abi=true assembleRelease 
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 1096 bytes (99.9% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+
+D:\.projects\yuv_ffi\example\android>if "0" == "0" goto mainEnd 
+
+D:\.projects\yuv_ffi\example\android>if "Windows_NT" == "Windows_NT" endlocal
+Running Gradle task 'assembleRelease'...                           42,5s
+√ Built build\app\outputs\flutter-apk\app-armeabi-v7a-release.apk (22.0MB)
+Performing Streamed Install
+Success
+RA25_HOST_RESULT {"schema":1,"gitSha":"1ef71b68540c7133f2e223cd0320b2cb155ecbd5","runId":"f78dfc5bf1c3437293a510a9cfa3902e","abi":"armeabi-v7a","smoke":"PASS","probe":"PASS","caseCount":1188,"apkSha256":"6543c93155847ba951168a3a4adeb5dd34713335d4fe2719244b137150b4e243","apkPath":"D:\\.projects\\yuv_ffi\\example\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-release.apk","model":"Pixel 3","android":"12","supportedAbis":"arm64-v8a,armeabi-v7a,armeabi","device":"8B1X11QLW"}

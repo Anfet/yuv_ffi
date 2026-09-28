@@ -11,11 +11,16 @@ param(
   [int]$Warmups = 3,
   [ValidateRange(1, 100)]
   [int]$Samples = 9,
-  [switch]$AllowDirtySmoke
+  [switch]$AllowDirtySmoke,
+  [string]$ExpectedPackagePath = '',
+  [ValidatePattern('^[0-9a-f]{40}$')]
+  [string]$ExpectedPackageRevision = '',
+  [switch]$ValidatePackageOnly
 )
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+$exampleRoot = Join-Path $repoRoot 'example'
 $runId = [guid]::NewGuid().ToString('N')
 $scheme = (& powercfg /getactivescheme 2>&1 | Out-String).Trim()
 $expectedScheme = '381b4222-f694-41f0-9685-ff5bb260df2e'
@@ -32,15 +37,31 @@ $head = (& git -C $repoRoot rev-parse HEAD).Trim().ToLowerInvariant()
 if ($head -ne $GitSha) {
   throw "GitSha $GitSha does not match HEAD $head."
 }
-$dirty = @(& git -C $repoRoot status --porcelain)
-if ($dirty.Count -gt 0 -and -not $AllowDirtySmoke) {
+$packageRoot = if ($ExpectedPackagePath) { (Resolve-Path -LiteralPath $ExpectedPackagePath).Path } else { $repoRoot }
+$packageRoot = [IO.Path]::GetFullPath($packageRoot)
+$packageRevision = (& git -C $packageRoot rev-parse HEAD).Trim().ToLowerInvariant()
+$expectedPackageRevision = if ($ExpectedPackageRevision) { $ExpectedPackageRevision } else { $head }
+if ($packageRevision -ne $expectedPackageRevision) {
+  throw "RA-26 package revision is $packageRevision, expected $expectedPackageRevision."
+}
+$usesPackageOverride = -not [string]::Equals($packageRoot, $repoRoot, [StringComparison]::OrdinalIgnoreCase)
+$overridePath = Join-Path $exampleRoot 'pubspec_overrides.yaml'
+$temporaryOverrideCreated = $false
+$initialDirty = @(& git -C $repoRoot status --porcelain)
+if ($initialDirty.Count -gt 0 -and -not $AllowDirtySmoke) {
   throw 'Release comparison requires a clean committed worktree. Use -AllowDirtySmoke only for a non-evidence local smoke.'
 }
-if ($BaselinePath -and $dirty.Count -gt 0) {
+if ($BaselinePath -and $initialDirty.Count -gt 0) {
   throw 'A dirty smoke cannot compare with a baseline.'
 }
 if ($BaselinePath -and -not (Test-Path -LiteralPath $BaselinePath -PathType Leaf)) {
   throw "Baseline result is missing: $BaselinePath"
+}
+if ($usesPackageOverride -and (Test-Path -LiteralPath $overridePath)) {
+  throw "RA-26 baseline override must be created by this runner; remove $overridePath before starting."
+}
+if (-not $usesPackageOverride -and (Test-Path -LiteralPath $overridePath)) {
+  throw "RA-26 HEAD run must not use $overridePath."
 }
 
 $cpu = (Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name).Trim()
@@ -53,8 +74,50 @@ if (Test-Path -LiteralPath $resultPath) {
   throw "Unique result path unexpectedly exists: $resultPath"
 }
 
-Push-Location (Join-Path $repoRoot 'example')
+Push-Location $exampleRoot
 try {
+  if ($usesPackageOverride) {
+    $packageUri = $packageRoot.Replace('\', '/')
+    @(
+      'dependency_overrides:',
+      '  yuv_ffi:',
+      "    path: '$packageUri'"
+    ) | Set-Content -LiteralPath $overridePath
+    $temporaryOverrideCreated = $true
+  }
+
+  & flutter pub get
+  if ($LASTEXITCODE -ne 0) { throw 'Flutter pub get failed before the release benchmark build.' }
+
+  $packageConfigPath = Join-Path (Get-Location) '.dart_tool\package_config.json'
+  if (-not (Test-Path -LiteralPath $packageConfigPath -PathType Leaf)) {
+    throw "RA-26 package config is missing: $packageConfigPath"
+  }
+  $packageConfig = Get-Content -LiteralPath $packageConfigPath -Raw | ConvertFrom-Json
+  $packageEntries = @($packageConfig.packages | Where-Object { $_.name -eq 'yuv_ffi' })
+  if ($packageEntries.Count -ne 1 -or [string]::IsNullOrWhiteSpace($packageEntries[0].rootUri)) {
+    throw 'RA-26 package config must resolve exactly one yuv_ffi package root.'
+  }
+  $resolvedPackageRoot = (Resolve-Path -LiteralPath ([uri]$packageEntries[0].rootUri).LocalPath).Path
+  if (-not [string]::Equals($resolvedPackageRoot, $packageRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "RA-26 package config resolved yuv_ffi to $resolvedPackageRoot, expected $packageRoot."
+  }
+  $resolvedPackageRevision = (& git -C $resolvedPackageRoot rev-parse HEAD).Trim().ToLowerInvariant()
+  if ($resolvedPackageRevision -ne $expectedPackageRevision) {
+    throw "RA-26 resolved package revision is $resolvedPackageRevision, expected $expectedPackageRevision."
+  }
+  $packageProvenance = [ordered]@{
+    appGitSha = $head
+    packagePath = $resolvedPackageRoot
+    packageRevision = $resolvedPackageRevision
+    packageOverridden = $usesPackageOverride
+    packageConfigPath = $packageConfigPath
+  }
+  if ($ValidatePackageOnly) {
+    Write-Output "RA26_PACKAGE_PROVENANCE $($packageProvenance | ConvertTo-Json -Compress)"
+    return
+  }
+
   $buildArguments = @(
     'build', 'windows', '--release', '--target=probe/windows_release_benchmark.dart',
     "--dart-define=RA26_GIT_SHA=$GitSha",
@@ -118,7 +181,12 @@ try {
     runId = $runId
     hostId = $hostId
     buildMode = 'release'
-    sourceVerified = $dirty.Count -eq 0
+    sourceVerified = $initialDirty.Count -eq 0
+    appGitSha = $packageProvenance.appGitSha
+    packagePath = $packageProvenance.packagePath
+    packageRevision = $packageProvenance.packageRevision
+    packageOverridden = $packageProvenance.packageOverridden
+    packageConfigPath = $packageProvenance.packageConfigPath
     baselinePath = if ($BaselinePath) { [IO.Path]::GetFullPath($BaselinePath) } else { $null }
     resultPath = $resultPath
     resultSha256 = (Get-FileHash -LiteralPath $resultPath -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -130,4 +198,8 @@ try {
   Write-Output "RA26_HOST_RESULT $($hostResult | ConvertTo-Json -Compress)"
 } finally {
   Pop-Location
+  if ($temporaryOverrideCreated) {
+    Remove-Item -LiteralPath $overridePath -Force -ErrorAction SilentlyContinue
+    & git -C $repoRoot restore --worktree -- example/pubspec.lock example/windows/flutter/generated_plugin_registrant.cc example/windows/flutter/generated_plugin_registrant.h example/windows/flutter/generated_plugins.cmake
+  }
 }
