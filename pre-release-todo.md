@@ -72,7 +72,7 @@
 `flutter analyze lib test` локально; ссылка на зелёный CI-run.
 
 #### Executor Report
-Добавлен только `// ignore_for_file: deprecated_member_use_from_same_package`. `flutter analyze lib test` и `git diff --check` прошли на Flutter 3.44.9. Flutter 3.38.10 локально отсутствует. Push run `36398351919` и ручной run `36398511200` завершились `startup_failure` до создания jobs; логи отсутствуют.
+Добавлен только `// ignore_for_file: deprecated_member_use_from_same_package`. `flutter analyze lib test` и `git diff --check` прошли на Flutter 3.44.9. Flutter 3.38.10 локально отсутствует. Push runs `36398351919` и `36408963181` и ручной run `36398511200` завершились `startup_failure` до создания jobs; логов нет.
 
 #### Review
 Локальный diff соответствует Architect Decision и ограничению scope. Полный DoD не подтверждён: оба GitHub run завершились до запуска jobs, поэтому Flutter 3.38.10 и зелёный CI-run не проверены.
@@ -106,7 +106,7 @@
 YAML-парсинг локально; ссылка на CI-run.
 
 #### Executor Report
-Удалена джоба `android-armv7-runtime`; сборка ARMv7-only APK и проверка его ABI находятся в `android-native-build`. Добавлены отмена устаревших запусков и `paths-ignore`, все checkout обновлены до v5. PyYAML и `git diff --check` прошли; `actionlint` отсутствует. Push run `36398351919` и ручной run `36398511200` завершились `startup_failure` без jobs, поэтому markdown-only push и workflow jobs не проверены.
+Удалена джоба `android-armv7-runtime`; сборка ARMv7-only APK и проверка его ABI находятся в `android-native-build`. Добавлены отмена устаревших запусков и `paths-ignore`, все checkout обновлены до v5. PyYAML и `git diff --check` прошли; `actionlint` отсутствует. Push runs `36398351919` и `36408963181` и ручной run `36398511200` завершились `startup_failure` без jobs, поэтому markdown-only push и workflow jobs не проверены.
 
 #### Review
 Изменения соответствуют Architect Decision; других workflow jobs/actions не меняли. CI-доказательство отсутствует: оба run завершились до создания jobs. Markdown-only trigger тоже не проверен.
@@ -144,7 +144,7 @@ YAML-парсинг локально; ссылка на CI-run.
 Вывод dry-run и ссылка на run.
 
 #### Executor Report
-Удалены все 10 tracked `*.log` и 2 tracked `*.nv12`; проверка `git ls-files` по этим расширениям вывела пустой результат. До коммита `flutter pub publish --dry-run` завершился кодом 65 из-за незакоммиченного состояния. Повтор после коммита `30fff53` прошёл с 0 warnings (одна допустимая подсказка по версии). Push run `36398351919` и ручной run `36398511200` завершились `startup_failure` без jobs.
+Удалены все 10 tracked `*.log` и 2 tracked `*.nv12`; проверка `git ls-files` по этим расширениям вывела пустой результат. До коммита `flutter pub publish --dry-run` завершился кодом 65 из-за незакоммиченного состояния. Повтор после коммита `30fff53` прошёл с 0 warnings (одна допустимая подсказка по версии). Push runs `36398351919` и `36408963181` и ручной run `36398511200` завершились `startup_failure` без jobs.
 
 #### Review
 Список удалений соответствует Architect Decision; `.jsonl`/`.csv` и `.gitignore` не менялись. Локальный dry-run принят. CI-шаг `Verify published package contains committed WASM` ещё не подтверждён из-за startup_failure до создания jobs.
