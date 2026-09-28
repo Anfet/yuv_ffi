@@ -4,7 +4,7 @@
 
 **Объём релиза заморожен.** VIEW-00…03 и PACK-00…01D приняты. С начала цикла RA в `lib/`, `src/`, `example/lib/` не добавляется новая функциональность; любое новое требование — отдельной карточкой после решения Engineer.
 
-**Состояние на 28.09.2026:** ветка `release/0.4.2` впереди `origin` на 44 коммита; последний CI-run (`36335618257`, `b982561`) — красные `analyze-and-test-vm (3.38.10)`, `wasm-web-integration`, `android-armv7-runtime`. Для PACK-изменений CI не запускался.
+**Состояние на 28.09.2026:** изменения RA-05/06/08 запушены, но CI runs завершались до создания jobs. `actions/checkout@v5` отклоняется allowlist репозитория; в workflow возвращён разрешённый `@v4`. Oracle RA-21 восстановлен в `doc/archive/audit-2026-09-27/` и локально совпал с HEAD на 1188/1188 случаях.
 
 ## Решения Engineer
 
@@ -22,7 +22,7 @@
 | [ ] | RA-14 | TODO | T3 | — | RA-04 | Вычистить комментарии и описания `group`/`test` в `test/` по DOC-RULES. Логика тестов не меняется. |
 | [ ] | RA-16 | TODO | T3 | — | RA-01, RA-04 | Вычистить комментарии example (`lib`, `test`, `integration_test`, `pubspec.yaml`, README) по DOC-RULES. |
 | [ ] | RA-19 | TODO | T3 | — | RA-22, RA-23, RA-41 | Вычистить служебные README (`tool/wasm`, `assets/wasm`, `test_native`) и комментарии CI от номеров задач. |
-| [ ] | RA-21 | ARCHITECT_REQUIRED | T2 | — | — | Пробы, часть корректности: файл на операцию, golden-хэши, эквивалентные 0.4.0 (layout-случаи с `YuvPlaneLayout.preserve`), случаи `pack()`, проверка покрытия всех `YuvOperation`; VM-тест и example-цель. |
+| [ ] | RA-21 | TODO | T2 | — | — | Пробы, часть корректности: файл на операцию, golden-хэши, эквивалентные 0.4.0 (layout-случаи с `YuvPlaneLayout.preserve`), случаи `pack()`, проверка покрытия всех `YuvOperation`; VM-тест и example-цель. |
 | [ ] | RA-26 | TODO | T2 | — | RA-21 | Добавить в пробы замер скорости: общий исполнитель, методика, контроль окружения, строка вердикта и JSON; базовые линии Windows и Pixel 3 от 0.4.0 и HEAD. |
 | [ ] | RA-27 | TODO | T3 | — | RA-26 | Записать в AGENTS.md правило проб для задач разработки (Windows у исполнителя, Pixel 3 на ревью) и поле `Probe` в шаблон карточки. |
 | [ ] | RA-22 | TODO | T2 | — | RA-04, RA-06, RA-21 | Подключить пробу корректности в CI для Linux, macOS, iOS Simulator, Android x86_64 перебором `*_native_test.dart` и общим скриптом вердикта `tool/ci/drive.sh`. |
@@ -91,7 +91,7 @@
 1. Удалить джобу `android-armv7-runtime` целиком. ARMv7 доказывается на физическом Pixel 3 (RA-25). Шаг `Verify ARMv7-only APK contents` перенести в `android-native-build` как отдельный шаг после сборки: `flutter build apk --debug --target=integration_test/native_app_runtime_smoke_test.dart --target-platform android-arm --split-per-abi` + та же проверка состава APK (сборку armv7 продолжаем проверять в CI, запуск — нет).
 2. В начало workflow: `concurrency: { group: ci-${{ github.ref }}, cancel-in-progress: true }`.
 3. В `on.push` и `on.pull_request`: `paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/archive/perf/**']`. `README.md` и `CHANGELOG.md` тоже игнорируются — они проверяются финальным run RA-50.
-4. `actions/checkout@v4` → `actions/checkout@v5` во всех джобах. Другие actions не трогать.
+4. Использовать `actions/checkout@v4`: репозиторий разрешает только эту версию. Обновление до `@v5` блокируется allowlist GitHub Actions. Другие actions не трогать; пока allowlist не изменён Engineer, предупреждение Node 20 для разрешённой версии документируется.
 
 #### Constraints / Non-goals
 Не менять шаги остальных джоб, кроме переноса проверки APK. Не делать другие джобы non-blocking.
@@ -100,7 +100,7 @@
 - [ ] В workflow нет `android-armv7-runtime` и нет `continue-on-error`
 - [ ] Проверка состава armv7 APK выполняется в `android-native-build` и зелёная
 - [ ] Коммит только в md не запускает CI (проверить пустым md-коммитом в отчёте)
-- [ ] Нет предупреждения Node 20 для checkout
+- [ ] Нет ошибок allowlist для checkout; предупреждение Node 20 документировано, пока разрешён только `@v4`
 
 #### Validation / Testing
 YAML-парсинг локально; ссылка на CI-run.
@@ -239,15 +239,15 @@ YAML-парсинг локально; ссылка на CI-run.
 ---
 
 ### RA-21 — Пробы: корректность (golden-хэши)
-**Status:** ARCHITECT_REQUIRED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** — · **Rejection Count:** 0
+**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** — · **Rejection Count:** 0
 
 #### Problem / Goal
 Полный поведенческий набор запускается только на Linux x64 VM (CI) и Windows локально. На Android/iOS/macOS/Linux-app проверяется только smoke 4×4 («не нули»). 44 из 119 референсных случаев сравниваются с допуском, поэтому дрейф переписанных ядер может пройти незамеченным.
 
 #### Architect Decision
-- Матрица: форматы I420/NV12/BGRA8888 × размеры 1×1, 2×2, 3×5, 16×9, 33×17, 127×255 × раскладки `tight`, `padded` (+7 байт к rowStride), `gap` (I420 pixelStride 2 для Y и UV, NV12 UV pixelStride 3, BGRA pixelStride 5) × 22 операции: grayscale, blackWhite, negate, gaussian(r3, σ2), box(r2), mean(r2), box c ROI, mean c ROI, crop со смещением 1, crop по чётной границе, cropped, flipH, flipV, rotation 90/180/270, toI420, toNv12, toBgra, toBgraBytes, applyRgbaBytes, chromaSwap (только NV12) — всего 1188 случаев. Вход детерминирован LCG; эталон — архитектурный харнесс `regress_dump_test.dart` из аудита (приложить его к карточке при выдаче исполнителю).
+- Матрица: форматы I420/NV12/BGRA8888 × размеры 1×1, 2×2, 3×5, 16×9, 33×17, 127×255 × раскладки `tight`, `padded` (+7 байт к rowStride), `gap` (I420 pixelStride 2 для Y и UV, NV12 UV pixelStride 3, BGRA pixelStride 5) × 22 операции: grayscale, blackWhite, negate, gaussian(r3, σ2), box(r2), mean(r2), box c ROI, mean c ROI, crop со смещением 1, crop по чётной границе, cropped, flipH, flipV, rotation 90/180/270, toI420, toNv12, toBgra, toBgraBytes, applyRgbaBytes, chromaSwap (только NV12) — всего 1188 случаев. Вход детерминирован LCG. Исходник матрицы — архитектурный харнесс [`doc/archive/audit-2026-09-27/regress_dump_seed.dart`](doc/archive/audit-2026-09-27/regress_dump_seed.dart): форматы, размеры, раскладки, операции, LCG (`_seed = 12345 + width * 31 + height`, пересчёт перед каждым случаем) и формат id `<format> <W>x<H> <layout> <op>` переносить из него без изменений. Оракул 0.4.0 — [`regress_dump_v040.txt`](doc/archive/audit-2026-09-27/regress_dump_v040.txt), 1188 строк.
 - **Layout после PACK-01B:** фабрики по умолчанию упаковывают переданные плоскости. Случаи `padded` и `gap` создают образ с `layout: YuvPlaneLayout.preserve`, иначе они молча превратятся в `tight`. Отдельная группа случаев проверяет умолчание `.packed` и `pack()`: для каждой раскладки хэш `toBgraBytes()` до и после упаковки совпадает, `isTightlyPacked` после `pack()` — `true`.
-- Результат случая: SHA-256 (первые 16 hex) от `toBytes()` результата либо от `Uint8List`; для ошибки — `ERR <runtimeType>`.
+- Результат случая — строка ровно в формате харнесса: для `YuvImage` — `<format> <W>x<H> <sha16(toBytes)> src=<sha16(toBytes источника)>`, для `Uint8List` — `<sha16>`, для ошибки — `ERR <runtimeType>`. Строка оракула — это id до `: ` и значение после. В `golden.json` значения матрицы хранятся в том же виде, поэтому сравнение с оракулом — простое равенство строк.
 - **Раскладка файлов (одна операция — один файл, без центрального реестра логики):**
   - `test/probe/cases/<operation>.dart` — только данные случаев операции;
   - `test/probe/cases.dart` — список файлов операций, одна строка на операцию;
@@ -255,7 +255,8 @@ YAML-парсинг локально; ссылка на CI-run.
   - `test/probe/probe_correctness_test.dart` с `@Tags(['probe'])` — не пропускается при отсутствии native, а падает;
   - `test/probe/operation_coverage_test.dart` — у каждого значения `YuvOperation.values` есть файл случаев; новая операция без случаев = красный тест.
 - **Golden только дополняется.** Режим записи `PROBE_RECORD=1` дописывает отсутствующие id; перезапись существующего id — только с `PROBE_RECORD=overwrite` и отметкой в отчёте как изменение поведения. Новый случай без эталона — тест падает с сообщением «нет эталона».
-- Golden записывается на Windows x64 от HEAD; перед коммитом доказать совпадение с тегом `0.4.0` для всех случаев, которые существовали в 0.4.0 (собрать native из `git archive 0.4.0 src`, прогнать набор, 0 расхождений; случаи `pack()`/`layout` в 0.4.0 не существовали и исключаются из сравнения). Сравнение везде точное.
+- Golden записывается на Windows x64 от HEAD. Эквивалентность с 0.4.0 доказывается сравнением с оракулом `regress_dump_v040.txt`: для каждого из 1188 случаев матрицы хэш в `golden.json` равен хэшу оракула (0 расхождений). Сборка 0.4.0 не нужна. Случаи группы `pack()`/`layout` в оракуле отсутствуют и в сравнение не входят. Сравнение везде точное.
+- Архитектор проверил 28.09.2026: харнесс на HEAD `fda3215` (native собран MSVC Release) с `layout: YuvPlaneLayout.preserve` даёт дамп, побайтно равный оракулу (SHA-256 файла `69BE886405F75E50…`, 0 расхождений из 1188, 0 ошибок). Если у исполнителя расхождение — это дефект порта харнесса, а не повод обновить golden.
 - `dart_test.yaml` в корне: теги `probe` и `release`; `release` исключён по умолчанию.
 - Example: `example/integration_test/probe_native_test.dart` (все native-платформы) и `probe_web_test.dart` (WASM) + копии `test/probe/**` в `example/integration_test/helpers/probe/` и `golden.json` в `example/assets/probe/`; копирование — расширить `example/tool/copy_reference_fixtures.sh`; `test/probe/probe_copy_sync_test.dart` проверяет побайтное совпадение копий.
 - Расхождение golden на какой-либо платформе не ослабляется допуском: исполнитель RA-22/23/25/41 переводит карточку в ARCHITECT_REQUIRED с перечнем случаев.
@@ -272,9 +273,6 @@ YAML-парсинг локально; ссылка на CI-run.
 
 #### Validation / Testing
 `flutter test --tags probe`; `flutter test test/probe/probe_copy_sync_test.dart`; `cd example && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/probe_native_test.dart -d windows`.
-
-#### Architect Required
-В Architect Decision указан обязательный эталон — `regress_dump_test.dart` из аудита, но файл отсутствует в рабочем дереве и во всех доступных Git-refs; поиск по репозиторию нашёл только ссылку в этой карточке. В памяти проекта эталон также не найден. До передачи исполнителю требуется восстановить файл или выдать полный oracle/решение по его замене; исполнителю нельзя самостоятельно выдумывать эталон.
 
 ---
 
