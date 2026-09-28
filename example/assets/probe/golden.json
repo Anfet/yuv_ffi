@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "cases": {
-    "i420 1x1 tight gray": "intentionally-wrong",
+    "i420 1x1 tight gray": "i420 1x1 daa30ad832c14d13 src=daa30ad832c14d13",
     "i420 1x1 tight bw": "i420 1x1 2e9442554f856d24 src=2e9442554f856d24",
     "i420 1x1 tight neg": "i420 1x1 b97147650b4ee95f src=b97147650b4ee95f",
     "i420 1x1 tight gauss": "i420 1x1 c898a7c335850662 src=c898a7c335850662",
