@@ -106,10 +106,10 @@
 YAML-парсинг локально; ссылка на CI-run.
 
 #### Executor Report
-Удалена джоба `android-armv7-runtime`; сборка ARMv7-only APK и проверка его ABI находятся в `android-native-build`. Добавлены отмена устаревших запусков и `paths-ignore`, все checkout обновлены до v5. PyYAML и `git diff --check` прошли; `actionlint` отсутствует. Push runs `36398351919` и `36408963181` и ручной run `36398511200` завершились `startup_failure` без jobs, поэтому markdown-only push и workflow jobs не проверены.
+Удалена джоба `android-armv7-runtime`; сборка ARMv7-only APK и проверка его ABI находятся в `android-native-build`. Добавлены отмена устаревших запусков и `paths-ignore`, все checkout обновлены до v5. PyYAML и `git diff --check` прошли; `actionlint` отсутствует. Push runs `36398351919` и `36408963181` и ручной run `36398511200` завершились `startup_failure` без jobs. Tracker-only push commit `0ea4483` не создал новый CI run при повторной проверке `gh run list`, что подтверждает `paths-ignore` для Markdown-only push.
 
 #### Review
-Изменения соответствуют Architect Decision; других workflow jobs/actions не меняли. CI-доказательство отсутствует: оба run завершились до создания jobs. Markdown-only trigger тоже не проверен.
+Изменения соответствуют Architect Decision; других workflow jobs/actions не меняли. CI-доказательство отсутствует: оба push run завершились до создания jobs. Markdown-only push `0ea4483` не создал run, что подтверждает настроенный `paths-ignore`.
 
 ---
 
