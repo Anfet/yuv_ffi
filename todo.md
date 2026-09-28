@@ -3,7 +3,7 @@
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | — | VIEW-03 | REVIEW | T1 | Claude | VIEW-00…02 | Замеры пути кадра ожидают отдельного решения; абсолютные profile-цифры rotate пересмотрены в PACK-00 по release-замеру. |
-| — | PACK-01D | TODO | T2 | Claude (главная сессия) | PACK-01C | Ревью отклонено: новые тесты проверяют row padding, но не pixel gaps и не весь обязательный metadata-контракт. |
+| — | PACK-01D | REVIEW | T2 | Claude (главная сессия) | PACK-01C | Второй проход: тесты дополнены реальными pixel-gap раскладками (I420 U/V, NV12 UV, BGRA) и полной проверкой metadata. |
 
 Завершённая оптимизация YUV→BGRA зафиксирована в [COMPLETION.md](COMPLETION.md). Этот список теперь посвящён корректному и быстрому отображению кадров.
 
@@ -443,6 +443,33 @@ example — без замечаний; `flutter test` в example — 71 passed (
 --no-pub`, форматирование и `git diff --check` чисты. Локальный исходник `google_mlkit_commons`
 0.11.0 подтверждает: Android byte-array путь принимает NV21/YV12, iOS принимает BGRA с переданным
 `bytesPerRow`. Это подтверждает направление исправления, но не заменяет недостающий gapped-тест.
+
+### Executor Report — второй проход (ответ на REJECT 28.09.2026)
+
+**Исполнитель:** Claude (главная сессия). Производственный код (`example/lib/ext.dart`) не менялся —
+существующие тесты на padding уже проходили через общий `copy().pack()`, который по коду одинаково
+обрабатывает и row padding, и pixel-gap; отдельного дефекта для gapped-входа найдено не было, поэтому
+правка ограничена тестами, как и разрешало ревью («production code менять только если тест выявит
+ошибку»).
+
+**Правка (`example/test/yuv_image_to_input_image_test.dart`).** Все три теста теперь строят реальный
+pixel-gap, а не только row padding: I420 U/V — `pixelStride=2` при одном видимом байте (раскладка,
+которую `CameraImageExt.toYuvImage()` уже документирует для части Android-устройств), NV12 UV —
+`pixelStride=4` при двух видимых байтах (U,V) и двух byte gap, BGRA — `pixelStride=6` при четырёх
+видимых байтах. Байты gap/padding заполняются сентинелом `0xEE`, который не встречается ни в одном
+использованном `deterministicByte(seed, index)` (проверено перебором всех фактически используемых пар
+seed/index) — добавлена проверка `isNot(contains(gapSentinel))`, что ни один byte gap/padding не
+просочился в результат. Добавлены недостающие проверки metadata: `rotation` для всех трёх тестов,
+`bytesPerRow`/`size` там, где их не было (NV12, BGRA — `size`; I420, NV12 — `bytesPerRow`).
+
+**Проверка.** `dart format --line-length 150` на изменённом файле; `flutter analyze .` в example —
+без замечаний; `flutter test` в example — 71 passed (68 прежних + 3 обновлённых, без регрессий);
+`flutter analyze lib test --no-pub` в корне — без замечаний, `lib/` и корневой `test/` не тронуты.
+`git diff --check` чист.
+
+**Открытые пункты.** Device smoke по прежнему не запускался — не требуется приёмкой. Production-код
+не менялся: если независимое ревью найдёт конкретный байтовый дефект на gapped-входе через эти тесты,
+это станет отдельным исправлением.
 
 ## Позже
 
