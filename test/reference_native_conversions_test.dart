@@ -82,17 +82,23 @@ void main() {
 /// the file: the loader's own search path first, then the legacy build tree so
 /// an existing local checkout keeps working.
 File? _nativeLibraryFile() {
-  if (Platform.isWindows) return _firstExisting(<String>['yuv_ffi.dll']);
-  final String name = Platform.isLinux
+  final String name = Platform.isWindows
+      ? 'yuv_ffi.dll'
+      : Platform.isLinux
       ? 'libyuv_ffi.so'
       : Platform.isMacOS
       ? 'libyuv_ffi.dylib'
       : '';
   if (name.isEmpty) return null;
 
-  final searchPath = Platform.environment[Platform.isMacOS ? 'DYLD_LIBRARY_PATH' : 'LD_LIBRARY_PATH'] ?? '';
+  final searchPathVariable = Platform.isWindows
+      ? 'PATH'
+      : Platform.isMacOS
+      ? 'DYLD_LIBRARY_PATH'
+      : 'LD_LIBRARY_PATH';
+  final searchPath = Platform.environment[searchPathVariable] ?? '';
   return _firstExisting(<String>[
-    for (final dir in searchPath.split(Platform.isWindows ? ';' : ':').where((d) => d.isNotEmpty)) '$dir/$name',
+    for (final dir in searchPath.split(Platform.isWindows ? ';' : ':').where((dir) => dir.isNotEmpty)) '$dir${Platform.pathSeparator}$name',
     'native/src/build/$name',
   ]);
 }
