@@ -35,5 +35,5 @@ strided-совместимыми; менять native C эти карточки 
 
 ## Позже
 
-- [Предрелизные проверки Android, Windows, macOS, Web, Linux и iOS](doc/perf/prerelease-todo.md) выполняются после стабилизации конвертации на одном финальном SHA.
+- [Предрелизный цикл RA](pre-release-todo.md) — чистка, документация, CI, пробы и платформенные проверки 0.4.2; заменяет PRE-00…07 из `doc/perf/prerelease-todo.md`. Запуск — по команде Engineer.
 - Предыдущие задачи по blur, OPT-14 и остальным направлениям конвертации сохранены в [архиве](doc/perf/archive/todo-before-bgra-focus-2026-09-26.md); принятые результаты — в [COMPLETION.md](COMPLETION.md). Сейчас они не конкурируют с YUV→BGRA за активный цикл.

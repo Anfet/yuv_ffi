@@ -148,86 +148,86 @@
 - Принято: `android-native-build` вызывает `reactivecircus/android-emulator-runner@v2` с `working-directory: example`, однострочным `flutter drive` и подготовкой KVM. Порядок formatter gate исправлен ранее в AUD-08.
 - Доказательство: [GitHub Actions run 36062365665](https://github.com/Anfet/yuv_ffi/actions/runs/36062365665) на `f8dfd61a0d4d75a4b5651599a71f39d8207607d5`: job `android-native-build` прошёл; лог показывает `Formatted 1 file (0 changed)`, ABI `x86_64` и `All tests passed` для app-runtime smoke. Рабочий Android путь после этого run не менялся. Полный CI на итоговом SHA остаётся выпускным gate в AUD-06.
 - Коммиты: `14b958e8afb54271a95b0d2692c12ef43ace5b51`, `955442b0791c4e8e034d532e3b1f34e1f0ab6fb7`.
-# AUD-18 — Актуализирован Android CI в README
+## AUD-18 — Актуализирован Android CI в README
 
 - Принято после независимой сверки README с CI workflow и run 36117003942; diff ограничен Android CI формулировкой, Android x86_64 smoke отделён от ARMv7 evidence.
 - Проверка: `git diff --check -- README.md` прошла.
 
-# AUD-19 — Синхронизирован tracked lockfile примера
+## AUD-19 — Синхронизирован tracked lockfile примера
 
 - На момент приёмки `example/pubspec.lock` фиксировал `yuv_ffi 0.4.1` и resolver Flutter 3.44.9; изменены пять транзитивных версий. Flutter 3.38.10 сохранял прежние разрешения этих зависимостей, оставлен один воспроизводимый lockfile. При переходе на 0.4.2 запись path-зависимости обновлена отдельно.
 - Проверки на Flutter 3.38.10 и 3.44.9: `flutter analyze` и `flutter build web --release` прошли; повторный `flutter pub get` на 3.44.9 не меняет lockfile. Web build выводит ожидаемые WASM dry-run предупреждения о `dart:html`. `pubspec.yaml` и constraints не менялись.
 
-# AUD-20 — Уточнены release notes кандидата 0.4.1
+## AUD-20 — Уточнены release notes кандидата 0.4.1
 
 - Принято: верхняя запись CHANGELOG перечисляет подтверждённые изменения и ограничения, не предполагает причину retraction 0.4.0 и сохраняет статус Web как partial WASM backend.
 - Проверка: `git diff --check`; `CHANGELOG.md` и `pubspec.yaml` остаются на версии 0.4.1.
 
-# AUD-22 — Проверен Web/WASM runtime на Flutter 3.38.10
+## AUD-22 — Проверен Web/WASM runtime на Flutter 3.38.10
 
 - Принято: asset-backed `flutter drive` прошёл в браузере на Flutter 3.38.10 / Dart 3.10.9 в чистом detached checkout `35c516e`; Chrome и ChromeDriver 152.0.7977.82. `wasm_bootstrap_test.dart` реально выполняет `YuvFfi.initialize()` и RGBA→BGRA→I420→BGRA; ChromeDriver сообщил `result: true`, без failure details.
 - Shared checkout не затронут; backend/API/CI не менялись. `git diff --check -- todo.md` прошёл.
 
-# AUD-23 — Зафиксировано ограничение ARM64 native suite
+## AUD-23 — Зафиксировано ограничение ARM64 native suite
 
 - Принято как неблокирующая проверка с явным инфраструктурным ограничением: полного ARM64 Linux suite выполнить не удалось, так как доступная машина — Windows x64 без ARM64 Linux runner, CMake/CTest, QEMU или Docker/Podman. Android NDK не подменяет Linux ABI/sanitizer gate.
 - Записано 0/11 CTest targets, сохранённые sanitizer требования и воспроизводимая команда для ARM64 Linux host/QEMU. C/C/CMake и sanitizer gate не менялись.
 
-# AUD-24 — Проверен чистый Windows consumer
+## AUD-24 — Проверен чистый Windows consumer
 
 - Принято: consumer вне репозитория использовал path dependency на чистую package-копию из `git archive` SHA `35c516e`; до сборки в ней отсутствовал DLL. `flutter build windows` успешно собрал приложение; DLL штатно собрана CMake из package source и bundled Flutter plugin path, ручное копирование не выполнялось.
 - `flutter drive` завершился `All tests passed` в consumer process и проверил initialize, conversion и negate. Исходная DLL из корня checkout не использовалась; код плагина/native C не менялся.
 
-# AUD-25 — Обновлён Android Gradle toolchain
+## AUD-25 — Обновлён Android Gradle toolchain
 
 - Принято: Android wrapper обновлён до Gradle 8.14.3, AGP до 8.11.1, Kotlin Gradle Plugin до 2.2.20 — пороговых версий, о которых предупреждал Flutter.
 - `flutter build apk --debug` завершился успешно на Flutter 3.38.10 и 3.44.9 без Flutter dependency-validation warnings. Остались не связанные с toolchain javac deprecation/unchecked warnings от `camera_android_camerax` и ML Kit зависимостей.
 - Для проверки 3.38.10 временно выполнен `flutter pub get`, затем lockfile восстановлен resolver-ом 3.44.9; итоговый tracked `example/pubspec.lock` сохраняет AUD-19 разрешение. Изменений Android поведения, SDK/NDK или версии пакета нет.
 
-# MEAS-01 — Подготовлен Windows benchmark
+## MEAS-01 — Подготовлен Windows benchmark
 
 - Принято после независимого ревью и исправлений: добавлены публичный Dart AOT runner, сборка/драйвер, watchdog, fallback CSV для не записавших строку процессов, манифесты сборки и packed active-sample checksum.
 - Windows release smoke подтвердил 0.2.4 и ABI v1 для 1080p и 12 MP; ошибка строки сохраняет `ERROR:setup` и не останавливает следующие сценарии. `CVT.NV12.I420` checksum совпал с C-стендом для обеих версий. Детали и локальные CSV пути — `doc/perf/MEAS-01-run-instructions.md`.
 - Проверки: `dart analyze tool/bench/dart`, форматирование, PowerShell parse и `git diff --check` прошли. MEAS-02/03 и пооперационные baseline к этой приёмке не относились.
 
-# SPEED-00 — Подготовлен отдельный Dart FFI тест
+## SPEED-00 — Подготовлен отдельный Dart FFI тест
 
 - Исполнитель: GPT-5.6 Terra (T2). Добавлен чистый Dart package `speed_00_dart_ffi`; тест загружает текущую Windows Release DLL напрямую через `dart:ffi`, без Flutter API и существующего bench suite.
 - `dart test test/yuv_flip_v1_test.dart -r expanded`: I420 1280×720, 20 warm-up и 200 вызовов; среднее 46,513.47 мкс/вызов; FNV-1a checksum `0xef3bff85fcdefd25`; все status и каждый output sample прошли проверки.
 - Независимый повтор: 46,162.96 мкс/вызов, тот же checksum; `dart format --output=none --set-exit-if-changed test/yuv_flip_v1_test.dart` — 0 изменений. Formatter сообщил, что корневой `flutter_lints` недоступен из отдельного Dart package; это не помешало форматированию или тесту.
 - Принято после независимой проверки. Коммит содержит реализацию, тест и этот completion record.
 
-# C-01 — Ускорен `yuv_flip_v1`
+## C-01 — Ускорен `yuv_flip_v1`
 
 - Исполнитель: GPT-5.6 Terra (T2). По C-коду тега `0.2.4` подтверждён быстрый прямой обход плоскостей: горизонтальное обращение samples, вертикальная перестановка строк. В ABI v1 добавлен плотный путь на `yuv_flip_v1.c`: горизонтально копируются samples в обратном порядке, вертикально строки через `memcpy`; odd 4:2:0 и stride/pixel gaps остаются на phase-correct общем ядре.
 - Адресный Dart FFI тест расширен до I420/NV12/BGRA × H/V, проверяет каждый output sample и checksum, таймер охватывает только вызовы функции. Windows Release до → после, мкс/вызов: I420 H 46,575 → 2,702 (17.24×), V 47,616 → 111.84 (425.9×); NV12 H 39,782 → 2,365 (16.82×), V 39,981 → 127.62 (313.3×); BGRA H 32,613 → 2,693 (12.11×), V 31,838 → 341.05 (93.4×). Все шесть oracle/checksum прошли; независимый повтор `dart test test/yuv_flip_v1_test.dart -r expanded` прошёл.
 - Принято после просмотра native diff и повторного теста. Изменены `src/yuv/abi/yuv_flip_v1.c`, `speed_00_dart_ffi/test/yuv_flip_v1_test.dart`, инструкция теста. Коммит: `cd09d99`.
 
-# C-02 — Ускорен `yuv_convert_v1`
+## C-02 — Ускорен `yuv_convert_v1`
 
 - Исполнитель: GPT-6 Sol (T1). В C `0.2.4` найдены прямые проходы по строкам/плоскостям. ABI v1 получил прямое копирование плотных строк, plane-aware copy/relayout, fused packed→YUV luma+chroma pass на блок 2×2 и специализированный YUV/RGBA→BGRA путь; ABI и общий helper не менялись.
 - Адресный Dart FFI тест проверяет все 12 разрешённых пар при 1281×721, каждый output byte против независимого oracle, статус и checksum. Windows Release, мкс/вызов до → после (speedup): I420→I420 48406.38→117.91 (410.54×); I420→NV12 40267.91→747.59 (53.86×); I420→BGRA 69611.80→5683.71 (12.25×); NV12→I420 39383.95→838.99 (46.94×); NV12→NV12 41334.64→111.27 (371.48×); NV12→BGRA 56132.21→5867.72 (9.57×); BGRA→I420 67704.86→3813.29 (17.75×); BGRA→NV12 64982.21→3651.93 (17.79×); BGRA→BGRA 32144.15→327.42 (98.17×); RGBA→I420 68228.20→4053.50 (16.83×); RGBA→NV12 64912.59→3642.38 (17.82×); RGBA→BGRA 36818.60→1529.78 (24.07×). Same-format and I420↔NV12 остаются byte-exact. NV12→BGRA — 9.57× после проверенной альтернативы; bottleneck — полный BT.601 decode/clamp на каждый pixel.
 - Принято: независимый `dart test test/yuv_convert_v1_test.dart -r expanded` — 12/12; format/analyze без замечаний; `abi_convert_tests`, `abi_status_tests`, `abi_sanitizer_tests` — 3/3; `git diff --check` чисто. Коммит: `869efb3`.
 
-# C-03 — Ускорен `yuv_crop_v1`
+## C-03 — Ускорен `yuv_crop_v1`
 
 - Исполнитель: GPT-5.6 Terra (T2). Legacy crop `0.2.4` использует построчный memcpy, но floor chroma и прямой UV-copy ломают odd-origin/odd-edge правила ABI v1. Добавлен tight-packed fast path: Y/BGRA row-copy, aligned 4:2:0 chroma row-copy, иначе прямой Y-copy и phase-correct chroma recompute. Fast path требует tight source/destination pixel и row strides; padded layout безопасно идёт через generic kernel.
 - Один адресный Windows Dart FFI тест проверяет I420/NV12/BGRA aligned, odd-origin/odd-edge случаи и I420 odd-origin с padded source rows; каждый output sample и checksum oracle проверяются вне batch timer. До → после, мс/вызов (speedup): I420 aligned 25.51707→0.03477 (733.8×), odd origin 51.46728→4.58196 (11.23×), odd edge 51.42297→4.98110 (10.32×); NV12 aligned 21.67528→0.03173 (683.1×), odd origin 44.13614→4.74567 (9.30×), odd edge 43.64942→4.75129 (9.19×); BGRA even 17.24063→0.19989 (86.25×), odd 17.22686→0.19167 (89.87×). NV12 phase cases retain ~9× cost from required chroma decode/average/encode.
 - Принято после native diff review и независимого финального `dart test test/yuv_crop_v1_test.dart -r expanded`: 9/9, все checksum совпали. `dart format` без изменений, `dart analyze` без замечаний, `git diff --check` чисто. Коммит: task-specific commit is recorded in Git history.
 
-# C-04 — Ускорен `yuv_rotate_v1`
+## C-04 — Ускорен `yuv_rotate_v1`
 
 - Исполнитель: GPT-5.6 Terra (T2). Legacy `0.2.4` проходит по output pixels и копирует stored samples напрямую; ABI v1 получил tight-packed direct plane path, а odd 4:2:0/padded/gapped input остаётся на phase-aware generic kernel.
 - Адресный Dart FFI test покрывает I420/NV12/BGRA × 90/180/270, выходную геометрию, все samples и checksum вне batch timer. Windows Release, мс/вызов до → после (speedup): I420 90 45.512→4.107 (11.08×), 180 45.071→4.502 (10.01×), 270 45.364→4.535 (10.01×); NV12 90 38.828→3.425 (11.34×), 180 38.602→3.733 (10.34×), 270 38.709→3.784 (10.23×); BGRA 90 32.503→2.928 (11.10×), 180 30.384→2.999 (10.13×), 270 32.852→3.214 (10.22×).
 - Принято после native diff review и независимого `dart test test/yuv_rotate_v1_test.dart -r expanded`: 9/9, oracle/checksums прошли; `dart format` без изменений, `dart analyze` без замечаний, `git diff --check` чисто. Task commit записан в Git history.
 
-# C-05 — Ускорен `yuv_grayscale_v1`
+## C-05 — Ускорен `yuv_grayscale_v1`
 
 - Исполнитель: GPT-5.6 Terra (T2). В `0.2.4` YUV grayscale нейтрализует chroma напрямую, что не сохраняет ABI v1 ROI boundary semantics. Добавлен локальный tight-packed path: BGRA grayscale с alpha preservation; I420/NV12 full-frame обрабатывает 2×2 блок одним decode и re-encode; ROI копирует untouched data, обрабатывает выбранные pixels и пересчитывает пересечённые chroma blocks. Padded/gapped/alias layouts остаются в generic kernel; shared helpers не менялись.
 - Dart FFI test проверяет I420/NV12/BGRA × full-frame/ROI, bytewise BT.601 oracle и checksum вне batch timer; отдельный padded I420 ROI кейс проверяет fallback. Windows Release, мкс/вызов до → после (speedup): I420 full 176149.30→12143.55 (14.51×), ROI 141551.95→10893.50 (12.99×); NV12 full 153269.95→11915.05 (12.86×), ROI 121020.10→11176.05 (10.83×); BGRA full 60527.00→2462.15 (24.58×), ROI 47218.75→1745.80 (27.05×).
 - Принято после native diff review и независимого `dart test test/yuv_grayscale_v1_test.dart -r expanded`: 7/7, oracle/checksums прошли; `dart format` без изменений, `dart analyze` без замечаний, `git diff --check` чисто. Task commit записан в Git history.
 
-# C-06 — Ускорен `yuv_black_white_v1`
+## C-06 — Ускорен `yuv_black_white_v1`
 
 - Исполнитель: GPT-5.6 Terra (T2). `0.2.4` black-white для YUV thresholded stored Y/neutralized chroma, а BGRA used different strict floating threshold; neither preserves ABI v1 visible-RGB inclusive `gray >= 128` plus ROI-boundary chroma semantics. Added local tight-packed direct path; alpha is preserved, padded/gapped/alias cases stay on generic effect path.
 - Dart FFI test checks I420/NV12/BGRA × full/ROI, visible gray 127/128/129, every output byte, checksum and padded I420 ROI fallback. Batch Windows Release mкс/вызов до → после (speedup): I420 full 178387.40→12302.80 (14.50×), ROI 142719.10→11180.20 (12.77×); NV12 full 155966.95→11965.70 (13.03×), ROI 122213.80→11334.85 (10.78×); BGRA full 61704.20→2321.85 (26.57×), ROI 47816.20→1617.75 (29.56×).
@@ -269,3 +269,81 @@
 - **ACCEPT**, независимое ревью 28.09.2026 после доработки тестов. Исполнитель: Claude (T2); коммиты `8098702`, `22299be`, `43fa060`. `YuvImage.toInputImage()` на границе example формирует для I420/NV12 плотные байты `Y + VU` и маркирует их как NV21; для BGRA передаёт плотный буфер с `bytesPerRow = width * 4`. Внутренний UV-порядок `YuvImage`, native C и публичный API пакета не менялись.
 - Тесты теперь используют реальные pixel gaps вместе с padding строк: I420 U/V `pixelStride=2`, NV12 UV `pixelStride=4`, BGRA `pixelStride=6`. Проверены видимые байты, порядок V/U, длина, отсутствие padding в результате, формат, размер, row stride и `rotation0deg`. Локальный исходник `google_mlkit_commons` 0.11.0 подтверждает соответствующие Android NV21 и iOS BGRA byte-array пути.
 - Независимо прошли 3 адресных теста `yuv_image_to_input_image_test.dart`, `flutter analyze --no-pub` в example, форматирование и `git diff --check`. Реальный вызов face detection на устройстве не запускался; карточка разрешала VM-приёмку без нового device-стенда.
+
+## VIEW-00 — Закрыто владение кадром при декодировании и захвате
+
+- **ACCEPT**, независимое ревью 27.09.2026; исполнитель T1 · Claude Opus 5.5; rejection count: 1.
+- Проверены фиксация ревизии, декодирование и снимок кадра при захвате; повторная приёмка закрыла дефект старого ключа после мутации источника.
+- Регрессионные тесты и анализ прошли. [Полный отчёт и ревью](doc/archive/view-00-02-2026-09-27.md).
+
+## VIEW-01 — Ограничена обработка кадров и освобождаются ресурсы превью
+
+- **ACCEPT**, независимое ревью 27.09.2026; исполнитель T1 · Claude Opus 5.5; rejection count: 1.
+- Mobile/web превью обрабатывает один кадр до отрисовки; ресурсы освобождаются, FPS считается после кадра. Устранена гонка старого web reader после перезапуска.
+- Детерминированные lifecycle-тесты и корневые/example тесты и анализ прошли. [Полный отчёт и ревью](doc/archive/view-00-02-2026-09-27.md).
+
+## VIEW-01A — Проверен desktop camera stream для example
+
+- **ACCEPT**, независимое ревью 27.09.2026; исполнитель T2 · Claude Sonnet 5; rejection count: 3.
+- Windows BGRA stream/import подтверждены; Linux/macOS builds и CI цели на Flutter 3.44.9 прошли на принятом SHA. Ограничения Flutter 3.38.10 и Web остаются отдельными.
+- Четвёртое ревью подтверждает относящиеся к задаче CI jobs; физическая камера macOS/Linux не проверялась. [Полный отчёт и ревью](doc/archive/view-00-02-2026-09-27.md).
+
+## VIEW-01P — Перенесён потоковый презентер в публичный API
+
+- **ACCEPT**, независимое ревью 27.09.2026; исполнитель T2 · Claude Sonnet 5; rejection count: 0.
+- Пакет экспортирует `YuvFramePresenter` и `YuvFrameView`; example использует пакетную реализацию, тесты владения и освобождения кадров перенесены.
+- Перенесённые тесты и адресный BGRA-тест прошли; анализ пакета и example без замечаний. [Полный отчёт и ревью](doc/archive/view-00-02-2026-09-27.md).
+
+## VIEW-01B — Переведено desktop-превью example на camera_desktop
+
+- **ACCEPT**, повторное независимое ревью 27.09.2026; исполнитель T1 · Claude Opus 5.5; rejection count: 1.
+- Windows smoke с физической камерой подтвердил показ и захват кадров; macOS entitlements и usage description добавлены.
+- macOS/Linux CI подтвердил сборку и запуск без камеры; работа физической камеры на этих платформах не проверялась. [Полный отчёт и ревью](doc/archive/view-00-02-2026-09-27.md).
+
+## VIEW-02 — Унифицированы transform и lifecycle превью
+
+- **ACCEPT**, независимое ревью 27.09.2026; исполнитель T1 · Claude Opus 5.5; rejection count: 2.
+- Захват подтверждается после отрисовки и отменяется при остановке; mobile отображает ошибку потока после старта. Закрыты гонки поколения и поздние кадры.
+- Целевые тесты, анализ example и Web JavaScript build прошли; физические прогоны оставлены платформенным проверкам. [Полный отчёт и ревью](doc/archive/view-00-02-2026-09-27.md).
+
+## C-07 — Ускорен `yuv_negate_v1`
+
+- **DONE**, коммит `2b11af7` (25.09.2026); исполнитель и тир в доступном архиве не указаны; приёмка ревьюера не зафиксирована.
+- Оптимизация packed transforms; архивированная карточка и подробные проверки не найдены.
+
+## C-08 — Ускорен `yuv_chroma_swap_v1`
+
+- **DONE**, коммит `ae981fd` (25.09.2026); исполнитель и тир в доступном архиве не указаны; приёмка ревьюера не зафиксирована.
+- Оптимизация tight frames; архивированная карточка и подробные проверки не найдены.
+
+## C-09 — Ускорен `yuv_box_blur_v1`
+
+- **DONE**, коммит `d089cd4` (25.09.2026); исполнитель и тир в доступном архиве не указаны; приёмка ревьюера не зафиксирована.
+- Добавлен bounded scratch; архивированная карточка и подробные проверки не найдены.
+
+## C-10 — Ускорен `yuv_mean_blur_v1`
+
+- **DONE**, коммит `77223ae` (25.09.2026); исполнитель и тир в доступном архиве не указаны; приёмка ревьюера не зафиксирована.
+- Добавлен bounded scratch; архивированная карточка и подробные проверки не найдены.
+
+## C-11 — Ускорен `yuv_gaussian_blur_v1`
+
+- **DONE**, коммит `74a1496` (25.09.2026), исполнитель GPT-6 Sol · T1; приёмка ревьюера не зафиксирована. Архивная карточка всё ещё говорит «Ожидает независимой проверки Terra».
+- Gaussian вычисление использует bounded row buffers; отчёт и проверки должны быть сверены отдельно, так как в карточке нет заключения ревьюера.
+
+## OPT-13 — Исследованы blur buffers и Dart plane copies
+
+- **ACCEPT**, независимая проверка GPT-5.6 Terra · T2; дата ревью в архиве не указана; исполнитель GPT-6 Sol · T1; rejection count: не зафиксирован.
+- Prototype separable Gaussian совпал с oracle в описанной выборке; allocation fault injection прошёл. `malloc` отклонён из-за неинициализированных reserved/padding bytes, оставлен `calloc`.
+- Рекомендованы bounded scratch и отдельная узкая row-copy задача; production Gaussian не менялся. [Отчёт и ревью](doc/perf/archive/native-refactor-todo-2026-09-26.md).
+
+## SPEED-12 — Сводка производительности
+
+- **SUPERSEDED** — заменена пробами RA-21/RA-26.
+
+## RA-03 — Приведена история задач к протоколу
+
+- Исполнитель GPT-6 Luna · T3; независимое ревью Codex · T2: **ACCEPT**; rejection count: 0.
+- Полные отчёты VIEW-00…02 перемещены в [архив](doc/archive/view-00-02-2026-09-27.md); в `COMPLETION.md` добавлены краткие записи VIEW-00…02, C-07…C-11, OPT-13 и SPEED-12. Заголовки записей приведены к `##`.
+- Все относительные Markdown-ссылки в затронутых файлах разрешаются; `COMPLETION.md` содержит только один H1; `git diff --check` прошёл. Приёмка ревьюера не зафиксирована для C-07…C-11 и явно обозначена в записях.
+- Изменения не закоммичены.

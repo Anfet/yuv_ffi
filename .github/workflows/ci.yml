@@ -1,9 +1,15 @@
 name: CI
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: ["**"]
+    paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/perf/**']
   pull_request:
+    paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/perf/**']
   workflow_dispatch:
 
 jobs:
@@ -15,7 +21,7 @@ jobs:
         flutter-version: ['3.38.10', '3.44.9']
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -66,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Report toolchain versions
         run: |
@@ -126,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -160,7 +166,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -229,7 +235,7 @@ jobs:
     runs-on: [self-hosted, macOS]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -301,7 +307,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -325,6 +331,23 @@ jobs:
       - name: Build example (android)
         working-directory: example
         run: flutter build apk --debug
+      - name: Build ARMv7-only app-runtime smoke APK
+        working-directory: example
+        run: >
+          flutter build apk --debug --target=integration_test/native_app_runtime_smoke_test.dart
+          --target-platform android-arm --split-per-abi
+
+      - name: Verify ARMv7-only APK contents
+        working-directory: example
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk='build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk'
+          test -s "$apk"
+          mapfile -t apk_abis < <(unzip -Z1 "$apk" | sed -n 's#^lib/\([^/]*\)/.*#\1#p' | sort -u)
+          test "${#apk_abis[@]}" -eq 1
+          test "${apk_abis[0]}" = 'armeabi-v7a'
+          unzip -Z1 "$apk" | grep --fixed-strings --line-regexp 'lib/armeabi-v7a/libyuv_ffi.so'
 
       # The action recommends this on Ubuntu hosted runners to make the
       # x86_64 emulator fast. Its absence is a performance concern; the action
@@ -351,116 +374,6 @@ jobs:
           working-directory: example
           script: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart -d emulator-5554 --no-pub
 
-  # Android Emulator API 30 x86_64 images advertise ARMv7 through the native
-  # bridge. Build the whole Flutter app as ARMv7-only so Android cannot select
-  # an x86_64 fallback, then run the same no-skip smoke through that bridge.
-  # This is a real execution of the published 32-bit ARM library, while the
-  # x86_64 system image remains KVM-accelerated on the GitHub Linux host.
-  android-armv7-runtime:
-    runs-on: ubuntu-latest
-    # Without an explicit cap, a stuck `flutter drive` against the emulator
-    # (observed: APK installs fine, then the driver never reports back) runs
-    # until GitHub's default 6h job timeout instead of failing fast.
-    timeout-minutes: 25
-    # The driver/observatory handshake against the ARM-translated (native
-    # bridge) process on this GitHub-hosted x86_64 image is unreliable: across
-    # four independent runs on 2026-09-25 it succeeded once and hung three
-    # times (the hangs now fail fast via the timeout above instead of running
-    # to the job limit). ARMv7 runtime is separately verified on a physical
-    # device (see todo.md AUD-17); this job stays non-blocking so a flaky
-    # emulator handshake does not gate releases that already have that
-    # stronger evidence. Re-tighten this once the handshake proves reliable
-    # across several consecutive runs.
-    continue-on-error: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.44.9'
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Flutter pub get (example)
-        working-directory: example
-        run: flutter pub get
-
-      # `--target-platform android-arm` alone is not honored for debug builds:
-      # Flutter still assembles a universal debug APK with arm64-v8a/x86_64
-      # libraries alongside armeabi-v7a. `--split-per-abi` is what actually
-      # produces a single-ABI `app-armeabi-v7a-debug.apk`.
-      - name: Build ARMv7-only app-runtime smoke APK
-        working-directory: example
-        run: >
-          flutter build apk --debug
-          --target=integration_test/native_app_runtime_smoke_test.dart
-          --target-platform android-arm
-          --split-per-abi
-
-      # Verify the test input before the emulator starts: a fat APK could run
-      # an x86_64 fallback and would not prove execution of the ARMv7 library.
-      - name: Verify ARMv7-only APK contents
-        working-directory: example
-        shell: bash
-        run: |
-          set -euo pipefail
-          apk='build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk'
-          test -s "$apk"
-          mapfile -t apk_abis < <(unzip -Z1 "$apk" | sed -n 's#^lib/\([^/]*\)/.*#\1#p' | sort -u)
-          test "${#apk_abis[@]}" -eq 1
-          test "${apk_abis[0]}" = 'armeabi-v7a'
-          unzip -Z1 "$apk" | grep --fixed-strings --line-regexp 'lib/armeabi-v7a/libyuv_ffi.so'
-
-      - name: Enable KVM permissions
-        shell: bash
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      # The emulator action executes each `script` line in a separate shell.
-      # Keep the ABI assertion and drive invocation in one script so failures
-      # and shell variables survive until the smoke has completed.
-      - name: Prepare ARMv7 native-bridge smoke script
-        shell: bash
-        run: |
-          cat > "$RUNNER_TEMP/armv7-native-bridge-smoke.sh" <<'BASH'
-          set -euo pipefail
-          abi_list="$(adb -s emulator-5554 shell getprop ro.product.cpu.abilist | tr -d '\r')"
-          printf 'Android native-bridge ABI list: %s\n' "$abi_list"
-          case ",$abi_list," in
-            *,armeabi-v7a,*) ;;
-            *) echo 'API 30 x86_64 image did not advertise armeabi-v7a support.' >&2; exit 1 ;;
-          esac
-          # `flutter drive` has been observed to install the APK successfully
-          # and then hang indefinitely with no further output instead of
-          # failing when the driver/observatory handshake does not complete.
-          # `timeout` turns that hang into a fast, diagnosable failure instead
-          # of relying solely on the job-level timeout-minutes to cut it off.
-          timeout --signal=KILL 12m flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart --use-application-binary=build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk -d emulator-5554 --no-pub
-          BASH
-          bash -n "$RUNNER_TEMP/armv7-native-bridge-smoke.sh"
-
-      - name: App-runtime smoke (ARMv7 native bridge)
-        uses: reactivecircus/android-emulator-runner@v2
-        timeout-minutes: 20
-        with:
-          # Android 11 x86_64 images support ARMv7 binaries through the native
-          # bridge. `arch: armeabi-v7a` is deliberately absent: the action has
-          # no such system-image architecture.
-          api-level: 30
-          target: google_apis
-          arch: x86_64
-          profile: pixel_2
-          working-directory: example
-          script: bash "$RUNNER_TEMP/armv7-native-bridge-smoke.sh"
-
   # YUV-06 requires mobile build evidence on both platforms. Android is covered
   # by android-native-build through the NDK. This job separately proves the
   # unsigned device build and the simulator's real app-runtime path. The latter
@@ -473,7 +386,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -548,7 +461,7 @@ jobs:
         flutter-version: ['3.41.0', '3.44.9']
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -574,7 +487,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
