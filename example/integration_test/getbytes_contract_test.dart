@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Web acceptance for YUV-14: `getBytes()` must return exactly the
+/// `getBytes()` must return exactly the
 /// concatenation of `plane.bytes`, with no alignment tail, on the real WASM
 /// backend served by a browser.
 ///
@@ -57,7 +57,7 @@ void main() {
     expect(image.getBytes(), orderedEquals(expectedBytes));
   });
 
-  testWidgets('F-003 diagnostic case: tight i420 3x3 yields exactly 17 bytes', (tester) async {
+  testWidgets('tight I420 3x3 yields exactly 17 bytes', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     await YuvFfi.ensureInitialized();

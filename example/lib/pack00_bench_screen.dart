@@ -9,18 +9,9 @@ import 'package:yuv_ffi_example/ext.dart';
 import 'package:yuv_ffi_example/widgets/impl/yuv_camera_preview_io.dart';
 import 'package:yuv_ffi_example/widgets/yuv_camera_preview.dart';
 
-/// PACK-00 in-app release bench, temporary: reruns the VIEW-03
-/// delivered/dropped/accepted/presented measurement
-/// (`example/integration_test/view03_frame_path_pixel3_test.dart`,
-/// `pack00_pack_vs_padded_pixel3_test.dart`) inside this app's own real
-/// `--release` build instead of `flutter drive --profile` (Flutter Driver
-/// refuses `--release` on non-web, so no integration_test in this repo has
-/// ever measured this path in release). A user-run in-app rotate bench on
-/// this device found `applyRotation` at ~9-12 ms in release, an order of
-/// magnitude below the ~93 ms every `--profile` run measured -- this screen
-/// checks whether the full delivered-to-presented path shows the same gap,
-/// and runs both the padded and packed camera import
-/// ([kYuvCameraPreviewPackPlanes]) back to back for a real release comparison.
+/// In-app release benchmark for camera frames delivered, dropped, accepted,
+/// and presented. It runs in the app's `--release` build and compares padded
+/// and packed camera imports ([kYuvCameraPreviewPackPlanes]) back to back.
 class Pack00BenchScreen extends StatefulWidget {
   const Pack00BenchScreen({super.key});
 

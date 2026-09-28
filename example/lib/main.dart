@@ -165,8 +165,8 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // PACK-00 in-app bench, temporary: opens a screen that reruns the VIEW-03
-  // delivered/dropped/accepted/presented measurement inside this app's real
+  // Opens an in-app release benchmark that measures frames delivered,
+  // dropped, accepted, and presented inside this app's real
   // `--release` build, not `flutter drive --profile` (Flutter Driver refuses
   // `--release` on non-web, so no integration_test has measured this path in
   // release before). See `pack00_bench_screen.dart`.

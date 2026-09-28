@@ -39,23 +39,21 @@ dev_dependencies:
 
   flutter_lints: ^5.0.0
 
-  # YUV-12: the ported reference_web_conversions_test.dart reuses the same
-  # pure-Dart oracle helper as the native suite (test/helpers/reference/
+  # The browser reference suite reuses the same pure-Dart oracle helper as
+  # the native suite (test/helpers/reference/
   # test_pattern_reference.dart), which depends on these two packages.
   crypto: ^3.0.6
   image: ^4.5.4
 
-  # BGRA-04: bgra04_copy_out_candidates_pixel3_test.dart allocates a raw
-  # native buffer directly to compare copy-out candidates in isolation,
-  # mirroring speed_00_dart_ffi/test/bgra04_copy_out_bench_test.dart's use of
-  # dart:ffi + package:ffi. Declared explicitly rather than relied on as a
+  # Camera frame benchmarks compare native copy strategies in isolation using
+  # dart:ffi and package:ffi. Declare ffi directly instead of relying on a
   # transitive dependency of yuv_ffi.
   ffi: ^2.2.0
 
 flutter:
   uses-material-design: true
   assets:
-    # YUV-12 reference fixtures. The example package cannot bundle assets
+    # Reference fixtures. The example package cannot bundle assets
     # from outside its own root (../test/...), so these are a build-time copy
     # of test/reference/test_pattern_512/{manifest.json,artifacts/*.png} and
     # test/assets/test_pattern_512.png. Only the PNG artifacts are copied:

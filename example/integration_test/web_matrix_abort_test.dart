@@ -17,7 +17,7 @@ external void _consoleError(JSString message);
 
 const _sourceAssetPath = 'assets/reference/test_pattern_512.png';
 
-/// Test-only YUV-40 probe for F-010. The default variant exercises the
+/// Test-only probe for the conversion boundary. The default variant exercises the
 /// suspect case in isolation; `-DYUV40_VARIANT=after-nv21-to-i420` first runs
 /// its immediate predecessor from the interrupted matrix.
 const _variant = String.fromEnvironment('YUV40_VARIANT', defaultValue: 'isolated');
@@ -31,7 +31,7 @@ void _marker(String message) {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('F-010 BGRA to NV21 abort boundary', (tester) async {
+  testWidgets('BGRA to NV21 abort boundary', (tester) async {
     expect(kIsWeb, isTrue, reason: 'YUV-40 must run in Chrome.');
     _marker('before ensureInitialized');
     await YuvFfi.initialize();

@@ -3,19 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Web acceptance for YUV-08: `toBgraBytes()` on a padded BGRA source must
+/// `toBgraBytes()` on a padded BGRA source must
 /// return exactly `width * height * 4` tightly packed bytes, never the padded
 /// plane verbatim.
 ///
-/// `lib/src/yuv/impl/web/yuv_web.dart`'s old `toBgra8888()` used to return
-/// `yPlane.bytes` unconditionally for the BGRA format, which is only correct
-/// when the plane's `rowStride` already equals `width * 4`. When the source
-/// plane carries row padding (`rowStride > width * 4`), that violated the
-/// public contract by leaking padding bytes into the result. This test
-/// exercises the fix against the real WASM backend, mirroring the native
-/// reference behavior in `lib/src/yuv/impl/io/yuv_image.dart`.
+/// A padded source plane has a `rowStride` greater than `width * 4`; returning
+/// its bytes directly would leak padding into the result. This test checks the
+/// public contract against the real WASM backend and the native implementation.
 ///
-/// This runs through this package's integration harness (see
+/// This runs through the integration harness (see
 /// `wasm_bootstrap_test.dart`) instead of `flutter test --platform chrome`,
 /// which serves no asset bundle and cannot load the WASM module.
 void main() {

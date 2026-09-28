@@ -1,28 +1,15 @@
-// VIEW-01A / VIEW-01B diagnostic tool. Not wired into `main.dart` and not part
-// of the demo app's UI; run it directly on a desktop platform with a physical
-// camera to reproduce the frame-stream smoke test recorded in
-// `todo.md` (VIEW-01A, second pass). The demo's desktop preview uses the same
-// stream path since VIEW-01B; this tool stays as a minimal, UI-free check of
-// the camera stream on a new machine or platform.
+// Diagnostic entry point for checking a desktop camera stream without the
+// demo UI. Run it directly on a desktop with a camera:
 //
 // Run (from `example/`):
 //   flutter run -t lib/camera_desktop_smoke_main.dart -d windows
 //   flutter run -t lib/camera_desktop_smoke_main.dart -d macos
 //   flutter run -t lib/camera_desktop_smoke_main.dart -d linux
 //
-// What it proves and why it bypasses `CameraController.startImageStream`:
-// `camera` 0.11.0+2's `CameraController.startImageStream`/`stopImageStream`
-// assert `defaultTargetPlatform` is Android or iOS
-// (camera_controller.dart:488, :524 in camera-0.11.0+2). That assert fires in
-// debug/profile regardless of which `CameraPlatform.instance` is registered,
-// even though the method's actual body is just
-// `CameraPlatform.instance.onStreamedFrameAvailable(cameraId).listen(...)`,
-// which is not platform-gated at all. This smoke calls
-// `CameraPlatform.instance.onStreamedFrameAvailable` directly -- the same
-// call `startImageStream` would make -- so it streams real frames on desktop
-// without tripping that assert, while still using `CameraController` for
-// `initialize`/`dispose`/lifecycle. The desktop preview
-// (`widgets/impl/yuv_camera_preview_desk.dart`) uses the same bypass.
+// The camera package restricts `CameraController.startImageStream` to Android
+// and iOS. Calling `CameraPlatform.instance.onStreamedFrameAvailable` directly
+// lets this diagnostic exercise desktop frame delivery while retaining the
+// controller's initialization, disposal, and lifecycle handling.
 //
 // Verdict: the final line is `SMOKE COMPLETE` only if all five frames were
 // imported through `toYuvImage()`/`toBgraBytes()` without throwing and the
@@ -93,11 +80,8 @@ class _SmokeBodyState extends State<_SmokeBody> {
     _running = true;
     int? cameraId;
     StreamSubscription<CameraImageData>? subscription;
-    // Tracks the two conditions the smoke exists to prove: five frames
-    // imported through `toYuvImage()`/`toBgraBytes()` without throwing, and a
-    // clean stop of the stream. Either one failing must flip the final
-    // verdict -- neither used to affect it, which is the false positive this
-    // pass fixes.
+    // The final verdict requires five successful imports and a clean stream
+    // stop; either condition failing makes the smoke fail.
     var framesImported = 0;
     const targetFrames = 5;
     var streamStoppedCleanly = false;

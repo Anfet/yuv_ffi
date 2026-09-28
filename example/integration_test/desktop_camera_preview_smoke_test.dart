@@ -13,7 +13,7 @@ import 'package:yuv_ffi_example/main.dart' as demo;
 /// Where the smoke writes the drawn and the captured frame as PNG, if set.
 const String _outDir = String.fromEnvironment('SMOKE_OUT');
 
-/// VIEW-01B desktop smoke with a physical camera: the demo opens
+/// Desktop camera smoke: the demo opens
 /// `CameraScreen`, the `camera_desktop` stream is shown through the preview
 /// for a few seconds, and "Capture frame" returns the frame that was drawn.
 ///

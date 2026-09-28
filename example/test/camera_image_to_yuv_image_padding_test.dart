@@ -7,15 +7,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
 
-/// VIEW-01A: `camera_desktop`'s BGRA8888 frames report `bytesPerRow` from the
+/// `camera_desktop`'s BGRA8888 frames report `bytesPerRow` from the
 /// native capture backend, which can exceed `width * 4` (row padding for
 /// alignment). This test does not depend on `camera_desktop` or a physical
 /// camera: it builds the same [CameraImageData] shape the platform interface
 /// hands to [CameraImage.fromPlatformInterface] and exercises the
 /// `isPacked` branch of [CameraImageExt.toYuvImage] with a padded stride,
-/// forcing [kYuvCameraPreviewPackPlanes] off (PACK-01C made dense import the
-/// default) to specifically cover the padded-preserving path this test is
-/// named for.
+/// forcing [kYuvCameraPreviewPackPlanes] off to cover the padded-preserving
+/// path.
 void main() {
   setUp(() => kYuvCameraPreviewPackPlanes = false);
   tearDown(() => kYuvCameraPreviewPackPlanes = true);

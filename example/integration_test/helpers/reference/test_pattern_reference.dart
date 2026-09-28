@@ -1,10 +1,10 @@
-/// Pure-Dart reference primitives for the YUV-10 fixture generator.
+/// Pure-Dart reference primitives for generating image fixtures.
 ///
 /// This library deliberately has no dependency on `yuv_ffi`, FFI, or WASM.
 /// It models BT.601 limited-range 4:2:0 conversion and RGB operations so the
 /// generated files remain an independent oracle for both package backends.
 ///
-/// YUV-12 note: this is a verbatim copy of `test/helpers/reference/
+/// This is a copy of `test/helpers/reference/
 /// test_pattern_reference.dart` (the root package's copy), not a symlink or
 /// a cross-package relative import. It has to live inside the `example`
 /// package because the dartdevc/DDC Web compiler resolves `org-dartlang-app:/`

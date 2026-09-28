@@ -112,7 +112,7 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
   }
 
   void onNewImageAvailable(CameraImage image, int generation) {
-    // VIEW-03 measurement only: null in production, so this is a single
+    // Null in production, so this is a single
     // field read plus a virtual call, never a per-frame allocation.
     final debugEvent = debugYuvCameraPreviewMobileEvent;
     if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.delivered, debugYuvCameraPreviewMobileClock.elapsed);

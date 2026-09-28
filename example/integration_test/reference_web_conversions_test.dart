@@ -11,7 +11,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 
 import 'helpers/reference/test_pattern_reference.dart';
 
-/// YUV-12: runs the same 119-case reference conversion matrix as
+/// Runs the same 119-case reference conversion matrix as
 /// `test/reference_native_conversions_test.dart`, but against the real
 /// Web/WASM backend in a browser instead of the native FFI backend.
 ///
@@ -252,11 +252,8 @@ YuvImage _newImage(YuvPixelFormat format, int width, int height, List<YuvPlane> 
     planes = _blankLogicalSamples(format, width, planes);
   }
   return switch (format) {
-    // Since YUV-15 the named BGRA constructor preserves the declared layout
-    // just like the explicit-format one, so both blank and populated cases can
-    // go through it. This whole file exercises declared strides byte-for-byte,
-    // so every case passes `.preserve` explicitly (PACK-01B changed the
-    // default to `.packed`).
+    // This suite exercises declared strides byte-for-byte, so each case uses
+    // `.preserve` explicitly.
     YuvPixelFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
     YuvPixelFormat.i420 => YuvImage.i420(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
     YuvPixelFormat.nv12 => YuvImage.nv12(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
@@ -484,10 +481,8 @@ Uint8List _rgbaToBgra(Uint8List rgba) {
 /// the one frame decoded in `main()` is equivalent and avoids that.
 Uint8List parametersForRaw(Map<String, dynamic> entry, RgbaFrame source) {
   final input = entry['input'] as Map<String, dynamic>;
-  // Every format now keeps the declared layout. BGRA used to be forced to
-  // 'tight' here because the named constructor repacked padded input at
-  // construction time; YUV-15 makes it preserve the caller's stride, so the
-  // expectation is built from the same layout the case actually declares.
+  // Build expected bytes from the declared layout so padded and gapped cases
+  // retain their original plane geometry.
   final layout = input['layout'] as String;
   final planes = _planesFor(_format(input['format'] as String), _rawSourceFrame(entry, source), layout);
   if (entry['operation'] == 'copy' && (entry['parameters'] as Map<String, dynamic>)['blank'] == true) {

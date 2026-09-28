@@ -3,15 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Web acceptance for YUV-15: the padded BGRA constructor contract.
+/// The padded BGRA constructor preserves valid row-strided input.
 ///
-/// F-004 was a `RangeError (end): Invalid value: Not in inclusive range 0..16: 32`
-/// thrown by the specialized `YuvImage.bgra` constructor when given a padded
-/// plane (rowStride 16 with a logical width of 2 pixels at 4 bytes each, i.e.
-/// 8 logical bytes per row but 16 allocated). The fix made the specialized
-/// constructor share the generic constructor's validation and deep-copy path.
-/// This must be proven on the Web backend too, since the VM and Web
-/// implementations diverge (`lib/src/yuv/impl/io` vs `lib/src/yuv/impl/web`).
+/// The input uses 16 bytes per row for two BGRA pixels, whose logical row size
+/// is eight bytes. The check runs against the Web backend because its
+/// implementation is separate from the VM backend.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 

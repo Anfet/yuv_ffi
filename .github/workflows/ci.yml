@@ -14,7 +14,7 @@ on:
 
 jobs:
   analyze-and-test-vm:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     strategy:
       fail-fast: false
       matrix:
@@ -52,74 +52,23 @@ jobs:
       # install looks like; keeping the old in-tree path would have hidden a
       # packaging regression behind a green job.
       - name: Build native library
-        shell: bash
+        shell: pwsh
+        env:
+          FLUTTER_VERSION: ${{ matrix.flutter-version }}
         run: |
-          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
-          cmake --build "$RUNNER_TEMP/native-build" --config Release
-          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.so"
-          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
+          $nativeBuild = Join-Path $env:RUNNER_TEMP "native-build-$env:FLUTTER_VERSION"
+          cmake -S src -B $nativeBuild -A x64 -DCMAKE_BUILD_TYPE=Release
+          if ($LASTEXITCODE -ne 0) { throw "CMake configure failed with $LASTEXITCODE" }
+          cmake --build $nativeBuild --config Release --parallel
+          if ($LASTEXITCODE -ne 0) { throw "CMake build failed with $LASTEXITCODE" }
+          $nativeDllDirectory = Join-Path $nativeBuild 'Release'
+          if (-not (Test-Path (Join-Path $nativeDllDirectory 'yuv_ffi.dll'))) {
+            throw "Native library was not produced in $nativeDllDirectory"
+          }
+          $nativeDllDirectory | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Unit tests
         run: flutter test
-
-  # YUV-34: required native memory-safety gate. Flutter reference tests prove
-  # wrong pixels; they cannot prove the absence of out-of-bounds access,
-  # uninitialized reads, integer UB, or leaks inside the C kernels. This job
-  # builds the C-only test_native harness (never the Flutter plugin build)
-  # with clang and ASan+UBSan (LSan is bundled into ASan on Linux), and fails
-  # on any sanitizer report or non-zero ctest exit -- no continue-on-error.
-  native-sanitizer-gate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Report toolchain versions
-        run: |
-          clang --version
-          cmake --version
-
-      # BUILD_TESTING=ON pulls in test_native/ (see root CMakeLists.txt); the
-      # generator is left at its Ubuntu default (Unix Makefiles), and the
-      # compiler is pinned to clang explicitly rather than relying on
-      # whatever cc/gcc the runner image defaults to, since the sanitizer
-      # flags in test_native/CMakeLists.txt are written for GCC/Clang and the
-      # required CI evidence should name one specific compiler.
-      - name: Configure
-        run: |
-          cmake -S . -B "$RUNNER_TEMP/sanitizer-build" \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DBUILD_TESTING=ON \
-            -DCMAKE_C_COMPILER=clang
-
-      - name: Build
-        run: cmake --build "$RUNNER_TEMP/sanitizer-build" --config Debug
-
-      # --output-on-failure surfaces the sanitizer report inline in the job
-      # log; run twice (Debug is ctest's implicit default here, Release is
-      # asserted explicitly per the project rule that NDEBUG silences assert()
-      # and must not silently drop the harness's own checks).
-      - name: Run native test suite (Debug)
-        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build" -C Debug --output-on-failure
-
-      - name: Configure (Release)
-        run: |
-          cmake -S . -B "$RUNNER_TEMP/sanitizer-build-release" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTING=ON \
-            -DCMAKE_C_COMPILER=clang
-
-      - name: Build (Release)
-        run: cmake --build "$RUNNER_TEMP/sanitizer-build-release" --config Release
-
-      - name: Run native test suite (Release)
-        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build-release" -C Release --output-on-failure
-
-      # Prints the sanitizer safety gate's own executed-case count into the
-      # job log as required evidence, independent of ctest's per-test pass
-      # count (ctest reports one pass/fail per executable, not per case).
-      - name: Report executed case count
-        run: "$RUNNER_TEMP/sanitizer-build/test_native/abi_sanitizer_test"
 
   # YUV-26: proves ffigen.yaml's allowlist is host-independent. libclang's
   # system headers differ between Windows and Linux, so a `functions.include`
@@ -129,7 +78,7 @@ jobs:
   # checkout and diffing against the committed file is a stronger proof of
   # host-independence than re-deriving the expected symbol set by hand.
   bindings-regeneration:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -140,7 +89,12 @@ jobs:
           flutter-version: '3.44.9'
 
       - name: Install libclang
-        run: sudo apt-get update && sudo apt-get install -y libclang-dev
+        shell: bash
+        run: |
+          xcode_developer="$(xcode-select -p)"
+          libclang="$xcode_developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib"
+          test -f "$libclang"
+          echo "FFIGEN_LIBCLANG_PATH=$libclang" >> "$GITHUB_ENV"
 
       - name: Flutter pub get (root)
         run: flutter pub get
@@ -175,6 +129,40 @@ jobs:
 
       - name: Flutter pub get (root)
         run: flutter pub get
+
+      - name: Report sanitizer toolchain versions
+        run: |
+          clang --version
+          cmake --version
+
+      - name: Configure sanitizer tests (Debug)
+        run: |
+          cmake -S . -B "$RUNNER_TEMP/sanitizer-build" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=clang
+
+      - name: Build sanitizer tests (Debug)
+        run: cmake --build "$RUNNER_TEMP/sanitizer-build" --config Debug
+
+      - name: Run sanitizer tests (Debug)
+        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build" -C Debug --output-on-failure
+
+      - name: Configure sanitizer tests (Release)
+        run: |
+          cmake -S . -B "$RUNNER_TEMP/sanitizer-build-release" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=clang
+
+      - name: Build sanitizer tests (Release)
+        run: cmake --build "$RUNNER_TEMP/sanitizer-build-release" --config Release
+
+      - name: Run sanitizer tests (Release)
+        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build-release" -C Release --output-on-failure
+
+      - name: Report sanitizer case count
+        run: "$RUNNER_TEMP/sanitizer-build/test_native/abi_sanitizer_test"
 
       # Installed name on the loader search path, never the CMake build tree:
       # native/src/build/libyuv_ffi.so does not exist in a published package.
@@ -232,7 +220,7 @@ jobs:
     # unconditional relative-to-executable search paths dlopen always tries, so
     # it resolves regardless of what SIP strips from the environment; confirmed
     # working on the same host before wiring it into this job.
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -304,7 +292,7 @@ jobs:
   # ../src/CMakeLists.txt; the APK build exercises that list and the smoke
   # closes the runtime gap a successful Gradle build alone cannot prove.
   android-native-build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -313,6 +301,18 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.9'
+
+      - name: Configure Android SDK
+        shell: pwsh
+        run: |
+          $androidSdk = 'D:\.important\android-sdk'
+          if (-not (Test-Path (Join-Path $androidSdk 'platform-tools\adb.exe'))) {
+            throw "Android SDK is missing at $androidSdk"
+          }
+          "ANDROID_HOME=$androidSdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ANDROID_SDK_ROOT=$androidSdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          (Join-Path $androidSdk 'platform-tools') | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          (Join-Path $androidSdk 'emulator') | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -339,40 +339,60 @@ jobs:
 
       - name: Verify ARMv7-only APK contents
         working-directory: example
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          apk='build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk'
-          test -s "$apk"
-          mapfile -t apk_abis < <(unzip -Z1 "$apk" | sed -n 's#^lib/\([^/]*\)/.*#\1#p' | sort -u)
-          test "${#apk_abis[@]}" -eq 1
-          test "${apk_abis[0]}" = 'armeabi-v7a'
-          unzip -Z1 "$apk" | grep --fixed-strings --line-regexp 'lib/armeabi-v7a/libyuv_ffi.so'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $apkPath = 'build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk'
+          if (-not (Test-Path $apkPath)) { throw "ARMv7 APK is missing: $apkPath" }
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $apkPath))
+          try {
+            $entries = @($archive.Entries | ForEach-Object FullName)
+            $abis = @($entries | ForEach-Object {
+              if ($_ -match '^lib/([^/]+)/') { $Matches[1] }
+            } | Sort-Object -Unique)
+            if ($abis.Count -ne 1 -or $abis[0] -ne 'armeabi-v7a') {
+              throw "Expected only armeabi-v7a native libraries, found: $($abis -join ', ')"
+            }
+            if ($entries -notcontains 'lib/armeabi-v7a/libyuv_ffi.so') {
+              throw 'ARMv7 APK does not contain libyuv_ffi.so'
+            }
+          } finally {
+            $archive.Dispose()
+          }
 
-      # The action recommends this on Ubuntu hosted runners to make the
-      # x86_64 emulator fast. Its absence is a performance concern; the action
-      # can still run with software acceleration when virtualization is absent.
-      - name: Enable KVM permissions
-        shell: bash
+      - name: Run Android smoke and correctness probe on Windows emulator
+        shell: pwsh
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      # A built APK proves the NDK source list compiles, but it does not prove
-      # Android can load the packaged library or resolve and call its symbols.
-      # Run the same no-skip app-runtime smoke used by the desktop and iOS jobs
-      # against an x86_64 emulator. The architecture is explicit here because
-      # the app runtime itself cannot report Android's ABI through Dart.
-      - name: App-runtime smoke (android emulator)
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          profile: pixel_2
-          working-directory: example
-          script: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart -d emulator-5554 --no-pub
+          $androidSdk = $env:ANDROID_SDK_ROOT
+          $adb = Join-Path $androidSdk 'platform-tools\adb.exe'
+          $emulator = Join-Path $androidSdk 'emulator\emulator.exe'
+          if (-not (Test-Path $emulator)) { throw "Android emulator is missing: $emulator" }
+          $avdNames = @(& $emulator -list-avds)
+          if ($LASTEXITCODE -ne 0 -or $avdNames -notcontains 'Pixel_Tablet') {
+            throw 'The configured x86_64 API 35 AVD Pixel_Tablet is unavailable.'
+          }
+          & $adb start-server
+          if ($LASTEXITCODE -ne 0) { throw 'adb start-server failed' }
+          $emulatorProcess = Start-Process -FilePath $emulator -ArgumentList @('-avd', 'Pixel_Tablet', '-port', '5554', '-no-window', '-no-audio', '-no-boot-anim', '-no-snapshot', '-gpu', 'swiftshader_indirect') -WindowStyle Hidden -PassThru
+          try {
+            & $adb -s emulator-5554 wait-for-device
+            if ($LASTEXITCODE -ne 0) { throw 'Android emulator did not connect to adb' }
+            $deadline = (Get-Date).AddMinutes(5)
+            do {
+              $bootCompleted = (& $adb -s emulator-5554 shell getprop sys.boot_completed).Trim()
+              if ($bootCompleted -eq '1') { break }
+              if ((Get-Date) -gt $deadline) { throw 'Android emulator did not finish booting within 5 minutes' }
+              Start-Sleep -Seconds 3
+            } while ($true)
+            & $adb -s emulator-5554 shell settings put global window_animation_scale 0
+            Set-Location example
+            flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart -d emulator-5554 --no-pub
+            if ($LASTEXITCODE -ne 0) { throw "Android app-runtime smoke failed with $LASTEXITCODE" }
+            flutter drive --driver=test_driver/integration_test.dart --target=integration_test/probe_native_test.dart -d emulator-5554 --no-pub
+            if ($LASTEXITCODE -ne 0) { throw "Android correctness probe failed with $LASTEXITCODE" }
+          } finally {
+            & $adb -s emulator-5554 emu kill
+          }
 
   # YUV-06 requires mobile build evidence on both platforms. Android is covered
   # by android-native-build through the NDK. This job separately proves the
@@ -383,7 +403,7 @@ jobs:
   # --no-codesign is what makes this runnable without provisioning profiles; it
   # skips signing only, not the compile and link of the pod target.
   ios-native-build:
-    runs-on: macos-latest
+    runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -444,8 +464,63 @@ jobs:
         working-directory: example
         run: flutter build ios --debug --no-codesign
 
+  windows-native-smoke:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+
+      - name: Flutter pub get (root)
+        run: flutter pub get
+
+      - name: Build and expose native library
+        shell: pwsh
+        run: |
+          $nativeBuild = Join-Path $env:RUNNER_TEMP 'yuv-native-build'
+          cmake -S src -B $nativeBuild -A x64 -DCMAKE_BUILD_TYPE=Release
+          if ($LASTEXITCODE -ne 0) { throw "CMake configure failed with $LASTEXITCODE" }
+          cmake --build $nativeBuild --config Release --parallel
+          if ($LASTEXITCODE -ne 0) { throw "CMake build failed with $LASTEXITCODE" }
+          $nativeDllDirectory = Join-Path $nativeBuild 'Release'
+          if (-not (Test-Path (Join-Path $nativeDllDirectory 'yuv_ffi.dll'))) {
+            throw "Native library was not produced in $nativeDllDirectory"
+          }
+          $nativeDllDirectory | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Run package tests without native skips
+        run: flutter test --reporter expanded
+
+      - name: Flutter pub get (example)
+        working-directory: example
+        run: flutter pub get
+
+      - name: Build example (Windows desktop)
+        working-directory: example
+        run: flutter build windows --release
+
+      - name: App-runtime smoke (Windows desktop)
+        working-directory: example
+        run: >
+          flutter drive
+          --driver=test_driver/integration_test.dart
+          --target=integration_test/native_app_runtime_smoke_test.dart
+          -d windows --no-pub
+
+      - name: Native correctness probe (Windows desktop)
+        working-directory: example
+        run: >
+          flutter drive
+          --driver=test_driver/integration_test.dart
+          --target=integration_test/probe_native_test.dart
+          -d windows --no-pub
+
   example-analyze-and-build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     strategy:
       fail-fast: false
       matrix:
@@ -484,7 +559,7 @@ jobs:
   # chrome` does not serve that bundle, so every asset-dependent runtime test
   # belongs in example/integration_test and runs through flutter drive.
   wasm-web-integration:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -494,24 +569,23 @@ jobs:
         with:
           flutter-version: '3.44.9'
 
-      # Both must come from the same install, or the driver refuses the session:
-      # the stable channel briefly shipped chromedriver 153 against Chrome 152,
-      # which failed with "This version of ChromeDriver only supports Chrome
-      # version 153". Pinning one version keeps the pair consistent.
-      - name: Setup Chrome and matching chromedriver
-        uses: browser-actions/setup-chrome@v1
-        id: chrome
-        with:
-          chrome-version: '152'
-          install-chromedriver: true
-          install-dependencies: true
-
-      - name: Report the browser/driver pair
-        shell: bash
+      - name: Verify machine Chrome and ChromeDriver
+        shell: pwsh
         run: |
-          echo "chrome:       ${{ steps.chrome.outputs.chrome-version }}"
-          echo "chromedriver: ${{ steps.chrome.outputs.chromedriver-version }}"
-          "${{ steps.chrome.outputs.chromedriver-path }}" --version
+          $chrome = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+          $driver = 'D:\.projects\.tools\chromedriver-win64\chromedriver.exe'
+          if (-not (Test-Path $chrome)) { throw "Chrome is missing: $chrome" }
+          if (-not (Test-Path $driver)) { throw "ChromeDriver is missing: $driver" }
+          $chromeVersion = (Get-Item $chrome).VersionInfo.ProductVersion
+          $driverVersion = (& $driver --version | Select-Object -First 1) -replace '^ChromeDriver ', ''
+          if ($LASTEXITCODE -ne 0) { throw 'ChromeDriver version check failed' }
+          if ($chromeVersion.Split('.')[0] -ne $driverVersion.Split('.')[0]) {
+            throw "Chrome $chromeVersion and ChromeDriver $driverVersion have different major versions"
+          }
+          Write-Host "Chrome: $chromeVersion"
+          Write-Host "ChromeDriver: $driverVersion"
+          "CHROME_EXECUTABLE=$chrome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CHROMEDRIVER_EXE=$driver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Enable Flutter web
         run: flutter config --enable-web
@@ -524,51 +598,67 @@ jobs:
       # archive's file list, so the two searches prove they are package inputs
       # rather than merely files left in the repository.
       - name: Verify published package contains committed WASM
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          test -s assets/wasm/yuv_ffi.js
-          test -s assets/wasm/yuv_ffi.wasm
-          flutter pub publish --dry-run 2>&1 | tee "$RUNNER_TEMP/publish-dry-run.log"
-          grep --extended-regexp 'yuv_ffi\.js \(' "$RUNNER_TEMP/publish-dry-run.log"
-          grep --extended-regexp 'yuv_ffi\.wasm \(' "$RUNNER_TEMP/publish-dry-run.log"
+          foreach ($asset in @('assets/wasm/yuv_ffi.js', 'assets/wasm/yuv_ffi.wasm')) {
+            if (-not (Test-Path $asset) -or (Get-Item $asset).Length -eq 0) {
+              throw "WASM package asset is missing or empty: $asset"
+            }
+          }
+          $logPath = Join-Path $env:RUNNER_TEMP 'publish-dry-run.log'
+          $output = & flutter pub publish --dry-run 2>&1
+          $publishExitCode = $LASTEXITCODE
+          $output | Tee-Object -FilePath $logPath
+          if ($publishExitCode -ne 0) { throw "pub publish dry-run exited $publishExitCode" }
+          $dryRunOutput = [string]::Join([Environment]::NewLine, $output)
+          if ($dryRunOutput -notmatch 'yuv_ffi\.js \(' -or $dryRunOutput -notmatch 'yuv_ffi\.wasm \(') {
+            throw 'pub dry-run did not list both committed WASM assets'
+          }
 
       # These suites install a fake Emscripten module through JS interop; they
       # deliberately do not load the package asset bundle. A browser test is
       # therefore the direct gate for their Web dispatch and staging contracts.
       - name: Browser fake-module contracts
-        shell: bash
+        shell: pwsh
         run: |
-          flutter test --platform chrome \
-            test/web/wasm_swap_nv_atomicity_test.dart \
-            test/web/yuv_web_capabilities_test.dart \
-            test/web/wasm_abi_v1_descriptor_staging_test.dart
+          flutter test --platform chrome test/web/wasm_swap_nv_atomicity_test.dart test/web/yuv_web_capabilities_test.dart test/web/wasm_abi_v1_descriptor_staging_test.dart
+          if ($LASTEXITCODE -ne 0) { throw "Browser fake-module tests failed with $LASTEXITCODE" }
 
       - name: Install Emscripten SDK
-        shell: bash
+        shell: pwsh
         run: |
-          git clone https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
-          "$HOME/emsdk/emsdk" install 3.1.74
-          "$HOME/emsdk/emsdk" activate 3.1.74
+          $emsdkRoot = 'D:\.projects\.tools\emsdk-3.1.74'
+          if (-not (Test-Path (Join-Path $emsdkRoot 'emsdk.bat'))) {
+            git clone https://github.com/emscripten-core/emsdk.git $emsdkRoot
+            if ($LASTEXITCODE -ne 0) { throw "emsdk clone failed with $LASTEXITCODE" }
+          }
+          & (Join-Path $emsdkRoot 'emsdk.bat') install 3.1.74
+          if ($LASTEXITCODE -ne 0) { throw "emsdk 3.1.74 install failed with $LASTEXITCODE" }
+          & (Join-Path $emsdkRoot 'emsdk.bat') activate 3.1.74
+          if ($LASTEXITCODE -ne 0) { throw "emsdk 3.1.74 activation failed with $LASTEXITCODE" }
 
       # Emscripten 3.1.74 is the locked reproduction input for this generated
       # pair. A byte-for-byte diff makes an uncommitted or stale published
       # module fail instead of testing only a replacement.
       - name: Rebuild and compare WASM artifacts
-        shell: bash
+        shell: pwsh
         run: |
-          source "$HOME/emsdk/emsdk_env.sh"
-          emcc -v
-          sh ./tool/wasm/build_wasm.sh --profile release
-          test -f assets/wasm/yuv_ffi.js
-          test -f assets/wasm/yuv_ffi.wasm
-          # emcc writes yuv_ffi.wasm with the executable bit set on this runner,
-          # which git sees as a mode-only diff against the tracked 100644 blob
-          # even when the bytes are identical. Restore the tracked mode before
-          # comparing, so the gate reports content drift, not the compiler's
-          # output permissions.
-          chmod 644 assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
+          $emsdkRoot = 'D:\.projects\.tools\emsdk-3.1.74'
+          . (Join-Path $emsdkRoot 'emsdk_env.ps1')
+          if ($LASTEXITCODE -ne 0) { throw "emsdk environment setup failed with $LASTEXITCODE" }
+          & (Join-Path $emsdkRoot 'upstream\emscripten\emcc.bat') -v
+          if ($LASTEXITCODE -ne 0) { throw "emcc version check failed with $LASTEXITCODE" }
+          $gitBash = 'D:\.important\Git\bin\bash.exe'
+          if (-not (Test-Path $gitBash)) { throw "Git Bash is missing: $gitBash" }
+          & $gitBash --noprofile --norc -c 'sh ./tool/wasm/build_wasm.sh --profile release'
+          if ($LASTEXITCODE -ne 0) { throw "WASM build failed with $LASTEXITCODE" }
+          foreach ($asset in @('assets/wasm/yuv_ffi.js', 'assets/wasm/yuv_ffi.wasm')) {
+            if (-not (Test-Path $asset) -or (Get-Item $asset).Length -eq 0) {
+              throw "WASM artifact is missing or empty: $asset"
+            }
+          }
           git diff --exit-code -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
+          if ($LASTEXITCODE -ne 0) { throw 'Committed WASM artifacts differ from the emsdk 3.1.74 Windows rebuild' }
 
       - name: Flutter pub get (example)
         working-directory: example
@@ -580,56 +670,43 @@ jobs:
       # the job, so each exit status is checked explicitly.
       - name: Required Web integration gate
         working-directory: example
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
+          $driverProcess = Start-Process -FilePath $env:CHROMEDRIVER_EXE -ArgumentList '--port=4444' -WindowStyle Hidden -PassThru
+          try {
+            $ready = $false
+            $deadline = (Get-Date).AddSeconds(15)
+            do {
+              try {
+                $status = Invoke-RestMethod -Uri 'http://127.0.0.1:4444/status' -TimeoutSec 2
+                if ($status.value.ready) { $ready = $true; break }
+              } catch { Start-Sleep -Seconds 1 }
+            } while ((Get-Date) -lt $deadline)
+            if (-not $ready) { throw 'ChromeDriver did not become ready on port 4444' }
 
-          chromedriver --port=4444 > /tmp/chromedriver.log 2>&1 &
-          chromedriver_pid=$!
-          trap 'cat /tmp/chromedriver.log; kill "$chromedriver_pid"' EXIT
-
-          for _ in $(seq 1 10); do
-            if curl --fail --silent http://127.0.0.1:4444/status > /dev/null; then
-              break
-            fi
-            sleep 1
-          done
-          curl --fail --silent http://127.0.0.1:4444/status > /dev/null
-
-          targets=(
-            integration_test/wasm_bootstrap_test.dart
-            integration_test/getbytes_contract_test.dart
-            integration_test/padded_bgra_constructor_test.dart
-            integration_test/image_cache_key_test.dart
-            integration_test/serialization_contract_test.dart
-            integration_test/wasm_loader_lifecycle_test.dart
-            integration_test/wasm_parity_edge_cases_test.dart
-            integration_test/nv_chroma_order_web_test.dart
-            integration_test/web_ownership_regression_test.dart
-          )
-
-          failed=()
-          for target in "${targets[@]}"; do
-            echo "::group::$target"
-            if xvfb-run -a flutter drive \
-              --driver=test_driver/integration_test.dart \
-              --target="$target" \
-              -d web-server \
-              --browser-name=chrome \
-              --headless; then
-              echo "PASS $target"
-            else
-              echo "FAIL $target"
-              failed+=("$target")
-            fi
-            echo "::endgroup::"
-          done
-
-          if [ ${#failed[@]} -ne 0 ]; then
-            echo "Failed Web integration targets:"
-            printf '  %s\n' "${failed[@]}"
-            exit 1
-          fi
+            $targets = @(
+              'integration_test/wasm_bootstrap_test.dart',
+              'integration_test/getbytes_contract_test.dart',
+              'integration_test/padded_bgra_constructor_test.dart',
+              'integration_test/image_cache_key_test.dart',
+              'integration_test/serialization_contract_test.dart',
+              'integration_test/wasm_loader_lifecycle_test.dart',
+              'integration_test/wasm_parity_edge_cases_test.dart',
+              'integration_test/nv_chroma_order_web_test.dart',
+              'integration_test/web_ownership_regression_test.dart'
+            )
+            $failed = @()
+            foreach ($target in $targets) {
+              Write-Host "::group::$target"
+              flutter drive --driver=test_driver/integration_test.dart --target=$target -d web-server --browser-name=chrome --headless
+              if ($LASTEXITCODE -eq 0) { Write-Host "PASS $target" }
+              else { Write-Host "FAIL $target"; $failed += $target }
+              Write-Host '::endgroup::'
+            }
+            if ($failed.Count -gt 0) { throw "Failed Web integration targets: $($failed -join ', ')" }
+          } finally {
+            if ($driverProcess -and -not $driverProcess.HasExited) { Stop-Process -Id $driverProcess.Id -Force }
+          }
 
       # YUV-18: the full reference matrix (119 cases over test_pattern_512.png).
       # CI did not cover it at all -- the targets above are contract and
@@ -652,18 +729,21 @@ jobs:
       # which. Reproduce locally to get per-case ids.
       - name: Web reference matrix (YUV-12/YUV-18)
         working-directory: example
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-
-          chromedriver --port=4444 > /tmp/chromedriver-matrix.log 2>&1 &
-          chromedriver_pid=$!
-          trap 'kill "$chromedriver_pid" 2>/dev/null || true' EXIT
-
-          for _ in $(seq 1 10); do
-            curl --fail --silent http://127.0.0.1:4444/status > /dev/null && break
-            sleep 1
-          done
-          curl --fail --silent http://127.0.0.1:4444/status > /dev/null
-
-          xvfb-run -a flutter drive             --driver=test_driver/integration_test.dart             --target=integration_test/reference_web_conversions_test.dart             -d web-server             --browser-name=chrome             --headless
+          $driverProcess = Start-Process -FilePath $env:CHROMEDRIVER_EXE -ArgumentList '--port=4444' -WindowStyle Hidden -PassThru
+          try {
+            $ready = $false
+            $deadline = (Get-Date).AddSeconds(15)
+            do {
+              try {
+                $status = Invoke-RestMethod -Uri 'http://127.0.0.1:4444/status' -TimeoutSec 2
+                if ($status.value.ready) { $ready = $true; break }
+              } catch { Start-Sleep -Seconds 1 }
+            } while ((Get-Date) -lt $deadline)
+            if (-not $ready) { throw 'ChromeDriver did not become ready on port 4444' }
+            flutter drive --driver=test_driver/integration_test.dart --target=integration_test/reference_web_conversions_test.dart -d web-server --browser-name=chrome --headless
+            if ($LASTEXITCODE -ne 0) { throw "Web reference matrix failed with $LASTEXITCODE" }
+          } finally {
+            if ($driverProcess -and -not $driverProcess.HasExited) { Stop-Process -Id $driverProcess.Id -Force }
+          }

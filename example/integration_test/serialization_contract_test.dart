@@ -4,7 +4,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_codec.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Web acceptance for YUV-07: the serialization codec (`YuvCodec`), shared by
+/// The serialization codec (`YuvCodec`), shared by
 /// the native and Web backends, must prove its contract executing on the real
 /// WASM backend served by a browser, not only on the VM.
 ///

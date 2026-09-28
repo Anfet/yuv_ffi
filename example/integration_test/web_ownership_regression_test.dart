@@ -7,7 +7,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Browser regression coverage for REL-02 and REL-05.
+/// Browser coverage for plane ownership and independent conversion results.
 ///
 /// This must run through the example integration harness: unlike
 /// `flutter test --platform chrome`, it serves the WASM asset bundle.
@@ -16,7 +16,7 @@ void main() {
 
   setUpAll(YuvFfi.initialize);
 
-  testWidgets('REL-02 applyPlanes copies a gapped NV12 plane on WASM', (tester) async {
+  testWidgets('applyPlanes copies a gapped NV12 plane on WASM', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This regression must execute in a browser.');
 
     final image = YuvImage.nv12(4, 4, uvPixelStride: 3);
@@ -34,7 +34,7 @@ void main() {
     expect(image.uPlane.bytes[0], 1, reason: 'applyPlanes must copy rather than adopt caller storage.');
   });
 
-  testWidgets('REL-05 conversions and results own independent WASM buffers', (tester) async {
+  testWidgets('conversions and results own independent WASM buffers', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This regression must execute in a browser.');
 
     final source = YuvImage.nv12(4, 4, uvPixelStride: 3);
@@ -76,7 +76,7 @@ void main() {
     expect(rotation.toBytes(), orderedEquals(rotationBefore));
   });
 
-  testWidgets('REL-05 byte copies, padding and semantic no-ops hold on WASM', (tester) async {
+  testWidgets('byte copies, padding and semantic no-ops hold on WASM', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This regression must execute in a browser.');
 
     const width = 3;

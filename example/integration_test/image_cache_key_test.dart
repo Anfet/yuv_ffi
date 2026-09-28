@@ -7,14 +7,12 @@ import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Web acceptance for YUV-20: the image cache key must be driven by the
+/// The image cache key must be driven by the
 /// revision of the **real** Web backend, not by a test double.
 ///
-/// An earlier version of this file asserted against a fake that implemented
-/// `YuvRevisionAware` itself and called `markDirty()` itself. That proved the
-/// fixture worked and nothing about `YuvImageImpl`, which is the class that
-/// actually has to bump its revision from inside every mutating method — the
-/// test would have stayed green if the Web backend dropped the seam entirely.
+/// The key must follow revisions from the Web backend's `YuvImageImpl` after
+/// each mutation; a fake that increments its own revision would not verify that
+/// contract.
 ///
 /// Every case below therefore drives a real `YuvImage` built by the package
 /// factory and backed by the WASM module. The mutator matrix mirrors

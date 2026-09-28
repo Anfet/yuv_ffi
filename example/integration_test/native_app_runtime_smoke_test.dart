@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// YUV-06: the plugin must load and compute inside a real built application.
+/// The plugin must load and compute inside a real built application.
 ///
 /// `test/native_packaging_smoke_test.dart` runs under `flutter test`, a plain
 /// Dart VM process that links nothing and resolves the library through a
@@ -20,8 +20,8 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 ///
 /// Unlike the other native suites in this repository it never skips when the
 /// library cannot be opened. A run where the native cases skipped and a run
-/// where they passed used to look identical in a CI log, which is how broken
-/// packaging stayed green.
+/// where they passed would look identical in a CI log, allowing broken
+/// packaging to pass unnoticed.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 

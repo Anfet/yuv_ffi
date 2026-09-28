@@ -19,7 +19,7 @@ part 'yuv_camera_preview_mobile.dart';
 bool kYuvCameraPreviewFlipAndroid = true;
 
 /// A single lifecycle event of the mobile preview's one platform subscription,
-/// for [debugYuvCameraPreviewMobileEvent] (VIEW-03 measurement only).
+/// for [debugYuvCameraPreviewMobileEvent].
 enum DebugYuvCameraPreviewMobileEventKind {
   /// A platform frame reached `onNewImageAvailable`, before any check or
   /// conversion runs on it.
@@ -42,7 +42,7 @@ enum DebugYuvCameraPreviewMobileEventKind {
   acceptedForTransform,
 }
 
-/// VIEW-03 measurement hook only: sink for [DebugYuvCameraPreviewMobileEventKind]
+/// Measurement hook: sink for [DebugYuvCameraPreviewMobileEventKind]
 /// events raised by the mobile preview's single platform subscription, with a
 /// monotonic timestamp ([debugYuvCameraPreviewMobileClock]'s elapsed time) and
 /// no per-frame allocation beyond the event itself. `null` by default, so it

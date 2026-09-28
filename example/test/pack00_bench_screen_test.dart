@@ -6,13 +6,10 @@ import 'package:yuv_ffi_example/pack00_bench_screen.dart';
 
 import 'support/fake_camera.dart';
 
-/// PACK-01C: `Pack00BenchScreen` toggles the global `kYuvCameraPreviewPackPlanes`
+/// `Pack00BenchScreen` toggles the global `kYuvCameraPreviewPackPlanes`
 /// switch to run its padded/packed A/B comparison, then must restore
-/// whatever the flag was *before* the screen ran -- not hardcode it back to
-/// `false`, which was only correct while padded import was the shipped
-/// default. Since PACK-01C flipped that default to `true`, leaving this
-/// screen used to silently leave the normal mobile preview importing padded
-/// frames afterward.
+/// whatever value the flag had before the screen ran, so the normal mobile
+/// preview resumes with its original import mode.
 void main() {
   late FakeCameraPlatform platform;
 

@@ -4,15 +4,14 @@ import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Web acceptance for YUV-21: the WASM loader lifecycle seams behave
+/// The WASM loader lifecycle seams behave
 /// correctly under a real browser runtime.
 ///
 /// `flutter test --platform chrome` serves no asset bundle, so it cannot
 /// exercise the real asset-loaded module (see `wasm_bootstrap_test.dart`).
 /// This harness runs against a real built application instead, which is
-/// also why these lifecycle cases — originally proven in
-/// `test/web/wasm_loader_initialization_test.dart` against the loader in
-/// isolation — are ported here rather than merely trusted from that suite.
+/// These lifecycle cases run against the built application as well as the
+/// loader's unit-level initialization checks.
 ///
 /// Each case installs a fake initializer via `debugSetInitializer` to count
 /// attempts and fail deterministically without touching real WASM assets.

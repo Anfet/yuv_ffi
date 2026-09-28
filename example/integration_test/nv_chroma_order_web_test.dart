@@ -4,7 +4,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 /// Web analog of `test/nv_chroma_order_test.dart`'s hand-written byte-level
-/// UV round-trip check (REL-06, R1-review addendum): the project contract
+/// UV round-trip check: the project contract
 /// keeps the public `nv21` label while the real byte order is UV, shared with
 /// the truthfully named `YuvPixelFormat.nv12`. That native-side test writes
 /// exact known chroma byte values directly through `applyPlanes()` -- no
