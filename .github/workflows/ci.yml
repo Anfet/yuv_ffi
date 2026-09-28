@@ -649,8 +649,10 @@ jobs:
           if (-not (Test-Path $chrome)) { throw "Chrome is missing: $chrome" }
           if (-not (Test-Path $driver)) { throw "ChromeDriver is missing: $driver" }
           $chromeVersion = (Get-Item $chrome).VersionInfo.ProductVersion
-          $driverVersion = (& $driver --version | Select-Object -First 1) -replace '^ChromeDriver ', ''
-          if ($LASTEXITCODE -ne 0) { throw 'ChromeDriver version check failed' }
+          $driverOutput = & $driver --version
+          $driverExitCode = $LASTEXITCODE
+          if ($driverExitCode -ne 0) { throw "ChromeDriver version check failed with exit code $driverExitCode" }
+          $driverVersion = ($driverOutput | Select-Object -First 1) -replace '^ChromeDriver ', ''
           if ($chromeVersion.Split('.')[0] -ne $driverVersion.Split('.')[0]) {
             throw "Chrome $chromeVersion and ChromeDriver $driverVersion have different major versions"
           }
