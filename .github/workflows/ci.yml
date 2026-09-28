@@ -396,12 +396,12 @@ jobs:
           $emulator = Join-Path $androidSdk 'emulator\emulator.exe'
           if (-not (Test-Path $emulator)) { throw "Android emulator is missing: $emulator" }
           $avdNames = @(& $emulator -list-avds)
-          if ($LASTEXITCODE -ne 0 -or $avdNames -notcontains 'Pixel_Tablet') {
-            throw 'The configured x86_64 API 35 AVD Pixel_Tablet is unavailable.'
+          if ($LASTEXITCODE -ne 0 -or $avdNames -notcontains 'Tablet') {
+            throw 'The configured x86_64 API 35 AVD Tablet is unavailable.'
           }
           & $adb start-server
           if ($LASTEXITCODE -ne 0) { throw 'adb start-server failed' }
-          $emulatorProcess = Start-Process -FilePath $emulator -ArgumentList @('-avd', 'Pixel_Tablet', '-port', '5554', '-no-window', '-no-audio', '-no-boot-anim', '-no-snapshot', '-gpu', 'swiftshader_indirect') -WindowStyle Hidden -PassThru
+          $emulatorProcess = Start-Process -FilePath $emulator -ArgumentList @('-avd', 'Tablet', '-port', '5554', '-no-window', '-no-audio', '-no-boot-anim', '-no-snapshot', '-gpu', 'swiftshader_indirect') -WindowStyle Hidden -PassThru
           try {
             & $adb -s emulator-5554 wait-for-device
             if ($LASTEXITCODE -ne 0) { throw 'Android emulator did not connect to adb' }
