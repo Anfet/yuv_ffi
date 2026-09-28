@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-03: the new `YuvImage.nv12`, `.allocate` and `.fromRgbaBytes`
-/// factories follow the geometry rules of design doc section 4 -- tight,
+/// Verifies that the new `YuvImage.nv12`, `.allocate` and `.fromRgbaBytes`
+/// factories follow the documented geometry rules: tight,
 /// padded and gapped layouts, even/odd dimensions, and invalid-argument
 /// rejection -- and are reachable from the root export.
 void main() {
@@ -36,14 +36,14 @@ void main() {
     test('an explicit stride above the default is honored, not clamped back down', () {
       // Unlike the legacy nv21 factory, nv12 does not fold a larger explicit
       // stride into the default: it is a real pixel gap the ABI's
-      // stride-aware kernels already support (design doc section 11).
+      // stride-aware kernels already support (the ABI stride rules).
       final image = YuvImage.nv12(4, 4, uvPixelStride: 3);
       expect(image.uPlane.pixelStride, 3);
       expect(image.uPlane.rowStride, 2 * 3);
     });
 
     test('an explicit stride below the packed-pair minimum throws instead of being silently clamped', () {
-      // The architect decision for REL-03: unlike the legacy nv21 factory
+      // The API requires this validation, unlike the nv21 factory
       // (which clamps up to 2), nv12 rejects an invalid stride outright.
       expect(() => YuvImage.nv12(4, 4, uvPixelStride: 1), throwsArgumentError);
       expect(() => YuvImage.nv12(4, 4, uvPixelStride: 0), throwsArgumentError);

@@ -10,8 +10,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-04's `apply*` surface (`doc/api-abi-0.4-design.md` sections 2,
-/// 4, 7, 13; `todo.md`'s post-REL-09 addendum).
+/// Verifies the `apply*` surface and its validation order.
 ///
 /// Every `apply*` must call [yuvRequireCapability] as its first action, before
 /// any allocation, native invocation, or state change, and every failure
@@ -104,7 +103,7 @@ void main() {
       loader_io.debugSetLibraryOpener(() => ffi.DynamicLibrary.executable());
       loader_io.debugSetSymbolChecker((_, symbol) => true);
       // yuv_ffi's IO loader currently requires the complete manifest to
-      // initialize at all (REL-09 scope), so this test instead exercises the
+      // initialize at all, so this test instead exercises the
       // same-shaped rejection through a capability snapshot missing an
       // operation directly, which is the situation Web's partial backend hits
       // routinely and IO would hit if a future ABI revision made the manifest
@@ -346,7 +345,7 @@ void main() {
         loader_io.debugResetLoader();
       });
 
-      test('every apply* succeeds for every YuvPixelFormat it accepts per the section 11 matrix', () async {
+      test('every apply* succeeds for each supported YuvPixelFormat', () async {
         await YuvFfi.initialize();
 
         for (final format in YuvPixelFormat.values) {
@@ -357,7 +356,7 @@ void main() {
           }..applyRgbaBytes(rgba(w, h));
 
           // Every effect, blur, flip, rotate and crop accepts every format
-          // (section 11): same-format in, same-format out.
+          // The operations preserve the format: same-format in, same-format out.
           expect(image(4, 4).applyGrayscale().format, format, reason: 'grayscale on $format');
           expect(image(4, 4).applyBlackWhite().format, format, reason: 'blackwhite on $format');
           expect(image(4, 4).applyNegate().format, format, reason: 'negate on $format');

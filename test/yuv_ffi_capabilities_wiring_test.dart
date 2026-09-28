@@ -5,12 +5,12 @@ import 'package:yuv_ffi/src/loader/impl/loader_io.dart' as loader_io;
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-09's IO wiring: [YuvFfi.initialize] computes capabilities from
+/// Verifies the IO wiring: [YuvFfi.initialize] computes capabilities from
 /// the real symbols the loaded library resolves -- never a hardcoded
 /// "everything is supported" default -- and native IO initialization requires
 /// the complete ABI v1 manifest rather than returning a capability snapshot
 /// that silently marks a missing export unsupported
-/// (`doc/api-abi-0.4-design.md` section 7).
+/// based on the exports present in the loaded library.
 ///
 /// Uses the same replaceable-opener/symbol-checker seam
 /// `loader_io_test.dart`/`yuv_ffi_initializer_test.dart` use, so this runs on
@@ -27,7 +27,7 @@ void main() {
       final capabilities = await YuvFfi.initialize();
 
       for (final operation in YuvOperation.values) {
-        // chromaSwap only ever accepts NV12 (section 11); every other
+        // chromaSwap only ever accepts NV12; every other
         // operation accepts every YuvPixelFormat, so NV12 exercises all of
         // them uniformly.
         expect(

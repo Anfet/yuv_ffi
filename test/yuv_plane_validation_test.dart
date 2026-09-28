@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies YUV-04: unsafe geometry is rejected with a Dart exception before
+/// Verifies that unsafe geometry is rejected with a Dart exception before
 /// any FFI/WASM allocation or call, and valid layouts keep working.
 void main() {
   /// Builds a plane whose buffer exactly matches its declared geometry.
@@ -109,8 +109,8 @@ void main() {
     });
 
     test('YuvImage.bgra keeps a valid padded plane instead of repacking it', () {
-      // YUV-15 supersedes the earlier YUV-04 behaviour here: the constructor
-      // used to repack a padded plane into a tight buffer, which destroyed the
+      // The constructor preserves a padded plane instead of repacking it into
+      // a tight buffer, which would destroy the
       // caller's layout. Producing a tight buffer is the job of toBgra8888();
       // the constructor deep-copies the plane exactly as declared when passed
       // YuvPlaneLayout.preserve (PACK-01B changed the default to `.packed`).
@@ -168,7 +168,7 @@ void main() {
     });
   });
 
-  group('YUV-52 / REL-13: getPixel/setPixel coordinate bounds', () {
+  group('getPixel/setPixel coordinate bounds', () {
     // Regression for the original bug: with the old unchecked `_indexOf`,
     // `(y * rowStride) + (x * pixelStride)` for x=-1, y=1, rowStride=8,
     // pixelStride=1 computed `(1 * 8) + (-1 * 1) = 7`, which is a byte inside

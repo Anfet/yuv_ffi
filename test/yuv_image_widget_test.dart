@@ -266,7 +266,7 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
 ///
 /// [toBgraBytes] packs only the four live bytes of each logical pixel and
 /// skips [YuvPlane.pixelStride] and [YuvPlane.rowStride] slack, mirroring what
-/// the real IO/Web backends do (REL-05/REL-12). This class exists to prove the
+/// the real IO/Web backends do. This class exists to prove the
 /// widget/provider layer correctly consumes that tight output, not to
 /// re-verify the packing logic itself.
 class _PaddedBgraImage implements YuvImage, YuvRevisionAware {
@@ -518,7 +518,7 @@ void main() {
       PaintingBinding.instance.imageCache.clearLiveImages();
     });
 
-    test('F-006 diagnostic case: two providers of one frame share a key', () {
+    test('two providers of one frame share a key', () {
       final image = _FakeBgraImage(4, 4, bytes: Uint8List(4 * 4 * 4));
 
       final first = YuvImageProvider(image);

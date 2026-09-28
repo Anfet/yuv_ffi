@@ -536,7 +536,7 @@ void main() {
     /// Builds a plane whose buffer exactly matches its declared geometry.
     YuvPlane plane(int height, int rowStride, [int pixelStride = 4]) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
 
-    test('F-004 diagnostic case: a valid padded plane is accepted', () {
+    test('a valid padded plane is accepted', () {
       expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)], layout: YuvPlaneLayout.preserve), returnsNormally);
     });
 
@@ -596,7 +596,7 @@ void main() {
   });
 
   // These cases only allocate planes in Dart, so they must run without a native
-  // library. Guarding them with `skip: !_nativeAvailable` would let the F-003
+  // library. Guarding them with `skip: !_nativeAvailable` would let the
   // regression pass unnoticed on a machine with no built binary.
   group('getBytes contract', () {
     const sizes = <({int w, int h})>[(w: 1, h: 1), (w: 3, h: 3), (w: 127, h: 255), (w: 512, h: 512)];
@@ -641,7 +641,7 @@ void main() {
       expect(snapshot[1], snapshotByteBefore);
     });
 
-    test('F-003 diagnostic case: i420 3x3 has no alignment tail', () {
+    test('I420 3x3 has no alignment tail', () {
       final image = YuvImage.i420(3, 3);
       final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 

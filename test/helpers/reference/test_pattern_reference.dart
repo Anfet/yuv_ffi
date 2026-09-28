@@ -1,4 +1,4 @@
-/// Pure-Dart reference primitives for the YUV-10 fixture generator.
+/// Pure-Dart reference primitives for the test-pattern fixture generator.
 ///
 /// This library deliberately has no dependency on `yuv_ffi`, FFI, or WASM.
 /// It models BT.601 limited-range 4:2:0 conversion and RGB operations so the

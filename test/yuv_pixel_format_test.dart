@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-01: the exported [YuvPixelFormat] carries stable wire IDs
+/// Verifies that the exported [YuvPixelFormat] carries stable wire IDs
 /// that are never derived from [Enum.index], and its `nv12` value keeps the
 /// legacy NV21 UV byte order under a truthful name.
 void main() {
@@ -29,7 +29,7 @@ void main() {
       // i420 is declared first (index 0) but its wire ID is 1: if a future
       // edit ever reordered the declarations, index-based encoding would
       // silently change what is written to the codec/ABI, which the design
-      // explicitly forbids (section 6).
+      // explicitly forbids.
       for (final format in YuvPixelFormat.values) {
         expect(format.wireId, format.index + 1, reason: 'wireId happens to equal index + 1 today, but must be read from wireId, not index');
       }
@@ -44,7 +44,7 @@ void main() {
 
       // Both share the same interleaved chroma pixel stride and layout: the
       // truthful name introduces no reinterpretation of already-supplied
-      // bytes (section 14, Q1).
+      // bytes.
       expect(canonical.uPlane.pixelStride, legacy.uPlane.pixelStride);
       expect(canonical.uPlane.rowStride, legacy.uPlane.rowStride);
       expect(canonical.format, legacy.format, reason: 'nv12 is canonical NV12 storage, which today is backed by the same legacy value as nv21');
@@ -60,7 +60,7 @@ void main() {
     });
   });
 
-  group('REL-19: YuvImage.format is YuvPixelFormat', () {
+  group('YuvImage.format is YuvPixelFormat', () {
     test('exhaustively switches over image.format through the public import alone', () {
       String describe(YuvImage image) => switch (image.format) {
         YuvPixelFormat.i420 => 'i420',

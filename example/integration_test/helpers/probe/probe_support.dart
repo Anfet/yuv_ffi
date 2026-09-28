@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 import 'cases.dart';
+import 'probe_seed.dart';
 
 Map<String, dynamic> decodeProbeGolden(String document) {
   final decoded = jsonDecode(document) as Map<String, dynamic>;
@@ -31,6 +32,8 @@ class ProbeCase {
   String get layout => _parts[2];
   String get operation => _parts[3];
 }
+
+final probeInputIds = probeCaseIds.map((id) => id.split(' ').take(3).join(' ')).toSet().map((id) => 'input $id').toList(growable: false);
 
 YuvOperation operationForCase(ProbeCase probeCase) => switch (probeCase.operation) {
   'gray' => YuvOperation.grayscale,
@@ -137,7 +140,7 @@ String runProbeCase(ProbeCase probeCase) {
   final size = probeCase.size;
   var seed = 12345 + size.$1 * 31 + size.$2;
   int nextByte() {
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    seed = probeNextSeed(seed);
     return (seed >> 8) & 0xff;
   }
 
@@ -154,6 +157,36 @@ String runProbeCase(ProbeCase probeCase) {
   } catch (error) {
     return 'ERR ${error.runtimeType}';
   }
+}
+
+String runProbeInput(String id) {
+  final parts = id.split(' ');
+  final probeCase = ProbeCase('${parts[1]} ${parts[2]} ${parts[3]} input');
+  final size = probeCase.size;
+  var seed = 12345 + size.$1 * 31 + size.$2;
+  int nextByte() {
+    seed = probeNextSeed(seed);
+    return (seed >> 8) & 0xff;
+  }
+
+  final image = _makeImage(probeCase, size.$1, size.$2, nextByte);
+  return sha256.convert(image.toBytes()).toString().substring(0, 16);
+}
+
+List<String> probeInputMismatches(Map<String, dynamic> golden) {
+  final mismatches = <String>[];
+  for (final id in probeInputIds) {
+    final expected = golden[id];
+    if (expected == null) {
+      mismatches.add('$id: missing input golden');
+      continue;
+    }
+    final actual = runProbeInput(id);
+    if (actual != expected) {
+      mismatches.add('$id: expected input $expected, got $actual');
+    }
+  }
+  return mismatches;
 }
 
 Future<List<String>> probeMismatches(Map<String, dynamic> golden, {Iterable<String>? caseIds}) async {
@@ -174,5 +207,5 @@ Future<List<String>> probeMismatches(Map<String, dynamic> golden, {Iterable<Stri
 }
 
 void expectProbeMismatchesEmpty(List<String> mismatches) {
-  expect(mismatches, isEmpty, reason: mismatches.take(20).join('\n'));
+  expect(mismatches, isEmpty, reason: '${mismatches.length} probe mismatches:\n${mismatches.take(20).join('\n')}');
 }

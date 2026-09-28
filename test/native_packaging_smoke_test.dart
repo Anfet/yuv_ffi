@@ -7,7 +7,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// YUV-06 packaging smoke: the library must be loadable by its *installed*
+/// Packaging smoke: the library must be loadable by its *installed*
 /// name and must actually compute.
 ///
 /// This suite deliberately does NOT skip when the library cannot be opened.
@@ -19,10 +19,10 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// when the library is not where a real consumer would find it, so a failure to
 /// open is a failure, not a skip.
 ///
-/// Before the YUV-06 fix the loader opened `native/src/build/libyuv_ffi.{so,
-/// dylib}` — a CMake build-tree path that exists in no published package and no
-/// application bundle — so on Linux and macOS this suite is reproducibly red
-/// until the loader uses the installed name (Linux) or process symbols (macOS).
+/// The Linux loader resolves the library by its installed name. On macOS the
+/// symbols are linked into the application process. Neither path relies on
+/// `native/src/build/libyuv_ffi.{so,dylib}`, which is a CMake build-tree path
+/// absent from published packages and application bundles.
 void main() {
   test('the native library opens by its installed name and performs a real conversion', () async {
     // Fails loudly rather than skipping: see the library doc above.

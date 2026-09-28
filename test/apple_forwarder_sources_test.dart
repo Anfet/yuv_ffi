@@ -12,7 +12,7 @@ const _forwarderPrefix = '../../src/';
 
 const _forwarderDirs = <String, String>{'iOS': 'ios/Classes', 'macOS': 'macos/Classes'};
 
-/// YUV-06: the Apple pod targets must compile the same translation units the
+/// The Apple pod targets must compile the same translation units that
 /// CMake build does.
 ///
 /// CocoaPods compiles `Classes/**/*`, and the podspec cannot reference paths
@@ -29,7 +29,7 @@ const _forwarderDirs = <String, String>{'iOS': 'ios/Classes', 'macOS': 'macos/Cl
 /// and `src/yuv/utils/validated_view.c` once ended up absent from both
 /// forwarder sets while every gate stayed green: back then nothing called the
 /// versioned ABI symbols, so the missing link step had nothing to fail on.
-/// They are the whole library since YUV-52 removed the legacy sources, which
+/// They are the whole library because the legacy sources have been removed, which
 /// makes this check the only thing standing between a forgotten include and a
 /// pod target that links without the operation a caller asks for.
 ///
@@ -174,8 +174,8 @@ List<String> _includesFromForwarders(String directory) {
 /// relative to `src/`.
 ///
 /// Rejects a repeated separator rather than normalizing it: `src/yuv//foo.c`
-/// compiles, so the double slashes that used to sit in the iOS forwarders were
-/// invisible, and normalizing here would let them come back.
+/// compiles despite the doubled separator, and normalizing here would let that
+/// invalid path pass again.
 String _relativeToSrc(String forwarderPath, String includeTarget) {
   expect(
     includeTarget.startsWith(_forwarderPrefix),

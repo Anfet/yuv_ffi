@@ -7,11 +7,11 @@ import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-05's independent-result surface (`toI420`/`toNv12`/`toBgra`,
-/// `cropped`/`rotated`, `toBytes`/`toBgraBytes`) against
-/// `doc/api-abi-0.4-design.md` sections 4 and 13.
+/// Verifies the independent-result surface (`toI420`, `toNv12`, and `toBgra`,
+/// `cropped`/`rotated`, `toBytes`/`toBgraBytes`) against their documented
+/// behavior.
 ///
-/// REL-04 already added generic no-op-aliasing coverage for `cropped()`,
+/// Generic no-op aliasing is also covered for `cropped()`,
 /// `rotated(rotation0)` and `toI420()` in `test/yuv_apply_surface_test.dart`.
 /// This file adds what that left out: byte-level correctness of the
 /// conversions against a hand-computable oracle, explicit source/result
@@ -174,7 +174,7 @@ void main() {
 
         // toBgra() on an already-BGRA source is the documented same-format
         // no-op: an independent deep copy that keeps the source's own layout
-        // (section 4), not a re-tightened buffer. It must still report the
+        // rather than a re-tightened buffer. It must still report the
         // same logical pixel content once read back through toBgraBytes(),
         // and must not alias the source's backing buffer.
         final converted = padded.toBgra();

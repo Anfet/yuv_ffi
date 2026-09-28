@@ -238,7 +238,7 @@ void main() {
   group('padded BGRA constructor contract', () {
     YuvPlane plane(int height, int rowStride, [int pixelStride = 4]) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
 
-    test('F-004 diagnostic case: a valid padded plane is accepted', () {
+    test('a valid padded plane is accepted by the constructor', () {
       expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]), returnsNormally);
     });
 
@@ -321,7 +321,7 @@ void main() {
       expect(snapshot[1], snapshotByteBefore);
     });
 
-    test('F-003 diagnostic case: i420 3x3 has no alignment tail', () {
+    test('I420 3x3 has no alignment tail', () {
       final image = YuvImage.i420(3, 3);
       final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 

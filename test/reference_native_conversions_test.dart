@@ -74,13 +74,8 @@ void main() {
 
 /// Locates the native library for provenance reporting only.
 ///
-/// This used to hardcode `native/src/build/libyuv_ffi.*`, the CMake build tree.
-/// Since YUV-06 the loader opens the library by its installed name, so the
-/// build output no longer has to sit in that directory — and a probe pinned to
-/// it reported `exists=false` and skipped all 119 cases while the library was
-/// perfectly loadable. The search order below mirrors where a real install puts
-/// the file: the loader's own search path first, then the legacy build tree so
-/// an existing local checkout keeps working.
+/// The search checks the loader's installed-library locations first, then the
+/// local CMake build tree so a development checkout can run the probe too.
 File? _nativeLibraryFile() {
   final String name = Platform.isWindows
       ? 'yuv_ffi.dll'
@@ -287,7 +282,7 @@ YuvImage _newImage(YuvFileFormat format, int width, int height, List<YuvPlane> p
     planes = _blankLogicalSamples(format, width, planes);
   }
   return switch (format) {
-    // Since YUV-15 the named BGRA constructor preserves the declared layout
+    // The named BGRA constructor preserves the declared layout
     // just like the explicit-format one, so both blank and populated cases can
     // go through it. This whole file exercises declared strides byte-for-byte
     // (including custom/padded ones), so every case passes `.preserve`
@@ -451,8 +446,7 @@ void _assertCase(Map<String, dynamic> entry, _CaseResult result, Map<String, Rgb
       operation == 'toYuvI420' ||
       operation == 'toYuvNv21' ||
       (operation == 'swapNv' && result.image.format == YuvPixelFormat.nv12)) {
-    // The manifest still names the legacy NV21 label: it predates the
-    // truthfully-named YuvPixelFormat.nv12 (REL-19) and describes the same
+    // The manifest's legacy NV21 label describes the same
     // canonical semi-planar storage, so the comparison maps nv12 back to that
     // legacy name rather than expecting the fixture data to be relabeled.
     final actualFormatName = result.image.format == YuvPixelFormat.nv12 ? 'nv21' : result.image.format.name;
@@ -533,10 +527,8 @@ Uint8List _rgbaToBgra(Uint8List rgba) {
 
 Uint8List parametersForRaw(Map<String, dynamic> entry) {
   final input = entry['input'] as Map<String, dynamic>;
-  // Every format now keeps the declared layout. BGRA used to be forced to
-  // 'tight' here because the named constructor repacked padded input at
-  // construction time; YUV-15 makes it preserve the caller's stride, so the
-  // expectation is built from the same layout the case actually declares.
+  // BGRA keeps the declared layout because its named constructor preserves the
+  // caller's stride. Build the expectation from the layout the case declares.
   final layout = input['layout'] as String;
   final planes = _planesFor(_format(input['format'] as String), _rawSourceFrame(entry), layout);
   if (entry['operation'] == 'copy' && (entry['parameters'] as Map<String, dynamic>)['blank'] == true) {

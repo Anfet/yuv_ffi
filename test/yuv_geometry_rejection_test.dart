@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Regression cases for the review findings on YUV-04 and YUV-05.
+/// Regression cases for invalid geometry and unsafe access.
 ///
 /// Each group pins down a path that previously reached a backend call with a
 /// layout the native code cannot handle.
@@ -111,8 +111,7 @@ void main() {
     });
 
     test('exactly one plane is accepted and keeps its declared layout', () {
-      // YUV-15 supersedes the earlier YUV-04 behaviour: a valid padded plane is
-      // deep-copied as declared instead of being repacked tightly at
+      // A valid padded plane is deep-copied as declared instead of being repacked tightly at
       // construction time. toBgra8888() is what produces a tight buffer.
       final image = YuvImage.bgra(8, 8, planes: [filled(8, 32 + 16, 4)], layout: YuvPlaneLayout.preserve);
       expect(image.planes.length, 1);
@@ -153,8 +152,7 @@ void main() {
         yLength: image.yPlane.bytes.length,
       );
 
-      // YUV-07 pins this to FormatException; it was deliberately loose while
-      // the reader could still surface RangeError or TypeError instead.
+      // Malformed payloads raise FormatException rather than RangeError or TypeError.
       // ignore: deprecated_member_use_from_same_package
       await expectLater(image.load(malformedPayload(format: 'i420', width: 8, height: 8, planes: const [])), throwsFormatException);
 
@@ -190,12 +188,12 @@ void main() {
         YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [filled(8, 8 * 4 + 16, 4)], layout: YuvPlaneLayout.preserve);
 
     test('blur operations accept a padded plane and leave its padding untouched', () {
-      // Until YUV-50 these threw: the legacy per-format kernels allocated a
-      // tight width * height * 4 scratch buffer while addressing it through the
-      // source row stride, so a padded plane made them write past it, and the
+      // The per-format kernels allocated a tight width * height * 4 scratch
+      // buffer while addressing it through the source row stride, so a padded
+      // plane made them write past it, and the
       // Dart side refused the input rather than passing it on. ABI v1 walks
       // every plane through its own declared strides, so the input is now
-      // supported and its padding is contractually preserved (section 11).
+      // supported and its padding is preserved by the image contract.
       const rowStride = 8 * 4 + 16;
       for (final blur in <void Function(YuvImage)>[
         (image) => image.applyGaussianBlur(radius: 1, sigma: 1.0),

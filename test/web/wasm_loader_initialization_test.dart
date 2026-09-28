@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 
-/// Verifies YUV-21 on the Web backend: concurrent callers share one attempt,
+/// Verifies that the Web backend: concurrent callers share one attempt,
 /// a failure leaves nothing behind, and a later call really retries.
 ///
 /// The counted initializer seam is what makes those observable without

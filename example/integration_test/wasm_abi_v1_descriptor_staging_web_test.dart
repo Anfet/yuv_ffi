@@ -1,10 +1,3 @@
-@TestOn('browser')
-// The runner reaches the WASM module through `dart:js_interop`, which the VM
-// cannot compile at all -- unlike the other `test/web` suites, which import
-// only platform-agnostic code and guard on `kIsWeb` at runtime. `@TestOn`
-// excludes this file from a VM run rather than letting it fail to load.
-library;
-
 // ignore_for_file: avoid_web_libraries_in_flutter
 
 import 'dart:js_interop';
@@ -13,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/src/yuv/impl/web/abi/yuv_abi_v1_wasm_layout.dart';
 import 'package:yuv_ffi/src/yuv/impl/web/abi/yuv_abi_v1_web_runner.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
@@ -21,7 +15,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 
-/// YUV-51: what the Web runner actually writes into WASM linear memory.
+/// What the Web runner actually writes into WASM linear memory.
 ///
 /// `wasm_abi_v1_layout_test.dart` proves the offset constants match the C
 /// header. This proves the runner uses them correctly: it runs against a fake
@@ -38,9 +32,9 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 /// reference matrix in `example/integration_test/reference_web_conversions_test.dart`,
 /// which runs the real WASM build in Chrome.
 ///
-/// These run in a browser (`flutter test --platform chrome`) because the runner
-/// reaches the module through `dart:js_interop`; they need no WASM asset, only
-/// a JS object shaped like an Emscripten module.
+/// These run in a browser integration test because the runner reaches the
+/// module through `dart:js_interop`; they need no WASM asset, only a JS object
+/// shaped like an Emscripten module.
 
 /// A JS object standing in for an Emscripten module: a heap, a bump allocator,
 /// `ccall`, and every ABI v1 export name so the dispatch's completeness check
@@ -189,15 +183,16 @@ YuvAbiV1FrameInput _i420Source({int width = 4, int height = 4, int yRowStride = 
 }
 
 void main() {
-  test('runs on a real browser runtime', () {
-    // @TestOn('browser') already excludes a VM run, so this asserts the
-    // annotation is doing its job rather than the suite silently passing
-    // somewhere the staging under test cannot even execute.
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('runs on a real browser runtime', (_) async {
+    // This prevents the suite from passing somewhere the staging under test
+    // cannot execute.
     expect(kIsWeb, isTrue);
   });
 
   group('source frame staging', () {
-    test('every scalar field carries the value ABI v1 requires', () {
+    testWidgets('every scalar field carries the value ABI v1 requires', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.grayscale(module: module, source: _i420Source());
 
@@ -218,7 +213,7 @@ void main() {
       expect(heap.getUint32(src + YuvWasmFrameV1.offsetColorRange, Endian.little), yuvColorRangeLimited);
     });
 
-    test('plane descriptors carry real lengths, both strides and the format sampleBytes', () {
+    testWidgets('plane descriptors carry real lengths, both strides and the format sampleBytes', (_) async {
       final module = _newFakeModule();
       // A padded Y plane: rowStride 6 for a 4-pixel-wide frame.
       final source = _i420Source(yRowStride: 6, uvRowStride: 3);
@@ -244,7 +239,7 @@ void main() {
       expect(v.data, isNot(u.data), reason: 'each plane must get its own buffer');
     });
 
-    test('NV12 stages two planes, with sampleBytes 2 on the interleaved chroma plane', () {
+    testWidgets('NV12 stages two planes, with sampleBytes 2 on the interleaved chroma plane', (_) async {
       final module = _newFakeModule();
       final source = YuvAbiV1FrameInput(
         format: yuvFormatNv12,
@@ -264,8 +259,8 @@ void main() {
       expect(_readPlane(module, src, 1).pixelStride, 2);
     });
 
-    test('the unused third plane slot is a zero-filled descriptor with null data', () {
-      // Section 9's explicit rule. The fake allocator poisons fresh memory with
+    testWidgets('the unused third plane slot is a zero-filled descriptor with null data', (_) async {
+      // This reserved slot must remain zero. The fake allocator poisons fresh memory with
       // 0xA5, so a slot the runner never zeroed would be caught here rather
       // than passing by luck on a zeroed heap.
       final module = _newFakeModule();
@@ -290,8 +285,8 @@ void main() {
       }
     });
 
-    test('the reserved tail is zeroed rather than left as allocator garbage', () {
-      // A non-zero reserved field is INVALID_ARGUMENT under section 9, so this
+    testWidgets('the reserved tail is zeroed rather than left as allocator garbage', (_) async {
+      // A non-zero reserved field is INVALID_ARGUMENT, so this
       // is the difference between working and a rejected descriptor.
       final module = _newFakeModule();
       YuvAbiV1WebRunner.grayscale(module: module, source: _i420Source());
@@ -303,7 +298,7 @@ void main() {
       }
     });
 
-    test('plane bytes reach the heap exactly as given, padding included', () {
+    testWidgets('plane bytes reach the heap exactly as given, padding included', (_) async {
       final module = _newFakeModule();
       final source = _i420Source(yRowStride: 6, uvRowStride: 3);
       YuvAbiV1WebRunner.grayscale(module: module, source: source);
@@ -312,7 +307,7 @@ void main() {
       expect(module.heapBytes.sublist(y.data, y.data + y.length), source.planes[0].bytes);
     });
 
-    test('a uint64 length writes a zero high half', () {
+    testWidgets('a uint64 length writes a zero high half', (_) async {
       // wasm32 is little-endian; a stray high half would make `length` absurd.
       final module = _newFakeModule();
       YuvAbiV1WebRunner.grayscale(module: module, source: _i420Source());
@@ -325,7 +320,7 @@ void main() {
   });
 
   group('destination frame staging', () {
-    test('the destination is tight regardless of a padded source', () {
+    testWidgets('the destination is tight regardless of a padded source', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.grayscale(module: module, source: _i420Source(yRowStride: 6, uvRowStride: 3));
 
@@ -336,7 +331,7 @@ void main() {
       expect(_readPlane(module, dst, 1).rowStride, 2);
     });
 
-    test('rotate by 90 transposes the destination geometry', () {
+    testWidgets('rotate by 90 transposes the destination geometry', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.rotate(module: module, source: _i420Source(width: 4, height: 8, yRowStride: 4, uvRowStride: 2), rotationDegrees: 90);
 
@@ -346,7 +341,7 @@ void main() {
       expect(_readPlane(module, dst, 0).rowStride, 8);
     });
 
-    test('rotate by 180 keeps the source geometry', () {
+    testWidgets('rotate by 180 keeps the source geometry', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.rotate(module: module, source: _i420Source(width: 4, height: 8, yRowStride: 4, uvRowStride: 2), rotationDegrees: 180);
 
@@ -355,7 +350,7 @@ void main() {
       expect(module.heap.getUint32(dst + YuvWasmFrameV1.offsetHeight, Endian.little), 8);
     });
 
-    test('odd 4:2:0 geometry rounds chroma extents up', () {
+    testWidgets('odd 4:2:0 geometry rounds chroma extents up', (_) async {
       // ceil(5/2) == 3: a truncating division would under-allocate chroma and
       // the kernel would write past the buffer.
       final module = _newFakeModule();
@@ -377,7 +372,7 @@ void main() {
       expect(u.length, 9, reason: 'chroma is ceil(5/2) x ceil(5/2)');
     });
 
-    test('a non-ROI destination starts zeroed, not as allocator garbage', () {
+    testWidgets('a non-ROI destination starts zeroed, not as allocator garbage', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.grayscale(module: module, source: _i420Source());
 
@@ -386,7 +381,7 @@ void main() {
       expect(module.heapBytes.sublist(y.data, y.data + y.length), everyElement(0));
     });
 
-    test('an ROI destination is seeded with the source samples so bytes outside it survive', () {
+    testWidgets('an ROI destination is seeded with the source samples so bytes outside it survive', (_) async {
       final module = _newFakeModule();
       final source = _i420Source();
       YuvAbiV1WebRunner.blackWhite(module: module, source: source, region: const YuvAbiV1Region(left: 0, top: 0, right: 2, bottom: 2));
@@ -400,7 +395,7 @@ void main() {
       );
     });
 
-    test('seeding walks a padded source through its own strides', () {
+    testWidgets('seeding walks a padded source through its own strides', (_) async {
       final module = _newFakeModule();
       // rowStride 6 over a 4-wide frame: bytes 4 and 5 of each row are padding
       // and must not appear in the tight destination.
@@ -422,7 +417,7 @@ void main() {
   });
 
   group('options staging', () {
-    test('effect options carry a disabled region with every coordinate zeroed', () {
+    testWidgets('effect options carry a disabled region with every coordinate zeroed', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.grayscale(module: module, source: _i420Source());
 
@@ -434,7 +429,7 @@ void main() {
       final region = options + YuvWasmEffectOptionsV1.offsetRegion;
       expect(heap.getUint32(region + YuvWasmRegionOptionsV1.offsetStructSize, Endian.little), 32);
       expect(heap.getUint32(region + YuvWasmRegionOptionsV1.offsetEnabled, Endian.little), 0);
-      // Section 10: "when 0, all four coordinates and reserved0 must be zero".
+      // When disabled, all four coordinates and reserved0 must be zero.
       for (final offset in [
         YuvWasmRegionOptionsV1.offsetLeft,
         YuvWasmRegionOptionsV1.offsetTop,
@@ -447,7 +442,7 @@ void main() {
       expect(module.heapBytes.sublist(options + YuvWasmEffectOptionsV1.offsetReserved, options + YuvWasmEffectOptionsV1.sizeBytes), everyElement(0));
     });
 
-    test('an enabled region carries its four coordinates', () {
+    testWidgets('an enabled region carries its four coordinates', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.negate(module: module, source: _i420Source(), region: const YuvAbiV1Region(left: 1, top: 2, right: 3, bottom: 4));
 
@@ -460,7 +455,7 @@ void main() {
       expect(heap.getInt32(region + YuvWasmRegionOptionsV1.offsetBottom, Endian.little), 4);
     });
 
-    test('blur options carry radius, clamp border and an IEEE-754 sigma', () {
+    testWidgets('blur options carry radius, clamp border and an IEEE-754 sigma', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.blur(module: module, kind: YuvAbiV1BlurKind.gaussian, source: _i420Source(), radius: 3, sigma: 2.5);
 
@@ -472,7 +467,7 @@ void main() {
       expect(heap.getFloat64(options + YuvWasmBlurOptionsV1.offsetSigma, Endian.little), 2.5);
     });
 
-    test('the uniform-weight blurs carry sigma 0, as section 10 requires', () {
+    testWidgets('the uniform-weight blurs carry sigma 0', (_) async {
       for (final kind in [YuvAbiV1BlurKind.mean, YuvAbiV1BlurKind.box]) {
         final module = _newFakeModule();
         YuvAbiV1WebRunner.blur(module: module, kind: kind, source: _i420Source(), radius: 2);
@@ -480,7 +475,7 @@ void main() {
       }
     });
 
-    test('crop options carry the rectangle', () {
+    testWidgets('crop options carry the rectangle', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.crop(
         module: module,
@@ -500,7 +495,7 @@ void main() {
       expect(heap.getUint32(options + YuvWasmCropOptionsV1.offsetHeight, Endian.little), 4);
     });
 
-    test('flip and rotate options carry their one field and a zeroed reserved tail', () {
+    testWidgets('flip and rotate options carry their one field and a zeroed reserved tail', (_) async {
       final flipModule = _newFakeModule();
       YuvAbiV1WebRunner.flip(module: flipModule, source: _i420Source(), direction: yuvFlipVertical, operation: YuvOperation.flipVertical);
       final flipOptions = flipModule.calls.single.options;
@@ -520,7 +515,7 @@ void main() {
       );
     });
 
-    test('convert options are the bare versioned header', () {
+    testWidgets('convert options are the bare versioned header', (_) async {
       final module = _newFakeModule();
       YuvAbiV1WebRunner.convert(
         module: module,
@@ -545,7 +540,7 @@ void main() {
   });
 
   group('dispatch and symbols', () {
-    test('every public operation invokes exactly one v1 symbol, and the expected one', () {
+    testWidgets('every public operation invokes exactly one v1 symbol, and the expected one', (_) async {
       final cases = <String, void Function(JSObject)>{
         yuvSymbolConvertV1: (m) => YuvAbiV1WebRunner.convert(
           module: m,
@@ -583,7 +578,7 @@ void main() {
       }
     });
 
-    test('a module missing a v1 symbol is rejected by name before anything is staged', () {
+    testWidgets('a module missing a v1 symbol is rejected by name before anything is staged', (_) async {
       final module = _newFakeModule();
       module.delete('_yuv_grayscale_v1'.toJS);
 
@@ -597,7 +592,7 @@ void main() {
   });
 
   group('status mapping and memory', () {
-    test('a successful call copies the destination back and frees everything', () {
+    testWidgets('a successful call copies the destination back and frees everything', (_) async {
       final module = _newFakeModule();
       final result = YuvAbiV1WebRunner.grayscale(module: module, source: _i420Source());
 
@@ -607,7 +602,7 @@ void main() {
       expect(module.liveAllocations, 0, reason: 'every WASM allocation must be released on the success path');
     });
 
-    test('each status maps to the documented Dart exception and frees everything', () {
+    testWidgets('each status maps to the documented Dart exception and frees everything', (_) async {
       final expectations = <int, Matcher>{
         yuvStatusInvalidArgument: isA<ArgumentError>(),
         yuvStatusUnsupportedFormat: isA<UnsupportedError>(),
@@ -632,7 +627,7 @@ void main() {
       }
     });
 
-    test('the thrown exception names the symbol that failed', () {
+    testWidgets('the thrown exception names the symbol that failed', (_) async {
       final module = _newFakeModule();
       module.status = yuvStatusInternalError;
       expect(
@@ -641,7 +636,7 @@ void main() {
       );
     });
 
-    test('a wrong plane count is rejected before any allocation', () {
+    testWidgets('a wrong plane count is rejected before any allocation', (_) async {
       final module = _newFakeModule();
       final source = YuvAbiV1FrameInput(
         format: yuvFormatI420,
@@ -656,7 +651,7 @@ void main() {
       expect(module.liveAllocations, 0);
     });
 
-    test('an allocation failure releases what was already allocated', () {
+    testWidgets('an allocation failure releases what was already allocated', (_) async {
       // A heap far too small for the staging this operation needs, so `_malloc`
       // returns 0 partway through and the arena has live pointers to release.
       final module = _newFakeModule(heapBytes: 256);

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 
 /// The eleven ABI v1 processing symbols from
-/// `doc/api-abi-0.4-design.md` section 11 / `src/yuv/abi/h/yuv_ops_v1.h`.
+/// The manifest must match the exported declarations in `src/yuv/abi/h/yuv_ops_v1.h`.
 ///
 /// This is the hand-kept reference list the gate judges every source against,
 /// including the shared Dart manifest in
@@ -202,7 +202,7 @@ void main() {
 
     test('the Web runner dispatches every symbol through the shared manifest constant', () {
       // The Web mirror of the native-runner check above, and the half of the
-      // gate YUV-51 made real: before it, the Web side could only be asked
+      // The Web dispatch gate is exercised: before it, the Web side could only be asked
       // whether it *named* the symbols. Now the Web runner must reach each one
       // through the manifest constant, exactly as the native runner does, so a
       // symbol wired on one backend but not the other fails here.
@@ -261,7 +261,7 @@ void main() {
       final runner = File(_webRunnerPath).readAsStringSync();
       expect(backend, contains("import 'yuv_abi_v1_dispatch_web.dart';"), reason: '$_webBackendPath must import the ABI v1 Web dispatch');
       expect(backend, contains('YuvAbiV1WebDispatch.'), reason: '$_webBackendPath must actually use the ABI v1 Web dispatch');
-      // Since YUV-51 the per-operation dispatch happens in the runner, so the
+      // Per-operation dispatch happens in the runner, so the
       // dispatch layer has to be reached from there too -- otherwise the
       // completeness check could be bypassed by every real operation.
       expect(runner, contains('YuvAbiV1WebDispatch.call('), reason: '$_webRunnerPath must invoke symbols through the ABI v1 Web dispatch');

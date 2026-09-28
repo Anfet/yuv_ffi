@@ -5,9 +5,9 @@ import 'dart:ui' as ui;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-20's `encodeTo(sink)`/static `YuvImage.decode(stream)` surface
+/// Verifies the `encodeTo(sink)` and static `YuvImage.decode(stream)` APIs
 /// and the `save`/`load` migration into `DeprecatedYuvImageApi`
-/// (`doc/api-abi-0.4-design.md` sections 4 and 8; `todo.md`'s REL-20 entry).
+/// for the public encode and decode APIs.
 ///
 /// Covers: `save()` forwards to `encodeTo()` with identical bytes; the static
 /// `decode()` round-trips a real image without mutating any receiver;

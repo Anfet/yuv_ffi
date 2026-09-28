@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies YUV-05: native conversions stay inside their buffers when the
+/// Verifies that native conversions stay inside their buffers when the
 /// source and destination use different strides, and produce deterministic
 /// planes for odd dimensions.
 ///
@@ -257,7 +257,7 @@ void main() {
           expect(image.uPlane.bytes[row * chromaRowStride + i], 10 + row * 10 + i + 1);
           expect(image.uPlane.bytes[row * chromaRowStride + i + 1], 10 + row * 10 + i);
         }
-        // Since YUV-50 swapNv publishes through the ABI v1 transport, which
+        // swapNv publishes through the ABI v1 transport, which
         // writes only active samples into the receiver's existing layout, so
         // the source padding survives verbatim instead of being replaced by a
         // freshly zeroed allocation. Either way no active data may leak into

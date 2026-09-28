@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies YUV-27: the misspelled `bytesPerPixes` getter keeps working while
+/// Verifies that the misspelled `bytesPerPixes` getter keeps working while
 /// the correctly spelled `bytesPerPixel` becomes the one to use.
 ///
 /// Both must report `pixelStride`, so a patch update cannot change what an

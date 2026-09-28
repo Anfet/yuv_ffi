@@ -5,15 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies YUV-43: I420 and NV21 box/mean blur are deterministic, leave
+/// Verifies that I420 and NV21 box/mean blur are deterministic, leave
 /// everything outside the ROI untouched, and agree with each other (box and
 /// mean are the same uniform-average filter per the 0.3.0 contract).
 ///
-/// The historical defects were format-specific: I420 used a shrinking window
-/// at the border and never blurred chroma at all (a Dart-side wiring gap, not
-/// a native one); NV21 used `radius / 2` instead of `radius` for the kernel
-/// size and could read already-blurred chroma samples back into a later
-/// average because it wrote in place during the same pass.
+/// The assertions cover clamp-to-edge borders, chroma processing, and
+/// deterministic repeated runs for both planar and interleaved formats.
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
 
@@ -183,10 +180,8 @@ void main() {
         markTestSkipped('native library is not available on this host');
         return;
       }
-      // Regression guard for the historical Dart-side wiring gap: native
-      // chroma blur ran, but the wrapper never copied `u`/`v` back out of the
-      // FFI struct, so the Dart planes stayed exactly as constructed no
-      // matter what the native code did.
+      // Both chroma planes must contain transformed samples after the call;
+      // unchanged planes would leave chroma processing unobservable to Dart.
       final image = patternI420(16, 16);
       final beforeU = Uint8List.fromList(image.uPlane.bytes);
       final beforeV = Uint8List.fromList(image.vPlane.bytes);
@@ -232,7 +227,7 @@ void main() {
   });
 
   group('NV21', () {
-    test('radius == 0 is a no-op', () {
+    test('NV21: radius == 0 is a no-op', () {
       if (!nativeAvailable) {
         markTestSkipped('native library is not available on this host');
         return;
@@ -248,7 +243,7 @@ void main() {
       expect(image.uPlane.bytes, orderedEquals(beforeUv));
     });
 
-    test('an empty ROI is a no-op', () {
+    test('NV21: an empty ROI is a no-op', () {
       if (!nativeAvailable) {
         markTestSkipped('native library is not available on this host');
         return;
@@ -262,7 +257,7 @@ void main() {
       expect(image.yPlane.bytes, orderedEquals(before));
     });
 
-    test('pixels outside the ROI keep their original Y bytes', () {
+    test('NV21: pixels outside the ROI keep their original Y bytes', () {
       if (!nativeAvailable) {
         markTestSkipped('native library is not available on this host');
         return;
@@ -282,7 +277,7 @@ void main() {
       }
     });
 
-    test('boxBlur and meanBlur agree on every plane', () {
+    test('NV21: boxBlur and meanBlur agree on every plane', () {
       if (!nativeAvailable) {
         markTestSkipped('native library is not available on this host');
         return;
@@ -301,9 +296,9 @@ void main() {
         markTestSkipped('native library is not available on this host');
         return;
       }
-      // Regression guard for the historical in-place chroma hazard: unpacking
-      // into scratch planes and blurring those, rather than blurring the
-      // interleaved plane in place, is what makes repeated runs deterministic.
+      // Identical input must produce identical output. Processing scratch
+      // planes keeps each sample independent of values written earlier in the
+      // same pass.
       // ignore: deprecated_member_use_from_same_package
       final a = patternNv21(24, 24)..boxBlur(radius: 4, rect: const ui.Rect.fromLTRB(4, 4, 20, 20));
       // ignore: deprecated_member_use_from_same_package
@@ -353,11 +348,9 @@ void main() {
   });
 
   test('an invalid radius is rejected before reaching native code, for I420 and NV21', () {
-    // Regression guard for the general P1 review finding on 2026-09-20:
-    // boxBlur/meanBlur passed any radius straight to C without validation. A
-    // negative radius inverts the SAT rectangle bounds and reads/writes out
-    // of bounds; this does not need nativeAvailable, since validation
-    // happens in Dart before any native call or allocation.
+    // Validation rejects a negative radius before it can invert SAT rectangle
+    // bounds. This does not need nativeAvailable because validation happens
+    // in Dart before native work.
     final i420 = patternI420(8, 8);
     // ignore: deprecated_member_use_from_same_package
     expect(() => i420.boxBlur(radius: -1), throwsArgumentError);

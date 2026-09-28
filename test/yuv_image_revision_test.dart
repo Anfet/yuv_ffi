@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies YUV-20: the revision counter that makes a mutable [YuvImage]
+/// Verifies that the revision counter that makes a mutable [YuvImage]
 /// usable as an image cache key.
 ///
 /// Every successful mutating operation must advance it exactly once, and a

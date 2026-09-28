@@ -6,7 +6,7 @@ import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies YUV-16: every already-acquired native resource is released when a
+/// Verifies that every already-acquired native resource is released when a
 /// later allocation in the same method throws.
 ///
 /// The instrumented allocator fails deterministically at the Nth allocation and

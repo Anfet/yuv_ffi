@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies YUV-20 source compatibility: a class written against `0.2.4` that
+/// Verifies source compatibility: a class written against `0.2.4` that
 /// implements [YuvImage] without knowing anything about the revision seam must
 /// still compile and work on `0.2.5`.
 ///
@@ -13,7 +13,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// [_LegacyExternalImage] stops compiling and this test fails to build — which
 /// is exactly the regression it exists to catch.
 void main() {
-  test('a pre-0.2.5 external implementation still satisfies YuvImage', () {
+  test('a version 0.2.4 external implementation still satisfies YuvImage', () {
     final YuvImage image = _LegacyExternalImage(2, 2);
 
     expect(image.width, 2);
@@ -33,7 +33,7 @@ void main() {
 
   test('an external implementation is never keyed by a revision it does not report', () {
     // A foreign class cannot prove its frame is unchanged, so it deliberately
-    // gets the pre-0.2.5 always-miss key rather than revision equality. Calling
+    // gets an always-miss key rather than revision equality. Calling
     // markDirty() on it still advances the tracked revision (above), but that
     // revision is not what keys the cache for this kind of image.
     final image = _LegacyExternalImage(2, 2);
@@ -84,7 +84,7 @@ void main() {
   });
 }
 
-/// A pre-0.2.5 external [YuvImage] whose standard mutators actually mutate.
+/// A legacy external [YuvImage] whose standard mutators actually mutate.
 ///
 /// [_LegacyExternalImage] throws from every mutator, which cannot expose a cache
 /// that trusts an unreported mutation. This one changes its bytes in place the
@@ -146,13 +146,13 @@ class _LegacyExternalImage implements YuvImage {
   @override
   Future<void> encodeTo(Sink<List<int>> sink) => throw UnimplementedError();
 
-  // Pre-0.4.0 instance methods this legacy class already defined on itself,
+  // Legacy instance methods this legacy class already defined on itself,
   // same as a real `0.2.4`-era implementer would have. They are no longer
   // `YuvImage` interface members -- `DeprecatedYuvImageApi` covers their name
   // for every other `YuvImage` -- but a class that already had its own method
   // of the same name keeps it: Dart resolves an instance member before an
   // extension one, so these still shadow the extension here, exactly as they
-  // would have before REL-06 existed.
+  // would have before the revision API existed.
   YuvImage blackwhite() => throw UnimplementedError();
 
   YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => throw UnimplementedError();

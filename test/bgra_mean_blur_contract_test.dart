@@ -5,13 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies YUV-42: the BGRA mean blur is deterministic, leaves everything
+/// Verifies that the BGRA mean blur is deterministic, leaves everything
 /// outside the ROI untouched, keeps alpha exact, and averages over a
 /// clamp-to-edge kernel rather than a truncated window.
 ///
-/// The historical defect wrote only inside the ROI but copied a whole
-/// `malloc`'d scratch buffer back, so pixels outside the ROI came from
-/// uninitialized heap and differed between runs.
+/// The ROI checks protect the guarantee that pixels outside the selected
+/// rectangle retain their original values.
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
 
@@ -160,36 +159,9 @@ void main() {
       markTestSkipped('native library is not available on this host');
       return;
     }
-    // Originally written as a P1 overflow regression for the 2026-09-20
-    // review (the SAT accumulators used to be int32_t, and a single-channel
-    // SAT cell at the bottom-right corner sums every sample in the plane; an
-    // all-white 3000x2900 frame sums to 2,218,500,000, past INT32_MAX). That
-    // framing turned out to be wrong on two counts, found on a later pass of
-    // the same review:
-    //
-    // 1. It does not exercise 32-bit index/allocation overflow either:
-    //    width * height here is 8,700,000, four orders of magnitude below
-    //    where 32-bit indexing would actually wrap (~2^31). It is simply a
-    //    large frame, not a boundary case for sizing.
-    // 2. It cannot distinguish int32_t from int64_t SAT storage at all.
-    //    Every query this algorithm issues reads a *rectangle* via
-    //    inclusion-exclusion, bounded by the kernel (`radius <= 256`, so
-    //    area <= 513x513), never a bare unpaired corner cell except for the
-    //    (0,0) pixel's own kernel, which is bounded the same way. Under an
-    //    explicit two's-complement wraparound model, paired add/subtract is
-    //    exact modulo 2^32, so it reconstructs the true rectangle sum even
-    //    from wrapped int32_t cells — verified by simulating both
-    //    accumulator widths directly; every sampled query matched. (Signed
-    //    overflow is still UB in C, not a guaranteed wraparound, which is
-    //    why the int64_t widening was correct regardless — see
-    //    bgra8888_mean_blur.c.) Either way, this fixture's result is
-    //    identical whether the table is int32_t or int64_t, so it proves
-    //    nothing about the accumulator width.
-    //
-    // Kept as what it actually is: a smoke test that the SAT build and
-    // clamp-to-edge blur behave correctly at a resolution well above the
-    // small fixtures used elsewhere in this file, not a regression guard for
-    // any specific overflow.
+    // This is a large-frame smoke test for summed-area-table construction and
+    // clamp-to-edge output. It does not verify accumulator-width overflow:
+    // each query sums a bounded kernel (`radius <= 256`).
     const width = 3000;
     const height = 2900;
     final bytes = Uint8List(width * height * 4)..fillRange(0, width * height * 4, 0xFF);
@@ -209,12 +181,9 @@ void main() {
   }, timeout: const Timeout(Duration(minutes: 2)));
 
   test('an invalid radius is rejected before reaching native code', () {
-    // Regression guard for the general P1 review finding on 2026-09-20:
-    // boxBlur/meanBlur/gaussianBlur passed any radius straight to C without
-    // validation. A negative radius inverts the SAT rectangle bounds
-    // (x1 > x2, y1 > y2) and reads/writes out of bounds; this does not need
-    // nativeAvailable, since validation happens in Dart before any native
-    // call or allocation.
+    // Validation rejects a negative radius before it can invert the SAT
+    // rectangle bounds (x1 > x2, y1 > y2). This does not need
+    // nativeAvailable because validation happens in Dart before native work.
     final image = patternImage(8, 8);
     // ignore: deprecated_member_use_from_same_package
     expect(() => image.meanBlur(radius: -1), throwsArgumentError);

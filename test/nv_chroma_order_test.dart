@@ -110,7 +110,7 @@ void main() {
       // directly through applyPlanes() -- no RGBA->YUV conversion, no
       // rounding, no tolerance. YuvPixelFormat.nv12 and the legacy nv21
       // factory are documented to share the same interleaved storage
-      // (section 14, Q1); this proves it at the byte level, not just by
+      // This proves it at the byte level, not just by
       // comparing stride/format as `yuv_pixel_format_test.dart` does.
       const int uSample = 37;
       const int vSample = 219;

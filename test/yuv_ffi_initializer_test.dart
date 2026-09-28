@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/impl/loader_io.dart' as loader_io;
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-08: the public `YuvFfi.initialize()` entrypoint shares one
+/// Verifies that the public `YuvFfi.initialize()` entrypoint shares one
 /// in-flight future across concurrent callers, really retries after a failure,
 /// and keeps the deprecated `ensureInitialized()` name working as a forwarder.
 ///

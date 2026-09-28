@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Characterization tests for [YuvImageRotation] (YUV-27).
+/// Characterization tests for [YuvImageRotation].
 ///
 /// These pin the behaviour that exists today. `toZero()` in particular is
 /// documented here rather than changed: the card requires evidence of an actual

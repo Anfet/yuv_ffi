@@ -215,13 +215,22 @@ jobs:
       # inside the built application, where the plugin's own CMake install
       # rules are what must place the .so next to the runner.
       - name: App-runtime smoke (linux desktop)
-        working-directory: example
         shell: bash
         run: |
-          xvfb-run -a flutter drive \
-            --driver=test_driver/integration_test.dart \
-            --target=integration_test/native_app_runtime_smoke_test.dart \
-            -d linux
+          xvfb-run -a bash tool/ci/drive.sh integration_test/native_app_runtime_smoke_test.dart linux
+
+      - name: Native correctness probes (linux desktop)
+        shell: bash
+        run: |
+          shopt -s nullglob
+          targets=(example/integration_test/*_native_test.dart)
+          if (( ${#targets[@]} == 0 )); then
+            echo 'No native integration-test targets were found.' >&2
+            exit 1
+          fi
+          for target_path in "${targets[@]}"; do
+            xvfb-run -a bash tool/ci/drive.sh "${target_path#example/}" linux
+          done
 
   macos-native-smoke:
     # Self-hosted (yuv-self-hosted): faster than the GitHub-hosted macos-latest
@@ -290,15 +299,26 @@ jobs:
       # job via GITHUB_ENV above, and leaving it visible would let the app fall
       # back to the same side-loaded dylib and mask an empty pod target.
       - name: App-runtime smoke (macos desktop)
-        working-directory: example
         shell: bash
         env:
           DYLD_LIBRARY_PATH: ''
         run: |
-          flutter drive \
-            --driver=test_driver/integration_test.dart \
-            --target=integration_test/native_app_runtime_smoke_test.dart \
-            -d macos
+          bash tool/ci/drive.sh integration_test/native_app_runtime_smoke_test.dart macos
+
+      - name: Native correctness probes (macos desktop)
+        shell: bash
+        env:
+          DYLD_LIBRARY_PATH: ''
+        run: |
+          shopt -s nullglob
+          targets=(example/integration_test/*_native_test.dart)
+          if (( ${#targets[@]} == 0 )); then
+            echo 'No native integration-test targets were found.' >&2
+            exit 1
+          fi
+          for target_path in "${targets[@]}"; do
+            bash tool/ci/drive.sh "${target_path#example/}" macos
+          done
 
   # YUV-24/YUV-06: proves Android builds the shared CMake source list through
   # the NDK and then loads and invokes the packaged library in an emulator.
@@ -388,7 +408,7 @@ jobs:
             $archive.Dispose()
           }
 
-      - name: Run Android smoke and correctness probe on Windows emulator
+      - name: Run Android smoke and correctness probes on Windows emulator
         shell: pwsh
         run: |
           $androidSdk = $env:ANDROID_SDK_ROOT
@@ -413,11 +433,14 @@ jobs:
               Start-Sleep -Seconds 3
             } while ($true)
             & $adb -s emulator-5554 shell settings put global window_animation_scale 0
-            Set-Location example
-            flutter drive --driver=test_driver/integration_test.dart --target=integration_test/native_app_runtime_smoke_test.dart -d emulator-5554 --no-pub
+            & bash tool/ci/drive.sh integration_test/native_app_runtime_smoke_test.dart emulator-5554 --no-pub
             if ($LASTEXITCODE -ne 0) { throw "Android app-runtime smoke failed with $LASTEXITCODE" }
-            flutter drive --driver=test_driver/integration_test.dart --target=integration_test/probe_native_test.dart -d emulator-5554 --no-pub
-            if ($LASTEXITCODE -ne 0) { throw "Android correctness probe failed with $LASTEXITCODE" }
+            $targets = Get-ChildItem -Path example/integration_test -Filter '*_native_test.dart' -File
+            if ($targets.Count -eq 0) { throw 'No native integration-test targets were found.' }
+            foreach ($target in $targets) {
+              & bash tool/ci/drive.sh "integration_test/$($target.Name)" emulator-5554 --no-pub
+              if ($LASTEXITCODE -ne 0) { throw "Android native correctness probe failed: $($target.Name), exit $LASTEXITCODE" }
+            }
           } finally {
             & $adb -s emulator-5554 emu kill
           }
@@ -482,13 +505,22 @@ jobs:
         run: flutter build ios --simulator --debug --no-codesign
 
       - name: App-runtime smoke (ios simulator)
-        working-directory: example
+        shell: bash
         run: |
-          flutter drive \
-            --driver=test_driver/integration_test.dart \
-            --target=integration_test/native_app_runtime_smoke_test.dart \
-            -d '${{ steps.ios-simulator.outputs.id }}' \
-            --no-pub
+          bash tool/ci/drive.sh integration_test/native_app_runtime_smoke_test.dart '${{ steps.ios-simulator.outputs.id }}' --no-pub
+
+      - name: Native correctness probes (ios simulator)
+        shell: bash
+        run: |
+          shopt -s nullglob
+          targets=(example/integration_test/*_native_test.dart)
+          if (( ${#targets[@]} == 0 )); then
+            echo 'No native integration-test targets were found.' >&2
+            exit 1
+          fi
+          for target_path in "${targets[@]}"; do
+            bash tool/ci/drive.sh "${target_path#example/}" '${{ steps.ios-simulator.outputs.id }}' --no-pub
+          done
 
       - name: Build example (ios device, no codesign)
         working-directory: example
@@ -548,20 +580,20 @@ jobs:
         run: flutter build windows --release
 
       - name: App-runtime smoke (Windows desktop)
-        working-directory: example
-        run: >
-          flutter drive
-          --driver=test_driver/integration_test.dart
-          --target=integration_test/native_app_runtime_smoke_test.dart
-          -d windows --no-pub
+        shell: pwsh
+        run: |
+          & bash tool/ci/drive.sh integration_test/native_app_runtime_smoke_test.dart windows --no-pub
+          if ($LASTEXITCODE -ne 0) { throw "Windows app-runtime smoke failed with $LASTEXITCODE" }
 
-      - name: Native correctness probe (Windows desktop)
-        working-directory: example
-        run: >
-          flutter drive
-          --driver=test_driver/integration_test.dart
-          --target=integration_test/probe_native_test.dart
-          -d windows --no-pub
+      - name: Native correctness probes (Windows desktop)
+        shell: pwsh
+        run: |
+          $targets = Get-ChildItem -Path example/integration_test -Filter '*_native_test.dart' -File
+          if ($targets.Count -eq 0) { throw 'No native integration-test targets were found.' }
+          foreach ($target in $targets) {
+            & bash tool/ci/drive.sh "integration_test/$($target.Name)" windows --no-pub
+            if ($LASTEXITCODE -ne 0) { throw "Windows native correctness probe failed: $($target.Name), exit $LASTEXITCODE" }
+          }
 
   example-analyze-and-build:
     runs-on: [self-hosted, Windows, X64]
@@ -691,15 +723,6 @@ jobs:
             throw 'pub dry-run did not list both committed WASM assets'
           }
 
-      # These suites install a fake Emscripten module through JS interop; they
-      # deliberately do not load the package asset bundle. A browser test is
-      # therefore the direct gate for their Web dispatch and staging contracts.
-      - name: Browser fake-module contracts
-        shell: pwsh
-        run: |
-          flutter test --platform chrome test/web/wasm_swap_nv_atomicity_test.dart test/web/yuv_web_capabilities_test.dart test/web/wasm_abi_v1_descriptor_staging_test.dart
-          if ($LASTEXITCODE -ne 0) { throw "Browser fake-module tests failed with $LASTEXITCODE" }
-
       - name: Install Emscripten SDK
         shell: pwsh
         run: |
@@ -760,23 +783,15 @@ jobs:
             } while ((Get-Date) -lt $deadline)
             if (-not $ready) { throw 'ChromeDriver did not become ready on port 4444' }
 
-            $targets = @(
-              'integration_test/wasm_bootstrap_test.dart',
-              'integration_test/getbytes_contract_test.dart',
-              'integration_test/padded_bgra_constructor_test.dart',
-              'integration_test/image_cache_key_test.dart',
-              'integration_test/serialization_contract_test.dart',
-              'integration_test/wasm_loader_lifecycle_test.dart',
-              'integration_test/wasm_parity_edge_cases_test.dart',
-              'integration_test/nv_chroma_order_web_test.dart',
-              'integration_test/web_ownership_regression_test.dart'
-            )
+            $targets = @(Get-ChildItem -Path integration_test -Filter '*_web_test.dart' -File | Sort-Object Name)
+            if ($targets.Count -eq 0) { throw 'No Web integration-test targets were found.' }
             $failed = @()
             foreach ($target in $targets) {
-              Write-Host "::group::$target"
-              flutter drive --driver=test_driver/integration_test.dart --target=$target -d web-server --browser-name=chrome --headless
-              if ($LASTEXITCODE -eq 0) { Write-Host "PASS $target" }
-              else { Write-Host "FAIL $target"; $failed += $target }
+              $targetPath = "integration_test/$($target.Name)"
+              Write-Host "::group::$targetPath"
+              & bash ../tool/ci/drive.sh $targetPath web-server --browser-name=chrome --headless
+              if ($LASTEXITCODE -eq 0) { Write-Host "PASS $targetPath" }
+              else { Write-Host "FAIL $targetPath"; $failed += $targetPath }
               Write-Host '::endgroup::'
             }
             if ($failed.Count -gt 0) { throw "Failed Web integration targets: $($failed -join ', ')" }
@@ -790,9 +805,10 @@ jobs:
       # so a Web/native divergence like F-009 could only be caught by a manual
       # run. This step closes that gap.
       #
-      # Judged the same way as the gate above: by flutter drive's exit code.
-      # An earlier version of this step tried to assert on the suite's own
-      # "YUV-12 summary: executed=... failed=..." line, which was wrong --
+      # The shared drive helper requires both exit 0 and Flutter's terminal
+      # "All tests passed" verdict. An earlier version of this step tried to
+      # assert on the suite's own "YUV-12 summary: executed=... failed=..."
+      # line, which was wrong --
       # debugPrint output from the browser does not reach drive's stdout, so
       # that line is never visible here even on a fully successful run, and
       # every run would fail. Only the failure output (expect() messages and
@@ -818,7 +834,7 @@ jobs:
               } catch { Start-Sleep -Seconds 1 }
             } while ((Get-Date) -lt $deadline)
             if (-not $ready) { throw 'ChromeDriver did not become ready on port 4444' }
-            flutter drive --driver=test_driver/integration_test.dart --target=integration_test/reference_web_conversions_test.dart -d web-server --browser-name=chrome --headless
+            & bash ../tool/ci/drive.sh integration_test/reference_web_conversions_test.dart web-server --browser-name=chrome --headless
             if ($LASTEXITCODE -ne 0) { throw "Web reference matrix failed with $LASTEXITCODE" }
           } finally {
             if ($driverProcess -and -not $driverProcess.HasExited) { Stop-Process -Id $driverProcess.Id -Force }

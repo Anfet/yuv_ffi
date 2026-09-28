@@ -9,7 +9,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 ///
 /// No `YuvFfi.initialize()` call anywhere here: `pack()` builds replacement
 /// planes in pure Dart and publishes them through the existing, already
-/// native-free `applyPlanes()` (YUV-20/REL-02), so this whole file runs on
+/// native-free `applyPlanes()`, so this whole file runs on
 /// every host, including one without the native library available.
 void main() {
   int deterministicByte(int seed, int index) => (index * 37 + seed) & 0xff;

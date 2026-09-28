@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-02: constructors copy input buffers, `planes`/`yPlane`/
+/// Verifies that constructors copy input buffers, `planes`/`yPlane`/
 /// `uPlane`/`vPlane` are live views backed by the image's own storage, and
 /// `applyPlanes` is an atomic, validated, copying replacement that bumps the
 /// revision exactly once and leaves the image untouched on failure.
@@ -38,7 +38,7 @@ void main() {
     });
 
     test('a direct write is visible without markDirty; markDirty only affects revision', () {
-      // Section 5/REL-02: writes through a live plane are immediately visible
+      // Writes through a live plane are immediately visible
       // through that same storage. markDirty() exists purely so revision-keyed
       // caches (e.g. YuvImageProvider) learn about it -- it does not gate
       // whether the byte write itself is visible.

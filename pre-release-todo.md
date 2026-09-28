@@ -1,6 +1,6 @@
 # yuv_ffi 0.4.2 — предрелизный цикл RA
 
-Источник: предрелизный аудит 27.09.2026 (HEAD `9b41cb5`), повторная сверка 28.09.2026 на `db42681`. Карточки RA заменяют PRE-00…07 из `doc/archive/perf/prerelease-todo.md`. Архитектор — Claude Opus (T1). Готовность карточки не означает разрешения: запуск — только по команде Engineer, по ID или пакету.
+Источник: предрелизный аудит 27.09.2026 (HEAD `9b41cb5`), повторная сверка 28.09.2026 на `db42681`. Карточки RA заменяют PRE-00…07 из `doc/archive/perf/prerelease-todo.md`. Архитектор — Claude Opus (T1). Engineer разрешил довести весь цикл до RA-50 по зависимостям; отдельный pub.dev publish не входит в задачу.
 
 **Объём релиза заморожен.** VIEW-00…03 и PACK-00…01D приняты. С начала цикла RA в `lib/`, `src/`, `example/lib/` не добавляется новая функциональность; любое новое требование — отдельной карточкой после решения Engineer.
 
@@ -10,13 +10,39 @@ Engineer установил правило: jobs проекта не должн�
 
 Текущая маршрутизация: macOS native, iOS Simulator и bindings regeneration — `yuv-self-hosted`; Windows native, Flutter VM matrix, Android x86_64 emulator, Web/WASM и example analyze/build — `dev.working`; Linux smoke плюс sanitizer — единственная hosted Linux job. На Windows runner доступны Android SDK `D:\.important\android-sdk`, x86_64 API 35 AVD `Tablet` (конфигурация `Pixel_Tablet.avd`), Chrome `154.0.8037.58`, ChromeDriver `D:\.projects\.tools\chromedriver-win64\chromedriver.exe` (`154.0.8037.57`) и Git Bash `D:\.important\Git\bin\bash.exe`. Установленный глобально emsdk `5.0.1` не используется для RA-40; runner ставит точный `3.1.74` в `D:\.projects\.tools\emsdk-3.1.74`.
 
-**Состояние на 28.09.2026, commit `8af210e` плюс текущая рабочая копия:** RA-05 ранее прошёл на Flutter 3.38.10 и 3.44.9 в run `36413754181`. RA-02 dry-run: 0 warnings, allowlist соблюдён, архив 974 KB; публикации не было. В run `36427394808` прошли Linux smoke/sanitizer, macOS native smoke, iOS simulator/device build и smoke, bindings regeneration и example analyze/build 3.41.0. Windows root tests выявили две runner-specific проблемы: test provenance не искал DLL в PATH; probe source/copy различались только CRLF/LF. В рабочей копии исправлен Windows PATH lookup, добавлен `.gitattributes` LF для synced probe-файлов; локально `flutter analyze --no-fatal-infos lib test` чистый, полный `flutter test` прошёл 703 теста с собранной DLL в PATH. Commit и CI rerun ожидаются. Android job в `36427394808` ещё не стартовал; предыдущий run собрал arm64/armv7 APK, а новое имя API 35 x86_64 AVD `Tablet` ждёт подтверждения CI. RA-21 oracle совпал на 1188/1188 случаях и локальный Windows probe прошёл; требуется финальное независимое ревью. На свежих emsdk 3.1.74 assets Web probe завершился exit 1 с минимум 20 gray I420/NV12 mismatches (доказательство в `doc/archive/release-0.4.2/web-probe-evidence.md`); RA-41 требует решения Architect. Pixel 3 profile smoke и probe 1188/1188 прошли, APK arm64/armv7 собраны; release assertions остаются заблокированы ограничением Flutter Driver, см. RA-25. Runner API показывает `dev.working` (Windows x64) и `yuv-self-hosted` (macOS x64) online. Только Linux smoke/sanitizer job использует GitHub-hosted runner; Android, Web и Windows jobs — self-hosted Windows, iOS/macOS/bindings — self-hosted Mac.
+## Current board — 28.09.2026
+
+| State | Card | What is verified now | Next action / blocker |
+| --- | --- | --- | --- |
+| **IN PROGRESS · Terra** | **RA-26** | Windows Release harness is implemented; dirty smoke returned 24 PASS cases (not comparison evidence). Pixel 3 arm64 profile diagnostic passed 24/24 with nine stable hashes per scenario, but `sourceVerified=false`, so it is not comparison evidence. Balanced + AC are valid. Full root suite passed 711/1 skip using the existing DLL; CMake is unavailable for a fresh local native build. | RA-14 is accepted and archived. Terra is preparing the candidate commit/push; then run clean 0.4.0/HEAD Windows Release comparisons with stable repeats and archive accepted results. |
+| **WAITING FOR COMMIT · Terra** | **RA-25** | Standalone release entrypoint, all 1188 root checks, arm64/armv7 APK builds, and strict ADB/logcat script are ready. No device release verdict yet. | After the shared changes are committed, run both ABIs on that SHA and archive APK/logcat evidence. |
+| **READY FOR CI · Terra** | **RA-22** | `drive.sh` checks both exit code and `All tests passed`; local controls reject exit 0 without marker and exit 7 with marker. | On the shared candidate SHA, run 1188 cases in all four native jobs and remote corrupted-golden control, then revert the control. |
+| **READY FOR CI** | **RA-23** | Workflow and local Windows root suite are prepared. Latest CI run was cancelled before the Windows job started. | Run the workflow on the shared candidate SHA and confirm the Windows job. |
+| **READY FOR CI · Terra** | **RA-40** | Two isolated emsdk 3.1.74 builds matched committed JS/WASM assets and each other byte-for-byte. | Confirm the workflow compare on the shared candidate SHA. |
+| **READY FOR CI · Terra** | **RA-41** | Local Web gate passed 13/13 targets; separate reference matrix passed 119/119 with zero mismatches. | Confirm CI on the shared candidate SHA and remote corrupted-WASM negative control, then revert the control. |
+| **REVIEW AT END** | **RA-21** | Local 1188-case oracle/probe and root checks passed; Web seed issue is resolved under RA-41. | Independent T1 review at the end, as requested. |
+| **QUEUED** | **RA-19** | Documentation cleanup is ready by scope. | After RA-22, RA-23, and RA-41 settle; it edits workflow comments, so it must precede the final CI run. |
+| **QUEUED** | **RA-27** | Probe policy decision is ready. | After RA-26 measurements are accepted. |
+| **QUEUED** | **RA-18** | Changelog structure is approved. | After performance/device evidence and other release changes are final. |
+| **FINAL GATE** | **RA-50** | Not started. | One green final SHA, clean package dry-run/allowlist, synchronized versions, report. No tag or pub.dev publish. |
+
+**Recently completed local checks:** `flutter analyze --no-fatal-infos lib test` clean; full root suite 711 passed/1 skipped (native DLL was supplied from the existing workspace build path; this is not a fresh CI-style native build); local Web dynamic gate 13/13 and reference matrix 119/119; emsdk 3.1.74 reproducibility; RA-22 helper negative controls. `flutter pub publish --dry-run` last reported one warning only because the worktree was dirty, plus the expected version hint; rerun after commit. `tool/bench/` is user-owned and must remain untouched/uncommitted.
+
+**Orchestration:** the active Pixel run is owned by Terra (`ra26_windows_collection`). No code implementation is assigned to the coordinator; current work is delegated, status tracking, integration, and final acceptance.
+
+**Исторический срез до последних push: commit `8af210e` плюс тогдашняя рабочая копия:** RA-05 ранее прошёл на Flutter 3.38.10 и 3.44.9 в run `36413754181`. RA-02 dry-run: 0 warnings, allowlist соблюдён, архив 974 KB; публикации не было. В run `36427394808` прошли Linux smoke/sanitizer, macOS native smoke, iOS simulator/device build и smoke, bindings regeneration и example analyze/build 3.41.0. Windows root tests выявили две runner-specific проблемы: test provenance не искал DLL в PATH; probe source/copy различались только CRLF/LF. В рабочей копии исправлен Windows PATH lookup, добавлен `.gitattributes` LF для synced probe-файлов; локально `flutter analyze --no-fatal-infos lib test` чистый, полный `flutter test` прошёл 703 теста с собранной DLL в PATH. Commit и CI rerun ожидаются. Android job в `36427394808` ещё не стартовал; предыдущий run собрал arm64/armv7 APK, а новое имя API 35 x86_64 AVD `Tablet` ждёт подтверждения CI. RA-21 oracle совпал на 1188/1188 случаях и локальный Windows probe прошёл; требуется финальное независимое ревью. На свежих emsdk 3.1.74 assets Web probe завершился exit 1 с минимум 20 gray I420/NV12 mismatches (доказательство в `doc/archive/release-0.4.2/web-probe-evidence.md`); RA-41 требует решения Architect. Pixel 3 profile smoke и probe 1188/1188 прошли, APK arm64/armv7 собраны; release assertions остаются заблокированы ограничением Flutter Driver, см. RA-25. Runner API показывает `dev.working` (Windows x64) и `yuv-self-hosted` (macOS x64) online. Только Linux smoke/sanitizer job использует GitHub-hosted runner; Android, Web и Windows jobs — self-hosted Windows, iOS/macOS/bindings — self-hosted Mac.
+
+**Snapshot на HEAD `d8d8d48` от 28.09.2026:** CI-run `36431067534` был отменён при зависании browser fake-module tests до старта Windows job. Детальные актуальные статусы находятся в Current board выше; старые сведения далее по документу сохранены как история, если помечены историческими.
 
 ## Решения Engineer
 
 | ID | Status | Вопрос | Рекомендация Architect |
 | --- | --- | --- | --- |
 | D-1 | DECIDED 28.09.2026 | Версия релиза при смене умолчания layout (PACK-01B). | **0.4.2.** Последняя опубликованная неотозванная версия — 0.2.4, 0.4.0 отозвана, поэтому 0.5.0 ничего не даёт. Смена умолчания описывается как **Behavior change** в CHANGELOG и отдельной строкой в таблице миграции с 0.2.4 в README: фабрики с `planes:` теперь упаковывают плоскости, для старого поведения — `layout: YuvPlaneLayout.preserve`. |
+
+## Full Card Registry
+
+Этот реестр сохраняет владельца, зависимости и причину статуса карточек. Быстрый актуальный статус — в таблице Current board выше.
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -25,17 +51,16 @@ Engineer установил правило: jobs проекта не должн�
 | [x] | RA-08 | DONE | T3 | Luna | — | Удалены 10 сырых `*.log` и 2 `*.nv12`; CI dry-run проверка package assets прошла с 0 warnings. |
 | [x] | RA-02 | DONE | T3 | — | RA-01, RA-08 | Dry-run на `e66751e`: 0 warnings, 1 допустимая hint, allowlist совпал, архив 974 KB; публикации в pub.dev нет. |
 | [x] | RA-04 | DONE | T3 | — | RA-01, RA-05, RA-06 | 10 файлов переименованы; analyze чистый, 703 теста прошли; run `36415310682` прошёл во всех jobs, кроме независимого WASM rebuild gate RA-40. |
-| [ ] | RA-14 | TODO | T3 | — | RA-04 | Вычистить комментарии и описания `group`/`test` в `test/` по DOC-RULES. Логика тестов не меняется. |
 | [x] | RA-16 | DONE | T3 | — | RA-01, RA-04 | README и example-комментарии очищены по DOC-RULES; `flutter analyze` чистый, 71 example test пройден. Сохранены только CI runtime markers/messages и термины `pre-screen`/`pre-injection`, описывающие состояние. |
-| [ ] | RA-19 | TODO | T3 | — | RA-22, RA-23, RA-41 | Вычистить служебные README (`tool/wasm`, `assets/wasm`, `test_native`) и комментарии CI от номеров задач. |
-| [ ] | RA-21 | IN_PROGRESS | T2 | — | — | Локальные DoD пройдены: 1188 оракулов/проб на Windows, 703 root tests, coverage/layout/copy sync. Ожидает финального независимого ревью; Web runtime mismatches на пересобранном WASM вынесены в RA-41. |
-| [ ] | RA-26 | TODO | T2 | — | RA-21 | Добавить в пробы замер скорости: общий исполнитель, методика, контроль окружения, строка вердикта и JSON; базовые линии Windows и Pixel 3 от 0.4.0 и HEAD. |
+| [ ] | RA-19 | TODO | T3 | — | RA-22, RA-23, RA-41 | Вычистить служебные README (`tool/wasm`, `assets/wasm`, `test_native`) и комментарии CI от номеров задач после закрытия зависимостей. |
+| [ ] | RA-21 | REVIEW_AT_END | T2 | — | RA-06, RA-08, RA-13 | Локальные DoD пройдены: 1188 оракулов/проб на Windows, coverage/layout/copy sync. Доказательства ждут финального независимого ревью в конце цикла по указанию Engineer; Web-проба перенесена в RA-41. |
+| [ ] | RA-26 | IN_PROGRESS | T2 | Terra | RA-21 | Balanced/AC подтверждены; JIT диагностика нестабильна. Windows Release runner готов, dirty smoke прошёл 24 сценария/9 hash samples. Pixel arm64 profile diagnostic также прошёл 24/24 и host gate, но `sourceVerified=false`: это не baseline и не comparison evidence. Нужны committed candidate SHA, чистые 0.4.0/HEAD worktrees, Windows Release сравнения и архивирование; затем Pixel comparisons. |
 | [ ] | RA-27 | TODO | T3 | — | RA-26 | Записать в AGENTS.md правило проб для задач разработки (Windows у исполнителя, Pixel 3 на ревью) и поле `Probe` в шаблон карточки. |
-| [ ] | RA-22 | TODO | T2 | — | RA-04, RA-06, RA-21 | Подключить пробу корректности в CI для Linux, macOS, iOS Simulator, Android x86_64 перебором `*_native_test.dart` и общим скриптом вердикта `tool/ci/drive.sh`. |
-| [ ] | RA-23 | IN_PROGRESS | T2 | — | RA-06, RA-21, RA-22 | Windows job настроена на native build, полный `flutter test`, Windows build, runtime smoke и correctness probe. Run `36427394808` подтвердил Git Bash/CMake PATH, но root tests выявили Windows DLL provenance lookup и CRLF/LF sync; оба исправлены локально, `flutter test` — 703/703 с DLL в PATH. Новый CI run должен подтвердить fixes и AVD `Tablet`. |
-| [ ] | RA-25 | IN_PROGRESS | T2 | — | RA-13, RA-21, RA-26 | Pixel 3 доступен через ADB. Profile smoke и probe 1188/1188 прошли; release APK arm64/armv7 собраны, arm64 установлен и запущен. Требуемый `flutter drive --release` не поддержан Flutter Driver и завершился до сборки; профильный прогон не заменяет release assertions. Ожидает решения/реализации release smoke, RA-26 замеры. Доказательство: `doc/archive/release-0.4.2/pixel3-evidence.md`. |
-| [ ] | RA-40 | IN_PROGRESS | T2 | — | RA-06, RA-08, RA-13 | Assets пересобраны на Windows через изолированный emsdk 3.1.74; повторная сборка совпала побайтно. CI compare ещё не запускался: Windows runner сначала остановился на Setup Flutter, затем на native build из-за отсутствия CMake в PATH; проверка ожидает повторного run после PATH fix. |
-| [ ] | RA-41 | ARCHITECT_REQUIRED | T2 | — | RA-04, RA-21, RA-22, RA-40 | ChromeDriver 154 запустил 1188-case Web probe на пересобранных assets; зафиксированы как минимум 20 golden mismatches серых I420/NV12 операций. Нужна позиция Architect по эталонному результату. |
+| [ ] | RA-22 | READY_FOR_CI | T2 | Terra | RA-04, RA-06, RA-21 | Реализация и локальные negative controls готовы. Остались remote corrupted-golden run/revert и зелёный CI с 1188 cases во всех 4 native jobs на общем candidate SHA. |
+| [ ] | RA-23 | READY_FOR_CI | T2 | — | RA-06, RA-21, RA-22 | Workflow и локальные Windows fixes готовы; предыдущий CI-run отменён до старта Windows job. Нужен запуск на общем candidate SHA и успешная Windows job. |
+| [ ] | RA-25 | WAITING_FOR_COMMIT | T2 | Terra | RA-13, RA-21, RA-26 | Release entrypoint, 1188-case checks и arm64/armv7 release builds готовы; Pixel ADB/logcat gate ждёт общего committed SHA. Profile smoke не является release verdict. |
+| [ ] | RA-40 | READY_FOR_CI | T2 | Terra | RA-06, RA-08, RA-13 | Две изолированные emsdk 3.1.74 сборки и committed assets идентичны: JS `DC5E08EE…F39D5`, WASM `BAD2FC75…1D08F`. Локальная воспроизводимость доказана; требуется integrated CI compare на общем candidate SHA. |
+| [ ] | RA-41 | READY_FOR_CI | T2 | Terra | RA-04, RA-21, RA-22, RA-40 | Локально прошли 13/13 dynamic целей и отдельная reference matrix 119/119, mismatches 0, на неизменённых committed WASM assets. Остались CI на общем candidate SHA и remote negative control. |
 | [ ] | RA-18 | TODO | T2 | — | все RA кроме RA-50 | Финальный CHANGELOG 0.4.2 вместо черновика: фактические изменения, новый API, известные ограничения. |
 | [ ] | RA-50 | TODO | T2 | — | все RA | Не начат: ждёт закрытия предыдущих RA и финального CI на одном SHA. Тег и публикация — Engineer; pub.dev publish не входит в эту работу. |
 
@@ -225,18 +250,6 @@ YAML-парсинг локально; ссылка на CI-run.
 
 
 
-### RA-14 — Комментарии и описания тестов `test/`
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-04 · **Rejection Count:** 0
-
-**Scope:** `test/**/*.dart`.
-**Architect Decision:** DOC-RULES, плюс строки описаний `group(...)`/`test(...)`: убрать префиксы-номера `(YUV-36d)` и т.п., оставить описание поведения. Уникальность описаний внутри файла сохраняется.
-**Constraints:** логика, ожидания, фикстуры не меняются.
-**DoD:** регэксп = 0; количество тестов в `flutter test` не изменилось.
-**Validation:** `flutter analyze lib test`; `flutter test`.
-
----
-
-
 ### RA-16 — Комментарии example
 **Status:** DONE · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-01, RA-04 · **Rejection Count:** 0
 
@@ -265,7 +278,7 @@ README описывает запуск для настроенных Android, iO
 ---
 
 ### RA-21 — Пробы: корректность (golden-хэши)
-**Status:** IN_PROGRESS · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** — · **Rejection Count:** 0
+**Status:** REVIEW_AT_END · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-06, RA-08, RA-13 · **Rejection Count:** 0
 
 #### Problem / Goal
 Полный поведенческий набор запускается только на Linux x64 VM (CI) и Windows локально. На Android/iOS/macOS/Linux-app проверяется только smoke 4×4 («не нули»). 44 из 119 референсных случаев сравниваются с допуском, поэтому дрейф переписанных ядер может пройти незамеченным.
@@ -309,7 +322,7 @@ README описывает запуск для настроенных Android, iO
 ---
 
 ### RA-26 — Пробы: замер скорости
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-21 · **Rejection Count:** 0
+**Status:** IN_PROGRESS · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-21 · **Rejection Count:** 0
 
 #### Problem / Goal
 Агент должен одной командой узнать по каждой операции: корректна ли она, стала ли быстрее или медленнее. Регрессия 0.4 (ядра в 10–350 раз медленнее 0.2.4) была замечена только по жалобе.
@@ -325,11 +338,31 @@ README описывает запуск для настроенных Android, iO
   - `SLOWER` краснеет только при `PROBE_STRICT=1`; в CI скорость только пишется в отчёт.
 - База: `test/probe/baseline/<host-id>.json`, где `<host-id>` = ОС, модель CPU/устройства, ABI, режим сборки. Обновление только через `PROBE_RECORD=1`.
 - Контроль окружения (иначе замер помечается `INVALID-ENV`):
-  - Windows — питание от сети, схема питания «Высокая производительность»;
+  - Windows — питание от сети, схема питания Balanced (GUID `381b4222-f694-41f0-9685-ff5bb260df2e`). Не менять схему питания; записывать фактическое имя/GUID в окружение каждого результата;
   - Pixel 3 — `mWakefulness=Awake`, экран включён, keyguard снят, нет thermal throttling (`dumpsys thermalservice`), пауза остывания между операциями.
 - Команды:
   - Windows: `flutter test --tags probe` в Release-сборке native; Dart в JIT честно помечается в отчёте.
   - Pixel 3: `tool/probe/run_android.ps1 [-Ops convert,crop] [-Abi arm64|armv7]` — `flutter drive --profile` цели `integration_test/probe_native_test.dart`.
+
+#### Current Environment Correction — Engineer, 28.09.2026
+Balanced is the intended Windows measurement contour. The machine currently reports the Balanced scheme GUID above and AC power; no power setting change is allowed or needed. Current RA-26 runners accept Balanced + AC, and no current RA-26 result is classified `INVALID-ENV` because of Balanced. One pre-correction JIT attempt was rejected by the old High Performance-only gate in `tool/probe/run_windows.ps1`; that diagnostic was not accepted as a baseline and has been superseded. Historical MEAS-01/03 archives describe their earlier High/Ultimate protocol and do not define the RA-26 environment policy.
+
+#### Architect Decision 28.09.2026 — Windows Release benchmark
+`flutter test` has no Release mode, so JIT timings are diagnostic only. Add `example/probe/windows_release_benchmark.dart` outside frozen `example/lib/`; it must require `kReleaseMode`, initialize `YuvFfi`, execute `probeScenarios` + `runProbe` for all 12 operations × 2 sizes, validate the 24 unique IDs/hashes and sample hash stability, and atomically write one JSON verdict to a unique host-provided result path. Host rejects timeout, missing/stale/malformed/duplicate verdict, wrong run ID, `INVALID-ENV`, nonzero exit, incomplete matrix, or hash mismatch. Retain and hash each timed invocation result after the stopwatch stops so AOT cannot elide the operation.
+
+For 0.4.0 ↔ HEAD, build identical benchmark source in separate detached worktrees with Flutter 3.44.9: a detached `0.4.0` package worktree; a committed HEAD baseline app worktree whose temporary `example/pubspec_overrides.yaml` points `yuv_ffi` to the tag; and a HEAD app worktree with its normal dependency. Verify package_config resolution, package revision, EXE/DLL SHA-256, and common CPU/power contour. Tight benchmark scenarios must be compatible with 0.4.0: omit only `YuvPlaneLayout.preserve` on already-tight inputs and move the deterministic seed helper out of modern `probe_support.dart`. Do not change public API/native C. Persist accepted tag baseline at `test/probe/baseline/windows-<cpu>-x64-release.json`; keep raw runs and comparison report in `doc/archive/release-0.4.2/ra26-windows-release/`.
+
+#### Execution Report — Windows diagnostic JIT, 28.09.2026
+The canonical Balanced GUID is active; read-only `root\\wmi:BatteryStatus` returned `PowerOnline=True`, `Discharging=False`. Added a 10-minute test timeout because the full 24-case JIT matrix exceeded test's default 30 seconds. Two full unrecorded runs passed all 24 cases and hashes matched 24/24, but per-case median deltas ranged −47.6% to +23.4%; these runs are unstable diagnostics, not Release baseline evidence. Negative controls passed: injected delay produces strict `SLOWER`/FAIL; wrong golden produces `HASH-MISMATCH`/FAIL. No baseline file was written.
+
+#### Execution Report — Windows Release runner, 28.09.2026
+Added `example/probe/windows_release_benchmark.dart` and `tool/probe/run_windows_release.ps1`, plus a pure `test/probe/probe_seed.dart` so the shared tight-input scenarios can compile against 0.4.0. The Release app explicitly checks `kReleaseMode`, emits one atomic JSON verdict, and verifies sample hashes after timing; the host checks a clean exact SHA, Balanced/AC, run ID, full 24-scenario matrix and result integrity. Scoped runner tests passed 10/10, analysis and PowerShell parse passed. Dirty-worktree smoke (`-AllowDirtySmoke`) built/launched Windows Release and returned 24 PASS scenarios with nine sample hashes each; `sourceVerified=false`, saved only in `%TEMP%`, so it is not comparison evidence. Next: commit implementation, build same benchmark source against tag 0.4.0 and committed HEAD in separate worktrees, collect stable repeats and archive raw reports.
+
+#### Execution Report — Pixel 3 arm64 profile diagnostic, 28.09.2026
+Corrected Pixel preflight passed: awake, display on, keyguard unlocked, thermal status 0. `flutter drive --profile` completed with exit 0 and `All tests passed`; the strict host accepted exactly one `RA26_ANDROID_RESULT` and emitted `RA26_ANDROID_HOST_RESULT PASS`. Run ID `095d9d326eee4afca9fa1aba1f1a8b68`, device `8B1X11QLW`, ABI `arm64-v8a`, SHA `d8d8d481948f483ef7aa53ed939fbf1db0b962c9`, run-set SHA-256 `2f036abd3bd82f76bff576af34351eefade43ede1686769e2e851c99d6557a46`; 24/24 scenarios PASS with nine samples per scenario. This was a dirty-worktree diagnostic (`sourceVerified=false`), so it created no baseline or archived comparison evidence. Release verification remains separate under RA-25.
+
+#### Integration check — 28.09.2026
+The shared root/example `layout_pack_test.dart` files were missing the new `probe_seed.dart` import; Terra fixed both imports. `dart format`, staged/unstaged `git diff --check`, scoped probe/reference tests (122 passed), and the full root suite (711 passed, 1 intentional skip) passed. The existing workspace `yuv_ffi.dll` was supplied through the process-local `PATH` (SHA-256 `9c816b9f59ee159573575c2916321693ae035161d99b92274d9fc21a22365f30`); this is not a fresh native build. CMake is absent on this Windows runner, so a CI-style native build cannot be reproduced locally. `tool/bench/` remains untracked and outside the index. Candidate commit is waiting on RA-14 correction and repeat review.
 
 #### Definition of Done
 - [ ] Сценарии замера для всех 12 `YuvOperation`
@@ -357,16 +390,19 @@ README описывает запуск для настроенных Android, iO
 ---
 
 ### RA-22 — Проба корректности в платформенных CI-джобах
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** FAST · **Review Tier:** T1 · **Depends On:** RA-04, RA-06, RA-21 · **Rejection Count:** 0
+**Status:** READY_FOR_CI · **Tier:** T2 · **Execution Mode:** FAST · **Review Tier:** T1 · **Depends On:** RA-04, RA-06, RA-21 · **Rejection Count:** 0
 
 **Architect Decision:** в `linux-native-smoke`, `macos-native-smoke`, `ios-native-build`, `android-native-build` после шага app-runtime smoke добавить шаг, который перебирает `integration_test/*_native_test.dart` (сейчас это `probe_native_test.dart`) на том же устройстве; новая цель с таким суффиксом попадает во все джобы без правки YAML (джоба `android-armv7-runtime` удалена в RA-06; ARMv7 доказывается RA-25). Вердикт выносит общий `tool/ci/drive.sh <target> <device>`: PASS только при exit 0 **и** строке `All tests passed` в выводе; скрипт используют все джобы с `flutter drive`, включая app-runtime smoke.
 **DoD:** зелёный CI-run на ветке; в логах каждой из 4 джоб видно выполнение 1188 случаев.
 **Validation:** ссылка на run; негативный контроль — один прогон с испорченным golden в отдельном коммите, который красит джобы, затем откатывается.
 
+#### Local Negative Controls — 28.09.2026
+Using a temporary fake `flutter` executable without touching the workflow: exit 0 without the terminal marker was rejected (helper exit 1); exit 7 while printing the marker was also rejected (helper preserved exit 7). The required remote corrupted-golden run across the four native jobs remains pending.
+
 ---
 
 ### RA-23 — Windows CI
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-06, RA-21, RA-22 · **Rejection Count:** 0
+**Status:** READY_FOR_CI · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-06, RA-21, RA-22 · **Rejection Count:** 0
 
 **Architect Decision:** новая джоба `windows-native-smoke` на `windows-latest`, Flutter 3.44.9: `cmake -S src -B $RUNNER_TEMP/nb -A x64` + Release; каталог сборки добавить в `PATH`; `flutter test` (полный набор, без пропусков native); `cd example && flutter build windows --release`; `flutter drive -d windows` для `native_app_runtime_smoke_test.dart` и всех `*_native_test.dart` через `tool/ci/drive.sh`. Блокирующая.
 **DoD:** зелёный run; в логе `flutter test` нет пропущенных native-тестов.
@@ -374,21 +410,26 @@ README описывает запуск для настроенных Android, iO
 ---
 
 ### RA-25 — Физический Pixel 3: arm64 и armv7
-**Status:** IN_PROGRESS · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-13, RA-21, RA-26 · **Rejection Count:** 0
+**Status:** WAITING_FOR_COMMIT · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-13, RA-21, RA-26 · **Rejection Count:** 0
 
-**Architect Decision:** на Pixel 3 (экран включён, keyguard снят — проверить `dumpsys power`) выполнить в `--release`: `native_app_runtime_smoke_test.dart` и `probe_native_test.dart`; в `--profile` — замер скорости RA-26 (`tool/probe/run_android.ps1`), базой служит HEAD, принятый в RA-26, для (а) обычной сборки arm64-v8a и (б) APK `--target-platform android-arm --split-per-abi` с проверкой состава APK как в CI-джобе armv7. Доказательство (SHA, модель, Android, ABI, полный вывод) — `doc/archive/release-0.4.2/pixel3-evidence.md`.
-**DoD:** оба прогона — `All tests passed`; файл доказательства закоммичен.
+**Architect Decision:** Flutter Driver не поддерживает `--release`, а `integration_test` release APK не запускает. Заменить невозможный driver gate на отдельный обычный Flutter release entrypoint за пределами `example/lib/` (не менять замороженный продуктовый слой). Он должен выполнить runtime smoke и все 1188 golden probe cases на Pixel 3 arm64 и armv7 через явные проверки `if`/`StateError`, без `assert`, `flutter_test` и `integration_test`. Собрать отдельные APK `flutter build apk --release --target=<entrypoint> --target-platform android-arm64|android-arm --split-per-abi`; проверить SHA и состав каждого APK, установить точный ABI, запустить через ADB и подтвердить `primaryCpuAbi`/загрузку `libyuv_ffi.so`. Результат запускается в logcat одной строгой JSON-записью с SHA, уникальным run ID, ABI, smoke/probe PASS и числом 1188; хост принимает ровно одну запись с ожидаемыми полями, а пропуск, timeout, duplicate, malformed или FAIL — ошибка. Экран должен быть включён, keyguard снят, устройство awake и без thermal throttling. Замеры скорости RA-26 остаются отдельной profile-проверкой.
+**DoD:** оба ABI проходят release smoke и 1188-case probe; для каждого ABI закоммичен полный отчёт с SHA, APK hash/content, моделью/Android/ABI, состоянием устройства и logcat verdict.
 **Constraints:** это единственный gate для ARMv7 и arm64 Android (CI-джоба armv7 удалена в RA-06).
 
 #### Executor Report
 Pixel 3 (`8B1X11QLW`, Android 12, `arm64-v8a,armeabi-v7a,armeabi`) подключён через ADB; экран включён, keyguard снят, thermal status 0. Profile app-runtime smoke и native probe завершились `All tests passed`; probe обработал 1188 случаев. Release APK arm64 и armv7 собраны, в каждой APK подтверждена только целевая ABI и `libyuv_ffi.so`; arm64 APK установлена и запущена без ошибок загрузки библиотеки.
 
-Требуемый `flutter drive --release` прекращается до сборки сообщением, что Flutter Driver не поддерживает release mode. Profile-прогон не подтверждает release assertions, а запуск основного example app подтверждает только открытие приложения. RA-25 не завершена, пока release checks не получат поддерживаемый механизм либо Engineer/Architect не изменит критерий. RA-26 performance measurements также не выполнены. Полные команды и вывод: `doc/archive/release-0.4.2/pixel3-evidence.md`.
+Требуемый `flutter drive --release` прекращается до сборки сообщением, что Flutter Driver не поддерживает release mode. Profile-прогон не подтверждает release assertions, а запуск основного example app подтверждает только открытие приложения. Это историческая блокировка, разрешённая решением ниже от 28.09.2026. Полные команды прежних попыток: `doc/archive/release-0.4.2/pixel3-evidence.md`.
+
+#### Architect Decision 28.09.2026 — standalone release verification
+Заменить невозможный Flutter Driver release gate отдельным обычным Flutter entrypoint вне `example/lib/`, без `flutter_test`, `integration_test` и Dart `assert`. Entry point должен выполнить runtime smoke и все 1188 golden probe cases с явными `if`/`StateError`. Собирать release APK по отдельности для arm64 и armv7, проверять SHA-256 и ZIP-состав целевого ABI/`libyuv_ffi.so`, установить именно этот ABI, подтвердить `primaryCpuAbi` и единственную строгую JSON-запись `RA25_RESULT` из logcat с ожидаемым SHA, run ID, ABI, smoke/probe PASS и `caseCount: 1188`. Пропуск, timeout, duplicate, malformed или FAIL — ошибка. Release checks отдельно от profile-замеров RA-26.
+
+**Implementation result:** `tool/probe/release_probe_core.dart`, `example/probe/release_probe.dart`, `tool/probe/run_release_android.ps1` и focused test добавлены. Core и 1188 golden cases прошли, оба split-ABI release APK собраны, analyzer и PowerShell parse прошли; source guard подтвердил отсутствие запрещённых test imports/assert. Реальный APK hash/ADB/logcat/`primaryCpuAbi` gate ещё не запускался; он ожидает согласованный финальный commit SHA.
 
 ---
 
 ### RA-40 — Пересборка WASM
-**Status:** IN_PROGRESS · **Tier:** T2 · **Execution Mode:** FAST · **Review Tier:** T1 · **Depends On:** RA-06, RA-08, RA-13 · **Rejection Count:** 0
+**Status:** READY_FOR_CI · **Tier:** T2 · **Execution Mode:** FAST · **Review Tier:** T1 · **Depends On:** RA-06, RA-08, RA-13 · **Rejection Count:** 0
 
 #### Problem / Goal
 `assets/wasm/*` собраны в `d447fb2`, до 14 C-коммитов; доказано, что исходники HEAD дают другой `.wasm`. CI-гейт сравнивает с пересборкой на emsdk 3.1.74 и упадёт.
@@ -397,17 +438,55 @@ Pixel 3 (`8B1X11QLW`, Android 12, `arm64-v8a,armeabi-v7a,armeabi`) подклю�
 На Windows runner `dev.working` использовать изолированный emsdk 3.1.74 из `D:\.projects\.tools\emsdk-3.1.74`; локальный emsdk 5.0.1 не использовать. Пересобрать assets из checkout, подтвердить повторяемость и включить их в commit. CI job сравнивает committed assets с чистой повторной сборкой на том же runner. GitHub-hosted `upload-artifact` не требуется: по решению Engineer только единый Linux smoke/sanitizer job остаётся hosted, а Web/WASM проверяется на Windows self-hosted.
 **DoD:** следующий run: шаг сравнения зелёный; `git log -1 -- assets/wasm` новее последнего коммита в `src/`.
 
+#### Local Reproducibility Report — 28.09.2026
+Two isolated `emsdk 3.1.74` release builds in ignored `tool/wasm/out/ra40-a` and `ra40-b` matched the committed assets and each other. SHA-256: `yuv_ffi.js` = `DC5E08EE24EC15D1F10F829D2EB71EA0BFC944F50F63CC14E010EC6C853F39D5`; `yuv_ffi.wasm` = `BAD2FC75799FE29FB40FD9866C2D106B3FA13F1929C41F7A219301C8C0F1D08F`. No tracked files changed. Remaining blocker: CI comparison on the release candidate SHA.
+
 ---
 
 ### RA-41 — Зелёный Web-гейт
-**Status:** ARCHITECT_REQUIRED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-04, RA-21, RA-22, RA-40 · **Rejection Count:** 0
+**Status:** READY_FOR_CI · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-04, RA-21, RA-22, RA-40 · **Rejection Count:** 0
 
 **Architect Decision:** заменить явный список целей `Required Web integration gate` перебором `integration_test/*_web_test.dart` (включая `probe_web_test.dart`; существующие web-цели из списка переименовать в этот суффикс в этой же карточке); обновить имена целей после RA-04. В цикле и в шаге матрицы 119 вердикт PASS — только при exit 0 **и** строке `All tests passed` в выводе через `tool/ci/drive.sh` из RA-22. Если golden расходится на WASM — ARCHITECT_REQUIRED со списком случаев (не ослаблять).
+
+#### Architect Decision 28.09.2026 — Windows browser test runner
+Flutter 3.44.9 on Windows maps `path.fromUri()` to backslashes while its web test selector uses slash paths. The fake-module `flutter test --platform chrome` suites therefore hang at `+0` before registration. Move the three suites intact into `example/integration_test/*_web_test.dart`, use the integration test binding and `testWidgets`, and run them through ChromeDriver + `tool/ci/drive.sh`; remove the standalone browser unit-test CI step and keep the dynamic target glob as the authoritative gate.
+
+**Local implementation result:** 39 static registrations preserve 41 runtime cases. All three migrated targets passed with exit 0 and `All tests passed` (48.1 s, 48.4 s, 45.8 s); `flutter analyze integration_test` passed with 12 existing legacy deprecation infos. The full dynamic gate passed 13/13 locally. Separate `reference_web_conversions_test.dart` passed 119/119 with zero mismatches in 645.1 s; committed WASM asset hashes were unchanged before/after. Remaining: integrated CI green on one candidate SHA and a remote negative control proving the gate fails on deliberately corrupted WASM, followed by revert.
 **DoD:** зелёная джоба `wasm-web-integration`; негативный контроль (обнуление первых 64 байт `yuv_ffi.wasm` во временном коммите) красит гейт, затем откат.
 
 **Локальный Windows Web-run:** ChromeDriver находится в `D:\.projects\.tools\chromedriver-win64\chromedriver.exe` (154.0.8037.57), установленный Chrome — 154.0.8037.58. Запустить `chromedriver --port=4444`, затем из `example/`: `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/probe_web_test.dart -d web-server --browser-name=chrome --headless`. Эта запись хранится в `pre-release-todo.md`, исключённом из pub archive правилом `/pre-release-todo.md` в `.pubignore`.
 
-**Текущий результат:** driver/browser подключились; после пересборки assets через emsdk 3.1.74 тест исполнил матрицу и завершился с exit 1. Подтверждено как минимум 20 mismatches: серые операции I420 для tight/padded/gap на размерах 1x1, 2x2, 3x5, 16x9, 33x17, 127x255, а также NV12 1x1 tight/padded. Сообщение теста ограничено первыми 20 случаями; вывод и команды записаны в `doc/archive/release-0.4.2/web-probe-evidence.md`. Golden не ослаблять. Нужны разбор этих случаев и решение Architect о правильном результате; до этого зелёный Web-гейт и RA-50 заблокированы. Локальный прогон не заменяет CI-гейт и его негативный контроль.
+**Исторический результат до исправления seed:** driver/browser подключились; после пересборки assets через emsdk 3.1.74 матрица дала как минимум 20 несовпадений. Т1 установил, что Web генерировал другие входные байты из-за неточной LCG-арифметики dart2js; golden и оракул верны. Этот результат и блокировка из `doc/archive/release-0.4.2/web-probe-evidence.md` сняты исправлением seed, описанным ниже. После исправления ChromeDriver probe прошёл 1188 операций без mismatches; полный dynamic gate 13/13 целей и отдельная 119-case reference matrix (119/119, mismatches 0) также локально зелёные. Ожидаются CI на общем candidate SHA и remote negative control.
+
+#### Architect Decision 28.09.2026 — причина расхождений на Web
+
+**Дефект в генераторе входа пробы, а не в WASM и не в C.** Golden и оракул 0.4.0 остаются верными.
+
+Генератор байтов в `test/probe/probe_support.dart:140` и `test/probe/layout_pack_test.dart:29` — `seed = (seed * 1103515245 + 12345) & 0x7fffffff`. На VM это точная 64-битная арифметика. В dart2js `int` — это IEEE double: `seed * 1103515245` доходит до ~2,4·10¹⁸ > 2⁵³ и теряет младшие биты, а `&` в JS работает с 32-битным усечением. На Web тест получает **другие входные кадры**, поэтому расходятся все случаи, а не только gray: gray просто идёт первым файлом `cases.dart`, и отчёт показывает первые 20.
+
+Проверено архитектором: одна и та же функция скомпилирована в VM и в dart2js (запуск в Node). Последовательность расходится со второго шага (`firstDiff=1`, контрольная сумма 200 000 байт `830980134` на VM и `86505086` в dart2js). Точная web-безопасная замена ниже даёт в dart2js ту же сумму `830980134`, что и VM, то есть совпадает побайтно.
+
+**Что сделать:**
+1. В обоих местах заменить шаг генератора на точный эквивалент, у которого все промежуточные значения меньше 2⁵³ и нет побитовых операций над большими числами:
+   ```dart
+   /// Same sequence as `(s * 1103515245 + 12345) & 0x7fffffff`, computed
+   /// exactly on the web too: every intermediate stays below 2^53.
+   int probeNextSeed(int s) {
+     const aHi = 16838; // 1103515245 ~/ 65536
+     const aLo = 20077; // 1103515245 % 65536
+     final hi = (s * aHi) % 32768;
+     return (s * aLo + hi * 65536 + 12345) % 2147483648;
+   }
+   ```
+   Функция объявляется один раз в `probe_support.dart`; `layout_pack_test.dart` использует её, а не свою копию. `(seed >> 8) & 0xff` менять не нужно: `seed < 2³¹`.
+2. Синхронизировать копии в `example/integration_test/helpers/probe/` штатным скриптом копирования.
+3. Отчёт о расхождениях: в `expectProbeMismatchesEmpty` выводить общее число расхождений и первые 20, а не только первые 20.
+4. Добавить быструю проверку входа, чтобы отличать «другой вход» от «другой результат»: в `golden.json` дописать (режим `PROBE_RECORD=1`, записать на VM) id `input <format> <W>x<H> <layout>` со значением sha16 от `toBytes()` сгенерированного исходного кадра до операции; `probe_correctness_test` и `probe_web_test` проверяют эти id первыми и падают с сообщением «генератор входа расходится на этой платформе».
+
+**Проверка:**
+- VM: `flutter test --tags probe` — 0 расхождений с существующим golden (последовательность не меняется, эквивалентность доказана выше) и совпадение с оракулом 0.4.0.
+- Web (локально, как в записи выше): 0 расхождений. Если после исправления остаются расхождения — вход уже гарантированно одинаковый, значит это реальное различие WASM и native. Тогда ARCHITECT_REQUIRED с **полным** списком, golden не менять.
+- Затем прежний DoD: зелёная CI-джоба и негативный контроль.
 
 ---
 

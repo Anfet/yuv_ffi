@@ -8,7 +8,7 @@ import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
 
-/// BGRA-04: `_copyDestinationPlanes` (the copy-out step of
+/// `_copyDestinationPlanes` (the copy-out step of
 /// `YuvAbiV1Runner._run`, step 7) copies the native destination buffer into a
 /// Dart-owned `Uint8List` before `_run`'s `finally` frees that native buffer
 /// (step 9). This file verifies the contract the investigation in
@@ -50,7 +50,7 @@ void main() {
 
   final bool nativeAvailable = _nativeAvailable(width, height);
 
-  group('BGRA-04 copy-out independence/lifetime (convert)', () {
+  group('copy-out independence/lifetime (convert)', () {
     test('result is unaffected by mutating the source after the call returns', () {
       // "Independent of the source": mutating the caller's own input plane
       // bytes after convert() returns must never change the already-returned
@@ -115,7 +115,7 @@ void main() {
     });
   }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
 
-  group('BGRA-04 copy-out candidate independence (allocator-level)', () {
+  group('copy-out candidate independence (allocator-level)', () {
     // These do not go through YuvAbiV1Runner: they exercise each copy-out
     // candidate from speed_00_dart_ffi's bench directly against a raw
     // package:ffi buffer, proving independence/lifetime holds for every

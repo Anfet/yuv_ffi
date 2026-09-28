@@ -2,7 +2,7 @@
 // Dart SDK libraries, the test framework, and `package:yuv_ffi/yuv_ffi.dart`
 // itself -- unlike `rel06_deprecated_api_test.dart`'s hidden-impl check, which
 // imports `YuvImageImpl` directly to prove it still exists and works. This
-// file proves the other half of REL-06's "YuvImageImpl confirmed hidden"
+// file proves the other half of the "YuvImageImpl confirmed hidden"
 // acceptance criterion: that a real consumer, reaching this package only
 // through its public library, never needs -- and cannot reach -- the concrete
 // backend class. Every `YuvImage` here is produced by a public factory and
@@ -19,7 +19,7 @@ import 'dart:ui' as ui;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-06's "YuvImageImpl confirmed hidden" acceptance criterion from
+/// Verifies the "YuvImageImpl confirmed hidden" acceptance criterion from
 /// the actual consumer side: the complete `0.3.0` deprecated API surface is
 /// reachable and usable through `package:yuv_ffi/yuv_ffi.dart` alone.
 void main() {

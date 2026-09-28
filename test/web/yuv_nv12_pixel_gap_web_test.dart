@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-03 on Web: `YuvImage.nv12` accepts an explicit interleaved
+/// Verifies that Web `YuvImage.nv12` accepts an explicit interleaved
 /// chroma `pixelStride` above the packed-pair minimum as a real gap, and a
 /// WASM ABI v1 operation walking that plane through its declared strides
 /// leaves the gap byte untouched.

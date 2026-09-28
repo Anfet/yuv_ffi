@@ -2,6 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
+import 'probe_seed.dart';
+
 void main() {
   test('packing preserves the visible BGRA result across padded and gapped layouts', () async {
     await YuvFfi.initialize();
@@ -26,7 +28,7 @@ void main() {
 YuvImage _makeImage(YuvPixelFormat format, int width, int height, String layout, YuvPlaneLayout packing) {
   var seed = 12345 + width * 31 + height;
   int nextByte() {
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    seed = probeNextSeed(seed);
     return (seed >> 8) & 0xff;
   }
 

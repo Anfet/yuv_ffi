@@ -7,10 +7,11 @@
 - **RA-11:** вычищены внутренние IO/shared комментарии без изменения кода и generated bindings. DOC-RULES regex — 0 совпадений; analyze чистый, format — 0 изменений; Flutter tests — 698.
 - **RA-12:** вычищены Web/loader комментарии; DOC-RULES regex оставляет только техническое слово `pre-filled` в описании уже заполненной destination plane. Analyze чистый после RA-10, Flutter tests — 698. Три локальных Chrome-теста зависают на старте; браузерный gate остаётся для RA-41 CI.
 - **RA-13:** вычищены native C комментарии; все 19 изменённых C/H файлов совпадают с baseline после `clang -E -P` и удаления whitespace. Release CTest — 11/11; Flutter tests — 698.
+- **RA-14:** очищены комментарии и `group`/`test` descriptions в 50 тестовых Dart-файлах. T2 review принял после одной коррекции: 0 executable/assertion changes, 657 уникальных статических descriptions, DOC-RULES scan без исторических ссылок в комментариях. Format и diff checks чистые; актуальный root suite — 711 passed, 1 intentional skip. Повторное ревью — ACCEPT; candidate commit SHA будет добавлен после интеграции.
 - **RA-15:** очищены комментарии `test_native`; все 11 изменённых C-файлов совпадают с baseline после preprocessing и удаления whitespace. Debug и Release CTest — 11/11. Regex-совпадения в test output strings сохранены, поскольку карточка разрешала менять только комментарии.
 - **RA-17:** README обновлён под 0.4.2; примеры прошли временную проверку в example. Минимум macOS 10.11 подтверждён podspec библиотеки, example требует 10.15.
 
-Независимый ревьюер принял RA-01/10/11/12/13/15/17. Открытые внешние проверки: GitHub CI `startup_failure` до запуска jobs, Chrome gate RA-12 через RA-41 и предсуществующий dartdoc `RangeError` на baseline.
+Независимый ревьюер принял RA-01/10/11/12/13/14/15/17. Открытые внешние проверки: GitHub CI `startup_failure` до запуска jobs, Chrome gate RA-12 через RA-41 и предсуществующий dartdoc `RangeError` на baseline.
 
 ## BGRA-00…04 — COMPLETE — Разбор и ускорение YUV → BGRA
 

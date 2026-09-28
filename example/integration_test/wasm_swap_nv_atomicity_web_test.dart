@@ -1,9 +1,3 @@
-@TestOn('browser')
-// Drives the public Web backend against a fake Emscripten module through
-// `dart:js_interop`, which the VM cannot compile; `@TestOn` excludes this file
-// from a VM run rather than letting it fail to load.
-library;
-
 // ignore_for_file: avoid_web_libraries_in_flutter
 
 import 'dart:js_interop';
@@ -12,13 +6,14 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// YUV-51 review regression (2026-09-23): `swapNv()` on a non-NV receiver is
+/// `swapNv()` on a non-NV receiver is atomic after failure.
 /// atomic across both of its native calls.
 ///
 /// `swapNv()` on I420/BGRA needs two WASM calls -- a conversion to NV12, then
@@ -108,16 +103,17 @@ YuvImage _imageOf(YuvPixelFormat format) => switch (format) {
 };
 
 void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   tearDown(YuvWasmLoader.debugReset);
 
-  test('runs on a real browser runtime', () {
+  testWidgets('runs on a real browser runtime', (_) async {
     expect(kIsWeb, isTrue);
   });
 
   final publicFormats = [YuvPixelFormat.i420, YuvPixelFormat.bgra8888];
 
   for (final publicFormat in publicFormats) {
-    test('a failing chroma swap after a successful conversion leaves a ${publicFormat.name} receiver untouched', () async {
+    testWidgets('a failing chroma swap after a successful conversion leaves a ${publicFormat.name} receiver untouched', (_) async {
       // Call 1 is yuv_convert_v1 and succeeds; call 2 is yuv_chroma_swap_v1
       // and fails. This is the exact sequence the review reproduced.
       final module = _statusModule([yuvStatusOk, yuvStatusInternalError]);
@@ -140,7 +136,7 @@ void main() {
       expect((image as YuvRevisionAware).internalRevision, revisionBefore, reason: 'revision advanced although swapNv failed');
     });
 
-    test('a failing conversion leaves a ${publicFormat.name} receiver untouched', () async {
+    testWidgets('a failing conversion leaves a ${publicFormat.name} receiver untouched', (_) async {
       final module = _statusModule([yuvStatusInternalError]);
       await _useModule(module);
 
@@ -160,7 +156,7 @@ void main() {
     });
   }
 
-  test('a failing chroma swap leaves an already-NV21 receiver untouched', () async {
+  testWidgets('a failing chroma swap leaves an already-NV21 receiver untouched', (_) async {
     // The one-call form: no conversion happens, so the only thing that could
     // publish early is the swap itself.
     final module = _statusModule([yuvStatusInternalError]);
@@ -181,7 +177,7 @@ void main() {
     expect((image as YuvRevisionAware).internalRevision, revisionBefore);
   });
 
-  test('both calls succeeding publishes once, as NV21, advancing the revision by one', () async {
+  testWidgets('both calls succeeding publishes once, as NV21, advancing the revision by one', (_) async {
     // The positive half of the same path, so the fix cannot be "never
     // publish": two native calls must still be exactly one publish.
     final module = _statusModule([yuvStatusOk, yuvStatusOk]);

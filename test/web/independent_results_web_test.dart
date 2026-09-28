@@ -6,10 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Web counterpart of `test/rel05_independent_results_test.dart`: REL-05's
+/// Web counterpart of `independent_results_test.dart`, covering the same
 /// aliasing, padded BGRA, and semantic-no-op contracts hold the same way on
-/// the WASM backend, per `doc/api-abi-0.4-design.md` sections 4 and 13
-/// ("Both runners follow" the same eight-step publish contract).
+/// the WASM backend. Both runners follow the same publish contract.
 ///
 /// Follows the existing `test/web/wasm_parity_*` convention: skipped with a
 /// passing placeholder on a non-browser runtime, so this file participates in
@@ -17,7 +16,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// module under `flutter test -p chrome`.
 void main() {
   if (!kIsWeb) {
-    test('REL-05 web parity tests are skipped on non-web runtime', () {
+    test('Web parity tests are skipped on non-web runtime', () {
       expect(true, isTrue);
     });
     return;

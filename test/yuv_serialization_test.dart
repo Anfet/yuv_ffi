@@ -9,7 +9,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 
 import 'fixtures/codec_v1_i420_2x2_fixture.dart';
 
-/// Verifies YUV-07: the serialization format is versioned, transactional and
+/// Verifies that the serialization format is versioned, transactional and
 /// identical on every backend.
 ///
 /// These cases only allocate planes in Dart, so they must run without a native

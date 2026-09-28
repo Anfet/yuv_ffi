@@ -7,7 +7,7 @@ import 'package:yuv_ffi/src/yuv/impl/io/defs/native_allocator.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
 
-/// BGRA-03: `YuvAbiV1Runner.convert`'s destination buffer is allocated with
+/// The `YuvAbiV1Runner.convert` destination buffer is allocated with
 /// `malloc` (uninitialized) instead of `calloc` (zero-filled), because its
 /// destination layout is always tight-stride (no row padding, no pixel gaps)
 /// and `yuv_convert_v1` either rejects the call before writing a single byte
@@ -41,14 +41,14 @@ void main() {
 
   final bool nativeAvailable = _nativeAvailable();
 
-  group('BGRA-03 destination allocation (convert)', () {
+  group('destination allocation (convert)', () {
     test('success path is byte-exact against the calloc baseline', () {
       // Runs the same conversion twice: once through the allocator that
       // now backs production (malloc-uninitialized destination for
       // convert), and once forcing calloc for every allocation via a
       // thin wrapper, to prove the candidate is not merely "did not
       // crash" but produces the exact same bytes as the zero-filled
-      // baseline the library used before BGRA-03.
+      // baseline the library used previously
       final source = i420Source();
       final layout = bgraLayout();
 
@@ -124,7 +124,7 @@ void main() {
     });
 
     test('padded destination layout keeps row padding zeroed, not malloc garbage', () {
-      // Independent review, doc/perf/results/bgra_independent_review_2026-09-26.md:
+      // The destination may carry row padding or pixel gaps:
       // convert() is a public method that accepts whatever destinationLayout
       // the caller passes, not only the tight layout toBgraBytes()/toBgra()
       // build. A rowStride wider than the active row leaves padding bytes
@@ -198,7 +198,7 @@ void main() {
     });
 
     test('tight destination layout still gets the malloc fast path (no zero-fill work)', () {
-      // The fix must not regress the BGRA-03 win for the case it was meant
+      // The fix must not regress the allocation win for the case it was meant
       // for: a genuinely tight layout (what toBgraBytes()/toBgra() build)
       // should still route through allocateUninitialized, not allocate.
       final source = i420Source();

@@ -3,10 +3,10 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 import 'package:yuv_ffi/src/yuv_capabilities.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-09: an immutable [YuvCapabilities] snapshot that answers
+/// Verifies that an immutable [YuvCapabilities] snapshot that answers
 /// whether dispatch exists for an operation and format pair -- never whether
 /// arbitrary input to it is valid -- and that a negative capability rejects
-/// before any backend dispatch (`doc/api-abi-0.4-design.md` section 7).
+/// before any backend dispatch.
 ///
 /// This suite exercises the pure Dart layer ([YuvCapabilitiesSnapshot],
 /// [yuvAbiV1FormatPairSupported], [yuvAvailableOperations]) directly, so it
@@ -17,7 +17,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// for their own runtime.
 void main() {
   group('YuvCapabilitiesSnapshot.supports -- full operation x format table', () {
-    // Section 11's "Format, layout, and geometry matrix": every operation
+    // The format, layout, and geometry contract: every operation
     // except convert and chromaSwap accepts every YuvPixelFormat as a
     // same-format source/destination pair; chromaSwap accepts only NV12;
     // convert accepts every format as both source and destination, but only

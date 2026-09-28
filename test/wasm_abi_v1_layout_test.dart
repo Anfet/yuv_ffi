@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/yuv/impl/web/abi/yuv_abi_v1_wasm_layout.dart';
 
-/// YUV-51: the wasm32 struct layout the Web runner writes into WASM linear
+/// The wasm32 struct layout that the Web runner writes into WASM linear
 /// memory must be the layout ABI v1 declares.
 ///
 /// The IO backend cannot get this wrong -- `dart:ffi` derives every offset from
@@ -13,8 +13,7 @@ import 'package:yuv_ffi/src/yuv/impl/web/abi/yuv_abi_v1_wasm_layout.dart';
 ///
 /// Two independent checks are made for every struct:
 ///
-///  1. against the literal offset tables of `doc/api-abi-0.4-design.md`
-///     sections 9 and 10, spelled out here rather than imported, so this file
+///  1. against literal offset tables spelled out here rather than imported, so this file
 ///     is a second source rather than a restatement of the one being tested;
 ///  2. against `src/yuv/abi/h/yuv_abi_v1.h`'s own `YUV_ABI_STATIC_ASSERT`
 ///     lines, parsed from the header, so a header change that the Dart
@@ -55,7 +54,7 @@ void main() {
   });
 
   group('plane descriptor', () {
-    test('offsets and size match the section 9 table', () {
+    test('plane struct offsets and size match the header', () {
       expect(YuvWasmPlaneV1.offsetLength, 0);
       expect(YuvWasmPlaneV1.offsetRowStride, 8);
       expect(YuvWasmPlaneV1.offsetPixelStride, 16);
@@ -64,7 +63,7 @@ void main() {
       expect(YuvWasmPlaneV1.sizeBytes, 32);
     });
 
-    test('agrees with the C header for both the const and mutable form', () {
+    test('plane struct agrees with the C header for const and mutable forms', () {
       for (final struct in ['YuvConstPlaneV1', 'YuvMutablePlaneV1']) {
         final prefix = struct == 'YuvConstPlaneV1' ? 'YuvConstPlaneV1' : 'YuvMutablePlaneV1';
         expect(headerOffsets['$prefix.length'], YuvWasmPlaneV1.offsetLength);
@@ -89,7 +88,7 @@ void main() {
   });
 
   group('frame descriptor', () {
-    test('offsets and size match the section 9 table', () {
+    test('frame struct offsets and size match the header', () {
       expect(YuvWasmFrameV1.offsetStructSize, 0);
       expect(YuvWasmFrameV1.offsetAbiVersion, 4);
       expect(YuvWasmFrameV1.offsetFormat, 8);
@@ -103,7 +102,7 @@ void main() {
       expect(YuvWasmFrameV1.sizeBytes, 160);
     });
 
-    test('agrees with the C header for both the const and mutable form', () {
+    test('frame struct agrees with the C header for const and mutable forms', () {
       for (final struct in ['YuvConstFrameV1', 'YuvMutableFrameV1']) {
         expect(headerOffsets['$struct.structSize'], YuvWasmFrameV1.offsetStructSize);
         expect(headerOffsets['$struct.abiVersion'], YuvWasmFrameV1.offsetAbiVersion);
@@ -138,7 +137,7 @@ void main() {
   });
 
   group('options structs', () {
-    test('region offsets and size match the section 10 table and the header', () {
+    test('region option offsets and size match the header', () {
       expect(YuvWasmRegionOptionsV1.offsetStructSize, 0);
       expect(YuvWasmRegionOptionsV1.offsetAbiVersion, 4);
       expect(YuvWasmRegionOptionsV1.offsetLeft, 8);
@@ -158,7 +157,7 @@ void main() {
       expect(headerSizes['YuvRegionOptionsV1'], YuvWasmRegionOptionsV1.sizeBytes);
     });
 
-    test('blur offsets and size match the section 10 table and the header', () {
+    test('blur option offsets and size match the header', () {
       expect(YuvWasmBlurOptionsV1.offsetRadius, 8);
       expect(YuvWasmBlurOptionsV1.offsetBorderMode, 12);
       expect(YuvWasmBlurOptionsV1.offsetSigma, 16);
@@ -182,7 +181,7 @@ void main() {
       expect(YuvWasmEffectOptionsV1.offsetRegion + YuvWasmRegionOptionsV1.sizeBytes, YuvWasmEffectOptionsV1.offsetReserved);
     });
 
-    test('effect offsets and size match the section 10 table and the header', () {
+    test('effect option offsets and size match the header', () {
       expect(YuvWasmEffectOptionsV1.offsetRegion, 8);
       expect(YuvWasmEffectOptionsV1.offsetReserved, 40);
       expect(YuvWasmEffectOptionsV1.sizeBytes, 56);
@@ -192,7 +191,7 @@ void main() {
       expect(headerSizes['YuvEffectOptionsV1'], YuvWasmEffectOptionsV1.sizeBytes);
     });
 
-    test('convert offsets and size match the section 10 table and the header', () {
+    test('convert option offsets and size match the header', () {
       expect(YuvWasmConvertOptionsV1.offsetReserved, 8);
       expect(YuvWasmConvertOptionsV1.sizeBytes, 32);
 
@@ -200,7 +199,7 @@ void main() {
       expect(headerSizes['YuvConvertOptionsV1'], YuvWasmConvertOptionsV1.sizeBytes);
     });
 
-    test('crop offsets and size match the section 10 table and the header', () {
+    test('crop option offsets and size match the header', () {
       expect(YuvWasmCropOptionsV1.offsetLeft, 8);
       expect(YuvWasmCropOptionsV1.offsetTop, 12);
       expect(YuvWasmCropOptionsV1.offsetWidth, 16);
@@ -216,7 +215,7 @@ void main() {
       expect(headerSizes['YuvCropOptionsV1'], YuvWasmCropOptionsV1.sizeBytes);
     });
 
-    test('flip offsets and size match the section 10 table and the header', () {
+    test('flip option offsets and size match the header', () {
       expect(YuvWasmFlipOptionsV1.offsetDirection, 8);
       expect(YuvWasmFlipOptionsV1.offsetReserved0, 12);
       expect(YuvWasmFlipOptionsV1.offsetReserved, 16);
@@ -228,7 +227,7 @@ void main() {
       expect(headerSizes['YuvFlipOptionsV1'], YuvWasmFlipOptionsV1.sizeBytes);
     });
 
-    test('rotate offsets and size match the section 10 table and the header', () {
+    test('rotate option offsets and size match the header', () {
       expect(YuvWasmRotateOptionsV1.offsetRotationDegrees, 8);
       expect(YuvWasmRotateOptionsV1.offsetReserved0, 12);
       expect(YuvWasmRotateOptionsV1.offsetReserved, 16);

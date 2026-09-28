@@ -3,6 +3,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 
 import 'cases.dart';
 import 'probe_support.dart';
+import 'probe_scenarios.dart';
 
 void main() {
   test('every public operation has at least one correctness case', () {
@@ -12,6 +13,10 @@ void main() {
   test('omitting one operation file makes the coverage check fail', () {
     final withoutChromaSwap = probeCaseIds.where((id) => operationForCase(ProbeCase(id)) != YuvOperation.chromaSwap);
     expect(_missingOperations(withoutChromaSwap), contains(YuvOperation.chromaSwap));
+  });
+
+  test('every public operation has one performance scenario', () {
+    expect({for (final scenario in probeScenarios) scenario.operation}, unorderedEquals(YuvOperation.values));
   });
 }
 

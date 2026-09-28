@@ -9,7 +9,7 @@ const _srcDir = 'src';
 const _cmakeListsPath = 'src/CMakeLists.txt';
 const _cmakeSourceDirPrefix = r'${CMAKE_CURRENT_SOURCE_DIR}/';
 
-/// YUV-24: `src/CMakeLists.txt` lists its `.c` sources explicitly instead of
+/// `src/CMakeLists.txt` lists its `.c` sources explicitly instead of
 /// using `file(GLOB_RECURSE ... CONFIGURE_DEPENDS ...)`.
 ///
 /// CONFIGURE_DEPENDS requires CMake 3.12; this project intentionally keeps

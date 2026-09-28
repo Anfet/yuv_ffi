@@ -2,11 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 /// Characterization tests for the state/geometry/accessor contract the three
-/// `YuvImageImpl` backends share (YUV-28).
+/// `YuvImageImpl` backends share.
 ///
-/// These were written against the pre-unification implementations and must keep
-/// passing unchanged afterwards: they are the evidence that moving state into a
-/// shared owner preserved behavior rather than redefining it. They deliberately
+/// They define behavior shared by all backends. They deliberately
 /// exercise only the parts of the contract that need no backend call, so the
 /// same file is meaningful on the VM and in a browser.
 void main() {

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/reference/test_pattern_reference.dart';
 
-/// Regression coverage for YUV-48: the oracle's chroma/decode math must give
+/// Regression coverage for the oracle's chroma/decode math must give
 /// the same numeric result on every platform, not merely "VM equals Web"
 /// (that equality cannot be asserted from a VM-only test). Every expected
 /// value below is derived from the BT.601 formula directly, using an input
@@ -12,8 +12,8 @@ import 'helpers/reference/test_pattern_reference.dart';
 /// diverges between the Dart VM (true signed shift) and dart2js/DDC (Web
 /// numbers reinterpret negative operands as unsigned 32-bit before shifting).
 void main() {
-  group('YUV-48 platform-independent >> in the reference oracle', () {
-    test('rgbaToI420 chroma U/V match the BT.601 formula for a negative pre-shift sum', () {
+  group('platform-independent >> in the reference oracle', () {
+    test('rgbaToI420 chroma U/V match BT.601 for a negative pre-shift sum', () {
       // red=0, green=255, blue=0 drives chromaU's pre-shift sum to
       // -38*0 - 74*255 + 112*0 + 128 = -18742 (negative) and chromaV's to
       // 112*0 - 94*255 - 18*0 + 128 = -23842 (negative).

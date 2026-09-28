@@ -7,7 +7,7 @@ import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 
-/// Verifies YUV-21: the native initialization contract.
+/// Verifies that the native initialization contract.
 ///
 /// The counted opener seam is what makes "does not reopen" and "really retries"
 /// observable; asserting on the returned library alone would prove neither.
@@ -126,8 +126,8 @@ void main() {
     });
   });
 
-  group('REL-10: missing ABI v1 symbol manifest gate', () {
-    // `doc/api-abi-0.4-design.md` section 7: a native library missing a
+  group('missing ABI v1 symbol manifest gate', () {
+    // A native library missing a
     // required export "fails initialization ... rather than returning
     // capabilities that silently mark it unsupported" -- StateError, not
     // YuvNativeException or UnsupportedError, since this is a load-time
@@ -174,7 +174,7 @@ void main() {
     });
   });
 
-  group('REL-10: WASM loader stub on a non-web (VM) target', () {
+  group('WASM loader stub on a non-web (VM) target', () {
     // `wasm_loader_io.dart` is the fallback compiled in whenever
     // `dart.library.js_interop` is unavailable, i.e. every host `flutter
     // test` runs on. Calling it here (rather than through the Web backend,

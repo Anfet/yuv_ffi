@@ -12,9 +12,8 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-06's deprecated `0.3.0` compatibility surface
-/// (`doc/api-abi-0.4-design.md` sections 4, 8, 14 Q1; `todo.md`'s REL-06 entry
-/// and its R1-review addendum).
+/// Verifies the deprecated `0.3.0` compatibility surface
+/// for serialization, image mutation, and conversion behavior.
 ///
 /// Covers: every `0.3.0` instance method still compiles and forwards to its
 /// `0.4.0` replacement with matching behavior; `swapNv()`'s two-step
@@ -26,7 +25,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// uses (`debugSetLibraryOpener`/`debugSetSymbolChecker` plus
 /// `YuvAbiV1Runner.debugInvokeOverride`), so they run on every host without a
 /// real `yuv_ffi.dll`. Genuine byte-level correctness of the underlying
-/// conversions is REL-01/REL-05's job (`nv_chroma_order_test.dart`,
+/// conversion behavior is covered by dedicated conversion tests such as `nv_chroma_order_test.dart`,
 /// `rel05_independent_results_test.dart`); the "matches historical bytes"
 /// group here additionally requires the real native library and self-skips
 /// without one.
@@ -50,7 +49,7 @@ void main() {
       // YuvImageImpl only through its internal impl library path
       // (package:yuv_ffi/src/yuv/impl/io/yuv_image.dart), never through
       // package:yuv_ffi/yuv_ffi.dart. If a future change re-exports the impl
-      // library wholesale (as yuv.dart used to), this file's import would
+      // library wholesale, this file's import would
       // become redundant but this assertion still only proves the type is
       // constructible via factories, not that it is part of the public API.
       final YuvImage image = YuvImage.i420(2, 2);
@@ -90,7 +89,7 @@ void main() {
       final YuvImage image = YuvImage.bgra(4, 4);
 
       // Plane aliases. BGRA has only one plane (Y only), so uPlane/vPlane
-      // throw by design (section 4: "StateError when format has no U/V
+      // throw by design ("StateError when format has no U/V
       // plane") while the deprecated u/v getters stay null-safe -- they
       // intentionally diverge for a format without that plane, so u/v are
       // checked against null, not uPlane/vPlane.
@@ -252,7 +251,7 @@ void main() {
     test('fromRgba8888() matches applyRgbaBytes()', () async {
       await YuvFfi.initialize();
       // Fills every destination byte deterministically rather than leaving
-      // it whatever the allocator happened to hand back (BGRA-03: a
+      // it whatever the allocator provides (the result is
       // convert-backed destination is no longer calloc-zeroed, so a no-op
       // fake here must not rely on zero-fill as an implicit "both sides
       // produced the same bytes" oracle).
@@ -316,7 +315,7 @@ void main() {
     });
   });
 
-  group('swapNv() two-step convert-then-swap behavior (section 14, Q1)', () {
+  group('swapNv() two-step convert-then-swap behavior', () {
     test('on an already-NV12 image, swapNv() dispatches exactly one native call (chromaSwap only)', () async {
       await YuvFfi.initialize();
       int invocationCount = 0;
@@ -357,7 +356,7 @@ void main() {
       expect(invocationCount, 2, reason: 'a non-NV source must be converted to NV12 first, then swapped');
       expect(image.format, YuvPixelFormat.nv12, reason: 'swapNv() adopts the legacy nv21 label after converting');
       // Exactly one publish happens no matter how many native calls it took to
-      // get there (section 13): the receiver's revision must still advance by
+      // get there: the receiver's revision must still advance by
       // exactly one, not once per internal native call.
       expect((image as YuvRevisionAware).internalRevision, revisionBefore + 1);
     });
@@ -383,7 +382,7 @@ void main() {
       // ignore: deprecated_member_use_from_same_package
       expect(() => image.swapNv(), throwsA(isA<YuvNativeException>()));
 
-      // Section 13's transactional contract: nothing is published until every
+      // The transactional contract publishes nothing until every
       // step has succeeded, so a failure partway through the deprecated
       // two-step path must leave the receiver exactly as it was -- not
       // "already converted to NV12, swap still pending".
@@ -538,7 +537,7 @@ void main() {
       expect(image.yPlane.bytes, orderedEquals(bytesBefore), reason: 'a rejected swapNv() must not mutate a foreign receiver');
     });
 
-    test('load() is the other documented exception: it throws UnsupportedError without mutating (REL-20)', () {
+    test('load() throws UnsupportedError without mutating the image', () {
       final image = _RecordingForeignImage(4, 4);
       final bytesBefore = Uint8List.fromList(image.yPlane.bytes);
 
@@ -566,7 +565,7 @@ bool _checkNativeAvailable() {
 ///
 /// Every `apply*`/`applyFormat` here simply records its call and returns
 /// `this`, exactly the "capability-gated but otherwise functional" shape
-/// REL-04's already-accepted breaking change requires every `YuvImage`
+/// The accepted breaking change requires every `YuvImage`
 /// implementer to provide.
 class _RecordingForeignImage implements YuvImage {
   _RecordingForeignImage(this.width, this.height) : _plane = YuvPlane(height, width * 4, 4, Uint8List(height * width * 4));
@@ -710,7 +709,7 @@ class _RecordingForeignImage implements YuvImage {
 }
 
 /// A `debugInvokeOverride` fake that fills every destination plane with
-/// [fillByte], standing in for a real conversion kernel's guarantee (BGRA-03:
+/// [fillByte], standing in for a real conversion kernel's guarantee:
 /// `yuv_convert_v1`'s dispatch table only ever writes every active byte of a
 /// full-frame destination, never leaves any of it untouched). Two Dart calls
 /// through this fake with the same geometry/format therefore always produce

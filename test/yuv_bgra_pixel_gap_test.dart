@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies REL-12: packing a BGRA plane whose `pixelStride` exceeds 4 must
+/// Verifies that packing a BGRA plane whose `pixelStride` exceeds 4 must
 /// exclude the per-pixel gap byte(s) as well as row padding beyond
 /// `width * pixelStride`, and must never modify the source plane.
 void main() {

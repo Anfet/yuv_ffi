@@ -11,7 +11,10 @@ void main() {
 
   testWidgets('Web operation matrix matches the exact golden', (tester) async {
     final document = await rootBundle.loadString('assets/probe/golden.json');
-    final mismatches = await probeMismatches(decodeProbeGolden(document));
+    final golden = decodeProbeGolden(document);
+    final inputMismatches = probeInputMismatches(golden);
+    expect(inputMismatches, isEmpty, reason: 'Probe input generator diverges on this platform:\n${inputMismatches.take(20).join('\n')}');
+    final mismatches = await probeMismatches(golden);
     expectProbeMismatchesEmpty(mismatches);
     debugPrint('Web probe matrix passed: ${probeCaseIds.length} cases');
   });

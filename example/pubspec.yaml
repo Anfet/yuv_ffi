@@ -12,6 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  crypto: ^3.0.6
+
   yuv_ffi:
     path: ../
 
@@ -42,7 +44,6 @@ dev_dependencies:
   # The browser reference suite reuses the same pure-Dart oracle helper as
   # the native suite (test/helpers/reference/
   # test_pattern_reference.dart), which depends on these two packages.
-  crypto: ^3.0.6
   image: ^4.5.4
 
   # Camera frame benchmarks compare native copy strategies in isolation using

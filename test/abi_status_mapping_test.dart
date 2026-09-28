@@ -12,10 +12,10 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 
-/// Covers YUV-36d's two DoD items that a native call cannot exercise by
+/// Covers status mapping and Dart-side failure behavior that a native call cannot exercise by
 /// itself:
 ///
-///  - every numeric `YuvStatus` maps to the Dart exception section 11
+///  - every numeric `YuvStatus` maps to the documented Dart exception;
 ///    requires, including a value ABI v1 does not define;
 ///  - a native failure leaves the destination Dart draft never constructed
 ///    (there is nothing to "not change" in Dart before the native call
@@ -28,7 +28,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 /// down against the actual `yuv_ffi` binary, skipped when it is unavailable
 /// on the host running the test.
 void main() {
-  group('yuvThrowForStatus maps every YuvStatus value (YUV-36d)', () {
+  group('yuvThrowForStatus maps every YuvStatus value', () {
     test('YUV_STATUS_OK does not throw', () {
       // yuvThrowForStatus is a Never function and must not be called for
       // status 0 at all -- the runner branches on status before calling it.
@@ -67,8 +67,7 @@ void main() {
     });
 
     test('YUV_STATUS_UNSUPPORTED_LAYOUT (3) throws UnsupportedError', () {
-      // No ABI v1 entry point can currently produce this status (see the
-      // Engineer's decision recorded in todo.md and the dartdoc on
+      // No ABI v1 entry point currently produces this status. The contract on
       // yuvStatusUnsupportedLayout), but the mapping must already exist for
       // a future ABI revision that does, so it is tested directly here
       // rather than through a native call.
@@ -112,7 +111,7 @@ void main() {
     });
 
     test('an unknown non-zero status throws YuvNativeException retaining the exact code', () {
-      // Section 11: "any unknown non-zero value" still becomes a
+      // Any unknown non-zero value still becomes a
       // YuvNativeException -- an unrecognized code from a newer native
       // binary must not be silently dropped or collapsed into a generic
       // failure.
@@ -148,9 +147,9 @@ void main() {
 
   final bool nativeAvailable = _checkNativeAvailable();
 
-  group('YuvAbiV1Runner descriptor construction (YUV-36i: no yuv_ffi.dll required)', () {
+  group('YuvAbiV1Runner descriptor construction (no yuv_ffi.dll required)', () {
     // Every test in this group drives the runner through debugInvokeOverride
-    // (YUV-36k's seam) instead of the real yuv_ffi.dll symbols, so it runs
+    // The injected seam replaces the real yuv_ffi.dll symbols, so it runs
     // identically with or without the native library on the host -- unlike
     // the group below, which specifically exercises the real binary and is
     // still skipped when that binary is unavailable.
@@ -169,7 +168,7 @@ void main() {
 
     test('a fully valid call reaches the kernel step and surfaces its status', () {
       // The kernel stub always returns INTERNAL_ERROR in the real binary
-      // (YUV-36b); the fake kernel here reproduces exactly that status, so
+      // The fake kernel reproduces exactly that status, so
       // this checks the same thing the real-library test below checks --
       // that the runner builds a descriptor the "native" call actually
       // receives and its status reaches the caller -- without needing the
@@ -229,8 +228,8 @@ void main() {
       expect(() => YuvAbiV1Runner.grayscale(source: malformed), throwsArgumentError);
     });
 
-    test('ROI grayscale seeds the destination from source outside the ROI on BGRA (YUV-36h)', () {
-      // Kernels are stubs (INTERNAL_ERROR, YUV-36b) in the real binary, so
+    test('ROI grayscale seeds the destination from source outside the ROI on BGRA', () {
+      // Kernels return INTERNAL_ERROR in the real binary, so
       // this drives the same INTERNAL_ERROR result through the override and
       // captures what the runner itself staged into destination memory
       // before the "native" call, using a byte-count-aware allocator that
@@ -268,7 +267,7 @@ void main() {
       expect(matchesSeeding, isNotEmpty, reason: 'destination staging was not seeded with source bytes for a ROI-enabled effect call on BGRA');
     });
 
-    test('ROI grayscale seeds the destination from source outside the ROI on I420 (YUV-36h)', () {
+    test('ROI grayscale seeds the destination from source outside the ROI on I420', () {
       const width = 4, height = 4;
       final y = Uint8List(width * height);
       final u = Uint8List((width ~/ 2) * (height ~/ 2));
@@ -307,17 +306,17 @@ void main() {
     });
   });
 
-  group('YuvAbiV1Runner runner-level atomicity on nonzero status (YUV-36i)', () {
-    // Engineer decision 2026-09-21 (variant A): the runner never mutates an
-    // existing "recipient" object -- it only ever returns a fresh
+  group('YuvAbiV1Runner runner-level atomicity on nonzero status', () {
+    // The runner never mutates an existing "recipient" object -- it only ever
+    // returns a fresh
     // YuvAbiV1FrameResult, and only on YUV_STATUS_OK. "metadata"/"revision"
     // (YuvImage.revision, yuv_revision.dart) belong to the mutable public API
-    // YUV-28 introduces on top of this runner and do not exist at this layer,
+    // Higher-level operations do not exist at this layer,
     // so the runner-level invariant this group checks is exactly: on a
     // nonzero status, (a) source bytes are unchanged and (b) no
     // YuvAbiV1FrameResult is ever constructed (no copy-back happens). The
     // public bytes/metadata/revision-of-the-recipient invariant remains
-    // YUV-28's obligation once a mutable recipient exists to check it against.
+    // Public operations enforce recipient metadata and revision invariants.
     setUp(() => YuvAbiV1Runner.debugInvokeOverride = null);
     tearDown(() => YuvAbiV1Runner.debugInvokeOverride = null);
 
@@ -358,7 +357,7 @@ void main() {
 
     test('a failing call never mutates the caller-owned source bytes even when it never reaches invoke', () {
       // Complements the loop above: this failure path (wrong plane count for
-      // the format -- checked directly in Dart by _run, section 13 step 1)
+      // the format -- checked directly in Dart by _run before the native call)
       // is rejected before invoke is ever called at all -- the override
       // below would fail the test if it were ever reached -- so this checks
       // the same bytes-unchanged invariant for the "rejected before native
@@ -396,11 +395,9 @@ void main() {
     }
 
     test('a fully valid call runs the real kernel and returns its result', () {
-      // This used to assert the opposite: while every yuv_*_v1 kernel was a
-      // deliberate stub (YUV-36b), a structurally valid call passed validation
-      // and returned YUV_STATUS_INTERNAL_ERROR. The stubs are gone
-      // (YUV-22/23/31/32), so the same call now has to succeed and hand back a
-      // destination of the right shape. It stays the real-DLL counterpart of
+      // This confirms that a structurally valid call succeeds through the real
+      // kernels and hands back a destination of the right shape. It is the
+      // real-DLL counterpart of
       // the override-driven group above: it is the only thing here that would
       // catch an ABI mismatch a fake kernel cannot surface, and it remains
       // skipped when the DLL is unavailable.
@@ -436,7 +433,7 @@ void main() {
     });
 
     test('an unsupported color pairing throws UnsupportedError (7)', () {
-      // BGRA requires colorMatrix/colorRange NONE (section 9); the runner
+      // BGRA requires colorMatrix/colorRange NONE; the runner
       // always derives the correct pairing from the format
       // (yuvAbiV1ColorMatrixFor/yuvAbiV1ColorRangeFor), so this exercises
       // status 7 through a hand-built frame bypassing that derivation --
@@ -459,12 +456,12 @@ void main() {
     });
   }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
 
-  group('YuvAbiV1Runner ROI success-path copy-back (YUV-36k)', () {
+  group('YuvAbiV1Runner ROI success-path copy-back', () {
     // Does not depend on yuv_ffi.dll: every test here sets
     // YuvAbiV1Runner.debugInvokeOverride to a fake "kernel" that returns
     // YUV_STATUS_OK after writing a recognizable pattern into the ROI
     // rectangle of the already-staged destination frame -- exercising the
-    // real seeding (YUV-36h) -> native call -> status-ok -> copy-back path
+    // real seeding -> native call -> status-ok -> copy-back path
     // through the public runner API, with no real native symbol involved.
     setUp(() => YuvAbiV1Runner.debugInvokeOverride = null);
     tearDown(() => YuvAbiV1Runner.debugInvokeOverride = null);
@@ -526,7 +523,7 @@ void main() {
       // ROI in luma (visible-pixel) coordinates; the fake kernel below only
       // fills plane 0 (Y) to keep the test's ROI geometry unambiguous --
       // chroma-footprint ROI mapping for blur/effects is not this card's
-      // scope (YUV-36h's dartdoc: "approved chroma-footprint rule" is a
+      // The approved chroma-footprint rule is a
       // kernel concern, not the runner's).
       const region = YuvAbiV1Region(left: 1, top: 1, right: 3, bottom: 3);
 
@@ -551,7 +548,7 @@ void main() {
       );
       // Untouched planes (U, V) round-trip exactly, since the fake kernel
       // never writes them -- this is a copy-back correctness check, not
-      // another seeding check (already covered by YUV-36h's tests above).
+      // another seeding check (already covered by the tests above).
       expect(result.planes[1], u, reason: 'U plane must round-trip unchanged through a successful call the fake kernel never wrote to');
       expect(result.planes[2], v, reason: 'V plane must round-trip unchanged through a successful call the fake kernel never wrote to');
     });
@@ -561,7 +558,7 @@ void main() {
       // width*pixelStride the runner's destination always uses -- see
       // _sameGeometryDestination/_destinationWithGeometry), so seeding must
       // go through both sides' strides rather than a raw memcpy for this
-      // case to pass (YUV-36h's escalated decision).
+      // case to pass.
       const width = 3, height = 3;
       const sourcePixelStride = 4;
       const sourceRowStride = width * sourcePixelStride + 8; // 8 bytes of trailing row padding
@@ -618,13 +615,13 @@ void main() {
     });
   });
 
-  group('YuvAbiV1Runner releases every allocation on a call (YUV-36d/YUV-36i: no yuv_ffi.dll required)', () {
+  group('YuvAbiV1Runner releases every allocation on a call (no yuv_ffi.dll required)', () {
     /// Counts native allocations a clean call makes, then re-runs with the
     /// instrumented allocator failing at each allocation index in turn,
     /// asserting nothing is left outstanding either way. Mirrors the pattern
     /// native_allocation_safety_test.dart uses for the public operations.
     /// [call] is expected to drive the runner through debugInvokeOverride
-    /// rather than the real yuv_ffi.dll, per YUV-36i.
+    /// rather than the real yuv_ffi.dll, as required.
     void expectNoLeakAtEveryAllocation(String label, YuvAbiV1FrameResult Function() call) {
       final counting = InstrumentedNativeAllocator();
       final int total;
@@ -665,7 +662,7 @@ void main() {
     setUp(() => YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) => yuvStatusInternalError);
     tearDown(() => YuvAbiV1Runner.debugInvokeOverride = null);
 
-    test('a successful call leaks nothing at any allocation-failure point', () {
+    test('a successful call leaks nothing at any injected allocation-failure point', () {
       final bytes = Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x22);
       final source = YuvAbiV1FrameInput(
         format: yuvFormatBgra8888,
@@ -676,7 +673,7 @@ void main() {
       expectNoLeakAtEveryAllocation('grayscale', () => YuvAbiV1Runner.grayscale(source: source));
     });
 
-    test('a crop call (different destination geometry) leaks nothing at any allocation-failure point', () {
+    test('a crop call leaks nothing at any injected allocation-failure point', () {
       final bytes = Uint8List(8 * 8 * 4)..fillRange(0, 8 * 8 * 4, 0x33);
       final source = YuvAbiV1FrameInput(
         format: yuvFormatBgra8888,
@@ -687,7 +684,7 @@ void main() {
       expectNoLeakAtEveryAllocation('crop', () => YuvAbiV1Runner.crop(source: source, left: 1, top: 1, width: 4, height: 4));
     });
 
-    test('a multi-plane I420 call leaks nothing at any allocation-failure point', () {
+    test('a multi-plane I420 call leaks nothing at any injected allocation-failure point', () {
       const width = 4;
       const height = 4;
       final y = Uint8List(width * height)..fillRange(0, width * height, 0x40);
@@ -708,12 +705,12 @@ void main() {
   });
 
   group(
-    'YuvAbiV1Runner releases every allocation on a real native call (YUV-36d)',
+    'YuvAbiV1Runner releases every allocation on a real native call',
     () {
       // Real-DLL counterpart of the group above: same three calls, but through
       // the actual yuv_ffi.dll symbols, to catch a real ABI/allocator mismatch
       // a fake kernel could never surface. Skipped when the DLL is unavailable,
-      // per YUV-36i's requirement that this be the exception, not the rule.
+      // because it applies only when the native binary is available.
       void expectNoLeakAtEveryAllocation(String label, YuvAbiV1FrameResult Function() call) {
         final counting = InstrumentedNativeAllocator();
         final int total;
@@ -751,7 +748,7 @@ void main() {
         }
       }
 
-      test('a successful call leaks nothing at any allocation-failure point', () {
+      test('a successful native call leaks nothing at every allocation-failure point', () {
         final bytes = Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x22);
         final source = YuvAbiV1FrameInput(
           format: yuvFormatBgra8888,
@@ -762,7 +759,7 @@ void main() {
         expectNoLeakAtEveryAllocation('grayscale', () => YuvAbiV1Runner.grayscale(source: source));
       });
 
-      test('a crop call (different destination geometry) leaks nothing at any allocation-failure point', () {
+      test('a native crop call leaks nothing at every allocation-failure point', () {
         final bytes = Uint8List(8 * 8 * 4)..fillRange(0, 8 * 8 * 4, 0x33);
         final source = YuvAbiV1FrameInput(
           format: yuvFormatBgra8888,
@@ -773,7 +770,7 @@ void main() {
         expectNoLeakAtEveryAllocation('crop', () => YuvAbiV1Runner.crop(source: source, left: 1, top: 1, width: 4, height: 4));
       });
 
-      test('a multi-plane I420 call leaks nothing at any allocation-failure point', () {
+      test('a native multi-plane I420 call leaks nothing at every allocation-failure point', () {
         const width = 4;
         const height = 4;
         final y = Uint8List(width * height)..fillRange(0, width * height, 0x40);
@@ -835,7 +832,7 @@ class _SnapshottingNativeAllocator implements NativeAllocator {
   }
 }
 
-/// Builds a YUV-36k fake "kernel" function suitable for
+/// Builds a fake "kernel" function suitable for
 /// `YuvAbiV1Runner.debugInvokeOverride`: it fills the destination frame's
 /// plane 0 ROI rectangle with [fillByte] repeated across each sample's
 /// `sampleBytes`, in visible-pixel coordinates, then returns
@@ -843,7 +840,7 @@ class _SnapshottingNativeAllocator implements NativeAllocator {
 /// without `yuv_ffi.dll`. Only plane 0 is written -- adequate for these
 /// single-plane-ROI tests, which only assert on plane 0's ROI edges
 /// (chroma-footprint ROI mapping for blur/effects is a kernel concern, not
-/// the runner's -- see YUV-36h's dartdoc).
+/// the runner; see the runner's public contract documentation).
 int Function(ffi.Pointer<YuvConstFrameV1>, ffi.Pointer<YuvMutableFrameV1>, ffi.Pointer<ffi.NativeType>) _fillRoiWithFixedByte({
   required YuvAbiV1Region roi,
   required int fillByte,

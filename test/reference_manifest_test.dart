@@ -10,7 +10,7 @@ const _manifestPath = 'test/reference/test_pattern_512/manifest.json';
 const _sourcePath = 'test/assets/test_pattern_512.png';
 
 void main() {
-  group('YUV-10 test_pattern_512 reference manifest', () {
+  group('test_pattern_512 reference manifest', () {
     late Map<String, dynamic> manifest;
 
     setUpAll(() async {
@@ -202,7 +202,7 @@ void main() {
       }
     });
 
-    test('pins the F-011/F-012 planar tolerance sections and their case assignment (YUV-49)', () {
+    test('pins planar tolerance profiles and case assignment', () {
       final tolerances = manifest['tolerances'] as Map<String, dynamic>;
       final cases = (manifest['cases'] as List<dynamic>).cast<Map<String, dynamic>>();
       Map<String, dynamic> byId(String id) => cases.singleWhere((entry) => entry['id'] == id);

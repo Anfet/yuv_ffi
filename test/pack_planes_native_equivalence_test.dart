@@ -118,8 +118,7 @@ void main() {
 
     test('I420 with a padded chroma source reported at pixelStride 2 (real Pixel 3 geometry) '
         'de-interleaves to pixelStride 1, not just a tighter row stride', () {
-      // Matches doc/perf/results/pack00_pixel3_raw/isolation_geometry.json:
-      // this device's `ImageFormatGroup.yuv420` reports separate U and V
+      // This device's `ImageFormatGroup.yuv420` reports separate U and V
       // planes, each with `bytesPerPixel == 2` -- physically the same
       // interleaved chroma buffer NV12/NV21 uses, split a byte apart. A
       // packed import that only tightened the row stride while keeping
