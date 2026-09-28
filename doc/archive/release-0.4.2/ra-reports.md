@@ -78,12 +78,11 @@ Two isolated `emsdk 3.1.74` release builds in ignored `tool/wasm/out/ra40-a` and
 
 <!-- RA-23 (поглощена RA-72) -->
 ### RA-23 — Windows CI
-**Status:** CI_FAILED_UNASSIGNED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-06, RA-21, RA-22 · **Rejection Count:** 0
+Историческая карточка; отдельного активного исполнения нет. Требование вынести Windows CI поглощено RA-72 после M1.
 
-**Current failure:** CI run `36455663081` failed in Windows native and VM 3.38.10/3.44.9 at `probe_copy_sync_test.dart`: expected 29 root helper files, found 28. Root-only `test/probe/run_release_android_test.dart` is absent from `_rootOnlyProbeFiles` in `test/probe/probe_copy_sync_test.dart`. No exclusion fix or focused rerun is recorded. The card has no assigned executor; the request to delegate is pending.
+В run `36455663081` обнаружилось расхождение copy-sync (ожидалось 29 root-only helper files, найдено 28). Причину устранила RA-51, добавив новый root-only тест в allowlist; исправление принято по T2 review, а все 11 jobs прошли в run `36471185052` на SHA `ea54e0c78cca5e81db4ddc6ebe035214f63850b0`. Поэтому этот старый отказ больше не является текущей блокировкой.
 
-**Architect Decision:** новая джоба `windows-native-smoke` на `windows-latest`, Flutter 3.44.9: `cmake -S src -B $RUNNER_TEMP/nb -A x64` + Release; каталог сборки добавить в `PATH`; `flutter test` (полный набор, без пропусков native); `cd example && flutter build windows --release`; `flutter drive -d windows` для `native_app_runtime_smoke_test.dart` и всех `*_native_test.dart` через `tool/ci/drive.sh`. Блокирующая.
-**DoD:** зелёный run; в логе `flutter test` нет пропущенных native-тестов.
+Текущий целевой результат переноса workflow и Windows проверок зафиксирован в карточке [RA-72](../../../tasks/release-0.4.2/RA-72.md); её зависимости RA-70 и RA-80 ещё не закрыты.
 
 ---
 
