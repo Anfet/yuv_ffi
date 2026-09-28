@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi_example/ext.dart';
 import 'package:yuv_ffi_example/widgets/impl/yuv_camera_preview_io.dart';
 import 'package:yuv_ffi_example/widgets/yuv_camera_preview.dart';
 
@@ -80,6 +81,16 @@ import 'package:yuv_ffi_example/widgets/yuv_camera_preview.dart';
 ///   --target=integration_test/view03_frame_path_pixel3_test.dart \
 ///   -d 8B1X11QLW --profile
 /// ```
+///
+/// ## Import mode -- historical, padded layout
+///
+/// This stand reproduces the **original, pre-PACK-01C padded import**, the
+/// same layout the 93-94 ms `rotation_us` finding below was measured under:
+/// it explicitly sets `kYuvCameraPreviewPackPlanes = false` before pumping
+/// the widget and restores the previous value in `addTearDown`. Since
+/// PACK-01C that flag defaults to `true` (tightly packed import), which no
+/// longer reproduces this padded-path measurement -- see PACK-00 for the
+/// packed-path numbers on the same device.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -89,6 +100,10 @@ void main() {
   testWidgets('VIEW-03 Pixel 3: delivered/dropped/accepted/presented in one running subscription', (tester) async {
     expect(kIsWeb, isFalse, reason: 'this measurement is for the mobile preview path on a physical device');
     await YuvFfi.initialize();
+
+    final previousPackPlanes = kYuvCameraPreviewPackPlanes;
+    kYuvCameraPreviewPackPlanes = false;
+    addTearDown(() => kYuvCameraPreviewPackPlanes = previousPackPlanes);
 
     final cameras = await availableCameras();
     expect(cameras, isNotEmpty, reason: 'a physical camera must be available on the driving device');
