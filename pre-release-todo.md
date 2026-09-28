@@ -53,29 +53,29 @@
 ---
 
 ### RA-05 — Зелёная джоба `analyze-and-test-vm (3.38.10)`
-**Status:** IN_PROGRESS · **Tier:** T3 · **Owner:** Luna · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
+**Status:** DONE · **Tier:** T3 · **Owner:** Luna · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
 
 #### Problem / Goal
-Джоба красная в каждом run на `release/0.4.2` (11 из 11 проверенных). Текущая причина (run 36335618257): `flutter analyze lib test` на Flutter 3.38.10 даёт 4 info `deprecated_member_use_from_same_package` в `test/opt14_copy_contract_test.dart` (строки 19, 26, 51, 82). На 3.44.9 эта же диагностика не выдаётся, поэтому локально и во второй матричной джобе всё чисто. После analyze в джобе идут сборка native и `flutter test` — на 3.38.10 они ни разу не выполнялись и могут открыть следующую ошибку.
+Джоба падала на Flutter 3.38.10 из-за `deprecated_member_use_from_same_package`. Первопричина и итог проверки записаны в Executor Report ниже.
 
 #### Architect Decision
-Первой строкой `test/opt14_copy_contract_test.dart` добавить `// ignore_for_file: deprecated_member_use_from_same_package`: тест намеренно проверяет внутренний транспорт, который ключуется устаревшим `YuvFileFormat`. На Flutter 3.38.10 этот же analyzer также сообщает о шести других намеренных same-package deprecation calls в legacy API и тестах; чтобы сохранить ограничение «не менять `lib/`», запускать `flutter analyze --no-fatal-infos lib test`. Warnings и errors остаются блокирующими; текущий Flutter 3.44.9 выводит для тех же файлов 0 info.
+`test/plane_row_copy_contract_test.dart` имеет `// ignore_for_file: deprecated_member_use_from_same_package`: тест намеренно проверяет внутренний транспорт, который ключуется устаревшим `YuvFileFormat`. На Flutter 3.38.10 этот же analyzer также сообщает о шести других намеренных same-package deprecation calls в legacy API и тестах; чтобы сохранить ограничение «не менять `lib/`», запускать `flutter analyze --no-fatal-infos lib test`. Warnings и errors остаются блокирующими; текущий Flutter 3.44.9 выводит для тех же файлов 0 info.
 
 #### Constraints / Non-goals
 Не менять `lib/`, не поднимать нижнюю границу SDK, не убирать 3.38.10 из матрицы. Если `flutter test` на 3.38.10 падает из-за реальной несовместимости пакета (а не теста) — ARCHITECT_REQUIRED с логом: это решение Engineer о границе `flutter: '>=3.38.0'`.
 
 #### Definition of Done
-- [ ] Обе матричные джобы `analyze-and-test-vm` зелёные в CI-run
-- [ ] Нет изменений в `lib/`; устаревшее внутреннее использование остаётся видимым в CI, но analyzer info не валит только эту проверку
+- [x] Обе матричные джобы `analyze-and-test-vm` зелёные в CI-run `36413754181`
+- [x] Нет изменений в `lib/`; устаревшее внутреннее использование остаётся видимым в CI, но analyzer info не валит только эту проверку
 
 #### Validation / Testing
 `flutter analyze --no-fatal-infos lib test`; ссылка на зелёный CI-run.
 
 #### Executor Report
-Добавлен `// ignore_for_file: deprecated_member_use_from_same_package` в целевой тест. CI run `36411031370` на Flutter 3.38.10 нашёл ещё шесть same-package deprecation infos в трёх legacy-файлах `lib/` и двух тестах; на 3.44.9 эти же info отсутствуют. Из-за запрета менять `lib/` шаг Analyze запускается с `--no-fatal-infos`; warnings и errors остаются блокирующими. Локально флаг принят Flutter 3.44.9; ожидается новый CI run на обеих версиях.
+Добавлен `// ignore_for_file: deprecated_member_use_from_same_package` в `test/plane_row_copy_contract_test.dart`. CI run `36411031370` на Flutter 3.38.10 нашёл ещё шесть same-package deprecation infos в трёх legacy-файлах `lib/` и двух тестах; на 3.44.9 эти же info отсутствуют. Из-за запрета менять `lib/` шаг Analyze запускается с `--no-fatal-infos`; warnings и errors остаются блокирующими. Новый CI run `36413754181` подтвердил зелёные матричные Analyze/Test jobs на обеих версиях.
 
 #### Review
-Ожидает проверки нового CI run после изменения analyzer invocation.
+Проверено по CI run `36413754181`: обе версии Flutter прошли Analyze и Test. Для 3.38.10 info остаются видимыми, но не блокируют анализ; ошибки и warnings по-прежнему блокируют.
 
 ---
 
@@ -174,7 +174,7 @@ YAML-парсинг локально; ссылка на CI-run.
 ---
 
 ### RA-04 — Переименовать тесты с номерами задач
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-01, RA-05, RA-06 · **Rejection Count:** 0
+**Status:** IN_PROGRESS · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-01, RA-05, RA-06 · **Rejection Count:** 0
 
 #### Architect Decision
 `git mv`:
