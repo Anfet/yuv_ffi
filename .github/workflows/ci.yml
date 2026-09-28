@@ -679,6 +679,8 @@ jobs:
               throw "WASM package asset is missing or empty: $asset"
             }
           }
+          git restore --worktree -- example/windows/flutter/generated_plugin_registrant.cc example/windows/flutter/generated_plugin_registrant.h example/windows/flutter/generated_plugins.cmake
+          if ($LASTEXITCODE -ne 0) { throw 'Could not restore generated Windows plugin registrant files before package validation' }
           $logPath = Join-Path $env:RUNNER_TEMP 'publish-dry-run.log'
           $output = & flutter pub publish --dry-run 2>&1
           $publishExitCode = $LASTEXITCODE
