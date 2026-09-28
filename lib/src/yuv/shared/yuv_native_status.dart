@@ -1,7 +1,4 @@
-/// The `YuvStatus` values of the versioned native ABI v1
-/// (`doc/api-abi-0.4-design.md` section 9) and their Dart exception mapping
-/// (`doc/api-abi-0.4-design.md` section 2, contract 6, and section 7's
-/// [YuvNativeException] definition).
+/// Maps native ABI status values to Dart exceptions.
 ///
 /// This maps a single [int] returned by a `yuv_*_v1` symbol to the exception
 /// the typed IO/Web runners throw. It does not decide *when* a status is
@@ -37,13 +34,6 @@ const int yuvStatusUnsupportedFormat = 2;
 /// `YUV_STATUS_UNSUPPORTED_LAYOUT` (3): a structurally valid layout ABI v1
 /// does not implement.
 ///
-/// No `yuv_*_v1` entry point can currently return this value — see the
-/// Engineer's YUV-36b decision recorded in `todo.md`: every layout ABI v1
-/// defines is either accepted or rejected by a more specific status, so the
-/// set this status describes is empty in this ABI version. The mapping below
-/// still exists, because a future ABI revision may introduce a layout this
-/// build genuinely cannot support, and Dart must already know how to react
-/// to it without a follow-up release.
 const int yuvStatusUnsupportedLayout = 3;
 
 /// `YUV_STATUS_OVERFLOW` (4): geometry, stride, or span arithmetic could not
@@ -57,10 +47,6 @@ const int yuvStatusAllocationFailed = 5;
 /// `YUV_STATUS_INTERNAL_ERROR` (6): an operation-internal failure that is
 /// neither a caller mistake nor a resource exhaustion.
 ///
-/// This used to be the placeholder every ABI v1 kernel returned while only
-/// validation was implemented (YUV-36b). Those stubs are gone
-/// (YUV-22/23/31/32), so a [YuvNativeException] with this code now means a
-/// genuine internal defect rather than "kernel pending".
 const int yuvStatusInternalError = 6;
 
 /// `YUV_STATUS_UNSUPPORTED_COLOR` (7): a known format declaring a
@@ -69,13 +55,11 @@ const int yuvStatusUnsupportedColor = 7;
 
 /// Thrown for a native status that maps to neither [ArgumentError] nor
 /// [UnsupportedError]: `4 OVERFLOW`, `5 ALLOCATION_FAILED`, `6 INTERNAL_ERROR`,
-/// and any status value ABI v1 does not define
-/// (`doc/api-abi-0.4-design.md` section 2, contract 6).
+/// and any status value the ABI does not define.
 ///
 /// [statusCode] retains the raw `YuvStatus` value exactly as the native call
-/// returned it, including an unknown code -- see section 11: "any unknown
-/// non-zero value" still becomes a [YuvNativeException], not a silently
-/// dropped failure. [operation] names the public [YuvOperation] that was being
+/// returned it, including an unknown code. [operation] names the public
+/// [YuvOperation] that was being
 /// attempted, so a caught exception is actionable without a native stack
 /// trace; [message] additionally names the `yuv_*_v1` symbol that returned
 /// [statusCode], for diagnostics that need the exact native entry point.
@@ -100,7 +84,7 @@ class YuvNativeException implements Exception {
 }
 
 /// Translates a raw native `YuvStatus` [status] returned by [nativeSymbol]
-/// while attempting [operation] into the Dart result section 11 requires.
+/// while attempting [operation] into a Dart result.
 ///
 /// Returns `null` for `YUV_STATUS_OK` (0): the caller commits the destination
 /// and does not throw. Every other value throws before returning, per the
@@ -133,8 +117,7 @@ Never yuvThrowForStatus({required int status, required YuvOperation operation, r
     case yuvStatusInternalError:
       throw YuvNativeException(statusCode: status, operation: operation, message: '$nativeSymbol returned status $status');
     default:
-      // Any value ABI v1 does not define. Preserved rather than collapsed --
-      // see the class dartdoc.
+      // Preserve unknown values for diagnostics.
       throw YuvNativeException(statusCode: status, operation: operation, message: '$nativeSymbol returned unrecognized status $status');
   }
 }

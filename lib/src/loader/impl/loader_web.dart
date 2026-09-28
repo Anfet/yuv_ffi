@@ -26,9 +26,9 @@ YuvCapabilities? get capabilitiesIfInitialized => _capabilities;
 ///
 /// This reuses the WASM bootstrap loader and gives higher-level code a single
 /// entrypoint (`ensureInitialized`) across all platforms. Unlike IO, a missing
-/// export does not fail initialization here: Web is a partial WASM backend
-/// (`doc/api-abi-0.4-design.md` section 7), so the returned capabilities mark
-/// an operation supported only when its required export is actually present
+/// export does not fail initialization here: Web is a partial WASM backend, so
+/// capabilities mark an operation supported only when its required export is
+/// actually present
 /// on the loaded module.
 Future<YuvCapabilities> ensureInitialized() async {
   final module = await YuvWasmLoader.ensureInitialized();

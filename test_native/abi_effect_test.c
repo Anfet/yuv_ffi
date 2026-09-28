@@ -1,28 +1,5 @@
-/*
- * ABI v1 effect tests (YUV-22): grayscale, black-white, negate, chroma swap.
- *
- * YUV-11 reported six reference failures here, and each had a specific cause
- * that this file pins:
- *
- *  - grayscale truncated where the oracle rounds (MAE 0.264, max 1);
- *  - black-white used `> 128` where the documented threshold is `>= 128`,
- *    which flips exactly the pixels whose gray is 128 -- a 255-wide error;
- *  - negate inverted the stored Y/U/V samples, which is not RGB negation in
- *    limited range (MAE 8.152, max 134), and computed chroma as 256 - value,
- *    which is unrepresentable for an input of 0.
- *
- * The boundary cases are therefore not decoration: gray exactly 128, and a
- * chroma sample of exactly 0, are the inputs that separate the contract from
- * the defect. Both appear below as explicit vectors.
- *
- * The other half of the contract is that the three formats agree: one visible
- * image, stored as BGRA, I420, and NV12, must come back visibly equal after
- * the same effect. That is checked directly, with a tolerance that covers
- * 4:2:0 chroma quantization but nothing larger.
- *
- * Checks use volatile locals (MSVC C4127 under /W4 /WX) and report through the
- * exit code rather than abort().
- */
+/* Checks grayscale rounding, the black-white threshold, RGB-visible negate,
+ * chroma swap, and agreement across BGRA, I420, and NV12. */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -627,9 +604,7 @@ static void test_region(void) {
     expect_true("      destination padding intact", padding_intact(&destination));
 }
 
-/* ============================================================================
- * Chroma swap (YUV-31, section 14 Q1)
- * ============================================================================ */
+
 
 static void test_chroma_swap(void) {
     printf("Chroma swap\n");

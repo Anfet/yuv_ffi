@@ -74,9 +74,9 @@ void debugResetLoader() {
 /// Rethrows the original error. An unsupported platform throws
 /// [UnsupportedError]; a library that cannot be opened throws the platform's
 /// own FFI error, with its message and stack trace preserved. Native IO
-/// initialization additionally requires the complete ABI v1 symbol manifest
-/// (`doc/api-abi-0.4-design.md` section 7): a library missing any required
-/// `yuv_*_v1` export fails initialization with [StateError] naming the missing
+/// initialization additionally requires every symbol in the ABI v1 manifest.
+/// A library missing any required `yuv_*_v1` export fails initialization with
+/// [StateError] naming the missing
 /// symbols, rather than returning capabilities that silently mark them
 /// unsupported.
 Future<YuvCapabilities> ensureInitialized() async {
@@ -138,10 +138,8 @@ ffi.DynamicLibrary _openIfNeeded() {
 
 /// Opens the library by its installed name, never by a build-tree path.
 ///
-/// `native/src/build/libyuv_ffi.*` used to be hardcoded for Linux and macOS.
-/// That directory is an artifact of building the CMake target in place: it does
-/// not exist in a published package or in an application bundle, so any consumer
-/// outside this repository failed at the first FFI call.
+/// Resolving the installed library name works in published packages and
+/// application bundles, where a repository build-tree path is unavailable.
 ///
 /// The contract per platform:
 /// - Android/Linux load the installed shared object by name, so the dynamic
@@ -159,11 +157,8 @@ ffi.DynamicLibrary _openYuvLibrary() {
     // command-line host — links nothing, and `process()` there resolves to a
     // handle whose first symbol lookup throws "symbol not found". Falling back
     // to the installed dylib keeps both hosts working.
-    // Probed by an ABI v1 symbol, named from the shared manifest. It used to
-    // probe `yuv420_from_rgba8888`, one of the legacy processing exports
-    // YUV-52 removed: had the probe stayed, every macOS host would have fallen
-    // through to `open('libyuv_ffi.dylib')`, which in a real app bundle finds
-    // no such file and throws instead of using the already-linked symbols.
+    // Probe a symbol present in the linked library. Processing exports may be
+    // absent from a host executable even when its linked symbols are usable.
     final fromProcess = ffi.DynamicLibrary.process();
     if (fromProcess.providesSymbol(yuvSymbolConvertV1)) {
       return fromProcess;

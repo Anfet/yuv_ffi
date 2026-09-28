@@ -230,7 +230,7 @@ rect[4] = {left, top, right, bottom}`, as written by the 0.2.4 Dart `boxBlur`/`m
 
 ### Entry points
 
-Header: `src/yuv/abi/h/yuv_ops_v1.h`, via `src/yuv_ffi.h`. Contract: `doc/api-abi-0.4-design.md` sections 9–11.
+Header: `src/yuv/abi/h/yuv_ops_v1.h`, via `src/yuv_ffi.h`. Contract: `doc/archive/api-abi-0.4-design.md` sections 9–11.
 Every symbol has the form `YuvStatus f(const YuvConstFrameV1 *src, YuvMutableFrameV1 *dst, const <Options> *opt)`.
 All pointers are non-null, every options struct starts with `structSize = sizeof(...)` and `abiVersion = 1`,
 and all `reserved*` fields are zero. Verified: the Release DLL at `35c516e` exports exactly these 11 symbols.

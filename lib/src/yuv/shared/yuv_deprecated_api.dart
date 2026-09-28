@@ -9,45 +9,12 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
-/// The published `0.2.4` instance-method surface, forwarded to its `0.4.0` replacement
-/// (`doc/api-abi-0.4-design.md` sections 4 and 8).
+/// Deprecated instance methods that forward to the current [YuvImage] API.
 ///
-/// An extension rather than interface members, so adding it does not break an
-/// existing external `implements YuvImage`: every renamed member below used to
-/// live directly on the interface (with a `throw UnimplementedError()`
-/// default body) and has been removed from it, because an instance member
-/// would shadow the extension of the same name. `copy(blank:)` and
-/// `toImage()` are not here: `copy`'s name collides with the still-current
-/// `copy()`, so only its `blank` parameter is deprecated in place; `toImage()`
-/// is an unchanged target member that stays on the interface; and the
-/// named/unnamed factories cannot be expressed as extension members at all --
-/// see the still-deprecated members directly on [YuvImage] for those.
-///
-/// This package's own backends dispatch every mutating member below through
-/// [YuvLegacyDispatchAdapter] rather than its same-shaped `apply*`
-/// replacement. Forwarding straight to `apply*` would be simpler, but every
-/// `apply*` calls `yuvRequireCapability` first (REL-04) -- a precondition
-/// `0.2.4` never had. A caller that invoked one of these methods before
-/// initialization in `0.2.4` got argument validation or a native
-/// dispatch, never `UnsupportedError`; several pre-REL-06 tests
-/// (`bgra_mean_blur_contract_test.dart`, `conversions_test.dart`,
-/// `io_abi_v1_public_contract_test.dart`) pin that down. See
-/// [YuvLegacyDispatchAdapter]'s doc for the full reasoning.
-///
-/// A foreign `implements YuvImage` that does not provide
-/// [YuvLegacyDispatchAdapter] falls back to the receiver's own public
-/// `apply*`/`applyFormat` method instead -- which REL-04's already-accepted
-/// breaking change requires every `YuvImage` implementer to provide -- so a
-/// pre-existing foreign implementation still gets a working (if
-/// capability-gated) deprecated method rather than an outright failure. The
-// ignore: deprecated_member_use_from_same_package
-/// two exceptions are [swapNv] and [load]: neither can be expressed as a call
-/// to a public `apply*`/`applyFormat` member on a foreign receiver -- swapNv's
-/// two-step convert-then-swap cannot be staged atomically (see its own doc),
-/// and load's full format/geometry/plane replacement is not an operation the
-/// `0.4.0` interface exposes as a mutator at all (`YuvImage.decode` builds a
-/// new instance instead) -- so both throw [UnsupportedError] without mutating
-/// when the receiver is foreign, exactly as section 8 specifies.
+/// Package backends use their package-private legacy dispatch adapter.
+/// Foreign implementations use their current public methods where possible.
+/// [swapNv] and [load] throw [UnsupportedError] for a foreign implementation
+/// because their changes cannot be staged through the public API.
 extension DeprecatedYuvImageApi on YuvImage {
   /// Alias for [yPlane]. Never null: every format has a Y plane.
   @Deprecated('Use yPlane.')
@@ -107,18 +74,15 @@ extension DeprecatedYuvImageApi on YuvImage {
   /// every interleaved U/V sample value in place, and returns `this`.
   ///
   /// This is a two-step legacy path, not a simple alias for
-  /// [YuvImage.applyChromaSwap] (`doc/api-abi-0.4-design.md` section 14, Q1):
-  /// it preserves the historical output bytes and legacy `nv21` UV
-  /// interpretation without claiming a truthful NV21 format exists.
+  /// [YuvImage.applyChromaSwap].
   ///
   /// Unlike every other member of this extension, this one has no
   /// public-`apply*`-based fallback for a foreign `implements YuvImage`: the
   /// convert-then-swap sequence must publish only once, after both steps have
-  /// succeeded (section 13's transactional design), and a foreign receiver
+  /// succeeded, and a foreign receiver
   /// exposes no way to stage that atomically. Throws [UnsupportedError]
   /// without mutating for a receiver that does not implement
-  /// [YuvLegacyDispatchAdapter] -- the same fallback section 8 documents for
-  /// the legacy `load()` extension.
+  /// the package-private legacy dispatch adapter.
   @Deprecated(
     'Use applyFormat(YuvPixelFormat.nv12) followed by applyChromaSwap() if a two-step conversion is intended, '
     'or applyChromaSwap() directly on an image already in NV12.',
@@ -215,14 +179,11 @@ extension DeprecatedYuvImageApi on YuvImage {
   /// Decodes [stream] and replaces this image's format, geometry and planes
   /// in place.
   ///
-  /// Forwards to the package-private [YuvLegacyDispatchAdapter.legacyLoad]
-  /// atomic state-replacement adapter, the same pattern [swapNv] uses. A
-  /// foreign `implements YuvImage` that does not provide that adapter throws
+  /// The adapter replaces the full state atomically, as [swapNv] does. A
+  /// foreign `implements YuvImage` that does not provide it throws
   /// [UnsupportedError] without mutating the receiver -- there is no
-  /// `apply*`-based fallback for a full state replacement, unlike every other
-  /// member of this extension (`doc/api-abi-0.4-design.md` section 8). New
-  /// code uses the static `YuvImage.decode()` instead, which returns a new
-  /// image and never mutates a receiver.
+  /// `apply*`-based fallback for a full state replacement. Use the static
+  /// [YuvImage.decode] to create a new image instead.
   @Deprecated('Use the static YuvImage.decode().')
   Future<void> load(Stream<List<int>> stream) {
     final Object self = this;

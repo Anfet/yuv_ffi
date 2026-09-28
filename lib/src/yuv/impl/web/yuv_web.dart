@@ -28,11 +28,11 @@ import 'yuv_abi_v1_dispatch_web.dart';
 /// Web backend implementation, dispatching to the `yuv_ffi` WASM module.
 ///
 /// Format, geometry, plane, copy and serialization state lives in the shared
-/// [YuvImageState] this holds by composition (YUV-28); what remains here is the
+/// [YuvImageState] this holds by composition; what remains here is the
 /// WASM dispatch itself.
 ///
-/// Every operation goes through the ABI v1 transport (YUV-51), the same way the
-/// IO backend does (YUV-50): the public method validates and decides the
+/// Every operation goes through the ABI v1 transport, as on the IO backend:
+/// the public method validates and decides the
 /// destination shape, [YuvAbiV1WebRunner] stages descriptors in WASM linear
 /// memory and invokes exactly one `yuv_*_v1` symbol, and the result is published
 /// in a single step. A non-zero status throws out of the runner before any byte
@@ -245,7 +245,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   void legacyFromRgba8888(Uint8List bytes) {
     _state.validateRgba8888Length(bytes.length);
 
-    // RGBA is a convert-only source format (section 11), so this is a
+    // RGBA is a convert-only source format, so this is a
     // conversion into this image's own format rather than one of the effect
     // paths. The destination keeps this image's geometry.
     final result = YuvAbiV1WebRunner.convert(
@@ -308,16 +308,15 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
 
   @override
   YuvImage legacySwapNv() {
-    // Deprecated compatibility path (section 14, Q1): convert non-NV input to
-    // canonical NV12 first, then swap the chroma sample values.
+    // Convert non-NV input to canonical NV12 first, then swap the chroma
+    // sample values.
     //
     // Both steps run on local drafts and nothing is published until both have
     // succeeded. Converting through applyFormat() first would publish the
     // converted image before the swap was attempted, so a chroma swap that
     // returned a non-zero status would leave the receiver converted -- a
-    // visible partial result, which section 13 forbids. That is also why the
-    // revision is not snapshotted and restored here any more: there is only
-    // ever one publish, which advances it exactly once.
+    // visible partial result. Keeping both steps on drafts allows one publish,
+    // which advances the revision exactly once.
     final Object module = _requireModule();
     // ignore: deprecated_member_use_from_same_package
     final YuvFileFormat sourceFormat = _state.format;
@@ -464,15 +463,15 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     return module.rawModule;
   }
 
-  // -- 0.4.0 `apply*`/`to*` surface ------------------------------------------
+  // Current capability-aware operation surface.
 
   /// The currently loaded backend's capability snapshot.
   ///
   /// `null` before [YuvFfi.initialize] has completed successfully, mirroring
   /// [YuvWasmLoader.moduleIfInitialized]'s own post-initialization cache. A
   /// capability check against a `null` snapshot is unconditionally
-  /// unsupported: Web never reports success through a silent no-op (section
-  /// 2, contract 7), including before initialization.
+  /// unsupported: Web never reports success through a silent no-op, including
+  /// before initialization.
   YuvCapabilities? get _capabilities => loader.capabilitiesIfInitialized;
 
   void _requireCapability(YuvOperation operation, {required YuvPixelFormat sourceFormat, YuvPixelFormat? destinationFormat}) {
@@ -656,7 +655,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       // Shared with the native reference through YuvImageState.packedBgraBytes,
       // which is what keeps the two backends byte-identical here: it walks the
       // plane through its own rowStride and pixelStride, so both row padding
-      // and a per-pixel gap (pixelStride > 4, REL-12) are excluded the same way
+      // and a per-pixel gap (pixelStride > 4) are excluded the same way
       // on both backends. See that method's doc.
       return _state.packedBgraBytes();
     }

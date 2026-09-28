@@ -1,15 +1,7 @@
-/// How a `YuvImage` factory that accepts caller-supplied `planes` stores them.
+/// Controls how factories store caller-supplied `YuvPlane` instances.
 ///
-/// PACK-01A found that dense packing (`YuvImagePack.pack()`) can matter a lot
-/// for performance -- on a real Pixel 3, packing I420 chroma from
-/// `pixelStride == 2` down to `1` cut `applyRotation` from 15.0 ms to 4.5 ms.
-/// PACK-01B lets every `planes`-accepting factory apply that packing at
-/// construction time instead of requiring a separate `pack()` call
-/// afterwards.
-///
-/// Only affects factory construction, not a permanent property of the image:
-/// [YuvImage.applyPlanes] still accepts and keeps whatever strides the caller
-/// passes it, regardless of which [YuvPlaneLayout] the image was built with.
+/// Factories default to [packed]. `YuvImage.copy()`, `YuvImage.decode()`, and
+/// `YuvImage.applyPlanes()` preserve their plane layout.
 enum YuvPlaneLayout {
   /// Keep the caller's plane layout exactly as given: row stride, pixel
   /// stride and every padding byte, unchanged.

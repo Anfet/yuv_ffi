@@ -35,7 +35,7 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_chroma_swap_v1(const YuvConstFrameV1 *source, Yu
         return pairStatus;
     }
 
-    /* Regional chroma swap is not a public 0.4.0 operation, so the region
+    /* Regional chroma swap is not supported, so the region
      * must be disabled rather than merely ignored: silently dropping a
      * region the caller set would swap the whole frame they meant to
      * protect. */
@@ -77,7 +77,7 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_chroma_swap_v1(const YuvConstFrameV1 *source, Yu
         return YUV_STATUS_OK;
     }
 
-    /* Section 14 Q1: a channel-value effect on stored samples, not a format
+    /* A channel-value effect on stored samples, not a format
      * conversion and not a visible-pixel operation. Y is copied byte for byte
      * and each UV pair is written back as (V,U); nothing is decoded to RGB,
      * because a round trip would quantize a frame whose samples the caller

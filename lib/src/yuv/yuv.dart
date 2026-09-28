@@ -14,18 +14,12 @@ import 'impl/yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_image.dart' if (d
 
 export 'shared/yuv_deprecated_api.dart';
 
-// `YuvImageImpl` (whichever backend this conditional import resolves to) is
-// deliberately not exported: it is an internal implementation detail behind
-// the `YuvImage` interface, reachable by callers only through the factory
-// constructors below. REL-06 hides it; earlier revisions exported the impl
-// library wholesale.
-
 /// Represents an in-memory image in one of supported YUV/BGRA formats.
 ///
 /// Use factory constructors to create an instance for a specific format:
 /// [YuvImage.i420], [YuvImage.nv12], or [YuvImage.bgra].
 ///
-/// Mutation model (`io` and `web` backends):
+/// Both backends provide the same mutation model:
 /// - In-place (returns `this`): [applyGrayscale], [applyBlackWhite],
 ///   [applyNegate], [applyGaussianBlur], [applyMeanBlur], [applyBoxBlur],
 ///   [applyCrop], [applyFlipHorizontal], [applyFlipVertical],
@@ -34,30 +28,13 @@ export 'shared/yuv_deprecated_api.dart';
 /// - Returns a new, independent image: [copy], [cropped], [rotated],
 ///   [toI420], [toNv12], [toBgra], and the static [YuvImage.decode].
 ///
-/// The published `0.2.4` instance-method surface (`blackwhite()`, `gaussianBlur()`,
-/// `crop()`, `swapNv()`, `toYuvNv21()`, `save()`, `load()`, and the rest)
-/// still compiles: it lives in the deprecated `DeprecatedYuvImageApi`
-/// extension, forwarding to the members above (`doc/api-abi-0.4-design.md`
-/// sections 4 and 8). `save()` forwards to [encodeTo] with identical bytes;
-/// `load()` mutates in place through a package-private atomic
-/// state-replacement adapter and throws [UnsupportedError] without mutating
-/// on a foreign `implements YuvImage` -- new code uses the static
-/// [YuvImage.decode], which returns a new image and never mutates a receiver.
-///
-/// Breaking change for a foreign `implements YuvImage`: every `apply*`/`to*`
-/// member added for `0.4.0` is a required interface member, so an external
-/// class that implements this interface directly (rather than extending a
-/// backend this package provides) must implement them too. This is the same
-/// breaking change already introduced when those members were added; nothing
-/// here adds further required members beyond that set.
+/// Deprecated instance methods remain available through
+/// [DeprecatedYuvImageApi].
 abstract interface class YuvImage {
   /// Pixel format of the current image.
   ///
-  /// A legacy `nv21`-labeled image (created through the legacy `nv21`
-  /// or unnamed factory) reports
-  /// [YuvPixelFormat.nv12] here: the truthful name for the same canonical
-  /// semi-planar storage (section 4, lines ~112/144 of
-  /// `doc/api-abi-0.4-design.md`).
+  /// Legacy images labeled `nv21` report [YuvPixelFormat.nv12], which names
+  /// their interleaved UV storage.
   YuvPixelFormat get format;
 
   /// Image width in pixels.
@@ -86,18 +63,18 @@ abstract interface class YuvImage {
   /// [width] and [height] are image dimensions in pixels.
   /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
   /// when [planes] is omitted.
-  /// If [planes] is provided, plane data is copied from it, according to
-  /// [layout] (PACK-01B): [YuvPlaneLayout.packed] (the default) copies only
+  /// If [planes] is provided, plane data is copied according to [layout].
+  /// [YuvPlaneLayout.packed] is the default and copies only
   /// the visible samples into a tightly packed layout, discarding row padding
   /// and any per-sample pixel gap; [YuvPlaneLayout.preserve] keeps the given
   /// `rowStride`/`pixelStride` byte-for-byte. [layout] is ignored when
-  /// [planes] is omitted -- an allocated image is always tight already.
+  /// [planes] is omitted because allocated images are already tightly packed.
   factory YuvImage.i420(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes, YuvPlaneLayout layout}) =
       YuvImageImpl.i420;
 
   /// Creates an NV21-labeled image.
   ///
-  /// Note: in this project the `nv21` label is intentionally mapped to UV order.
+  /// Its bytes use interleaved UV order.
   ///
   /// [width] and [height] are image dimensions in pixels.
   /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
@@ -135,8 +112,7 @@ abstract interface class YuvImage {
 
   /// Creates an NV12 image with the truthfully named semi-planar storage.
   ///
-  /// Canonical replacement for the legacy `nv21` factory: same interleaved chroma
-  /// storage, without claiming the legacy NV21 byte order.
+  /// Uses interleaved UV chroma storage.
   ///
   /// [width] and [height] are image dimensions in pixels.
   /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
@@ -205,13 +181,10 @@ abstract interface class YuvImage {
   /// Decodes [stream] into a new, independent image.
   ///
   /// Never mutates an existing instance -- there is no receiver, only a fresh
-  /// image built from the decoded payload (`doc/api-abi-0.4-design.md`
-  /// sections 4 and 8; the legacy mutating `load(stream)` moved to the
-  /// deprecated `DeprecatedYuvImageApi.load` extension, which additionally
-  /// requires a package-private atomic state-replacement adapter).
+  /// image built from the decoded payload.
   ///
   /// Throws [FormatException] when [stream] holds a malformed or unsupported
-  /// (for example a `0.2.4` version-1) payload.
+  /// payload.
   static Future<YuvImage> decode(Stream<List<int>> stream) async {
     final draft = await YuvCodec.decodeStream(stream);
     return YuvImageImpl(
@@ -230,21 +203,10 @@ abstract interface class YuvImage {
   /// Throws if pixel decode fails in the underlying engine.
   Future<ui.Image> toImage() => throw UnimplementedError();
 
-  // -- 0.4.0 `apply*`/`to*` surface (doc/api-abi-0.4-design.md sections 2-4,
-  // 13) --------------------------------------------------------------------
-  //
-  // Every `apply*` below calls `yuvRequireCapability` first, before any
-  // allocation, native/WASM invocation, or state change (todo.md REL-04's
-  // post-REL-09 addendum). On success it mutates in place, advances the
-  // revision exactly once, and returns `identical(this)`. On failure --
-  // capability, argument, or a non-zero native status -- bytes, format,
-  // geometry and revision are left exactly as they were. A defined no-op
-  // (radius 0, an empty normalized crop/ROI, rotation 0, same-format
-  // `applyFormat`) short-circuits before dispatch and does not advance the
-  // revision. The legacy instance methods that used to live directly above
-  // this surface (`blackwhite()`, `crop()`, `swapNv()`, and the rest) were
-  // retired into the deprecated `DeprecatedYuvImageApi` extension (REL-06),
-  // which forwards every one of them to a member below.
+  /// The `apply*` methods validate backend capability before changing this
+  /// image. Successful calls mutate it in place, advance [revision] once, and
+  /// return `this`. Rejected calls leave its bytes, format, geometry, and
+  /// revision unchanged. A no-op does not advance [revision].
 
   /// Replaces the current pixel content from tight RGBA8888 [bytes], in this
   /// image's own format and geometry, and returns `this`.
@@ -311,9 +273,7 @@ abstract interface class YuvImage {
   /// Swaps every interleaved U/V sample value of this NV12 image in place,
   /// keeping the frame labeled NV12, and returns `this`.
   ///
-  /// This is a visible channel-value effect, not a format conversion (section
-  /// 14, Q1). Throws [UnsupportedError] for I420/BGRA8888 without converting
-  /// or mutating.
+  /// Throws [UnsupportedError] for I420 and BGRA8888 without mutating.
   YuvImage applyChromaSwap() => throw UnimplementedError();
 
   /// Returns a new, independent image cropped to [region].

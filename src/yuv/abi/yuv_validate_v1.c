@@ -37,15 +37,15 @@ YuvStatus yuv_validate_v1_status_from_view(YuvViewStatus status) {
 
 /*
  * I420 and NV12 carry BT.601 limited-range luma/chroma; BGRA and RGBA are
- * already in the display space and declare no matrix or range. Section 9 makes
- * these the ONLY two combinations in ABI v1.
+ * already in the display space and declare no matrix or range. These are the
+ * only combinations accepted by ABI v1.
  *
  * The two failure modes are deliberately different statuses, and the order of
  * the checks below is what separates them:
  *
  *   - a value this ABI does not define at all (matrix 99) is an unknown
- *     numeric value, which section 9 groups with null pointers and bad
- *     versions as INVALID_ARGUMENT -- the descriptor is malformed;
+ *     numeric value, like null pointers and bad versions, is malformed and
+ *     returns INVALID_ARGUMENT;
  *   - a value this ABI does define, paired with a format it does not go with
  *     (BGRA declaring BT601), is UNSUPPORTED_COLOR -- the descriptor is
  *     well-formed and simply names a combination this version does not
@@ -128,8 +128,8 @@ static YuvStatus yuv_validate_v1_frame_prefix(
     }
 
     /* An unknown numeric format is INVALID_ARGUMENT, not UNSUPPORTED_FORMAT:
-     * section 9 lists it alongside null pointers and bad ABI versions as a
-     * malformed descriptor. UNSUPPORTED_FORMAT is reserved for a KNOWN format
+     * it is malformed like null pointers and bad ABI versions.
+     * UNSUPPORTED_FORMAT is reserved for a KNOWN format
      * in a pairing an operation does not accept, which each entry point
      * decides for itself through yuv_validate_v1_format_pair(). */
     uint32_t expectedPlaneCount = yuv_validated_view_plane_count(format);

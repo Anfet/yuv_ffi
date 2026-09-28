@@ -2,7 +2,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 
 /// Immutable snapshot of which public operations the currently loaded backend
-/// actually supports (`doc/api-abi-0.4-design.md` section 7).
+/// actually supports.
 ///
 /// A capability answers whether dispatch exists for an operation and format
 /// pair, not whether arbitrary input to that operation is valid: invalid
@@ -27,8 +27,7 @@ abstract interface class YuvCapabilities {
 /// export actually resolved -- a real dynamic-library symbol on IO
 /// (`dlsym`/`providesSymbol`), a real WASM export on Web -- never a hardcoded
 /// "everything is supported" assumption. [supports] then narrows an available
-/// operation further by the format-pair matrix in
-/// `doc/api-abi-0.4-design.md` section 11.
+/// operation further by its supported format pairs.
 final class YuvCapabilitiesSnapshot implements YuvCapabilities {
   /// Creates a snapshot naming exactly [availableOperations] as backed by a
   /// resolved export. The set is defensively copied and frozen, so a caller
@@ -52,9 +51,8 @@ final class YuvCapabilitiesSnapshot implements YuvCapabilities {
         return false;
       }
     } else if (destinationFormat != null) {
-      // Section 7: destinationFormat "must be omitted for all other
-      // operations". Supplying one for a same-format operation is a malformed
-      // query, which returns false rather than throwing.
+      // Supplying a destination for a same-format operation is malformed and
+      // returns false rather than throwing.
       return false;
     }
     return yuvAbiV1FormatPairSupported(operation, sourceFormat: sourceFormat, destinationFormat: destinationFormat);
@@ -63,9 +61,7 @@ final class YuvCapabilitiesSnapshot implements YuvCapabilities {
 
 /// Throws [UnsupportedError] naming [operation] and the formats involved when
 /// [capabilities] does not support it, before any allocation, native
-/// invocation, or revision change (section 7: "Calling one whose exact
-/// format/pair capability is false throws `UnsupportedError` before
-/// allocation, native invocation, or revision change.").
+/// invocation, or revision change.
 ///
 /// Callers that dispatch an operation against a backend should call this
 /// first and let it throw rather than proceeding into backend-specific

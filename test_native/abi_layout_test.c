@@ -1,20 +1,4 @@
-/*
- * ABI v1 layout test (YUV-36a).
- *
- * The header src/yuv/abi/h/yuv_abi_v1.h already fails to COMPILE on a target
- * whose layout differs from doc/api-abi-0.4-design.md sections 9 and 10. This
- * test adds the other half of the same guarantee: it prints the layout the
- * toolchain actually produced, so a reviewer on a new target (native32,
- * native64, wasm32) can read the real numbers instead of trusting that the
- * build "just passed", and it re-checks each documented row at runtime.
- *
- * Why the checks are not written as plain constant expressions: MSVC reports
- * C4127 ("conditional expression is constant") for a comparison of two
- * compile-time constants, and the harness builds with /W4 /WX, so such a
- * check would fail the build rather than run. Both sides of every comparison
- * therefore pass through a `volatile` local, which forces the comparison to be
- * evaluated at runtime.
- */
+/* Checks public ABI descriptor/options sizes, offsets, and constant values. */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -26,16 +10,7 @@
 static int test_count = 0;
 static int failures = 0;
 
-/*
- * Routes both operands through volatile locals so the comparison happens at
- * runtime (see the C4127 note above), reports the actual and expected values
- * on mismatch, and keeps going so one run reports every broken row rather
- * than only the first.
- *
- * Failure is reported through the exit code, never abort(): on Windows an
- * abort() exits with 0xC0000409, which CTest does not treat as an ordinary
- * non-zero return.
- */
+
 static void expect_size(const char *label, size_t actual, size_t expected) {
     volatile size_t a = actual;
     volatile size_t e = expected;

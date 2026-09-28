@@ -283,9 +283,8 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_gaussian_blur_v1(const YuvConstFrameV1 *source, 
         return YUV_STATUS_INVALID_ARGUMENT;
     }
 
-    /* radius 0 is a defined no-op rather than an error, but a radius past
-     * 256 would make the kernel area exceed what the accumulators and the
-     * reference oracle are defined for. */
+    /* Radius 0 is a defined no-op rather than an error; values above 256 are
+     * outside the supported kernel range. */
     if (options->radius > 256) {
         return YUV_STATUS_INVALID_ARGUMENT;
     }

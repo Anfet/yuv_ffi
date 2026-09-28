@@ -75,15 +75,15 @@ static inline uint8_t yuv_convert_clip(int32_t value) {
     return (uint8_t)value;
 }
 
-/* Shared by every YUV->BGRA path (fast and generic, NV12 and I420) so the
+/* Shared by every YUV to BGRA path (fast and generic, NV12 and I420) so the
  * BT.601 limited-range formula exists in exactly one place. c298 is
  * 298 * (Y - 16); bTerm/gTerm/rTerm are the chroma-derived additive terms
  * (516*d+128, -100*d-208*e+128, 409*e+128) computed once per chroma sample by
  * the caller and reused for both Y values that share it. This is the same
  * sum as (298*c + 516*d + 128) >> 8 etc., just grouped so the chroma part is
- * shared -- see the Architect Decision for why the regrouping cannot change
- * the result (int32_t throughout, well under overflow range). Byte-by-byte
- * writes, not a uint32_t cast: an aliased, possibly misaligned uint8_t* store
+ * shared. All intermediate values use int32_t and remain well within range.
+ * Byte-by-byte writes, not a uint32_t cast: an aliased, possibly misaligned
+ * uint8_t* store
  * of a wider type is undefined behavior under strict aliasing. */
 static inline void yuv_convert_store_bgra(
     uint8_t *to, int32_t c298, int32_t bTerm, int32_t gTerm, int32_t rTerm) {

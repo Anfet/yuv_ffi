@@ -22,15 +22,13 @@ import 'package:yuv_ffi/src/yuv_capabilities.dart';
 
 /// Native backend implementation, dispatching to the `yuv_ffi` C library.
 ///
-/// Format, geometry, plane, copy and serialization state lives in the shared
-/// [YuvImageState] this holds by composition (YUV-28); what remains here is the
-/// FFI dispatch itself.
+/// Format, geometry, plane, copy, and serialization state lives in the shared
+/// [YuvImageState]; this class handles FFI dispatch.
 ///
-/// Every operation goes through the ABI v1 transport (YUV-50): the public
-/// method validates and decides the destination shape, [YuvAbiV1Runner] stages
-/// descriptors and invokes exactly one `yuv_*_v1` symbol, and the result is
-/// published in a single step. A non-zero native status throws out of the
-/// runner before any byte is read back, so a failed operation leaves this
+/// Each operation validates its arguments and decides the destination shape.
+/// [YuvAbiV1Runner] stages descriptors and invokes one `yuv_*_v1` symbol. The
+/// result is published in one step. A non-zero native status throws before
+/// the runner reads any destination byte, so a failed operation leaves this
 /// image's bytes, metadata and revision untouched.
 class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapter {
   final YuvImageState _state;
@@ -117,13 +115,12 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
 
   /// Creates a BGRA image, optionally adopting a caller-supplied plane.
   ///
-  /// [layout] defaults to [YuvPlaneLayout.packed] (PACK-01B): a padded
-  /// caller-supplied plane is repacked to `rowStride == width * 4` at
-  /// construction time. Pass [YuvPlaneLayout.preserve] to keep the caller's
-  /// `rowStride`/`pixelStride` exactly as given, as every entry point did
-  /// before PACK-01B. This matches the generic
-  /// `YuvImage(YuvFileFormat.bgra8888, ...)` constructor, so both entry points
-  /// share one validation and copy contract.
+  /// [layout] defaults to [YuvPlaneLayout.packed], which repacks a padded
+  /// caller-supplied plane to `rowStride == width * 4` during construction.
+  /// Pass [YuvPlaneLayout.preserve] to keep the caller's `rowStride` and
+  /// `pixelStride`. This factory and the generic
+  /// `YuvImage(YuvFileFormat.bgra8888, ...)` constructor share the same
+  /// validation and copy contract.
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes, YuvPlaneLayout layout = YuvPlaneLayout.packed})
     // ignore: deprecated_member_use_from_same_package
     : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: planes, layout: layout);
@@ -238,9 +235,8 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   void legacyFromRgba8888(Uint8List bytes) {
     _state.validateRgba8888Length(bytes.length);
 
-    // RGBA is a convert-only source format (section 11), so this is a
-    // conversion into this image's own format rather than one of the effect
-    // paths. The destination keeps this image's geometry.
+    // Converts the RGBA8888 source to this image's format while preserving its
+    // geometry.
     final result = YuvAbiV1Runner.convert(
       source: YuvAbiV1ImageTransport.rgbaSource(bytes: bytes, width: width, height: height),
       destinationLayout: YuvAbiV1ImageTransport.destination(format: _state.format, width: width, height: height),
@@ -301,16 +297,11 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
 
   @override
   YuvImage legacySwapNv() {
-    // Deprecated compatibility path (section 14, Q1): convert non-NV input to
-    // canonical NV12 first, then swap the chroma sample values.
+    // Convert to NV12 if needed, then swap the interleaved chroma samples.
     //
-    // Both steps run on local drafts and nothing is published until both have
-    // succeeded. Converting through applyFormat() first would publish the
-    // converted image before the swap was attempted, so a chroma swap that
-    // returned a non-zero status would leave the receiver converted -- a
-    // visible partial result, which section 13 forbids. That is also why the
-    // revision is not snapshotted and restored here any more: there is only
-    // ever one publish, which advances it exactly once.
+    // Both steps use local drafts. The receiver changes only after both
+    // succeed, so a failure leaves it untouched and success advances its
+    // revision exactly once.
     // ignore: deprecated_member_use_from_same_package
     final YuvFileFormat sourceFormat = _state.format;
     final YuvAbiV1FrameInput swapSource;
@@ -431,7 +422,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     return this;
   }
 
-  // -- 0.4.0 `apply*`/`to*` surface ------------------------------------------
+  // -- `apply*`/`to*` processing surface -------------------------------------
 
   /// The currently loaded backend's capability snapshot.
   ///
@@ -529,9 +520,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   YuvImage applyChromaSwap() {
     // ignore: deprecated_member_use_from_same_package
     if (_state.format != YuvFileFormat.nv21) {
-      // NV12-only per section 14, Q1: rejected before the capability check
-      // even reads the (irrelevant) destination format, and before any
-      // allocation or dispatch.
+      // Reject non-NV12 input before capability lookup, allocation, or dispatch.
       throw UnsupportedError('applyChromaSwap is only supported for NV12 images, not ${_state.format}.');
     }
     _requireCapability(YuvOperation.chromaSwap, sourceFormat: _state.format.pixelFormat);
@@ -543,8 +532,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     _requireCapability(YuvOperation.crop, sourceFormat: _state.format.pixelFormat);
     final clamped = _state.clampCrop(region);
     if (clamped == null) {
-      // A semantic no-op still returns an independent copy (section 4: "never
-      // alias even for a semantic no-op"), never `this`.
+      // Return an independent copy even when the crop selects no pixels.
       return copy();
     }
     final result = YuvAbiV1Runner.crop(source: _sourceFrame(), left: clamped.left, top: clamped.top, width: clamped.width, height: clamped.height);
@@ -598,9 +586,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   YuvImage _toIndependent(YuvFileFormat target, YuvOperation operation) {
     _requireCapability(operation, sourceFormat: _state.format.pixelFormat, destinationFormat: target.pixelFormat);
     if (_state.format == target) {
-      // Same-format `to*` still returns a deep copy (section 4: "same-format
-      // `to*` return an independent deep copy while leaving the source
-      // revision unchanged").
+      // Return an independent copy without changing the source revision.
       return copy();
     }
     final result = YuvAbiV1Runner.convert(

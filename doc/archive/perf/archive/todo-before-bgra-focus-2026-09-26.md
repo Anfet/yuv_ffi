@@ -28,7 +28,7 @@
 
 ### BLUR-00 — один воспроизводимый прогон — DONE
 
-Принято: минимальный Dart Release runner принимает `box`, `mean` или `gaussian`; PNG decode, NV12 подготовка и source clone вынесены из таймера. Все операции прошли на Pixel 3 для исходного 1477×1065 и детерминированного 720×360. Raw samples, медианы, spread, SHA и параметры записаны в [BLUR-00 report](../results/blur_reference_pixel3_blur00.md) и `doc/perf/results/blur_raw/`. Flutter analyze runner прошёл. Baseline 720×360: Box 8.562 ms, Mean 8.644 ms, Gaussian 225.356 ms.
+Принято: минимальный Dart Release runner принимает `box`, `mean` или `gaussian`; PNG decode, NV12 подготовка и source clone вынесены из таймера. Все операции прошли на Pixel 3 для исходного 1477×1065 и детерминированного 720×360. Raw samples, медианы, spread, SHA и параметры записаны в [BLUR-00 report](../results/blur_reference_pixel3_blur00.md) и `doc/archive/perf/results/blur_raw/`. Flutter analyze runner прошёл. Baseline 720×360: Box 8.562 ms, Mean 8.644 ms, Gaussian 225.356 ms.
 
 ### BLUR-01 — Box без RGB
 

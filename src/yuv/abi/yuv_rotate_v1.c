@@ -25,7 +25,7 @@ typedef struct {
     uint32_t degrees;
 } YuvRotateContextV1;
 
-/* Clockwise, per section 11: 90 takes destination (x,y) from source
+/* Clockwise: 90 takes destination (x,y) from source
  * (y, height-1-x), 180 from (width-1-x, height-1-y), 270 from (width-1-y, x). */
 static void yuv_rotate_v1_map(
     void *context, uint32_t destinationX, uint32_t destinationY, uint32_t *outSourceX, uint32_t *outSourceY) {

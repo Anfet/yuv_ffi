@@ -1,29 +1,5 @@
-/*
- * ABI v1 status and atomicity tests (YUV-36b).
- *
- * Covers two things the design document treats as contract, not detail:
- *
- *  1. Each status reachable through ABI v1 validation has a concrete case.
- *     Status 3 is reserved for a future unsupported layout and its numeric
- *     value is pinned here; YUV-36d tests its Dart exception mapping directly.
- *
- *  2. Rejected descriptors leave the destination byte-for-byte untouched.
- *     Negative cases use a destination pre-filled with a canary pattern and
- *     check that pattern after the call. Valid calls separately confirm that
- *     validation reaches the temporary kernel stub.
- *
- * Kernels land task by task. An operation whose kernel is implemented asserts
- * YUV_STATUS_OK here; one still stubbed asserts YUV_STATUS_INTERNAL_ERROR,
- * which proves validation was passed rather than short-circuited and starts
- * failing the moment that kernel lands without this file being updated --
- * the intended reminder. The transforms (YUV-31) are implemented; their
- * pixel-level correctness is covered by abi_transform_test.c.
- *
- * Checks are routed through helpers taking volatile locals so MSVC does not
- * report C4127 (constant conditional) under /W4 /WX, and failures are reported
- * through the exit code rather than abort(), whose 0xC0000409 on Windows CTest
- * does not treat as an ordinary non-zero return.
- */
+/* Checks reachable ABI statuses, validation of malformed descriptors, and
+ * byte-for-byte destination atomicity on rejected calls. */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -63,13 +39,7 @@ static void expect_true(const char *label, int condition) {
     }
 }
 
-/* ============================================================================
- * Fixtures
- *
- * A BGRA8888 frame is the simplest useful case: one plane, 4 bytes per sample,
- * no chroma subsampling to reason about. I420 is used where a multi-plane or
- * YUV-only rule is under test.
- * ============================================================================ */
+
 
 #define FRAME_WIDTH 8
 #define FRAME_HEIGHT 4
@@ -410,10 +380,7 @@ static void test_invalid_argument(void) {
             YUV_STATUS_INVALID_ARGUMENT);
     }
     {
-        /* Section 9 groups an unknown numeric format with null pointers and bad
-         * ABI versions: the descriptor is malformed, so INVALID_ARGUMENT.
-         * UNSUPPORTED_FORMAT is reserved for a KNOWN format in a pairing an
-         * operation does not accept. */
+
         YuvConstFrameV1 source = make_bgra_source();
         source.format = 99;
         check_effect_case("unknown numeric format", source, make_bgra_destination(), make_effect_options(),
@@ -539,33 +506,7 @@ static void test_overflow(void) {
     }
 }
 
-/* ============================================================================
- * Status 3: UNSUPPORTED_LAYOUT -- not reachable in ABI v1, by construction
- *
- * Section 11 defines status 3 as "the unsupported but structurally valid
- * layout". In ABI v1 that set is empty, and it is empty deliberately rather
- * than by omission:
- *
- *   - the same section states "Positive larger pixel/row strides are
- *     supported", so every structurally valid stride combination is accepted;
- *   - a plane that is too small, or whose sampleBytes/pixelStride disagree
- *     with its format, is not structurally valid -- that is INVALID_ARGUMENT;
- *   - a span whose arithmetic does not fit is OVERFLOW;
- *   - a known format in a pairing an operation does not accept is
- *     UNSUPPORTED_FORMAT.
- *
- * That partition leaves no input which is simultaneously structurally valid
- * and unimplementable, so no entry point can return 3 without first rejecting
- * a layout the contract explicitly requires it to support.
- *
- * The accepted YUV-33c foundation reached the same conclusion independently:
- * YuvViewStatus defines 0, 1, 2 and 4, with no layout status at all.
- *
- * This is therefore reported as a contract gap for the Engineer rather than
- * silently satisfied with a fabricated case. The check below pins the
- * constant so a renumbering still breaks a test, and states the reachability
- * fact in the output where a reviewer will see it.
- * ============================================================================ */
+
 
 static void test_unsupported_layout_unreachable(void) {
     printf("UNSUPPORTED_LAYOUT (3)\n");
@@ -742,11 +683,7 @@ static void test_transform_options(void) {
 static void test_valid_descriptor_reaches_kernel(void) {
     printf("Valid descriptors pass validation\n");
 
-    /* Each of these is a fully valid call. Today the kernel is a stub, so the
-     * expected status is INTERNAL_ERROR: reaching it proves validation
-     * accepted the descriptor rather than rejecting it early. When YUV-31/32/
-     * 22/23 land, these expectations become OK -- that is the intended signal
-     * that this file needs updating alongside the kernel. */
+
     {
         reset_buffers();
         YuvConstFrameV1 source = make_bgra_source();

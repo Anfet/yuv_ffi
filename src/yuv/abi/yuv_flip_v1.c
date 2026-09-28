@@ -137,11 +137,9 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_flip_v1(const YuvConstFrameV1 *source, YuvMutabl
         return YUV_STATUS_OK;
     }
 
-    /* Destination-driven, so every destination sample is written exactly once
-     * and nothing needs a scratch buffer: the legacy vertical flip allocated
-     * one and could leave a half-mutated frame when that allocation failed.
-     * With no allocation there is no failure to be atomic about, and the
-     * prologue has already proven the two frames do not overlap. */
+    /* Destination-driven traversal writes each sample exactly once without
+     * scratch storage. The validation prologue has already proven the frames
+     * do not overlap. */
     yuv_kernel_v1_transform(&sourceView, &destinationView, yuv_flip_v1_map, &context, blockAligned);
 
     return YUV_STATUS_OK;

@@ -4,5 +4,6 @@ import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 ///
 /// Runtime initialization is handled by [YuvFfi.initialize] in user code.
 class YuvFfiWebPlugin {
+  /// Registers the Web plugin with Flutter's registrar.
   static void registerWith(Registrar registrar) {}
 }

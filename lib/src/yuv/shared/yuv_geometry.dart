@@ -3,9 +3,9 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 
 /// Shared geometry and plane-layout validation for every backend.
 ///
-/// Both the native (`io`) and the Web (`wasm`) implementations run these checks
+/// Both the IO and Web implementations run these checks
 /// before any FFI/WASM call, so the two backends accept and reject exactly the
-/// same geometry. Native code walks planes using `width`, `height` and the
+/// same geometry. The backend walks planes using `width`, `height` and the
 /// declared strides rather than the Dart buffer length, so a plane that is too
 /// small for its declared geometry would be read and written out of bounds.
 ///
@@ -59,16 +59,9 @@ abstract final class YuvGeometry {
   /// [planes] must already be in format order: `[Y]` for BGRA8888, `[Y, UV]`
   /// for NV, and `[Y, U, V]` for I420.
   ///
-  /// [allowLargerNvChromaStride] relaxes the interleaved-chroma check from
-  /// "exactly [nvChromaPixelStride]" to "at least [nvChromaPixelStride]".
-  /// Native code (`validated_view.c`/`yuv_kernel_v1.c`) already addresses every
-  /// sample through its declared `rowStride`/`pixelStride` generically and only
-  /// enforces a *minimum* pixel stride, so a larger explicit stride is real,
-  /// native-supported padding (design doc section 11: "Positive larger pixel/row
-  /// strides are supported"), not a layout native code cannot express. This
-  /// defaults to `false` so the legacy `nv21` entry points keep their 0.3.0
-  /// exact-two behavior unchanged; only the truthfully named `nv12` construction
-  /// path opts into the relaxed check (REL-03).
+  /// [allowLargerNvChromaStride] permits an interleaved chroma pixel stride
+  /// greater than [nvChromaPixelStride]. When `false`, the stride must equal
+  /// [nvChromaPixelStride].
   ///
   /// Throws [ArgumentError] when the geometry is inconsistent.
   static void validateImage({
@@ -215,21 +208,14 @@ abstract final class YuvGeometry {
     }
   }
 
-  /// Largest `radius` a box/mean/gaussian blur accepts.
-  ///
-  /// Matches the `1..256` bound documented for the native ABI in
-  /// `doc/api-abi-0.4-design.md`. Native blur builds a SAT-style summed-area
-  /// table and computes plane-wide row/column pad weights from `radius`; an
-  /// unvalidated negative or absurdly large radius produces inverted SAT
-  /// bounds and an out-of-bounds native read/write rather than a clean
-  /// rejection.
+  /// Largest radius accepted by box, mean, and Gaussian blur.
   static const int maxBlurRadius = 256;
 
-  /// Validates a blur `radius` before it reaches native code.
+  /// Validates a blur `radius` before backend dispatch.
   ///
-  /// `radius == 0` is the documented no-op and is accepted here; callers
-  /// short-circuit on it before doing any allocation or native call. Throws
-  /// [ArgumentError] for a negative radius or one above [maxBlurRadius].
+  /// Accepts zero, which callers treat as a no-op, and values through
+  /// [maxBlurRadius]. Throws [ArgumentError] for a negative radius or a value
+  /// above the maximum.
   static void validateBlurRadius(int radius) {
     if (radius < 0 || radius > maxBlurRadius) {
       throw ArgumentError.value(radius, 'radius', 'Radius must be 0 (no-op) or between 1 and $maxBlurRadius');

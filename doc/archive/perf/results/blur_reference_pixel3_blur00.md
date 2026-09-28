@@ -49,7 +49,7 @@ Package commit SHA: `89e66c3b462a11b7e542530060afa7e572f6587d`.
 Native source tree SHA: `d4e9e54fd92a53ce204ecc36f0031c8db3e2085c`.
 Build parameters: `android-release-aot`, one operation per APK, radius 10,
 Gaussian sigma 10, two warmups, seven samples. The complete machine-readable
-records and captured logcat are under `doc/perf/results/blur_raw/`.
+records and captured logcat are under `doc/archive/perf/results/blur_raw/`.
 
 ## Reproduction
 

@@ -5,27 +5,23 @@
 #include <stddef.h>
 
 /*
- * Public wire-stable native ABI v1 for yuv_ffi 0.4.0.
+ * Public wire-stable native ABI v1 types.
  *
  * This header is the single source of truth for the descriptor, options, and
- * status types described in doc/api-abi-0.4-design.md sections 9 and 10.
- * Values and member order are copied from that document literally; this file
- * does not invent an alternative contract.
+ * status types. Field widths, values, and member order define the ABI
+ * contract in this header.
  *
- * Scope note (YUV-36a): this header declares TYPES ONLY. The eleven
- * `yuv_*_v1` entry points of section 11 are declared and implemented by
- * YUV-36b in src/yuv/abi/h/yuv_ops_v1.h; nothing here is an exported symbol,
- * so including this header adds no ABI surface on its own.
+ * This header declares types only. The `yuv_*_v1` entry points are declared
+ * by yuv_ops_v1.h; including this header adds no exported symbols.
  *
  * The internal validation logic that consumes these types lives in
- * src/yuv/utils/h/validated_view.h (YUV-33c). That header deliberately
- * declares its own view structs rather than these, so that validation could
- * land before the public ABI. The two layouts are member-compatible by
- * construction; YUV-36b builds the views from these structs.
+ * src/yuv/utils/h/validated_view.h. That header declares internal view
+ * structs with fields compatible with these descriptors; the entry points
+ * build the views from these structs.
  */
 
 /* ===========================================================================
- * Status (section 9)
+ * Status
  *
  * A fixed-width integer, never a compiler-sized C enum: the value crosses the
  * native/wasm boundary and is read back by Dart as a 32-bit integer.
@@ -43,7 +39,7 @@ typedef int32_t YuvStatus;
 #define YUV_STATUS_UNSUPPORTED_COLOR  ((YuvStatus)7)
 
 /* ===========================================================================
- * Numeric contract constants (section 9)
+ * Numeric contract constants
  * =========================================================================== */
 
 /* The only ABI version accepted by v1 entry points. */
@@ -65,7 +61,7 @@ typedef int32_t YuvStatus;
 #define YUV_FLIP_VERTICAL   ((uint32_t)2)
 
 /* ===========================================================================
- * Frame and plane descriptors (section 9)
+ * Frame and plane descriptors
  * =========================================================================== */
 
 typedef struct {
@@ -111,7 +107,7 @@ typedef struct {
 } YuvMutableFrameV1;
 
 /* ===========================================================================
- * Options (section 10)
+ * Options
  *
  * Each options struct is a distinct fixed-width type. Positional scalar tails
  * are not permitted, so an added field is a new struct size negotiated through
@@ -181,10 +177,9 @@ typedef struct {
 /* ===========================================================================
  * Layout assertions
  *
- * Every row of the two offset tables in sections 9 and 10 is asserted here.
- * The design document calls this "a required build assertion, not an
- * assumption": a target whose layout differs must fail to compile rather than
- * silently exchange misaligned descriptors with Dart or with a WASM module.
+ * These assertions verify the required ABI v1 field offsets. A target whose
+ * layout differs must fail to compile rather than exchange misaligned
+ * descriptors with Dart or with a WASM module.
  *
  * The assertion is a negative-array typedef rather than `static_assert`,
  * because this header must hold under C99 without <assert.h>, and because an
@@ -272,7 +267,7 @@ YUV_ABI_STATIC_ASSERT(sizeof(uint64_t) == 8, uint64_size);
 YUV_ABI_STATIC_ASSERT(offsetof(YuvAbiUint64AlignProbe, v) == 8, uint64_alignment);
 YUV_ABI_STATIC_ASSERT(offsetof(YuvAbiDoubleAlignProbe, v) == 8, double_alignment);
 
-/* --- Options (section 10). --- */
+/* --- Options. --- */
 
 YUV_ABI_STATIC_ASSERT(offsetof(YuvRegionOptionsV1, structSize) == 0, region_struct_size);
 YUV_ABI_STATIC_ASSERT(offsetof(YuvRegionOptionsV1, abiVersion) == 4, region_abi_version);
@@ -327,8 +322,7 @@ YUV_ABI_STATIC_ASSERT(offsetof(YuvRotateOptionsV1, reserved0) == 12, rotate_rese
 YUV_ABI_STATIC_ASSERT(offsetof(YuvRotateOptionsV1, reserved) == 16, rotate_reserved);
 YUV_ABI_STATIC_ASSERT(sizeof(YuvRotateOptionsV1) == 32, rotate_size);
 
-/* --- Per-struct alignment (section 10: "sizeof, alignment, and offsetof
- * compile assertions are required"). Size and offsets alone do not pin
+/* --- Per-struct alignment. Size and offset assertions alone do not pin
  * alignment down: a type can have the right layout internally and still be
  * placed differently when embedded in another struct or in an array, which is
  * exactly what YuvRegionOptionsV1 does inside the blur and effect options.

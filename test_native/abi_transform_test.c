@@ -1,30 +1,5 @@
-/*
- * ABI v1 geometric transform tests (YUV-31): crop, flip, rotate.
- *
- * abi_status_test.c proves these entry points validate and stay atomic. This
- * file proves they compute the right pixels, which is what the YUV-31 audit
- * found they did not: destination width used as a destination stride, a pixel
- * stride copied as if it were a sample size, floor chroma geometry dropping a
- * trailing row, and padding moved around as if it were image data.
- *
- * Every case is checked against an independent oracle built here from the
- * visible-pixel mapping in doc/api-abi-0.4-design.md section 11, not against
- * the implementation's own helpers -- the point is to disagree with the
- * kernel if the kernel is wrong.
- *
- * Layout choices that matter:
- *
- *  - Every fixture is allocated with a deliberately larger row stride than
- *    its minimum span, and the gap bytes are filled with a canary. A transform
- *    that treats a gap as pixel data, or writes through it, is caught by the
- *    canary check rather than by a value comparison that would silently pass.
- *  - Odd geometry (5x3) is a first-class case, not an afterthought: it is
- *    where floor-vs-ceil chroma and the chroma phase rule of section 14 Q2
- *    actually bite.
- *
- * Checks use volatile locals (MSVC C4127 under /W4 /WX) and report through the
- * exit code rather than abort().
- */
+/* Checks crop, flip, and rotate against an independent pixel oracle across
+ * formats, odd geometry, padded rows, and custom pixel strides. */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -581,9 +556,7 @@ static void test_crop(void) {
             expect_true("      destination padding intact", padding_intact(&destination));
             expect_true("      source padding intact", padding_intact(&source));
         }
-        /* Odd extent: the trailing column and row are real samples. A kernel
-         * using floor chroma geometry drops them -- the 3x3 probe in the
-         * YUV-31 audit wrote one of four chroma samples. */
+
         {
             Frame source;
             Frame destination;
@@ -607,8 +580,7 @@ static void test_crop(void) {
                     FORMATS[f] == YUV_FORMAT_BGRA8888));
             expect_true("      destination padding intact", padding_intact(&destination));
         }
-        /* Odd origin: section 14 Q2's phase case. Luma still maps exactly;
-         * chroma is recomputed, so only the luma plane is compared. */
+
         {
             Frame source;
             Frame destination;
@@ -727,19 +699,7 @@ static void test_custom_pixel_stride(void) {
     expect_true("      source pixel gaps untouched (read as padding, not data)", padding_intact(&source));
 }
 
-/* ============================================================================
- * Crop trailing chroma
- *
- * The case the reviewer of the first YUV-31 submission caught: an even crop
- * origin alone does not make a chroma copy correct. A destination chroma
- * sample is the average of the pixels that really exist in its 2x2 footprint,
- * so when an odd destination extent leaves a trailing block holding 1 or 2
- * pixels, copying the source sample -- which was averaged over 4 -- carries a
- * different value. On the colours below that difference is several LSB.
- *
- * The expected values here are computed from the clipped-footprint rule, not
- * read back from the implementation.
- * ============================================================================ */
+
 
 static int clip_int(int value) {
     return value < 0 ? 0 : (value > 255 ? 255 : value);

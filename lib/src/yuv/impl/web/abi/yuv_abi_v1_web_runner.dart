@@ -11,7 +11,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 
-/// Typed Web runner for the ABI v1 `yuv_*_v1` symbols (YUV-51).
+/// Typed Web runner for the ABI v1 `yuv_*_v1` symbols.
 ///
 /// The Web counterpart of `YuvAbiV1Runner`: same public method set, same
 /// arguments, same [YuvAbiV1FrameResult], same status-to-exception mapping
@@ -20,8 +20,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 /// memory through `dart:ffi` -- so the two backends cannot diverge in what they
 /// ask the ABI for, only in how they reach it.
 ///
-/// Every method follows section 13's numbered steps exactly as the IO runner
-/// documents them:
+/// Every method follows the same execution sequence as the IO runner:
 ///
 ///  1. validate public arguments -- the caller has already done so, and the
 ///     plane count is re-checked here before any allocation;
@@ -83,7 +82,7 @@ abstract final class YuvAbiV1WebRunner {
 
   /// Runs `yuv_chroma_swap_v1`.
   ///
-  /// Takes no region: ABI v1 requires its region disabled (section 10), so
+  /// Takes no region: ABI v1 requires its region disabled, so
   /// there is no value that would produce anything but `INVALID_ARGUMENT`.
   static YuvAbiV1FrameResult chromaSwap({required Object module, required YuvAbiV1FrameInput source}) =>
       _runEffect(module: module, operation: YuvOperation.chromaSwap, nativeSymbol: yuvSymbolChromaSwapV1, source: source, region: null);
@@ -92,7 +91,7 @@ abstract final class YuvAbiV1WebRunner {
   /// `yuv_box_blur_v1`, selected by [kind].
   ///
   /// [sigma] is required for [YuvAbiV1BlurKind.gaussian] and must be `0.0` for
-  /// the two uniform-weight kinds (section 10).
+  /// the two uniform-weight kinds.
   static YuvAbiV1FrameResult blur({
     required Object module,
     required YuvAbiV1BlurKind kind,
@@ -326,7 +325,7 @@ abstract final class YuvAbiV1WebRunner {
       arena.writePointer(planeOffset, YuvWasmPlaneV1.offsetData, planePointers[i]);
     }
     // Slots past planeCount stay as `allocateZeroed` left them: zero-filled
-    // descriptors with a null `data`, per section 9.
+    // descriptors with a null `data`.
 
     return framePtr;
   }
@@ -426,7 +425,7 @@ abstract final class YuvAbiV1WebRunner {
   /// Writes a `YuvRegionOptionsV1` at absolute address [address].
   ///
   /// A `null` region writes the disabled form: every coordinate zeroed, per
-  /// section 10 ("when 0, all four coordinates and reserved0 must be zero").
+  /// ABI v1 requires all coordinates and `reserved0` to be zero when disabled.
   /// The surrounding struct was zero-filled at allocation, so this only has to
   /// write the header for that case -- but it writes the coordinates anyway,
   /// so the disabled form does not depend on the allocator's behaviour.

@@ -50,17 +50,8 @@ class YuvValidatedImageDraft {
 ///   bytes   plane data
 /// ```
 ///
-/// `formatId` is [YuvPixelFormat.wireId] (section 6 of
-/// `doc/api-abi-0.4-design.md`), never a Dart enum index and never the legacy
-/// string `format` name v1 wrote: index and name both reflect declaration
-/// order and would silently renumber or rename a value already on disk.
-///
-/// Version 1 (the wire shape published in 0.2.4: string `format`, no `formatId`) is
-/// read only far enough to recognize and reject it -- there is no v1 writer
-/// and no automatic migration. An application holding 0.2.4-era serialized
-/// frames must first be read by a 0.2.4 app into an application-owned
-/// intermediate representation (format, dimensions, plane strides, and bytes).
-/// After upgrading, recreate the image from that representation and encode v2.
+/// The format identifier is a stable wire value rather than an enum index, so
+/// changing enum declaration order does not change the serialized identity.
 ///
 /// Every malformed, truncated or unsupported payload throws a
 /// [FormatException]. Nothing here relies on `assert`, which would disappear in
@@ -139,12 +130,8 @@ abstract final class YuvCodec {
   /// format, wrong field types, an implausible plane count or length, geometry
   /// the planes cannot satisfy, or unexpected trailing bytes.
   ///
-  /// Only version 2 is accepted. A version-1 payload -- the published 0.2.4 wire
-  /// shape, keyed by a string `format` name instead of a stable `formatId` --
-  /// is rejected with [FormatException] rather than transparently migrated;
-  /// there is no v1 writer. A 0.2.4 app must first preserve the decoded frame
-  /// in an application-owned intermediate representation; a 0.4.0 app then
-  /// recreates it and writes v2.
+  /// Only version 2 payloads are accepted. Payloads using another version are
+  /// rejected with [FormatException].
   static Future<YuvValidatedImageDraft> decodeStream(Stream<List<int>> stream) async {
     final reader = _StreamReader(stream);
     try {
@@ -423,10 +410,9 @@ class _StreamReader {
   /// or reject the same payload depending on how it was chunked and on when the
   /// scheduler ran — the format contract would then hold only by luck.
   ///
-  /// The cost is that a source which never closes never finishes decoding. That
-  /// is inherent to a version-1 payload: it carries no outer frame length, so
-  /// EOF is the only boundary there is. Decoding a frame from a stream that
-  /// stays open needs a framed protocol, not a timeout guessing at one.
+  /// A source which never closes never finishes decoding. The payload has no
+  /// outer frame length, so EOF is the only boundary. Decoding from a stream
+  /// that stays open requires a framed protocol.
   Future<bool> atEnd() async {
     if (_available > 0) {
       return false;

@@ -1,6 +1,6 @@
 # yuv_ffi 0.4.2 — предрелизный цикл RA
 
-Источник: предрелизный аудит 27.09.2026 (HEAD `9b41cb5`), повторная сверка 28.09.2026 на `db42681`. Карточки RA заменяют PRE-00…07 из `doc/perf/prerelease-todo.md`. Архитектор — Claude Opus (T1). Готовность карточки не означает разрешения: запуск — только по команде Engineer, по ID или пакету.
+Источник: предрелизный аудит 27.09.2026 (HEAD `9b41cb5`), повторная сверка 28.09.2026 на `db42681`. Карточки RA заменяют PRE-00…07 из `doc/archive/perf/prerelease-todo.md`. Архитектор — Claude Opus (T1). Готовность карточки не означает разрешения: запуск — только по команде Engineer, по ID или пакету.
 
 **Объём релиза заморожен.** VIEW-00…03 и PACK-00…01D приняты. С начала цикла RA в `lib/`, `src/`, `example/lib/` не добавляется новая функциональность; любое новое требование — отдельной карточкой после решения Engineer.
 
@@ -16,20 +16,13 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | [ ] | RA-05 | BLOCKED | T3 | Luna | — | Сделать зелёной джобу `analyze-and-test-vm (3.38.10)`: убрать 4 info в тесте копирования плоскостей и довести до зелёного весь job, включая `flutter test`. |
 | [ ] | RA-06 | BLOCKED | T3 | Luna | — | Гигиена CI: удалить всегда падающую `android-armv7-runtime`, отменять устаревшие прогоны, не запускать CI на коммиты только в md/архив, обновить `actions/checkout`. |
-| [ ] | RA-08 | BLOCKED | T3 | Luna | — | Удалить из git 10 сырых `*.log` и 2 сырых кадра `*.nv12` из `doc/perf/results`: это разблокирует `pub publish --dry-run` и `wasm-web-integration`. Измерения остаются в `.jsonl`/`.csv` и отчётах. |
-| [ ] | RA-01 | TODO | T3 | — | — | Перенести внутреннюю историю и бенчмарки в `doc/archive/` по точному списку, исключить её из пакета и анализатора. Код пакета не меняется. |
+| [ ] | RA-08 | BLOCKED | T3 | Luna | — | Удалить из git 10 сырых `*.log` и 2 сырых кадра `*.nv12` из `doc/archive/perf/results`: это разблокирует `pub publish --dry-run` и `wasm-web-integration`. Измерения остаются в `.jsonl`/`.csv` и отчётах. |
 | [ ] | RA-02 | TODO | T3 | — | RA-01, RA-08 | Довести `.pubignore` до чистого архива: `pub publish --dry-run` без warnings, дерево совпадает с allowlist. |
 | [ ] | RA-04 | TODO | T3 | — | RA-01, RA-05, RA-06 | Переименовать тесты с номерами задач в имена по поведению и обновить CI-цели. |
-| [ ] | RA-10 | TODO | T2 | — | RA-01 | Вычитать dartdoc публичного API по DOC-RULES: только текущий контракт, без истории и ссылок на задачи/дизайн-док. Код не меняется. |
-| [ ] | RA-11 | TODO | T3 | — | RA-01 | Вычистить комментарии внутренних Dart-файлов IO/shared по DOC-RULES. Код не меняется. |
-| [ ] | RA-12 | TODO | T3 | — | RA-01 | Вычистить комментарии Web/loader Dart-файлов по DOC-RULES. Код не меняется. |
-| [ ] | RA-13 | TODO | T3 | — | RA-01 | Вычистить комментарии native C (`src/`, `ios|macos/Classes`) по DOC-RULES. Доказать, что препроцессированный код побайтно не изменился. |
 | [ ] | RA-14 | TODO | T3 | — | RA-04 | Вычистить комментарии и описания `group`/`test` в `test/` по DOC-RULES. Логика тестов не меняется. |
-| [ ] | RA-15 | TODO | T3 | — | RA-01 | Вычистить комментарии `test_native/` по DOC-RULES с той же проверкой препроцессором, что RA-13. |
 | [ ] | RA-16 | TODO | T3 | — | RA-01, RA-04 | Вычистить комментарии example (`lib`, `test`, `integration_test`, `pubspec.yaml`, README) по DOC-RULES. |
-| [ ] | RA-17 | TODO | T2 | — | RA-01 | Переписать README под текущий 0.4.2 по заданной структуре; места под доказательства платформ заполняются в RA-50. |
 | [ ] | RA-19 | TODO | T3 | — | RA-22, RA-23, RA-41 | Вычистить служебные README (`tool/wasm`, `assets/wasm`, `test_native`) и комментарии CI от номеров задач. |
-| [ ] | RA-21 | TODO | T2 | — | — | Пробы, часть корректности: файл на операцию, golden-хэши, эквивалентные 0.4.0 (layout-случаи с `YuvPlaneLayout.preserve`), случаи `pack()`, проверка покрытия всех `YuvOperation`; VM-тест и example-цель. |
+| [ ] | RA-21 | ARCHITECT_REQUIRED | T2 | — | — | Пробы, часть корректности: файл на операцию, golden-хэши, эквивалентные 0.4.0 (layout-случаи с `YuvPlaneLayout.preserve`), случаи `pack()`, проверка покрытия всех `YuvOperation`; VM-тест и example-цель. |
 | [ ] | RA-26 | TODO | T2 | — | RA-21 | Добавить в пробы замер скорости: общий исполнитель, методика, контроль окружения, строка вердикта и JSON; базовые линии Windows и Pixel 3 от 0.4.0 и HEAD. |
 | [ ] | RA-27 | TODO | T3 | — | RA-26 | Записать в AGENTS.md правило проб для задач разработки (Windows у исполнителя, Pixel 3 на ревью) и поле `Probe` в шаблон карточки. |
 | [ ] | RA-22 | TODO | T2 | — | RA-04, RA-06, RA-21 | Подключить пробу корректности в CI для Linux, macOS, iOS Simulator, Android x86_64 перебором `*_native_test.dart` и общим скриптом вердикта `tool/ci/drive.sh`. |
@@ -40,7 +33,7 @@
 | [ ] | RA-18 | TODO | T2 | — | все RA кроме RA-50 | Финальный CHANGELOG 0.4.2 вместо черновика: фактические изменения, новый API, известные ограничения. |
 | [ ] | RA-50 | TODO | T2 | — | все RA | Финальный релизный гейт на одном SHA: полный CI, dry-run, синхронизация версий, ссылки на доказательства. Тег и публикация — Engineer. |
 
-Параллельные пакеты: 0) CI-стабилизация RA-05, RA-06, RA-08 и история RA-03 — пересекающихся файлов нет (тест / `ci.yml` / удаление файлов в `doc/perf/results` / `COMPLETION.md` и `completed.md`) → 1) RA-01 → 2) RA-02, RA-04, RA-10, RA-11, RA-12, RA-13, RA-15, RA-17, RA-21 → 3) RA-14, RA-16, RA-22, RA-26, RA-40 → 4) RA-23, RA-25, RA-27, RA-41 → 5) RA-19 → 6) RA-18 → 7) RA-50.
+Дополнение к разбиению от 28.09.2026: RA-10, RA-11, RA-12, RA-13, RA-15 и RA-17 выполняются параллельно с RA-01. Их области — Dart/C комментарии, test_native комментарии и README; RA-01 перемещает файлы, меняет ссылки в orchestration Markdown и одну ссылку в CHANGELOG. Пересечений по изменяемым строкам нет. Валидация каждой карточки остаётся обязательной. RA-16 остаётся после RA-01 и RA-04 из-за пересечения с перемещаемыми example integration tests. После группы продолжаем по зависимостям таблицы.
 
 Ревью: T3 → T2; T2 → T1 (предпочтительно другой провайдер, чем исполнитель); RA-50 — T1 + Engineer. Принятые карточки переносятся в `COMPLETION.md` по протоколу; этот файл содержит только текущую работу цикла.
 
@@ -48,7 +41,7 @@
 
 ## DOC-RULES — общее решение Architect для RA-10…RA-19
 
-1. Удалить: номера задач и ревью (`YUV-`, `REL-`, `BGRA-`, `AUD-`, `OPT-`, `BLUR-`, `CVT-`, `VIEW-`, `MEAS-`, `PERF-`, `PRE-`, `WAIT-`, `PATCH-`, `F-0xx`), ссылки на `todo*.md`, `COMPLETION.md`, `completed.md`, `doc/perf`, `doc/archive`, `doc/api-abi-0.4-design.md`, «section N», «Q1», пересказ истории («used to», «earlier revisions», «pre-…», «was removed in …», «independent review showed»).
+1. Удалить: номера задач и ревью (`YUV-`, `REL-`, `BGRA-`, `AUD-`, `OPT-`, `BLUR-`, `CVT-`, `VIEW-`, `MEAS-`, `PERF-`, `PRE-`, `WAIT-`, `PATCH-`, `F-0xx`), ссылки на `todo*.md`, `COMPLETION.md`, `completed.md`, `doc/perf`, `doc/archive`, `doc/archive/api-abi-0.4-design.md`, «section N», «Q1», пересказ истории («used to», «earlier revisions», «pre-…», «was removed in …», «independent review showed»).
 2. Оставить и при необходимости переформулировать: что делает символ, параметры, возврат, исключения, побочные эффекты (revision, мутация, владение памятью), платформенные различия, ограничения, неочевидное «почему» — без ссылки на задачу.
 3. Публичный dartdoc — по Effective Dart: первая фраза — краткое описание; `Throws …` для документированных ошибок; ссылки `[Symbol]` только на экспортируемые символы.
 4. Комментарий, который после чистки ничего не объясняет, удаляется целиком. Бесполезные `// ignore:` внутри dartdoc-блоков удаляются только если анализ остаётся чистым.
@@ -79,10 +72,10 @@
 `flutter analyze lib test` локально; ссылка на зелёный CI-run.
 
 #### Executor Report
-Добавлен только `// ignore_for_file: deprecated_member_use_from_same_package`. `flutter analyze lib test` и `git diff --check` прошли на Flutter 3.44.9. Flutter 3.38.10 локально отсутствует; обе матричные CI-джобы ещё не запускались.
+Добавлен только `// ignore_for_file: deprecated_member_use_from_same_package`. `flutter analyze lib test` и `git diff --check` прошли на Flutter 3.44.9. Flutter 3.38.10 локально отсутствует. Push run `36398351919` и ручной run `36398511200` завершились `startup_failure` до создания jobs; логи отсутствуют.
 
 #### Review
-Локальный diff соответствует Architect Decision и ограничению scope. Полный DoD не подтверждён без job на Flutter 3.38.10 и зелёного CI-run; BLOCKED до запуска CI на коммите.
+Локальный diff соответствует Architect Decision и ограничению scope. Полный DoD не подтверждён: оба GitHub run завершились до запуска jobs, поэтому Flutter 3.38.10 и зелёный CI-run не проверены.
 
 ---
 
@@ -97,7 +90,7 @@
 #### Architect Decision
 1. Удалить джобу `android-armv7-runtime` целиком. ARMv7 доказывается на физическом Pixel 3 (RA-25). Шаг `Verify ARMv7-only APK contents` перенести в `android-native-build` как отдельный шаг после сборки: `flutter build apk --debug --target=integration_test/native_app_runtime_smoke_test.dart --target-platform android-arm --split-per-abi` + та же проверка состава APK (сборку armv7 продолжаем проверять в CI, запуск — нет).
 2. В начало workflow: `concurrency: { group: ci-${{ github.ref }}, cancel-in-progress: true }`.
-3. В `on.push` и `on.pull_request`: `paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/perf/**']`. `README.md` и `CHANGELOG.md` тоже игнорируются — они проверяются финальным run RA-50.
+3. В `on.push` и `on.pull_request`: `paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/archive/perf/**']`. `README.md` и `CHANGELOG.md` тоже игнорируются — они проверяются финальным run RA-50.
 4. `actions/checkout@v4` → `actions/checkout@v5` во всех джобах. Другие actions не трогать.
 
 #### Constraints / Non-goals
@@ -113,10 +106,10 @@
 YAML-парсинг локально; ссылка на CI-run.
 
 #### Executor Report
-Удалена джоба `android-armv7-runtime`; сборка ARMv7-only APK и проверка его ABI находятся в `android-native-build`. Добавлены отмена устаревших запусков и `paths-ignore`, все checkout обновлены до v5. PyYAML и `git diff --check` прошли; `actionlint` отсутствует. Реальный markdown-only push и CI-run не выполнялись.
+Удалена джоба `android-armv7-runtime`; сборка ARMv7-only APK и проверка его ABI находятся в `android-native-build`. Добавлены отмена устаревших запусков и `paths-ignore`, все checkout обновлены до v5. PyYAML и `git diff --check` прошли; `actionlint` отсутствует. Push run `36398351919` и ручной run `36398511200` завершились `startup_failure` без jobs, поэтому markdown-only push и workflow jobs не проверены.
 
 #### Review
-Изменения соответствуют Architect Decision; других workflow jobs/actions не меняли. CI-run и проверка markdown-only trigger требуют коммита и запуска Actions; BLOCKED до появления CI-доказательства.
+Изменения соответствуют Architect Decision; других workflow jobs/actions не меняли. CI-доказательство отсутствует: оба run завершились до создания jobs. Markdown-only trigger тоже не проверен.
 
 ---
 
@@ -124,18 +117,18 @@ YAML-парсинг локально; ссылка на CI-run.
 **Status:** BLOCKED · **Tier:** T3 · **Owner:** Luna · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
 
 #### Problem / Goal
-`wasm-web-integration` падает в каждом run на шаге `Verify published package contains committed WASM`: dry-run выходит с кодом 65 из-за предупреждения «10 checked-in files are ignored by a `.gitignore`» (логи `doc/perf/results/blur0{1,2}_*/**/*.log`, коммиты `2285ca9`, `c115d78`). Из-за этого до пересборки WASM и Web-гейта джоба не доходит.
+`wasm-web-integration` падает в каждом run на шаге `Verify published package contains committed WASM`: dry-run выходит с кодом 65 из-за предупреждения «10 checked-in files are ignored by a `.gitignore`» (логи `doc/archive/perf/results/blur0{1,2}_*/**/*.log`, коммиты `2285ca9`, `c115d78`). Из-за этого до пересборки WASM и Web-гейта джоба не доходит.
 
 #### Architect Decision
 Сырые логи — мусор, а не доказательство: 8 из 10 — дамп logcat рядом с одноимённым `.jsonl`, где лежат те же измерения; `host.log` пустой; `host-error.log` (479 байт) — ошибка неудачного запуска. Ни один md-файл на них не ссылается как на источник данных. Два кадра `*.nv12` (по 2,3 МБ) — сырой вывод BLUR-04; отчёт хранит их checksum, ссылок на файлы нет.
 
 `git rm` (не в архив):
-- `doc/perf/results/blur01_raw/{yonly,yuv}/*.log`
-- `doc/perf/results/blur01_visual_raw/{rgb,yonly,yuv}/*.log`
-- `doc/perf/results/blur02_raw/{yonly,yuv}/*.log`
-- `doc/perf/results/blur02_control/mean_then_box/mean/*.log` (3 файла)
-- `doc/perf/results/blur04_raw/separable/20260926-014531-gaussian-separable.nv12`
-- `doc/perf/results/blur04_raw/yuv/20260926-014225-gaussian-yuv.nv12`
+- `doc/archive/perf/results/blur01_raw/{yonly,yuv}/*.log`
+- `doc/archive/perf/results/blur01_visual_raw/{rgb,yonly,yuv}/*.log`
+- `doc/archive/perf/results/blur02_raw/{yonly,yuv}/*.log`
+- `doc/archive/perf/results/blur02_control/mean_then_box/mean/*.log` (3 файла)
+- `doc/archive/perf/results/blur04_raw/separable/20260926-014531-gaussian-separable.nv12`
+- `doc/archive/perf/results/blur04_raw/yuv/20260926-014225-gaussian-yuv.nv12`
 
 `.gitignore` не менять: `*.log` остаётся игнорируемым, чтобы логи больше не попадали в репозиторий. `.jsonl`/`.csv` не трогать.
 
@@ -151,54 +144,13 @@ YAML-парсинг локально; ссылка на CI-run.
 Вывод dry-run и ссылка на run.
 
 #### Executor Report
-Удалены все 10 tracked `*.log` и 2 tracked `*.nv12`; проверка `git ls-files` по этим расширениям вывела пустой результат. `flutter pub publish --dry-run` завершился с кодом 65: в общей незакоммиченной рабочей копии Pub ещё видит `completed.md` как tracked и обнаруживает изменённый тест. Предупреждений от удалённых логов больше нет; CI-run не запускался.
+Удалены все 10 tracked `*.log` и 2 tracked `*.nv12`; проверка `git ls-files` по этим расширениям вывела пустой результат. До коммита `flutter pub publish --dry-run` завершился кодом 65 из-за незакоммиченного состояния. Повтор после коммита `30fff53` прошёл с 0 warnings (одна допустимая подсказка по версии). Push run `36398351919` и ручной run `36398511200` завершились `startup_failure` без jobs.
 
 #### Review
-Список удалений соответствует Architect Decision, измерительные `.jsonl`/`.csv` и `.gitignore` не менялись. DoD публикации и CI не подтверждён из-за состояния незакоммиченного пакета; BLOCKED до прогона на собранном коммите.
+Список удалений соответствует Architect Decision; `.jsonl`/`.csv` и `.gitignore` не менялись. Локальный dry-run принят. CI-шаг `Verify published package contains committed WASM` ещё не подтверждён из-за startup_failure до создания jobs.
 
 ---
 
-### RA-01 — Перенести внутреннюю историю в `doc/archive/`
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
-
-#### Problem / Goal
-В пакет и корень репозитория попадают ~150 служебных файлов (12 МБ `doc/perf`, бенчмарк-приложения, Pixel 3-бенчмарки в example). Архив пакета — 8 МБ.
-
-#### Architect Decision
-Переместить `git mv` (история сохраняется) по списку:
-- `doc/perf/**` → `doc/archive/perf/**`
-- `tool/bench/**` → `doc/archive/tool/bench/**`
-- `speed_00_dart_ffi/**` → `doc/archive/speed_00_dart_ffi/**`
-- `tool/migration/**` → `doc/archive/tool/migration/**`
-- `tool/wasm/yuv40_web_matrix_probe.ps1` → `doc/archive/tool/wasm/`
-- `example/doc/*` → `doc/archive/example/doc/`
-- все `example/integration_test/*_pixel3_test.dart` (на 28.09.2026 — 11 файлов: `bgra00_*`, `bgra0102_*`, `bgra04_*` ×3, `pack00_*` ×2, `rotate_*` ×3, `view03_*`) и `example/integration_test/helpers/bgra_round_trip_oracle.dart` → `doc/archive/example/integration_test/`
-- `doc/api-abi-0.4-design.md` → `doc/archive/api-abi-0.4-design.md`
-
-Живые файлы оркестрации (`todo.md`, `pre-release-todo.md`, `todo-0.4.3.md`, `todo-waitlist.md`, `COMPLETION.md`, `AGENTS.md`) остаются в корне, исключаются из пакета в RA-02. `completed.md` к этому моменту уже перенесён в архив задачей RA-03.
-
-Бенчмарки Pixel 3 уходят в архив не насовсем по смыслу: их функцию в поддерживаемом виде берут пробы RA-21/RA-26.
-
-Добавить `analysis_options.yaml` → `analyzer.exclude: - doc/archive/**`. Архивированные пакеты и тесты не обязаны собираться.
-
-Обновить ссылки `doc/perf/` → `doc/archive/perf/` и `doc/api-abi-0.4-design.md` → `doc/archive/api-abi-0.4-design.md` только в живых md-файлах оркестрации и внутри `doc/archive/`. В CHANGELOG запись 0.4.0 заменить markdown-ссылку на дизайн-док обычным текстом без ссылки. Ссылки в `lib/`, `src/`, тестах не трогать — их убирают RA-10…RA-16.
-
-#### Scope
-Перечисленные пути, `analysis_options.yaml`, ссылки в md-файлах оркестрации и `CHANGELOG.md` (одна строка 0.4.0).
-
-#### Constraints / Non-goals
-Не менять `lib/`, `src/`, `test/`, `example/lib/`, CI-файл. Не удалять файлы. Не трогать `tool/verify_bindings_audit.dart`, `tool/reference/`, `tool/wasm/build_wasm.sh`, `tool/wasm/README.md`, `tool/abi_v1_wasm_harness.cjs`, `example/tool/copy_reference_fixtures.sh`, `example/integration_test/helpers/reference/`.
-
-#### Definition of Done
-- [ ] Все пути списка перемещены через `git mv`; в исходных местах их нет
-- [ ] `analyzer.exclude` содержит `doc/archive/**`
-- [ ] Ссылки обновлены по правилу выше
-- [ ] Executor report со списком перемещённого
-
-#### Validation / Testing
-`flutter analyze lib test` — чисто; `cd example && flutter analyze` — чисто; `flutter test` — все проходят; `git status` не содержит неожиданных изменений.
-
----
 
 ### RA-02 — Чистый архив пакета
 **Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-01, RA-08 · **Rejection Count:** 0
@@ -251,61 +203,9 @@ YAML-парсинг локально; ссылка на CI-run.
 
 ---
 
-### RA-10 — Dartdoc публичного API
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-01 · **Rejection Count:** 0
 
-#### Problem / Goal
-Публичная документация на pub.dev пересказывает историю задач и ссылается на внутренний дизайн-док (в `lib/` 159 ссылок в 26 файлах).
 
-#### Architect Decision
-Применить DOC-RULES. Каждое утверждение dartdoc сверить с реализацией IO (`impl/io/yuv_image.dart`) и Web (`impl/web/yuv_web.dart`); где backend-поведение различается — описать различие.
 
-#### Scope
-`lib/yuv_ffi.dart`, `lib/yuv_ffi_web.dart`, `lib/src/yuv/yuv.dart`, `lib/src/yuv_ffi_initializer.dart`, `lib/src/yuv_capabilities.dart`, `lib/src/yuv/shared/{yuv_operation,yuv_pixel_format,yuv_file_format,yuv_plane,yuv_plane_layout,yuv_pack,yuv_image_rotation,yuv_native_status,yuv_revision,yuv_deprecated_api}.dart`, `lib/src/widgets/*.dart` (включая `YuvFramePresenter`, `YuvFrameView`). Для `YuvPlaneLayout` и параметра `layout` фабрик в dartdoc явно описать умолчание `.packed` и что `copy()`, `decode()`, `applyPlanes()` сохраняют layout.
-
-#### Definition of Done
-- [ ] DOC-RULES выполнены; регэксп = 0
-- [ ] У каждого экспортируемого символа есть dartdoc
-- [ ] Расхождения doc↔код перечислены в отчёте, код не изменён
-
-#### Validation / Testing
-`flutter analyze lib test`; `dart format --line-length 150` на изменённых; `flutter test`; `dart doc --dry-run` без новых warnings.
-
----
-
-### RA-11 — Внутренние Dart-комментарии IO/shared
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-01 · **Rejection Count:** 0
-
-**Scope:** `lib/src/yuv/impl/io/**`, `lib/src/yuv/shared/**` кроме файлов RA-10, `lib/src/functions/**` кроме `bindings/yuv_ffi_bingings.dart` (сгенерирован — не трогать).
-**Architect Decision:** DOC-RULES.
-**DoD:** регэксп = 0 по scope; `git diff` — только комментарии.
-**Validation:** `flutter analyze lib test`; `dart format --line-length 150`; `flutter test`.
-
----
-
-### RA-12 — Внутренние Dart-комментарии Web/loader
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-01 · **Rejection Count:** 0
-
-**Scope:** `lib/src/yuv/impl/web/**`, `lib/src/yuv/impl/yuv_stub.dart`, `lib/src/loader/**`, `lib/src/web/**`.
-**Architect Decision:** DOC-RULES.
-**DoD / Validation:** как RA-11, плюс `flutter test --platform chrome test/web/wasm_swap_nv_atomicity_test.dart test/web/yuv_web_capabilities_test.dart test/web/wasm_abi_v1_descriptor_staging_test.dart` (если локальный Chrome недоступен — отметить, проверка переходит в CI RA-41).
-
----
-
-### RA-13 — Комментарии native C
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-01 · **Rejection Count:** 0
-
-Разрешение Engineer на правку только комментариев в native C получено 27.09.2026.
-
-**Scope:** `src/**/*.c`, `src/**/*.h`, `ios/Classes/*.c`, `macos/Classes/*.c`. `src/CMakeLists.txt` — только комментарии.
-**Architect Decision:** DOC-RULES. Комментарии в заголовках ABI (`src/yuv/abi/h/*.h`) остаются описанием контракта ABI v1 (layout, статусы, владение памятью) — теперь это единственный справочник ABI вместо архивированного дизайн-дока.
-**Constraints:** ни одного изменения вне комментариев; `#include`, макросы, пробелы в коде не трогать.
-**DoD:**
-- [ ] регэксп = 0 по scope
-- [ ] Для каждого изменённого `.c`/`.h`: `emcc -E -P` (или `clang -E -P`) базового SHA и результата после удаления всех пробельных символов побайтно совпадают (в `src/` нет `assert`/`__LINE__`, поэтому различий быть не должно)
-**Validation:** проверка препроцессором (скрипт и вывод — в отчёт); CTest `-DBUILD_TESTING=ON` Release; `flutter test`.
-
----
 
 ### RA-14 — Комментарии и описания тестов `test/`
 **Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-04 · **Rejection Count:** 0
@@ -318,14 +218,6 @@ YAML-парсинг локально; ссылка на CI-run.
 
 ---
 
-### RA-15 — Комментарии `test_native/`
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-01 · **Rejection Count:** 0
-
-**Scope:** `test_native/*.c`, `test_native/CMakeLists.txt` (только комментарии).
-**Architect Decision / DoD:** как RA-13, включая проверку препроцессором.
-**Validation:** CTest `-DBUILD_TESTING=ON` Debug и Release — 11/11.
-
----
 
 ### RA-16 — Комментарии example
 **Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-01, RA-04 · **Rejection Count:** 0
@@ -336,33 +228,6 @@ YAML-парсинг локально; ссылка на CI-run.
 
 ---
 
-### RA-17 — README 0.4.2
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** RA-01 · **Rejection Count:** 0
-
-#### Architect Decision
-Структура:
-1. Назначение и возможности.
-2. Установка (без «planned»; упоминание отзыва 0.4.0 — одной фразой).
-3. Требования: Dart/Flutter, Android API 26 и ABI, iOS 13, macOS 10.11, Windows, Linux, Web (JS-сборка, `--wasm` не поддержан, Safari 16.4+).
-4. Quick start и Initialization (объединить, без повторов).
-5. Модель мутаций: `apply*` / `to*` / `copy`, revision и `markDirty()`.
-6. Отображение: `YuvImageWidget`, `YuvImageProvider`, `YuvFramePresenter`, `YuvFrameView`.
-7. Формат NV12/NV21 (UV-порядок).
-8. Capabilities и ошибки (`ArgumentError`, `UnsupportedError`, `YuvNativeException`, `StateError` при init).
-9. Платформы: таблица «поддержка / что проверяется в CI / что проверено вручную» с плейсхолдерами `<!-- RA-50 -->` для ссылок на run.
-10. Web: ограничения частичного backend.
-11. Миграция с 0.2.4 (существующая таблица, вычитанная) плюс строка по решению D-1: фабрики с `planes:` по умолчанию упаковывают плоскости; чтобы сохранить исходные strides и padding, передать `layout: YuvPlaneLayout.preserve`.
-12. Сборка из исходников (native, WASM через `bash`, bindings через `dart run ffigen`).
-13. License.
-
-Убрать: раздел TODO, «Web WASM status (current stage)» с фазами, внутренние номера, ссылки на старые CI run, Credits с внутренними ролями — оставить автора.
-
-#### Definition of Done
-- [ ] Все примеры кода компилируются (проверить вставкой во временный файл в `example/` и `flutter analyze`; файл не коммитить)
-- [ ] Каждое утверждение о поведении совпадает с dartdoc RA-10 / кодом
-- [ ] Регэксп DOC-RULES = 0
-
----
 
 ### RA-19 — Служебные README и комментарии CI
 **Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-22, RA-23, RA-41 · **Rejection Count:** 0
@@ -374,7 +239,7 @@ YAML-парсинг локально; ссылка на CI-run.
 ---
 
 ### RA-21 — Пробы: корректность (golden-хэши)
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** — · **Rejection Count:** 0
+**Status:** ARCHITECT_REQUIRED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** — · **Rejection Count:** 0
 
 #### Problem / Goal
 Полный поведенческий набор запускается только на Linux x64 VM (CI) и Windows локально. На Android/iOS/macOS/Linux-app проверяется только smoke 4×4 («не нули»). 44 из 119 референсных случаев сравниваются с допуском, поэтому дрейф переписанных ядер может пройти незамеченным.
@@ -407,6 +272,9 @@ YAML-парсинг локально; ссылка на CI-run.
 
 #### Validation / Testing
 `flutter test --tags probe`; `flutter test test/probe/probe_copy_sync_test.dart`; `cd example && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/probe_native_test.dart -d windows`.
+
+#### Architect Required
+В Architect Decision указан обязательный эталон — `regress_dump_test.dart` из аудита, но файл отсутствует в рабочем дереве и во всех доступных Git-refs; поиск по репозиторию нашёл только ссылку в этой карточке. В памяти проекта эталон также не найден. До передачи исполнителю требуется восстановить файл или выдать полный oracle/решение по его замене; исполнителю нельзя самостоятельно выдумывать эталон.
 
 ---
 

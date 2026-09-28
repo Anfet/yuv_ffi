@@ -46,8 +46,8 @@ Raw JSONL с отдельными samples:
 Для 1477×1065 совпали SHA и полные сохранённые NV12 bytes:
 `8c66d9c886d6e9c274cee10cf97a4cdfa6dcfd5ec5c5221131907d8f294b670d`;
 2,360,779 байт, 0 отличающихся байтов, максимальная абсолютная разница 0.
-Raw: [direct Y/U/V](blur04_raw/yuv/20260926-014225-gaussian-yuv.nv12),
-[separable Y/U/V](blur04_raw/separable/20260926-014531-gaussian-separable.nv12).
+The raw NV12 dumps were removed during release cleanup; the hashes and byte
+comparison above preserve the recorded result.
 
 ![Выход разделимого Y/U/V Gaussian](blur04_raw/separable/20260926-014450-gaussian-separable.png)
 

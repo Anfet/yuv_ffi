@@ -1,13 +1,10 @@
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 
-/// The exhaustive public processing operations a backend can expose
-/// capabilities for (`doc/api-abi-0.4-design.md` section 7).
+/// The public processing operations a backend can expose.
 ///
-/// Every member maps to exactly one required ABI v1 processing export (the
-/// "Required processing export" table in section 7); [YuvCapabilities]
-/// answers whether that export resolved on the currently loaded backend, not
-/// whether arbitrary input to the operation is valid.
+/// [YuvCapabilities] reports whether the loaded backend can dispatch each
+/// operation. It does not validate individual inputs.
 enum YuvOperation {
   /// `to*`, `applyFormat`, and RGBA import -- dispatched through
   /// `yuv_convert_v1`.
@@ -48,8 +45,7 @@ enum YuvOperation {
   chromaSwap,
 }
 
-/// The single ABI v1 processing symbol [operation] dispatches through
-/// (section 7's "Required processing export" table). Horizontal and vertical
+/// Returns the ABI processing symbol for [operation]. Horizontal and vertical
 /// flip share `yuv_flip_v1`, and both blurs plus Gaussian each own their own
 /// `yuv_*_blur_v1` export.
 String yuvAbiV1SymbolForOperation(YuvOperation operation) => switch (operation) {
@@ -82,15 +78,14 @@ Set<YuvOperation> yuvAvailableOperations(bool Function(String symbol) symbolIsAv
 /// Whether [operation] accepts [sourceFormat] as input and, for [convert]
 /// only, produces [destinationFormat].
 ///
-/// Encodes the "Format, layout, and geometry matrix" table
-/// (`doc/api-abi-0.4-design.md` section 11): [convert] accepts any of I420,
+/// [YuvOperation.convert] accepts I420,
 /// NV12, BGRA8888 as both source and destination (RGBA8888 import is a
 /// distinct one-plane source not modeled by [YuvPixelFormat] and is not a
 /// query this method answers); every effect, blur, geometric transform, and
 /// crop is same-format in and out; [chromaSwap] accepts only NV12.
 ///
 /// [destinationFormat] is required for [YuvOperation.convert] and ignored for
-/// every other operation, which the design doc mandates to be same-format.
+/// every other operation.
 bool yuvAbiV1FormatPairSupported(YuvOperation operation, {required YuvPixelFormat sourceFormat, YuvPixelFormat? destinationFormat}) {
   switch (operation) {
     case YuvOperation.convert:
@@ -110,8 +105,7 @@ bool yuvAbiV1FormatPairSupported(YuvOperation operation, {required YuvPixelForma
     case YuvOperation.flipHorizontal:
     case YuvOperation.flipVertical:
     case YuvOperation.rotate:
-      // Every YuvPixelFormat value (I420, NV12, BGRA8888) is a valid
-      // same-format source/destination pair per section 11's matrix.
+      // Each supported stored format is valid for same-format operations.
       return true;
   }
 }

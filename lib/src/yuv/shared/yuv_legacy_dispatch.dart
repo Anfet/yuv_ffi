@@ -5,86 +5,59 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
-/// Implemented by this package's backends to give the deprecated `0.3.0`
-/// instance methods in [DeprecatedYuvImageApi] their historical,
-/// capability-ungated dispatch (`doc/api-abi-0.4-design.md` sections 4, 8,
-/// 14 Q1).
+/// Internal dispatch interface for deprecated [DeprecatedYuvImageApi] methods.
 ///
-/// The `0.4.0` `apply*` surface added a precondition `0.3.0` never had: every
-/// `apply*` calls `yuvRequireCapability` first and throws `UnsupportedError`
-/// before `YuvFfi.initialize()` has completed (REL-04's post-REL-09
-/// addendum). A deprecated method that simply forwarded to its `apply*`
-/// replacement would inherit that gate and change observable `0.3.0`
-/// behavior for existing callers -- confirmed by several pre-REL-06 tests
-/// (`bgra_mean_blur_contract_test.dart`'s "an invalid radius is rejected
-/// before reaching native code", `conversions_test.dart`'s "fromRgba8888
-/// validates input length", `io_abi_v1_public_contract_test.dart`'s
-/// non-zero-status group) that call these methods with no prior
-/// `YuvFfi.initialize()` and expect argument validation or a native-status
-/// exception, not `UnsupportedError`. This interface is the same
-/// capability-ungated dispatch path the corresponding `apply*` method calls
-/// internally (`_blur`, `_convertTo`, `_crop`, and so on on each backend),
-/// exposed under one name so the deprecated extension can reach it without
-/// going through the capability gate a second time.
+/// Package backends implement this adapter so legacy operations can preserve
+/// argument validation and native error behavior without repeating capability
+/// checks. When a `YuvImage` implementation does not provide this adapter,
+/// deprecated methods use their public `apply*` methods where possible.
 ///
-/// Not exported from `yuv_ffi.dart`, the same way [YuvRevisionAware] is not: a
-/// foreign `implements YuvImage` never has to know it exists. For every method
-/// here except [legacySwapNv], [DeprecatedYuvImageApi] falls back to the
-/// receiver's own public `apply*`/`applyFormat` method when it does not
-/// implement this adapter -- REL-04's already-accepted breaking change
-/// requires every `YuvImage` implementer to provide those, so a foreign
-/// receiver still gets a working (capability-gated) deprecated method rather
-/// than an outright failure. [legacySwapNv] is the one exception: its
-/// two-step convert-then-swap cannot be made atomic against an arbitrary
-// ignore: deprecated_member_use_from_same_package
-/// foreign implementation, so [DeprecatedYuvImageApi.swapNv] throws
-/// [UnsupportedError] without mutating when the receiver does not implement
-/// this adapter, the same fallback section 8 documents for the legacy
-/// `load()` extension when a foreign implementation cannot provide its own
-/// atomic state-replacement adapter.
+/// `swapNv()` requires atomic state replacement. It throws [UnsupportedError]
+/// without mutating when a foreign implementation cannot provide that adapter.
 abstract interface class YuvLegacyDispatchAdapter {
-  /// `0.3.0` `blackwhite()`: in-place, no capability gate.
+  /// Applies the black and white effect in place without checking capabilities.
   YuvImage legacyBlackWhite();
 
-  /// `0.3.0` `grayscale()`: in-place, no capability gate.
+  /// Applies grayscale in place without checking capabilities.
   YuvImage legacyGrayscale();
 
-  /// `0.3.0` `negate()`: in-place, no capability gate.
+  /// Applies color negation in place without checking capabilities.
   YuvImage legacyNegate();
 
-  /// `0.3.0` `gaussianBlur(radius:, sigma:)`: validates [radius] and [sigma]
-  /// and short-circuits on `radius == 0`, exactly as `0.3.0` did, with no
-  /// capability gate.
+  /// Applies Gaussian blur in place without checking capabilities.
+  ///
+  /// Validates [radius] and [sigma]. A zero [radius] is a no-op.
   YuvImage legacyGaussianBlur({required int radius, required double sigma});
 
-  /// `0.3.0` `boxBlur(radius:, rect:)`: validates [radius] and short-circuits
-  /// on `radius == 0` or an empty [rect], with no capability gate.
+  /// Applies box blur in place without checking capabilities.
+  ///
+  /// Validates [radius]. A zero [radius] or empty [rect] is a no-op.
   YuvImage legacyBoxBlur({required int radius, ui.Rect? rect});
 
-  /// `0.3.0` `meanBlur(radius:, rect:)`: same contract as [legacyBoxBlur].
+  /// Applies mean blur in place with the validation and no-op behavior of
+  /// [legacyBoxBlur].
   YuvImage legacyMeanBlur({required int radius, ui.Rect? rect});
 
-  /// `0.3.0` `crop(rect)`: in-place, no capability gate. An empty effective
-  /// crop area is a no-op.
+  /// Crops the image in place without checking capabilities. An empty
+  /// effective crop area is a no-op.
   YuvImage legacyCrop(ui.Rect rect);
 
-  /// `0.3.0` `flipHorizontally()`: in-place, no capability gate.
+  /// Flips the image horizontally in place without checking capabilities.
   YuvImage legacyFlipHorizontal();
 
-  /// `0.3.0` `flipVertically()`: in-place, no capability gate.
+  /// Flips the image vertically in place without checking capabilities.
   YuvImage legacyFlipVertical();
 
-  /// `0.3.0` `rotate(rotation)`: in-place, no capability gate.
-  /// `YuvImageRotation.rotation0` is a no-op.
+  /// Rotates the image in place without checking capabilities.
+  /// [YuvImageRotation.rotation0] is a no-op.
   YuvImage legacyRotate(YuvImageRotation rotation);
 
-  /// `0.3.0` `fromRgba8888(bytes)`: validates [bytes]' exact length and
-  /// mutates in place, with no capability gate.
+  /// Replaces the image pixels from RGBA8888 [bytes] in place without checking
+  /// capabilities. Validates the exact byte length.
   void legacyFromRgba8888(Uint8List bytes);
 
-  /// `0.3.0` `toYuvI420()`/`toYuvBgra8888()`/`toYuvNv21()`: converts this
-  /// image to [target] in place and returns `this`; a conversion to the
-  /// format this image already has is a no-op. No capability gate.
+  /// Converts the image to [target] in place without checking capabilities.
+  /// Returns the receiver; converting to its current format is a no-op.
   // ignore: deprecated_member_use_from_same_package
   YuvImage legacyConvertTo(YuvFileFormat target);
 
@@ -92,35 +65,20 @@ abstract interface class YuvLegacyDispatchAdapter {
   /// already NV12, then swaps every interleaved U/V sample value in place,
   /// and returns `this`.
   ///
-  /// `swapNv()` cannot be expressed as a plain `extension on YuvImage` built
-  /// out of `applyFormat()` followed by `applyChromaSwap()`: the first call
-  /// would publish the NV12 conversion and bump the revision before the swap
-  /// was even attempted, so a chroma swap that then failed would leave the
-  /// receiver visibly half-migrated -- exactly the partial mutation section
-  /// 13's transactional design forbids for every mutating operation,
-  /// deprecated or not. Each backend already stages both steps as local
-  /// drafts and publishes once, so this method only exposes that existing
-  /// atomic path under one name. Keeps the legacy `nv21`-labeled UV byte
-  /// order and historical output bytes exactly as `0.3.0`'s `swapNv()`
-  /// produced them.
+  /// Converts to NV12 if needed, then swaps every interleaved U/V sample in
+  /// one atomic in-place update. Returns the receiver.
   YuvImage legacySwapNv();
 
-  /// `0.3.0` `load(stream)`: decodes [stream] and atomically replaces this
-  /// image's format, geometry and planes with what it held.
+  /// Decodes [stream] and atomically replaces the image's format, geometry,
+  /// and planes.
   ///
   /// Decoding completes into a fully validated draft (`YuvCodec.decodeStream`)
   /// before anything on this receiver is touched, so a malformed payload
   /// throws [FormatException] and leaves format, geometry, planes and revision
-  /// exactly as they were -- the same atomic state-replacement contract every
-  /// backend's `YuvImageState.decodeAndReplace` already gives. On success the
-  /// revision advances exactly once.
+  /// exactly as they were. On success, the revision advances exactly once.
   ///
-  /// Unlike every other method here, there is no `apply*`-based fallback a
-  /// foreign `implements YuvImage` could be forwarded to: replacing format,
-  /// geometry and every plane at once is not an operation the `0.4.0`
-  /// interface exposes at all (`YuvImage.decode` builds a new instance
-  /// instead), so `DeprecatedYuvImageApi.load` throws [UnsupportedError]
-  /// without mutating when the receiver does not implement this adapter --
-  /// exactly the fallback section 8 documents for legacy `load()`.
+  /// A foreign `YuvImage` implementation cannot provide this replacement
+  /// through its `apply*` methods, so [DeprecatedYuvImageApi.load] throws
+  /// [UnsupportedError] without mutating when the receiver lacks this adapter.
   Future<void> legacyLoad(Stream<List<int>> stream);
 }

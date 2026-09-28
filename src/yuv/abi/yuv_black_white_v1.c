@@ -6,7 +6,8 @@
 
 /*
  * Black-white effect: the rounded visible BT.601 gray selects white at >= 128
- * and black below it. I420->I420, NV12->NV12, BGRA->BGRA at identical geometry.
+ * and black below it. I420 to I420, NV12 to NV12, and BGRA to BGRA at
+ * identical geometry.
  * The inclusive boundary is part of the ABI v1 contract.
  */
 static YuvRgbaPixelV1 yuv_black_white_v1_effect(void *context, YuvRgbaPixelV1 pixel, uint32_t x, uint32_t y) {

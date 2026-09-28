@@ -80,10 +80,7 @@ endif ()
 
 # --- Platform-specific linking ---
 
-# Android: liblog is no longer linked. The only user of __android_log_print was
-# src/yuv/utils/h/log.h, which YUV-52 removed together with the legacy
-# processing sources that included it; linking a library nothing references
-# would just misstate the target's dependencies.
+# Android builds do not use liblog.
 if (ANDROID)
     # Android 15: 16k page size support
     target_link_options(yuv_ffi PRIVATE "-Wl,-z,max-page-size=16384")

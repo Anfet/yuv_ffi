@@ -104,7 +104,7 @@
 
 ## 0.4.0
 
-First published release after `0.2.4`. Implemented against [the 0.4.0 design](doc/api-abi-0.4-design.md).
+First published release after `0.2.4`. Implemented against the 0.4.0 design.
 See the README's "Migrating from `0.2.4`" section for a full method-by-method mapping.
 
 ### Breaking changes
@@ -163,7 +163,7 @@ the published `0.2.4` → `0.4.0` upgrade, not a separate pub.dev release.
 - Narrowed `ffigen` to the ABI the package actually uses and switched the native build to an explicit source list.
 - Enabled optimization for native builds and SIMD for the WASM artifacts, and rebuilt those artifacts from the fixed C sources.
 - Added a Web reference conversion matrix and an independent `test_pattern_512` reference, and made the reference matrix skip honestly when no native library is present.
-- Documented the native C ABI and public Dart API contract in [the 0.4.0 design](doc/api-abi-0.4-design.md).
+- Documented the native C ABI and public Dart API contract in the 0.4.0 design.
 - Upgraded `ffigen` to `^21.0.0`, `ffi` to `^2.2.0`, `build_runner` to `^2.15.1`, `flutter_lints` to `^6.0.0` and `image` (dev) to `^4.10.1`, and regenerated the native bindings; the output is formatting-only (ffigen's newer, more compact function-signature style), with the same symbols and struct layout confirmed by `tool/verify_bindings_audit.dart`.
 - Added a dedicated Android CI build job that exercises the plugin's `externalNativeBuild`/CMake wiring through a real `flutter build apk` (YUV-24).
 

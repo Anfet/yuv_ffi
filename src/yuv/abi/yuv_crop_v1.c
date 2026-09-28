@@ -196,7 +196,7 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_crop_v1(const YuvConstFrameV1 *source, YuvMutabl
         return YUV_STATUS_INVALID_ARGUMENT;
     }
 
-    /* Section 14 Q2: an odd crop origin puts the destination luma grid out of
+    /* An odd crop origin puts the destination luma grid out of
      * phase with the source 2x2 chroma blocks, so destination chroma has to be
      * recomputed from the visible footprint.
      *

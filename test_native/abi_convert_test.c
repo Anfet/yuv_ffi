@@ -1,26 +1,5 @@
-/*
- * ABI v1 conversion tests (YUV-32).
- *
- * The defect this file exists to prevent is not a crash but a disagreement:
- * RGBA->YUV used BT.601 limited range and averaged the real 2x2 block, while
- * BGRA->YUV used a full-range matrix and took chroma from the top-left pixel
- * only. The same picture therefore encoded to different bytes depending on
- * which channel order it arrived in.
- *
- * So the central case here is a parity case: build one image, present it as
- * RGBA and as the byte-swapped BGRA, convert both, and require the two
- * results to be identical sample for sample. That check fails for either half
- * of the old defect -- a different matrix or a different chroma reducer --
- * without this test needing to know which matrix is "right".
- *
- * Separately, the absolute values are pinned against the reference oracle
- * (test/helpers/reference/test_pattern_reference.dart) recomputed here in C:
- * parity alone would also be satisfied by two paths that agree and are both
- * wrong.
- *
- * Checks use volatile locals (MSVC C4127 under /W4 /WX) and report through the
- * exit code rather than abort().
- */
+/* Compares RGBA and BGRA conversion results sample by sample and checks
+ * geometry, independent plane strides, and pixel gaps against an oracle. */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -551,18 +530,7 @@ static void test_rejected_pairs(void) {
         yuv_convert_v1(&sourceFrame, &destinationFrame, &options), YUV_STATUS_UNSUPPORTED_FORMAT);
 }
 
-/* ============================================================================
- * BGRA-01: NV12->BGRA byte-exact geometry/layout matrix
- *
- * A heap fixture with an independently configurable pixelStride/rowStride per
- * plane, plus an optional +1 byte data offset -- the stack Frame fixture
- * above hard-codes pixelStride to sampleBytes and caps geometry at 8x8, which
- * cannot express the fast-path/generic-path selection (pixelStride ==
- * 1/2/4 vs. gapped) or the 33x17 case this task's DoD asks for. The oracle
- * here is transcribed independently again, not shared with the kernel or
- * with test_yuv_to_bgra's oracle above, to keep the "two agreeing but wrong
- * paths" failure mode catchable.
- * ============================================================================ */
+
 
 typedef struct {
     uint8_t *base;      /* raw allocation, possibly unaligned-offset */
@@ -619,9 +587,7 @@ static int nv12_bgra_clip(int value) {
     return value < 0 ? 0 : (value > 255 ? 255 : value);
 }
 
-/* Independent oracle: plain per-pixel BT.601 limited-range decode, no shared
- * chroma term or fast/generic distinction -- exactly the pre-optimization
- * shape, transcribed again rather than reused. */
+
 static void nv12_bgra_oracle_pixel(int y, int u, int v, int *b, int *g, int *r) {
     int c = y - 16;
     int d = u - 128;
@@ -814,16 +780,7 @@ static void test_nv12_to_bgra_geometry_and_layout(void) {
     }
 }
 
-/* ============================================================================
- * BGRA-02: I420->BGRA byte-exact geometry/layout matrix
- *
- * Same GapPlane fixture and oracle shape as BGRA-01's NV12 matrix above, but
- * U and V are independent planes here, each with its own pixelStride and
- * rowStride -- the layout table below varies them separately (not just
- * together) so a bug that swaps U/V stride or reads V through U's stride is
- * caught. The oracle is transcribed independently again, not shared with the
- * NV12 oracle above or with the kernel.
- * ============================================================================ */
+
 
 #define I420_BGRA_CANARY 0xCB
 
@@ -1012,10 +969,7 @@ static void test_i420_to_bgra_geometry_and_layout(void) {
         {"row-padded", 5, 1, 4, 1, 7, 1, 9, 4, 0, 0, 0, 0},
         /* Pixel-gapped on every plane: forces the generic path throughout. */
         {"pixel-gapped", 0, 2, 0, 3, 0, 2, 0, 5, 0, 0, 0, 0},
-        /* U and V independently gapped with DIFFERENT pixelStride from each
-         * other (BGRA-02-specific: NV12 has one interleaved UV plane, I420
-         * has two independent ones, so this is the case that would catch a
-         * bug that reused U's stride for V or vice versa). */
+
         {"u-v-different-stride", 0, 1, 0, 1, 0, 3, 0, 4, 0, 0, 0, 0},
         {"u-v-different-stride-2", 0, 1, 0, 3, 0, 1, 0, 4, 0, 0, 0, 0},
         /* Mixed: tight source, gapped destination -- generic path is chosen
@@ -1024,8 +978,7 @@ static void test_i420_to_bgra_geometry_and_layout(void) {
         /* Mixed the other way: gapped source, tight destination -- generic
          * path chosen because yPs != 1. */
         {"src-gapped-dst-tight", 0, 2, 0, 2, 0, 2, 0, 4, 0, 0, 0, 0},
-        /* Y tight, chroma gapped (both U and V) -- explicitly called out in
-         * the DoD as the "mixed" case beyond BGRA-01's NV12 matrix. */
+
         {"y-tight-chroma-gapped", 0, 1, 0, 2, 0, 2, 0, 4, 0, 0, 0, 0},
         /* Unaligned data: every plane's descriptor points 1 byte into its
          * allocation, so a fast-path pointer increment cannot rely on any

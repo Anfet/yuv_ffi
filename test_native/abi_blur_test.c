@@ -1,26 +1,5 @@
-/*
- * ABI v1 blur tests (YUV-23): Gaussian, mean, box.
- *
- * YUV-11 reported 19 blur failures, and the audit behind them found the
- * causes were structural rather than numeric. The cases here target each one:
- *
- *  - results that depended on traversal order, because the kernel read the
- *    destination it was writing (probes gave 170 and 198 where the snapshot
- *    answer is 127) -- checked by blurring into a destination pre-filled with
- *    two different patterns and requiring the same output;
- *  - uninitialized bytes outside the region and destroyed alpha, from filling
- *    a scratch buffer only inside the rectangle and copying all of it back --
- *    checked by an explicit outside-region byte comparison and an alpha check;
- *  - mean and box disagreeing, though section 11 makes them one oracle --
- *    checked by requiring identical output for the same radius;
- *  - border handling, which the Engineer fixed as edge-replicate on
- *    2026-09-20: full kernel area, clamped coordinates, divisor always the
- *    full area -- checked against a flat image, where edge-replicate is the
- *    only rule that returns the flat value unchanged at the border.
- *
- * Checks use volatile locals (MSVC C4127 under /W4 /WX) and report through the
- * exit code rather than abort().
- */
+/* Verifies blur results are independent of destination contents, preserve
+ * alpha and bytes outside the region, and use edge replication at borders. */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -682,22 +661,7 @@ static void test_odd_geometry(void) {
     }
 }
 
-/* ============================================================================
- * Region of interest on 4:2:0
- *
- * The defect the reviewer of the first YUV-23 submission caught. The BGRA
- * region case above passed while this one would not have: blur wrote the
- * whole destination through the frame encoder, which re-derives every luma
- * sample from the decoded snapshot. For BGRA that round trip happens to be
- * lossless, so nothing showed; for I420 and NV12 it re-quantizes, and a Y
- * sample outside the region came back changed (the reviewer reproduced
- * 17 -> 25).
- *
- * Luma outside the region must therefore be byte-identical. Chroma is a
- * separate matter: a chroma sample whose 2x2 footprint intersects the region
- * is re-encoded by contract (section 14 Q2), so only blocks entirely outside
- * the region are required to be untouched.
- * ============================================================================ */
+
 
 static void test_region_on_420(void) {
     printf("Region of interest on 4:2:0\n");
@@ -787,8 +751,7 @@ static void test_region_on_420(void) {
         expect_true("      destination padding intact", padding_intact(&destination));
     }
 
-    /* The reviewer's exact shape: a 1x1 region, where every other sample of
-     * the frame must survive unchanged. */
+
     {
         Frame source;
         Frame destination;

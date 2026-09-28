@@ -4,8 +4,7 @@ import 'dart:typed_data';
 
 import 'package:yuv_ffi/src/web/impl/js_util_compat_web.dart' as js_util;
 
-/// A scoped `_malloc`/`_free` arena over a WASM module's linear memory
-/// (YUV-51).
+/// A scoped `_malloc`/`_free` arena over a WASM module's linear memory.
 ///
 /// This is the Web counterpart of `NativeAllocator` on the IO side: the ABI v1
 /// Web runner stages every descriptor, options struct and plane buffer through

@@ -287,8 +287,8 @@ static YuvStatus yuv_box_blur_v1_run(
 }
 
 /*
- * Normalized box blur: every kernel cell has weight 1/(2*radius+1)^2. Shares its
- * oracle with mean blur, so both must produce the same logical result for the
+ * Normalized box blur: every kernel cell has weight 1/(2*radius+1)^2. Uses the
+ * same semantics as mean blur, so both produce the same logical result for the
  * same radius and ROI. Edge-replicate at the border.
  */
 FFI_PLUGIN_EXPORT YuvStatus yuv_box_blur_v1(const YuvConstFrameV1 *source, YuvMutableFrameV1 *destination,
@@ -301,9 +301,8 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_box_blur_v1(const YuvConstFrameV1 *source, YuvMu
         return YUV_STATUS_INVALID_ARGUMENT;
     }
 
-    /* radius 0 is a defined no-op rather than an error, but a radius past
-     * 256 would make the kernel area exceed what the accumulators and the
-     * reference oracle are defined for. */
+    /* Radius 0 is a defined no-op rather than an error; values above 256 are
+     * outside the supported kernel range. */
     if (options->radius > 256) {
         return YUV_STATUS_INVALID_ARGUMENT;
     }

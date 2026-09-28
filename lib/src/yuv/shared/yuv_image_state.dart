@@ -13,12 +13,8 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane_packing.dart';
 /// owns, with the accessor, allocation, copy and serialization logic that state
 /// implies.
 ///
-/// This is the single owner of the logic the three backends used to repeat
-/// verbatim (YUV-28). Each backend holds one of these by composition rather
-/// than inheriting from it, so the FFI/WASM dispatch that genuinely differs
-/// stays in `impl/io/yuv_image.dart` and `impl/web/yuv_web.dart` and this class
-/// stays free of any backend import -- there is no platform-conditional code
-/// here and nothing in `shared/` imports `impl/`, so no cycle is possible.
+/// Each backend composes this state object and keeps its platform-specific
+/// dispatch in its own implementation. This class has no backend imports.
 ///
 /// It is internal: the public mutation model, and which operations a backend
 /// supports at all, remain each backend's own contract. In particular sharing
@@ -29,7 +25,7 @@ class YuvImageState {
   ///
   /// When [planes] is given, it is validated against the format geometry
   /// first -- reading only, never copying or mutating the caller's planes --
-  /// then adopted according to [layout] (PACK-01B): [YuvPlaneLayout.preserve]
+  /// then adopted according to [layout]: [YuvPlaneLayout.preserve]
   /// deep-copies the caller's layout, including row and pixel padding, exactly
   /// as given. [YuvPlaneLayout.packed] (the default) copies only the visible
   /// samples straight out of the caller's own planes into a tightly packed
@@ -42,11 +38,9 @@ class YuvImageState {
   /// zero-filled -- [layout] is not consulted in that case, since there is no
   /// caller layout to preserve.
   ///
-  /// [allowLargerNvChromaStride] is the REL-03 `nv12` entry point's opt-in to a
-  /// pixel stride above [YuvGeometry.nvChromaPixelStride] being real padding
-  /// rather than a rejected layout; see [YuvGeometry.validateImage]. It defaults
-  /// to `false`, which is what every other entry point (including legacy
-  /// `nv21`) keeps using.
+  /// [allowLargerNvChromaStride] permits an interleaved chroma pixel stride
+  /// above [YuvGeometry.nvChromaPixelStride] when that extra spacing is
+  /// intentional. It defaults to `false`, which other entry points use.
   ///
   /// Throws [ArgumentError] for a non-positive dimension, a plane count that
   /// does not match [format], a plane that cannot hold its declared geometry,
@@ -241,12 +235,8 @@ class YuvImageState {
     _revision++;
   }
 
-  // There is deliberately no "replace but rewind the revision" variant. It
-  // existed for an operation that published an intermediate result and then
-  // corrected the counter afterwards (`swapNv` converting to NV21 first), which
-  // is exactly the partial-publish the 0.3.0 contract forbids: a failure in the
-  // second step left the receiver converted. An operation that needs several
-  // native calls completes them all on drafts and calls [replace] once.
+  // Multi-step operations stage all results before calling [replace] once, so
+  // a failure cannot publish an intermediate image state.
 
   /// Every plane's bytes concatenated in format order, as a fresh buffer.
   Uint8List getBytes() => YuvPlaneBytes.concat(_planes);
@@ -290,9 +280,7 @@ class YuvImageState {
   /// Several native BGRA effects allocate a tight `width * height * 4` scratch
   /// buffer but address it through the source row stride, so a padded plane
   /// makes them write past the allocation. The WASM build shares those sources,
-  /// so both backends refuse exactly the same input here rather than passing it
-  /// to a backend call. Until those implementations are fixed (YUV-23) this is
-  /// the boundary.
+  /// so both backends reject this input before dispatch.
   void requireTightBgraFor(String operation) {
     // ignore: deprecated_member_use_from_same_package
     if (_format != YuvFileFormat.bgra8888 || isTightBgra) {
@@ -354,10 +342,8 @@ class YuvImageState {
   /// The BGRA plane's bytes as a fresh, tightly packed `width * height * 4`
   /// buffer, repacking rows only when the plane declares row or pixel padding.
   ///
-  /// A `pixelStride` greater than 4 (REL-12) leaves a per-pixel gap between
-  /// logical samples, distinct from row padding beyond `width * pixelStride`.
-  /// Both are skipped here: only the four logical bytes of each pixel are
-  /// copied, walked through the plane's own `rowStride`/`pixelStride`, so
+  /// Per-pixel gaps and row padding are skipped. Only the four logical bytes
+  /// of each pixel are copied using the plane's `rowStride` and `pixelStride`, so
   /// neither kind of padding leaks into the tightly packed result. The result
   /// is always a fresh copy, never a view onto the mutable plane buffer, and
   /// the source plane is never modified.

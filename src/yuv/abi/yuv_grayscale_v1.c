@@ -6,13 +6,12 @@
 
 /*
  * Grayscale effect: every visible pixel is replaced by its rounded BT.601 luma
- * on all three RGB channels. I420->I420, NV12->NV12, BGRA->BGRA at identical
+ * on all three RGB channels. I420 to I420, NV12 to NV12, and BGRA to BGRA at
  * geometry.
  */
-/* Section 11: gray = floor((299*R + 587*G + 114*B + 500) / 1000), written to
+/* gray = floor((299*R + 587*G + 114*B + 500) / 1000), written to
  * all three channels. The +500 is a half-up rounding term; truncating instead
- * biases every pixel down by up to one step, which is the MAE 0.264 that
- * EFFECT-GRAYSCALE-BGRA8888 reported against the oracle. */
+ * biases every pixel down by up to one step. */
 static YuvRgbaPixelV1 yuv_grayscale_v1_effect(void *context, YuvRgbaPixelV1 pixel, uint32_t x, uint32_t y) {
     (void)context;
     (void)x;

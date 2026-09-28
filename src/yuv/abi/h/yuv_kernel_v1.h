@@ -8,12 +8,9 @@
  * Shared pixel-kernel support for the ABI v1 entry points.
  *
  * Division of labour: yuv_validate_v1.h owns everything that happens BEFORE
- * the first destination write; this header owns what happens after, once both
- * views are known sound. It exists because the legacy surface proved that
- * nine or forty copies of "index a sample through its own row/pixel stride"
- * and "decode BT.601" diverge -- the audit behind YUV-22/23/31/32 is a list
- * of exactly those divergences (floor vs ceil chroma, pixelStride used as a
- * sample size, one matrix here and another there).
+ * the first destination write; this header owns the shared pixel operations
+ * that run after both views are validated. Centralizing sample access and
+ * color conversion keeps those rules consistent across operations.
  *
  * Two rules hold throughout and are the reason the accessors take a plane
  * view rather than a raw pointer:
@@ -49,8 +46,7 @@ const uint8_t *yuv_kernel_v1_const_sample(const YuvValidatedConstPlaneIn *plane,
 uint8_t *yuv_kernel_v1_mutable_sample(const YuvValidatedMutablePlaneIn *plane, uint32_t x, uint32_t y);
 
 /* ===========================================================================
- * BT.601 limited-range codec (section 11: "the existing BT.601 limited-range
- * integer oracle")
+ * BT.601 limited-range codec
  * =========================================================================== */
 
 /* Decodes one YUV triple to RGB. Alpha of the result is 255. */
@@ -64,9 +60,8 @@ uint8_t yuv_kernel_v1_rgb_to_u(uint8_t r, uint8_t g, uint8_t b);
 uint8_t yuv_kernel_v1_rgb_to_v(uint8_t r, uint8_t g, uint8_t b);
 
 /* Rounded luma used by grayscale and black-white:
- * floor((299*R + 587*G + 114*B + 500) / 1000). Note this is the visible-RGB
- * gray of section 11, NOT the limited-range Y above: they differ, and using
- * one where the other belongs is one of the reference failures YUV-22 lists. */
+ * floor((299*R + 587*G + 114*B + 500) / 1000). This is visible-RGB gray,
+ * distinct from the limited-range Y above. */
 uint8_t yuv_kernel_v1_gray(uint8_t r, uint8_t g, uint8_t b);
 
 /* ===========================================================================
@@ -117,8 +112,8 @@ void yuv_kernel_v1_write_luma(
 /*
  * Writes the chroma sample covering the 2x2 luma footprint whose top-left is
  * (blockX * 2, blockY * 2), averaging U and V over the pixels of that
- * footprint that actually exist -- the clipped 2x2 rule of section 11, which
- * is what makes an odd right/bottom edge divide by 2 or 1 instead of 4.
+ * footprint that actually exist. The clipped 2x2 rule makes an odd
+ * right/bottom edge divide by 2 or 1 instead of 4.
  *
  * `pixels` holds the footprint in raster order and `count` how many of the
  * four are real. A no-op for BGRA, which has no chroma plane.
@@ -164,9 +159,8 @@ typedef void (*YuvPixelMapV1)(void *context, uint32_t destinationX, uint32_t des
  *    re-encodes chroma by the clipped 2x2 rule. Phase-correct for any
  *    geometry, at the cost of one extra quantization.
  *
- * This is the "recompute destination chroma from the source visible RGB
- * footprint (or an exactly equivalent phase-aware implementation)" of section
- * 14 Q2: the fast path is taken only where it is provably that equivalent.
+ * The fast path is taken only where byte copying is equivalent to recomputing
+ * destination chroma from the source visible RGB footprint.
  *
  * `blockAligned` is the caller's assertion that the mapping preserves 2x2
  * block alignment. Ignored for BGRA, which has no chroma to phase-shift.
@@ -195,10 +189,8 @@ typedef YuvRgbaPixelV1 (*YuvPixelSourceV1)(void *context, uint32_t x, uint32_t y
  * actually exist.
  *
  * This is the single encode path behind conversion, the effects, and blur.
- * Having one means the clipped-2x2 odd-edge rule, and the "average RGB then
- * encode once" order that the reference oracle uses, cannot drift between
- * them -- which is exactly how BGRA->I420 ended up taking chroma from the
- * top-left pixel while RGBA->I420 averaged the block (YUV-32).
+ * Having one keeps the clipped-2x2 odd-edge rule and the "average RGB then
+ * encode once" order consistent across operations.
  *
  * `produce` is called once per visible pixel for luma, and again for the
  * members of each chroma footprint, so it must be a pure function of its
@@ -212,8 +204,7 @@ void yuv_kernel_v1_encode_frame(
  * =========================================================================== */
 
 /* Transforms one visible RGB pixel. Alpha of the returned pixel is ignored:
- * the driver carries the source alpha across untouched, per section 11
- * ("Effects and blur preserve the BGRA alpha byte"). */
+ * the driver carries the source alpha across untouched. */
 typedef YuvRgbaPixelV1 (*YuvRgbEffectV1)(void *context, YuvRgbaPixelV1 pixel, uint32_t x, uint32_t y);
 
 /* A normalized, already-validated region of interest. `enabled == 0` means
@@ -230,8 +221,8 @@ typedef struct {
  * Applies `effect` to every visible pixel inside the region and copies the
  * rest of the frame across unchanged, then re-encodes chroma.
  *
- * The chroma rule is section 14 Q2's: a chroma sample is recomputed when its
- * 2x2 luma footprint intersects the region, and is otherwise copied from the
+ * Recompute a chroma sample when its 2x2 luma footprint intersects the
+ * region; otherwise, copy it from the
  * source. Because one chroma sample can serve pixels on both sides of the
  * region boundary, a boundary block is re-encoded from the post-effect RGB of
  * its whole footprint -- the documented shared-chroma influence, not a bug.
@@ -255,25 +246,21 @@ YuvRegionV1 yuv_kernel_v1_region(const YuvRegionOptionsV1 *options);
 /*
  * Convolves the visible RGB image and writes the result to the destination.
  *
- * Semantics are fixed by the Engineer decision of 2026-09-20 (edge-replicate)
- * and section 11:
+ * Border samples use edge replication:
  *
  *  - The kernel is always the full (2*radius+1)^2 for every output pixel,
  *    including at the border. A cell falling outside the image clamps its
  *    coordinate to the nearest edge, so an edge pixel enters the sum once per
  *    cell that landed on it.
- *  - The divisor is therefore always the full kernel weight, never the number
- *    of cells that happened to fall inside. The rejected alternative
- *    (shrinking the window) diverged from the oracle by more than the
- *    tolerance as radius grew.
- *  - Rounding is half-up, floor(value + 0.5), matching the oracle's round().
+ *  - The divisor is always the full kernel weight, never the number of cells
+ *    that fall inside the image.
+ *  - Rounding is half-up, floor(value + 0.5).
  *    Truncating biases every channel down by one step.
  *  - Alpha never enters the convolution: it is copied from the source pixel.
  *
  * `weights` is NULL for the uniform mean/box blur, or a (2*radius+1)^2 array
- * of Gaussian weights in raster order. Accumulation is in a type wide enough
- * that a full DCI 4K frame cannot overflow it, which the legacy int32_t
- * integral image could.
+ * of Gaussian weights in raster order. Accumulation uses a type wide enough
+ * for a full DCI 4K frame.
  *
  * The whole scratch snapshot is allocated once, before the first destination
  * write. On failure nothing has been written and YUV_STATUS_ALLOCATION_FAILED

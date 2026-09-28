@@ -1,8 +1,5 @@
-/// The names of the eleven ABI v1 processing symbols
-/// (`src/yuv/abi/h/yuv_ops_v1.h`, `doc/api-abi-0.4-design.md` section 11), as
-/// the Dart side of the package names them.
+/// Names of the ABI v1 processing symbols used by Dart dispatch.
 ///
-/// This is the Dart-dispatch side of the four-way symbol-manifest gate (YUV-28):
 /// `test/abi_symbol_manifest_test.dart` requires exact agreement between the C
 /// header, the ffigen allowlist, the WASM `EXPORTED_FUNCTIONS` list, and this
 /// file -- and requires that every name here is actually reached from dispatch
@@ -50,8 +47,7 @@ const String yuvSymbolRotateV1 = 'yuv_rotate_v1';
 /// `yuv_chroma_swap_v1` -- swap interleaved chroma order.
 const String yuvSymbolChromaSwapV1 = 'yuv_chroma_swap_v1';
 
-/// Every ABI v1 processing symbol, in `doc/api-abi-0.4-design.md` section 11
-/// order.
+/// The complete list of ABI v1 processing symbols.
 ///
 /// The manifest gate asserts this holds exactly eleven distinct names, so a
 /// symbol added to the header without being added here -- or the reverse --

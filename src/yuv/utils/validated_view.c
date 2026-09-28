@@ -46,7 +46,7 @@ YuvViewStatus yuv_validated_view_plane_geometry(
 
     /* Plane 0 (Y, or the single packed RGBA/BGRA plane) is always full
      * frame geometry. Chroma planes (I420 U/V, NV12 UV) use ceil(w/2) x
-     * ceil(h/2) per section 11's format matrix. */
+     * ceil(h/2). */
     if (planeIndex == 0) {
         *outPlaneWidth = width;
         *outPlaneHeight = height;
@@ -110,12 +110,12 @@ YuvViewStatus yuv_validated_view_plane_sample_layout(
 }
 
 /*
- * Shared validation body for one plane's stride/span rules (section 11):
+ * Shared validation body for one plane's stride and span rules:
  *   rowStride >= (planeWidth - 1) * pixelStride + sampleBytes
  *   length    >= (planeHeight - 1) * rowStride +
  *                (planeWidth - 1) * pixelStride + sampleBytes
- * Implemented entirely through yuv_checked_plane_span()/yuv_checked_plane_size()
- * (never raw `*`/`+`), per Architect Decision #1/#2.
+ * Implemented through yuv_checked_plane_span()/yuv_checked_plane_size() to
+ * detect overflow before any pointer arithmetic.
  */
 static YuvViewStatus yuv_validated_view_check_plane_geometry(
     uint32_t planeWidth,

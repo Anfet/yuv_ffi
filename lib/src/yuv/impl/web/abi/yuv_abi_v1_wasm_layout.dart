@@ -1,6 +1,6 @@
 /// The wasm32 byte offsets and sizes of every ABI v1 struct
-/// (`src/yuv/abi/h/yuv_abi_v1.h`, `doc/api-abi-0.4-design.md` sections 9 and
-/// 10), as the Web runner stages them into WASM linear memory (YUV-51).
+/// (`src/yuv/abi/h/yuv_abi_v1.h`), as the Web runner stages them into WASM
+/// linear memory.
 ///
 /// The IO side never needs these: `dart:ffi` derives every offset from the
 /// `@Packed`-free generated struct definitions. The Web side has no such
@@ -75,9 +75,7 @@ abstract final class YuvWasmFrameV1 {
 
   /// The three plane slots ABI v1 declares, whatever the format's plane count.
   ///
-  /// Slots past the format's `planeCount` stay zero-filled with a null `data`,
-  /// per section 9 ("Unused planes are zero-filled descriptors with null
-  /// data").
+  /// Slots past the format's `planeCount` stay zero-filled with a null `data`.
   static const int planeSlots = 3;
 
   /// Byte offset of plane [index]'s descriptor within the frame.

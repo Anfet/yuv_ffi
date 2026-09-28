@@ -17,7 +17,7 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// `dart:js_interop`.
 ///
 /// Format, geometry, plane, copy and serialization state lives in the shared
-/// [YuvImageState] this holds by composition (YUV-28); what remains here is the
+/// [YuvImageState] this holds by composition; what remains here is the
 /// no-backend behavior itself -- every processing operation is a no-op, and the
 /// format conversions only restate geometry.
 class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapter {
@@ -219,11 +219,8 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     return completer.future;
   }
 
-  // No native/WASM backend exists here, so every legacy effect/blur is a
-  // no-op, exactly as `0.3.0`'s stub behavior was: there is nothing to
-  // dispatch, so validation and processing are the same thing this stub
-  // always did -- nothing, beyond the geometry work crop/format-reinterpret
-  // still do below.
+  // No native or WASM backend exists here, so effects and blurs are no-ops.
+  // Crop and format reinterpretation still update geometry below.
 
   @override
   YuvImage legacyBlackWhite() => this;
@@ -254,11 +251,9 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
 
   @override
   YuvImage legacyCrop(ui.Rect rect) {
-    // Clamped through the shared helper, so an empty rect is the same no-op it
-    // is on the native and Web backends. The previous stub-only clamp allowed a
-    // zero width or height through, which then either built a degenerate plane
-    // or made the plane allocation throw after the geometry had already been
-    // overwritten -- leaving the image inconsistent.
+    // The shared clamp makes an empty rect a no-op, matching the native and Web
+    // backends. It also prevents allocating a degenerate plane after changing
+    // the image geometry.
     final region = _state.clampCrop(rect);
     if (region == null) {
       return this;
@@ -293,8 +288,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     return this;
   }
 
-  /// No-op: this stub has no backend to stage a real convert-then-swap with,
-  /// consistent with `0.3.0`'s `swapNv()` returning `this` unconditionally here.
+  /// No-op because this stub has no backend to convert and swap chroma samples.
   @override
   YuvImage legacySwapNv() => this;
 

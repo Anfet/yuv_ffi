@@ -3,7 +3,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 
 /// Shared tight-packing geometry and copy loop for every backend and for the
-/// public `YuvImagePack.pack()` extension (PACK-01A/B).
+/// public [YuvImagePack.pack] extension.
 ///
 /// Kept independent of any live [YuvImage] instance -- unlike
 /// `YuvImagePack`, which reads an existing image's `format`/`width`/`height`
@@ -65,9 +65,8 @@ abstract final class YuvPlanePacking {
   /// [sampleBytes] is how many leading bytes of each [YuvPlane.pixelStride]-wide
   /// source slot are copied. When [source]'s pixel stride is wider than
   /// [sampleBytes] this de-interleaves: any byte belonging to a different
-  /// channel packed into the same source slot (I420 U/V reported at
-  /// `pixelStride == 2` on some Android devices -- PACK-00) is left behind,
-  /// not carried into the packed plane.
+  /// channel packed into the same source slot is left behind, not carried into
+  /// the packed plane.
   static YuvPlane packPlane(YuvPlane source, {required int rows, required int columns, required int sampleBytes}) {
     final tightRowStride = columns * sampleBytes;
     if (source.pixelStride == sampleBytes && source.rowStride == tightRowStride) {

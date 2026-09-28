@@ -6,13 +6,11 @@
 
 /*
  * Visible RGB negate: each channel becomes 255 - channel, with alpha preserved.
- * I420->I420, NV12->NV12, BGRA->BGRA at identical geometry.
+ * I420 to I420, NV12 to NV12, and BGRA to BGRA at identical geometry.
  */
-/* Section 11: negate is an RGB operation, (255-R, 255-G, 255-B). Inverting
- * the stored Y/U/V samples instead is not equivalent in limited range -- that
- * is the MAE 8.152 in EFFECT-NEGATE-I420 -- and the legacy chroma form
- * 256 - value had no representable result for 0, wrapping back to 0 in a
- * uint8_t. Going through RGB removes both problems by construction. */
+/* Negate is an RGB operation, (255-R, 255-G, 255-B). Inverting
+ * the stored Y/U/V samples instead is not equivalent in limited range. The
+ * RGB operation also avoids unsigned-byte underflow at zero. */
 static YuvRgbaPixelV1 yuv_negate_v1_effect(void *context, YuvRgbaPixelV1 pixel, uint32_t x, uint32_t y) {
     (void)context;
     (void)x;

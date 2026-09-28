@@ -9,9 +9,9 @@
 ## Завершённый цикл BGRA
 
 Активных задач цикла YUV→BGRA сейчас нет. BGRA-00…05 завершены: [краткие итоги](COMPLETION.md),
-[подробная история и ревью BGRA-00…04](doc/perf/archive/bgra-00-04-2026-09-27.md), сводная
+[подробная история и ревью BGRA-00…04](doc/archive/perf/archive/bgra-00-04-2026-09-27.md), сводная
 карточка BGRA-05 (DONE, принята независимым T1-ревью) —
-[в архиве](doc/perf/archive/bgra-05-2026-09-27.md).
+[в архиве](doc/archive/perf/archive/bgra-05-2026-09-27.md).
 
 ## PACK — библиотечная упаковка и адаптеры
 
@@ -35,5 +35,5 @@ strided-совместимыми; менять native C эти карточки 
 
 ## Позже
 
-- [Предрелизный цикл RA](pre-release-todo.md) — чистка, документация, CI, пробы и платформенные проверки 0.4.2; заменяет PRE-00…07 из `doc/perf/prerelease-todo.md`. Запуск — по команде Engineer.
-- Предыдущие задачи по blur, OPT-14 и остальным направлениям конвертации сохранены в [архиве](doc/perf/archive/todo-before-bgra-focus-2026-09-26.md); принятые результаты — в [COMPLETION.md](COMPLETION.md). Сейчас они не конкурируют с YUV→BGRA за активный цикл.
+- [Предрелизный цикл RA](pre-release-todo.md) — чистка, документация, CI, пробы и платформенные проверки 0.4.2; заменяет PRE-00…07 из `doc/archive/perf/prerelease-todo.md`. Запуск — по команде Engineer.
+- Предыдущие задачи по blur, OPT-14 и остальным направлениям конвертации сохранены в [архиве](doc/archive/perf/archive/todo-before-bgra-focus-2026-09-26.md); принятые результаты — в [COMPLETION.md](COMPLETION.md). Сейчас они не конкурируют с YUV→BGRA за активный цикл.

@@ -11,16 +11,12 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 
-/// Typed IO runner for the ABI v1 `yuv_*_v1` symbols
-/// (`doc/api-abi-0.4-design.md` sections 9, 11, 13).
+/// Runs one ABI v1 native symbol using typed IO descriptors.
 ///
-/// This is the internal transport path YUV-36d owns: it stages source and
-/// destination native descriptors, invokes exactly one ABI v1 symbol, maps
-/// its `YuvStatus` to the Dart result, and releases every allocation it made.
-/// It is not the public Dart API -- that redesign, with the public
-/// `apply*`/`to*` surface calling through this runner, is YUV-28.
-///
-/// Every method follows section 13's numbered steps literally:
+/// It stages source and destination descriptors, maps the returned
+/// [YuvStatus] to a Dart result, and releases every allocation it makes.
+/// This is an internal transport layer; callers decide how to publish the
+/// returned draft.
 ///
 ///  1. validate public arguments and capability -- done by the caller before
 ///     reaching this runner, and defensively re-checked here (plane counts,
@@ -36,23 +32,15 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';
 ///     destination -- the exception is thrown before any destination bytes
 ///     are read back;
 ///  7. copy destination into a Dart draft;
-///  8. atomic replace / new object is the caller's job (YUV-28's `apply*` vs
-///     `to*` split); this runner always returns a fresh [YuvAbiV1FrameResult]
-///     and lets the caller decide what to do with it;
+///  8. return a fresh [YuvAbiV1FrameResult]
+///     and let the caller decide how to publish it;
 ///  9. dispose options, destination, and source in `finally`.
 class YuvAbiV1Runner {
   const YuvAbiV1Runner._();
 
-  /// Test-only override for the native `invoke` step (section 13, step 5),
-  /// used by YUV-36k's success-path regression to exercise the real
-  /// destination-seeding/copy-back path through the public runner methods
-  /// without `yuv_ffi.dll`: it is called with the exact same arguments
-  /// `_run` would otherwise pass to the real `ffiBingings.yuv_*_v1` symbol
-  /// (source frame, destination frame, format-specific options -- all
-  /// already staged and, for ROI effects/blur, already seeded), and its
-  /// return value flows through the same status-mapping/copy-back/cleanup
-  /// steps a real native return value would. `null` (the default) means "use
-  /// the real native call" -- production code never sets this.
+  /// Test hook for replacing the native invocation. The override receives the
+  /// staged source, destination, and options and follows the normal status
+  /// mapping, copy-back, and cleanup path. `null` uses the native symbol.
   ///
   /// A test that sets this must reset it to `null` in the same test (or a
   /// `tearDown`), since it is process-global static state; leaving it set
@@ -72,29 +60,11 @@ class YuvAbiV1Runner {
       allocateOptions: (allocator) => _allocateConvertOptions(allocator).cast(),
       freeOptions: (allocator, options) => allocator.free(options.cast()),
       invoke: (src, dst, options) => ffiBingings.yuv_convert_v1(src, dst, options.cast()),
-      // BGRA-03: yuv_convert_v1 validates its options header, reserved
-      // bytes, frame geometry/strides, and the source/destination format
-      // pair before it ever dispatches into a conversion function (see
-      // yuv_convert_v1's structure: every check returns early on failure,
-      // and every dispatch target -- copy, relayout, to_bgra, from_packed --
-      // only runs after all of them pass). `_run` also never copies the
-      // destination back (step 7) unless status is OK (step 6), so on any
-      // error this buffer's content -- zeroed or not -- is never observed by
-      // the caller. On success, every dispatch target fully overwrites every
-      // *active* sample of every destination plane -- but `convert()` is a
-      // public method that accepts whatever `destinationLayout` the caller
-      // passes in, not only the tight layout `toBgraBytes()`/`toBgra()`
-      // happen to build. A padded or gapped layout leaves bytes outside the
-      // active samples (row padding, pixel gaps) untouched by the native
-      // call, and `_copyDestinationPlanes` below copies the *whole* plane
-      // length, padding included -- so skipping zero-fill there would leak
-      // `malloc` garbage into the result instead of the deterministic zeros
-      // `calloc` used to produce (independent review,
-      // doc/perf/results/bgra_independent_review_2026-09-26.md, reproduced
-      // this with a real I420 2x2 -> BGRA rowStride=12 destination). Malloc
-      // is therefore only safe when every destination plane is verified
-      // tight for this specific `layout`, not assumed tight from the
-      // caller's identity.
+      // Conversion overwrites every active destination sample, but padded
+      // layouts leave row padding and pixel gaps untouched. Since copy-back
+      // includes those bytes, zero-fill must remain enabled unless every
+      // destination plane is tight; otherwise uninitialized memory would be
+      // exposed in the returned planes.
       zeroFillDestination: !_isTightLayout(destinationLayout),
     );
   }
@@ -102,12 +72,8 @@ class YuvAbiV1Runner {
   /// Whether every plane of [layout] is tight -- `pixelStride == sampleBytes`
   /// and `rowStride == planeWidth * sampleBytes` -- meaning it has no row
   /// padding and no pixel gaps, so every byte the allocator hands back is an
-  /// active sample. [YuvAbiV1Runner.convert] uses this to decide whether
-  /// skipping zero-fill (BGRA-03) is safe for the specific layout it was
-  /// given, rather than assuming it from the caller's identity: the public
-  /// `toBgraBytes()`/`toBgra()` surface always builds a tight layout, but
-  /// `convert()` itself accepts any [YuvAbiV1DestinationLayout] a caller
-  /// constructs.
+  /// active sample. [YuvAbiV1Runner.convert] uses this check before skipping
+  /// zero-filling for a destination layout.
   static bool _isTightLayout(YuvAbiV1DestinationLayout layout) {
     for (int planeIndex = 0; planeIndex < layout.planeRowStrides.length; planeIndex++) {
       final int sampleBytes = yuvAbiV1SampleBytes(layout.format, planeIndex);
@@ -148,10 +114,10 @@ class YuvAbiV1Runner {
     return _runEffect(YuvOperation.negate, yuvSymbolNegateV1, source, region, (src, dst, options) => ffiBingings.yuv_negate_v1(src, dst, options));
   }
 
-  /// Runs `yuv_chroma_swap_v1`. ABI v1 requires its region disabled (section
-  /// 10: "regional chroma swap is not a public 0.3.0 operation"), so this
-  /// method takes no [YuvAbiV1Region] parameter at all -- there is no value
-  /// that would produce anything other than `INVALID_ARGUMENT`.
+  /// Runs `yuv_chroma_swap_v1`, which does not support regional swaps.
+  ///
+  /// A regional request would return `INVALID_ARGUMENT`, so this method takes
+  /// no [YuvAbiV1Region] parameter.
   static YuvAbiV1FrameResult chromaSwap({required YuvAbiV1FrameInput source}) {
     return _runEffect(
       YuvOperation.chromaSwap,
@@ -162,13 +128,10 @@ class YuvAbiV1Runner {
     );
   }
 
-  /// Runs one of `yuv_gaussian_blur_v1`, `yuv_mean_blur_v1`, or
-  /// `yuv_box_blur_v1`, selected by [kind]. [radius] `0` is a defined no-op at
-  /// the ABI level -- validated and dispatched like any other accepted
-  /// radius, per section 10 ("radius == 0 is a no-op") -- but produces a
-  /// destination identical to the source rather than skipping the native
-  /// call. [sigma] is required for [YuvAbiV1BlurKind.gaussian] and must be
-  /// `0.0` for the two uniform-weight kinds (section 10).
+  /// Runs the blur symbol selected by [kind]. A zero [radius] is validated
+  /// and dispatched, producing a destination identical to the source
+  /// rather than skipping the native call. [sigma] is required for
+  /// [YuvAbiV1BlurKind.gaussian] and must be zero for the other kinds.
   static YuvAbiV1FrameResult blur({
     required YuvAbiV1BlurKind kind,
     required YuvAbiV1FrameInput source,
@@ -199,9 +162,8 @@ class YuvAbiV1Runner {
       // Dispatched by kind inside the closure (rather than a tear-off picked
       // eagerly outside it) so `ffiBingings` -- and the `yuv_ffi.dll` load it
       // triggers -- is only touched when this closure actually runs, not
-      // whenever `blur` is called. That matters when debugInvokeOverride
-      // (YUV-36k) is set: `_run` never calls this closure at all in that
-      // case, so the real kernel symbol (and the library behind it) is never
+      // whenever `blur` is called. When [debugInvokeOverride] is set, the
+      // real kernel symbol (and the library behind it) is never
       // looked up.
       invoke: (src, dst, options) => switch (kind) {
         YuvAbiV1BlurKind.gaussian => ffiBingings.yuv_gaussian_blur_v1(src, dst, options.cast()),
@@ -212,10 +174,9 @@ class YuvAbiV1Runner {
     );
   }
 
-  /// Runs `yuv_crop_v1`. The destination is exactly `width x height`
-  /// starting at `(left, top)` in source visible-pixel coordinates (section
-  /// 11): unlike every other operation, its geometry is NOT the source
-  /// geometry.
+  /// Runs `yuv_crop_v1` using visible-pixel coordinates from `(left, top)`.
+  /// The destination dimensions are exactly `width x height` and may differ
+  /// from the source dimensions.
   static YuvAbiV1FrameResult crop({
     required YuvAbiV1FrameInput source,
     required int left,
@@ -255,8 +216,8 @@ class YuvAbiV1Runner {
   }
 
   /// Runs `yuv_rotate_v1`. [rotationDegrees] must be `0`, `90`, `180`, or
-  /// `270`; `90`/`270` transpose the destination geometry (section 11), which
-  /// this method computes for the caller.
+  /// `270`; quarter turns transpose the destination geometry, which this
+  /// method computes for the caller.
   static YuvAbiV1FrameResult rotate({required YuvAbiV1FrameInput source, required int rotationDegrees}) {
     final bool transposed = rotationDegrees == 90 || rotationDegrees == 270;
     final YuvAbiV1DestinationLayout destinationLayout = transposed
@@ -365,10 +326,9 @@ class YuvAbiV1Runner {
       sourceFrame = _allocateConstFrame(allocator, source);
 
       // Step 3: allocate and seed destination staging. ROI effects/blur need
-      // the destination pre-populated with source samples so bytes outside
-      // the ROI survive untouched (section 11: "ROI effects seed the
-      // destination from source..."); every other operation replaces the
-      // whole destination, so a zero-filled buffer is the correct seed.
+      // the destination initialized with source samples so bytes outside the
+      // ROI survive; every other operation replaces the whole destination,
+      // so a zero-filled buffer is the correct seed.
       destinationFrame = _allocateMutableFrame(
         allocator,
         destinationLayout,
@@ -379,9 +339,8 @@ class YuvAbiV1Runner {
       // Step 4: allocate versioned options.
       options = allocateOptions(allocator);
 
-      // Step 5: invoke exactly one format-independent symbol -- or, in a
-      // test that has set debugInvokeOverride (YUV-36k), that override
-      // instead, so the destination-seeding and copy-back steps around it
+      // Step 5: invoke exactly one format-independent symbol, or the test
+      // override, so the destination-seeding and copy-back steps around it
       // are exercised for real without requiring yuv_ffi.dll.
       final int status = (debugInvokeOverride ?? invoke)(sourceFrame, destinationFrame, options);
 
@@ -448,8 +407,7 @@ class YuvAbiV1Runner {
         target.sampleBytes = yuvAbiV1SampleBytes(source.format, i);
       }
       // Unused plane slots (fewer than 3 required by format) are left
-      // zero-filled by `calloc`, matching "Unused planes are zero-filled
-      // descriptors with null data" (section 9).
+      // zero-filled by `calloc`, matching the ABI descriptor requirements.
     } catch (_) {
       _freeConstFrame(allocator, frame, source);
       rethrow;
@@ -472,27 +430,18 @@ class YuvAbiV1Runner {
   /// Allocates the destination frame struct and one native buffer per
   /// destination plane, per [layout].
   ///
-  /// When [seedFromSource] is `null`, each buffer is normally `calloc`-zeroed:
-  /// every non-ROI operation replaces the whole destination, so a zeroed
-  /// buffer is the correct starting state. When it is given (ROI
-  /// effects/blur only -- callers pass it exactly when [preserveOutsideRoi]
-  /// told [_run] the operation has an enabled ROI), each buffer is instead
-  /// seeded with [seedFromSource]'s samples so bytes outside the ROI the
-  /// native call writes remain the source's exact values (section 11: "ROI
-  /// effects seed the destination from source..."). [seedFromSource] and
-  /// [layout] always share geometry here -- every ROI-capable call uses
-  /// [_sameGeometryDestination] -- but their row/pixel strides may still
-  /// differ, so seeding uses each plane's row/pixel stride and copies only
+  /// When [seedFromSource] is `null`, each buffer is zero-filled because the
+  /// operation replaces the whole destination. For ROI effects and blurs, the
+  /// source samples seed the destination so bytes outside the ROI survive.
+  /// Source and destination geometry always match in that case, though their
+  /// strides may differ; seeding follows each plane's strides and copies only
   /// active samples.
   ///
-  /// [zeroFill] (BGRA-03) lets a caller that has proven its destination is
-  /// always fully overwritten -- see [convert]'s call site and
-  /// [_isTightLayout], which it uses to check that proof holds for the
-  /// specific layout in hand, not just for the operation in general -- skip
-  /// the zero-fill and allocate with `malloc` instead of `calloc`. It must
-  /// never be `false` together with a non-`null` [seedFromSource]: an ROI seed
-  /// only copies the active region, and `calloc`'s zero-fill is what makes
-  /// the seeded plane's own row padding/pixel gaps deterministic, so this is
+  /// When [zeroFill] is `false`, buffers use `malloc` and the caller must prove
+  /// the destination is fully overwritten. [convert] makes this choice after
+  /// [_isTightLayout] checks the specific layout. A seeded destination must
+  /// keep zero-fill enabled because an ROI seed copies only active samples and
+  /// padding and pixel gaps must remain deterministic. The precondition is
   /// asserted rather than silently overridden.
   ///
   /// Transactional in the same sense as [_allocateConstFrame]: any throw
@@ -695,9 +644,8 @@ class YuvAbiV1Runner {
 
   /// Writes [region] into [target] (already-allocated struct memory, either
   /// standalone or, more commonly, the embedded `region` field of a blur or
-  /// effect options struct). A `null` region writes the disabled form: every
-  /// coordinate zeroed, per section 10 ("when 0, all four coordinates and
-  /// reserved0 must be zero").
+  /// effect options struct). A `null` region writes the disabled form with all
+  /// coordinates and the reserved field set to zero.
   static void _writeRegion(YuvRegionOptionsV1 target, YuvAbiV1Region? region, {required int width, required int height}) {
     target.structSize = ffi.sizeOf<YuvRegionOptionsV1>();
     target.abiVersion = yuvAbiVersion1;

@@ -6,15 +6,14 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 /// The Web side of the ABI v1 symbol dispatch: how the Web backend names and
 /// resolves each of the eleven `yuv_*_v1` symbols against a loaded WASM module.
 ///
-/// This is the fourth source the symbol-manifest gate compares (YUV-28): the C
-/// header declares the symbols, `ffigen.yaml` allows them into the native
+/// The C header declares the symbols, `ffigen.yaml` allows them into the native
 /// bindings, `tool/wasm/build_wasm.sh` exports them from the WASM build, and
 /// this file is what Web dispatch actually asks the module for. Every name comes
 /// from [yuvAbiV1Symbols] rather than being spelled out again here, so the Web
 /// dispatch cannot drift onto a different spelling than the native runner uses.
 ///
-/// Since YUV-51 the Web backend's public operations run entirely on these
-/// symbols, staged by `abi/yuv_abi_v1_web_runner.dart`. What this class
+/// The Web backend's public operations run through these symbols, staged by
+/// `abi/yuv_abi_v1_web_runner.dart`. This class
 /// guarantees is that the symbol a Web operation reaches for is the same one
 /// the header declares and the build exports -- and that a symbol missing from
 /// the module is reported by name before the call, instead of failing as an

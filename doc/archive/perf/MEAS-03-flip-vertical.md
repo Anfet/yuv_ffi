@@ -66,7 +66,7 @@ Run from the repository root in PowerShell. The example writes to a unique times
 
 ```powershell
 $stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
-$out = "doc/perf/results/meas03_flip_vertical_windows_$stamp.csv"
+$out = "doc/archive/perf/results/meas03_flip_vertical_windows_$stamp.csv"
 if (Test-Path -LiteralPath $out) { throw "Output already exists: $out" }
 .\tool\bench\run_dart_windows.ps1 `
     -ExeV024 "$env:TEMP\yuv_ffi_dart_bench\app_v024\build\windows\x64\runner\Release\yuv_bench.exe" `

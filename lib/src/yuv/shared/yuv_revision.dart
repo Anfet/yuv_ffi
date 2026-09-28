@@ -49,9 +49,9 @@ abstract final class YuvRevision {
   ///
   /// Only this package's backends do: they advance the revision from inside
   /// each mutating method, so an unchanged revision genuinely means an
-  /// unchanged frame. A foreign `implements YuvImage` written before this seam
-  /// existed mutates without telling anyone, so its revision is not evidence
-  /// that the frame is untouched and must not be used to prove a cache hit.
+  /// unchanged frame. A foreign `implements YuvImage` without this revision
+  /// hook mutates without notifying observers, so its revision cannot establish
+  /// that a cached frame is current.
   ///
   /// A foreign implementation can still opt in, by calling [YuvImageInvalidation.markDirty]
   /// after it mutates — but nothing observed here can distinguish one that does

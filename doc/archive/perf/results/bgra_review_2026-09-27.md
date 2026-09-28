@@ -25,7 +25,7 @@ flutter drive --driver=test_driver/integration_test.dart --target=integration_te
 
 - `src/yuv/abi/yuv_convert_v1.c`: NV12/I420 dispatch вынесен перед пиксельным циклом; chroma-компоненты переиспользуются на пару Y, generic stride и хвост нечётной ширины сохранены. Формула BT.601 и byte-exact oracle покрываются ранее запущенными C тестами и текущими Android прогонами. C тесты в этом проходе не перезапускались. Android тест измеряет полный публичный вызов, не отдельное C-ядро.
 - `lib/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart`: `convert()` вызывает `_isTightLayout(destinationLayout)` и использует `malloc` только для плотных плоскостей; для row padding/pixel gaps остаётся обнуление. `flutter test test/bgra03_dest_alloc_test.dart test/bgra04_copy_out_test.dart test/yuv_bgra_pixel_gap_test.dart test/abi_status_mapping_test.dart -r compact` — 49/49 passed. Тесты включают canary, отказ аллокатора и независимость копии от native памяти.
-- `doc/perf/results/bgra05_final_windows_1080p_raw.csv`: самостоятельно сгруппированы три раунда `OK` по исходнику и паре, пересчитана медиана медиан. NV12 43,1865→30,0045 мс (−30,5%), I420 43,7135→30,5430 мс (−30,1%); SHA-256 внутри каждой группы стабилен. Это Windows AOT `toBgraBytes()` 1080p, не результат Pixel 3 и не отдельный `toBgra()`.
+- `doc/archive/perf/results/bgra05_final_windows_1080p_raw.csv`: самостоятельно сгруппированы три раунда `OK` по исходнику и паре, пересчитана медиана медиан. NV12 43,1865→30,0045 мс (−30,5%), I420 43,7135→30,5430 мс (−30,1%); SHA-256 внутри каждой группы стабилен. Это Windows AOT `toBgraBytes()` 1080p, не результат Pixel 3 и не отдельный `toBgra()`.
 
 ## Решение по карточкам
 

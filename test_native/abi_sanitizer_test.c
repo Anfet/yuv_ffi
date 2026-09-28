@@ -1,54 +1,5 @@
-/*
- * Native ASan/UBSan/LSan safety gate (YUV-34).
- *
- * Flutter reference tests prove wrong pixels; they cannot prove the absence of
- * out-of-bounds access, uninitialized reads, integer UB, or leaks inside the C
- * kernels. This harness calls the eleven exported ABI v1 entry points directly,
- * with every frame allocated on the HEAP at its exact declared plane length so
- * a kernel that steps outside a plane trips ASan's own redzone rather than
- * relying solely on a manually placed byte. Row/column padding gaps inside that
- * same allocation are additionally filled with a canary pattern and checked
- * byte-for-byte, which is what catches a kernel that copies a row/pixel stride
- * instead of a sample -- a bug ASan cannot see, because the byte it touches is
- * still inside the allocation.
- *
- * Case groups (see also test_native/README.md and CMakeLists.txt comment):
- *
- *  - C-01..C-03: canary probes on tight and padded BGRA/I420/NV12 frames
- *    across every operation family (effect, blur, convert, transform), odd
- *    geometry included.
- *  - C-04..C-06: geometric transforms (crop/flip/rotate) and chroma swap on
- *    heap frames, where a destination-index or transposed-geometry defect
- *    reads or writes past the allocated plane.
- *  - C-07: region-of-interest blur/effect on heap frames -- the ROI seam is
- *    where a previous defect (encode_frame re-touching luma outside the
- *    region) actually reached memory outside the intended write set.
- *  - C-08: exact-fit heap allocation with NO padding at all (rowStride ==
- *    minimum span), so there is zero slack between the last real byte and the
- *    ASan redzone; the tightest possible OOB probe.
- *  - C-09: repeated back-to-back calls across the whole operation set on
- *    freshly allocated/freed frames each iteration, giving LSan many
- *    allocate/free cycles to disagree with.
- *  - H-01: invalid rect/radius/sigma/geometry inputs run through the same
- *    heap fixtures, proving the validation prologue rejects them before any
- *    read/write that a sanitizer could otherwise catch as a symptom rather
- *    than the actual contract violation.
- *  - H-02: checked-arithmetic overflow inputs (huge stride/length) reach
- *    OVERFLOW without the kernel ever dereferencing the corresponding plane.
- *  - Allocation-failure injection (blur only entry points that allocate):
- *    proves ALLOCATION_FAILED is atomic (destination canary intact) and that
- *    no partial commit or leak occurs, via a wrapped malloc that can be told
- *    to fail on a chosen call. Compiled only where the linker supports
- *    --wrap (GNU/gold/lld on ELF), which is the toolchain the required
- *    sanitizer CI job actually uses; see ENABLE_MALLOC_WRAP below.
- *
- * Checks are routed through helpers taking volatile locals so MSVC does not
- * report C4127 (constant conditional) under /W4 /WX, matching every other
- * test_native file. Failure is reported through the exit code, never
- * abort(): on Windows abort() raises 0xC0000409, which CTest's WILL_FAIL does
- * not treat as an ordinary non-zero return, and this file is not documented
- * as an expected-failure target.
- */
+/* Exercises every exported operation with exact-length heap planes, canary
+ * padding, invalid inputs, and repeated allocations under available sanitizers. */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -476,19 +427,7 @@ static void test_canary_probes_convert(void) {
     }
 }
 
-/* ============================================================================
- * C-02b: NV12->BGRA pixel-gapped, exact-length allocations (BGRA-01)
- *
- * The shared HeapFrame fixture above always sets pixelStride == sampleBytes,
- * so it can only probe row padding, never a pixel gap -- exactly the layout
- * that forces yuv_convert_nv12_to_bgra's generic path instead of its fast
- * path. Each plane here is its own malloc() sized to the exact declared
- * length with the requested pixelStride baked into rowStride, so ASan's
- * redzone sits immediately after the last real byte of that specific plane
- * with zero padding slack -- the tightest possible probe that the generic
- * (gapped) path still only touches active samples, never a gap byte or a
- * byte past the plane.
- * ============================================================================ */
+
 
 typedef struct {
     uint8_t *y;
@@ -610,14 +549,7 @@ static void test_nv12_bgra_pixel_gaps(void) {
     run_nv12_bgra_gap_case("dst-gapped-only", 9, 7, 1, 2, 6);
 }
 
-/* ============================================================================
- * C-02c: I420->BGRA pixel-gapped, exact-length allocations (BGRA-02)
- *
- * Same shape as C-02b above, but U and V are independent planes with
- * independently chosen pixelStride, so a case can gap only one of the two
- * chroma planes -- the case NV12's single interleaved UV plane cannot
- * express -- to catch a bug that mixes up U's and V's stride.
- * ============================================================================ */
+
 
 typedef struct {
     uint8_t *y;
@@ -867,9 +799,7 @@ static void test_canary_probes_rotate(void) {
             HeapFrame destination;
             uint32_t width = 7;
             uint32_t height = 5;
-            /* 90/270 transpose destination geometry; a kernel indexing the
-             * destination by source width (the historical defect C-01 of the
-             * YUV-31 audit) writes past a transposed heap plane. */
+
             int transposed = degrees[d] == 90 || degrees[d] == 270;
             uint32_t destinationWidth = transposed ? height : width;
             uint32_t destinationHeight = transposed ? width : height;
@@ -1212,15 +1142,7 @@ static void test_overflow_parameters(void) {
     }
 }
 
-/* ============================================================================
- * Allocation-failure injection (blur only: the sole entry points that
- * malloc). Compiled only when the build defines ENABLE_MALLOC_WRAP, which the
- * CMake target does on platforms whose linker accepts --wrap (the ELF
- * toolchain the required Ubuntu ASan/UBSan job actually uses). On other
- * toolchains this group is skipped and reported as such, rather than
- * silently omitted -- see the DoD note on `checks`/`executedCases` staying
- * meaningful across platforms.
- * ============================================================================ */
+
 
 #ifdef ENABLE_MALLOC_WRAP
 
@@ -1292,10 +1214,7 @@ static void test_allocation_failure_injection(void) {
 
         expect_status("mean blur snapshot allocation fails", status, YUV_STATUS_ALLOCATION_FAILED);
         executedCases++;
-        /* The proof is byte-for-byte: every destination byte, including
-         * the padding, must still read as the canary this case pre-filled,
-         * since blur's allocation happens before the first destination
-         * write (doc/api-abi-0.4-design.md section 13). */
+
         {
             int untouched = 1;
             for (size_t i = 0; i < (size_t)destination.length[0]; i++) {

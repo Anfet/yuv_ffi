@@ -82,8 +82,8 @@ final class YuvWasmLoader {
   /// [debugReset] deliberately leaves the document alone: it clears this
   /// class's own cached handles, and a script that already loaded is still
   /// legitimately there. A test that wants to observe injection itself — the
-  /// failure path especially — needs the page returned to its pre-injection
-  /// state, which only this can do.
+  /// failure path especially — needs the page returned to its original state,
+  /// which only this can do.
   ///
   /// Not exported publicly, like the rest of the debug surface.
   static void debugRemoveInjectedScript() {

@@ -18,7 +18,7 @@ native buffers (`_allocateConstFrame`), (3) allocate and zero-fill the destinati
 call `yuv_convert_v1` once, (7) copy destination planes back into a Dart-owned `Uint8List`
 (`_copyDestinationPlanes`), then free everything in `finally`. This report times those same four
 stages individually, plus the full A+B+C+D sequence, from a new standalone Dart FFI test:
-[`speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart`](../../../speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart).
+[`speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart`](../../speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart).
 
 The runner does not call the `yuv_ffi` package; like the existing `yuv_convert_v1_test.dart`, it
 drives the same ABI v1 struct layout directly against the built DLL, so the measurement stays a

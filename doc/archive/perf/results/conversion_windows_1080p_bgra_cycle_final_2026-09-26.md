@@ -88,7 +88,7 @@ b08cec9880b62a1957c53397509216d6c086ce56af2d1095840bc3d846cdc59f
 ## Декомпозиция после BGRA-01/02/03: что теперь лимитирующий этап
 
 Прогнан тот же read-only stages-раннер BGRA-00
-([`speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart`](../../../speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart))
+([`speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart`](../../speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart))
 на HEAD-эквивалентной DLL (`BA3AEDD9...`, тот же `src/`, что кандидат выше), 2 раунда по 30
 замеров/этап, Dart VM/JIT (не AOT — тот же класс раннера и та же оговорка о несравнимости абсолютных
 чисел с AOT, что в исходном отчёте BGRA-00).
@@ -100,7 +100,7 @@ BGRA-00). Поэтому "доля от `full_call`" внутри *этого* �
 после BGRA-03 — `full_call` здесь искусственно завышен на ~9 мс calloc-стоимости, которой в
 production `convert()` больше нет. Чтобы не повторить методологическую ошибку, для этого отчёта
 `dest_alloc`/`full_call` взяты из **уже принятого BGRA-03 бенча**
-([`speed_00_dart_ffi/test/bgra03_dest_alloc_bench_test.dart`](../../../speed_00_dart_ffi/test/bgra03_dest_alloc_bench_test.dart)),
+([`speed_00_dart_ffi/test/bgra03_dest_alloc_bench_test.dart`](../../speed_00_dart_ffi/test/bgra03_dest_alloc_bench_test.dart)),
 который явно сравнивает calloc и malloc варианты на этой же DLL и содержит malloc-вариант
 `full_call`, соответствующий реальному production-поведению.
 

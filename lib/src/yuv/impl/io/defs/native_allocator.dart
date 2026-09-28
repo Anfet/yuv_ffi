@@ -17,13 +17,10 @@ abstract class NativeAllocator {
   /// Allocates [byteCount] zeroed bytes.
   Pointer<T> allocate<T extends NativeType>(int byteCount);
 
-  /// Allocates [byteCount] bytes without zeroing them (BGRA-03: only for a
-  /// buffer the caller has proven is always fully overwritten before any of
-  /// its bytes are read back -- see
-  /// `YuvAbiV1Runner._allocateMutableFrame`'s `zeroFill` parameter). Falls
-  /// back to [allocate] on any allocator that has no cheaper uninitialized
-  /// path; callers must not rely on the returned memory being zeroed either
-  /// way.
+  /// Allocates [byteCount] uninitialized bytes. Callers must prove the buffer
+  /// is fully overwritten before reading any byte. Implementations without a
+  /// cheaper uninitialized path may delegate to [allocate]; callers must not
+  /// rely on the returned memory being zeroed.
   Pointer<T> allocateUninitialized<T extends NativeType>(int byteCount);
 
   /// Releases a pointer previously returned by [allocate] or

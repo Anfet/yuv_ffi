@@ -6,7 +6,7 @@ decision). Native C, ABI v1 and `YuvImage`'s general constructor are unchanged; 
 `test/pack_planes_native_equivalence_test.dart`, `example/integration_test/pack00_pack_vs_padded_pixel3_test.dart`,
 `example/integration_test/pack00_padding_plane_isolation_pixel3_test.dart`,
 `example/lib/pack00_bench_screen.dart` (a temporary in-app release bench, see below), this report, and
-`doc/perf/results/pack00_pixel3_raw/`.
+`doc/archive/perf/results/pack00_pixel3_raw/`.
 
 ## Two retractions: this report was wrong twice before reaching its current numbers
 
@@ -20,7 +20,7 @@ call by roughly 6-8x. An in-app release bench was built to re-measure (see below
 found padded and packed statistically indistinguishable (~14-15 ms rotate either way, ~15.4-15.5 fps
 either way) and concluded packing does not help. An independent review caught the actual bug: this
 device's `ImageFormatGroup.yuv420` camera frames report separate U and V planes with **`bytesPerPixel == 2`
-each** (`doc/perf/results/pack00_pixel3_raw/isolation_geometry.json`) — the same physically interleaved
+each** (`doc/archive/perf/results/pack00_pixel3_raw/isolation_geometry.json`) — the same physically interleaved
 chroma buffer NV12/NV21 uses, exposed as two `Image.Plane`s one byte apart, not the fully planar layout
 the format name implies. `_packPlane()` in `example/lib/ext.dart` only removed row padding; it kept the
 source's `pixelStride`, so a "packed" I420 chroma plane still had `pixelStride == 2`. The native rotate
@@ -84,7 +84,7 @@ physical device, result copied to clipboard and pasted back.
 | padded | 300 | 143 | 157 | 157 | 15.7 | 2.37 ms | 15.00 ms | 2.62 ms | 20.42 ms | 65.65 ms |
 | packed | 300 | 107 | 193 | 193 | **19.3** | 2.45 ms | **4.48 ms** | 2.56 ms | 20.91 ms | 49.41 ms |
 
-Raw JSON: `doc/perf/results/pack00_pixel3_raw/release_build_in_app_runs_fixed.json`.
+Raw JSON: `doc/archive/perf/results/pack00_pixel3_raw/release_build_in_app_runs_fixed.json`.
 
 **Packing gives a real, substantial win once it actually reaches the native fast path.** Rotate drops
 from 15.0 ms to 4.5 ms (a 3.3x speedup, consistent with the isolated device measurement below), displayed
@@ -119,7 +119,7 @@ matches the release-mode 15.0 ms → 4.5 ms magnitude change reasonably well giv
 inflation of this call (see the first retraction above) — profile mode's absolute numbers should still not
 be trusted, but its *shape* (padded slow, fully-tight fast) is now consistent with release.
 
-Raw JSON: `doc/perf/results/pack00_pixel3_raw/isolation_geometry_fixed.json`,
+Raw JSON: `doc/archive/perf/results/pack00_pixel3_raw/isolation_geometry_fixed.json`,
 `isolation_rotate_fixed.json`, `isolation_bgra_fixed.json`.
 
 ## Live-subscription profile-mode result (for completeness; same shape, inflated magnitude)
@@ -141,7 +141,7 @@ count nearly doubles for packed (294-295 vs 160-165) because a much lower per-fr
 (~93 ms vs release's ~15 ms for padded, ~15 ms vs release's ~4.5 ms for packed — the profile/release ratio
 is consistent across both variants, ~6x), but the padded-vs-packed *effect* is unmistakable in both modes.
 
-Raw JSON: `doc/perf/results/pack00_pixel3_raw/main_variant_runs.jsonl` (pre-fix, kept for the historical
+Raw JSON: `doc/archive/perf/results/pack00_pixel3_raw/main_variant_runs.jsonl` (pre-fix, kept for the historical
 record of the bug) — **superseded**; the corrected run's JSON is embedded in this section directly since
 it was captured inline during the fix verification.
 

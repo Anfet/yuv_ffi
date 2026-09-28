@@ -1,15 +1,10 @@
 /// Mirrors of the native ABI v1 numeric constants
-/// (`src/yuv/abi/h/yuv_abi_v1.h`, `doc/api-abi-0.4-design.md` section 9).
 ///
-/// This file is hand-kept in sync with the C header rather than generated,
-/// because ffigen does not emit `#define` numeric macros as Dart constants --
-/// only the struct/function declarations that reference them. The
-/// `abi_symbol_manifest` coverage planned for YUV-36e is the intended guard
-/// against the two drifting; until it lands, a change to these values in the
-/// header must be mirrored here by hand.
+/// Ffigen does not emit numeric `#define` macros as Dart constants, so changes
+/// to these values in the C header must be mirrored here by hand.
 library;
 
-/// The only ABI version the typed IO runner negotiates.
+/// The ABI version both backends use for their v1 descriptors.
 const int yuvAbiVersion1 = 1;
 
 /// Planar YUV 4:2:0, three planes (Y, U, V), `sampleBytes` 1 for every plane.
@@ -18,10 +13,9 @@ const int yuvFormatI420 = 1;
 /// Semi-planar YUV 4:2:0, two planes (Y, interleaved UV),
 /// `sampleBytes` 1 for Y and 2 for UV.
 ///
-/// This is the canonical ABI v1 storage; the project's legacy `nv21` label
-/// keeps its historical `(U, V)` byte order under this same numeric format
-/// id (Engineer decision Q1, `doc/api-abi-0.4-design.md` section 14) -- ABI
-/// v1 does not define a separate NV21 format value.
+/// This is the canonical ABI v1 storage. The legacy `nv21` label maps to this
+/// format id and stores interleaved `(U, V)` bytes; ABI v1 has no separate
+/// NV21 format value.
 const int yuvFormatNv12 = 2;
 
 /// Packed BGRA, one plane, `sampleBytes` 4.
@@ -68,11 +62,10 @@ int yuvAbiV1PlaneCount(int format) {
   }
 }
 
-/// `sampleBytes` for plane [planeIndex] of [format]
-/// (`yuv_validated_view_plane_sample_layout` in
-/// `src/yuv/utils/validated_view.c`, section 11's format matrix): 1 for every
-/// I420 plane, 1 for NV12's Y and 2 for its interleaved UV, 4 for the single
-/// BGRA/RGBA plane.
+/// Returns the bytes per sample for plane [planeIndex] of [format].
+///
+/// I420 planes use one byte per sample. NV12 uses one byte for Y and two for
+/// interleaved UV. BGRA and RGBA use four bytes for their single plane.
 ///
 /// Throws [RangeError] for a [planeIndex] outside `0..yuvAbiV1PlaneCount(format)`
 /// or an unknown [format] -- the runner only calls this after both have
@@ -96,9 +89,8 @@ int yuvAbiV1SampleBytes(int format, int planeIndex) {
   }
 }
 
-/// The `colorMatrix` value ABI v1 requires for [format]
-/// (`yuv_validate_v1_color` in `src/yuv/abi/yuv_validate_v1.c`, section 9):
-/// BT.601 for I420/NV12, none for BGRA/RGBA. Throws [ArgumentError] for an
+/// The `colorMatrix` value ABI v1 requires for [format]: BT.601 for I420/NV12
+/// and none for BGRA/RGBA. Throws [ArgumentError] for an
 /// unknown format.
 int yuvAbiV1ColorMatrixFor(int format) {
   switch (format) {

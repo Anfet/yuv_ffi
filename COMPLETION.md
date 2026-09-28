@@ -1,49 +1,61 @@
 # yuv_ffi — история проверок и принятых задач
 
+## Подготовка документации и комментариев к 0.4.2 — COMPLETE — 2026-09-28
+
+- **RA-01:** перенесён 171 tracked-файл во внутренний архив; `doc/archive/**` исключён из analyzer. Исправлены все переезды локальных Markdown-ссылок; независимая проверка подтвердила 88/88 существующих targets. Незакоммиченные локальные артефакты в `tool/bench/` оставлены на месте.
+- **RA-10:** приведён к текущему контракту публичный DartDoc, добавлены недостающие описания и удалены недопустимые ссылки на внутренний тип. Analyze чистый, Flutter tests — 698. `dart doc --dry-run` падает в dartdoc 9.0.4 с `RangeError` в `_stripDocImports`; тот же сбой воспроизводится на чистом baseline `30fff53`.
+- **RA-11:** вычищены внутренние IO/shared комментарии без изменения кода и generated bindings. DOC-RULES regex — 0 совпадений; analyze чистый, format — 0 изменений; Flutter tests — 698.
+- **RA-12:** вычищены Web/loader комментарии; DOC-RULES regex оставляет только техническое слово `pre-filled` в описании уже заполненной destination plane. Analyze чистый после RA-10, Flutter tests — 698. Три локальных Chrome-теста зависают на старте; браузерный gate остаётся для RA-41 CI.
+- **RA-13:** вычищены native C комментарии; все 19 изменённых C/H файлов совпадают с baseline после `clang -E -P` и удаления whitespace. Release CTest — 11/11; Flutter tests — 698.
+- **RA-15:** очищены комментарии `test_native`; все 11 изменённых C-файлов совпадают с baseline после preprocessing и удаления whitespace. Debug и Release CTest — 11/11. Regex-совпадения в test output strings сохранены, поскольку карточка разрешала менять только комментарии.
+- **RA-17:** README обновлён под 0.4.2; примеры прошли временную проверку в example. Минимум macOS 10.11 подтверждён podspec библиотеки, example требует 10.15.
+
+Независимый ревьюер принял RA-01/10/11/12/13/15/17. Открытые внешние проверки: GitHub CI `startup_failure` до запуска jobs, Chrome gate RA-12 через RA-41 и предсуществующий dartdoc `RangeError` на baseline.
+
 ## BGRA-00…04 — COMPLETE — Разбор и ускорение YUV → BGRA
 
-- **BGRA-00:** разложены staging, destination allocation, C kernel, copy-out и полный публичный вызов. На Pixel 3 при включённом экране `toBgraBytes()` для NV12/I420 занял 10,92/11,28 мс на 720×360; выключенный экран давал около 43–46 мс. [Подробная история](doc/perf/archive/bgra-00-04-2026-09-27.md).
-- **BGRA-01:** NV12-ветка C ускорена без изменения результата. Исправленный замер Pixel 3 для `toBgraBytes()` после подготовки кадра: 8,503334 → 6,298542 мс (−25,9%); checksum совпал. [Повторное независимое ревью](doc/perf/results/bgra_review_2026-09-27_followup.md).
-- **BGRA-02:** I420-ветка C ускорена: 8,245521 → 6,851512 мс (−16,9%) на Pixel 3; NV12 остался без регрессии, checksum совпал. [Повторное независимое ревью](doc/perf/results/bgra_review_2026-09-27_followup.md).
-- **BGRA-03:** для полностью перезаписываемого tight destination применён `malloc`; padded/gapped layout сохраняет `calloc`. Проверки отказа аллокатора и неинициализированной памяти пройдены. [Подробная история](doc/perf/archive/bgra-00-04-2026-09-27.md).
-- **BGRA-04:** изолированный interleaved A/D опыт на Pixel 3 не подтвердил устойчивый выигрыш copy-out кандидата D при пороге 5%; production-код не менялся. Вывод ограничен проверенным кандидатом и изолированным копированием: полный публичный A/D вызов и peak RSS не измерялись. [Независимая проверка и raw](doc/perf/results/bgra04_independent_review_2026-09-27.md).
-- **BGRA-05:** сводный итог цикла на Windows 1920×1080 Release/AOT — полный публичный вызов `toBgraBytes()` снизился с 43,30–44,10 мс до 30,0045 мс для NV12→BGRA (−30,5%) и с 44,15–44,23 мс до 30,5430 мс для I420→BGRA (−30,1%), checksum не изменился на всех 12 измеренных строках; production/native код не тронут этой карточкой. Pixel 3 1080p контроль и детальный memory-профиль остались открытыми пунктами, не блокирующими приёмку. [Архив с полным Executor Report и независимым ревью](doc/perf/archive/bgra-05-2026-09-27.md).
+- **BGRA-00:** разложены staging, destination allocation, C kernel, copy-out и полный публичный вызов. На Pixel 3 при включённом экране `toBgraBytes()` для NV12/I420 занял 10,92/11,28 мс на 720×360; выключенный экран давал около 43–46 мс. [Подробная история](doc/archive/perf/archive/bgra-00-04-2026-09-27.md).
+- **BGRA-01:** NV12-ветка C ускорена без изменения результата. Исправленный замер Pixel 3 для `toBgraBytes()` после подготовки кадра: 8,503334 → 6,298542 мс (−25,9%); checksum совпал. [Повторное независимое ревью](doc/archive/perf/results/bgra_review_2026-09-27_followup.md).
+- **BGRA-02:** I420-ветка C ускорена: 8,245521 → 6,851512 мс (−16,9%) на Pixel 3; NV12 остался без регрессии, checksum совпал. [Повторное независимое ревью](doc/archive/perf/results/bgra_review_2026-09-27_followup.md).
+- **BGRA-03:** для полностью перезаписываемого tight destination применён `malloc`; padded/gapped layout сохраняет `calloc`. Проверки отказа аллокатора и неинициализированной памяти пройдены. [Подробная история](doc/archive/perf/archive/bgra-00-04-2026-09-27.md).
+- **BGRA-04:** изолированный interleaved A/D опыт на Pixel 3 не подтвердил устойчивый выигрыш copy-out кандидата D при пороге 5%; production-код не менялся. Вывод ограничен проверенным кандидатом и изолированным копированием: полный публичный A/D вызов и peak RSS не измерялись. [Независимая проверка и raw](doc/archive/perf/results/bgra04_independent_review_2026-09-27.md).
+- **BGRA-05:** сводный итог цикла на Windows 1920×1080 Release/AOT — полный публичный вызов `toBgraBytes()` снизился с 43,30–44,10 мс до 30,0045 мс для NV12→BGRA (−30,5%) и с 44,15–44,23 мс до 30,5430 мс для I420→BGRA (−30,1%), checksum не изменился на всех 12 измеренных строках; production/native код не тронут этой карточкой. Pixel 3 1080p контроль и детальный memory-профиль остались открытыми пунктами, не блокирующими приёмку. [Архив с полным Executor Report и независимым ревью](doc/archive/perf/archive/bgra-05-2026-09-27.md).
 
-Исторические отчёты и ревью BGRA-00…04 сохранены в [архиве](doc/perf/archive/bgra-00-04-2026-09-27.md).
+Исторические отчёты и ревью BGRA-00…04 сохранены в [архиве](doc/archive/perf/archive/bgra-00-04-2026-09-27.md).
 
 ## CVT-00 — DONE — Измерены текущие конвертации ABI v1
 
-- Windows x64 Flutter 3.44.9 Release/AOT на `3564f5f`, 1920×1080: все 12 поддерживаемых направлений прошли два отдельных прогона с 30 или 50 образцами и стабильными checksum. I420/NV12→BGRA: 43.3–44.2 мс, BGRA/RGBA→YUV: 20.7–23.3 мс, I420↔NV12: 10.3–11.8 мс медианы публичного вызова. [Отчёт и raw](doc/perf/results/conversion_windows_1080p_2026-09-26.md).
+- Windows x64 Flutter 3.44.9 Release/AOT на `3564f5f`, 1920×1080: все 12 поддерживаемых направлений прошли два отдельных прогона с 30 или 50 образцами и стабильными checksum. I420/NV12→BGRA: 43.3–44.2 мс, BGRA/RGBA→YUV: 20.7–23.3 мс, I420↔NV12: 10.3–11.8 мс медианы публичного вызова. [Отчёт и raw](doc/archive/perf/results/conversion_windows_1080p_2026-09-26.md).
 - Приоритет дальнейшей работы: сначала отделить Dart staging от C kernel, затем адресно исследовать `yuv_convert_to_bgra`, `yuv_convert_relayout` и `yuv_convert_from_packed`. Задачи CVT-01…06 и предрелизная платформа-проверка PRE-00…07 занесены в [todo](todo.md).
 
 ## OPT-14 — DONE — Проверены и перенесены Dart row-copy fast paths
 
 - Изолированный Windows Dart эксперимент на padded BGRA 1920×1080 подтвердил гипотезу: ROI seed 49.403 → 27.190 ms, copy-back 45.194 → 11.844 ms. Кандидат применим только при плотном pixel stride и сохраняет row padding; pixel gaps остаются на прежнем sample-wise пути.
-- В production Dart добавлено построчное копирование для плотных пикселей в ROI seed и `applyTo`. Контрактные проверки padded rows, pixel gaps и ROI seed прошли (3 новых + 33 `abi_status_mapping_test.dart`, включая native-dependent тесты на этом хосте); адресный `flutter analyze` — без замечаний. Native C и ABI не менялись. Детали: [OPT-14 report](doc/perf/results/opt14_windows_row_copy.md).
+- В production Dart добавлено построчное копирование для плотных пикселей в ROI seed и `applyTo`. Контрактные проверки padded rows, pixel gaps и ROI seed прошли (3 новых + 33 `abi_status_mapping_test.dart`, включая native-dependent тесты на этом хосте); адресный `flutter analyze` — без замечаний. Native C и ABI не менялись. Детали: [OPT-14 report](doc/archive/perf/results/opt14_windows_row_copy.md).
 
 ## BLUR-04 — DONE — Измерить разделимый Gaussian по Y/U/V
 
 - На Pixel 3 Release/AOT два независимых прогона разделимого Y/U/V Gaussian дали 186.225 ms для 1477×1065 и 28.783 ms для 720×360; прямой 2D Y/U/V — 937.816/147.547 ms. Ускорение 5.04×/5.13× при том же публичном вызове.
-- На этих входах выходные checksum разделимого и прямого 2D YUV совпали; raw NV12 большого кадра побайтно совпал (max delta 0, различий 0). Scratch: 242.3 KiB при 1477×1065/r10; оценка 15.66 MiB при 4000×3000/r256. Кандидат и область применимости описаны в [отчёте](doc/perf/results/blur04_pixel3_gaussian_separable.md); production C/ABI не менялись.
+- На этих входах выходные checksum разделимого и прямого 2D YUV совпали; raw NV12 большого кадра побайтно совпал (max delta 0, различий 0). Scratch: 242.3 KiB при 1477×1065/r10; оценка 15.66 MiB при 4000×3000/r256. Кандидат и область применимости описаны в [отчёте](doc/archive/perf/results/blur04_pixel3_gaussian_separable.md); production C/ABI не менялись.
 
 ## BLUR-03 — DONE — Измерить Gaussian напрямую по Y и Y/U/V
 
 - Изолированный 2D кандидат на Pixel 3, Android Release/AOT: для 1477×1065 RGB 1427.865 ms, Y-only 829.745 ms, Y/U/V 938.257 ms; для 720×360 225.534, 129.841 и 147.677 ms. Полный Y/U/V экономит 34.29%/34.52% при сохранённой 2D сложности. Повторный Y/U/V прогон дал близкие медианы 937.358/148.361 ms и те же checksum.
-- Два candidate patch, raw JSONL/logcat, source SHA и три фактических PNG сохранены в [отчёте](doc/perf/results/blur03_pixel3_gaussian_direct_yuv.md). Проверка принята как эксперимент; production C/ABI не менялись, production-перенос не принят. Визуальная семантика YUV отличается от RGB.
+- Два candidate patch, raw JSONL/logcat, source SHA и три фактических PNG сохранены в [отчёте](doc/archive/perf/results/blur03_pixel3_gaussian_direct_yuv.md). Проверка принята как эксперимент; production C/ABI не менялись, production-перенос не принят. Визуальная семантика YUV отличается от RGB.
 
 ## BLUR-02 — Измерить Mean напрямую по Y и Y/U/V
 
 - Принято как изолированный эксперимент: отдельный `yuv_mean_blur_v1.c` кандидат измерен на Pixel 3 без изменения production ABI/C. Контрольный Y/U/V повтор после idle дал на 720×360 RGB 8.644 ms, Y-only 1.648 ms, Y/U/V 2.538 ms; на 1477×1065: 54.374, 12.695 и 18.005 ms. Исходный шумный Y/U/V прогон сохранён в raw и не репрезентативен; source/diff и checksum исключили отдельный kernel или dispatch. Межсессионная вариативность не позволяет принять production threshold; production-перенос не принят.
-- Исходный source diff подтверждает, что текущие Box/Mean эквивалентны по kernel; candidate output SHA побайтно совпал с BLUR-01 для соответствующих Y-only/YUV вариантов, поэтому три проверенных PNG BLUR-01 переиспользованы. Raw и детали: `doc/perf/results/blur02_pixel3_mean_direct_yuv.md`.
+- Исходный source diff подтверждает, что текущие Box/Mean эквивалентны по kernel; candidate output SHA побайтно совпал с BLUR-01 для соответствующих Y-only/YUV вариантов, поэтому три проверенных PNG BLUR-01 переиспользованы. Raw и детали: `doc/archive/perf/results/blur02_pixel3_mean_direct_yuv.md`.
 
 ## BLUR-00 — Подготовить Pixel 3 Release runner и baseline
 
 - Принято 2026-09-26. Добавлен отдельный Dart runner и PowerShell-скрипт, которые запускают одну выбранную публичную blur-операцию в Release и сохраняют raw logcat/JSONL; Pixel 3 проверен для всех трёх операций и двух размеров. PNG decode, packed `Y + UV` подготовка и source clone не входят в таймер.
-- 720×360 медианы: Box 8.562 ms, Mean 8.644 ms, Gaussian 225.356 ms. Для 1477×1065: 54.943 ms, 54.374 ms и 1427.216 ms. Box/Mean output SHA совпадает ожидаемо: обе native функции реализуют один uniform kernel. `flutter analyze lib/main.dart` прошёл; подробные raw samples и ограничения формата записаны в `doc/perf/results/blur_reference_pixel3_blur00.md`.
+- 720×360 медианы: Box 8.562 ms, Mean 8.644 ms, Gaussian 225.356 ms. Для 1477×1065: 54.943 ms, 54.374 ms и 1427.216 ms. Box/Mean output SHA совпадает ожидаемо: обе native функции реализуют один uniform kernel. `flutter analyze lib/main.dart` прошёл; подробные raw samples и ограничения формата записаны в `doc/archive/perf/results/blur_reference_pixel3_blur00.md`.
 
 ## BLUR-01 — Измерить Box напрямую по Y и Y/U/V
 
-- Принято 2026-09-26 как изолированный эксперимент; production ABI/C не менялись. На Pixel 3 полный публичный вызов для tight packed NV12 дал на 720×360: RGB 8.562 ms, Y-only 1.676 ms (−80.42%), Y/U/V 2.548 ms (−70.24%); на 1477×1065: 54.943, 12.738 (−76.82%) и 17.967 ms (−67.30%). Визуально RGB и Y/U/V неразличимы на эталонном кадре; Y-only меняет видимое поведение, сохраняя исходную chroma. Декодируемые PNG, raw timings, checksums и ограничения tight/full-frame кандидата записаны в `doc/perf/results/blur01_pixel3_box_direct_yuv.md`.
+- Принято 2026-09-26 как изолированный эксперимент; production ABI/C не менялись. На Pixel 3 полный публичный вызов для tight packed NV12 дал на 720×360: RGB 8.562 ms, Y-only 1.676 ms (−80.42%), Y/U/V 2.548 ms (−70.24%); на 1477×1065: 54.943, 12.738 (−76.82%) и 17.967 ms (−67.30%). Визуально RGB и Y/U/V неразличимы на эталонном кадре; Y-only меняет видимое поведение, сохраняя исходную chroma. Декодируемые PNG, raw timings, checksums и ограничения tight/full-frame кандидата записаны в `doc/archive/perf/results/blur01_pixel3_box_direct_yuv.md`.
 
 ## История release candidate 0.4.1
 
@@ -92,7 +104,7 @@
 
 ## AUD-04 — Документация и матрица проверок
 
-- Принято: `README.md` и `doc/api-abi-0.4-design.md` описывают текущие CI цели, iOS smoke, частичный Web backend и реальные 119 reference cases без приписывания отдельному BGRA-тесту проверки геометрии.
+- Принято: `README.md` и `doc/archive/api-abi-0.4-design.md` описывают текущие CI цели, iOS smoke, частичный Web backend и реальные 119 reference cases без приписывания отдельному BGRA-тесту проверки геометрии.
 - Доказательство: manifest, integration-тесты и workflow сверены с текстом; `git diff --check` прошёл. Изменения документационные.
 - Коммит: изменения пока находятся в рабочем дереве.
 
@@ -187,7 +199,7 @@
 ## MEAS-01 — Подготовлен Windows benchmark
 
 - Принято после независимого ревью и исправлений: добавлены публичный Dart AOT runner, сборка/драйвер, watchdog, fallback CSV для не записавших строку процессов, манифесты сборки и packed active-sample checksum.
-- Windows release smoke подтвердил 0.2.4 и ABI v1 для 1080p и 12 MP; ошибка строки сохраняет `ERROR:setup` и не останавливает следующие сценарии. `CVT.NV12.I420` checksum совпал с C-стендом для обеих версий. Детали и локальные CSV пути — `doc/perf/MEAS-01-run-instructions.md`.
+- Windows release smoke подтвердил 0.2.4 и ABI v1 для 1080p и 12 MP; ошибка строки сохраняет `ERROR:setup` и не останавливает следующие сценарии. `CVT.NV12.I420` checksum совпал с C-стендом для обеих версий. Детали и локальные CSV пути — `doc/archive/perf/MEAS-01-run-instructions.md`.
 - Проверки: `dart analyze tool/bench/dart`, форматирование, PowerShell parse и `git diff --check` прошли. MEAS-02/03 и пооперационные baseline к этой приёмке не относились.
 
 ## SPEED-00 — Подготовлен отдельный Dart FFI тест
@@ -234,14 +246,14 @@
 - Принято после исправления comments, native diff review и независимого `dart test test/yuv_black_white_v1_test.dart -r expanded`: 7/7, oracle/checksums прошли; format/analyze без замечаний, `git diff --check` чисто. Task commit записан в Git history.
 ## VIEW-03 — Измерен путь кадра в preview на Pixel 3
 
-- **ACCEPT**, независимое ревью 28.09.2026 после трёх отказов и четвёртого прохода. Исполнитель: Claude (T1), итоговый исполнительский коммит `a31a5b9`; ревьюер уточнил две численные и причинные формулировки без изменения измерений. [Итоговый отчёт и raw-данные](doc/perf/results/view03_pixel3_frame_path_2026-09-27.md), [история проходов и ревью](doc/perf/archive/view-03-2026-09-28.md).
+- **ACCEPT**, независимое ревью 28.09.2026 после трёх отказов и четвёртого прохода. Исполнитель: Claude (T1), итоговый исполнительский коммит `a31a5b9`; ревьюер уточнил две численные и причинные формулировки без изменения измерений. [Итоговый отчёт и raw-данные](doc/archive/perf/results/view03_pixel3_frame_path_2026-09-27.md), [история проходов и ревью](doc/archive/perf/archive/view-03-2026-09-28.md).
 - Стенд считает доставленные, отброшенные, принятые и показанные кадры внутри одной реальной подписки Pixel 3; исторический padded-режим теперь явно установлен и восстановлен после теста. Два сохранённых 10-секундных `flutter drive --profile` прогона дали 157/145 доставленных и 64/66 показанных кадров, ~6,4–6,6 FPS; медиана rotate ~94 мс в этом режиме. Исходник baseline `9d14f83` и сырые результаты сохранены. PSS-сравнение было отозвано как ненадёжное.
 - Числа VIEW-03 относятся только к историческому profile-прогону до PACK-01C. Принятый PACK-00 измерил в release 15,0 → 4,5 мс rotate и 15,7 → 19,3 FPS при полной упаковке. Синтетический тест VIEW-03 менял row stride всех Y/U/V плоскостей одновременно; последующая изоляция PACK-00 установила, что любая одна неплотная плоскость отключает tight fast path. Отдельный вклад Y и U/V из исходного теста VIEW-03 не выводится.
 - Независимо сверены raw JSON, код измерителя, текущий импорт кадра и изоляция PACK-00; адресный `flutter analyze integration_test/view03_frame_path_pixel3_test.dart --no-pub` прошёл. Новый device-прогон при документальной доработке не требовался; абсолютные release-цифры взяты из PACK-00. Native C и публичный API пакета не менялись. Следующие PACK-01A…D выполнены и приняты отдельно.
 
 ## PACK-00 — Проверена плотная упаковка кадра камеры на Pixel 3
 
-- Принято пользователем 28.09.2026 после независимой проверки и двух исправлений исполнителя Claude. Исполнительские коммиты: `96abd8c`, `504fad1`, `70b2c28`; итоговый отчёт и raw-данные — в [PACK-00](doc/perf/results/pack00_pixel3_dense_packing_2026-09-27.md).
+- Принято пользователем 28.09.2026 после независимой проверки и двух исправлений исполнителя Claude. Исполнительские коммиты: `96abd8c`, `504fad1`, `70b2c28`; итоговый отчёт и raw-данные — в [PACK-00](doc/archive/perf/results/pack00_pixel3_dense_packing_2026-09-27.md).
 - Решение: полная упаковка при импорте `CameraImage` убирает и row padding, и межсэмпловые промежутки I420 U/V (`pixelStride=2 → 1`). Это открывает tight fast path native rotate; прежние выводы по неполной упаковке отозваны. На Pixel 3, 720×480, в одном парном release-прогоне rotate: 15,0 → 4,5 мс (3,3×); показ: 15,7 → 19,3 FPS (+23%); `dropped_busy`: 48% → 36%. Масштаб выигрыша на других устройствах не измерялся.
 - Проверка: 9 адресных тестов в example и 7 в корне, включая равенство видимых сэмплов и BGRA/rotate; независимый повтор этих тестов прошёл. Публичный `YuvImage`, ABI v1 и native C не менялись; экспериментальный переключатель в example пока выключен по умолчанию. Ошибочно вычисленное поле `tight_chroma_bytes_per_row` в сохранённом JSON и его генератор исправлены при приёмке с 720 на 360; времена измерений не менялись.
 - Следующие карточки: PACK-01A…D добавляют публичную упаковку, опцию фабрик, плотный импорт камеры и корректный адаптер ML Kit. Исходный strided layout остаётся доступен явно; старые padding-байты после `pack()` не хранятся.
@@ -335,7 +347,7 @@
 
 - **ACCEPT**, независимая проверка GPT-5.6 Terra · T2; дата ревью в архиве не указана; исполнитель GPT-6 Sol · T1; rejection count: не зафиксирован.
 - Prototype separable Gaussian совпал с oracle в описанной выборке; allocation fault injection прошёл. `malloc` отклонён из-за неинициализированных reserved/padding bytes, оставлен `calloc`.
-- Рекомендованы bounded scratch и отдельная узкая row-copy задача; production Gaussian не менялся. [Отчёт и ревью](doc/perf/archive/native-refactor-todo-2026-09-26.md).
+- Рекомендованы bounded scratch и отдельная узкая row-copy задача; production Gaussian не менялся. [Отчёт и ревью](doc/archive/perf/archive/native-refactor-todo-2026-09-26.md).
 
 ## SPEED-12 — Сводка производительности
 

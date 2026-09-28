@@ -5,12 +5,8 @@
 #include <string.h>
 
 /*
- * The integer coefficients below are the reference oracle verbatim
- * (test/helpers/reference/test_pattern_reference.dart): BT.601 limited /
- * video range. They are not a re-derivation, and they are deliberately the
- * only copy in the native tree -- YUV-32 exists because BGRA->YUV once used a
- * different (full-range 77/150/29) matrix than RGBA->YUV, so the same frame
- * encoded to two different results depending on which symbol was called.
+ * The integer coefficients below implement BT.601 limited/video range and
+ * match the Dart reference implementation.
  */
 
 static uint8_t yuv_kernel_v1_clip(int32_t value) {
@@ -157,10 +153,8 @@ void yuv_kernel_v1_encode_chroma_block(
         return;
     }
 
-    /* RGB is averaged first and encoded once, rather than encoding each pixel
-     * and averaging the U/V samples. The two differ, and the reference oracle
-     * (rgbaToI420) does the former; averaging afterwards is what made the old
-     * BGRA path disagree with the RGBA path on odd edges. */
+    /* Average RGB first, then encode once. Averaging encoded U/V samples gives
+     * a different result, especially for odd-sized edge blocks. */
     uint32_t red = 0;
     uint32_t green = 0;
     uint32_t blue = 0;
@@ -211,7 +205,7 @@ void yuv_kernel_v1_copy_pixel(
         }
         /* Four bytes, not pixelStride bytes: a larger pixel stride is a gap
          * between samples, and copying across it would both read and write
-         * padding. That confusion is defect C-03 in the YUV-31 audit. */
+         * padding. */
         memcpy(to, from, 4);
         return;
     }
@@ -337,10 +331,8 @@ void yuv_kernel_v1_encode_frame(
     }
 
     /* Chroma is a second pass rather than an inline write inside the luma
-     * loop: a chroma sample covers four luma pixels, so writing it once per
-     * block from the block's average is the only order-independent way to do
-     * it. The legacy kernels wrote it from whichever pixel happened to be
-     * last, which made the result depend on the traversal direction. */
+     * loop: each sample covers four luma pixels and must be written once from
+     * the block average, independent of traversal order. */
     for (uint32_t blockY = 0; blockY * 2 < height; blockY++) {
         for (uint32_t blockX = 0; blockX * 2 < width; blockX++) {
             YuvRgbaPixelV1 footprint[4];
@@ -412,7 +404,7 @@ static YuvRgbaPixelV1 yuv_kernel_v1_effect_pixel(void *context, uint32_t x, uint
  *    never decoded and re-encoded, because a round trip would quantize a
  *    pixel the caller asked not to touch;
  *  - a chroma block is re-encoded only when its 2x2 footprint intersects the
- *    region (section 14 Q2), and is otherwise copied. A boundary block is
+ *    region, and is otherwise copied. A boundary block is
  *    re-encoded from the post-operation RGB of its whole footprint, which is
  *    the documented shared-chroma influence.
  */
@@ -492,11 +484,9 @@ void yuv_kernel_v1_apply_effect(
 /*
  * The decoded source snapshot the blur convolves over.
  *
- * Blur reads a neighbourhood, so it cannot read the destination it is
- * writing: the legacy kernels did, which made the result depend on traversal
- * order (probes produced 170 and 198 where the snapshot answer was 127). One
- * decoded copy of the visible image removes that, and decoding once also
- * avoids re-running the BT.601 decode (2*radius+1)^2 times per pixel.
+ * Blur reads a neighbourhood, so it cannot read from the destination it is
+ * writing. A decoded snapshot also avoids repeating the BT.601 decode
+ * (2*radius+1)^2 times per pixel.
  */
 typedef struct {
     uint32_t width;

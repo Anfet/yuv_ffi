@@ -2,7 +2,7 @@
 
 Measured 26 September 2026 on `release/0.4.2` HEAD `3ca75a79f371f4f123dfc395c6dce9194e728c5e`.
 Closes the first gap independent review found in the original BGRA-00 report
-(`doc/perf/results/bgra_independent_review_2026-09-26.md`, BGRA-00 row: "Нет ... отдельного
+(`doc/archive/perf/results/bgra_independent_review_2026-09-26.md`, BGRA-00 row: "Нет ... отдельного
 замера `toBgra()` в том же протоколе"). This addendum does not repeat or reinterpret the
 original stage numbers; it adds the one measurement that was missing and keeps the original
 report's readings about kernel/dest_alloc/staging/copy_out shares unchanged.
@@ -22,7 +22,7 @@ one extra, cheap wrap step — not a different conversion path.
 ## Method
 
 Extended the existing read-only external FFI runner
-([`speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart`](../../../speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart))
+([`speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart`](../../speed_00_dart_ffi/test/yuv_convert_v1_bgra_stages_test.dart))
 with two more timed regions, same 30-run/5-warmup/3-round protocol, same FNV-1a byte-exact check
 against the independent oracle on every run:
 
@@ -92,7 +92,7 @@ job, not this addendum's.
 
 Run by the coordinating session on the real device (`8B1X11QLW`) to avoid contention over the
 single physical device between parallel executors, using
-[`example/integration_test/bgra00_stage_breakdown_pixel3_test.dart`](../../../example/integration_test/bgra00_stage_breakdown_pixel3_test.dart).
+[`example/integration_test/bgra00_stage_breakdown_pixel3_test.dart`](../../example/integration_test/bgra00_stage_breakdown_pixel3_test.dart).
 That file documents, in its own header comment, why this is **not** a 4-stage breakdown the way
 the Windows runner is: `staging`/`dest_alloc_zero`/`kernel`/`copy_out` are internal steps of
 `YuvAbiV1Runner._run`, which is unexported from `package:yuv_ffi`'s public surface

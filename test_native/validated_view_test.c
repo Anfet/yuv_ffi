@@ -29,10 +29,7 @@ static int test_pass = 0;
     test_count++; \
     test_pass++;
 
-/* A placeholder non-null pointer. Never dereferenced by validated_view.c or
- * by these tests -- only compared against NULL. Using an address that is
- * plausibly non-zero but never read keeps these tests free of any real
- * allocation, per YUV-33c DoD. */
+
 static uint8_t g_fake_byte;
 #define FAKE_DATA ((const void *)&g_fake_byte)
 #define FAKE_MUTABLE_DATA ((void *)&g_fake_byte)

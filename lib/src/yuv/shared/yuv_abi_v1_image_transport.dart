@@ -5,9 +5,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 
-/// Translates between the public Dart image shape (the legacy format enum plus
-/// [YuvPlane] list) and the ABI v1 descriptors the runners consume (YUV-50,
-/// YUV-51).
+/// Maps public Dart image formats and planes to ABI v1 frame descriptors.
 ///
 /// A runner deliberately speaks only in numeric ABI format ids, byte buffers
 /// and strides: it is the transport for `yuv_*_v1` and knows nothing about the
@@ -29,9 +27,8 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 abstract final class YuvAbiV1ImageTransport {
   /// The ABI v1 numeric format id for [format].
   ///
-  /// The public `nv21` label maps onto canonical NV12 storage: ABI v1 defines
-  /// no separate NV21 format value, and the project's `nv21` keeps its
-  /// historical `(U, V)` byte order under that same id (section 14, Q1).
+  /// The public `nv21` label maps to the ABI's NV12 format id and retains
+  /// interleaved `(U, V)` byte order.
   // ignore: deprecated_member_use_from_same_package
   static int abiFormat(YuvFileFormat format) => switch (format) {
     // ignore: deprecated_member_use_from_same_package
@@ -44,7 +41,7 @@ abstract final class YuvAbiV1ImageTransport {
 
   /// A source descriptor over [planes], read as they are.
   ///
-  /// The planes' own row and pixel strides are passed through verbatim: native
+  /// The planes' own row and pixel strides are passed through verbatim: ABI
   /// validation walks active samples through both strides, so a padded source
   /// needs no repacking here.
   // ignore: deprecated_member_use_from_same_package
@@ -59,9 +56,8 @@ abstract final class YuvAbiV1ImageTransport {
 
   /// A source descriptor over a single RGBA8888 buffer.
   ///
-  /// RGBA is valid only as a `yuv_convert_v1` source (section 11), so it has no
-  /// legacy format enum of its own and is built directly from the caller's tight
-  /// `width * height * 4` buffer.
+  /// RGBA8888 has no public format enum value. This descriptor uses one tight
+  /// plane backed by the caller's `width * height * 4` bytes.
   static YuvAbiV1FrameInput rgbaSource({required Uint8List bytes, required int width, required int height}) {
     return YuvAbiV1FrameInput(
       format: yuvFormatRgba8888,
@@ -117,9 +113,7 @@ abstract final class YuvAbiV1ImageTransport {
   /// the in-place case, where the receiver keeps the layout it was constructed
   /// with. Only the active `planeWidth x planeHeight` samples are written, so
   /// row gaps, pixel gaps and any bytes past the last sample keep the values
-  /// they had before the operation -- the padding-preservation half of the
-  /// section 11 stride contract, which the runner's tight destination cannot
-  /// express on its own.
+  /// they had before the operation, preserving the receiver's plane layout.
   static void applyTo({
     required YuvAbiV1FrameResult result,
     required List<YuvPlane> planes,

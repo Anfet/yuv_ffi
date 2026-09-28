@@ -29,8 +29,8 @@ if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "Darwin") A
     add_compile_options(-fsanitize=address -fsanitize=undefined)
     add_link_options(-fsanitize=address -fsanitize=undefined)
 
-    # LeakSanitizer (YUV-34): bundled into ASan and on by default on Linux
-    # x86_64/i386/arm64 -- no separate -fsanitize=leak flag is needed there,
+    # LeakSanitizer is bundled into ASan on x86_64/i386/arm64; no separate
+    # -fsanitize=leak flag is needed,
     # and adding one is in fact rejected by the Linux ASan runtime ("-fsanitize=
     # leak is incompatible with enabled -fsanitize=address"). It is NOT
     # supported by ASan on macOS at all (Darwin's ASan silently disables leak
@@ -45,9 +45,9 @@ else()
     set(YUV_FFI_LSAN_SUPPORTED FALSE)
 endif()
 
-# Allocation-failure injection (YUV-34): abi_sanitizer_test.c wraps malloc via
-# the GNU/gold/lld ELF linker's --wrap to inject controlled allocation
-# failures into the ABI v1 blur entry points, the only ones that allocate.
+# abi_sanitizer_test.c uses the GNU/gold/lld ELF linker's --wrap to inject
+# controlled allocation failures into the ABI v1 blur entry points, the only
+# ones that allocate.
 # --wrap is a linker feature, not a compiler one, and is not available from
 # MSVC's link.exe or from lld-link's MSVC-compatible driver -- only from an
 # ELF-targeting linker. That is exactly the Linux/non-MSVC condition already
@@ -103,10 +103,9 @@ add_test(
     COMMAND checked_arithmetic_test
 )
 
-# Validated plane/frame view tests (YUV-33c)
-# Tests the internal validated const/mutable plane and frame views: format IDs,
+# Tests the internal validated const/mutable plane and frame views: formats,
 # plane counts, sample sizes, independent row/pixel strides, minimum spans, and
-# destination geometry, per doc/api-abi-0.4-design.md sections 9-11. Covers
+# destination geometry. Covers
 # null pointers, zero/negative geometry, undersized strides/spans, wrong plane
 # count/sample size, incompatible destination geometry, and the allowed
 # padded/custom-pixel-stride and odd-geometry cases for I420, NV12, BGRA8888,
@@ -124,14 +123,8 @@ add_test(
     COMMAND validated_view_test
 )
 
-# ABI v1 layout test (YUV-36a)
-# Verifies that the public wire-stable descriptor/options layout matches
-# doc/api-abi-0.4-design.md sections 9-10 on this toolchain, and prints the
-# actual sizeof/offsetof values so a reviewer on a new target (native32,
-# native64, wasm32) can read them rather than infer them. The header itself
-# also fails to compile on a mismatch; this target proves the same numbers at
-# runtime and covers the status/format constant values. Header-only: there is
-# no library source to compile in, because YUV-36a adds no exported symbol.
+# Verifies the public descriptor/options layout at compile time and at runtime,
+# prints sizeof/offsetof values, and checks status/format constant values.
 add_executable(abi_layout_test abi_layout_test.c)
 target_include_directories(abi_layout_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 
@@ -140,7 +133,6 @@ add_test(
     COMMAND abi_layout_test
 )
 
-# ABI v1 status and atomicity tests (YUV-36b)
 # Exercises the eleven yuv_*_v1 entry points through their shared validation
 # prologue: reachable validation statuses have concrete descriptor or options
 # cases, while reserved status 3 has its numeric value pinned. Negative cases
@@ -172,10 +164,8 @@ add_test(
     COMMAND abi_status_test
 )
 
-# ABI v1 geometric transform tests (YUV-31)
-# Verifies crop, flip, and rotate produce the visible-pixel mapping of
-# doc/api-abi-0.4-design.md section 11 against an oracle built independently
-# of the implementation, across I420, NV12, and BGRA8888, at even, odd, and
+# Verifies crop, flip, and rotate against an independent visible-pixel oracle
+# across I420, NV12, and BGRA8888 at even, odd, and
 # degenerate (1x1, 1xN, Nx1) geometry. Every fixture carries padded row
 # strides and canary-filled gaps, so a kernel that copies a row stride or a
 # pixel stride instead of a sample is caught rather than merely suspected.
@@ -196,11 +186,10 @@ add_test(
     COMMAND abi_transform_test
 )
 
-# ABI v1 conversion tests (YUV-32)
-# The central case is parity: the same image presented as RGBA and as BGRA
+# Tests parity: the same image presented as RGBA and as BGRA
 # must convert to identical YUV samples, which fails for either half of the
-# old defect (a different matrix, or chroma taken from the top-left pixel
-# instead of the clipped 2x2 average). Absolute values are additionally pinned
+# conversion contract (matrix selection or chroma averaging). Absolute values
+# are additionally pinned
 # against the reference oracle transcribed into the test, so two paths that
 # agree and are both wrong still fail.
 add_executable(abi_convert_test
@@ -218,13 +207,9 @@ add_test(
     COMMAND abi_convert_test
 )
 
-# ABI v1 effect tests (YUV-22)
-# Pins the three reference failures YUV-11 reported: grayscale rounding, the
-# black-white `>= 128` threshold, and RGB-visible negate (the stored-sample
-# inversion was max 134 off the oracle, and its 256 - value chroma form had no
-# representable result for 0). BGRA is checked against the oracle exactly,
-# since it has no subsampling; the three formats are additionally required to
-# agree on the visible result.
+# Tests grayscale rounding, the black-white `>= 128` threshold, and RGB-visible
+# negate across I420, NV12 and BGRA. BGRA is also compared with the exact oracle
+# result, and all three formats must agree on the visible output.
 add_executable(abi_effect_test
     abi_effect_test.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
@@ -243,14 +228,9 @@ add_test(
     COMMAND abi_effect_test
 )
 
-# ABI v1 blur tests (YUV-23)
-# Covers the structural defects behind the 19 reported blur failures: results
-# that depended on the destination's prior contents (the kernel read what it
-# was writing), destroyed alpha and uninitialized bytes outside the region,
-# mean and box disagreeing though section 11 makes them one oracle, and the
-# edge-replicate border rule fixed by the Engineer on 2026-09-20 -- pinned
-# both by an invariant (a flat image is preserved) and by a hand-computed
-# vector.
+# The test verifies that prior destination contents do not affect results,
+# alpha and bytes outside the region are preserved, and edges use replication.
+# Assertions include flat-image preservation and a hand-computed vector.
 add_executable(abi_blur_test
     abi_blur_test.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
@@ -268,17 +248,13 @@ add_test(
     COMMAND abi_blur_test
 )
 
-# ABI v1 native ASan/UBSan/LSan safety gate (YUV-34)
 # Calls all eleven exported ABI v1 entry points against frames whose planes are
 # each their own exact-length heap allocation, so a kernel that steps outside a
 # plane trips ASan's own heap redzone rather than only a manually placed byte.
-# Row/column padding gaps inside those same allocations are separately filled
-# with a canary and checked byte-for-byte, catching a stride-confusion bug
-# that never leaves the allocation. Covers canary probes across every
-# operation family (C-01..C-03), the geometric transforms and chroma swap
-# (C-04..C-06), region of interest (C-07), an exact-fit allocation with zero
-# padding slack (C-08), repeated allocate/free cycles for LSan (C-09), invalid
-# rect/radius/sigma/geometry (H-01), and checked-arithmetic overflow (H-02).
+# Row/column padding gaps are filled with a canary and checked byte-for-byte.
+# The cases cover each operation family, transforms, chroma swap, region
+# processing, exact-fit allocations, repeated allocate/free cycles, invalid
+# inputs, and checked-arithmetic overflow.
 add_executable(abi_sanitizer_test
     abi_sanitizer_test.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c

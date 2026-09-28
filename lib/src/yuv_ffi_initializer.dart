@@ -20,8 +20,8 @@ final class YuvFfi {
   /// On Web this must be awaited before any `YuvImage` operation: there is no
   /// lazy fallback, and an operation started earlier fails.
   ///
-  /// On IO/native it must complete before the capability-gated `0.4.0`
-  /// processing methods: [YuvImage.applyRgbaBytes], [YuvImage.applyGrayscale],
+  /// On IO/native it must complete before capability-gated processing methods:
+  /// [YuvImage.applyRgbaBytes], [YuvImage.applyGrayscale],
   /// [YuvImage.applyBlackWhite], [YuvImage.applyNegate],
   /// [YuvImage.applyGaussianBlur], [YuvImage.applyMeanBlur],
   /// [YuvImage.applyBoxBlur], [YuvImage.applyCrop],
@@ -57,10 +57,9 @@ final class YuvFfi {
   ///
   /// ## Web status
   ///
-  /// The Web backend is a partial WASM implementation: a successful
-  /// [initialize] only means the WASM runtime loaded, not that every
-  /// operation available on IO/native is supported. See
-  /// `lib/src/yuv/impl/web/yuv_web.dart` for current Web limitations.
+  /// The Web backend is a partial WASM implementation. A successful
+  /// [initialize] loads its runtime, while [YuvCapabilities] reports which
+  /// operations the loaded module supports.
   ///
   /// ## Errors
   ///
@@ -78,10 +77,8 @@ final class YuvFfi {
   /// ## Capabilities
   ///
   /// The returned [YuvCapabilities] is an immutable snapshot computed once
-  /// initialization succeeds. On Web it reflects the real WASM exports found
-  /// on the loaded module: an operation is supported only when its required
-  /// export is present and the module initialized successfully. See
-  /// `doc/api-abi-0.4-design.md` section 7.
+  /// initialization succeeds. On Web it reflects the exports found on the
+  /// loaded module.
   static Future<YuvCapabilities> initialize() async {
     return backend_loader.ensureInitialized();
   }

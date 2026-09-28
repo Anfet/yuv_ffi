@@ -1,20 +1,15 @@
 import 'dart:typed_data';
 
-/// One plane's geometry and bytes, as the ABI v1 typed IO runner needs them.
+/// One plane's geometry and bytes for an ABI v1 operation.
 ///
-/// This is deliberately a plain value carrying only what
-/// `YuvConstPlaneV1`/`YuvMutablePlaneV1` (`src/yuv/abi/h/yuv_abi_v1.h`)
-/// require: `bytes.length` is the descriptor's `length`, [rowStride] and
-/// [pixelStride] are copied verbatim, and `sampleBytes` is derived from the
-/// frame's format rather than carried here (every plane's `sampleBytes` is
-/// fixed by format + plane index in ABI v1, see section 11's format matrix).
+/// Carries the byte buffer and strides needed to build an ABI plane
+/// descriptor. The backend stages [bytes], [rowStride], and [pixelStride] in
+/// its memory and derives the sample width from the frame format.
 ///
-/// It is not [YuvPlane]: that type is the public Dart-facing plane shape and
-/// belongs to YUV-28's public API redesign, which this task does not touch.
+/// It is not the public `YuvPlane` model; it contains only ABI input data.
 class YuvAbiV1PlaneInput {
-  /// Creates a plane input. [bytes] is read but never retained past the
-  /// runner call that consumes it -- the runner copies into native memory
-  /// immediately.
+  /// Creates a plane input. The backend reads [bytes] for the operation and
+  /// stages it in its memory before invocation.
   const YuvAbiV1PlaneInput({required this.bytes, required this.rowStride, required this.pixelStride});
 
   /// Row-major plane bytes, exactly `rowStride * height` long for the plane's
@@ -29,20 +24,15 @@ class YuvAbiV1PlaneInput {
   final int pixelStride;
 }
 
-/// A source frame for the ABI v1 typed IO runner: format, geometry, and one
-/// plane per the format's plane count (1 for BGRA/RGBA, 2 for NV12, 3 for
-/// I420 -- see `yuv_validated_view_plane_count` in
-/// `src/yuv/utils/h/validated_view.h`, mirrored by the format matrix in
-/// `doc/api-abi-0.4-design.md` section 11).
+/// A source frame for an ABI v1 operation, containing format,
+/// dimensions, and one plane for BGRA/RGBA, two for NV12, or three for I420.
 ///
-/// `colorMatrix`/`colorRange` are not fields here: they are fixed by
-/// [format] under ABI v1 (BT.601/limited for I420/NV12, none/none for
-/// BGRA/RGBA -- section 9), so the runner derives them rather than accepting
-/// a value that could disagree with the format and be rejected as
-/// `UNSUPPORTED_COLOR` before the caller even gets to see why.
+/// The ABI derives color matrix and range from [format]: BT.601/limited for
+/// I420 and NV12, none/none for BGRA and RGBA. Callers cannot supply values
+/// that conflict with the format.
 class YuvAbiV1FrameInput {
   /// Creates a frame input. [planes] must have exactly as many entries as
-  /// [format] requires; the runner validates this before any native call.
+  /// [format] requires; the runner validates this before invoking the backend.
   const YuvAbiV1FrameInput({required this.format, required this.width, required this.height, required this.planes});
 
   /// One of the ABI v1 numeric format ids (`yuv_abi_v1_constants.dart`).
@@ -59,15 +49,13 @@ class YuvAbiV1FrameInput {
   final List<YuvAbiV1PlaneInput> planes;
 }
 
-/// Requested geometry and per-plane layout for the destination the ABI v1
-/// typed IO runner allocates and, on success, copies back into.
+/// Requested geometry and per-plane layout for the destination of an ABI v1
+/// operation.
 ///
-/// Unlike [YuvAbiV1FrameInput], this does not carry bytes: the runner
-/// allocates and zero-seeds the destination itself (section 13, step 3 --
-/// "allocate and seed destination staging where preservation is required"),
-/// then returns the result bytes rather than requiring the caller to
-/// pre-allocate a buffer whose size it may not know until validation exposes
-/// it (for example, rotate 90/270 transposes width and height).
+/// Unlike [YuvAbiV1FrameInput], this carries no plane bytes. The runner
+/// allocates destination buffers using this layout and returns the resulting
+/// bytes. Geometry-changing operations can provide dimensions different from
+/// the source, as with a quarter-turn rotation.
 class YuvAbiV1DestinationLayout {
   /// Creates a destination layout. [planeRowStrides]/[planePixelStrides] must
   /// have exactly as many entries as [format] requires, in ABI plane order.
@@ -98,9 +86,8 @@ class YuvAbiV1DestinationLayout {
 /// The bytes of a successfully completed ABI v1 operation, one entry per
 /// destination plane in ABI plane order.
 ///
-/// Only constructed after a `YUV_STATUS_OK` result: the runner never returns
-/// this for a non-zero status (section 13, step 6 -- "map non-zero status to
-/// Dart exception without publishing destination").
+/// The runner returns this only after `YUV_STATUS_OK`; on failure it throws
+/// without exposing destination bytes.
 class YuvAbiV1FrameResult {
   /// Creates a result. Callers do not normally construct this directly; the
   /// runner does.
@@ -111,13 +98,12 @@ class YuvAbiV1FrameResult {
 }
 
 /// A right/bottom-exclusive region of interest in source visible-pixel
-/// coordinates, mirroring `YuvRegionOptionsV1` (section 10) in its enabled
-/// form. Passing `null` where a runner method accepts this means "whole
-/// frame" (a disabled region).
+/// coordinates. Passing `null` where a runner method accepts this selects the
+/// whole frame.
 class YuvAbiV1Region {
-  /// Creates a region. A runner does not itself validate that it lies
-  /// inside the frame or is non-empty -- native validation is authoritative
-  /// (section 11) and reports `INVALID_ARGUMENT` for a malformed rectangle.
+  /// Creates a region. The runner does not validate whether it lies inside
+  /// the frame or is non-empty; validation by the ABI implementation is
+  /// authoritative.
   const YuvAbiV1Region({required this.left, required this.top, required this.right, required this.bottom});
 
   /// Left edge, inclusive.

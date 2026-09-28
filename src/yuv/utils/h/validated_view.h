@@ -5,14 +5,13 @@
 #include <stddef.h>
 
 /*
- * Internal validated plane/frame views for the 0.3 native ABI.
+ * Internal validated plane and frame views used by the native ABI.
  *
  * These views mirror the wire-compatible `YuvConstPlaneV1` / `YuvMutablePlaneV1`
- * / `YuvConstFrameV1` / `YuvMutableFrameV1` layouts described in
- * doc/api-abi-0.4-design.md sections 9-11, but this header intentionally does
- * NOT redeclare those exact ABI structs: YUV-36 owns the public, wire-stable
- * descriptor/status ABI (structSize/abiVersion negotiation, sizeof/offsetof
- * layout assertions, reserved-field zero checks). This header owns the
+ * / `YuvConstFrameV1` / `YuvMutableFrameV1` layouts, but this header
+ * intentionally does NOT redeclare those ABI structs: yuv_abi_v1.h owns the
+ * public, wire-stable descriptor/status ABI, including version negotiation,
+ * layout assertions, and reserved-field checks. This header owns the
  * validation LOGIC and the internal view shape the `yuv_*_v1` operations
  * build from those public structs.
  *
@@ -39,13 +38,13 @@ typedef struct {
     void *data;
 } YuvValidatedMutablePlaneIn;
 
-/* Format IDs, matching doc/api-abi-0.4-design.md section 9 exactly. */
+/* Internal format IDs matching the public ABI values. */
 #define YUV_VIEW_FORMAT_I420     ((uint32_t)1)
 #define YUV_VIEW_FORMAT_NV12     ((uint32_t)2)
 #define YUV_VIEW_FORMAT_BGRA8888 ((uint32_t)3)
 #define YUV_VIEW_FORMAT_RGBA8888 ((uint32_t)4)
 
-/* Validation status, kept intentionally close to YuvStatus (ABI section 9)
+/* Internal validation status, kept intentionally close to YuvStatus
  * but not aliased to it: this file does not own status-value stability for
  * the public ABI, src/yuv/abi/h/yuv_abi_v1.h does. */
 typedef enum {
@@ -57,7 +56,7 @@ typedef enum {
 
 /*
  * A validated source (const) frame view: up to 3 planes, each one already
- * checked against the format's geometry/stride/span rules in section 11.
+ * checked against the format's geometry, stride, and span rules.
  * Unused planes (e.g. I420's absent 3rd slot logically, or a format with
  * fewer than 3 planes) are zero-filled with a null `data` pointer -- see
  * yuv_validated_view_zero_plane_in().
@@ -80,22 +79,21 @@ typedef struct {
 
 /*
  * Returns a zero-filled plane descriptor with a null data pointer, for the
- * unused plane slots of a format with fewer than 3 planes (section 9: "Unused
- * planes are zero-filled descriptors with null data").
+ * unused plane slots of a format with fewer than 3 planes.
  */
 YuvValidatedConstPlaneIn yuv_validated_view_zero_plane_in(void);
 YuvValidatedMutablePlaneIn yuv_validated_view_zero_plane_mutable_in(void);
 
 /*
  * Returns the plane count required by `format`, or 0 if `format` is not one
- * of the section-9 format IDs.
+ * of the supported format IDs.
  */
 uint32_t yuv_validated_view_plane_count(uint32_t format);
 
 /*
  * Returns the logical plane width/height for `planeIndex` of `format` given
  * frame `width`/`height`, using checked ceil-half (yuv_checked_ceil_half) for
- * 4:2:0 chroma per section 11's format matrix. Returns YUV_VIEW_OK and fills
+ * 4:2:0 chroma. Returns YUV_VIEW_OK and fills
  * `*outPlaneWidth`/`*outPlaneHeight` on success; returns
  * YUV_VIEW_UNSUPPORTED_FORMAT for an unknown format or out-of-range
  * planeIndex, or YUV_VIEW_OVERFLOW if the ceil-half computation cannot
@@ -112,7 +110,7 @@ YuvViewStatus yuv_validated_view_plane_geometry(
 
 /*
  * Returns the required `sampleBytes` and minimum `pixelStride` for
- * `planeIndex` of `format`, per section 11's format matrix:
+ * `planeIndex` of `format`:
  *   I420:      every plane      sampleBytes=1, minPixelStride=1
  *   NV12:      Y                sampleBytes=1, minPixelStride=1
  *              UV               sampleBytes=2, minPixelStride=2
@@ -129,22 +127,22 @@ YuvViewStatus yuv_validated_view_plane_sample_layout(
 /*
  * Validates and builds a const frame view from caller-supplied geometry and
  * per-plane descriptors carrying ACTUAL lengths (never guessed from format/
- * geometry alone -- the point of this task per YUV-33 Architect Decision #2).
+ * geometry alone).
  *
  * `planes` must have exactly `yuv_validated_view_plane_count(format)` entries
  * populated (planes beyond that count are ignored on input and the
- * corresponding output slots are zero-filled). Validation performed, in
- * order, per doc/api-abi-0.4-design.md sections 9-11:
+ * corresponding output slots are zero-filled). Validation is performed in
+ * this order:
  *
- *   1. `out` non-null, `format` is one of the section-9 IDs, else
+ *   1. `out` non-null, `format` is supported, else
  *      UNSUPPORTED_FORMAT / INVALID_ARGUMENT (out null).
- *   2. `width` and `height` are both >= 1 and <= INT32_MAX (section 9).
+ *   2. `width` and `height` are both >= 1 and <= INT32_MAX.
  *   3. For each used plane: `data` non-null, `sampleBytes` and `pixelStride`
  *      match/exceed the format's required sample layout (`sampleBytes` must
  *      equal exactly; `pixelStride` must be >= the format minimum -- larger
- *      values are an accepted padded/gapped layout per Architect Decision
- *      #3), and `rowStride`/`length` satisfy the checked minimum span/size
- *      formulas from section 11, computed via the yuv_checked_* helpers
+ *      values are an accepted padded/gapped layout), and `rowStride`/`length`
+ *      satisfy the checked minimum span/size formulas computed via the
+ *      yuv_checked_* helpers
  *      (never raw `*`/`+`).
  *   4. Any checked-arithmetic overflow anywhere in step 3 is reported as
  *      YUV_VIEW_OVERFLOW, distinct from an ordinary undersized-value
@@ -173,7 +171,7 @@ YuvViewStatus yuv_validated_view_build_mutable_frame(
 
 /*
  * Validates that a destination frame view's geometry matches the geometry an
- * operation requires (section 11's "Destination geometry" column), given the
+ * operation requires, given the
  * already-built destination `YuvValidatedMutableFrameView`. `expectedWidth`/
  * `expectedHeight` are computed by the caller (identity for most operations,
  * transposed for 90/270 rotation, ROI-derived for crop). Returns
@@ -186,43 +184,17 @@ YuvViewStatus yuv_validated_view_check_destination_geometry(
 
 /*
  * ---------------------------------------------------------------------------
- * Adoption contract (YUV-33 Architect Decision #6)
+ * Adoption contract
  * ---------------------------------------------------------------------------
  *
- * Every native operation MUST complete validation via
- * yuv_validated_view_build_const_frame() / yuv_validated_view_build_mutable_frame()
- * (and yuv_validated_view_check_destination_geometry() for its expected
- * output size) BEFORE its first destination mutation, and use a single
- * cleanup/return path on any non-OK status.
+ * Every native operation validates its options, then builds the source and
+ * destination views and checks destination geometry before the first write.
+ * It returns on any validation failure without modifying the destination.
  *
- * This is now the state of the tree rather than a plan for it. The eleven
- * `yuv_*_v1` entry points in `src/yuv/abi/` are the whole processing surface:
- * each validates its options struct first (header, reserved fields and the
- * operation's own parameters), then builds its source and destination views
- * from the public `YuvConstFrameV1`/`YuvMutableFrameV1` structs, and checks
- * destination geometry before writing. Both halves of that sequence precede
- * the first destination mutation, which is what the contract above requires;
- * the order between them is not itself part of the contract. There are no
- * length-less pointer triples left to migrate -- YUV-52 removed the per-format
- * `src/yuv/bgra8888/`, `src/yuv/nv21/` and `src/yuv/yuv420/` implementations
- * and the `YUVDef` descriptor along with them, so every call site reaching
- * these views arrives through the section-9 ABI.
- *
- * That also closes the "weaker guarantee" recorded in YUV-33 Architect
- * Decision #5. A `YUVDef` carried no buffer length, so an adapter built on it
- * could only ever check internal consistency (non-null pointers, positive
- * geometry and strides) against a length it computed itself via
- * yuv_checked_plane_span()/yuv_checked_plane_size(). The section-9 descriptors
- * carry an explicit caller-supplied `length`, so a view built from them
- * validates the geometry and strides against the buffer length the caller
- * declares, rather than against a length derived from that same geometry.
- * Note the limit: `length` is the caller's claim about its buffer, not a
- * measurement of the allocation behind the pointer. A caller that declares a
- * length larger than it allocated still defeats these checks -- the ABI
- * cannot observe the real allocation size, and no in-process validation can.
- * What the descriptors buy is that an honest caller's under-sized buffer is
- * now rejected instead of silently over-read, which a computed length could
- * never catch.
+ * The public descriptors include a caller-supplied `length`; validation
+ * checks geometry and strides against that declared buffer length. It cannot
+ * measure the allocation behind the pointer, so the caller must report an
+ * accurate length.
  */
 
 #endif  // YUV_VALIDATED_VIEW_H
