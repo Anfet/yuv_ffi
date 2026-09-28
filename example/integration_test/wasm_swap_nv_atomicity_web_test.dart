@@ -1,4 +1,7 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
+// Legacy compatibility members are exercised deliberately by this atomicity
+// contract.
+// ignore_for_file: deprecated_member_use
 
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';

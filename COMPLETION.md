@@ -11,7 +11,20 @@
 - **RA-15:** очищены комментарии `test_native`; все 11 изменённых C-файлов совпадают с baseline после preprocessing и удаления whitespace. Debug и Release CTest — 11/11. Regex-совпадения в test output strings сохранены, поскольку карточка разрешала менять только комментарии.
 - **RA-17:** README обновлён под 0.4.2; примеры прошли временную проверку в example. Минимум macOS 10.11 подтверждён podspec библиотеки, example требует 10.15.
 
+- **RA-02:** архив пакета приведён к allowlist: dry-run на `e66751e` — 0 warnings, 1 ожидаемая hint о версии, 974 KB; публикации не было.
+- **RA-04:** 10 тестов с номерами задач переименованы по поведению, CI-цели обновлены; analyze чистый, 703 теста прошли, run `36415310682` зелёный во всех jobs, кроме WASM rebuild gate (RA-40).
+- **RA-05:** `analyze-and-test-vm` зелёные на Flutter 3.38.10 и 3.44.9 (run `36413754181`). Исполнитель — Luna (T3).
+- **RA-06:** гигиена CI: удалена всегда падающая `android-armv7-runtime`, сборка и проверка ABI armv7 APK перенесены в `android-native-build`, markdown-only push не запускает workflow; `actions/checkout` оставлен `@v4`, т.к. `@v5` не разрешён в репозитории. Исполнитель — Luna (T3).
+- **RA-08:** из git удалены 10 сырых `*.log` и 2 `*.nv12`; dry-run проверка package assets в CI прошла с 0 warnings. Исполнитель — Luna (T3).
+- **RA-16:** комментарии и README example очищены по DOC-RULES; `flutter analyze` чистый, 71 example test.
+
+Полные карточки, отчёты и ревью RA-02/04/05/06/08/16 — в [архиве](doc/archive/release-0.4.2/ra-accepted-cards.md).
+
 Независимый ревьюер принял RA-01/10/11/12/13/14/15/17. Открытые внешние проверки: GitHub CI `startup_failure` до запуска jobs, Chrome gate RA-12 через RA-41 и предсуществующий dartdoc `RangeError` на baseline.
+
+## Предрелизный цикл 0.4.2
+
+- **RA-51:** исправлен copy-sync список root-only файлов, исключения `.gitignore` для четырёх tracked Pixel логов и scoped `deprecated_member_use` suppression. Исполнитель Luna (T3), ревьюер GPT-5.6 Terra (T2) — ACCEPT. Локально прошли анализ root/example, copy-sync 28↔28 с проверкой имён, байтов и golden SHA-256, package dry-run с 0 warnings; все 11 CI jobs прошли на `ea54e0c78cca5e81db4ddc6ebe035214f63850b0` (run [36471185052](https://github.com/Anfet/yuv_ffi/actions/runs/36471185052)). Отдельные RA-25/26 изменения не включались; перенос их карточными ветками и заморозка до фазы 6 записаны в D-3.
 
 ## BGRA-00…04 — COMPLETE — Разбор и ускорение YUV → BGRA
 

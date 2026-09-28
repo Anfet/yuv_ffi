@@ -36,6 +36,7 @@ _tmp**
 /doc/archive/
 /todo*.md
 /pre-release-todo.md
+/tasks/
 /completed.md
 /scratch_rt_check/
 /test/tmp_verify/

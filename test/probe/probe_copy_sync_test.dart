@@ -6,8 +6,8 @@ void main() {
   test('example probe helpers and golden match the package sources', () {
     final source = Directory('test/probe');
     final copy = Directory('example/integration_test/helpers/probe');
-    final sourceFiles = _files(source)..removeWhere((path, _) => _rootOnlyProbeFiles.contains(path));
-    final copiedFiles = _files(copy)..removeWhere((path, _) => _rootOnlyProbeFiles.contains(path));
+    final sourceFiles = _files(source)..removeWhere((path, _) => rootOnlyFiles.contains(path));
+    final copiedFiles = _files(copy)..removeWhere((path, _) => rootOnlyFiles.contains(path));
     expect(copiedFiles.keys, unorderedEquals(sourceFiles.keys));
     for (final path in sourceFiles.keys) {
       expect(copiedFiles[path], sourceFiles[path], reason: '$path is out of sync');
@@ -16,10 +16,8 @@ void main() {
   });
 }
 
-// The timing executor runs from the package root and will later be imported by
-// the platform entrypoints. It has no place in the example's copied correctness
-// helpers, which must stay asset-bundle friendly for Web.
-const _rootOnlyProbeFiles = {
+// These helpers run from the package root and have no copy in the example.
+const rootOnlyFiles = {
   'operation_coverage_test.dart',
   'probe_copy_sync_test.dart',
   'probe_performance_test.dart',
@@ -27,6 +25,7 @@ const _rootOnlyProbeFiles = {
   'probe_runner_test.dart',
   'probe_scenarios.dart',
   'release_probe_core_test.dart',
+  'windows_release_package_provenance_contract_test.dart',
 };
 
 Map<String, List<int>> _files(Directory root) {
