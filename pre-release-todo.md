@@ -12,7 +12,7 @@
 
 ## Состояние
 
-Текущий `origin/release/0.4.2` — `2ef5e15`. RA-51 принята на ветке `ra/RA-51`: CI run `36471185052` зелёный на SHA `ea54e0c`; ожидает merge и CI на общем release SHA. RA-22 и RA-40 начнутся после интеграции; актуальные состояния оставшихся карточек и следующие шаги — в дашборде ниже.
+Текущий `origin/release/0.4.2` — `e4376ab` (RA-51, RA-22 и RA-40 интегрированы). CI run `36487815757` зелёный на точном SHA `e4376ab4272511c29a7258bdb599bdc8fde50118` (11/11 jobs). RA-22: негативный run `36480495893` attempt 2 на испорченном golden уронил все 4 целевые probe jobs; восстановление на `a17bbf4` подтвердило 1188 cases на каждой платформе. RA-22 и RA-40 приняты; следующий шаг — RA-41.
 
 ## Решения Engineer
 
@@ -43,8 +43,8 @@
 | Фаза | Содержание | Карточки | Состояние |
 | --- | --- | --- | --- |
 | 1 | Чистка лишнего и документация | RA-01…06, RA-08, RA-10…17 | **завершена** |
-| 2 | Тесты на Mac (параллельно с фазой 3): macOS native, iOS Simulator | RA-22 (только Mac-джобы) | Mac-джобы зелёные в run `36455663081`; осталось принять |
-| 3 | Web | RA-40, RA-41 | RA-51 принята; RA-40 стартует на общем SHA, RA-41 зависит от RA-22 и RA-40 |
+| 2 | Тесты на Mac (параллельно с фазой 3): macOS native, iOS Simulator | RA-22 | **завершена**; probe negative control и восстановление приняты на `e4376ab` |
+| 3 | Web | RA-40, RA-41 | RA-40 принята; RA-41 готова к запуску: зелёный Web-гейт на `e4376ab`, осталось выполнить corrupted-WASM negative control и revert |
 | **M1** | **Стабильный предрелиз:** фазы 1–3 закрыты, CI зелёный на одном SHA | — | — |
 | 4 | Декомпозиция тест-сьюта: запускать только нужное | RA-60…RA-62 | TODO |
 | 5 | Разделение CI: одна платформа — один workflow — одна карточка | RA-70…RA-78, RA-80 | TODO |
@@ -68,9 +68,7 @@
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-22](tasks/release-0.4.2/RA-22.md) | CI_PASS_PENDING_NEGATIVE_CONTROL | T2 | Terra | RA-04, RA-06, RA-21 | All four native jobs passed on `2ef5e15`; repeat on corrected SHA, then remote corrupted-golden control/revert. |
-| [ ] | [RA-40](tasks/release-0.4.2/RA-40.md) | CI_NOT_REACHED | T2 | Terra | RA-06, RA-08, RA-13 | Two isolated emsdk 3.1.74 builds match each other and committed JS/WASM. Workflow comparison was skipped because the Web job stopped at package dry-run in `36455663081`; repeat on corrected SHA. |
-| [ ] | [RA-41](tasks/release-0.4.2/RA-41.md) | LOCAL_FIXES_CI_PENDING | T2 | Terra | RA-04, RA-21, RA-22, RA-40 | `.gitignore` exceptions now allow dry-run; scoped suppression makes `flutter analyze integration_test` pass. In run `36455663081` the Web rebuild/browser/reference steps and example builds were skipped. Rerun on corrected SHA, then remote corrupted-WASM negative control. |
+| [ ] | [RA-41](tasks/release-0.4.2/RA-41.md) | TODO | T2 | — | RA-04, RA-21, RA-22, RA-40 | Web gate and 119-case matrix passed on `e4376ab` (`36487815757`); RA-22 is accepted. Next: create the isolated `ra/RA-41` worktree, then corrupted-WASM negative control/revert. |
 | [ ] | [RA-21](tasks/release-0.4.2/RA-21.md) | REVIEW_AT_END | T2 | — | RA-06, RA-08, RA-13 | Локальные DoD пройдены: 1188 оракулов/проб на Windows, coverage/layout/copy sync. Доказательства ждут финального независимого ревью в конце цикла по указанию Engineer; Web-проба перенесена в RA-41. |
 | [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | TODO | T3 | — | M1 | Фаза 4: теги `smoke`/`contract`/`probe`/`reference`/`release` в `dart_test.yaml` и в каждом файле; `flutter test` по умолчанию — только smoke + contract. |
 | [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | TODO | T2 | — | RA-60 | Фаза 4: фильтр проб `PROBE_OPS`/`PROBE_FORMATS` с явной строкой среза в отчёте; эталон не меняется. |

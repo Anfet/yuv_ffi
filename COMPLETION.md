@@ -26,6 +26,10 @@
 
 - **RA-51:** исправлен copy-sync список root-only файлов, исключения `.gitignore` для четырёх tracked Pixel логов и scoped `deprecated_member_use` suppression. Исполнитель Luna (T3), ревьюер GPT-5.6 Terra (T2) — ACCEPT. Локально прошли анализ root/example, copy-sync 28↔28 с проверкой имён, байтов и golden SHA-256, package dry-run с 0 warnings; все 11 CI jobs прошли на `ea54e0c78cca5e81db4ddc6ebe035214f63850b0` (run [36471185052](https://github.com/Anfet/yuv_ffi/actions/runs/36471185052)). Отдельные RA-25/26 изменения не включались; перенос их карточными ветками и заморозка до фазы 6 записаны в D-3.
 
+- **RA-40:** Windows emsdk 3.1.74 rebuild matched committed JS/WASM; release CI `36476080539` green on `32239178a59f4c6634f5d384bbac3f7d294a2d70`. WASM asset commit `6f7c38a` is newer than last `src/` and `lib/src/` commits (`1fc2615`). Reviewer GPT-6 Sol (T1): ACCEPT.
+
+- **RA-22:** negative control `36480495893` attempt 2 on bad SHA `f3304a1` failed all four DoD probe jobs at the intentionally corrupted I420 golden; restore SHA `a17bbf4` passed all 11 jobs and 1188 probe cases on Linux, macOS, iOS, and Android. Final branch run `36487815757` passed 11/11 on exact release SHA `e4376ab4272511c29a7258bdb599bdc8fde50118`. T1 review: ACCEPT; Windows is outside this card's DoD and its earlier copy-sync failure is documented in the archived card.
+
 ## BGRA-00…04 — COMPLETE — Разбор и ускорение YUV → BGRA
 
 - **BGRA-00:** разложены staging, destination allocation, C kernel, copy-out и полный публичный вызов. На Pixel 3 при включённом экране `toBgraBytes()` для NV12/I420 занял 10,92/11,28 мс на 720×360; выключенный экран давал около 43–46 мс. [Подробная история](doc/archive/perf/archive/bgra-00-04-2026-09-27.md).

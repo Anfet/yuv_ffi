@@ -53,8 +53,8 @@ Both Pixel 3 Release gates passed and host evidence is committed under `doc/arch
 
 
 <!-- RA-22 -->
-#### Local Negative Controls — 28.09.2026
-Using a temporary fake `flutter` executable without touching the workflow: exit 0 without the terminal marker was rejected (helper exit 1); exit 7 while printing the marker was also rejected (helper preserved exit 7). The required remote corrupted-golden run across the four native jobs remains pending.
+#### Negative Control and Acceptance
+The remote negative control [run 36480495893, attempt 2](https://github.com/Anfet/yuv_ffi/actions/runs/36480495893?attempt=2) used bad SHA `f3304a15d2bd350688ba3c791051ed4751d12625`; Linux, macOS, iOS, and Android probe jobs all failed on the intentionally corrupted I420 golden. Windows failed earlier in copy-sync and did not run its native probe; Windows is outside RA-22 DoD. Revert SHA `a17bbf405cfff29da35add375db05c1cdef58de1` passed [run 36481367925](https://github.com/Anfet/yuv_ffi/actions/runs/36481367925), with 1188 probe cases on each required platform. Final branch CI [run 36487815757](https://github.com/Anfet/yuv_ffi/actions/runs/36487815757) passed 11/11 jobs on release SHA `e4376ab4272511c29a7258bdb599bdc8fde50118`. T1 accepted RA-22.
 
 
 <!-- RA-25 -->
@@ -71,10 +71,10 @@ Pixel 3 (`8B1X11QLW`, Android 12, `arm64-v8a,armeabi-v7a,armeabi`) подклю�
 
 <!-- RA-40 -->
 #### Local Reproducibility Report — 28.09.2026
-Two isolated `emsdk 3.1.74` release builds in ignored `tool/wasm/out/ra40-a` and `ra40-b` matched the committed assets and each other. SHA-256: `yuv_ffi.js` = `DC5E08EE24EC15D1F10F829D2EB71EA0BFC944F50F63CC14E010EC6C853F39D5`; `yuv_ffi.wasm` = `BAD2FC75799FE29FB40FD9866C2D106B3FA13F1929C41F7A219301C8C0F1D08F`. No tracked files changed. Remaining blocker: CI comparison on the release candidate SHA.
+Two isolated `emsdk 3.1.74` release builds in ignored `tool/wasm/out/ra40-a` and `ra40-b` matched the committed assets and each other. SHA-256: `yuv_ffi.js` = `DC5E08EE24EC15D1F10F829D2EB71EA0BFC944F50F63CC14E010EC6C853F39D5`; `yuv_ffi.wasm` = `BAD2FC75799FE29FB40FD9866C2D106B3FA13F1929C41F7A219301C8C0F1D08F`. No tracked files changed. Release CI [run 36476080539](https://github.com/Anfet/yuv_ffi/actions/runs/36476080539) passed on SHA `32239178a59f4c6634f5d384bbac3f7d294a2d70`; reviewer GPT-6 Sol (T1) accepted RA-40.
 
 <!-- RA-41 -->
-**Local implementation result:** 39 static registrations preserve 41 runtime cases. All three migrated targets passed with exit 0 and `All tests passed` (48.1 s, 48.4 s, 45.8 s). The legacy `deprecated_member_use` infos are suppressed only in the intentionally legacy atomicity target; `flutter analyze integration_test` now reports no issues. The full dynamic gate passed 13/13 locally. Separate `reference_web_conversions_test.dart` passed 119/119 with zero mismatches in 645.1 s; committed WASM asset hashes were unchanged before/after. Remaining: integrated CI green on one candidate SHA and a remote negative control proving the gate fails on deliberately corrupted WASM, followed by revert.
+**Local implementation result:** 39 static registrations preserve 41 runtime cases. All three migrated targets passed with exit 0 and `All tests passed` (48.1 s, 48.4 s, 45.8 s). The legacy `deprecated_member_use` infos are suppressed only in the intentionally legacy atomicity target; `flutter analyze integration_test` now reports no issues. The full dynamic gate passed 13/13 locally. Separate `reference_web_conversions_test.dart` passed 119/119 with zero mismatches in 645.1 s; committed WASM asset hashes were unchanged before/after. Integrated Web CI and the 119-case matrix passed on release SHA `e4376ab` in run `36487815757`. Remaining: execute the remote corrupted-WASM negative control and revert it, then obtain T1 review.
 
 <!-- RA-23 (поглощена RA-72) -->
 ### RA-23 — Windows CI
