@@ -8,8 +8,10 @@
 
 
 <!-- RA-21 -->
-#### Review
-Ожидает финального независимого ревью.
+#### Review and Rework
+T1 review rejected the first implementation (rejection count 1): case coverage did not detect a removed case file, record mode did not match the append-only/overwrite contract, and two stale example helper copies remained. Terra corrected these issues in `d6308d9`; negative control removing `...boxCases` failed as expected. Golden/oracle data stayed unchanged.
+
+Final T1 review accepted branch SHA `a0ce963714420588eed5597acbe187912b4926f0`. Full CI run [36525331117](https://github.com/Anfet/yuv_ffi/actions/runs/36525331117) passed all 11 jobs on that exact SHA.
 
 
 <!-- RA-26 -->

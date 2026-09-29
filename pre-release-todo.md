@@ -12,7 +12,7 @@
 
 ## Состояние
 
-В `origin/release/0.4.2` интегрированы RA-51, RA-22 и RA-40; текущие дашбордные изменения только документальные. Последний полный CI run `36487815757` зелёный на точном кодовом SHA `e4376ab4272511c29a7258bdb599bdc8fde50118` (11/11 jobs); workflow игнорирует Markdown и архивную документацию. RA-22: негативный run `36480495893` attempt 2 на испорченном golden уронил все 4 целевые probe jobs; восстановление на `a17bbf4` подтвердило 1188 cases на каждой платформе. RA-22 и RA-40 приняты; RA-41 заблокирована незакрытым T1 review RA-21.
+В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40 и RA-21. RA-21 принята после одного rework: ветка `ra/RA-21` на `a0ce963714420588eed5597acbe187912b4926f0`, полный CI run `36525331117` зелёный (11/11 jobs) на том же SHA; T1 review — ACCEPT. RA-22: негативный run `36480495893` attempt 2 на испорченном golden уронил все 4 целевые probe jobs; восстановление на `a17bbf4` подтвердило 1188 cases на каждой платформе. RA-41 разблокирована и готова к запуску.
 
 ## Решения Engineer
 
@@ -45,7 +45,7 @@
 | --- | --- | --- | --- |
 | 1 | Чистка лишнего и документация | RA-01…06, RA-08, RA-10…17 | **завершена** |
 | 2 | Тесты на Mac (параллельно с фазой 3): macOS native, iOS Simulator | RA-22 | **завершена**; probe negative control и восстановление приняты на `e4376ab` |
-| 3 | Web | RA-40, RA-41 | RA-40 принята; RA-41 **BLOCKED**: RA-21 ожидает отдельного T1 review, затем требуется назначить T2 исполнителя |
+| 3 | Web | RA-40, RA-41 | RA-40 и RA-21 приняты; RA-41 разблокирована, готова к запуску |
 | **M1** | **Стабильный предрелиз:** фазы 1–3 закрыты, CI зелёный на одном SHA | — | — |
 | 4 | Декомпозиция тест-сьюта: запускать только нужное | RA-60…RA-62 | TODO |
 | 5 | Разделение CI: одна платформа — один workflow — одна карточка | RA-70…RA-78, RA-80 | TODO |
@@ -69,8 +69,7 @@
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-41](tasks/release-0.4.2/RA-41.md) | BLOCKED | T2 | — | RA-04, RA-21, RA-22, RA-40 | Web gate and 119-case matrix passed on `e4376ab` (`36487815757`); RA-22 accepted. RA-21 awaits separate T1 review; after acceptance, assign executor and run corrupted-WASM negative control/revert in isolated worktree. |
-| [ ] | [RA-21](tasks/release-0.4.2/RA-21.md) | IN_PROGRESS | T2 | Terra | RA-06, RA-08, RA-13 | T1 REJECT (count 1): enforce exact golden keys versus case IDs, append-only `PROBE_RECORD=1`, explicit overwrite, and reconcile stale example helper copies. Preserve golden/oracle; RA-25 copy-sync failure stays out of scope. |
+| [ ] | [RA-41](tasks/release-0.4.2/RA-41.md) | TODO | T2 | — | RA-04, RA-21, RA-22, RA-40 | Все зависимости закрыты. Готова к запуску: corrupted-WASM negative control/revert в изолированной ветке и полный CI по протоколу карточки. |
 | [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | TODO | T3 | — | M1 | Фаза 4: теги `smoke`/`contract`/`probe`/`reference`/`release` в `dart_test.yaml` и в каждом файле; `flutter test` по умолчанию — только smoke + contract. |
 | [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | TODO | T2 | — | RA-60 | Фаза 4: фильтр проб `PROBE_OPS`/`PROBE_FORMATS` с явной строкой среза в отчёте; эталон не меняется. |
 | [ ] | [RA-62](tasks/release-0.4.2/RA-62.md) | TODO | T3 | — | RA-60, RA-61 | Фаза 4: карта «изменённые пути → команды» в AGENTS.md; те же пути — фильтры workflow. |
