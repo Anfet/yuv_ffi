@@ -72,7 +72,7 @@
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | [x] | [RA-41](doc/archive/release-0.4.2/cards/RA-41.md) | DONE | T2 | Terra | RA-04, RA-21, RA-22, RA-40 | T1 ACCEPT на `8d96b84`; CI `36534765261` success 11/11, Web gate и matrix PASS. |
-| [ ] | [RA-53](tasks/release-0.4.2/RA-53.md) | TODO | T2 | — | RA-52 | D-5: push в ветку `<ключи>/RA-xx` запускает только джобы префикса (`web/…`, `windows+android/…`, `all/…`); проверка `tool/ci/scope_guard.sh` валит ветку, если префикс уже изменённых путей. Только `ci.yml` и скрипт. |
+| [ ] | [RA-53](tasks/release-0.4.2/RA-53.md) | IN_PROGRESS | T2 | GPT-5.6 Terra | RA-52 | D-5: push в ветку `<ключи>/RA-xx` запускает только джобы префикса; `scope_guard.sh` блокирует недостающую ширину префикса. Ветка `all/RA-53`; в Scope только `ci.yml` и проверочный скрипт. |
 | [ ] | [RA-80](tasks/release-0.4.2/RA-80.md) | BLOCKED | T2 | Terra | D-4 | `dev.working-2` зарегистрирован, но offline: установка службы требует Windows admin. Labels добавлены на текущий runner; параллельность ждёт elevated-сеанс. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | M1, RA-52, RA-80 | После M1: соглашения split CI и общие локально запускаемые `tool/ci/` scripts. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | После M1: `ci-vm.yml` на двух версиях Flutter. |
