@@ -12,7 +12,7 @@
 
 ## Состояние
 
-В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21, RA-41 и RA-52. RA-21, RA-41 и RA-52 приняты. RA-52: T1 ACCEPT; карточная ветка SHA `788a0e409a1ff00f09b28240aaac9dac542850e9`, выбранный Web CI `36544170908` зелёный на том же SHA; merge SHA `84c2f7f7432e4a170312d81f748906dfd21c5b09`, полный release CI [36546510703](https://github.com/Anfet/yuv_ffi/actions/runs/36546510703) завершился успешно. RA-53 следует решению Sol: проверка/ревью `all/RA-53`, условное слияние и затем узкие routing/guard проверки от merged release SHA. Первый push-run [36552336437](https://github.com/Anfet/yuv_ffi/actions/runs/36552336437) на SHA `7496f830494d69c636eae99e74bca13f1a6bc1a2` завершился до запуска jobs: actionlint отклонил 30 branch-glob шаблонов с неэкранированным `+`. Terra экранировал литеральные плюсы; локальные actionlint и YAML-проверки прошли, следующий шаг — corrective commit и повторный CI. RA-80 заблокирована, потому что установка `dev.working-2` как Windows-службы требует прав администратора; M1 ждёт RA-53 и RA-80.
+В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21, RA-41 и RA-52. RA-21, RA-41 и RA-52 приняты. RA-52: T1 ACCEPT; карточная ветка SHA `788a0e409a1ff00f09b28240aaac9dac542850e9`, выбранный Web CI `36544170908` зелёный на том же SHA; merge SHA `84c2f7f7432e4a170312d81f748906dfd21c5b09`, полный release CI [36546510703](https://github.com/Anfet/yuv_ffi/actions/runs/36546510703) завершился успешно. RA-53 следует решению Sol: проверить и отдать на T1 review `all/RA-53`, условно слить, затем проверить узкие маршруты и scope guard от merged release SHA. Первый push-run [36552336437](https://github.com/Anfet/yuv_ffi/actions/runs/36552336437) завершился до jobs: actionlint отклонил неэкранированный `+` в branch globs; исправление Terra прошло локальные actionlint/YAML проверки. Повторный run [36552571257](https://github.com/Anfet/yuv_ffi/actions/runs/36552571257) на SHA `6cc288dfc8d010a870c9efeaba6221ade6044c17` ещё выполняется, но GitHub API показывает 4 failed jobs: VM 3.44.9, Windows, Web и Android; остальные jobs pending/running. Terra ждёт завершения run для разбора причин по логам; новых push не делать до выяснения. RA-80 заблокирована, потому что установка `dev.working-2` как Windows-службы требует прав администратора; M1 ждёт RA-53 и RA-80.
 
 ## Решения Engineer
 
@@ -48,7 +48,7 @@
 | 1 | Чистка лишнего и документация | RA-01…06, RA-08, RA-10…17 | **завершена** |
 | 2 | Тесты на Mac (параллельно с фазой 3): macOS native, iOS Simulator | RA-22 | **завершена**; probe negative control и восстановление приняты на `e4376ab` |
 | 3 | Web | RA-40, RA-41 | **завершена**; обе карточки приняты |
-| 4 | CI routing и runners | RA-52, RA-53, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 DONE; RA-53 LOCAL_FIXES_CI_PENDING — actionlint/YAML исправлены локально, ждёт corrective commit и CI; RA-80 BLOCKED на Windows admin |
+| 4 | CI routing и runners | RA-52, RA-53, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 DONE; RA-53 CI_FAILED — run `36552571257` на `6cc288d` ещё выполняется, 4 jobs уже упали; Terra ждёт завершения для разбора. RA-80 BLOCKED на Windows admin |
 | **M1** | **Стабильный предрелиз:** фазы 1–3 закрыты, полный CI зелёный на одном SHA `release/0.4.2` | — | после RA-52, RA-53 и RA-80 |
 | 5 | Декомпозиция тест-сьюта: запускать только нужное | RA-60…RA-62 | после RA-70…78 |
 | 6 | Устройство и скорость | RA-25, RA-26, RA-27 | после фазы 5 |
@@ -72,7 +72,7 @@
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | [x] | [RA-41](doc/archive/release-0.4.2/cards/RA-41.md) | DONE | T2 | Terra | RA-04, RA-21, RA-22, RA-40 | T1 ACCEPT на `8d96b84`; CI `36534765261` success 11/11, Web gate и matrix PASS. |
-| [ ] | [RA-53](tasks/release-0.4.2/RA-53.md) | LOCAL_FIXES_CI_PENDING | T2 | GPT-5.6 Terra | RA-52 | Причина run `36552336437` найдена: actionlint отверг неэкранированный `+` в 30 branch globs. Локальные actionlint/YAML проверки после экранирования прошли; ждём corrective commit и новый CI run на `all/RA-53`. |
+| [ ] | [RA-53](tasks/release-0.4.2/RA-53.md) | CI_FAILED | T2 | GPT-5.6 Terra | RA-52 | Run `36552571257` на `6cc288d` ещё выполняется, но VM 3.44.9, Windows, Web и Android jobs уже failed; остальные jobs queued/running. Terra ждёт окончания run для чтения логов и определения причины; повторные push пока запрещены. |
 | [ ] | [RA-80](tasks/release-0.4.2/RA-80.md) | BLOCKED | T2 | Terra | D-4 | `dev.working-2` зарегистрирован, но offline: установка службы требует Windows admin. Labels добавлены на текущий runner; параллельность ждёт elevated-сеанс. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | M1, RA-52, RA-80 | После M1: соглашения split CI и общие локально запускаемые `tool/ci/` scripts. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | После M1: `ci-vm.yml` на двух версиях Flutter. |
