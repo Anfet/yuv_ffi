@@ -82,7 +82,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check branch scope
-        shell: bash
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
         run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
@@ -418,7 +418,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check branch scope
-        shell: bash
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
         run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
@@ -633,7 +633,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check branch scope
-        shell: bash
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
         run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
@@ -722,7 +722,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check branch scope
-        shell: bash
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
         run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
@@ -769,7 +769,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check branch scope
-        shell: bash
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
         run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
