@@ -13,7 +13,7 @@
 ## Где мы сейчас
 
 - **Сделано:** чистка репозитория и документации, пробы корректности (1188 случаев) на Windows, Linux, macOS, iOS, Android и Web, пересобранный WASM, запуск CI по префиксу ветки. Полный CI на `release/0.4.2` зелёный (11/11): run [36561975316](https://github.com/Anfet/yuv_ffi/actions/runs/36561975316) на `147f0bc`. Ускорение native-ядер (C-01…C-11) принято раньше.
-- **Сейчас:** этап 1 завершён; этап 2 идёт на замороженном РК `a4f17c1`. RA-25 (`43835b5`, focused 13/13, fake ADB timeout) и RA-56 (`c89796d`, Web-only run `36599392409` success за 4:34, 13 файлов/100 cases и все negative controls) исправили T1 findings. Обе карточки готовы к одному повторному пакетному T1 review. Pixel gate и merge/full CI не запускались.
+- **Сейчас:** пакетный T1 review принял RA-25 runner и RA-56 implementation. RA-25 выполняет единственный Pixel 3 gate (arm64+armv7, полный архив); после него — merge RA-56 и обязательный полный CI на release. Эти тяжёлые проверки выполняются последовательно на Windows runner.
 - **SHA РК:** `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026), принят T1; замороженные пути не менялись.
 
 ## Дашборд
@@ -33,8 +33,8 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | REVIEW_T1_PENDING | T2 | T1 review batch | RA-55 | **Повторное пакетное ревью: ускоренный Web gate.** На `c89796d` run [36599392409](https://github.com/Anfet/yuv_ffi/actions/runs/36599392409) успешен за 4:34; 13/100 cases сохранены. T1 findings по filename groups и fake-loader import guard закрыты с тремя отрицательными контролями. После acceptance остаётся merge и полный CI. Rejection count: 1. |
-| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | REVIEW_T1_PENDING | T2 | T1 review batch | RA-55 | **RA-25 rework готов к пакетной проверке.** Commit `43835b5` устранил no-op commit failure и проверяет timeout через fake `adb.cmd`; focused tests прошли 13/13, frozen-path diff к РК пустой. Автоматический полный CI run `36598490171` отменён; Pixel и ручной CI не запускались. Rejection count: 4. |
+| [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | MERGE_CI_PENDING | T2 | Orchestrator | RA-55 | **T1 принял Web CI для слияния.** На code SHA `c89796d` run [36599392409](https://github.com/Anfet/yuv_ffi/actions/runs/36599392409) успешен за 4:34; 13/100 cases, groups, import guard и три negative controls приняты. Ждёт Windows runner после Pixel gate RA-25; затем merge в release и полный CI по DoD. Rejection count: 1. |
+| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | IN_PROGRESS | T2 | Terra (Pixel 3 gate) | RA-55 | **T1 принял runner; выполняется одна разрешённая Pixel 3 попытка.** На `43835b5` focused tests 13/13, fake ADB timeout и frozen-path diff приняты; обе ABI должны пройти release smoke + 1188 probes, с SHA/APK/logcat evidence в архиве. Полный push-run отменён. Rejection count: 4. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | RA-53, RA-55 | **Общие правила отдельных CI-workflow:** один workflow на платформу, логика в скрипте `tool/ci/<имя>`, который запускается и локально; без номеров задач в YAML. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | **Отдельный CI: VM-тесты** (`ci-vm.yml`), две версии Flutter. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70 | **Отдельный CI: Windows** (`ci-windows.yml`) — сборка native, пробы, запуск приложения. |
@@ -96,6 +96,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 | `LOCAL_FIXES_CI_PENDING` | IN_PROGRESS | исполнитель: коммит и CI |
 | `CI_FAILED`, `CI_NOT_REACHED` | BLOCKED | владелец блокера |
 | `CI_PASS_PENDING_NEGATIVE_CONTROL` | IN_PROGRESS | исполнитель: негативный контроль |
+| `MERGE_CI_PENDING` | IN_PROGRESS | оркестратор: merge и полный release CI после освобождения раннера |
 | `DEFERRED` | — | перенесено; причина в карточке |
 
 Новый подстатус добавляется сюда одновременно с первым использованием.
