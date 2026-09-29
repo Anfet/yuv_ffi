@@ -182,12 +182,12 @@ Public calls can throw:
 
 | Platform | Support | Checked in CI | Checked manually |
 | --- | --- | --- | --- |
-| Android | Native FFI: `armeabi-v7a`, `arm64-v8a`, `x86_64` | Build and x86_64 app-runtime smoke <!-- RA-50 --> | <!-- RA-50 --> |
-| iOS | Native FFI | Simulator and device builds; simulator app-runtime smoke <!-- RA-50 --> | <!-- RA-50 --> |
-| macOS | Native FFI | Example build and app-runtime smoke <!-- RA-50 --> | <!-- RA-50 --> |
-| Windows | Native FFI | <!-- RA-50 --> | <!-- RA-50 --> |
-| Linux | Native FFI | Example build, packaging, and app-runtime smoke <!-- RA-50 --> | <!-- RA-50 --> |
-| Web | Partial WASM backend | Package and browser integration checks <!-- RA-50 --> | <!-- RA-50 --> |
+| Android | Native FFI: `armeabi-v7a`, `arm64-v8a`, `x86_64` | Build, app-runtime smoke, and the 1188-case correctness matrix | Release builds on a physical Pixel 3 for `arm64-v8a` and `armeabi-v7a` |
+| iOS | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | — |
+| macOS | Native FFI | Example build, app-runtime smoke, and the 1188-case correctness matrix | — |
+| Windows | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | — |
+| Linux | Native FFI | Example build, packaging, app-runtime smoke, and the 1188-case correctness matrix | — |
+| Web | Partial WASM backend | Package checks, browser tests, and the reference correctness matrix | — |
 
 ## Web backend
 

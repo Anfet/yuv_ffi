@@ -1,106 +1,68 @@
 ## 0.4.2
 
-### Release notes (draft; not published)
+### Highlights
 
-- `0.4.0` has been retracted from pub.dev. The reason for the retraction is not
-  recorded here.
-- The `0.4.1` release candidate was cancelled before publication or tagging.
-  `0.4.2` is the next planned release. Its existing preparation includes rebuilt
-  Web JS/WASM assets and updated documentation for initialization and platform
-  support. The ABI v1 performance refactor is planned for this release and is
-  not yet complete.
-- Call `YuvFfi.initialize()` before using the capability-gated `0.4.0` API on
-  every platform, then use `YuvCapabilities` to determine available operations.
+- Added a packed-plane API and frame-presentation widgets, rebuilt the Web
+  JS/WASM assets, and updated the package and example documentation.
+
+### Performance
+
+- Native kernels and Dart-side copying are faster while preserving byte-for-byte
+  behavior against the 0.4.0 compatibility set of 1188 cases.
+
+### Behavior change
+
+- Factories that receive `planes:` now default `layout` to
+  `YuvPlaneLayout.packed`. They copy visible samples into tight planes and
+  discard row padding and per-sample gaps. Pass
+  `layout: YuvPlaneLayout.preserve` when the supplied `rowStride`,
+  `pixelStride`, and padding bytes must remain intact. `copy()`,
+  `YuvImage.decode(...)`, native or WASM operation results, and
+  `applyPlanes(...)` preserve declared plane layouts.
+
+### New API
+
+- Added `YuvPlaneLayout.preserve` and `YuvPlaneLayout.packed`, plus `layout:`
+  on `YuvImage` factories that accept caller-supplied `planes`.
+- Added `isTightlyPacked` and `pack()` through the `YuvImagePack` extension.
+  `pack()` removes row padding and I420 per-sample pixel gaps in place while
+  preserving visible samples, format, geometry, and orientation.
+- Added `YuvFramePresenter` and `YuvFrameView` for displaying a stream of
+  `YuvImage` frames with one frame in flight.
 
 ### Changes
 
-- New public `YuvPlaneLayout` (`preserve`, `packed`) and a `layout` parameter on every `YuvImage`
-  factory that accepts caller-supplied `planes` (`i420`, `nv12`, `bgra`, the deprecated `nv21`/unnamed
-  constructor). **Behavior change:** `layout` defaults to `YuvPlaneLayout.packed`, so a factory called
-  with `planes:` and no explicit `layout:` now repacks a padded or pixel-gapped input to a tight
-  layout at construction time instead of preserving it byte-for-byte, as every factory did before this
-  release. Code that relies on the caller's exact `rowStride`/`pixelStride` surviving construction must
-  now pass `layout: YuvPlaneLayout.preserve` explicitly. `copy()`, `YuvImage.decode(...)` and every
-  internal adoption of a native/WASM operation's own result are unaffected: they always use
-  `.preserve` regardless of this default. `applyPlanes(...)` is also unaffected: it always keeps
-  whatever strides its argument declares.
-- New public `isTightlyPacked` getter and `pack()` method (`YuvImagePack`
-  extension on `YuvImage`, exported from `package:yuv_ffi/yuv_ffi.dart`):
-  `pack()` repacks an image's planes in place to remove row padding and, for
-  I420 chroma, a per-sample pixel gap (some Android devices report I420 U/V at
-  `pixelStride == 2`), while NV12's interleaved UV plane keeps `pixelStride ==
-  2` since native code addresses it as a packed `(U, V)` pair. A no-op on an
-  already tightly packed image; otherwise builds and validates a full
-  replacement plane set before publishing it through `applyPlanes()`, so a
-  partially packed state is never visible and the revision advances exactly
-  once. PACK-00 measured dense I420 packing at 3.3x faster `applyRotation` on
-  a real Pixel 3 device.
-- `YuvImageProvider` copies this package's `YuvImage` when decoding starts, so
-  mutating or reusing the source image while the decode waits no longer changes
-  the frame already queued for display, and an in-place resize in that window
-  no longer fails the load. Cache hits take no copy. A foreign
-  `implements YuvImage` is still converted from the live instance.
-- A `YuvImageProvider` whose image was mutated after the provider was created —
-  before its first load, or before a reload after its frame left the image
-  cache — now fails that load with a `StateError` instead of decoding the newer
-  frame under the key of the old one. Create a new provider for the new frame;
-  `YuvImageWidget` already does so on every build.
-- Example camera preview (mobile and Web): at most one frame is decoded or
-  waiting to be drawn at a time, frames arriving meanwhile are dropped, the
-  replaced frame is disposed at once instead of staying in `ImageCache`, frames
-  of a stopped or replaced stream are no longer shown, and the debug FPS counts
-  drawn frames rather than received ones. `YuvImageWidget` is unchanged.
-- New public widgets `YuvFramePresenter` and `YuvFrameView`, exported from
-  `package:yuv_ffi/yuv_ffi.dart`: a camera-independent way to show a stream of
-  `YuvImage` frames, keeping at most one frame in flight, converting each
-  frame's own BGRA bytes synchronously before `present` returns, disposing the
-  replaced and last `ui.Image`, never caching preview frames in `ImageCache`,
-  and counting a frame only after it is drawn. Moved from the example app,
-  which now uses the packaged widgets instead of its own copy.
-- The example app now requires Dart 3.11 or later to match `camera_desktop`
-  2.0.0. The package's minimum Dart SDK remains unchanged.
-- Example desktop camera preview (Windows, macOS, Linux) now streams
-  `camera_desktop` BGRA frames through `YuvFramePresenter`, shows the frame
-  returned by `transform` and captures that same frame, replacing the
-  `flutter_webrtc` preview and its periodic snapshot decoding. The example no
-  longer depends on `flutter_webrtc`.
-- Example camera preview now follows one `transform` contract on mobile, Web
-  and desktop: the returned frame is shown, the camera frame without
-  `transform`, and a throwing `transform` drops only its frame and is reported
-  instead of stopping the Web stream. Stream lifecycle was aligned as well: a
-  restart waits for the previous stop on mobile, as on desktop; start errors
-  and an uninitialized controller are shown instead of thrown; the Web preview
-  releases a camera stream that arrives after it was closed or restarted; a
-  camera error stops the stream on every platform instead of leaving the
-  camera running. `CameraScreen` no longer orphans a capture on a second tap
-  or on close.
-- Example `CameraScreen` now returns a captured frame only after the preview
-  has drawn it, and a capture pending when the stream stops or fails ends
-  without a frame; `YuvCameraPreview` reports both through the new
-  `onFramePresented` and `onStreamStopped` callbacks. The mobile preview now
-  stops the stream and shows a camera error that arrives after the stream has
-  started, instead of leaving it uncaught with the camera running.
+- `YuvImageProvider` copies a package `YuvImage` when decoding starts, so a
+  later source mutation cannot change the queued frame. A provider whose image
+  changed after it was created throws `StateError` on the affected load; create
+  a new provider for the changed image.
+- Rebuilt the Web JS/WASM assets.
+
+### Documentation fixes
+
+- Clarified that ROI and crop coordinates are pixels.
+- Clarified that `copy(blank: true)` preserves plane strides.
+- Clarified that `YuvFfi.initialize()` is required on IO before `apply*`
+  operations.
+
+### Example
+
+- Updated the camera previews to use `YuvFramePresenter` and `YuvFrameView`.
+  They keep at most one frame in flight, display the frame returned by
+  `transform`, and stop cleanly when the stream ends or fails.
 
 ### Known limitations
 
 - Web uses a partial WASM backend and is not feature-complete with native
-  backends. Flutter Web is supported through the JavaScript build; `flutter
-  build web --wasm` is currently unsupported. Release WASM builds require
-  Safari 16.4 or later.
-- The ARMv7 GitHub emulator runtime job is non-blocking because its driver
-  handshake is unreliable; the accepted ARMv7 runtime smoke ran on a physical
-  Pixel 3.
-- The full native and sanitizer suite has run on Linux x86_64. ARM64 has
-  app-runtime smoke coverage, but not the full native suite.
+  backends. Use `YuvCapabilities` to query the operations available at runtime.
+- Flutter Web is supported through the JavaScript build; `flutter build web
+  --wasm` is unsupported. Release WASM builds require Safari 16.4 or later.
 
-### Moving from a lockfile that pins 0.4.0
+### Moving from a 0.4.0 lockfile
 
-- A consumer whose `pubspec.lock` already pins `yuv_ffi 0.4.0` can keep using
-  that resolved version, though pub reports its retracted status. Do not delete
-  the whole lockfile, because that can update unrelated dependencies.
-- After `0.4.2` is published, run `flutter pub upgrade yuv_ffi` to select the
-  newest compatible non-retracted version and commit the resulting lockfile for
-  an application package.
+- A consumer whose `pubspec.lock` pins `yuv_ffi 0.4.0` can retain that resolved
+  version. Run `flutter pub upgrade yuv_ffi` to select 0.4.2 and commit the
+  resulting lockfile for an application package.
 
 ## 0.4.0
 
@@ -144,10 +106,10 @@ the published `0.2.4` → `0.4.0` upgrade, not a separate pub.dev release.
 - Routed every public native-backend and Web-backend operation through the versioned `yuv_*_v1` ABI. The per-format `yuv420_*`, `nv21_*` and `bgra8888_*` entry points, and `nvXX_to_nvYY`, are no longer called from Dart on either backend.
 - Moved the Web backend onto the same ABI v1 descriptors the native backend uses: it stages `YuvConstFrameV1`/`YuvMutableFrameV1` and the versioned options structs in WASM linear memory at the wasm32 layout the C header declares, and maps `YuvStatus` through the shared status contract. Web and native now share one transport, one format mapping and one padding-preservation rule, so an operation behaves the same on both. Web remains a partial WASM backend.
 - Web operations now report a failure instead of silently continuing: a non-zero `YuvStatus` throws before any result byte is read back, so a failed Web operation leaves bytes, geometry and the revision counter unchanged, and a WASM module missing an ABI v1 export is rejected by symbol name rather than failing inside a `ccall`.
-- A failed operation now leaves the image completely unchanged: a non-zero native status is raised before any result byte is read back, so bytes, format, geometry and the revision counter all keep their previous values. This holds for `swapNv()` on an I420 or BGRA image too, which needs two native calls: the conversion to NV12 and the chroma swap both complete on drafts, and the result is published once, so a chroma swap that fails no longer leaves the image converted.
+- A failed operation now leaves the image completely unchanged: a non-zero native status is raised before any result byte is read back, so bytes, format, geometry and the revision counter all keep their previous values. This holds for `swapNv()` on an I420 or BGRA image too, which needs two native calls: the conversion to NV12 and the chroma swap both complete on temporary results, and the result is published once, so a chroma swap that fails no longer leaves the image converted.
 - An image's declared plane layout survives an in-place operation. Only active samples are written, so row padding, pixel gaps and bytes past the last sample keep their previous contents instead of being repacked.
 - Blur and effects accept a padded BGRA plane, which the previous per-format kernels could not address safely and which the Dart layer therefore rejected.
-- Fixed `I420 <-> NV12` conversion, which ran through a YUV->RGB->YUV round trip and so perturbed every Y sample and re-averaged chroma that was already at final resolution. Both formats store identical samples, so the conversion now moves them directly.
+- Fixed `I420 <-> NV12` conversion, which ran through a YUV → RGB → YUV round trip and so perturbed every Y sample and re-averaged chroma that was already at final resolution. Both formats store identical samples, so the conversion now moves them directly.
 - Added checked native arithmetic helpers for addition, multiplication, ceil-half, plane span and sample offset. Overflow is detected before any pointer arithmetic or memory access, replacing signed `int` expressions that could overflow before reaching `size_t`.
 - Added internal validated const/mutable plane and frame views that carry actual buffer lengths and validate format IDs, plane counts, sample sizes, independent row/pixel strides, minimum spans and destination geometry.
 - Padded and gapped plane layouts are accepted with larger positive strides; row gaps, pixel gaps and bytes beyond the minimum span stay padding and are never treated as logical sample data.
@@ -165,7 +127,7 @@ the published `0.2.4` → `0.4.0` upgrade, not a separate pub.dev release.
 - Added a Web reference conversion matrix and an independent `test_pattern_512` reference, and made the reference matrix skip honestly when no native library is present.
 - Documented the native C ABI and public Dart API contract in the 0.4.0 design.
 - Upgraded `ffigen` to `^21.0.0`, `ffi` to `^2.2.0`, `build_runner` to `^2.15.1`, `flutter_lints` to `^6.0.0` and `image` (dev) to `^4.10.1`, and regenerated the native bindings; the output is formatting-only (ffigen's newer, more compact function-signature style), with the same symbols and struct layout confirmed by `tool/verify_bindings_audit.dart`.
-- Added a dedicated Android CI build job that exercises the plugin's `externalNativeBuild`/CMake wiring through a real `flutter build apk` (YUV-24).
+- Added a dedicated Android CI build job that exercises the plugin's `externalNativeBuild`/CMake wiring through a real `flutter build apk`.
 
 ## 0.2.4
 
