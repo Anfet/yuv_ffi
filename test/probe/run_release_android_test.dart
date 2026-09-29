@@ -81,9 +81,12 @@ void main() {
     final logcat = await _writeLogcat('missing-after-timeout', 'unrelated logcat output');
     addTearDown(logcat.delete);
 
-    final result = await _validate(worktree.path, gitSha, runId, logcat);
+    final elapsed = Stopwatch()..start();
+    final result = await _validate(worktree.path, gitSha, runId, logcat, timeoutSeconds: 2);
+    elapsed.stop();
 
     expect(result.exitCode, isNot(0));
+    expect(elapsed.elapsed, greaterThanOrEqualTo(const Duration(seconds: 2)));
     expect('${result.stdout}\n${result.stderr}', contains('Expected exactly one RA25_RESULT logcat marker, found 0'));
   });
 
@@ -162,7 +165,7 @@ Future<File> _writeLogcat(String name, String contents) async {
   return file;
 }
 
-Future<ProcessResult> _validate(String worktreePath, String gitSha, String runId, File logcat) => Process.run('pwsh', [
+Future<ProcessResult> _validate(String worktreePath, String gitSha, String runId, File logcat, {int timeoutSeconds = 300}) => Process.run('pwsh', [
   '-NoProfile',
   '-File',
   '$worktreePath\\tool\\probe\\run_release_android.ps1',
@@ -170,6 +173,8 @@ Future<ProcessResult> _validate(String worktreePath, String gitSha, String runId
   gitSha,
   '-RunId',
   runId,
+  '-TimeoutSeconds',
+  '$timeoutSeconds',
   '-ValidateLogcatPath',
   logcat.path,
 ], workingDirectory: worktreePath);

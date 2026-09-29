@@ -73,12 +73,31 @@ function Assert-Ra25Verdict($Verdict, [string]$ExpectedGitSha, [string]$Expected
   }
 }
 
+function Wait-Ra25ResultLogcat([scriptblock]$ReadLogcat, [int]$TimeoutSeconds, [int]$SettleSeconds) {
+  if ($TimeoutSeconds -le 0) { throw 'TimeoutSeconds must be positive.' }
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+  $markerCount = 0
+  $logcat = ''
+  do {
+    Start-Sleep -Seconds 1
+    $logcat = & $ReadLogcat
+    $markerCount = [regex]::Matches($logcat, '(?<![A-Za-z0-9_])RA25_RESULT(?![A-Za-z0-9_])').Count
+  } while ($markerCount -eq 0 -and (Get-Date) -lt $deadline)
+
+  if ($markerCount -gt 0 -and $SettleSeconds -gt 0) {
+    Start-Sleep -Seconds $SettleSeconds
+    $logcat = & $ReadLogcat
+  }
+  return $logcat
+}
+
 if ($ValidateLogcatPath) {
   if (-not (Test-Path -LiteralPath $ValidateLogcatPath -PathType Leaf)) {
     throw "ValidateLogcatPath is missing: $ValidateLogcatPath"
   }
   $validationExpectedAbi = if ($Abi -eq 'arm64') { 'arm64-v8a' } else { 'armeabi-v7a' }
-  $resultMarker = Read-Ra25ResultMarker (Get-Content -LiteralPath $ValidateLogcatPath -Raw)
+  $logcat = Wait-Ra25ResultLogcat { Get-Content -LiteralPath $ValidateLogcatPath -Raw } $TimeoutSeconds 0
+  $resultMarker = Read-Ra25ResultMarker $logcat
   Assert-Ra25Verdict $resultMarker.verdict $GitSha $RunId $validationExpectedAbi $resultMarker.marker.raw
   Write-Output "RA25_LOGCAT_RESULT $($resultMarker.verdict | ConvertTo-Json -Compress)"
   return
@@ -101,7 +120,6 @@ if ([string]::Equals($resolvedEvidenceDirectory, $resolvedRepoRoot, [StringCompa
 New-Item -ItemType Directory -Force -Path $resolvedEvidenceDirectory | Out-Null
 
 if (-not (Test-Path $adb)) { throw "adb is missing: $adb" }
-if ($TimeoutSeconds -le 0) { throw 'TimeoutSeconds must be positive.' }
 if (-not $Serial) {
   $devices = @(& $adb devices | Select-String '\tdevice$' | ForEach-Object { ($_ -split '\t')[0] })
   if ($devices.Count -ne 1) { throw 'Pass -Serial when exactly one Android device is not connected.' }
@@ -174,20 +192,7 @@ try {
   & $adb -s $Serial shell am start -n $activityName | Out-Null
   if ($LASTEXITCODE -ne 0) { throw 'Unable to launch the release probe APK.' }
 
-  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-  $markerCount = 0
-  $logcat = ''
-  do {
-    Start-Sleep -Seconds 1
-    $logcat = (& $adb -s $Serial logcat -d -v raw 2>&1 | Out-String)
-    $markerCount = [regex]::Matches($logcat, '(?<![A-Za-z0-9_])RA25_RESULT(?![A-Za-z0-9_])').Count
-  } while ($markerCount -eq 0 -and (Get-Date) -lt $deadline)
-
-  if ($markerCount -gt 0) {
-    Start-Sleep -Seconds 2
-    $logcat = (& $adb -s $Serial logcat -d -v raw 2>&1 | Out-String)
-  }
-
+  $logcat = Wait-Ra25ResultLogcat { (& $adb -s $Serial logcat -d -v raw 2>&1 | Out-String) } $TimeoutSeconds 2
   $resultMarker = Read-Ra25ResultMarker $logcat
   $verdict = $resultMarker.verdict
   Assert-Ra25Verdict $verdict $GitSha $runId $expectedAbi $resultMarker.marker.raw
