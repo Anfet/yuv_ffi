@@ -1,19 +1,33 @@
 name: CI
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.ref }}-${{ inputs.jobs || 'full' }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
 
 on:
   push:
-    branches: ["**"]
-    paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/perf/**']
-  pull_request:
+    branches: ["release/**"]
     paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/perf/**']
   workflow_dispatch:
+    inputs:
+      jobs:
+        description: Job to run
+        required: true
+        type: choice
+        options:
+          - vm
+          - bindings
+          - linux
+          - macos
+          - ios
+          - android
+          - windows
+          - example
+          - web
 
 jobs:
   analyze-and-test-vm:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'vm' }}
     runs-on: [self-hosted, Windows, X64]
     strategy:
       fail-fast: false
@@ -92,6 +106,7 @@ jobs:
   # checkout and diffing against the committed file is a stronger proof of
   # host-independence than re-deriving the expected symbol set by hand.
   bindings-regeneration:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'bindings' }}
     runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
@@ -131,6 +146,7 @@ jobs:
   # used to look identical in the log, which is how broken Linux/macOS
   # packaging stayed green.
   linux-native-smoke:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'linux' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -233,6 +249,7 @@ jobs:
           done
 
   macos-native-smoke:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'macos' }}
     # Self-hosted (yuv-self-hosted): faster than the GitHub-hosted macos-latest
     # runner, and gives a physical Mac for a later camera smoke on this job's
     # host. With SIP enabled on that Mac, dyld ignores DYLD_LIBRARY_PATH and
@@ -326,6 +343,7 @@ jobs:
   # ../src/CMakeLists.txt; the APK build exercises that list and the smoke
   # closes the runtime gap a successful Gradle build alone cannot prove.
   android-native-build:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'android' }}
     runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout
@@ -454,6 +472,7 @@ jobs:
   # --no-codesign is what makes this runnable without provisioning profiles; it
   # skips signing only, not the compile and link of the pod target.
   ios-native-build:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'ios' }}
     runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
@@ -527,6 +546,7 @@ jobs:
         run: flutter build ios --debug --no-codesign
 
   windows-native-smoke:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'windows' }}
     runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout
@@ -596,6 +616,7 @@ jobs:
           }
 
   example-analyze-and-build:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'example' }}
     runs-on: [self-hosted, Windows, X64]
     strategy:
       fail-fast: false
@@ -649,6 +670,7 @@ jobs:
   # chrome` does not serve that bundle, so every asset-dependent runtime test
   # belongs in example/integration_test and runs through flutter drive.
   wasm-web-integration:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'web' }}
     runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout
