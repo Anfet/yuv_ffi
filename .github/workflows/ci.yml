@@ -916,7 +916,12 @@ jobs:
             $aggregated = @($targets.Name | Where-Object { $_ -notin $separate })
             $missing = @($aggregated | Where-Object { $aggregatorSource -notmatch [regex]::Escape($_) })
             if ($missing.Count -gt 0) { throw "Web tests not covered by an execution target: $($missing -join ', ')" }
-            $targets = @($combined) + $separate
+            # The two fake-loader suites share the same disposable page; their source
+            # files remain listed above so the coverage guard accounts for each one.
+            $targets = @($combined, 'wasm_bootstrap_web_test.dart', 'wasm_loader_lifecycle_web_test.dart', 'fake_loader_web_tests.dart')
+            $targetPaths = @($targets | ForEach-Object { "integration_test/$_" })
+            $missingTargets = @($targetPaths | Where-Object { -not (Test-Path $_) })
+            if ($missingTargets.Count -gt 0) { throw "Missing Web execution targets: $($missingTargets -join ', ')" }
             $failed = @()
             foreach ($target in $targets) {
               $targetPath = "integration_test/$target"
