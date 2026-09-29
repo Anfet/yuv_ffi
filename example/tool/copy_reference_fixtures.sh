@@ -54,6 +54,14 @@ PROBE_GOLDEN_DEST="$EXAMPLE_DIR/assets/probe"
 rm -rf "$PROBE_DEST_DIR"
 mkdir -p "$PROBE_DEST_DIR" "$PROBE_GOLDEN_DEST"
 cp -R "$PROBE_SOURCE_DIR"/. "$PROBE_DEST_DIR"/
+rm -f "$PROBE_DEST_DIR"/operation_coverage_test.dart \
+  "$PROBE_DEST_DIR"/probe_copy_sync_test.dart \
+  "$PROBE_DEST_DIR"/probe_performance_test.dart \
+  "$PROBE_DEST_DIR"/probe_runner.dart \
+  "$PROBE_DEST_DIR"/probe_runner_test.dart \
+  "$PROBE_DEST_DIR"/probe_scenarios.dart \
+  "$PROBE_DEST_DIR"/release_probe_core_test.dart \
+  "$PROBE_DEST_DIR"/windows_release_package_provenance_contract_test.dart
 cp "$PROBE_SOURCE_DIR/golden.json" "$PROBE_GOLDEN_DEST/golden.json"
 
 echo "Copied operation probes to $PROBE_DEST_DIR and $PROBE_GOLDEN_DEST"

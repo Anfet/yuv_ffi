@@ -9,9 +9,20 @@ import 'helpers/probe/probe_support.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('native operation matrix matches the exact golden', (tester) async {
+  testWidgets('native operation matrix matches the exact golden', (
+    tester,
+  ) async {
     final document = await rootBundle.loadString('assets/probe/golden.json');
-    final mismatches = await probeMismatches(decodeProbeGolden(document));
+    final golden = decodeProbeGolden(document);
+    expectProbeGoldenCaseIdsExact(golden);
+    final inputMismatches = probeInputMismatches(golden);
+    expect(
+      inputMismatches,
+      isEmpty,
+      reason:
+          'Probe input generator diverges on this platform:\n${inputMismatches.take(20).join('\n')}',
+    );
+    final mismatches = await probeMismatches(golden);
     expectProbeMismatchesEmpty(mismatches);
     debugPrint('Probe matrix passed: ${probeCaseIds.length} cases');
   });
