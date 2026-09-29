@@ -70,7 +70,7 @@
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | [ ] | [RA-41](tasks/release-0.4.2/RA-41.md) | BLOCKED | T2 | — | RA-04, RA-21, RA-22, RA-40 | Web gate and 119-case matrix passed on `e4376ab` (`36487815757`); RA-22 accepted. RA-21 awaits separate T1 review; after acceptance, assign executor and run corrupted-WASM negative control/revert in isolated worktree. |
-| [ ] | [RA-21](tasks/release-0.4.2/RA-21.md) | REVIEW_T1_PENDING | T2 | — | RA-06, RA-08, RA-13 | Локальные DoD пройдены: 1188 оракулов/проб на Windows, coverage/layout/copy sync. Как probe-карточка требует отдельного T1 review; после принятия разблокирует зависимую RA-41. |
+| [ ] | [RA-21](tasks/release-0.4.2/RA-21.md) | IN_PROGRESS | T2 | Terra | RA-06, RA-08, RA-13 | T1 REJECT (count 1): enforce exact golden keys versus case IDs, append-only `PROBE_RECORD=1`, explicit overwrite, and reconcile stale example helper copies. Preserve golden/oracle; RA-25 copy-sync failure stays out of scope. |
 | [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | TODO | T3 | — | M1 | Фаза 4: теги `smoke`/`contract`/`probe`/`reference`/`release` в `dart_test.yaml` и в каждом файле; `flutter test` по умолчанию — только smoke + contract. |
 | [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | TODO | T2 | — | RA-60 | Фаза 4: фильтр проб `PROBE_OPS`/`PROBE_FORMATS` с явной строкой среза в отчёте; эталон не меняется. |
 | [ ] | [RA-62](tasks/release-0.4.2/RA-62.md) | TODO | T3 | — | RA-60, RA-61 | Фаза 4: карта «изменённые пути → команды» в AGENTS.md; те же пути — фильтры workflow. |
