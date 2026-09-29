@@ -8,6 +8,16 @@ if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot 'pubspec.yaml') -Pat
   throw "Repository root does not contain pubspec.yaml: $repositoryRoot"
 }
 
+$temporaryDirectory = Get-CiTemporaryDirectory
+if (-not (Test-Path -LiteralPath $temporaryDirectory -PathType Container)) {
+  throw "Temporary directory does not exist: $temporaryDirectory"
+}
+
+$flutterRoot = Get-CiFlutterRoot
+if (-not (Test-Path -LiteralPath $flutterRoot -PathType Container)) {
+  throw "Flutter root does not exist: $flutterRoot"
+}
+
 $driveScript = Join-Path $PSScriptRoot 'drive.ps1'
 $parseErrors = $null
 [void][System.Management.Automation.Language.Parser]::ParseFile(
