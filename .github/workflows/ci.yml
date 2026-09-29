@@ -903,7 +903,12 @@ jobs:
 
             $combined = 'all_web_test.dart'
             # These suites mutate page-global loader state and require a fresh page.
-            $separate = @('wasm_bootstrap_web_test.dart', 'wasm_loader_lifecycle_web_test.dart')
+            $separate = @(
+              'wasm_bootstrap_web_test.dart',
+              'wasm_loader_lifecycle_web_test.dart',
+              'wasm_swap_nv_atomicity_web_test.dart',
+              'yuv_web_capabilities_web_test.dart'
+            )
             $targets = @(Get-ChildItem -Path integration_test -Filter '*_web_test.dart' -File | Where-Object Name -ne $combined | Sort-Object Name)
             $aggregatorPath = "integration_test/$combined"
             if (-not (Test-Path $aggregatorPath)) { throw "Missing combined Web target: $combined" }

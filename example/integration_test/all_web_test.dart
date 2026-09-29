@@ -6,9 +6,7 @@ import 'probe_web_test.dart' as probe;
 import 'serialization_contract_web_test.dart' as serialization;
 import 'wasm_abi_v1_descriptor_staging_web_test.dart' as wasm_abi;
 import 'wasm_parity_edge_cases_web_test.dart' as wasm_parity;
-import 'wasm_swap_nv_atomicity_web_test.dart' as wasm_swap;
 import 'web_ownership_regression_web_test.dart' as ownership;
-import 'yuv_web_capabilities_web_test.dart' as capabilities;
 
 void main() {
   getbytes.main();
@@ -19,7 +17,5 @@ void main() {
   serialization.main();
   wasm_abi.main();
   wasm_parity.main();
-  wasm_swap.main();
   ownership.main();
-  capabilities.main();
 }
