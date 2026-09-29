@@ -14,19 +14,21 @@ void main() {
 
     final sourceScript = File('tool/probe/run_release_android.ps1');
     final worktreeScript = File('${worktree.path}\\tool\\probe\\run_release_android.ps1');
-    await sourceScript.copy(worktreeScript.path);
-    await _run('git', ['-C', worktree.path, 'add', 'tool/probe/run_release_android.ps1']);
-    await _run('git', [
-      '-C',
-      worktree.path,
-      '-c',
-      'user.name=RA-25 test',
-      '-c',
-      'user.email=ra25-test@example.invalid',
-      'commit',
-      '-m',
-      'Validated RA-25 script fixture',
-    ]);
+    if (await sourceScript.readAsString() != await worktreeScript.readAsString()) {
+      await sourceScript.copy(worktreeScript.path);
+      await _run('git', ['-C', worktree.path, 'add', 'tool/probe/run_release_android.ps1']);
+      await _run('git', [
+        '-C',
+        worktree.path,
+        '-c',
+        'user.name=RA-25 test',
+        '-c',
+        'user.email=ra25-test@example.invalid',
+        'commit',
+        '-m',
+        'Validated RA-25 script fixture',
+      ]);
+    }
     gitSha = (await _run('git', ['-C', worktree.path, 'rev-parse', 'HEAD'])).stdout.toString().trim();
   });
 
@@ -78,15 +80,21 @@ void main() {
   });
 
   test('rejects a missing marker after the logcat timeout', () async {
-    final logcat = await _writeLogcat('missing-after-timeout', 'unrelated logcat output');
-    addTearDown(logcat.delete);
+    final fakeAdb = await _writeFakeAdb('missing-after-timeout');
+    addTearDown(() async {
+      await fakeAdb.command.delete();
+      await fakeAdb.calls.delete();
+    });
 
     final elapsed = Stopwatch()..start();
-    final result = await _validate(worktree.path, gitSha, runId, logcat, timeoutSeconds: 2);
+    final result = await _validateWithFakeAdb(worktree.path, gitSha, runId, fakeAdb.command, timeoutSeconds: 2);
     elapsed.stop();
 
     expect(result.exitCode, isNot(0));
     expect(elapsed.elapsed, greaterThanOrEqualTo(const Duration(seconds: 2)));
+    final calls = await fakeAdb.calls.readAsLines();
+    expect(calls.length, greaterThanOrEqualTo(2));
+    expect(calls, everyElement('-s ra25-fake-device logcat -d -v raw'));
     expect('${result.stdout}\n${result.stderr}', contains('Expected exactly one RA25_RESULT logcat marker, found 0'));
   });
 
@@ -165,6 +173,14 @@ Future<File> _writeLogcat(String name, String contents) async {
   return file;
 }
 
+Future<({File command, File calls})> _writeFakeAdb(String name) async {
+  final suffix = '${DateTime.now().microsecondsSinceEpoch}';
+  final command = File('${Directory.systemTemp.path}\\yuv-ffi-ra25-$name-$suffix.cmd');
+  final calls = File('${Directory.systemTemp.path}\\yuv-ffi-ra25-$name-$suffix.calls');
+  await command.writeAsString('@echo off\r\necho %*>>"${calls.path}"\r\necho unrelated logcat output\r\n');
+  return (command: command, calls: calls);
+}
+
 Future<ProcessResult> _validate(String worktreePath, String gitSha, String runId, File logcat, {int timeoutSeconds = 300}) => Process.run('pwsh', [
   '-NoProfile',
   '-File',
@@ -178,6 +194,21 @@ Future<ProcessResult> _validate(String worktreePath, String gitSha, String runId
   '-ValidateLogcatPath',
   logcat.path,
 ], workingDirectory: worktreePath);
+
+Future<ProcessResult> _validateWithFakeAdb(String worktreePath, String gitSha, String runId, File fakeAdb, {int timeoutSeconds = 300}) =>
+    Process.run('pwsh', [
+      '-NoProfile',
+      '-File',
+      '$worktreePath\\tool\\probe\\run_release_android.ps1',
+      '-GitSha',
+      gitSha,
+      '-RunId',
+      runId,
+      '-TimeoutSeconds',
+      '$timeoutSeconds',
+      '-ValidateAdbPath',
+      fakeAdb.path,
+    ], workingDirectory: worktreePath);
 
 Future<ProcessResult> _run(String executable, List<String> arguments) async {
   final result = await Process.run(executable, arguments);

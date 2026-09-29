@@ -9,7 +9,8 @@ param(
   [int]$TimeoutSeconds = 300,
   [string]$RunId = '',
   [string]$EvidenceDirectory = (Join-Path $env:TEMP 'yuv_ffi-ra25-release'),
-  [string]$ValidateLogcatPath = ''
+  [string]$ValidateLogcatPath = '',
+  [string]$ValidateAdbPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -91,12 +92,32 @@ function Wait-Ra25ResultLogcat([scriptblock]$ReadLogcat, [int]$TimeoutSeconds, [
   return $logcat
 }
 
+function Read-Ra25AdbLogcat([string]$Adb, [string]$DeviceSerial) {
+  $logcat = (& $Adb -s $DeviceSerial logcat -d -v raw 2>&1 | Out-String)
+  if ($LASTEXITCODE -ne 0) { throw "Unable to read logcat from $DeviceSerial." }
+  return $logcat
+}
+
+if ($ValidateLogcatPath -and $ValidateAdbPath) {
+  throw 'Pass only one logcat validation source.'
+}
 if ($ValidateLogcatPath) {
   if (-not (Test-Path -LiteralPath $ValidateLogcatPath -PathType Leaf)) {
     throw "ValidateLogcatPath is missing: $ValidateLogcatPath"
   }
   $validationExpectedAbi = if ($Abi -eq 'arm64') { 'arm64-v8a' } else { 'armeabi-v7a' }
   $logcat = Wait-Ra25ResultLogcat { Get-Content -LiteralPath $ValidateLogcatPath -Raw } $TimeoutSeconds 0
+  $resultMarker = Read-Ra25ResultMarker $logcat
+  Assert-Ra25Verdict $resultMarker.verdict $GitSha $RunId $validationExpectedAbi $resultMarker.marker.raw
+  Write-Output "RA25_LOGCAT_RESULT $($resultMarker.verdict | ConvertTo-Json -Compress)"
+  return
+}
+if ($ValidateAdbPath) {
+  if (-not (Test-Path -LiteralPath $ValidateAdbPath -PathType Leaf)) {
+    throw "ValidateAdbPath is missing: $ValidateAdbPath"
+  }
+  $validationExpectedAbi = if ($Abi -eq 'arm64') { 'arm64-v8a' } else { 'armeabi-v7a' }
+  $logcat = Wait-Ra25ResultLogcat { Read-Ra25AdbLogcat $ValidateAdbPath 'ra25-fake-device' } $TimeoutSeconds 0
   $resultMarker = Read-Ra25ResultMarker $logcat
   Assert-Ra25Verdict $resultMarker.verdict $GitSha $RunId $validationExpectedAbi $resultMarker.marker.raw
   Write-Output "RA25_LOGCAT_RESULT $($resultMarker.verdict | ConvertTo-Json -Compress)"
@@ -192,7 +213,7 @@ try {
   & $adb -s $Serial shell am start -n $activityName | Out-Null
   if ($LASTEXITCODE -ne 0) { throw 'Unable to launch the release probe APK.' }
 
-  $logcat = Wait-Ra25ResultLogcat { (& $adb -s $Serial logcat -d -v raw 2>&1 | Out-String) } $TimeoutSeconds 2
+  $logcat = Wait-Ra25ResultLogcat { Read-Ra25AdbLogcat $adb $Serial } $TimeoutSeconds 2
   $resultMarker = Read-Ra25ResultMarker $logcat
   $verdict = $resultMarker.verdict
   Assert-Ra25Verdict $verdict $GitSha $runId $expectedAbi $resultMarker.marker.raw
