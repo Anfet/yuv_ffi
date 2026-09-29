@@ -24,7 +24,7 @@ ID ведёт к файлу карточки; Summary начинается с п
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-54](tasks/release-0.4.2/RA-54.md) | IN_PROGRESS | T3 | Luna | — | **Прибрать рабочую копию и ветки.** Sol решил сохранить parked SPM-предложение в `todo.md`; текущие origin-дельты переклассифицированы. Luna продолжает перенос RA-25/26 и cleanup; `tool/bench/` не трогать. |
+| [ ] | [RA-54](tasks/release-0.4.2/RA-54.md) | REVIEW | T3 | T2 batch review | — | **Прибрать рабочую копию и ветки.** Cleanup выполнен: root на `bedfdb7`, сохранены локальные коммиты RA-25/26, удалены устаревшие worktrees/ветки и offline runner 24; `tool/bench/` сохранён. Отчёт `docs/RA-54` на `cf5e248`; ждёт пакетного ревью этапа 1. |
 | [ ] | [RA-19](tasks/release-0.4.2/RA-19.md) | REVIEW | T3 | T2 batch review | — | **Служебные README без номеров задач.** Commit `93b4480`; DOC-RULES regex: 0 совпадений, ссылки проверены. Ждёт пакетного ревью документов этапа 1. |
 | [ ] | [RA-18](tasks/release-0.4.2/RA-18.md) | REVIEW | T2 | T1 batch review | — | **Финальные CHANGELOG и README.** Commit `1b0ea7e`; analyze чистый, publish dry-run без warnings (1 внешняя hint), версии 0.4.2 подтверждены. Ждёт пакетного ревью документов этапа 1. |
 | [ ] | [RA-55](tasks/release-0.4.2/RA-55.md) | TODO | T2 | — | RA-18, RA-19, RA-54 | **Заморозить релиз-кандидат.** Локально: analyze, test, `pub publish --dry-run` без предупреждений; записать SHA РК. Дальше код пакета меняется только исправлением дефекта. |
