@@ -34,7 +34,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | IN_PROGRESS | T2 | Terra (GPT-5.6) | RA-55 | **Ускорить Web-проверку с 18 до ≤ 6 минут.** Объединить совместимые Web-тесты в одну компиляцию и выполнять reference matrix не в debug; сохранить число тестов и итоговые счётчики. RA-53 принята, общий `ci.yml` свободен. |
-| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | REVIEW_T1_IN_PROGRESS | T2 | GPT-6 Sol (T1 review) | RA-55 | **T1 проверяет доработанный release runner `all/RA-25` на `57ad3e4`.** Проверяется привязка SHA к чистому checkout, строгая обработка единственного logcat marker и негативные контроли; Pixel 3 ARM64/ARMv7 прогон — после ACCEPT и отдельная одна попытка. |
+| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | REWORK | T2 | Terra (GPT-5.6) | RA-55 | **Исправить замечания T1 к runner.** `57ad3e4` связывает SHA с checkout, но основан до РК; перенести только карточные изменения на актуальный release, закрыть отсутствующие строгие негативные проверки и приложить focused test report. T1 отдельно запретил push/Pixel gate до этих исправлений. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | RA-53, RA-55 | **Общие правила отдельных CI-workflow:** один workflow на платформу, логика в скрипте `tool/ci/<имя>`, который запускается и локально; без номеров задач в YAML. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | **Отдельный CI: VM-тесты** (`ci-vm.yml`), две версии Flutter. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70 | **Отдельный CI: Windows** (`ci-windows.yml`) — сборка native, пробы, запуск приложения. |
