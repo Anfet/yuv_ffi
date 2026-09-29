@@ -12,7 +12,7 @@
 
 ## Состояние
 
-В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21, RA-41, RA-52 и RA-53 merge commit `147f0bc064a6cce406a56561aa354aeafff183ba`; RA-53 получила T1 ACCEPT после REWORK 1. Карточный CI [36557958255](https://github.com/Anfet/yuv_ffi/actions/runs/36557958255) success 11/11 на implementation SHA `fa002379d9253f1d7777f5edc4897c83298fb9d6`. Полный release CI [36561975316](https://github.com/Anfet/yuv_ffi/actions/runs/36561975316) на merge SHA `147f0bc064a6cce406a56561aa354aeafff183ba` in progress: bindings/Linux/iOS success; Web gate и macOS packaging выполняются; Windows/Android/VM/Example jobs ждут runner slots; после его success — post-merge route/scope controls. Если release CI красный, откатить merge. RA-80 BLOCKED: `dev.working-2` offline, установка runner-службы требует Windows admin. M1 ждёт RA-53 post-merge gates и RA-80.
+В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21, RA-41, RA-52 и RA-53 merge commit `147f0bc064a6cce406a56561aa354aeafff183ba`; RA-53 получила T1 ACCEPT после REWORK 1. Карточный CI [36557958255](https://github.com/Anfet/yuv_ffi/actions/runs/36557958255) success 11/11 на implementation SHA `fa002379d9253f1d7777f5edc4897c83298fb9d6`. Полный release CI [36561975316](https://github.com/Anfet/yuv_ffi/actions/runs/36561975316) success 11/11 на merge SHA `147f0bc064a6cce406a56561aa354aeafff183ba`. Post-merge Web route [36565641618](https://github.com/Anfet/yuv_ffi/actions/runs/36565641618) success: только Web job запущен, остальные восемь пропущены; temporary ветка/worktree удалены. Следующие проверки RA-53 (`vm+linux`, `ra/**`, scope negative control) ждут отдельного продолжения. RA-80 BLOCKED: `dev.working-2` offline, установка runner-службы требует Windows admin. M1 ждёт остаток RA-53 и RA-80.
 
 ## Решения Engineer
 
@@ -49,7 +49,7 @@
 | 1 | Чистка лишнего и документация | RA-01…06, RA-08, RA-10…17 | **завершена** |
 | 2 | Тесты на Mac (параллельно с фазой 3): macOS native, iOS Simulator | RA-22 | **завершена**; probe negative control и восстановление приняты на `e4376ab` |
 | 3 | Web | RA-40, RA-41 | **завершена**; обе карточки приняты |
-| 4 | CI routing и runners | RA-52, RA-53, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 DONE; **RA-53 post-merge Web-only check IN_PROGRESS**. Full release CI success 11/11. Run [36565641618](https://github.com/Anfet/yuv_ffi/actions/runs/36565641618) выбрал только Web job; после его terminal result удалить временную ветку, записать результат и STOP по просьбе Engineer. Другие post-merge checks не запускать до отдельного продолжения. RA-80 BLOCKED на Windows admin |
+| 4 | CI routing и runners | RA-52, RA-53, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 DONE; RA-53: Web-only route run [36565641618](https://github.com/Anfet/yuv_ffi/actions/runs/36565641618) success, остальные 8 jobs skipped; временная ветка удалена. Остановка по просьбе Engineer. `vm+linux`, `ra/**` no-run и scope negative control не запускались и ждут отдельного продолжения. RA-80 BLOCKED на Windows admin. Full release CI success 11/11. |
 | **M1** | **Стабильный предрелиз:** фазы 1–3 закрыты, полный CI зелёный на одном SHA `release/0.4.2` | — | после RA-52, RA-53 и RA-80 |
 | 5 | Декомпозиция тест-сьюта: запускать только нужное | RA-60…RA-62 | после RA-70…78 |
 | 6 | Устройство и скорость | RA-25, RA-26, RA-27 | после фазы 5 |
