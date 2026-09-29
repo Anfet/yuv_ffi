@@ -13,7 +13,7 @@
 ## Где мы сейчас
 
 - **Сделано:** чистка репозитория и документации, пробы корректности (1188 случаев) на Windows, Linux, macOS, iOS, Android и Web, пересобранный WASM, запуск CI по префиксу ветки. Полный CI на `release/0.4.2` зелёный (11/11): run [36561975316](https://github.com/Anfet/yuv_ffi/actions/runs/36561975316) на `147f0bc`. Ускорение native-ядер (C-01…C-11) принято раньше.
-- **Сейчас:** пакетный T1 review принял RA-25 runner и RA-56 implementation. Pixel 3 разблокирован, awake, thermal status `0`; исполнитель начинает единственный RA-25 gate (arm64+armv7, полный архив). После него — merge RA-56 и обязательный полный CI на release. Эти тяжёлые проверки выполняются последовательно на Windows runner.
+- **Сейчас:** пакетный T1 review принял RA-25 runner и RA-56 implementation. Единственный Pixel 3 gate завершён PASS для arm64 и armv7; RA-25 передана на финальный T1 review. После приёмки RA-25 — merge карточек по плану, затем обязательный полный CI на release. Эти тяжёлые проверки выполняются последовательно на Windows runner.
 - **SHA РК:** `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026), принят T1; замороженные пути не менялись.
 
 ## Дашборд
@@ -34,7 +34,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | MERGE_CI_PENDING | T2 | Orchestrator | RA-55 | **T1 принял Web CI для слияния.** На code SHA `c89796d` run [36599392409](https://github.com/Anfet/yuv_ffi/actions/runs/36599392409) успешен за 4:34; 13/100 cases, groups, import guard и три negative controls приняты. Ждёт Windows runner после Pixel gate RA-25; затем merge в release и полный CI по DoD. Rejection count: 1. |
-| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | IN_PROGRESS | T2 | Terra (Pixel 3 gate) | RA-55 | **Выполняется единственный Pixel 3 gate.** Перед стартом проверено: `8B1X11QLW`, Android 12, экран awake, keyguard снят, Thermal Status `0`. Целевой SHA runner `43835b5`; обе ABI должны пройти release smoke + 1188 probes с SHA/APK/logcat evidence в архиве. Rejection count: 4. |
+| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | REVIEW_T1_PENDING | T2 | T1 reviewer (только RA-25) | RA-55 | **Pixel 3 gate PASS на обеих ABI.** Source SHA `43835b5`; arm64 и armv7 прошли smoke + 1188 probes, APK content и `primaryCpuAbi` подтверждены; четыре canonical host/device JSON и оба маркера сохранены. Итоговый архив на `all/RA-25` commit `019368b`. Однокарточное T1 review — исключение: RA-25 блокирует следующий запланированный шаг, merge RA-56. Rejection count: 4. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | RA-53, RA-55 | **Общие правила отдельных CI-workflow:** один workflow на платформу, логика в скрипте `tool/ci/<имя>`, который запускается и локально; без номеров задач в YAML. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | **Отдельный CI: VM-тесты** (`ci-vm.yml`), две версии Flutter. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70 | **Отдельный CI: Windows** (`ci-windows.yml`) — сборка native, пробы, запуск приложения. |
