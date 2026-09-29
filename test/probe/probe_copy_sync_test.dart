@@ -25,6 +25,7 @@ const rootOnlyFiles = {
   'probe_runner_test.dart',
   'probe_scenarios.dart',
   'release_probe_core_test.dart',
+  'run_release_android_test.dart',
   'windows_release_package_provenance_contract_test.dart',
 };
 
