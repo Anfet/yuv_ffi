@@ -7,13 +7,10 @@ This directory contains C unit tests for the native yuv_ffi library. The tests a
 To build and run the native C tests:
 
 ```bash
-# Configure CMake with testing enabled
 cmake -S . -B <build-dir> -DBUILD_TESTING=ON
 
-# Build the test targets
 cmake --build <build-dir> --config Debug
 
-# Run the tests
 ctest --test-dir <build-dir> -C Debug --output-on-failure
 ```
 
@@ -28,7 +25,7 @@ ctest --test-dir <build-dir> -C Debug --output-on-failure
 
 - `smoke_test.c`: Demonstrates that the harness correctly catches assertion failures (configured as `WILL_FAIL`)
 - `smoke_test_pass.c`: Verifies that the harness correctly runs and passes normal tests
-- `abi_sanitizer_test.c`: Native ASan/UBSan/LSan safety gate (YUV-34). Calls all eleven exported ABI v1 entry points against heap frames whose planes are exact-length allocations, so an out-of-bounds kernel access trips ASan's own redzone; padding gaps inside those same allocations are separately canary-checked. Covers canary probes across every operation family, geometric transforms, region of interest, an exact-fit (zero padding) allocation, repeated allocate/free cycles, invalid rect/radius/sigma/geometry, checked-arithmetic overflow, and allocation-failure injection for the blur entry points (the only ones that allocate).
+- `abi_sanitizer_test.c`: Native ASan/UBSan/LSan safety gate. Calls all eleven exported ABI v1 entry points against heap frames whose planes are exact-length allocations, so an out-of-bounds kernel access trips ASan's own redzone; padding gaps inside those same allocations are separately canary-checked. Covers canary probes across every operation family, geometric transforms, region of interest, an exact-fit (zero padding) allocation, repeated allocate/free cycles, invalid rect/radius/sigma/geometry, checked-arithmetic overflow, and allocation-failure injection for the blur entry points (the only ones that allocate).
 
 ## Organization Notes
 
