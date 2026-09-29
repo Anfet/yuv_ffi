@@ -6,8 +6,7 @@ event_name="${GITHUB_EVENT_NAME:-}"
 prefix="${GITHUB_REF_NAME:-$(git branch --show-current)}"
 
 if [[ "$event_name" == "workflow_dispatch" || "$event_name" == "pull_request" ||
-  "$prefix" == "main" || "$prefix" == release/* ||
-  ( "${GITHUB_REF_TYPE:-}" == "tag" && "$prefix" == "ci-smoke-RA-70" ) ]]; then
+  "$prefix" == "main" || "$prefix" == release/* ]]; then
   exit 0
 fi
 

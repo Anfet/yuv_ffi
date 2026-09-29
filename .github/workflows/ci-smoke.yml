@@ -13,8 +13,6 @@ on:
       - 'all\+*/**'
       - '*\+all/**'
       - '*\+all\+*/**'
-    tags:
-      - 'ci-smoke-RA-70'
   workflow_dispatch:
 
 jobs:
