@@ -16,8 +16,9 @@
 | `armeabi-v7a` | `f7db33e2a5d64339a86ec5dc53ef0f9a` | `360d95584506955eb4822418e6aa874c41fdfc5bde3ce0550202242c1c3207c5` | `lib/armeabi-v7a/libyuv_ffi.so` | one `RA25_RESULT`, smoke/probe PASS, 1188 |
 
 The host evidence confirms one native ABI per APK and the required
-`libyuv_ffi.so`; the corresponding device evidence confirms
-`primaryCpuAbi` and the strict marker. APK binaries are deliberately excluded.
+`libyuv_ffi.so`; the device evidence retains the strict marker. The runner
+checks `primaryCpuAbi`; its per-ABI results are recorded in the Executor
+Report in the RA-25 card. APK binaries are deliberately excluded.
 
 ## Raw markers
 
