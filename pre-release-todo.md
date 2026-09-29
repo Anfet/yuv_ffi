@@ -12,7 +12,7 @@
 
 ## Состояние
 
-В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21, RA-41 и RA-52; RA-21, RA-41 и RA-52 приняты. **RA-53 проходит независимое T1-ревью:** branch HEAD `3fd58a0082edbaa521a48cb1546566d1699bf54d`, implementation SHA `50f0f1ee790b042cd2343cd7df15b4d7cb300eff`, CI [36552948924](https://github.com/Anfet/yuv_ffi/actions/runs/36552948924) success 11/11; executor report завершён. Ревьюер назначен; merge и post-merge проверки пока не запускались. RA-80 BLOCKED: `dev.working-2` offline, установка runner-службы требует Windows admin. M1 ждёт RA-53 и RA-80.
+В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21, RA-41 и RA-52; RA-21, RA-41 и RA-52 приняты. **RA-53 возвращена в REWORK (отказ T1 №1):** CI [36552948924](https://github.com/Anfet/yuv_ffi/actions/runs/36552948924) зелёный 11/11 на `50f0f1ee790b042cd2343cd7df15b4d7cb300eff`, но rename общего пути в узкий обходил scope guard, скрывая удалённый путь. Sol постановил учитывать обе стороны rename NUL-safe diff и fail closed при ошибках diff. Terra исправляет guard и выполняет изолированные regression controls; затем новый полный CI и повторное T1 review. Старый SHA не сливать. RA-80 BLOCKED: `dev.working-2` offline, установка runner-службы требует Windows admin. M1 ждёт RA-53 и RA-80.
 
 ## Решения Engineer
 
@@ -49,7 +49,7 @@
 | 1 | Чистка лишнего и документация | RA-01…06, RA-08, RA-10…17 | **завершена** |
 | 2 | Тесты на Mac (параллельно с фазой 3): macOS native, iOS Simulator | RA-22 | **завершена**; probe negative control и восстановление приняты на `e4376ab` |
 | 3 | Web | RA-40, RA-41 | **завершена**; обе карточки приняты |
-| 4 | CI routing и runners | RA-52, RA-53, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 DONE; **RA-53 REVIEW_T1_IN_PROGRESS** — T1 ревьюер проверяет branch HEAD `3fd58a0` и implementation `50f0f1e`; CI `36552948924` success 11/11. Следующее действие: T1 вернёт ACCEPT/REJECT. RA-80 BLOCKED на Windows admin |
+| 4 | CI routing и runners | RA-52, RA-53, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 DONE; **RA-53 IN_PROGRESS (REWORK 1)** — Sol подтвердил проверку обеих сторон rename через NUL-safe diff и fail-closed errors. Terra исправляет guard и запускает rename controls, затем новый CI и T1 review. Старый CI `36552948924` был 11/11, но SHA отклонён. RA-80 BLOCKED на Windows admin |
 | **M1** | **Стабильный предрелиз:** фазы 1–3 закрыты, полный CI зелёный на одном SHA `release/0.4.2` | — | после RA-52, RA-53 и RA-80 |
 | 5 | Декомпозиция тест-сьюта: запускать только нужное | RA-60…RA-62 | после RA-70…78 |
 | 6 | Устройство и скорость | RA-25, RA-26, RA-27 | после фазы 5 |
@@ -73,7 +73,7 @@
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | [x] | [RA-41](doc/archive/release-0.4.2/cards/RA-41.md) | DONE | T2 | Terra | RA-04, RA-21, RA-22, RA-40 | T1 ACCEPT на `8d96b84`; CI `36534765261` success 11/11, Web gate и matrix PASS. |
-| [ ] | [RA-53](tasks/release-0.4.2/RA-53.md) | REVIEW_T1_IN_PROGRESS | T2 | GPT-5.6 Terra; ревью: independent T1 reviewer | RA-52 | Исполнение и отчёт завершены. Branch HEAD `3fd58a0082edbaa521a48cb1546566d1699bf54d`; реализация `50f0f1ee790b042cd2343cd7df15b4d7cb300eff`; CI [36552948924](https://github.com/Anfet/yuv_ffi/actions/runs/36552948924) success 11/11. T1 проверяет точный implementation SHA; merge и post-merge маршрутизация ждут ACCEPT. |
+| [ ] | [RA-53](tasks/release-0.4.2/RA-53.md) | IN_PROGRESS | T2 | GPT-5.6 Terra | RA-52 | REWORK 1 после T1 REJECT: Sol решил учитывать обе стороны rename (`--no-renames --name-only -z`) и завершать ошибкой при merge-base/diff failure. Terra: guard + изолированные rename/delete/positive controls → полный CI на новом SHA → повторное независимое T1 review. Старый SHA `50f0f1e` отклонён; merge не выполнялся. |
 | [ ] | [RA-80](tasks/release-0.4.2/RA-80.md) | BLOCKED | T2 | Terra | D-4 | `dev.working-2` зарегистрирован, но offline: установка службы требует Windows admin. Labels добавлены на текущий runner; параллельность ждёт elevated-сеанс. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | M1, RA-52, RA-80 | После M1: соглашения split CI и общие локально запускаемые `tool/ci/` scripts. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | После M1: `ci-vm.yml` на двух версиях Flutter. |
