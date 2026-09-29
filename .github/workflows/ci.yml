@@ -909,19 +909,60 @@ jobs:
               'wasm_swap_nv_atomicity_web_test.dart',
               'yuv_web_capabilities_web_test.dart'
             )
-            $targets = @(Get-ChildItem -Path integration_test -Filter '*_web_test.dart' -File | Where-Object Name -ne $combined | Sort-Object Name)
+            $aggregate = @(
+              'getbytes_contract_web_test.dart',
+              'image_cache_key_web_test.dart',
+              'nv_chroma_order_web_test.dart',
+              'padded_bgra_constructor_web_test.dart',
+              'probe_web_test.dart',
+              'serialization_contract_web_test.dart',
+              'wasm_abi_v1_descriptor_staging_web_test.dart',
+              'wasm_parity_edge_cases_web_test.dart',
+              'web_ownership_regression_web_test.dart'
+            )
+            $executionSources = @{
+              'wasm_bootstrap_web_test.dart' = @('wasm_bootstrap_web_test.dart')
+              'wasm_loader_lifecycle_web_test.dart' = @('wasm_loader_lifecycle_web_test.dart')
+              'fake_loader_web_tests.dart' = @('wasm_swap_nv_atomicity_web_test.dart', 'yuv_web_capabilities_web_test.dart')
+            }
+            $discovered = @(Get-ChildItem -Path integration_test -Filter '*_web_test.dart' -File | Where-Object Name -ne $combined | ForEach-Object Name | Sort-Object)
             $aggregatorPath = "integration_test/$combined"
             if (-not (Test-Path $aggregatorPath)) { throw "Missing combined Web target: $combined" }
             $aggregatorSource = Get-Content -Raw $aggregatorPath
-            $aggregated = @($targets.Name | Where-Object { $_ -notin $separate })
-            $missing = @($aggregated | Where-Object { $aggregatorSource -notmatch [regex]::Escape($_) })
-            if ($missing.Count -gt 0) { throw "Web tests not covered by an execution target: $($missing -join ', ')" }
-            # The two fake-loader suites share the same disposable page; their source
-            # files remain listed above so the coverage guard accounts for each one.
-            $targets = @($combined, 'wasm_bootstrap_web_test.dart', 'wasm_loader_lifecycle_web_test.dart', 'fake_loader_web_tests.dart')
+            $mapped = @($aggregate + $separate | Sort-Object -Unique)
+            $unmapped = @($discovered | Where-Object { $_ -notin $mapped })
+            $missingSources = @($mapped | Where-Object { $_ -notin $discovered })
+            if ($unmapped.Count -gt 0 -or $missingSources.Count -gt 0 -or $mapped.Count -ne ($aggregate.Count + $separate.Count)) {
+              throw "Web source mapping mismatch: unmapped=[$($unmapped -join ', ')]; missing=[$($missingSources -join ', ')]"
+            }
+            foreach ($source in $aggregate) {
+              $importPattern = "import\s+'$([regex]::Escape($source))'\s+as\s+\w+;"
+              $groupPattern = "group\('$([regex]::Escape($source))'\s*,\s*\w+\.main\);"
+              if ($aggregatorSource -notmatch $importPattern -or $aggregatorSource -notmatch $groupPattern) {
+                throw "Aggregated Web source is not imported and grouped: $source"
+              }
+            }
+            $targets = @($combined) + @($executionSources.Keys | Sort-Object)
             $targetPaths = @($targets | ForEach-Object { "integration_test/$_" })
             $missingTargets = @($targetPaths | Where-Object { -not (Test-Path $_) })
             if ($missingTargets.Count -gt 0) { throw "Missing Web execution targets: $($missingTargets -join ', ')" }
+            $mappedSeparate = @($executionSources.Values | ForEach-Object { $_ } | Sort-Object)
+            $uncoveredSeparate = @($separate | Where-Object { $_ -notin $mappedSeparate })
+            $unexpectedSeparate = @($mappedSeparate | Where-Object { $_ -notin $separate })
+            if ($uncoveredSeparate.Count -gt 0 -or $unexpectedSeparate.Count -gt 0 -or $mappedSeparate.Count -ne $separate.Count) {
+              throw "Separate Web source mapping mismatch: uncovered=[$($uncoveredSeparate -join ', ')]; unexpected=[$($unexpectedSeparate -join ', ')]"
+            }
+            foreach ($target in $executionSources.Keys) {
+              if ($target -notlike '*_web_tests.dart') { continue }
+              $targetSource = Get-Content -Raw "integration_test/$target"
+              foreach ($source in $executionSources[$target]) {
+                $importPattern = "import\s+'$([regex]::Escape($source))'\s+as\s+\w+;"
+                $groupPattern = "group\('$([regex]::Escape($source))'\s*,\s*\w+\.main\);"
+                if ($targetSource -notmatch $importPattern -or $targetSource -notmatch $groupPattern) {
+                  throw "Separate Web source is not imported and grouped by ${target}: $source"
+                }
+              }
+            }
             $failed = @()
             foreach ($target in $targets) {
               $targetPath = "integration_test/$target"
