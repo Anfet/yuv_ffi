@@ -388,3 +388,10 @@
 - Полные отчёты VIEW-00…02 перемещены в [архив](doc/archive/view-00-02-2026-09-27.md); в `COMPLETION.md` добавлены краткие записи VIEW-00…02, C-07…C-11, OPT-13 и SPEED-12. Заголовки записей приведены к `##`.
 - Все относительные Markdown-ссылки в затронутых файлах разрешаются; `COMPLETION.md` содержит только один H1; `git diff --check` прошёл. Приёмка ревьюера не зафиксирована для C-07…C-11 и явно обозначена в записях.
 - Изменения не закоммичены.
+
+## RA-18 — Финализированы CHANGELOG и README для 0.4.2
+
+- **ACCEPT**, независимое ревью GPT-6 Sol · T1; исполнитель Terra · T2; rejection count: 1.
+- В CHANGELOG и README внесены решения D-1/D-7: migration table явно фиксирует default `YuvPlaneLayout.packed`, а внутренний Executor Report написан по-русски. Проверенный контент — SHA `49629ef5dccb5974c1b8ac92717429d7b209b75a`; финальный branch SHA `df2700588648308b10bb36c10970fa93ac3dd6cb`.
+- `flutter analyze` прошёл; `flutter pub publish --dry-run` дал 0 warnings и 1 внешнюю hint о ранее опубликованной `0.2.4`; публикация не выполнялась. Marker search и `git diff --check` чисты; CI не запускался для Markdown-only карточки.
+- [Архивная карточка и отчёт](doc/archive/release-0.4.2/cards/RA-18.md).
