@@ -395,3 +395,15 @@
 - В CHANGELOG и README внесены решения D-1/D-7: migration table явно фиксирует default `YuvPlaneLayout.packed`, а внутренний Executor Report написан по-русски. Проверенный контент — SHA `49629ef5dccb5974c1b8ac92717429d7b209b75a`; финальный branch SHA `df2700588648308b10bb36c10970fa93ac3dd6cb`.
 - `flutter analyze` прошёл; `flutter pub publish --dry-run` дал 0 warnings и 1 внешнюю hint о ранее опубликованной `0.2.4`; публикация не выполнялась. Marker search и `git diff --check` чисты; CI не запускался для Markdown-only карточки.
 - [Архивная карточка и отчёт](doc/archive/release-0.4.2/cards/RA-18.md).
+
+## RA-19 — Очищены служебные README
+
+- **ACCEPT**, независимое ревью GPT-6 Sol · T1; исполнитель Luna · T3, финальные исправления Terra · T2 reviewer-takeover; rejection count: 2.
+- На SHA `4d1bbddfa2faa9fb156e9e6e8e4295a90547d5e7` DOC-RULES дал 0 совпадений, пути проверены, `git diff --check` чист.
+- [Архивная карточка и отчёт](doc/archive/release-0.4.2/cards/RA-19.md).
+
+## RA-54 — Синхронизирована рабочая копия и очищены временные ветки
+
+- **ACCEPT**, независимое ревью GPT-6 Sol · T1; исполнитель Luna · T3, финальные исправления Terra · T2 reviewer-takeover; rejection count: 2.
+- Финальная ветка `docs/RA-54`, SHA `f4b100dfcc1b7324fcf454be3af122d72491d416`. T1 подтвердил постусловия на тогдашнем release SHA `c039d8c347a6e4e81daba3c5f49e7acd7fc29c71`; `tool/bench/` сохранён.
+- [Архивная карточка и отчёт](doc/archive/release-0.4.2/cards/RA-54.md).
