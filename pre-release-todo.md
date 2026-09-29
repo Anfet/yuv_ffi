@@ -13,7 +13,7 @@
 ## Где мы сейчас
 
 - **Сделано:** чистка репозитория и документации, пробы корректности (1188 случаев) на Windows, Linux, macOS, iOS, Android и Web, пересобранный WASM, запуск CI по префиксу ветки. Последний полный CI: run [36630795431](https://github.com/Anfet/yuv_ffi/actions/runs/36630795431), 11/11 PASS на `e6a1eab`. Ускорение native-ядер (C-01…C-11) принято раньше.
-- **Сейчас:** RA-25 и RA-79 завершены и архивированы после Engineer ACCEPT и полного release CI [36630795431](https://github.com/Anfet/yuv_ffi/actions/runs/36630795431): 11/11 jobs PASS на `e6a1eabb0fbe36750853caad98c059ea838447d2`. RA-56 rework выполняет GPT-5.6 Terra в `D:\.projects\yuv_ffi-wt\RA-56-rework`, ветка `all/RA-56-rework` от `9841814`. RA-70 cleanup завершён на `all/RA-70` (`f1557b6`) и остаётся в REVIEW для пакетной приёмки вместе с RA-56 после его завершения. RA-71…78 остаются BLOCKED до принятия RA-70; RA-77 также зависит от RA-56. Pub.dev публикации не будет.
+- **Сейчас:** RA-25 и RA-79 завершены и архивированы после Engineer ACCEPT и полного release CI [36630795431](https://github.com/Anfet/yuv_ffi/actions/runs/36630795431): 11/11 jobs PASS на `e6a1eabb0fbe36750853caad98c059ea838447d2`. RA-56 rework завершён и ждёт пакетного Engineer review вместе с RA-70: кодовый SHA `b5de994`, отчёт `c8bf3c0`, Web CI [36638775604](https://github.com/Anfet/yuv_ffi/actions/runs/36638775604) PASS за 5:10. RA-70 cleanup завершён на `all/RA-70` (`f1557b6`) и остаётся в REVIEW. RA-71…78 остаются BLOCKED до принятия RA-70; RA-77 также зависит от RA-56. Pub.dev публикации не будет.
 - **SHA РК:** `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026), принят T1; замороженные пути не менялись.
 
 ## Дашборд
@@ -33,7 +33,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | IN_PROGRESS | T2 | GPT-5.6 Terra (`all/RA-56-rework`) | RA-55, RA-79 | **Web-ускорение: идёт исправление пропущенных наборов.** База `9841814`; отчёт и обязательные негативные контроли — строго по RA-56. Rejection count: 2. |
+| [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | REVIEW | T2 | GPT-5.6 Terra (`all/RA-56-rework`) | RA-55, RA-79 | **Web-ускорение: rework завершён, ждёт пакетного Engineer review.** Код `b5de994`, report `c8bf3c0`; Web CI [36638775604](https://github.com/Anfet/yuv_ffi/actions/runs/36638775604) PASS за 5:10. Негативные контроли и счёт 13 файлов/100 кейсов приложены. Rejection count: 2. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | REVIEW | T2 | GPT-5.6 Terra (`all/RA-70`, `f1557b6`) | RA-53, RA-55 | **Удалён временный smoke обход.** Tag trigger и `scope_guard.sh` exception убраны; local/remote tag `ci-smoke-RA-70` удалён. Scope/static checks и `git diff --check` PASS; исходный smoke run [36619948343](https://github.com/Anfet/yuv_ffi/actions/runs/36619948343) остаётся доказательством. Ждёт повторного Engineer review. Rejection count: 1. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | BLOCKED | T3 | RA-70 rework | RA-70 | **Ждёт повторного принятия RA-70:** общие CI scripts и соглашения были возвращены на ограниченный rework; после ACCEPT — отдельный workflow VM-тестов на двух версиях Flutter. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | RA-70 rework | RA-70 | **Ждёт повторного принятия RA-70:** после ACCEPT — отдельный Windows workflow для native build, проб и app smoke. |
@@ -41,7 +41,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 | [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | BLOCKED | T3 | RA-70 rework | RA-70 | **Ждёт повторного принятия RA-70:** после ACCEPT — отдельный iOS workflow для Pods, симулятора и проб. |
 | [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | BLOCKED | T2 | RA-70 rework | RA-70 | **Ждёт повторного принятия RA-70:** после ACCEPT — отдельный Android workflow для трёх ABI, эмулятора и проб. |
 | [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | BLOCKED | T3 | RA-70 rework | RA-70 | **Ждёт повторного принятия RA-70:** после ACCEPT — отдельный Linux workflow; это единственная GitHub-hosted job. |
-| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | BLOCKED | T2 | RA-70/56 rework | RA-70, RA-56 | **Ждёт принятия RA-70 и завершения rework RA-56:** затем отдельный Web workflow для WASM, browser tests и эталонной матрицы. |
+| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | BLOCKED | T2 | RA-70/56 review | RA-70, RA-56 | **Ждёт Engineer ACCEPT RA-70 и RA-56:** затем отдельный Web workflow для WASM, browser tests и эталонной матрицы. |
 | [ ] | [RA-78](tasks/release-0.4.2/RA-78.md) | BLOCKED | T3 | RA-70 rework | RA-70 | **Ждёт повторного принятия RA-70:** после ACCEPT — отдельный example workflow с analyze и сборкой на Flutter 3.41.0 и 3.44.9. |
 | [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | BLOCKED | T3 | Предыдущие карточки | RA-70…78 | **Ждёт завершения платформенных workflow RA-71…78:** затем разметить тесты тегами, оставив по умолчанию smoke + contract. |
 | [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | BLOCKED | T2 | RA-60 | RA-60 | **Ждёт RA-60:** затем добавить выбор операции/формата и явный отчёт о выполненном срезе проб. |
