@@ -25,8 +25,8 @@ ID ведёт к файлу карточки; Summary начинается с п
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | [ ] | [RA-54](tasks/release-0.4.2/RA-54.md) | IN_PROGRESS | T3 | Luna | — | **Прибрать рабочую копию и ветки.** Luna распределяет локальные изменения RA-25/RA-26 по локальным веткам; сверяет остальные файлы с release; затем очистит устаревшие worktree/ветки и offline runner. `tool/bench/` не трогать. |
-| [ ] | [RA-19](tasks/release-0.4.2/RA-19.md) | TODO | T3 | — | — | **Служебные README без номеров задач:** `tool/wasm`, `assets/wasm`, `test_native`. Только `.md`, CI не нужен. |
-| [ ] | [RA-18](tasks/release-0.4.2/RA-18.md) | TODO | T2 | — | — | **Финальные CHANGELOG и README.** CHANGELOG без «draft» и «не завершено», скорость словами без цифр; таблица платформ в README — финальный текст без плейсхолдеров. Версия 0.4.2 уже синхронна — только проверить. |
+| [ ] | [RA-19](tasks/release-0.4.2/RA-19.md) | IN_PROGRESS | T3 | Luna | — | **Служебные README без номеров задач.** Исполнитель очищает `tool/wasm`, `assets/wasm`, `test_native` по DOC-RULES; только `.md`, CI не нужен. |
+| [ ] | [RA-18](tasks/release-0.4.2/RA-18.md) | IN_PROGRESS | T2 | Terra | — | **Финальные CHANGELOG и README.** Исполнитель завершает release notes и платформенную таблицу, проверяет версию без изменения исходников; только `.md`, CI не нужен. |
 | [ ] | [RA-55](tasks/release-0.4.2/RA-55.md) | TODO | T2 | — | RA-18, RA-19, RA-54 | **Заморозить релиз-кандидат.** Локально: analyze, test, `pub publish --dry-run` без предупреждений; записать SHA РК. Дальше код пакета меняется только исправлением дефекта. |
 
 RA-19 и RA-18 — одно пакетное ревью (документы).
