@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "kind": "RA25_DEVICE_RESULT",
+  "gitSha": "43835b542bddc16ed5edbd373dbb86ff02c35ac8",
+  "runId": "f7db33e2a5d64339a86ec5dc53ef0f9a",
+  "abi": "armeabi-v7a",
+  "device": {
+    "serial": "8B1X11QLW",
+    "model": "Pixel 3",
+    "android": "12",
+    "supportedAbis": "arm64-v8a,armeabi-v7a,armeabi"
+  },
+  "logcatMarker": {
+    "raw": "RA25_RESULT {\"schema\":1,\"gitSha\":\"43835b542bddc16ed5edbd373dbb86ff02c35ac8\",\"runId\":\"f7db33e2a5d64339a86ec5dc53ef0f9a\",\"abi\":\"armeabi-v7a\",\"smoke\":\"PASS\",\"probe\":\"PASS\",\"caseCount\":1188}",
+    "payload": "{\"schema\":1,\"gitSha\":\"43835b542bddc16ed5edbd373dbb86ff02c35ac8\",\"runId\":\"f7db33e2a5d64339a86ec5dc53ef0f9a\",\"abi\":\"armeabi-v7a\",\"smoke\":\"PASS\",\"probe\":\"PASS\",\"caseCount\":1188}",
+    "verdict": {
+      "schema": 1,
+      "gitSha": "43835b542bddc16ed5edbd373dbb86ff02c35ac8",
+      "runId": "f7db33e2a5d64339a86ec5dc53ef0f9a",
+      "abi": "armeabi-v7a",
+      "smoke": "PASS",
+      "probe": "PASS",
+      "caseCount": 1188
+    }
+  }
+}
