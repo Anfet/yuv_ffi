@@ -13,7 +13,7 @@
 ## Где мы сейчас
 
 - **Сделано:** чистка репозитория и документации, пробы корректности (1188 случаев) на Windows, Linux, macOS, iOS, Android и Web, пересобранный WASM, запуск CI по префиксу ветки. Полный CI на `release/0.4.2` зелёный (11/11): run [36561975316](https://github.com/Anfet/yuv_ffi/actions/runs/36561975316) на `147f0bc`. Ускорение native-ядер (C-01…C-11) принято раньше.
-- **Сейчас:** T1 принял RA-25 runner и финальный Pixel gate; RA-56 ранее принят для merge. Arm64 и armv7 прошли, архив запушен в `all/RA-25` (`1cd4eb2`). Обе принятые ветки локально объединены в release; после push запускается полный CI на одном итоговом SHA.
+- **Сейчас:** T1 принял RA-25 runner и финальный Pixel gate; RA-56 ранее принят для merge. Arm64 и armv7 прошли, отчёт и архив запушены в `all/RA-25` (`1cd4eb2`). Следующий шаг — в порядке плана внести принятые RA-25 и RA-56 в release и выполнить полный CI на итоговом SHA.
 - **SHA РК:** `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026), принят T1; замороженные пути не менялись.
 
 ## Дашборд
@@ -33,8 +33,8 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | MERGE_CI_PENDING | T2 | Orchestrator | RA-55 | **T1 принял Web CI для слияния.** На code SHA `c89796d` run [36599392409](https://github.com/Anfet/yuv_ffi/actions/runs/36599392409) успешен за 4:34; 13/100 cases, groups, import guard и три negative controls приняты. Ветка локально объединена с RA-25 в release; после push — полный CI и закрытие только при PASS. Rejection count: 1. |
-| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | MERGE_CI_PENDING | Orchestrator | RA-55 | **Pixel 3 gate принят T1.** Source SHA `43835b5`; arm64 и armv7 прошли smoke + 1188 probes, APK content и `primaryCpuAbi` подтверждены; четыре canonical host/device JSON и оба маркера сохранены. Архив `all/RA-25` на `1cd4eb2`; ветки RA-25 и RA-56 локально объединены в release, после push — единый полный CI. Однокарточное review было критическим исключением, причина записана в карточке. Rejection count: 4. |
+| [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | MERGE_CI_PENDING | T2 | Orchestrator | RA-55 | **T1 принял Web CI для слияния.** На code SHA `c89796d` run [36599392409](https://github.com/Anfet/yuv_ffi/actions/runs/36599392409) успешен за 4:34; 13/100 cases, groups, import guard и три negative controls приняты. Ждёт Windows runner после Pixel gate RA-25; затем merge в release и полный CI по DoD. Rejection count: 1. |
+| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | MERGE_CI_PENDING | Orchestrator | RA-55 | **Pixel 3 gate принят T1.** Source SHA `43835b5`; arm64 и armv7 прошли smoke + 1188 probes, APK content и `primaryCpuAbi` подтверждены; четыре canonical host/device JSON и оба маркера сохранены. Архив `all/RA-25` на `1cd4eb2`; полный CI ожидает внесения принятых RA-25 и RA-56 в release. Однокарточное review было вызвано как критическое исключение, причина сохранена в карточке. Rejection count: 4. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | RA-53, RA-55 | **Общие правила отдельных CI-workflow:** один workflow на платформу, логика в скрипте `tool/ci/<имя>`, который запускается и локально; без номеров задач в YAML. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | **Отдельный CI: VM-тесты** (`ci-vm.yml`), две версии Flutter. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70 | **Отдельный CI: Windows** (`ci-windows.yml`) — сборка native, пробы, запуск приложения. |
