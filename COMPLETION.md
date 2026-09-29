@@ -5,6 +5,11 @@
 - РК зафиксирован на `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026). Root/example analyze, Windows CMake native build и `flutter test --reporter expanded` прошли; повторный полный лог тестов на том же SHA заканчивается `+717 ~1: All tests passed!`, exit code 0. Frozen diff пуст, generated-файлы чисты, marker search — 0 совпадений.
 - `flutter pub publish --dry-run` дал 0 warnings и 1 допустимый hint о предыдущей версии `0.2.4`; текст hint восстановлен из прежнего tool output, отдельного файла лога нет. Публикация не выполнялась. T1 ACCEPT после одного rework; карточка в [архиве](doc/archive/release-0.4.2/cards/RA-55.md).
 
+## RA-53 — Проверена маршрутизация CI — ACCEPT
+
+- T1 принял post-merge проверки: полный release CI 11/11 на merge SHA `147f0bc`; маршрут `vm+linux` — 3 jobs success; API подтвердил отсутствие run для `ra/**`; Web route/guard прошёл, scope-guard negative control ожидаемо остановился на первом шаге с требованием `all` для `src/`. Все временные refs/worktrees удалены.
+- Проверки использовали потомка merge SHA `69a1168`; промежуточные изменения касались только Markdown. Сравнение CI workflow, scope guard и замороженных путей пустое. `jobs=all` недоступен в manual dispatch choices, отдельный run не создан; существующий full release CI закрывает DoD. Отчёт и независимое ревью — в [архивной карточке](doc/archive/release-0.4.2/cards/RA-53.md).
+
 ## RA-21 — Проверки golden-проб закрыты — ACCEPT
 
 - После одного rework добавлена точная проверка соответствия golden и ID кейсов, исправлены append-only/overwrite режимы `PROBE_RECORD`, удалены устаревшие копии example helpers. Golden и oracle сохранены без изменений.
