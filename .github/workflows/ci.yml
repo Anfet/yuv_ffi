@@ -10,45 +10,45 @@ on:
       - "release/**"
       - main
       - "all/**"
-      - "all+*/**"
-      - "*+all/**"
-      - "*+all+*/**"
+      - 'all\+*/**'
+      - '*\+all/**'
+      - '*\+all\+*/**'
       - "vm/**"
-      - "vm+*/**"
-      - "*+vm/**"
-      - "*+vm+*/**"
+      - 'vm\+*/**'
+      - '*\+vm/**'
+      - '*\+vm\+*/**'
       - "bindings/**"
-      - "bindings+*/**"
-      - "*+bindings/**"
-      - "*+bindings+*/**"
+      - 'bindings\+*/**'
+      - '*\+bindings/**'
+      - '*\+bindings\+*/**'
       - "linux/**"
-      - "linux+*/**"
-      - "*+linux/**"
-      - "*+linux+*/**"
+      - 'linux\+*/**'
+      - '*\+linux/**'
+      - '*\+linux\+*/**'
       - "macos/**"
-      - "macos+*/**"
-      - "*+macos/**"
-      - "*+macos+*/**"
+      - 'macos\+*/**'
+      - '*\+macos/**'
+      - '*\+macos\+*/**'
       - "ios/**"
-      - "ios+*/**"
-      - "*+ios/**"
-      - "*+ios+*/**"
+      - 'ios\+*/**'
+      - '*\+ios/**'
+      - '*\+ios\+*/**'
       - "android/**"
-      - "android+*/**"
-      - "*+android/**"
-      - "*+android+*/**"
+      - 'android\+*/**'
+      - '*\+android/**'
+      - '*\+android\+*/**'
       - "windows/**"
-      - "windows+*/**"
-      - "*+windows/**"
-      - "*+windows+*/**"
+      - 'windows\+*/**'
+      - '*\+windows/**'
+      - '*\+windows\+*/**'
       - "web/**"
-      - "web+*/**"
-      - "*+web/**"
-      - "*+web+*/**"
+      - 'web\+*/**'
+      - '*\+web/**'
+      - '*\+web\+*/**'
       - "example/**"
-      - "example+*/**"
-      - "*+example/**"
-      - "*+example+*/**"
+      - 'example\+*/**'
+      - '*\+example/**'
+      - '*\+example\+*/**'
     paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/perf/**']
   workflow_dispatch:
     inputs:
