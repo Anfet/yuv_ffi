@@ -6,7 +6,49 @@ concurrency:
 
 on:
   push:
-    branches: ["release/**"]
+    branches:
+      - "release/**"
+      - main
+      - "all/**"
+      - 'all\+*/**'
+      - '*\+all/**'
+      - '*\+all\+*/**'
+      - "vm/**"
+      - 'vm\+*/**'
+      - '*\+vm/**'
+      - '*\+vm\+*/**'
+      - "bindings/**"
+      - 'bindings\+*/**'
+      - '*\+bindings/**'
+      - '*\+bindings\+*/**'
+      - "linux/**"
+      - 'linux\+*/**'
+      - '*\+linux/**'
+      - '*\+linux\+*/**'
+      - "macos/**"
+      - 'macos\+*/**'
+      - '*\+macos/**'
+      - '*\+macos\+*/**'
+      - "ios/**"
+      - 'ios\+*/**'
+      - '*\+ios/**'
+      - '*\+ios\+*/**'
+      - "android/**"
+      - 'android\+*/**'
+      - '*\+android/**'
+      - '*\+android\+*/**'
+      - "windows/**"
+      - 'windows\+*/**'
+      - '*\+windows/**'
+      - '*\+windows\+*/**'
+      - "web/**"
+      - 'web\+*/**'
+      - '*\+web/**'
+      - '*\+web\+*/**'
+      - "example/**"
+      - 'example\+*/**'
+      - '*\+example/**'
+      - '*\+example\+*/**'
     paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/perf/**']
   workflow_dispatch:
     inputs:
@@ -27,7 +69,7 @@ on:
 
 jobs:
   analyze-and-test-vm:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'vm' }}
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'vm') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+vm/') || contains(format('+{0}', github.ref_name), '+vm+')) }}
     runs-on: [self-hosted, Windows, X64]
     strategy:
       fail-fast: false
@@ -36,6 +78,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
+        run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
         shell: pwsh
@@ -106,11 +154,17 @@ jobs:
   # checkout and diffing against the committed file is a stronger proof of
   # host-independence than re-deriving the expected symbol set by hand.
   bindings-regeneration:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'bindings' }}
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'bindings') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+bindings/') || contains(format('+{0}', github.ref_name), '+bindings+')) }}
     runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: bash
+        run: bash tool/ci/scope_guard.sh
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -146,11 +200,17 @@ jobs:
   # used to look identical in the log, which is how broken Linux/macOS
   # packaging stayed green.
   linux-native-smoke:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'linux' }}
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'linux') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+linux/') || contains(format('+{0}', github.ref_name), '+linux+')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: bash
+        run: bash tool/ci/scope_guard.sh
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -249,7 +309,7 @@ jobs:
           done
 
   macos-native-smoke:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'macos' }}
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'macos') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+macos/') || contains(format('+{0}', github.ref_name), '+macos+')) }}
     # Self-hosted (yuv-self-hosted): faster than the GitHub-hosted macos-latest
     # runner, and gives a physical Mac for a later camera smoke on this job's
     # host. With SIP enabled on that Mac, dyld ignores DYLD_LIBRARY_PATH and
@@ -264,6 +324,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: bash
+        run: bash tool/ci/scope_guard.sh
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -343,11 +409,17 @@ jobs:
   # ../src/CMakeLists.txt; the APK build exercises that list and the smoke
   # closes the runtime gap a successful Gradle build alone cannot prove.
   android-native-build:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'android' }}
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'android') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+android/') || contains(format('+{0}', github.ref_name), '+android+')) }}
     runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
+        run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
         shell: pwsh
@@ -472,11 +544,17 @@ jobs:
   # --no-codesign is what makes this runnable without provisioning profiles; it
   # skips signing only, not the compile and link of the pod target.
   ios-native-build:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'ios' }}
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'ios') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+ios/') || contains(format('+{0}', github.ref_name), '+ios+')) }}
     runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: bash
+        run: bash tool/ci/scope_guard.sh
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -546,11 +624,17 @@ jobs:
         run: flutter build ios --debug --no-codesign
 
   windows-native-smoke:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'windows' }}
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'windows') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+windows/') || contains(format('+{0}', github.ref_name), '+windows+')) }}
     runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
+        run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
         shell: pwsh
@@ -616,7 +700,7 @@ jobs:
           }
 
   example-analyze-and-build:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'example' }}
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'example') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+example/') || contains(format('+{0}', github.ref_name), '+example+')) }}
     runs-on: [self-hosted, Windows, X64]
     strategy:
       fail-fast: false
@@ -634,6 +718,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
+        run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
         shell: pwsh
@@ -670,11 +760,17 @@ jobs:
   # chrome` does not serve that bundle, so every asset-dependent runtime test
   # belongs in example/integration_test and runs through flutter drive.
   wasm-web-integration:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'web' }}
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'web') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+web/') || contains(format('+{0}', github.ref_name), '+web+')) }}
     runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
+        run: bash tool/ci/scope_guard.sh
 
       - name: Configure Windows build tools PATH
         shell: pwsh
