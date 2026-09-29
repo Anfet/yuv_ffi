@@ -12,7 +12,7 @@
 
 ## Состояние
 
-В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40 и RA-21. RA-21 принята после одного rework: ветка `ra/RA-21` на `a0ce963714420588eed5597acbe187912b4926f0`, полный CI run `36525331117` зелёный (11/11 jobs) на том же SHA; T1 review — ACCEPT. RA-41 запущена: T2 Terra, ветка `ra/RA-41`, negative control и CI выполняются.
+В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21 и RA-41. RA-21 принята после одного rework; RA-41 принята: ветка `ra/RA-41` на `8d96b841049698c80c8ef1f980203e73913708f4`, полный CI run `36534765261` зелёный (11/11 jobs) на том же SHA; T1 review — ACCEPT. По D-4 до M1 выполняются RA-52 и RA-80; platform split RA-70…78 начинается сразу после M1, затем RA-60…62.
 
 ## Решения Engineer
 
@@ -21,6 +21,7 @@
 | D-1 | DECIDED 28.09.2026 | Версия релиза при смене умолчания layout (PACK-01B). | **0.4.2.** Последняя опубликованная неотозванная версия — 0.2.4, 0.4.0 отозвана, поэтому 0.5.0 ничего не даёт. Смена умолчания описывается как **Behavior change** в CHANGELOG и отдельной строкой в таблице миграции с 0.2.4 в README: фабрики с `planes:` теперь упаковывают плоскости, для старого поведения — `layout: YuvPlaneLayout.preserve`. |
 | D-2 | DECIDED 28.09.2026 | Раннеры | GitHub-hosted — только одна Linux-джоба (правило Engineer). Число self-hosted раннеров увеличивается: RA-80. |
 | D-3 | DECIDED 28.09.2026 | Очерёдность RA-25/26 | После слияния RA-51 перенести готовые локальные изменения в отдельные карточные ветки и заморозить RA-25/26 до фазы 6. До этого не запускать новые Pixel- или benchmark-прогоны. |
+| D-4 | DECIDED 29.09.2026 | Очерёдность CI split, запуск карточных веток и масштабирование runners | Начать RA-52 и RA-80 сейчас, до M1. RA-52 меняет только `.github/workflows/ci.yml`, не меняя job steps: pushes в `ra/**` не запускают CI; карточные ветки вручную запускают только выбранные job keys `vm`, `bindings`, `linux`, `macos`, `ios`, `android`, `windows`, `example`, `web`. Negative-control commits помечаются `[skip ci]` и проверяются одной нужной job. Полный CI запускается только на `release/**` после merge; прогоны не отменяются. Если полный прогон красный, merge откатывается. После M1 выполняются RA-70…78 — отдельный workflow на платформу; RA-60…62 переносятся после split, RA-62 строит карту путей по готовым workflow path filters. Это решение разрешает RA-52 и RA-80 до M1. |
 
 Отчёты исполнителей и ревью по карточкам цикла — в [архиве](doc/archive/release-0.4.2/ra-reports.md).
 
@@ -45,23 +46,23 @@
 | --- | --- | --- | --- |
 | 1 | Чистка лишнего и документация | RA-01…06, RA-08, RA-10…17 | **завершена** |
 | 2 | Тесты на Mac (параллельно с фазой 3): macOS native, iOS Simulator | RA-22 | **завершена**; probe negative control и восстановление приняты на `e4376ab` |
-| 3 | Web | RA-40, RA-41 | RA-40 и RA-21 приняты; RA-41 выполняется (Terra) |
-| **M1** | **Стабильный предрелиз:** фазы 1–3 закрыты, CI зелёный на одном SHA | — | — |
-| 4 | Декомпозиция тест-сьюта: запускать только нужное | RA-60…RA-62 | TODO |
-| 5 | Разделение CI: одна платформа — один workflow — одна карточка | RA-70…RA-78, RA-80 | TODO |
+| 3 | Web | RA-40, RA-41 | **завершена**; обе карточки приняты |
+| 4 | CI routing и runners | RA-52, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 и RA-80 выполняются; platform split после M1 |
+| **M1** | **Стабильный предрелиз:** фазы 1–3 закрыты, полный CI зелёный на одном SHA `release/0.4.2` | — | после RA-52 и RA-80 |
+| 5 | Декомпозиция тест-сьюта: запускать только нужное | RA-60…RA-62 | после RA-70…78 |
 | 6 | Устройство и скорость | RA-25, RA-26, RA-27 | после фазы 5 |
 | 7 | Релиз | RA-19, RA-18, RA-50 | последней |
 
-Карточки фаз 4–7 не запускаются до M1. RA-25/RA-26 продолжаются только в той части, которая уже в работе; новые прогоны на устройстве — после фазы 5, когда CI перестанет требовать полного прогона на каждый push.
+Решение Engineer D-4 разрешает RA-52 и RA-80 до M1. Остальные карточки запускаются по зависимостям после M1. RA-25/RA-26 продолжаются только в той части, которая уже в работе; новые прогоны на устройстве — после platform split.
 
 ## Правила работы (Engineer, 28.09.2026)
 
 1. **Одна карточка — одна ветка.** Исполнитель работает в ветке `ra/RA-xx` от `release/0.4.2`; при параллельной работе — в отдельном worktree `D:\.projects\yuv_ffi-wt\RA-xx`. В коммит попадают только файлы своей карточки. CI и ревью проверяют SHA ветки карточки. После приёмки оркестратор вливает ветку в `release/0.4.2`; M1 и RA-50 фиксируются только на SHA `release/0.4.2`. Общая рабочая копия `D:\.projects\yuv_ffi` — не место для незакоммиченной работы карточек.
-2. **Локальная проверка до push и лимит CI-итераций.** Перед каждым push исполнитель выполняет локально проверки из Validation карточки (после RA-70 — `tool/ci/<name>`). Два красных прогона по одной причине, которую не удалось воспроизвести локально, — карточка переходит в `ARCHITECT_REQUIRED`, третьей попытки нет.
+2. **Локальная проверка, выбор CI и лимит итераций.** Перед push исполнитель выполняет Validation карточки. После RA-52 push в `ra/**` не запускает CI; исполнитель вручную запускает только перечисленные карточкой jobs, например `gh workflow run ci.yml --ref ra/RA-xx -f jobs=web`. Negative-control commits получают `[skip ci]` и проверяются одной нужной job. Полный CI запускается только на `release/**` после merge; такие прогоны не отменяются. Если полный прогон красный, merge откатывается. После RA-70 локально запускаются `tool/ci/<name>`. Два красных прогона по одной причине, которую не удалось воспроизвести локально, — карточка переходит в `ARCHITECT_REQUIRED`, третьей попытки нет.
 3. **Карточка — отдельный файл** `tasks/release-0.4.2/RA-xx.md`. Этот файл содержит только правила, порядок и дашборд. Дашборд и статусы правит только оркестратор; при расхождении статус дашборда главнее. Карточку правят архитектор (решение, DoD) и исполнитель (раздел `#### Executor Report` в конце). Исполнитель читает свою карточку и этот файл, остальные — по ссылке из Depends On.
 4. **Решение `ARCHITECT_REQUIRED`.** Оркестратор вызывает Sol с reasoning medium для решения; карточка не останавливает фазу: остальные карточки продолжаются, вопросы собираются в общий список. Разбор с архитектором и Engineer — одной сессией на границе фазы или раз в день.
 5. **Строгость ревью по риску.** Независимое ревью каждой карточки — для контракта API, native, проб и golden, CI-логики и релизных скриптов. Документация, чистка, перенос в архив и правки только комментариев принимаются одним пакетным ревью на фазу.
-6. **Одна фаза за раз.** До M1 новые карточки создаются только для того, что блокирует M1; прочие идеи — одной строкой в раздел «Позже» `todo.md`. Исключение: фазы 2 (Mac) и 3 (Web) идут параллельно — разные раннеры и разный код.
+6. **Одна фаза за раз.** До M1 новые карточки создаются только для того, что блокирует M1; решение Engineer D-4 разрешает начать RA-52 и RA-80. После M1 выполняются RA-70…78, затем RA-60…62. Фазы 2 (Mac) и 3 (Web) можно вести параллельно — разные раннеры и разный код.
 
 ## Дашборд
 
@@ -69,20 +70,21 @@
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-41](tasks/release-0.4.2/RA-41.md) | IN_PROGRESS | T2 | Terra | RA-04, RA-21, RA-22, RA-40 | Ветка `ra/RA-41`: corrupted-WASM negative control/revert и полный CI по протоколу карточки. |
-| [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | TODO | T3 | — | M1 | Фаза 4: теги `smoke`/`contract`/`probe`/`reference`/`release` в `dart_test.yaml` и в каждом файле; `flutter test` по умолчанию — только smoke + contract. |
-| [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | TODO | T2 | — | RA-60 | Фаза 4: фильтр проб `PROBE_OPS`/`PROBE_FORMATS` с явной строкой среза в отчёте; эталон не меняется. |
-| [ ] | [RA-62](tasks/release-0.4.2/RA-62.md) | TODO | T3 | — | RA-60, RA-61 | Фаза 4: карта «изменённые пути → команды» в AGENTS.md; те же пути — фильтры workflow. |
-| [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | M1 | Фаза 5: соглашения разделённого CI и общие скрипты `tool/ci/`; workflow = вызов одного скрипта, который запускается и локально. |
-| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | Фаза 5: `ci-vm.yml` — analyze и VM-тесты на двух версиях Flutter. Одна джоба, вызов `tool/ci/vm`; джоба удаляется из `ci.yml`. |
-| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70, RA-80 | Фаза 5: `ci-windows.yml` — native build, пробы и эталон, Windows app smoke (бывшая RA-23). Одна джоба, вызов `tool/ci/windows`; джоба удаляется из `ci.yml`. |
-| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | TODO | T3 | — | RA-70 | Фаза 5: `ci-macos.yml` — native build и app smoke на macOS. Одна джоба, вызов `tool/ci/macos`; джоба удаляется из `ci.yml`. |
-| [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | Фаза 5: `ci-ios.yml` — Pods, smoke и пробы на iOS Simulator, сборка без подписи. Одна джоба, вызов `tool/ci/ios`; джоба удаляется из `ci.yml`. |
-| [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | TODO | T2 | — | RA-70, RA-80 | Фаза 5: `ci-android.yml` — APK трёх ABI, smoke и пробы на эмуляторе (метка `android-emulator`). Одна джоба, вызов `tool/ci/android`; джоба удаляется из `ci.yml`. |
-| [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | TODO | T3 | — | RA-70 | Фаза 5: `ci-linux.yml` — единственная GitHub-hosted джоба: native, sanitizer, Linux app smoke. Одна джоба, вызов `tool/ci/linux`; джоба удаляется из `ci.yml`. |
-| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | TODO | T2 | — | RA-70, RA-80 | Фаза 5: `ci-web.yml` — dry-run, сравнение пересборки WASM, web-цели и матрица 119 (метка `web`). Одна джоба, вызов `tool/ci/web`; джоба удаляется из `ci.yml`. |
-| [ ] | [RA-78](tasks/release-0.4.2/RA-78.md) | TODO | T3 | — | RA-70 | Фаза 5: `ci-example.yml` — analyze и `build web` example на 3.41.0 / 3.44.9. Одна джоба, вызов `tool/ci/example`; джоба удаляется из `ci.yml`. |
-| [ ] | [RA-80](tasks/release-0.4.2/RA-80.md) | TODO | T2 | — | M1 | Фаза 5: ещё 2 Windows-раннера и при наличии ресурсов второй Mac; метки для эмулятора, Web и Pixel 3. |
+| [x] | [RA-41](doc/archive/release-0.4.2/cards/RA-41.md) | DONE | T2 | Terra | RA-04, RA-21, RA-22, RA-40 | T1 ACCEPT на `8d96b84`; CI `36534765261` success 11/11, Web gate и matrix PASS. |
+| [ ] | [RA-52](tasks/release-0.4.2/RA-52.md) | IN_PROGRESS | T2 | Terra | D-4 | Только `ci.yml`: manual dispatch по выбранному job key; без CI на `ra/**`; полный, неотменяемый CI только на `release/**`. |
+| [ ] | [RA-80](tasks/release-0.4.2/RA-80.md) | IN_PROGRESS | T2 | Terra | D-4 | Добавить два Windows runner instances; привязать Android emulator, Web/ChromeDriver/emsdk и Pixel 3 метками; проверить параллельные jobs. |
+| [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | M1, RA-52, RA-80 | После M1: соглашения split CI и общие локально запускаемые `tool/ci/` scripts. |
+| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | После M1: `ci-vm.yml` на двух версиях Flutter. |
+| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70, RA-80 | После M1: `ci-windows.yml` — native build, probes и Windows app smoke. |
+| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | TODO | T3 | — | RA-70 | После M1: `ci-macos.yml` — native build и macOS app smoke. |
+| [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | После M1: `ci-ios.yml` — Pods, smoke и Simulator probes. |
+| [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | TODO | T2 | — | RA-70, RA-80 | После M1: `ci-android.yml` — APK ABI, smoke и emulator probes. |
+| [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | TODO | T3 | — | RA-70 | После M1: `ci-linux.yml` — единственный GitHub-hosted Linux workflow. |
+| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | TODO | T2 | — | RA-70, RA-80 | После M1: `ci-web.yml` — WASM rebuild, Web targets и matrix 119. |
+| [ ] | [RA-78](tasks/release-0.4.2/RA-78.md) | TODO | T3 | — | RA-70 | После M1: `ci-example.yml` — analyze/build на 3.41.0 и 3.44.9. |
+| [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | TODO | T3 | — | RA-70…78 | После split: теги smoke/contract/probe/reference/release; default `flutter test` — smoke + contract. |
+| [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | TODO | T2 | — | RA-60 | После RA-60: фильтры `PROBE_OPS`/`PROBE_FORMATS` без изменения golden. |
+| [ ] | [RA-62](tasks/release-0.4.2/RA-62.md) | TODO | T3 | — | RA-60, RA-61, RA-71…78 | После split: карта путей→команды по готовым path filters. |
 | [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | REWORK | T2 | RA-41 agent | RA-13, RA-21, RA-26 | Local runner fixes bind to clean actual HEAD and strictly reject malformed/duplicate markers; focused executable tests pass 4/4. T1 re-review pending. Existing device evidence remains rejected; rerun both ABIs on accepted committed SHA and archive complete host/device evidence. |
 | [ ] | [RA-26](tasks/release-0.4.2/RA-26.md) | REWORK | T2 | Terra | RA-21 | Balanced/AC is the correct contour. Diagnostics are not comparisons because `sourceVerified=false`, not because of power mode. Provenance/cleanup corrections and executable controls are local; focused copy-sync currently fails because the new root-only RA-25 test is not excluded. Clean-worktree controls and T1 re-review pending. |
 | [ ] | [RA-27](tasks/release-0.4.2/RA-27.md) | TODO | T3 | — | RA-26 | Записать в AGENTS.md правило проб для задач разработки (Windows у исполнителя, Pixel 3 на ревью) и поле `Probe` в шаблон карточки. |

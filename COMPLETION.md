@@ -5,6 +5,11 @@
 - После одного rework добавлена точная проверка соответствия golden и ID кейсов, исправлены append-only/overwrite режимы `PROBE_RECORD`, удалены устаревшие копии example helpers. Golden и oracle сохранены без изменений.
 - T1 ACCEPT на `a0ce963714420588eed5597acbe187912b4926f0`; полный CI run [36525331117](https://github.com/Anfet/yuv_ffi/actions/runs/36525331117) прошёл 11/11 jobs на том же SHA. Подробности — в [архивном отчёте](doc/archive/release-0.4.2/ra-reports.md).
 
+## RA-41 — Web gate и матрица проверок приняты
+
+- На ветке `ra/RA-41` выполнены отрицательный контроль и восстановление WASM; final report SHA `8d96b841049698c80c8ef1f980203e73913708f4` прошёл полный CI [36534765261](https://github.com/Anfet/yuv_ffi/actions/runs/36534765261), 11/11 jobs. T1 review — ACCEPT.
+- Negative control остановил `wasm-web-integration` на artifact rebuild/compare; runtime gate и matrix были skipped. Revert вернул committed WASM побайтно. Подробности — в [архивной карточке](doc/archive/release-0.4.2/cards/RA-41.md) и [отчёте](doc/archive/release-0.4.2/ra-reports.md).
+
 ## Подготовка документации и комментариев к 0.4.2 — COMPLETE — 2026-09-28
 
 - **RA-01:** перенесён 171 tracked-файл во внутренний архив; `doc/archive/**` исключён из analyzer. Исправлены все переезды локальных Markdown-ссылок; независимая проверка подтвердила 88/88 существующих targets. Незакоммиченные локальные артефакты в `tool/bench/` оставлены на месте.
