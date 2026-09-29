@@ -13,7 +13,7 @@
 ## Где мы сейчас
 
 - **Сделано:** чистка репозитория и документации, пробы корректности (1188 случаев) на Windows, Linux, macOS, iOS, Android и Web, пересобранный WASM, запуск CI по префиксу ветки. Полный CI на `release/0.4.2` зелёный (11/11): run [36561975316](https://github.com/Anfet/yuv_ffi/actions/runs/36561975316) на `147f0bc`. Ускорение native-ядер (C-01…C-11) принято раньше.
-- **Сейчас:** этап 1 завершён; этап 2 идёт на замороженном РК `a4f17c1`. RA-53 принята T1 и архивирована. RA-56 готова к ревью: Web-only run `36596325376` прошёл на `8099807` за 5:21, все 13 файлов/100 cases и оба negative controls подтверждены. RA-25 takeover-кандидат `88b740a` ждёт тот же пакетный T1 review. Следом: после ревью — Pixel gate RA-25 и merge/full CI для RA-56.
+- **Сейчас:** этап 1 завершён; этап 2 идёт на замороженном РК `a4f17c1`. Пакетный T1 review отклонил RA-25 (timeout test обходил fake ADB; focused tests не воспроизвелись) и RA-56 (нет file-group names и import-coverage guard). RA-25 rework выполняет новый T1-агент; RA-56 T2 rework ждёт свободного agent slot. Pixel и merge/full CI не запускались.
 - **SHA РК:** `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026), принят T1; замороженные пути не менялись.
 
 ## Дашборд
@@ -33,8 +33,8 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | REVIEW_T1_PENDING | T2 | T1 review batch | RA-55 | **Ускоренный Web gate готов к пакетному ревью.** Run [36596325376](https://github.com/Anfet/yuv_ffi/actions/runs/36596325376) успешен на `8099807`: 5:21 всего (gate 3:33, матрица 0:55), все 13 файлов/100 cases сохранены, оба negative controls провалили цель ожидаемым образом. После T1 review — merge и обязательный полный CI на release. |
-| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | REVIEW_T1_PENDING | T2 | T1 review batch | RA-55 | **Takeover-кандидат ждёт пакетной независимой проверки.** `88b740a` закрывает реальный ADB polling timeout; в отчёте — 13/13 focused tests, чистое дерево и пустой frozen-path diff к РК. Review не запускался отдельно; push и Pixel gate не запускались. |
+| [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | REWORK | T2 | Terra (T2, queued) | RA-55 | **Закрыть два review finding-а.** `8099807` Web-only CI проходит за 5:21, 13/100 cases и два negative controls подтверждены. T1 отклонил: каждый `main()` должен быть обёрнут в группу с исходным filename, а guard должен обнаруживать удалённый fake-loader import. Исполнитель ждёт agent slot; после исправления — локальные negative controls и web-only CI. Rejection count: 1. |
+| [ ] | [RA-25](tasks/release-0.4.2/RA-25.md) | REWORK | T2 | GPT-6 Sol (T1 rework) | RA-55 | **Исправить RA-25 runner/test по независимому T1 review.** На `88b740a` focused test падает в `setUpAll` (`git commit` сообщает nothing to commit), а timeout-контроль использует `-ValidateLogcatPath` и не тестирует вызов fake `adb logcat`. Сохранить strict marker/source проверки; никаких Pixel/CI до повторного пакетного review. Rejection count: 4. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | RA-53, RA-55 | **Общие правила отдельных CI-workflow:** один workflow на платформу, логика в скрипте `tool/ci/<имя>`, который запускается и локально; без номеров задач в YAML. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | **Отдельный CI: VM-тесты** (`ci-vm.yml`), две версии Flutter. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70 | **Отдельный CI: Windows** (`ci-windows.yml`) — сборка native, пробы, запуск приложения. |
