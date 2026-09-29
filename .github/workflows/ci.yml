@@ -901,11 +901,20 @@ jobs:
             } while ((Get-Date) -lt $deadline)
             if (-not $ready) { throw 'ChromeDriver did not become ready on port 4444' }
 
-            $targets = @(Get-ChildItem -Path integration_test -Filter '*_web_test.dart' -File | Sort-Object Name)
-            if ($targets.Count -eq 0) { throw 'No Web integration-test targets were found.' }
+            $combined = 'all_web_test.dart'
+            # These suites mutate page-global loader state and require a fresh page.
+            $separate = @('wasm_bootstrap_web_test.dart', 'wasm_loader_lifecycle_web_test.dart')
+            $targets = @(Get-ChildItem -Path integration_test -Filter '*_web_test.dart' -File | Where-Object Name -ne $combined | Sort-Object Name)
+            $aggregatorPath = "integration_test/$combined"
+            if (-not (Test-Path $aggregatorPath)) { throw "Missing combined Web target: $combined" }
+            $aggregatorSource = Get-Content -Raw $aggregatorPath
+            $aggregated = @($targets.Name | Where-Object { $_ -notin $separate })
+            $missing = @($aggregated | Where-Object { $aggregatorSource -notmatch [regex]::Escape($_) })
+            if ($missing.Count -gt 0) { throw "Web tests not covered by an execution target: $($missing -join ', ')" }
+            $targets = @($combined) + $separate
             $failed = @()
             foreach ($target in $targets) {
-              $targetPath = "integration_test/$($target.Name)"
+              $targetPath = "integration_test/$target"
               Write-Host "::group::$targetPath"
               & bash ../tool/ci/drive.sh $targetPath web-server --browser-name=chrome --headless
               if ($LASTEXITCODE -eq 0) { Write-Host "PASS $targetPath" }
@@ -952,7 +961,7 @@ jobs:
               } catch { Start-Sleep -Seconds 1 }
             } while ((Get-Date) -lt $deadline)
             if (-not $ready) { throw 'ChromeDriver did not become ready on port 4444' }
-            & bash ../tool/ci/drive.sh integration_test/reference_web_conversions_test.dart web-server --browser-name=chrome --headless
+            & bash ../tool/ci/drive.sh integration_test/reference_web_conversions_test.dart web-server --browser-name=chrome --headless --profile
             if ($LASTEXITCODE -ne 0) { throw "Web reference matrix failed with $LASTEXITCODE" }
           } finally {
             if ($driverProcess -and -not $driverProcess.HasExited) { Stop-Process -Id $driverProcess.Id -Force }
