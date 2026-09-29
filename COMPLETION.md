@@ -34,6 +34,7 @@
 
 ## Предрелизный цикл 0.4.2
 
+- **RA-52:** выбранный Web job прошёл на точном карточном SHA `788a0e409a1ff00f09b28240aaac9dac542850e9` (run [36544170908](https://github.com/Anfet/yuv_ffi/actions/runs/36544170908)); T1 review — ACCEPT. После merge на `84c2f7f7432e4a170312d81f748906dfd21c5b09` полный release CI [36546510703](https://github.com/Anfet/yuv_ffi/actions/runs/36546510703) прошёл успешно. Карточка перенесена в архив; детали — в [карточке](doc/archive/release-0.4.2/cards/RA-52.md) и [отчёте](doc/archive/release-0.4.2/ra-reports.md).
 - **RA-51:** исправлен copy-sync список root-only файлов, исключения `.gitignore` для четырёх tracked Pixel логов и scoped `deprecated_member_use` suppression. Исполнитель Luna (T3), ревьюер GPT-5.6 Terra (T2) — ACCEPT. Локально прошли анализ root/example, copy-sync 28↔28 с проверкой имён, байтов и golden SHA-256, package dry-run с 0 warnings; все 11 CI jobs прошли на `ea54e0c78cca5e81db4ddc6ebe035214f63850b0` (run [36471185052](https://github.com/Anfet/yuv_ffi/actions/runs/36471185052)). Отдельные RA-25/26 изменения не включались; перенос их карточными ветками и заморозка до фазы 6 записаны в D-3.
 
 - **RA-40:** Windows emsdk 3.1.74 rebuild matched committed JS/WASM; release CI `36476080539` green on `32239178a59f4c6634f5d384bbac3f7d294a2d70`. WASM asset commit `6f7c38a` is newer than last `src/` and `lib/src/` commits (`1fc2615`). Reviewer GPT-6 Sol (T1): ACCEPT.

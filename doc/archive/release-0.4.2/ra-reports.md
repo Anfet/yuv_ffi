@@ -2,6 +2,10 @@
 
 Отчёты исполнителей, интеграционные проверки и ревью, вынесенные из `pre-release-todo.md` 28.09.2026. Решения архитектора и Engineer остались в карточках.
 
+<!-- RA-52 -->
+#### Execution and T1 review
+RA-52 was accepted by the independent T1 reviewer. The final card-branch SHA `788a0e409a1ff00f09b28240aaac9dac542850e9` passed selected Web run [36544170908](https://github.com/Anfet/yuv_ffi/actions/runs/36544170908), with only `wasm-web-integration` running and the other eight jobs skipped. Merge SHA `84c2f7f7432e4a170312d81f748906dfd21c5b09` passed full release CI [36546510703](https://github.com/Anfet/yuv_ffi/actions/runs/36546510703). The implementation changed workflow triggers, dispatch input, concurrency, and job-level conditions; existing job steps were unchanged. See the [archived card](cards/RA-52.md).
+
 <!-- RA-21 -->
 #### Executor Report
 Восстановленный seed harness выдал 1188/1188 строк, идентичных сохранённому 0.4.0 oracle. Созданы 22 отдельных файла с данными операций, golden с 1188 случаями и 949 уникальными результатами, проверка покрытия 12 значений `YuvOperation`, синхронизация копий и layout/pack suite на 54 сочетаниях. `flutter test --tags probe`, copy-sync/coverage/layout suite, analyze и Windows `flutter drive` прошли; Windows log подтвердил 1188 случаев. Web target добавлен; локальный запуск требует ChromeDriver на порту 4444, браузерный gate остаётся RA-41.
