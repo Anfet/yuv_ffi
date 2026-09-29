@@ -12,7 +12,7 @@
 
 ## Состояние
 
-В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21 и RA-41. RA-21 принята после одного rework; RA-41 принята: ветка `ra/RA-41` на `8d96b841049698c80c8ef1f980203e73913708f4`, полный CI run `36534765261` зелёный (11/11 jobs) на том же SHA; T1 review — ACCEPT. По D-4 до M1 выполняются RA-52 и RA-80; platform split RA-70…78 начинается сразу после M1, затем RA-60…62.
+В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21 и RA-41. RA-21 принята после одного rework; RA-41 принята: ветка `ra/RA-41` на `8d96b841049698c80c8ef1f980203e73913708f4`, полный CI run `36534765261` зелёный (11/11 jobs) на том же SHA; T1 review — ACCEPT. По D-4 до M1 выполняется RA-52, RA-80 заблокирована отсутствием прав администратора для установки службы Windows runner; platform split RA-70…78 начинается после M1, затем RA-60…62.
 
 ## Решения Engineer
 
@@ -47,7 +47,7 @@
 | 1 | Чистка лишнего и документация | RA-01…06, RA-08, RA-10…17 | **завершена** |
 | 2 | Тесты на Mac (параллельно с фазой 3): macOS native, iOS Simulator | RA-22 | **завершена**; probe negative control и восстановление приняты на `e4376ab` |
 | 3 | Web | RA-40, RA-41 | **завершена**; обе карточки приняты |
-| 4 | CI routing и runners | RA-52, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 и RA-80 выполняются; platform split после M1 |
+| 4 | CI routing и runners | RA-52, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 выполняется; RA-80 BLOCKED на правах Windows admin |
 | **M1** | **Стабильный предрелиз:** фазы 1–3 закрыты, полный CI зелёный на одном SHA `release/0.4.2` | — | после RA-52 и RA-80 |
 | 5 | Декомпозиция тест-сьюта: запускать только нужное | RA-60…RA-62 | после RA-70…78 |
 | 6 | Устройство и скорость | RA-25, RA-26, RA-27 | после фазы 5 |
@@ -72,7 +72,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | [x] | [RA-41](doc/archive/release-0.4.2/cards/RA-41.md) | DONE | T2 | Terra | RA-04, RA-21, RA-22, RA-40 | T1 ACCEPT на `8d96b84`; CI `36534765261` success 11/11, Web gate и matrix PASS. |
 | [ ] | [RA-52](tasks/release-0.4.2/RA-52.md) | IN_PROGRESS | T2 | Terra | D-4 | Только `ci.yml`: manual dispatch по выбранному job key; без CI на `ra/**`; полный, неотменяемый CI только на `release/**`. |
-| [ ] | [RA-80](tasks/release-0.4.2/RA-80.md) | IN_PROGRESS | T2 | Terra | D-4 | Добавить два Windows runner instances; привязать Android emulator, Web/ChromeDriver/emsdk и Pixel 3 метками; проверить параллельные jobs. |
+| [ ] | [RA-80](tasks/release-0.4.2/RA-80.md) | BLOCKED | T2 | Terra | D-4 | `dev.working-2` зарегистрирован, но offline: установка службы требует Windows admin. Labels добавлены на текущий runner; параллельность ждёт elevated-сеанс. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | M1, RA-52, RA-80 | После M1: соглашения split CI и общие локально запускаемые `tool/ci/` scripts. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | После M1: `ci-vm.yml` на двух версиях Flutter. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70, RA-80 | После M1: `ci-windows.yml` — native build, probes и Windows app smoke. |
