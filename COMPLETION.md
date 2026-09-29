@@ -1,5 +1,10 @@
 # yuv_ffi — история проверок и принятых задач
 
+## RA-55 — Заморожен релиз-кандидат — ACCEPT
+
+- РК зафиксирован на `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026). Root/example analyze, Windows CMake native build и `flutter test --reporter expanded` прошли; повторный полный лог тестов на том же SHA заканчивается `+717 ~1: All tests passed!`, exit code 0. Frozen diff пуст, generated-файлы чисты, marker search — 0 совпадений.
+- `flutter pub publish --dry-run` дал 0 warnings и 1 допустимый hint о предыдущей версии `0.2.4`; текст hint восстановлен из прежнего tool output, отдельного файла лога нет. Публикация не выполнялась. T1 ACCEPT после одного rework; карточка в [архиве](doc/archive/release-0.4.2/cards/RA-55.md).
+
 ## RA-21 — Проверки golden-проб закрыты — ACCEPT
 
 - После одного rework добавлена точная проверка соответствия golden и ID кейсов, исправлены append-only/overwrite режимы `PROBE_RECORD`, удалены устаревшие копии example helpers. Golden и oracle сохранены без изменений.
