@@ -37,18 +37,18 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 | [ ] | [RA-79](tasks/release-0.4.2/RA-79.md) | REVIEW | T3 | GPT-6 Luna (`/root/ra79_executor`) | RA-25 | **Список root-only probe-тестов исправлен.** Реализация в `all/RA-79` (`8a1c79b`), финальный report-only SHA `a4a4f7a`. Focused test и негативный контроль PASS/ожидаемый FAIL 28/29. VM run [36617911051](https://github.com/Anfet/yuv_ffi/actions/runs/36617911051) и Windows run [36621882484](https://github.com/Anfet/yuv_ffi/actions/runs/36621882484) PASS на одном code SHA `8a1c79b`. Готова к вашему ревью. |
 | [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | REVIEW | T2 | Orchestrator | RA-55, RA-79 | **Ускорение Web CI готово к интеграции.** Web run [36599392409](https://github.com/Anfet/yuv_ffi/actions/runs/36599392409) PASS за 4:34, включая матрицу и negative controls; Web job в интеграционном run [36614066552](https://github.com/Anfet/yuv_ffi/actions/runs/36614066552) также PASS. Повторное объединение с RA-25/RA-79 и полный CI — после вашего ревью. Rejection count: 1. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | REVIEW | T2 | GPT-5.6 Terra (`/root/ra70_executor_terra`) | RA-53, RA-55 | **Общие правила отдельных CI-workflow готовы.** Финальная ветка `all/RA-70` SHA `d33a7e9`; локальные проверки PASS. CI smoke run [36619948343](https://github.com/Anfet/yuv_ffi/actions/runs/36619948343) PASS на `0e2e412`; дерево совпадает с реализацией `a37bda9`. Executor Report обновлён. Передано на ваше ревью. |
-| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | **Отдельный CI: VM-тесты** (`ci-vm.yml`), две версии Flutter. |
-| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70 | **Отдельный CI: Windows** (`ci-windows.yml`) — сборка native, пробы, запуск приложения. |
-| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | TODO | T3 | — | RA-70 | **Отдельный CI: macOS** (`ci-macos.yml`) — сборка native, запуск приложения. |
-| [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | **Отдельный CI: iOS** (`ci-ios.yml`) — Pods, симулятор, пробы. |
-| [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | TODO | T2 | — | RA-70 | **Отдельный CI: Android** (`ci-android.yml`) — APK трёх ABI, эмулятор, пробы. |
-| [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | TODO | T3 | — | RA-70 | **Отдельный CI: Linux** (`ci-linux.yml`) — единственный на GitHub-hosted раннере. |
-| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | TODO | T2 | — | RA-70, RA-56 | **Отдельный CI: Web** (`ci-web.yml`) — WASM, браузерные тесты, эталонная матрица (уже ускоренные RA-56). |
-| [ ] | [RA-78](tasks/release-0.4.2/RA-78.md) | TODO | T3 | — | RA-70 | **Отдельный CI: example** (`ci-example.yml`) — analyze и сборка на 3.41.0 и 3.44.9. |
-| [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | TODO | T3 | — | RA-70…78 | **Разметить тесты тегами:** по умолчанию `flutter test` гоняет только быстрые (smoke + contract), пробы и эталон — по тегу. |
-| [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | TODO | T2 | — | RA-60 | **Фильтр проб по операции и формату** с явной строкой «какой срез выполнен». Эталон не меняется. |
-| [ ] | [RA-62](tasks/release-0.4.2/RA-62.md) | TODO | T3 | — | RA-60, RA-61 | **Карта «что изменил → что запускать»** в `AGENTS.md` по карте путей `tool/ci/scope_guard.sh`. |
-| [ ] | [RA-57](tasks/release-0.4.2/RA-57.md) | TODO | T2 | — | RA-53, RA-56, RA-70…78, RA-60…62 | **Полная проверка релиз-кандидата:** все платформенные workflow зелёные на одном SHA; код пакета не отличается от РК. |
+| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | BLOCKED | T3 | Engineer review | RA-70 | **Ожидает принятия RA-70:** общие CI scripts и соглашения пока на ревью; после ACCEPT — отдельный workflow VM-тестов на двух версиях Flutter. |
+| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | Engineer review | RA-70 | **Ожидает принятия RA-70:** после ACCEPT — отдельный Windows workflow для native build, проб и app smoke. |
+| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | BLOCKED | T3 | Engineer review | RA-70 | **Ожидает принятия RA-70:** после ACCEPT — отдельный macOS workflow для native build и app smoke. |
+| [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | BLOCKED | T3 | Engineer review | RA-70 | **Ожидает принятия RA-70:** после ACCEPT — отдельный iOS workflow для Pods, симулятора и проб. |
+| [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | BLOCKED | T2 | Engineer review | RA-70 | **Ожидает принятия RA-70:** после ACCEPT — отдельный Android workflow для трёх ABI, эмулятора и проб. |
+| [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | BLOCKED | T3 | Engineer review | RA-70 | **Ожидает принятия RA-70:** после ACCEPT — отдельный Linux workflow; это единственная GitHub-hosted job. |
+| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | BLOCKED | T2 | Engineer review | RA-70, RA-56 | **Ожидает принятия RA-70 и RA-56:** затем отдельный Web workflow для WASM, browser tests и ускоренной эталонной матрицы. |
+| [ ] | [RA-78](tasks/release-0.4.2/RA-78.md) | BLOCKED | T3 | Engineer review | RA-70 | **Ожидает принятия RA-70:** после ACCEPT — отдельный example workflow с analyze и сборкой на Flutter 3.41.0 и 3.44.9. |
+| [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | BLOCKED | T3 | Предыдущие карточки | RA-70…78 | **Ждёт завершения платформенных workflow RA-71…78:** затем разметить тесты тегами, оставив по умолчанию smoke + contract. |
+| [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | BLOCKED | T2 | RA-60 | RA-60 | **Ждёт RA-60:** затем добавить выбор операции/формата и явный отчёт о выполненном срезе проб. |
+| [ ] | [RA-62](tasks/release-0.4.2/RA-62.md) | BLOCKED | T3 | RA-60/61 | RA-60, RA-61 | **Ждёт RA-60 и RA-61:** затем описать карту «что изменил → что запускать» по `tool/ci/scope_guard.sh`. |
+| [ ] | [RA-57](tasks/release-0.4.2/RA-57.md) | BLOCKED | T2 | Предыдущие карточки | RA-53, RA-56, RA-70…78, RA-60…62 | **Ждёт завершения всех платформенных workflow и RA-60…62:** после этого проверить все платформы на одном SHA и равенство кода РК. |
 
 Порядок внутри этапа: RA-53 и RA-56 → RA-70 → RA-71…78 (параллельно, по одной платформе) → RA-60…62 → RA-57. RA-25 идёт параллельно с самого начала этапа. Если проверка нашла дефект в коде: карточка «Исправление: …» → повтор RA-55 (новый SHA РК) → повтор упавших проверок.
 
@@ -56,7 +56,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-50](tasks/release-0.4.2/RA-50.md) | TODO | T2 | — | RA-57, RA-25 | **Финальный гейт:** всё зелёное на одном SHA, код равен РК, dry-run без предупреждений; отчёт Engineer. Тег и публикация — Engineer. |
+| [ ] | [RA-50](tasks/release-0.4.2/RA-50.md) | BLOCKED | T2 | RA-57/RA-25 | RA-57, RA-25 | **Ждёт RA-57 и принятия RA-25:** затем финальный гейт на одном SHA, равенство кода РК, dry-run и отчёт Engineer. Pub.dev publish не входит в релиз. |
 
 ### После релиза 0.4.2
 
