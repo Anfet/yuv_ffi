@@ -118,8 +118,23 @@ covers_key() {
     "$prefix_tokens" == *"+$key/"* || "$prefix_tokens" == *"+$key+"* ]]
 }
 
-base="$(git merge-base origin/release/0.4.2 HEAD)"
-while IFS= read -r path; do
+if ! base="$(git merge-base origin/release/0.4.2 HEAD)"; then
+  printf 'scope: could not determine merge base against origin/release/0.4.2\n' >&2
+  exit 1
+fi
+
+if ! changed_paths="$(mktemp)"; then
+  printf 'scope: could not create a temporary path list\n' >&2
+  exit 1
+fi
+trap 'rm -f "$changed_paths"' EXIT
+
+if ! git diff --no-renames --name-only -z "$base" HEAD > "$changed_paths"; then
+  printf 'scope: could not enumerate changed paths\n' >&2
+  exit 1
+fi
+
+while IFS= read -r -d '' path; do
   [[ -n "$path" ]] || continue
   keys="$(path_keys "$path")"
   [[ -n "$keys" ]] || continue
@@ -130,4 +145,4 @@ while IFS= read -r path; do
       exit 1
     fi
   done
-done < <(git diff --name-only "$base" HEAD)
+done < "$changed_paths"
