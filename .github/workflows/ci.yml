@@ -881,10 +881,11 @@ jobs:
         working-directory: example
         run: flutter pub get
 
-      # Every asset-dependent Web acceptance case runs here. `flutter drive`
-      # takes one target at a time, so the suites are driven in a loop rather
-      # than as a directory; an unset `set -e` would let a failing target pass
-      # the job, so each exit status is checked explicitly.
+      # Every asset-dependent Web acceptance case runs here. Flutter's
+      # integration binding reports only the first top-level `group`, so the
+      # aggregate calls each source main directly. This keeps all tests in one
+      # declaration scope; wrapping source mains in groups would silently skip
+      # later sources.
       - name: Required Web integration gate
         working-directory: example
         shell: pwsh
@@ -901,11 +902,89 @@ jobs:
             } while ((Get-Date) -lt $deadline)
             if (-not $ready) { throw 'ChromeDriver did not become ready on port 4444' }
 
-            $targets = @(Get-ChildItem -Path integration_test -Filter '*_web_test.dart' -File | Sort-Object Name)
-            if ($targets.Count -eq 0) { throw 'No Web integration-test targets were found.' }
+            $combined = 'all_web_test.dart'
+            # These suites mutate page-global loader state and require a fresh page.
+            $separate = @(
+              'wasm_bootstrap_web_test.dart',
+              'wasm_loader_lifecycle_web_test.dart',
+              'wasm_swap_nv_atomicity_web_test.dart',
+              'yuv_web_capabilities_web_test.dart'
+            )
+            $aggregate = @(
+              'getbytes_contract_web_test.dart',
+              'image_cache_key_web_test.dart',
+              'nv_chroma_order_web_test.dart',
+              'padded_bgra_constructor_web_test.dart',
+              'probe_web_test.dart',
+              'serialization_contract_web_test.dart',
+              'wasm_abi_v1_descriptor_staging_web_test.dart',
+              'wasm_parity_edge_cases_web_test.dart',
+              'web_ownership_regression_web_test.dart'
+            )
+            $executionSources = @{
+              'wasm_bootstrap_web_test.dart' = @('wasm_bootstrap_web_test.dart')
+              'wasm_loader_lifecycle_web_test.dart' = @('wasm_loader_lifecycle_web_test.dart')
+              'fake_loader_web_tests.dart' = @('wasm_swap_nv_atomicity_web_test.dart', 'yuv_web_capabilities_web_test.dart')
+            }
+            $baselineCases = @{
+              'getbytes_contract_web_test.dart' = 4
+              'image_cache_key_web_test.dart' = 17
+              'nv_chroma_order_web_test.dart' = 2
+              'padded_bgra_constructor_web_test.dart' = 7
+              'probe_web_test.dart' = 1
+              'serialization_contract_web_test.dart' = 13
+              'wasm_abi_v1_descriptor_staging_web_test.dart' = 29
+              'wasm_bootstrap_web_test.dart' = 1
+              'wasm_loader_lifecycle_web_test.dart' = 9
+              'wasm_parity_edge_cases_web_test.dart' = 2
+              'wasm_swap_nv_atomicity_web_test.dart' = 7
+              'web_ownership_regression_web_test.dart' = 3
+              'yuv_web_capabilities_web_test.dart' = 5
+            }
+            $discovered = @(Get-ChildItem -Path integration_test -Filter '*_web_test.dart' -File | Where-Object Name -ne $combined | ForEach-Object Name | Sort-Object)
+            $mapped = @($aggregate + $separate | Sort-Object -Unique)
+            $unmapped = @($discovered | Where-Object { $_ -notin $mapped })
+            $missingSources = @($mapped | Where-Object { $_ -notin $discovered })
+            if ($unmapped.Count -gt 0 -or $missingSources.Count -gt 0 -or $mapped.Count -ne ($aggregate.Count + $separate.Count)) {
+              throw "Web source mapping mismatch: unmapped=[$($unmapped -join ', ')]; missing=[$($missingSources -join ', ')]"
+            }
+            if ($baselineCases.Count -ne $discovered.Count -or @($baselineCases.Keys | Where-Object { $_ -notin $discovered }).Count -gt 0 -or ($baselineCases.Values | Measure-Object -Sum).Sum -ne 100) {
+              throw 'Web source case baseline must cover all 13 sources and total 100 cases.'
+            }
+            $aggregatorPath = "integration_test/$combined"
+            if (-not (Test-Path $aggregatorPath)) { throw "Missing combined Web target: $combined" }
+            $aggregatorSource = Get-Content -Raw $aggregatorPath
+            foreach ($source in $aggregate) {
+              $importPattern = "import\s+'$([regex]::Escape($source))'\s+as\s+(\w+);"
+              if ($aggregatorSource -notmatch $importPattern) {
+                throw "Aggregated Web source is not imported and invoked: $source"
+              }
+              $alias = $Matches[1]
+              if ($aggregatorSource -notmatch "$([regex]::Escape($alias))\.main\(\);") { throw "Aggregated Web source is not invoked: $source" }
+            }
+            if ($aggregatorSource -match '\bgroup\(') { throw 'Aggregated Web target must not wrap source mains in groups.' }
+            foreach ($target in $executionSources.Keys) {
+              $targetPath = "integration_test/$target"
+              if (-not (Test-Path $targetPath)) { throw "Missing Web execution target: $target" }
+              if ($target -like '*_web_tests.dart') {
+                $targetSource = Get-Content -Raw $targetPath
+                foreach ($source in $executionSources[$target]) {
+                  $importPattern = "import\s+'$([regex]::Escape($source))'\s+as\s+(\w+);"
+                  if ($targetSource -notmatch $importPattern) {
+                    throw "Separate Web source is not imported and invoked by ${target}: $source"
+                  }
+                  $alias = $Matches[1]
+                  if ($targetSource -notmatch "$([regex]::Escape($alias))\.main\(\);") { throw "Separate Web source is not invoked by ${target}: $source" }
+                }
+                if ($targetSource -match '\bgroup\(') { throw "Separate Web target must not wrap source mains in groups: $target" }
+              }
+            }
+            $targets = @($combined) + @($executionSources.Keys | Sort-Object)
+            foreach ($source in $discovered) { Write-Host "Web source baseline: $source=$($baselineCases[$source])" }
+            Write-Host "Web source coverage: sources=$($discovered.Count), cases=$(($baselineCases.Values | Measure-Object -Sum).Sum), targets=$($targets.Count)"
             $failed = @()
             foreach ($target in $targets) {
-              $targetPath = "integration_test/$($target.Name)"
+              $targetPath = "integration_test/$target"
               Write-Host "::group::$targetPath"
               & bash ../tool/ci/drive.sh $targetPath web-server --browser-name=chrome --headless
               if ($LASTEXITCODE -eq 0) { Write-Host "PASS $targetPath" }
@@ -952,7 +1031,7 @@ jobs:
               } catch { Start-Sleep -Seconds 1 }
             } while ((Get-Date) -lt $deadline)
             if (-not $ready) { throw 'ChromeDriver did not become ready on port 4444' }
-            & bash ../tool/ci/drive.sh integration_test/reference_web_conversions_test.dart web-server --browser-name=chrome --headless
+            & bash ../tool/ci/drive.sh integration_test/reference_web_conversions_test.dart web-server --browser-name=chrome --headless --profile
             if ($LASTEXITCODE -ne 0) { throw "Web reference matrix failed with $LASTEXITCODE" }
           } finally {
             if ($driverProcess -and -not $driverProcess.HasExited) { Stop-Process -Id $driverProcess.Id -Force }
