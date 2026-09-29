@@ -21,6 +21,9 @@ path_keys() {
     .github/workflows/ci.yml)
       printf 'all\n'
       ;;
+    .github/workflows/ci-smoke.yml)
+      printf 'all\n'
+      ;;
     .github/workflows/ci-vm.yml)
       printf 'vm\n'
       ;;
@@ -48,7 +51,7 @@ path_keys() {
     .github/workflows/*)
       printf 'all\n'
       ;;
-    tool/ci/drive.sh|tool/ci/scope_guard.sh)
+    tool/ci/_common.ps1|tool/ci/drive.ps1|tool/ci/drive.sh|tool/ci/smoke.ps1|tool/ci/scope_guard.sh)
       printf 'all\n'
       ;;
     tool/ci/vm.*)

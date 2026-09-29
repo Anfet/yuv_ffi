@@ -1,0 +1,33 @@
+name: CI smoke
+
+concurrency:
+  group: ci-smoke-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
+
+on:
+  push:
+    branches:
+      - 'release/**'
+      - main
+      - 'all/**'
+      - 'all\+*/**'
+      - '*\+all/**'
+      - '*\+all\+*/**'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
+        run: bash tool/ci/scope_guard.sh
+
+      - name: Check CI helpers
+        shell: pwsh
+        run: ./tool/ci/smoke.ps1
