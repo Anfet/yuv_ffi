@@ -1,37 +1,37 @@
-# RA-25 — Pixel 3 Release Evidence
+# RA-25 — Pixel 3 release evidence
 
-- Candidate: `1ef71b68540c7133f2e223cd0320b2cb155ecbd5`
+## Accepted result set
+
+- Source checkout: `43835b542bddc16ed5edbd373dbb86ff02c35ac8`
 - Device: Pixel 3, serial `8B1X11QLW`, Android 12
-- Preconditions: awake screen, unlocked keyguard, thermal check passed before each host run.
+- Preconditions: ADB/RSA connected, awake, screen ON, keyguard unlocked,
+  thermal status 0.
+- Canonical full evidence: the four `ra25-*-{host,device}.json` files in this
+  directory. Each host record binds `gitSha` and `revision` to the source
+  checkout; its paired device record retains the exact accepted marker.
 
-## arm64-v8a
+| ABI | Run ID | APK SHA-256 | Required ZIP entry | Device verdict |
+| --- | --- | --- | --- | --- |
+| `arm64-v8a` | `43835b542bddc16ed5edbd373dbb86ff` | `3ccb760bb5bf853b9555440161b200d34c9a1de24718a0580972afe3d6ca11e2` | `lib/arm64-v8a/libyuv_ffi.so` | one `RA25_RESULT`, smoke/probe PASS, 1188 |
+| `armeabi-v7a` | `f7db33e2a5d64339a86ec5dc53ef0f9a` | `360d95584506955eb4822418e6aa874c41fdfc5bde3ce0550202242c1c3207c5` | `lib/armeabi-v7a/libyuv_ffi.so` | one `RA25_RESULT`, smoke/probe PASS, 1188 |
 
-Command:
+The host evidence confirms one native ABI per APK and the required
+`libyuv_ffi.so`; the device evidence retains the strict marker. The runner
+checks `primaryCpuAbi`; its per-ABI results are recorded in the Executor
+Report in the RA-25 card. APK binaries are deliberately excluded.
 
-```powershell
-.\tool\probe\run_release_android.ps1 -GitSha 1ef71b68540c7133f2e223cd0320b2cb155ecbd5 -Abi arm64 -TimeoutSeconds 420
-```
+## Raw markers
 
-- Run ID: `91308400c2904ccfb30828b08bc67e91`
-- APK: `app-arm64-v8a-release.apk`
-- APK SHA-256: `6a175d1dd106bf952489d168f6b9c526ffa260f353b1c02359dec54b2911980f`
-- Host verdict: smoke PASS, probe PASS, 1188 cases.
+- `raw/arm64.logcat-result.txt` is the exact accepted arm64 device marker.
+- `raw/armv7.logcat-result.txt` is the exact accepted armv7 device marker.
 
-## armeabi-v7a
+They match the paired device JSON files above. The JSON records are the full
+host/device evidence, including APK hash, ZIP entries, device details and
+marker payload.
 
-Command:
+## Historical unbound material
 
-```powershell
-.\tool\probe\run_release_android.ps1 -GitSha 1ef71b68540c7133f2e223cd0320b2cb155ecbd5 -Abi armv7 -TimeoutSeconds 420
-```
-
-- Run ID: `f78dfc5bf1c3437293a510a9cfa3902e`
-- APK: `app-armeabi-v7a-release.apk`
-- APK SHA-256: `6543c93155847ba951168a3a4adeb5dd34713335d4fe2719244b137150b4e243`
-- Host verdict: smoke PASS, probe PASS, 1188 cases.
-
-For each ABI, `run_release_android.ps1` accepted the run only after it verified exactly one ABI directory in the APK, `lib/<ABI>/libyuv_ffi.so`, installed `primaryCpuAbi`, and exactly one valid `RA25_RESULT` JSON record. The script emits the stored `RA25_HOST_RESULT` only after those checks. APK binaries are deliberately excluded.
-
-## Raw logs
-
-`raw/arm64.stdout.log` and `raw/armv7.stdout.log` contain the strict host results. Matching stderr files are empty. `raw/arm64.logcat-result.txt` contains the one retained device JSON record from the final arm64 run; each run clears logcat before launch.
+`raw/historical-unbound/` preserves the prior files for
+`1ef71b68540c7133f2e223cd0320b2cb155ecbd5`. That runner did not bind its
+caller-supplied SHA to checkout HEAD. These files are withdrawn from the
+accepted result set and must not be used as source-attributed RA-25 evidence.
