@@ -219,6 +219,7 @@ methods. New code should use the current API.
 | `image.load(stream)` | `YuvImage.decode(stream)` |
 | `YuvImage.nv21(...)`, `YuvImage(YuvFileFormat.x, ...)` | `YuvImage.nv12(...)`, `YuvImage.i420(...)`, `.bgra(...)`, or `.allocate(...)` |
 | `image.format` returning `YuvFileFormat` | `image.format` returning `YuvPixelFormat` |
+| Factories with caller-supplied `planes:` retaining their supplied layout by default | Factories with caller-supplied `planes:` default to `YuvPlaneLayout.packed`; pass `layout: YuvPlaneLayout.preserve` to retain strides and padding |
 
 Factories with `planes:` now pack planes by default. To keep the original
 strides and padding, pass `layout: YuvPlaneLayout.preserve`.
