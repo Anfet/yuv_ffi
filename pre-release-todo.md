@@ -12,7 +12,7 @@
 
 ## Состояние
 
-В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21, RA-41 и RA-52. RA-21, RA-41 и RA-52 приняты. RA-52: T1 ACCEPT; карточная ветка SHA `788a0e409a1ff00f09b28240aaac9dac542850e9`, выбранный Web CI `36544170908` зелёный на том же SHA; merge SHA `84c2f7f7432e4a170312d81f748906dfd21c5b09`, полный release CI [36546510703](https://github.com/Anfet/yuv_ffi/actions/runs/36546510703) завершился успешно. По D-5 следующая карточка — RA-53; M1 остаётся после RA-53 и RA-80. RA-80 заблокирована отсутствием прав администратора для службы `dev.working-2`.
+В `origin/release/0.4.2` интегрированы RA-51, RA-22, RA-40, RA-21, RA-41 и RA-52. RA-21, RA-41 и RA-52 приняты. RA-52: T1 ACCEPT; карточная ветка SHA `788a0e409a1ff00f09b28240aaac9dac542850e9`, выбранный Web CI `36544170908` зелёный на том же SHA; merge SHA `84c2f7f7432e4a170312d81f748906dfd21c5b09`, полный release CI [36546510703](https://github.com/Anfet/yuv_ffi/actions/runs/36546510703) завершился успешно. RA-53 передана GPT-5.6 Terra, но остановлена в `ARCHITECT_REQUIRED`: текущий DoD требует routing push checks до merge реализации, а карта D-5 запрещает использовать `web` для ветки с изменением `ci.yml` (для неё требуется `all`). Решение запрошено у GPT-6 Sol (medium). RA-80 заблокирована отсутствием прав администратора для службы `dev.working-2`; M1 ждёт RA-53 и RA-80.
 
 ## Решения Engineer
 
@@ -48,7 +48,7 @@
 | 1 | Чистка лишнего и документация | RA-01…06, RA-08, RA-10…17 | **завершена** |
 | 2 | Тесты на Mac (параллельно с фазой 3): macOS native, iOS Simulator | RA-22 | **завершена**; probe negative control и восстановление приняты на `e4376ab` |
 | 3 | Web | RA-40, RA-41 | **завершена**; обе карточки приняты |
-| 4 | CI routing и runners | RA-52, RA-53, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 DONE; RA-53 следующая; RA-80 BLOCKED на правах Windows admin |
+| 4 | CI routing и runners | RA-52, RA-53, RA-80 до M1; RA-70…78 сразу после M1 | RA-52 DONE; RA-53 ARCHITECT_REQUIRED (Sol решает порядок routing checks); RA-80 BLOCKED на Windows admin |
 | **M1** | **Стабильный предрелиз:** фазы 1–3 закрыты, полный CI зелёный на одном SHA `release/0.4.2` | — | после RA-52, RA-53 и RA-80 |
 | 5 | Декомпозиция тест-сьюта: запускать только нужное | RA-60…RA-62 | после RA-70…78 |
 | 6 | Устройство и скорость | RA-25, RA-26, RA-27 | после фазы 5 |
@@ -72,7 +72,7 @@
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | [x] | [RA-41](doc/archive/release-0.4.2/cards/RA-41.md) | DONE | T2 | Terra | RA-04, RA-21, RA-22, RA-40 | T1 ACCEPT на `8d96b84`; CI `36534765261` success 11/11, Web gate и matrix PASS. |
-| [ ] | [RA-53](tasks/release-0.4.2/RA-53.md) | IN_PROGRESS | T2 | GPT-5.6 Terra | RA-52 | D-5: push в ветку `<ключи>/RA-xx` запускает только джобы префикса; `scope_guard.sh` блокирует недостающую ширину префикса. Ветка `all/RA-53`; в Scope только `ci.yml` и проверочный скрипт. |
+| [ ] | [RA-53](tasks/release-0.4.2/RA-53.md) | ARCHITECT_REQUIRED | T2 | GPT-6 Sol | RA-52 | Конфликт проверки: pre-merge ветка `web/RA-53-check` содержит `ci.yml`, а D-5 требует для него `all`; без новой версии workflow на release push-check не стартует. Sol определяет корректный порядок end-to-end routing checks. Исполнитель Terra остановлен до решения. |
 | [ ] | [RA-80](tasks/release-0.4.2/RA-80.md) | BLOCKED | T2 | Terra | D-4 | `dev.working-2` зарегистрирован, но offline: установка службы требует Windows admin. Labels добавлены на текущий runner; параллельность ждёт elevated-сеанс. |
 | [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | TODO | T2 | — | M1, RA-52, RA-80 | После M1: соглашения split CI и общие локально запускаемые `tool/ci/` scripts. |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | После M1: `ci-vm.yml` на двух версиях Flutter. |
