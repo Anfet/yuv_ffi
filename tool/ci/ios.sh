@@ -42,7 +42,7 @@ fi
 
 for target_path in "${targets[@]}"; do
   bash "$repository_root/tool/ci/drive.sh" \
-    "${target_path#integration_test/}" "$simulator_id" --no-pub
+    "$target_path" "$simulator_id" --no-pub
 done
 
 flutter build ios --debug --no-codesign
