@@ -2,6 +2,10 @@
 
 Удалённые отчёты и сырые данные (`doc/archive/perf/**`, `doc/archive/view-00-02-2026-09-27.md`, `todo.md`) доступны в git: `git show e801bb6:<путь>`. Итоги замеров — [doc/perf-findings.md](doc/perf-findings.md).
 
+## RA-81 — CI только на release/main (D-9) — DONE
+
+- Триггеры всех workflow — `release/**`, `main`, `ci/**`; `paths-ignore` для `*.md`, `doc/**`, `tasks/**`; шаг `scope_guard` убран. Слияние `48dfc47`; release CI 8/9, падение Web — из-за `.gitignore` (исправлено в `e801bb6`, dry-run чистый). Документационный push `b5fb4ff` runs не создал.
+
 ## RA-55 — Заморожен релиз-кандидат — ACCEPT
 
 - РК зафиксирован на `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026). Root/example analyze, Windows CMake native build и `flutter test --reporter expanded` прошли; повторный полный лог тестов на том же SHA заканчивается `+717 ~1: All tests passed!`, exit code 0. Frozen diff пуст, generated-файлы чисты, marker search — 0 совпадений.
