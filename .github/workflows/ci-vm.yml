@@ -36,6 +36,10 @@ jobs:
         shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
         run: bash tool/ci/scope_guard.sh
 
+      - name: Add Git Bash to PATH
+        shell: pwsh
+        run: Add-Content -LiteralPath $env:GITHUB_PATH -Value 'D:\.important\Git\bin'
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
