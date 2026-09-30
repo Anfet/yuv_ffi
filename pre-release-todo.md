@@ -35,7 +35,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 | --- | --- | --- | --- | --- | --- | --- |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | BLOCKED | T3 | Luna | RA-70 | **Блокер:** ветка `vm/RA-71` не покрывает ключ `all`, требуемый для `ci.yml`; также остаётся нерешённым запуск workflow на Markdown-only push. Локальные проверки прошли, CI не запускался. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | Terra | RA-70 | **Блокер:** ветка `windows/RA-72` не покрывает ключ `all`, требуемый для `ci.yml`; `New-CiNativeBuild` также возвращает build-лог вместе с путём. Native build отдельно прошёл. |
-| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | BLOCKED | T3 | Luna | RA-70 | Полный `tool/ci/macos.sh` прошёл на Mac. GitHub `CI macOS` run [36694697440](https://github.com/Anfet/yuv_ffi/actions/runs/36694697440) поставлен в очередь; остановлено без ожидания результата. |
+| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | IN_PROGRESS | T3 | Luna | RA-70 | **Повтор CI:** run [36694697440](https://github.com/Anfet/yuv_ffi/actions/runs/36694697440) упал сразу при запуске `tool/ci/macos.sh`; исполнитель воспроизводит окружение на Mac. |
 | [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | **Готова к перезапуску:** iOS workflow и проверочный скрипт используют Bash (`.sh`); `pwsh` на runner не нужен. |
 | [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | BLOCKED | T2 | GPT-5.6 Terra | RA-70 | **Ожидает CI:** локальная проверка прошла, но новый workflow ещё не доступен; существующие CI runs в очереди. |
 | [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | BLOCKED | T3 | GPT-6 Luna | RA-70 | **Ожидает Linux-среды:** полная локальная проверка обязательна до push; на текущем Windows runner нет Linux shell/WSL. |
