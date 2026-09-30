@@ -28,7 +28,7 @@ ID ведёт к файлу карточки; Summary начинается с п
 
 | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- |
-| [RA-81](tasks/release-0.4.2/RA-81.md) | MERGE_CI_PENDING | T2 | Engineer | — | **CI только на release/main (D-9).** Триггеры всех workflow сужены до `release/**`, `main` и явного `ci/**`, документы игнорируются, `scope_guard` убран из workflow. Ждёт полного release CI после слияния. |
+| [RA-81](tasks/release-0.4.2/RA-81.md) | DONE | T2 | Engineer | — | **CI только на release/main (D-9).** Триггеры всех workflow сужены до `release/**`, `main` и явного `ci/**`, документы игнорируются, `scope_guard` убран из workflow. Release CI на `48dfc47` — 8/9; падение Web вызвано `.gitignore` (исправлено, dry-run локально чистый). Документационный push runs не создал. |
 | [RA-60](tasks/release-0.4.2/RA-60.md) | TODO | T3 | — | RA-70…75, RA-77, RA-78 | **Готова к работе:** платформенные workflow интегрированы; разметить тесты тегами, оставив по умолчанию smoke + contract. |
 | [RA-61](tasks/release-0.4.2/RA-61.md) | BLOCKED | T2 | RA-60 | RA-60 | **Ждёт RA-60:** затем добавить выбор операции/формата и явный отчёт о выполненном срезе проб. |
 | [RA-62](tasks/release-0.4.2/RA-62.md) | BLOCKED | T3 | RA-60/61 | RA-60, RA-61 | **Ждёт RA-60 и RA-61:** затем описать карту «что изменил → что запускать» по `tool/ci/scope_guard.sh`. |
