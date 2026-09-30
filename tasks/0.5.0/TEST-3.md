@@ -1,5 +1,5 @@
 # TEST 3 — Срезы проб по операции и формату
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 0
+**Status:** BLOCKED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 0
 **Было:** RA-61 (цикл 0.4.2).
 
 #### Architect Decision

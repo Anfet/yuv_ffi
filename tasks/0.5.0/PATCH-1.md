@@ -1,5 +1,5 @@
 # PATCH 1 — Вставка фрагмента в изображение
-**Status:** ARCHITECT_REQUIRED · **Tier:** T2 · **Owner:** — · **Depends On:** GEOM 1
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** — · **Depends On:** GEOM 1
 
 #### Goal
 Перенесено из `todo-0.4.3.md` (карточка PATCH-00; файл удалён, история — в git) без изменений.

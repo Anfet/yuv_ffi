@@ -1,5 +1,5 @@
 # RUNNER 1 — Дополнительные self-hosted раннеры
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Owner:** Terra · **Depends On:** — · **Rejection Count:** 0
+**Status:** BLOCKED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Owner:** Terra · **Depends On:** — · **Rejection Count:** 0
 **Было:** RA-80 (цикл 0.4.2).
 
 #### Решение Engineer D-6 (29.09.2026)

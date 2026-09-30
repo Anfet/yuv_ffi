@@ -1,5 +1,5 @@
 # PROBE 1 — Базовые линии скорости 0.4.0 против dev
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 1
+**Status:** BLOCKED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 1
 **Было:** RA-26 (цикл 0.4.2).
 
 #### Problem / Goal

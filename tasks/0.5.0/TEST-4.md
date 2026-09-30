@@ -1,5 +1,5 @@
 # TEST 4 — Карта «что изменил → что запускать»
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 0
+**Status:** BLOCKED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 0
 **Было:** RA-62 (цикл 0.4.2).
 
 #### Architect Decision

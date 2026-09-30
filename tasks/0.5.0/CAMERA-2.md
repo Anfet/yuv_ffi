@@ -1,5 +1,5 @@
 # CAMERA 2 — Виджеты камеры в example
-**Status:** ARCHITECT_REQUIRED · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 1
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 1
 
 #### Goal
 `YuvCameraView` (прямой показ на GPU; `onFrame` с прореживанием вне пути отрисовки; `capture()`; доступ к текущей геометрии) и `YuvTransformView` (`transform(CameraFrame) → YuvImage`). `CameraScreen` на новом API; детекция лиц на живом превью.

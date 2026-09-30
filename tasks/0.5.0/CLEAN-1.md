@@ -1,5 +1,5 @@
 # CLEAN 1 — Убрать следы замеров из example
-**Status:** ARCHITECT_REQUIRED · **Tier:** T3 · **Owner:** — · **Depends On:** —
+**Status:** BLOCKED · **Tier:** T3 · **Owner:** — · **Depends On:** —
 
 #### Goal
 Убрать экран `Pack00BenchScreen` и кнопку PACK-00, хуки VIEW-03 (`debugYuvCameraPreviewMobileEvent`, часы, enum), переключатель `kYuvCameraPreviewPackPlanes` (остаётся плотный импорт); `kYuvCameraPreviewFlipAndroid` заменить параметром ориентации.

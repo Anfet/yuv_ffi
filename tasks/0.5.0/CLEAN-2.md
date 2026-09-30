@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** ARCHITECT_REQUIRED · **Tier:** T2 · **Owner:** — · **Depends On:** TEST 2
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** — · **Depends On:** TEST 2
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.

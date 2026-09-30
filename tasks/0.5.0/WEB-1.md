@@ -1,5 +1,5 @@
 # WEB 1 — Веб: кадры камеры в YUV без RGBA
-**Status:** ARCHITECT_REQUIRED · **Tier:** T1 · **Owner:** — · **Depends On:** SHADER 1
+**Status:** BLOCKED · **Tier:** T1 · **Owner:** — · **Depends On:** SHADER 1
 
 #### Goal
 Исследование: `VideoFrame.copyTo()` в исходном I420/NV12 и шейдер на вебе, с учётом частичного WASM-бэкенда.
