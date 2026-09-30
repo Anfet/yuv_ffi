@@ -34,7 +34,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | BLOCKED | T3 | Luna | RA-70 | **Блокер:** ветка `vm/RA-71` не покрывает ключ `all`, требуемый для `ci.yml`; также остаётся нерешённым запуск workflow на Markdown-only push. Локальные проверки прошли, CI не запускался. |
-| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | Terra | RA-70 | **Ожидает CI:** `all+windows/RA-72`, `59a6c67`; локальный `tool/ci/windows.ps1` прошёл с MSVC DLL, 121 reference-тестом и 1188 native-пробами. [CI](https://github.com/Anfet/yuv_ffi/actions/runs/36693555804) и smoke находятся в очереди; отдельный `CI Windows` пока не появился. |
+| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | GPT-5.6 Terra | RA-70 | **Блокер Windows routing:** `835a638` создал dedicated [CI Windows run 36711016875](https://github.com/Anfet/yuv_ffi/actions/runs/36711016875) на `all+windows/RA-72`, но он завершился `failure` без jobs и без лога. Локальные `scope_guard` и MSVC native build прошли; нужен fresh Executor до негативных контролей. |
 | [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | TODO | T3 | — | RA-70 | **Готова к перезапуску:** macOS workflow и проверочный скрипт используют Bash (`.sh`); `pwsh` на runner не нужен. |
 | [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | **Готова к перезапуску:** iOS workflow и проверочный скрипт используют Bash (`.sh`); `pwsh` на runner не нужен. |
 | [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | BLOCKED | T2 | GPT-5.6 Terra | RA-70 | **Ожидает CI:** локальная проверка прошла, но новый workflow ещё не доступен; существующие CI runs в очереди. |
