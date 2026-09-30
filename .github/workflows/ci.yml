@@ -9,47 +9,8 @@ on:
     branches:
       - "release/**"
       - main
-      - "all/**"
-      - 'all\+*/**'
-      - '*\+all/**'
-      - '*\+all\+*/**'
-      - "vm/**"
-      - 'vm\+*/**'
-      - '*\+vm/**'
-      - '*\+vm\+*/**'
-      - "bindings/**"
-      - 'bindings\+*/**'
-      - '*\+bindings/**'
-      - '*\+bindings\+*/**'
-      - "linux/**"
-      - 'linux\+*/**'
-      - '*\+linux/**'
-      - '*\+linux\+*/**'
-      - "macos/**"
-      - 'macos\+*/**'
-      - '*\+macos/**'
-      - '*\+macos\+*/**'
-      - "ios/**"
-      - 'ios\+*/**'
-      - '*\+ios/**'
-      - '*\+ios\+*/**'
-      - "android/**"
-      - 'android\+*/**'
-      - '*\+android/**'
-      - '*\+android\+*/**'
-      - "windows/**"
-      - 'windows\+*/**'
-      - '*\+windows/**'
-      - '*\+windows\+*/**'
-      - "web/**"
-      - 'web\+*/**'
-      - '*\+web/**'
-      - '*\+web\+*/**'
-      - "example/**"
-      - 'example\+*/**'
-      - '*\+example/**'
-      - '*\+example\+*/**'
-    paths-ignore: ['**/*.md', 'doc/archive/**', 'doc/perf/**']
+      - "ci/**"
+    paths-ignore: ["**/*.md", "doc/**", "tasks/**"]
   workflow_dispatch:
     inputs:
       jobs:
@@ -57,15 +18,8 @@ on:
         required: true
         type: choice
         options:
-          - vm
           - bindings
           - linux
-          - macos
-          - ios
-          - android
-          - windows
-          - example
-          - web
 
 jobs:
   # YUV-26: proves ffigen.yaml's allowlist is host-independent. libclang's
@@ -76,17 +30,13 @@ jobs:
   # checkout and diffing against the committed file is a stronger proof of
   # host-independence than re-deriving the expected symbol set by hand.
   bindings-regeneration:
-    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'bindings') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+bindings/') || contains(format('+{0}', github.ref_name), '+bindings+')) }}
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'bindings' }}
     runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Check branch scope
-        shell: bash
-        run: bash tool/ci/scope_guard.sh
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -122,17 +72,13 @@ jobs:
   # used to look identical in the log, which is how broken Linux/macOS
   # packaging stayed green.
   linux-native-smoke:
-    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'linux') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+linux/') || contains(format('+{0}', github.ref_name), '+linux+')) }}
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'linux' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Check branch scope
-        shell: bash
-        run: bash tool/ci/scope_guard.sh
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2

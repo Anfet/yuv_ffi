@@ -9,19 +9,12 @@ on:
     branches:
       - "release/**"
       - main
-      - "all/**"
-      - 'all\+*/**'
-      - '*\+all/**'
-      - '*\+all\+*/**'
-      - "example/**"
-      - 'example\+*/**'
-      - '*\+example/**'
-      - '*\+example\+*/**'
+      - "ci/**"
+    paths-ignore: ["**/*.md", "doc/**", "tasks/**"]
   workflow_dispatch:
 
 jobs:
   example-analyze-and-build:
-    if: ${{ github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+example/') || contains(format('+{0}', github.ref_name), '+example+') }}
     runs-on: [self-hosted, Windows, X64]
     strategy:
       fail-fast: false
@@ -34,10 +27,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Check branch scope
-        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
-        run: bash tool/ci/scope_guard.sh
 
       - name: Analyze and build example
         shell: pwsh
