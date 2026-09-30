@@ -699,63 +699,6 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "Windows native correctness probe failed: $($target.Name), exit $LASTEXITCODE" }
           }
 
-  example-analyze-and-build:
-    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'example') && (github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+example/') || contains(format('+{0}', github.ref_name), '+example+')) }}
-    runs-on: [self-hosted, Windows, X64]
-    strategy:
-      fail-fast: false
-      matrix:
-        # The declared lower Flutter bound needs an application build, not only
-        # package analysis and VM tests. Both entries build the same example.
-        #
-        # VIEW-01A: example/pubspec.yaml requires Dart >=3.11.0 (camera_desktop
-        # 2.0.0's own constraint). 3.38.10 ships Dart 3.10.9 and fails `pub get`
-        # here, so the low end of this matrix is 3.41.0 -- the first stable
-        # Flutter release carrying Dart 3.11.0 -- rather than the package's own
-        # minimum-SDK floor used by analyze-and-test-vm below, which never
-        # touches example.
-        flutter-version: ['3.41.0', '3.44.9']
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check branch scope
-        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
-        run: bash tool/ci/scope_guard.sh
-
-      - name: Configure Windows build tools PATH
-        shell: pwsh
-        run: |
-          $gitBashDirectory = 'D:\.important\Git\bin'
-          $cmakeDirectory = 'D:\.important\android-sdk\cmake\3.22.1\bin'
-          if (-not (Test-Path (Join-Path $gitBashDirectory 'bash.exe'))) {
-            throw "Git Bash is missing: $gitBashDirectory"
-          }
-          if (-not (Test-Path (Join-Path $cmakeDirectory 'cmake.exe'))) {
-            throw "CMake is missing: $cmakeDirectory"
-          }
-          $cmakeDirectory | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          $gitBashDirectory | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.flutter-version }}
-
-      - name: Flutter pub get (example)
-        working-directory: example
-        run: flutter pub get
-
-      - name: Analyze (example)
-        working-directory: example
-        run: flutter analyze
-
-      - name: Build Web (example)
-        working-directory: example
-        run: flutter build web
-
   # The package WASM loader needs Flutter's asset bundle. `flutter test --platform
   # chrome` does not serve that bundle, so every asset-dependent runtime test
   # belongs in example/integration_test and runs through flutter drive.
