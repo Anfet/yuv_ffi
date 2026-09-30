@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi_example/view04_i420_shader.dart';
 
 /// VIEW-04 entry point: splits the preview's "accepted -> presented" interval
 /// into BGRA conversion, texture creation, and drawing.
@@ -49,7 +50,7 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
   ui.Image? _shown;
   int _repaintTick = 0;
   _DrawOrientation _drawOrientation = _DrawOrientation.none;
-  ui.FragmentShader? _shader;
+  View04I420Shader? _shader;
 
   /// Source-from-destination mapping handed to the shader, picked by
   /// [_verifyShader]: `(m00, m01, m10, m11, offsetX, offsetY)`.
@@ -119,13 +120,12 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
     if (shader == null || image == null || _shaderMapping.isEmpty) {
       return null;
     }
-    // The texture is W/4 x H*1.5, so the frame size follows from it.
-    return _ShaderDraw(shader, image, image.width * 4, image.height * 2 ~/ 3, _shaderMapping);
+    return _ShaderDraw(shader, image, _shaderMapping);
   }
 
   Future<void> _runAll() async {
     try {
-      _shader = (await ui.FragmentProgram.fromAsset('shaders/view04_i420.frag')).fragmentShader();
+      _shader = await View04I420Shader.load();
       for (final (width, height) in _sizes) {
         final frame = YuvImage.i420(width, height)..applyRgbaBytes(_pattern(width, height));
         await _verifyShader(frame);
@@ -151,7 +151,7 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
       final (stillWidth, stillHeight) = _sizes.first;
       final still = YuvImage.i420(stillWidth, stillHeight)..applyRgbaBytes(_pattern(stillWidth, stillHeight));
       await _verifyShader(still);
-      _show(await _planesTexture(still.toBytes(), stillWidth, stillHeight));
+      _show(await View04I420Shader.planesTexture(still.toBytes(), stillWidth, stillHeight));
       setState(() => _drawWithShader = true);
       _setStatus('Done: ${_results.length} scenarios, build mode $_buildMode');
       debugPrint('VIEW-04 done mode=$_buildMode');
@@ -260,8 +260,8 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
       final bytes = variant == _PathVariant.shader ? frame.toBytes() : frame.toBgraBytes();
       final convertAt = stopwatch.elapsedMicroseconds;
       final image = variant == _PathVariant.shader
-          ? await _planesTexture(bytes, frame.width, frame.height)
-          : await _texture(bytes, frame.width, frame.height, ui.PixelFormat.bgra8888);
+          ? await View04I420Shader.planesTexture(bytes, frame.width, frame.height)
+          : await View04I420Shader.texture(bytes, frame.width, frame.height, ui.PixelFormat.bgra8888);
       final textureAt = stopwatch.elapsedMicroseconds;
       _show(image);
       await SchedulerBinding.instance.endOfFrame;
@@ -287,11 +287,9 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
 
   /// Draws [source] through the shader offscreen and compares every pixel
   /// with the CPU path (turn, mirror, `toBgraBytes()`); the prototype's
-  /// numbers count only if it draws the same picture.
-  ///
-  /// The library's quarter-turn direction is not assumed: both mappings a
-  /// turn plus mirror can produce are tried, and the one that matches is kept
-  /// for the timed runs.
+  /// numbers count only if it draws the same picture. The library's
+  /// quarter-turn direction is not assumed: the orientation that matches is
+  /// kept for the timed runs.
   Future<void> _verifyShader(YuvImage source) async {
     final shader = _shader;
     if (shader == null) {
@@ -300,55 +298,14 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
     final width = source.width;
     final height = source.height;
     final expected = (source.copy().applyRotation(YuvImageRotation.rotation90)..applyFlipHorizontal()).toBgraBytes();
-    final texture = await _planesTexture(source.toBytes(), width, height);
-    final candidates = {
-      'transpose': [0.0, 1.0, 1.0, 0.0, 0.0, 0.0],
-      'anti_transpose': [0.0, -1.0, -1.0, 0.0, width - 1.0, height - 1.0],
-    };
-    final report = <String, Object>{};
-    String? matched;
-    for (final MapEntry(key: name, value: mapping) in candidates.entries) {
-      final recorder = ui.PictureRecorder();
-      _ShaderDraw(shader, texture, width, height, mapping).paint(Canvas(recorder), Offset.zero & Size(height.toDouble(), width.toDouble()));
-      final drawn = await recorder.endRecording().toImageSync(height, width).toByteData();
-      if (drawn == null) {
-        throw StateError('shader output unreadable');
-      }
-      var maxDiff = 0;
-      var mismatched = 0;
-      for (var p = 0; p < width * height; p++) {
-        for (final (rgba, bgra) in [(0, 2), (1, 1), (2, 0)]) {
-          final diff = (drawn.getUint8(p * 4 + rgba) - expected[p * 4 + bgra]).abs();
-          if (diff > maxDiff) maxDiff = diff;
-          if (diff > 1) mismatched++;
-        }
-      }
-      report[name] = {'max_diff': maxDiff, 'channels_off_by_more_than_1': mismatched};
-      if (matched == null && maxDiff <= 1) {
-        matched = name;
-        _shaderMapping = mapping;
-      }
-    }
+    final texture = await View04I420Shader.planesTexture(source.toBytes(), width, height);
+    final (matched, report) = await shader.match(texture, width, height, expected);
     texture.dispose();
-    debugPrint('VIEW-04 shader check ${width}x$height mode=$_buildMode matched=$matched ${jsonEncode(report)}');
+    debugPrint('VIEW-04 shader check ${width}x$height mode=$_buildMode matched=$matched max_diff=${jsonEncode(report)}');
     if (matched == null) {
       throw StateError('shader output differs from the CPU path: $report');
     }
-  }
-
-  Future<ui.Image> _planesTexture(Uint8List planes, int width, int height) => _texture(planes, width ~/ 4, height * 3 ~/ 2, ui.PixelFormat.rgba8888);
-
-  Future<ui.Image> _texture(Uint8List bytes, int width, int height, ui.PixelFormat pixelFormat) async {
-    final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
-    final descriptor = ui.ImageDescriptor.raw(buffer, width: width, height: height, pixelFormat: pixelFormat);
-    final codec = await descriptor.instantiateCodec();
-    try {
-      return (await codec.getNextFrame()).image;
-    } finally {
-      codec.dispose();
-      descriptor.dispose();
-      buffer.dispose();
-    }
+    _shaderMapping = View04I420Shader.orientations(width, height)[matched] ?? const [];
   }
 
   /// Control for the full-path runs: `toBgraBytes()` on a plain copy and on a
@@ -581,30 +538,18 @@ class _FramePainter extends CustomPainter {
       (oldDelegate.shaderDraw == null) != (shaderDraw == null);
 }
 
-/// One shader draw of an I420 planes texture, turned and mirrored by
-/// [mapping] into a frame of the swapped size.
+/// One shader draw of an I420 planes texture, oriented by [mapping].
 class _ShaderDraw {
-  final ui.FragmentShader shader;
+  final View04I420Shader shader;
   final ui.Image planes;
-  final int frameWidth;
-  final int frameHeight;
   final List<double> mapping;
 
-  Size get outputSize => Size(frameHeight.toDouble(), frameWidth.toDouble());
+  Size get outputSize => View04I420Shader.outputSize(mapping, planes.width * 4, planes.height * 2 ~/ 3);
 
-  const _ShaderDraw(this.shader, this.planes, this.frameWidth, this.frameHeight, this.mapping);
+  const _ShaderDraw(this.shader, this.planes, this.mapping);
 
   /// Fills [rect], whose local coordinates are output pixels.
-  void paint(Canvas canvas, Rect rect) {
-    // Float uniforms in declaration order: uFrameSize, uMap, uOffset,
-    // uTextureSize.
-    final floats = [frameWidth.toDouble(), frameHeight.toDouble(), ...mapping, planes.width.toDouble(), planes.height.toDouble()];
-    for (var i = 0; i < floats.length; i++) {
-      shader.setFloat(i, floats[i]);
-    }
-    shader.setImageSampler(0, planes);
-    canvas.drawRect(rect, Paint()..shader = shader);
-  }
+  void paint(Canvas canvas, Rect rect) => shader.draw(canvas, rect, planes, mapping);
 }
 
 extension on List<int> {
