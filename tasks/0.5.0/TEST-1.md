@@ -1,5 +1,5 @@
 # TEST 1 — Инвентаризация тест-сьюта
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** —
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Luna · **Depends On:** —
 
 #### Goal
 Одна таблица по всем тестовым файлам пакета и example: что каждый файл защищает, сколько стоит и где то же самое
@@ -61,4 +61,11 @@
    вывод сверки — в Executor Report.
 
 #### Executor Report
+**Status:** REVIEW
+
+- Added `TEST-1-inventory.md` from `dev` SHA `9fbd1564e70965950b5f552221b85e154fb66ba3` with 95 tracked test-file rows.
+- VM JSON run: 731 passed, 1 skipped, 0 failed in 37.75 s; example run: 71 passed, 0 skipped, 0 failed in 19.27 s. Release tag exclusion was temporarily removed and `dart_test.yaml` restored.
+- Windows web/integration cases were not run; their row counts use source declarations.
+- Limitation for review: contract labels and overlap fields are a first-pass inventory only; most rows use filename-derived labels and need contract-by-contract source comparison before TEST 5 can use them to remove or merge tests.
+- Validation: native DLL build succeeded; both JSON test runs exited 0; tracked table row count is 95. `dart_test.yaml` unchanged.
 #### Review
