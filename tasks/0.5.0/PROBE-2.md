@@ -1,5 +1,6 @@
-# RA-27 — Правило проб в AGENTS.md
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-26, релиз 0.4.2 (D-6) · **Rejection Count:** 0
+# PROBE 2 — Правило проб для задач
+**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** PROBE 1, TEST 4 · **Rejection Count:** 0
+**Было:** RA-27 (цикл 0.4.2).
 
 #### Architect Decision
 Добавить в `AGENTS.md` проекта раздел «Probes»:

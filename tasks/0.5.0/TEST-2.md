@@ -1,5 +1,6 @@
-# RA-60 — Теги тест-сьюта
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** RA-70, RA-71, RA-72, RA-73, RA-74, RA-75, RA-77, RA-78 · **Rejection Count:** 0
+# TEST 2 — Теги тест-сьюта
+**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
+**Было:** RA-60 (цикл 0.4.2).
 
 #### Problem / Goal
 Любая правка запускает всё: 700+ VM-тестов, 1188 проб, матрицу 119, все платформы. Нужно запускать только то, что относится к изменению.

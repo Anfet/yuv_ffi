@@ -1,5 +1,6 @@
-# RA-26 — Пробы: замер скорости
-**Status:** REWORK · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** релиз 0.4.2 (D-6) · **Rejection Count:** 1
+# PROBE 1 — Базовые линии скорости 0.4.0 против dev
+**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 1
+**Было:** RA-26 (цикл 0.4.2).
 
 #### Problem / Goal
 Агент должен одной командой узнать по каждой операции: корректна ли она, стала ли быстрее или медленнее. Регрессия 0.4 (ядра в 10–350 раз медленнее 0.2.4) была замечена только по жалобе.

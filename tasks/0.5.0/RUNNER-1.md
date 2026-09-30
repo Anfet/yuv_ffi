@@ -1,5 +1,6 @@
-# RA-80 — Дополнительные self-hosted раннеры
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Owner:** Terra · **Depends On:** релиз 0.4.2 · **Rejection Count:** 0
+# RUNNER 1 — Дополнительные self-hosted раннеры
+**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Owner:** Terra · **Depends On:** — · **Rejection Count:** 0
+**Было:** RA-80 (цикл 0.4.2).
 
 #### Решение Engineer D-6 (29.09.2026)
 Для 0.4.2 второй раннер не нужен: полных прогонов будет несколько, а не десятки, одна платформа запускается префиксом ветки, Web-джоба ускоряется RA-56. Карточка — после релиза. Сейчас: удалить офлайн-регистрацию `dev.working-2` (runner id `24`) через `gh api -X DELETE repos/Anfet/yuv_ffi/actions/runners/24` и каталог `D:\actions-runner-yuv-2`; метки `android-emulator`, `web`, `pixel3` на `dev.working` оставить. Это делает RA-54 (уборка).
