@@ -13,7 +13,7 @@
 ## Где мы сейчас
 
 - **Сделано:** чистка репозитория и документации, пробы корректности (1188 случаев) на Windows, Linux, macOS, iOS, Android и Web, пересобранный WASM, запуск CI по префиксу ветки. Последний полный CI: run [36630795431](https://github.com/Anfet/yuv_ffi/actions/runs/36630795431), 11/11 PASS на `e6a1eab`. Ускорение native-ядер (C-01…C-11) принято раньше.
-- **Сейчас:** RA-25, RA-79, RA-56 и RA-70 завершены. После интеграции RA-56/70 полный release CI [36671698935](https://github.com/Anfet/yuv_ffi/actions/runs/36671698935) прошёл 11/11 на `57f95a4226edab6c16c90c34d45de9ee8bb2e9ec`; smoke workflow также прошёл на том же SHA. RA-71…78 разблокированы и готовы к запуску; RA-77 зависит от уже принятой RA-56. Pub.dev публикации не будет.
+- **Сейчас:** RA-25, RA-79, RA-56 и RA-70 завершены. После интеграции RA-56/70 полный release CI [36671698935](https://github.com/Anfet/yuv_ffi/actions/runs/36671698935) прошёл 11/11 на `57f95a4226edab6c16c90c34d45de9ee8bb2e9ec`; smoke workflow также прошёл на том же SHA. RA-71…76 запущены, но сейчас BLOCKED по платформенным gate/CI (см. дашборд и карточки); RA-77 и RA-78 готовы к запуску, RA-77 зависит от принятой RA-56. Pub.dev публикации не будет.
 - **SHA РК:** `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026), принят T1; замороженные пути не менялись.
 
 ## Дашборд
@@ -33,9 +33,9 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | IN_PROGRESS | T3 | Luna | RA-70 | **Готова к запуску:** отдельный workflow VM-тестов на двух версиях Flutter. |
-| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | IN_PROGRESS | T2 | Terra | RA-70 | **Готова к запуску:** отдельный Windows workflow для native build, проб и app smoke. |
-| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | IN_PROGRESS | T3 | Luna | RA-70 | **Готова к запуску:** отдельный macOS workflow для native build и app smoke. |
+| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | BLOCKED | T3 | Luna | RA-70 | **Блокер:** ветка `vm/RA-71` не покрывает ключ `all`, требуемый для `ci.yml`; также остаётся нерешённым запуск workflow на Markdown-only push. Локальные проверки прошли, CI не запускался. |
+| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | Terra | RA-70 | **Блокер:** ветка `windows/RA-72` не покрывает ключ `all`, требуемый для `ci.yml`; `New-CiNativeBuild` также возвращает build-лог вместе с путём. Native build отдельно прошёл. |
+| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | BLOCKED | T3 | Luna | RA-70 | **Блокер:** не подтверждены наличие и запуск `pwsh` на `yuv-self-hosted`; реализация не начата. |
 | [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | BLOCKED | T3 | GPT-6 Luna | RA-70 | **Ожидает проверки runner gate:** наличие и запуск pwsh на yuv-self-hosted не подтверждены; реализация не начата. |
 | [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | BLOCKED | T2 | GPT-5.6 Terra | RA-70 | **Ожидает CI:** локальная проверка прошла, но новый workflow ещё не доступен; существующие CI runs в очереди. |
 | [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | BLOCKED | T3 | GPT-6 Luna | RA-70 | **Ожидает Linux-среды:** полная локальная проверка обязательна до push; на текущем Windows runner нет Linux shell/WSL. |
