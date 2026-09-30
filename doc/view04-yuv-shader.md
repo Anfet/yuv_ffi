@@ -4,7 +4,7 @@ Pixel 3 `8B1X11QLW`, Android 12, Flutter 3.44.9. Движок: Impeller снач
 работает на **OpenGLES** (`Using the Impeller rendering backend (OpenGLES)` в логе). Ветка
 `example/VIEW-04-draw-split` от `release/0.4.2` `7e226c1`, `lib/` и native не менялись.
 
-Стенд: [`example/lib/view04_draw_bench.dart`](../../../../example/lib/view04_draw_bench.dart), отдельная точка
+Стенд: [`example/lib/view04_draw_bench.dart`](../example/lib/view04_draw_bench.dart), отдельная точка
 входа (`flutter build apk --<mode> -t lib/view04_draw_bench.dart`), запуск через `adb shell am start`,
 результат из logcat. Синтетический I420 (tight), тот же градиент, что в BGRA-00…02. Каждый кадр идёт путём
 `YuvFramePresenter`: `toBgraBytes()` → `ImmutableBuffer` → `ImageDescriptor.raw` → codec → `ui.Image` →
@@ -64,7 +64,7 @@ vsync + build/layout/paint); `total` — всё вместе. `planes_as_rgba_up
   до конца окна. На стадии, измеренные `Stopwatch`, это не влияет.
 - Разброс конвертации 1080p между прогонами (27 против 36 мс) — два прогона, причина не исследована.
 
-Сырые логи (logcat, `.txt`, потому что `*.log` в `.gitignore`): [`view04_pixel3_raw/`](view04_pixel3_raw/).
+Сырые логи logcat удалены из рабочего дерева; они есть в git: `git show 0b62e4f:doc/archive/perf/results/view04_pixel3_raw/<файл>` (`release_run1…7.txt`, `profile_run1.txt`, `debug_run1.txt`, `camera_release_run1.txt`).
 
 ## Полный путь кадра: CPU-поворот, поворот на Canvas, шейдер (release, прогон 7)
 
@@ -74,7 +74,7 @@ vsync + build/layout/paint); `total` — всё вместе. `planes_as_rgba_up
 
 - `cpu` — поворот и флип в памяти, затем `toBgraBytes()`, как превью работает сейчас;
 - `canvas` — `toBgraBytes()` неповёрнутого кадра, поворот и зеркало через трансформацию Canvas;
-- `shader` — плоскости I420 одной RGBA-текстурой W/4×H·1,5 ([`example/shaders/view04_i420.frag`](../../../../example/shaders/view04_i420.frag));
+- `shader` — плоскости I420 одной RGBA-текстурой W/4×H·1,5 ([`example/shaders/view04_i420.frag`](../example/shaders/view04_i420.frag));
   конвертация BT.601 (та же целочисленная формула, что в `yuv_convert_v1.c`), поворот и зеркало в шейдере.
 
 **Корректность шейдера:** перед замером выход шейдера сравнивается попиксельно с CPU-путём (поворот, флип,
@@ -98,7 +98,7 @@ GPU-стоимость шейдера в пределах разброса.
 
 ## Живая камера (release, `camera_release_run1.txt`)
 
-Стенд [`example/lib/view04_camera_bench.dart`](../../../../example/lib/view04_camera_bench.dart): фронтальная
+Стенд [`example/lib/view04_camera_bench.dart`](../example/lib/view04_camera_bench.dart): фронтальная
 камера Pixel 3, `ResolutionPreset.medium`, `ImageFormatGroup.yuv420`, импорт через `toYuvImage()` (плотный I420
 720×480 после PACK-01C), один кадр в полёте, как в `YuvCameraPreview`. `cpu` — путь превью сегодня
 (поворот `rotation270` и флип в памяти, BGRA, текстура); `shader` — плоскости одной текстурой, конвертация,

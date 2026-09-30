@@ -1,1 +1,0 @@
-RA25_RESULT {"schema":1,"gitSha":"43835b542bddc16ed5edbd373dbb86ff02c35ac8","runId":"43835b542bddc16ed5edbd373dbb86ff","abi":"arm64-v8a","smoke":"PASS","probe":"PASS","caseCount":1188}
