@@ -59,7 +59,7 @@ Linux (RA-76) не проверялся локально: Linux-машины н�
 | **Тесты 3 — срезы проб** | Фильтр проб по операции и формату; отчёт называет выполненный срез. | RA-61 |
 | **Тесты 4 — что запускать при изменении** | Карта «изменённый путь → команды» по `tool/ci/scope_guard.sh`. | RA-62 |
 | **Тесты 5 — правило проб для задач** | Поле `Probe` в карточке и правило в `AGENTS.md`. | RA-27 |
-| **Тесты 6 — чистка дублей** | Каждое удаление доказывается мутацией: ошибка, от которой защищает тест, ловится другим тестом. Кандидаты: `conversions_test` / `reference_native_conversions_test` / `independent_results_test` / пробы; `test/web/wasm_parity_*` против `example/integration_test/*_web_test`. | — |
+| **Тесты 6 — чистка дублей** | Каждое удаление доказывается мутацией: ошибка, от которой защищает тест, ловится другим тестом. Кандидаты: `conversions_test` / `reference_native_conversions_test` / `independent_results_test` / пробы; `test/web/wasm_parity_*` против `example/integration_test/*_web_test`. Независимый эталон вместо собственного кода — libyuv ([`doc/independent-oracles.md`](doc/independent-oracles.md)). | — |
 | **Тесты 7 — тихий вывод** | Компактный репортер в `tool/ci/*`: тихий успех, точный провал. | — |
 
 ### Этап 2 — база скорости
@@ -160,6 +160,7 @@ D-14; отчёт Engineer (SHA, список run, результат Pixel 3, и
 - Перед запуском убивать старый драйвер, иначе порт 4444 занят прежней версией (`bind() failed: Address already in use`).
 - `flutter drive` возвращает exit 0 и при провале: судить только по строке `All tests passed` (так делает `tool/ci/drive.ps1`), прогон подтверждать негативным контролем.
 - Если ручной `flutter test --platform chrome` на Windows висит на `loading <test>.dart`, запускать на Mac.
+- `flutter test --platform chrome` не отдаёт asset bundle, поэтому тесты с ассетами (WASM-модуль, эталонные PNG) в браузере запускаются только через `flutter drive`.
 
 ### Mac (self-hosted раннер `yuv-self-hosted`)
 
