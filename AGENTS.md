@@ -44,8 +44,8 @@
 ## CI соглашения
 
 - Платформенная проверка живёт в `.github/workflows/ci-<name>.yml` и содержит одну джобу. В workflow остаются checkout, выбор runner, `tool/ci/scope_guard.sh` первым шагом и запуск одного `tool/ci/<name>`-скрипта.
-- Логику проверки размещать в `tool/ci/<name>.ps1` для Windows и macOS либо в `tool/ci/<name>.sh` для Linux. Тот же скрипт запускать локально до push.
+- Логику проверки размещать в `tool/ci/<name>.ps1` для Windows и в `tool/ci/<name>.sh` для Linux и macOS. Тот же скрипт запускать локально до push.
 - Триггеры платформенных workflow: `release/**`, `main`, `all/**` и ветка с ключом платформы; `workflow_dispatch` остаётся доступен. Не использовать `paths`: соответствие путей и ключей хранится только в `tool/ci/scope_guard.sh`.
 - Для workflow использовать `concurrency` с группой `ci-<name>-${{ github.ref }}`. На `release/**` прогоны не отменяются, на прочих ветках новый прогон отменяет предыдущий.
-- `tool/ci/drive.ps1` запускает `flutter drive` из `example/` и принимает результат только при exit code `0` и строке `All tests passed`. Не вызывать `flutter drive` напрямую из PowerShell workflow.
+- `tool/ci/drive.ps1` запускает `flutter drive` из `example/` и принимает результат только при exit code `0` и строке `All tests passed`. Не вызывать `flutter drive` напрямую из PowerShell workflow. Bash-скрипты macOS/Linux должны соблюдать тот же контракт запуска и проверки результата.
 - `tool/ci/_common.ps1` содержит общие функции для определения корня репозитория, Flutter, временного каталога, native-сборки и добавления каталогов в `PATH`.
