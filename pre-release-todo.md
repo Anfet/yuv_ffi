@@ -13,7 +13,7 @@
 ## Где мы сейчас
 
 - **Сделано:** чистка репозитория и документации, пробы корректности (1188 случаев) на Windows, Linux, macOS, iOS, Android и Web, пересобранный WASM, запуск CI по префиксу ветки. Последний полный CI: run [36630795431](https://github.com/Anfet/yuv_ffi/actions/runs/36630795431), 11/11 PASS на `e6a1eab`. Ускорение native-ядер (C-01…C-11) принято раньше.
-- **Сейчас:** RA-25 и RA-79 завершены и архивированы после Engineer ACCEPT и полного release CI [36630795431](https://github.com/Anfet/yuv_ffi/actions/runs/36630795431): 11/11 jobs PASS на `e6a1eabb0fbe36750853caad98c059ea838447d2`. RA-56 (`b5de994`, Web CI [36638775604](https://github.com/Anfet/yuv_ffi/actions/runs/36638775604) PASS за 5:10) и RA-70 (`f1557b6`, smoke [36619948343](https://github.com/Anfet/yuv_ffi/actions/runs/36619948343) PASS) приняты ревью 30.09 и ждут слияния и полного release CI. RA-71…78 остаются BLOCKED до интеграции RA-70; RA-77 также зависит от RA-56. Pub.dev публикации не будет.
+- **Сейчас:** RA-25, RA-79, RA-56 и RA-70 завершены. После интеграции RA-56/70 полный release CI [36671698935](https://github.com/Anfet/yuv_ffi/actions/runs/36671698935) прошёл 11/11 на `57f95a4226edab6c16c90c34d45de9ee8bb2e9ec`; smoke workflow также прошёл на том же SHA. RA-71…78 разблокированы и готовы к запуску; RA-77 зависит от уже принятой RA-56. Pub.dev публикации не будет.
 - **SHA РК:** `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026), принят T1; замороженные пути не менялись.
 
 ## Дашборд
@@ -33,16 +33,14 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-56](tasks/release-0.4.2/RA-56.md) | MERGE_CI_PENDING | T2 | GPT-5.6 Terra (`all/RA-56-rework`) | RA-55, RA-79 | **Web-ускорение принято ревью 30.09.** Код `b5de994`, report `c8bf3c0`; Web CI [36638775604](https://github.com/Anfet/yuv_ffi/actions/runs/36638775604) PASS за 5:10; негативные контроли приняты. Следующий шаг: слияние и полный release CI. Rejection count: 2. |
-| [ ] | [RA-70](tasks/release-0.4.2/RA-70.md) | MERGE_CI_PENDING | T2 | GPT-5.6 Terra (`all/RA-70`, `f1557b6`) | RA-53, RA-55 | **Общие правила CI приняты ревью 30.09.** Временный tag trigger и исключение scope guard удалены, remote tag отсутствует; smoke [36619948343](https://github.com/Anfet/yuv_ffi/actions/runs/36619948343) PASS. Следующий шаг: слияние и полный release CI. Rejection count: 1. |
-| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | BLOCKED | T3 | RA-70 merge/CI | RA-70 | **Ждёт интеграции RA-70 и полного release CI:** затем отдельный workflow VM-тестов на двух версиях Flutter. |
-| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | RA-70 merge/CI | RA-70 | **Ждёт интеграции RA-70 и полного release CI:** затем отдельный Windows workflow для native build, проб и app smoke. |
-| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | BLOCKED | T3 | RA-70 merge/CI | RA-70 | **Ждёт интеграции RA-70 и полного release CI:** затем отдельный macOS workflow для native build и app smoke. |
-| [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | BLOCKED | T3 | RA-70 merge/CI | RA-70 | **Ждёт интеграции RA-70 и полного release CI:** затем отдельный iOS workflow для Pods, симулятора и проб. |
-| [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | BLOCKED | T2 | RA-70 merge/CI | RA-70 | **Ждёт интеграции RA-70 и полного release CI:** затем отдельный Android workflow для трёх ABI, эмулятора и проб. |
-| [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | BLOCKED | T3 | RA-70 merge/CI | RA-70 | **Ждёт интеграции RA-70 и полного release CI:** затем отдельный Linux workflow; это единственная GitHub-hosted job. |
-| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | BLOCKED | T2 | RA-70/56 merge/CI | RA-70, RA-56 | **Ждёт интеграции RA-70 и RA-56 и полного release CI:** затем отдельный Web workflow для WASM, browser tests и эталонной матрицы. |
-| [ ] | [RA-78](tasks/release-0.4.2/RA-78.md) | BLOCKED | T3 | RA-70 merge/CI | RA-70 | **Ждёт интеграции RA-70 и полного release CI:** затем отдельный example workflow с analyze и сборкой на Flutter 3.41.0 и 3.44.9. |
+| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный workflow VM-тестов на двух версиях Flutter. |
+| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70 | **Готова к запуску:** отдельный Windows workflow для native build, проб и app smoke. |
+| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный macOS workflow для native build и app smoke. |
+| [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный iOS workflow для Pods, симулятора и проб. |
+| [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | TODO | T2 | — | RA-70 | **Готова к запуску:** отдельный Android workflow для трёх ABI, эмулятора и проб. |
+| [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный Linux workflow; это единственная GitHub-hosted job. |
+| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | TODO | T2 | — | RA-70, RA-56 | **Готова к запуску:** отдельный Web workflow для WASM, browser tests и эталонной матрицы. |
+| [ ] | [RA-78](tasks/release-0.4.2/RA-78.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный example workflow с analyze и сборкой на Flutter 3.41.0 и 3.44.9. |
 | [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | BLOCKED | T3 | Предыдущие карточки | RA-70…78 | **Ждёт завершения платформенных workflow RA-71…78:** затем разметить тесты тегами, оставив по умолчанию smoke + contract. |
 | [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | BLOCKED | T2 | RA-60 | RA-60 | **Ждёт RA-60:** затем добавить выбор операции/формата и явный отчёт о выполненном срезе проб. |
 | [ ] | [RA-62](tasks/release-0.4.2/RA-62.md) | BLOCKED | T3 | RA-60/61 | RA-60, RA-61 | **Ждёт RA-60 и RA-61:** затем описать карту «что изменил → что запускать» по `tool/ci/scope_guard.sh`. |
