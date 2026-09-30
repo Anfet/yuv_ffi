@@ -53,6 +53,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  shaders:
+    # VIEW-04 draw bench prototype only; see lib/view04_draw_bench.dart.
+    - shaders/view04_i420.frag
   assets:
     # Reference fixtures. The example package cannot bundle assets
     # from outside its own root (../test/...), so these are a build-time copy
