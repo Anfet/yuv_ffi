@@ -33,7 +33,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | AWAITING_EXTERNAL | T3 | Luna | RA-70 | **Исправлен Flutter setup в Windows workflow:** коммит `78005a4`; [CI VM run 36699200551](https://github.com/Anfet/yuv_ffi/actions/runs/36699200551) ждёт self-hosted runner. Локальные VM и drive проверки прошли повторно. |
+| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | AWAITING_EXTERNAL | T3 | Luna | RA-70 | **Flutter analyze совместим с 3.38.x:** info diagnostics больше не фатальны, warnings/errors остаются фатальными. Локальные VM проверки прошли на 3.38.4 и 3.44.9; drive прошёл на 3.44.9. Исправление отправляется; ожидается новая матрица CI на точном SHA. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | Terra | RA-70 | **Блокер:** ветка `windows/RA-72` не покрывает ключ `all`, требуемый для `ci.yml`; `New-CiNativeBuild` также возвращает build-лог вместе с путём. Native build отдельно прошёл. |
 | [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | TODO | T3 | — | RA-70 | **Готова к перезапуску:** macOS workflow и проверочный скрипт используют Bash (`.sh`); `pwsh` на runner не нужен. |
 | [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | **Готова к перезапуску:** iOS workflow и проверочный скрипт используют Bash (`.sh`); `pwsh` на runner не нужен. |

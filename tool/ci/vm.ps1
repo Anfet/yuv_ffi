@@ -9,7 +9,7 @@ try {
   Add-CiPath 'D:\.important\android-sdk\cmake\3.22.1\bin'
 
   Invoke-CiNativeCommand flutter pub get --no-example
-  Invoke-CiNativeCommand flutter analyze lib test
+  Invoke-CiNativeCommand flutter analyze --no-fatal-infos lib test
 
   New-CiNativeBuild `
     -Name 'yuv-ffi-vm-native' `
