@@ -1,0 +1,37 @@
+name: CI macOS
+
+concurrency:
+  group: ci-macos-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
+
+on:
+  push:
+    branches:
+      - "release/**"
+      - main
+      - "all/**"
+      - 'all\+*/**'
+      - '*\+all/**'
+      - '*\+all\+*/**'
+      - "macos/**"
+      - 'macos\+*/**'
+      - '*\+macos/**'
+      - '*\+macos\+*/**'
+  workflow_dispatch:
+
+jobs:
+  macos-native-smoke:
+    runs-on: [self-hosted, macOS, X64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: bash
+        run: bash tool/ci/scope_guard.sh
+
+      - name: Run macOS native checks
+        shell: bash
+        run: bash tool/ci/macos.sh
