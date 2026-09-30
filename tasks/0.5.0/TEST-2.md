@@ -1,5 +1,5 @@
 # TEST 2 — Теги тест-сьюта
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
+**Status:** ARCHITECT_REQUIRED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
 **Было:** RA-60 (цикл 0.4.2).
 
 #### Problem / Goal
@@ -21,3 +21,13 @@
 #### Definition of Done
 - [ ] Каждый файл имеет ровно один основной тег; `tags_coverage_test` зелёный
 - [ ] `flutter test`, `--tags probe`, `--tags reference` дают в сумме то же число тестов, что прежний полный прогон
+
+#### Executor Report
+Остановлено до реализации: требования к selector по умолчанию конфликтуют с уже записанным решением Architect по поведению Flutter test runner.
+
+- Эта карточка требует, чтобы `flutter test` без аргументов выбирал только `smoke + contract`, а явные `--tags probe` и `--tags reference` оставались рабочими.
+- Решение в `docs/RA-60-architect:tasks/release-0.4.2/RA-60.md` фиксирует техническое ограничение: package selector `include_tags` пересекается с CLI `--tags`, а `exclude_tags` тоже блокирует исключённые теги при CLI-запуске. Поэтому Flutter не может получить селективный default и одновременно прямые селекторы отдельных исключённых групп из одной статической конфигурации.
+- Тот Architect Decision предписывает оставить в `dart_test.yaml` только объявления тегов, считать `flutter test` полным прогоном, а обычный выборочный запуск задавать явно через `flutter test --tags 'smoke || contract'`; `tool/ci/vm.ps1` должен использовать этот явный selector. План 0.5.0 требует учитывать это решение, но текущая карточка не обновляет контракт по умолчанию.
+- Текущая конфигурация `dart_test.yaml` на `dev` задаёт `exclude_tags: release`; она также исключает `release` из прямого запуска по тегу. Реализация без уточнения контракта нарушила бы либо Definition of Done этой карточки, либо записанное техническое решение.
+
+Требуется обновить Architect Decision и Definition of Done этой карточки: принять полный `flutter test` как default и четыре явные непересекающиеся группы, либо выбрать иной способ запуска, который сохраняет оба требования. Код и тесты не менялись.
