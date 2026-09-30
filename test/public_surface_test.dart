@@ -1,3 +1,5 @@
+@Tags(['contract'])
+
 // Deliberately imports no internal `package:yuv_ffi/src/...` path -- only
 // Dart SDK libraries, the test framework, and `package:yuv_ffi/yuv_ffi.dart`
 // itself -- unlike `rel06_deprecated_api_test.dart`'s hidden-impl check, which
