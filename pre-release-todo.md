@@ -33,9 +33,9 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный workflow VM-тестов на двух версиях Flutter. |
-| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | TODO | T2 | — | RA-70 | **Готова к запуску:** отдельный Windows workflow для native build, проб и app smoke. |
-| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный macOS workflow для native build и app smoke. |
+| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | IN_PROGRESS | T3 | Luna | RA-70 | **Готова к запуску:** отдельный workflow VM-тестов на двух версиях Flutter. |
+| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | IN_PROGRESS | T2 | Terra | RA-70 | **Готова к запуску:** отдельный Windows workflow для native build, проб и app smoke. |
+| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | IN_PROGRESS | T3 | Luna | RA-70 | **Готова к запуску:** отдельный macOS workflow для native build и app smoke. |
 | [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный iOS workflow для Pods, симулятора и проб. |
 | [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | TODO | T2 | — | RA-70 | **Готова к запуску:** отдельный Android workflow для трёх ABI, эмулятора и проб. |
 | [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный Linux workflow; это единственная GitHub-hosted job. |
