@@ -10,13 +10,13 @@ on:
       - 'release/**'
       - main
       - 'all/**'
-      - 'all\\+*/**'
-      - '*\\+all/**'
-      - '*\\+all\\+*/**'
+      - 'all+*/**'
+      - '*+all/**'
+      - '*+all+*/**'
       - 'windows/**'
-      - 'windows\\+*/**'
-      - '*\\+windows/**'
-      - '*\\+windows\\+*/**'
+      - 'windows+*/**'
+      - '*+windows/**'
+      - '*+windows+*/**'
   workflow_dispatch:
 
 jobs:
