@@ -13,7 +13,7 @@
 ## Где мы сейчас
 
 - **Сделано:** чистка репозитория и документации, пробы корректности (1188 случаев) на Windows, Linux, macOS, iOS, Android и Web, пересобранный WASM, запуск CI по префиксу ветки. Последний полный CI: run [36630795431](https://github.com/Anfet/yuv_ffi/actions/runs/36630795431), 11/11 PASS на `e6a1eab`. Ускорение native-ядер (C-01…C-11) принято раньше.
-- **Сейчас:** RA-25, RA-79, RA-56 и RA-70 завершены. После интеграции RA-56/70 полный release CI [36671698935](https://github.com/Anfet/yuv_ffi/actions/runs/36671698935) прошёл 11/11 на `57f95a4226edab6c16c90c34d45de9ee8bb2e9ec`; smoke workflow также прошёл на том же SHA. RA-71, RA-72, RA-75 и RA-76 остаются BLOCKED; RA-73 и RA-74 возвращены в TODO после перехода macOS CI на Bash; RA-77 и RA-78 готовы к запуску, RA-77 зависит от принятой RA-56. Pub.dev публикации не будет.
+- **Сейчас:** RA-25, RA-79, RA-56 и RA-70 завершены. После интеграции RA-56/70 полный release CI [36671698935](https://github.com/Anfet/yuv_ffi/actions/runs/36671698935) прошёл 11/11 на `57f95a4226edab6c16c90c34d45de9ee8bb2e9ec`; smoke workflow также прошёл на том же SHA. RA-71, RA-72, RA-73, RA-74, RA-75 и RA-76 готовы к ручному ревью; ревью не запускалось. Для RA-73 негативные routing checks не подтверждены. RA-77 и RA-78 готовы к запуску, RA-77 зависит от принятой RA-56. Pub.dev публикации не будет.
 - **SHA РК:** `a4f17c1efa2d0098e39deb59361cea5597eb06cb` (29.09.2026), принят T1; замороженные пути не менялись.
 
 ## Дашборд
@@ -33,14 +33,13 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | AWAITING_EXTERNAL | T3 | Luna | RA-70 | **Flutter analyze совместим с 3.38.x:** info diagnostics больше не фатальны, warnings/errors остаются фатальными. Локальные VM проверки прошли на 3.38.4 и 3.44.9; drive прошёл на 3.44.9. Исправление отправляется; ожидается новая матрица CI на точном SHA. |
-| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | Terra | RA-70 | **Блокер:** ветка `windows/RA-72` не покрывает ключ `all`, требуемый для `ci.yml`; `New-CiNativeBuild` также возвращает build-лог вместе с путём. Native build отдельно прошёл. |
-| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | TODO | T3 | — | RA-70 | **Готова к перезапуску:** macOS workflow и проверочный скрипт используют Bash (`.sh`); `pwsh` на runner не нужен. |
-| [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | **Готова к перезапуску:** iOS workflow и проверочный скрипт используют Bash (`.sh`); `pwsh` на runner не нужен. |
-| [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | BLOCKED | T2 | GPT-5.6 Terra | RA-70 | **Ожидает CI:** локальная проверка прошла, но новый workflow ещё не доступен; существующие CI runs в очереди. |
-| [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | BLOCKED | T3 | GPT-6 Luna | RA-70 | **Ожидает Linux-среды:** полная локальная проверка обязательна до push; на текущем Windows runner нет Linux shell/WSL. |
-| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | TODO | T2 | — | RA-70, RA-56 | **Готова к запуску:** отдельный Web workflow для WASM, browser tests и эталонной матрицы. |
-| [ ] | [RA-78](tasks/release-0.4.2/RA-78.md) | TODO | T3 | — | RA-70 | **Готова к запуску:** отдельный example workflow с analyze и сборкой на Flutter 3.41.0 и 3.44.9. |
+| [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | ACCEPTED | T2 | — | RA-70 | **Windows routing controls приняты T1.** Accepted head `3ddc6e619505ad9f54fb26116ea9cedd6b1cf2f9`; CI Windows [36730099000](https://github.com/Anfet/yuv_ffi/actions/runs/36730099000) успешен, оба negative controls проверены. Ждёт integration batch. |
+| [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | ACCEPTED | T3 | — | RA-70 | **macOS workflow принят T2; ждёт повторного integration batch.** Review-accepted head `5472b51` вошёл в локальную подготовительную ветку; интеграция не завершена, так как batch остановлен на конфликте RA-75. |
+| [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | ACCEPTED | T3 | — | RA-70 | **iOS workflow принят T2; ждёт повторного integration batch.** Review-accepted head `1e1ebb3` вошёл в локальную подготовительную ветку; интеграция не завершена, так как batch остановлен на конфликте RA-75. |
+| [ ] | [RA-75](tasks/release-0.4.2/RA-75.md) | TODO | T2 | — | RA-70 | **Интеграция остановлена на конфликте ci.yml.** Review-accepted head `990182f` конфликтует с уже объединёнными RA-73/74 при слиянии изменений в `.github/workflows/ci.yml`. Нужен fresh Executor, чтобы подготовить merge-ready вариант; затем повторить полный batch RA-73–75 и одну интеграционную проверку. |
+| [ ] | [RA-76](tasks/release-0.4.2/RA-76.md) | DEFERRED | T3 | — | RA-70 | **Отложена: Linux-машины нет.** Возобновить, когда станет доступна Linux-среда для обязательного локального `bash tool/ci/linux.sh`; GitHub `ubuntu-latest` не заменяет локальный запуск по текущему DoD. |
+| [ ] | [RA-77](tasks/release-0.4.2/RA-77.md) | TODO | T2 | — | RA-70, RA-56 | **Повторить два negative controls без `[skip ci]`.** T1 отклонил: оба контрольных коммита подавили push workflows из-за маркера `[skip ci]`, поэтому отсутствие Web runs не доказывает routing. Положительный Web CI [36716893456](https://github.com/Anfet/yuv_ffi/actions/runs/36716893456) успешен. |
+| [ ] | [RA-78](tasks/release-0.4.2/RA-78.md) | ACCEPTED | T3 | — | RA-70 | **Example workflow принят T2.** Accepted SHA `cbc1deb84b2968b6e048b1689c750e3312d005d7`; scope guard, changed-file scope и workflow contract приняты. Example CI [36731738636](https://github.com/Anfet/yuv_ffi/actions/runs/36731738636), CI [36731738425](https://github.com/Anfet/yuv_ffi/actions/runs/36731738425) и smoke [36731738435](https://github.com/Anfet/yuv_ffi/actions/runs/36731738435) прошли. |
 | [ ] | [RA-60](tasks/release-0.4.2/RA-60.md) | BLOCKED | T3 | Предыдущие карточки | RA-70…78 | **Ждёт завершения платформенных workflow RA-71…78:** затем разметить тесты тегами, оставив по умолчанию smoke + contract. |
 | [ ] | [RA-61](tasks/release-0.4.2/RA-61.md) | BLOCKED | T2 | RA-60 | RA-60 | **Ждёт RA-60:** затем добавить выбор операции/формата и явный отчёт о выполненном срезе проб. |
 | [ ] | [RA-62](tasks/release-0.4.2/RA-62.md) | BLOCKED | T3 | RA-60/61 | RA-60, RA-61 | **Ждёт RA-60 и RA-61:** затем описать карту «что изменил → что запускать» по `tool/ci/scope_guard.sh`. |
@@ -70,7 +69,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 2. **Одна карточка — одна ветка** `<ключи>/RA-xx` от `release/0.4.2`, при параллельной работе — свой worktree `D:\.projects\yuv_ffi-wt\RA-xx`. Ключи CI: `all`, `vm`, `bindings`, `linux`, `macos`, `ios`, `android`, `windows`, `web`, `example`, несколько через `+`; префикс выбирается по карте `tool/ci/scope_guard.sh` и сверяется оркестратором со Scope карточки. Карточка, меняющая только `.md`, — ветка `docs/RA-xx`, CI не запускается. В коммит — только файлы своей карточки. Основная рабочая копия `D:\.projects\yuv_ffi` — не место для незакоммиченной работы.
 3. **Сначала локально, потом CI.** Перед push исполнитель выполняет Validation карточки локально. Push в ветку запускает только джобы её префикса; если префикс уже изменённых путей — джоба падает за секунды с `scope: …`, ветку переименовать. Откат негативного контроля пушится только после завершения контрольного прогона. Два красных прогона по одной причине, не воспроизведённой локально, — `ARCHITECT_REQUIRED`, третьей попытки нет.
 4. **Полный CI — только на `release/**`** после слияния; такие прогоны не отменяются; красный — откат слияния, карточка в `REWORK`.
-5. **Карточка — отдельный файл** `tasks/release-0.4.2/RA-xx.md`. Дашборд и статусы правит только оркестратор; при расхождении главнее дашборд. Summary в дашборде начинается с понятного названия задачи. Карточку правят архитектор (решение, DoD) и исполнитель (раздел `#### Executor Report`). Принятая карточка уходит из дашборда: краткая запись — в `COMPLETION.md`, файл — `git mv` в `doc/archive/release-0.4.2/cards/`.
+5. **Карточка — отдельный файл** `tasks/release-0.4.2/RA-xx.md`. Исполнитель при завершении своей работы обновляет в той же ветке статус карточки и строку этой задачи в дашборде: `REVIEW`, `BLOCKED`, `AWAITING_EXTERNAL` или `ARCHITECT_REQUIRED`, с коротким доказательством/причиной и ID внешнего run, если он создан. Для `AWAITING_EXTERNAL` оркестратор запускает Watcher; по его результату оркестратор маршрутизирует задачу. Если run ещё не создан, статус остаётся `BLOCKED`, а summary называет конкретный шаг и роль для разблокировки. При расхождении главным остаётся дашборд. Summary начинается с понятного названия задачи. Архитектор меняет решение и DoD, исполнитель — раздел `#### Executor Report`. Принятая карточка уходит из дашборда: краткая запись — в `COMPLETION.md`, файл — `git mv` в `doc/archive/release-0.4.2/cards/`.
 6. **Коммиты статуса — только при смене статуса карточки.** Прогресс отдельных джоб CI не коммитить: он виден в GitHub.
 7. **`ARCHITECT_REQUIRED` не останавливает этап:** остальные карточки идут дальше, вопросы копятся и разбираются одной сессией.
 8. **Пакетное ревью.** Когда готовы 2–4 карточки, оркестратор назначает один пакетный вызов подходящего ревьюера; в пакете каждая карточка проверяется отдельно по своему DoD, но ревьюер не берёт соседние исправления и задачи. Документация и уборка собираются к концу этапа. Отдельный вызов для одной карточки допустим только если она блокирует критический следующий шаг или Engineer явно просит срочный разбор; причину записать в дашборд.
@@ -84,7 +83,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 ## Статусы
 
-`TODO`, `IN_PROGRESS`, `BLOCKED`, `ARCHITECT_REQUIRED`, `REVIEW`, `DONE` — по протоколу. Уточнения оркестратора:
+`TODO`, `IN_PROGRESS`, `BLOCKED`, `ARCHITECT_REQUIRED`, `AWAITING_EXTERNAL`, `REVIEW`, `DONE` — по протоколу. Уточнения оркестратора:
 
 | Подстатус | Базовый | Кто делает следующий шаг |
 | --- | --- | --- |
@@ -92,6 +91,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 | `REVIEW_T1_PENDING`, `REVIEW_T1_IN_PROGRESS`, `REWORK_T1_REVIEW_PENDING` | REVIEW | ревьюер T1; пакетный вызов при 2–4 готовых карточках |
 | `LOCAL_FIXES_CI_PENDING` | IN_PROGRESS | исполнитель: коммит и CI |
 | `CI_FAILED`, `CI_NOT_REACHED` | BLOCKED | владелец блокера |
+| `AWAITING_EXTERNAL` | AWAITING_EXTERNAL | Watcher: дождаться завершения run; оркестратор: маршрутизировать результат |
 | `CI_PASS_PENDING_NEGATIVE_CONTROL` | IN_PROGRESS | исполнитель: негативный контроль |
 | `MERGE_CI_PENDING` | IN_PROGRESS | оркестратор: merge и полный release CI после освобождения раннера |
 | `DEFERRED` | — | перенесено; причина в карточке |
