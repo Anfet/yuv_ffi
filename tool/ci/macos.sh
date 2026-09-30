@@ -31,7 +31,8 @@ export PATH
 
 cd "$repository_root"
 
-cmake -S src -B "$native_build_directory" -DCMAKE_BUILD_TYPE=Release
+cmake -S src -B "$native_build_directory" -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_OSX_ARCHITECTURES='arm64;x86_64'
 cmake --build "$native_build_directory" --config Release
 test -f "$native_build_directory/libyuv_ffi.dylib"
 
