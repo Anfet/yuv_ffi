@@ -1013,7 +1013,7 @@ their user-facing impact.
 
 ## 18. Current CI verification
 
-The workflow is maintained in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml).
+The workflow is maintained in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 Its current platform evidence is narrower than the complete design verification
 list above and must not be read as full backend parity:
 
