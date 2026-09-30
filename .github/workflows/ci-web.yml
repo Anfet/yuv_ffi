@@ -1,0 +1,37 @@
+name: CI Web
+
+concurrency:
+  group: ci-web-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
+
+on:
+  push:
+    branches:
+      - 'release/**'
+      - main
+      - 'all/**'
+      - 'all\+*/**'
+      - '*\+all/**'
+      - '*\+all\+*/**'
+      - 'web/**'
+      - 'web\+*/**'
+      - '*\+web/**'
+      - '*\+web\+*/**'
+  workflow_dispatch:
+
+jobs:
+  web:
+    runs-on: [self-hosted, Windows, X64, web]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
+        run: bash tool/ci/scope_guard.sh
+
+      - name: Run Web checks
+        shell: pwsh
+        run: ./tool/ci/web.ps1
