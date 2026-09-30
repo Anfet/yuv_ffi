@@ -6,10 +6,27 @@ script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repository_root="$(cd -- "$script_directory/../.." && pwd)"
 native_build_directory="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/yuv-ffi-macos-native-build"
 
+for tool_directory in /opt/homebrew/bin /usr/local/bin; do
+  if [[ -d "$tool_directory" ]]; then
+    PATH="$tool_directory:$PATH"
+  fi
+done
+export PATH
+
 if [[ -z "${FLUTTER_ROOT:-}" ]]; then
-  flutter_command="$(command -v flutter)"
-  FLUTTER_ROOT="$(cd -- "$(dirname -- "$flutter_command")/.." && pwd)"
+  flutter_command="$(command -v flutter || true)"
+  if [[ -n "$flutter_command" ]]; then
+    FLUTTER_ROOT="$(cd -- "$(dirname -- "$flutter_command")/.." && pwd)"
+  elif [[ -x "$HOME/storage/flutter_3.44/flutter/bin/flutter" ]]; then
+    FLUTTER_ROOT="$HOME/storage/flutter_3.44/flutter"
+  else
+    echo 'Flutter was not found on PATH or at ~/storage/flutter_3.44/flutter.' >&2
+    exit 1
+  fi
 fi
+export FLUTTER_ROOT
+PATH="$FLUTTER_ROOT/bin:$PATH"
+export PATH
 
 cd "$repository_root"
 
