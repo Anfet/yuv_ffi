@@ -33,7 +33,7 @@ RA-19 и RA-18 — одно пакетное ревью (документы).
 
 | Done | ID | Status | Tier | Owner | Depends On | Summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | BLOCKED | T3 | Luna | RA-70 | **Блокер:** ветка `vm/RA-71` не покрывает ключ `all`, требуемый для `ci.yml`; также остаётся нерешённым запуск workflow на Markdown-only push. Локальные проверки прошли, CI не запускался. |
+| [ ] | [RA-71](tasks/release-0.4.2/RA-71.md) | IN_PROGRESS | T3 | Luna | RA-70 | **VM workflow: выполняется в `all+vm/RA-71`.** Маршрут по ключу ветки; Markdown-only push запускается в `all+vm/**`, проверка `scope_guard.sh` идёт после старта. Отрицательные маршруты: `docs/**` и ветка только с ключом чужой платформы. |
 | [ ] | [RA-72](tasks/release-0.4.2/RA-72.md) | BLOCKED | T2 | Terra | RA-70 | **Блокер:** ветка `windows/RA-72` не покрывает ключ `all`, требуемый для `ci.yml`; `New-CiNativeBuild` также возвращает build-лог вместе с путём. Native build отдельно прошёл. |
 | [ ] | [RA-73](tasks/release-0.4.2/RA-73.md) | TODO | T3 | — | RA-70 | **Готова к перезапуску:** macOS workflow и проверочный скрипт используют Bash (`.sh`); `pwsh` на runner не нужен. |
 | [ ] | [RA-74](tasks/release-0.4.2/RA-74.md) | TODO | T3 | — | RA-70 | **Готова к перезапуску:** iOS workflow и проверочный скрипт используют Bash (`.sh`); `pwsh` на runner не нужен. |
