@@ -1,6 +1,0 @@
-{
-  "note": "first in-app rotate-only bench (button removed and replaced by the full-path screen), user-run, release build",
-  "padded_bytes_per_row": 768,
-  "padded_rotate_ms": 12,
-  "tight_rotate_ms": 9
-}

@@ -89,6 +89,8 @@
 | Задача | Что | Было |
 | --- | --- | --- |
 | **Веб: YUV без RGBA** | Исследование: `VideoFrame.copyTo()` в исходном I420/NV12 и шейдер на вебе, с учётом частичного WASM-бэкенда. | — |
+| **Web WASM parity** | Матрица оставшихся операций, краевых layout и реальных browser/runtime проверок до заявления о полной parity с native. Сейчас Web — частичный backend (README). | WAIT-01 |
+| **Swift Package Manager и iOS 26 Simulator** | Flutter 3.44.9 предупреждает об отсутствии SPM у `yuv_ffi`; ML Kit в example не поддерживает arm64 для iOS 26+ Simulator. CocoaPods и smoke на iOS 18.6 работают — это совместимость будущих окружений, не дефект. | WAIT-02 |
 
 ### Этап 6 — релизный цикл
 
@@ -136,7 +138,7 @@
 
 ## Вставка фрагмента — постановка
 
-Перенесено из `todo-0.4.3.md` (теперь `doc/archive/todo-0.4.3.md`, карточка PATCH-00) без изменений.
+Перенесено из `todo-0.4.3.md` (карточка PATCH-00; файл удалён, история — в git) без изменений.
 
 Добавить непрозрачную вставку одного `YuvImage` в область другого: `cropped(region) → rotated(rotation) → applyPatch(fragment, x: ..., y: ...)`.
 
