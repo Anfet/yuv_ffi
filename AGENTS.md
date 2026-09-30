@@ -45,7 +45,8 @@
 - Do not leave changelog and package version out of sync.
 
 ## Native C code
-- Do not change any native code without explicit permissions, plan, explain and change after approoval only
+- Native code (`src/`) changes only as the work of a task: the task card's Architect Decision states the change explicitly (what and why), or the task itself is a native change with a known solution. An approved card is the permission.
+- No exploratory, experimental, or temporary edits of `src/` for tests or checks.
 
 ## История задач
 
