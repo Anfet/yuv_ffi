@@ -4,7 +4,8 @@ set -euo pipefail
 
 script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repository_root="$(cd -- "$script_directory/../.." && pwd)"
-native_build_directory="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/yuv-ffi-macos-native-build"
+native_build_parent="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
+native_build_directory="$(mktemp -d "$native_build_parent/yuv-ffi-macos-native-build.XXXXXX")"
 
 for tool_directory in /opt/homebrew/bin /usr/local/bin; do
   if [[ -d "$tool_directory" ]]; then
