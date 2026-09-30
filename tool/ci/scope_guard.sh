@@ -102,7 +102,10 @@ path_keys() {
     linux/*|example/linux/*)
       printf 'linux\n'
       ;;
-    lib/*|test/*|analysis_options.yaml|dart_test.yaml)
+    lib/*)
+      printf 'vm example\n'
+      ;;
+    test/*|analysis_options.yaml|dart_test.yaml)
       printf 'vm\n'
       ;;
     example/*)

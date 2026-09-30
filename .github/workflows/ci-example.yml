@@ -1,0 +1,44 @@
+name: Example CI
+
+concurrency:
+  group: ci-example-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
+
+on:
+  push:
+    branches:
+      - "release/**"
+      - main
+      - "all/**"
+      - 'all\+*/**'
+      - '*\+all/**'
+      - '*\+all\+*/**'
+      - "example/**"
+      - 'example\+*/**'
+      - '*\+example/**'
+      - '*\+example\+*/**'
+  workflow_dispatch:
+
+jobs:
+  example-analyze-and-build:
+    if: ${{ github.event_name != 'push' || startsWith(github.ref_name, 'release/') || github.ref_name == 'main' || contains(format('+{0}', github.ref_name), '+all/') || contains(format('+{0}', github.ref_name), '+all+') || contains(format('+{0}', github.ref_name), '+example/') || contains(format('+{0}', github.ref_name), '+example+') }}
+    runs-on: [self-hosted, Windows, X64]
+    strategy:
+      fail-fast: false
+      matrix:
+        flutter-version: ['3.41.0', '3.44.9']
+    env:
+      FLUTTER_VERSION: ${{ matrix.flutter-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch scope
+        shell: 'D:\.important\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
+        run: bash tool/ci/scope_guard.sh
+
+      - name: Analyze and build example
+        shell: pwsh
+        run: ./tool/ci/example.ps1
