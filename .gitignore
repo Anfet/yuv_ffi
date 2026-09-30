@@ -43,4 +43,4 @@ _tmp**
 /failed-test-cases.md
 /web-gate-blocker.md
 /native-primitives-research.md
-tool/
+/tool/bench/
