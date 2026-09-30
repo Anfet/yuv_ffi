@@ -19,6 +19,7 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
+/.worktrees/
 .zshrc
 yuv_ffi.dll
 .vscode/

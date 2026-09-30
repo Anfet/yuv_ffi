@@ -23,6 +23,12 @@
 - For all agents: completely exclude any `build/` directories from content retrieval.
 - Do not read, index, search, analyze, or summarize files under `build/` paths.
 
+## Worktree Location and Cleanup
+
+- Create linked Git worktrees inside the repository at `.worktrees/<task-id>`; do not create sibling `*-wt` or task-specific temporary checkout directories.
+- `.worktrees/` is ignored by Git and excluded from the published package.
+- When a task is terminal and its worktree is no longer needed, inspect its status before removal. Preserve dirty work. After removing a worktree, check the project worktree directory for unregistered temporary folders and remove only confirmed leftovers.
+
 ## Platform Implementation Layout Policy
 
 - All platform-dependent implementations must be placed under an `impl/` directory.

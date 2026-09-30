@@ -27,6 +27,7 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
+/.worktrees/
 .zshrc
 yuv_ffi.dll
 .vscode/
@@ -42,3 +43,4 @@ _tmp**
 /failed-test-cases.md
 /web-gate-blocker.md
 /native-primitives-research.md
+tool/

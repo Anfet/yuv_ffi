@@ -46,6 +46,7 @@
 
 - **RA-56:** Web integration агрегатор исправлен: все 13 источников маршрутизированы в четыре цели, 100 зарегистрированных случаев сохранены; Web gate на ветке прошёл за 5:10, включая negative controls для последнего агрегированного теста, probe golden, незарегистрированного источника и profile reference matrix. После слияния полный release CI [36671698935](https://github.com/Anfet/yuv_ffi/actions/runs/36671698935) прошёл 11/11 на `57f95a4226edab6c16c90c34d45de9ee8bb2e9ec`. Ревью — ACCEPT после двух rework; [архивная карточка](doc/archive/release-0.4.2/cards/RA-56.md).
 - **RA-70:** добавлены общие PowerShell CI helpers, smoke workflow и соглашения запуска платформенных CI; после Engineer-requested cleanup удалены временный tag trigger и исключение scope guard. Smoke run [36671698897](https://github.com/Anfet/yuv_ffi/actions/runs/36671698897) и полный release CI [36671698935](https://github.com/Anfet/yuv_ffi/actions/runs/36671698935) прошли успешно на `57f95a4226edab6c16c90c34d45de9ee8bb2e9ec`; полный CI — 11/11 jobs. Ревью — ACCEPT после одного rework; [архивная карточка](doc/archive/release-0.4.2/cards/RA-70.md).
+- **RA-71:** VM workflow интегрирован fast-forward в `release/0.4.2` на `e58a4ab0d51692447b9fb72445861fa3f934bc83`. Интеграционная проверка прошла: `vm.ps1` — 730 passed, 1 skipped; `drive.ps1` — exit 0 и `All tests passed`. Release CI VM [36725867816](https://github.com/Anfet/yuv_ffi/actions/runs/36725867816), full release CI [36725868124](https://github.com/Anfet/yuv_ffi/actions/runs/36725868124) и smoke [36725868502](https://github.com/Anfet/yuv_ffi/actions/runs/36725868502) — SUCCESS; [архивная карточка](doc/archive/release-0.4.2/cards/RA-71.md).
 
 - **RA-25:** Pixel 3 arm64/armv7 release smoke и 1188 probe cases приняты Engineer на source SHA `43835b542bddc16ed5edbd373dbb86ff02c35ac8`; полный архив проверен. После восстановления runner/tests/evidence интегрирована на `e6a1eabb0fbe36750853caad98c059ea838447d2`; полный release CI [36630795431](https://github.com/Anfet/yuv_ffi/actions/runs/36630795431) прошёл 11/11. [Архивная карточка](doc/archive/release-0.4.2/cards/RA-25.md).
 - **RA-79:** root-only `run_release_android_test.dart` добавлен в список исключений example copy-sync; focused negative control, VM и Windows jobs прошли. Engineer ACCEPT; интеграционный release CI [36630795431](https://github.com/Anfet/yuv_ffi/actions/runs/36630795431) прошёл 11/11 на `e6a1eabb0fbe36750853caad98c059ea838447d2`. [Архивная карточка](doc/archive/release-0.4.2/cards/RA-79.md).
@@ -423,3 +424,41 @@
 - **ACCEPT**, независимое ревью GPT-6 Sol · T1; исполнитель Luna · T3, финальные исправления Terra · T2 reviewer-takeover; rejection count: 2.
 - Финальная ветка `docs/RA-54`, SHA `f4b100dfcc1b7324fcf454be3af122d72491d416`. T1 подтвердил постусловия на тогдашнем release SHA `c039d8c347a6e4e81daba3c5f49e7acd7fc29c71`; `tool/bench/` сохранён.
 - [Архивная карточка и отчёт](doc/archive/release-0.4.2/cards/RA-54.md).
+
+## RA-72 — Проверена маршрутизация Windows CI
+
+- **DONE**, независимое ревью T1; accepted head `3ddc6e619505ad9f54fb26116ea9cedd6b1cf2f9`.
+- Ветка интегрирована в `release/0.4.2`, combined validation прошла на `daee83605f077c2f24aa10d60cf8246f5b118c19`; Windows CI [36742741432](https://github.com/Anfet/yuv_ffi/actions/runs/36742741432), общий CI [36742741428](https://github.com/Anfet/yuv_ffi/actions/runs/36742741428), CI VM [36742741539](https://github.com/Anfet/yuv_ffi/actions/runs/36742741539) успешны.
+- [Архивная карточка](doc/archive/release-0.4.2/cards/RA-72.md).
+
+## RA-73 — Переведён macOS CI на Bash
+
+- **DONE**, независимое ревью T2; accepted head `5472b5183f0e9eeaf7025cda833bc74beff1f8be`.
+- Ветка интегрирована в `release/0.4.2`; combined validation на `daee83605f077c2f24aa10d60cf8246f5b118c19` прошла: macOS CI [36742741448](https://github.com/Anfet/yuv_ffi/actions/runs/36742741448) и общий CI [36742741428](https://github.com/Anfet/yuv_ffi/actions/runs/36742741428) успешны.
+- [Архивная карточка](doc/archive/release-0.4.2/cards/RA-73.md).
+
+## RA-74 — Добавлена проверка iOS CI
+
+- **DONE**, независимое ревью T2; accepted head `1e1ebb3f1939dec25bb73eb7ffde5c90b4086f74`.
+- Ветка интегрирована в `release/0.4.2`; combined validation на `daee83605f077c2f24aa10d60cf8246f5b118c19` прошла: iOS CI [36742741370](https://github.com/Anfet/yuv_ffi/actions/runs/36742741370) и общий CI [36742741428](https://github.com/Anfet/yuv_ffi/actions/runs/36742741428) успешны.
+- [Архивная карточка](doc/archive/release-0.4.2/cards/RA-74.md).
+
+## RA-78 — Выделен Example CI workflow
+
+- **DONE**, независимое ревью T2; accepted head `cbc1deb84b2968b6e048b1689c750e3312d005d7`.
+- Ветка интегрирована в `release/0.4.2`; combined validation на `daee83605f077c2f24aa10d60cf8246f5b118c19` прошла: Example CI [36742741482](https://github.com/Anfet/yuv_ffi/actions/runs/36742741482) и smoke [36742741475](https://github.com/Anfet/yuv_ffi/actions/runs/36742741475) успешны.
+- Общие CI, CI VM, Windows CI, iOS CI и macOS CI batch также прошли.
+- [Архивная карточка](doc/archive/release-0.4.2/cards/RA-78.md).
+
+## RA-77 — Выделен Web CI workflow
+
+- **DONE**, независимое ревью GPT-6 Sol · T1; accepted implementation head `7f890c026b3ee3b0bc191ce664b393abb642d68d`.
+- Интегрировано в `release/0.4.2` на SHA `5a0f4126bb971d2eaa727cbc672c3a21859c4cf7`. Все восемь release CI checks успешны: общий [36756041175](https://github.com/Anfet/yuv_ffi/actions/runs/36756041175), smoke [36756041303](https://github.com/Anfet/yuv_ffi/actions/runs/36756041303), VM [36756041460](https://github.com/Anfet/yuv_ffi/actions/runs/36756041460), macOS [36756041140](https://github.com/Anfet/yuv_ffi/actions/runs/36756041140), iOS [36756041235](https://github.com/Anfet/yuv_ffi/actions/runs/36756041235), Windows [36756041462](https://github.com/Anfet/yuv_ffi/actions/runs/36756041462), Web [36756041275](https://github.com/Anfet/yuv_ffi/actions/runs/36756041275) и Example [36756041004](https://github.com/Anfet/yuv_ffi/actions/runs/36756041004).
+- [Архивная карточка](doc/archive/release-0.4.2/cards/RA-77.md).
+
+## RA-75 — Выделен Android CI workflow
+
+- **DONE**, независимое ревью GPT-6 Sol · T1; accepted head `56274794ceae6d245a27ee19484a935a0b7901d2`.
+- Интегрировано в `release/0.4.2` на SHA `f932c9914ec0967d1925f2fd89d28fb12016b121`. Положительный Android CI [36769983940](https://github.com/Anfet/yuv_ffi/actions/runs/36769983940) и все девять integration release checks успешны на точных целевых SHA.
+- Routing controls от интегрированного SHA: Markdown-only push на `docs/RA-75-md-control-attempt3` не запустил workflow; Windows-only push на `windows/RA-75-foreign-control-attempt3` не запустил Android CI, а CI Windows [36772397352](https://github.com/Anfet/yuv_ffi/actions/runs/36772397352) успешно прошёл scope check. Контрольные ветки не слиты.
+- [Архивная карточка](doc/archive/release-0.4.2/cards/RA-75.md).
