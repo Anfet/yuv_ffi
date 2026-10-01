@@ -35,7 +35,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 4](tasks/0.5.0/TEST-4.md) | TODO | T3 | — | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** TEST 2 и TEST 3 интегрированы; Architect-карточка готова в `fc89a8d`, можно исполнять. |
+| [TEST 4](tasks/0.5.0/TEST-4.md) | IN_PROGRESS | T3 | Luna | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** TEST 2 и TEST 3 интегрированы; спецификация TEST 4 влита в `0f9ee9d`, Executor работает на актуальном `dev`. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | REVIEW | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Инвентаризация не нашла удалений; `lib/` и `src/` не менялись. VM/Windows и указанные suite прошли на `873ff2b`. |
 
 ### Этап 2 — пробы и скорость
