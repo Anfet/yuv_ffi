@@ -1,6 +1,9 @@
 # RUNNER 1 — Дополнительные self-hosted раннеры
-**Status:** BLOCKED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Owner:** Terra · **Depends On:** — · **Rejection Count:** 0
+**Status:** DEFERRED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Owner:** Terra · **Depends On:** — · **Rejection Count:** 0
 **Было:** RA-80 (цикл 0.4.2).
+
+#### Решение Engineer — 01.10.2026
+Новые службы self-hosted раннеров добавляться не будут. Установка `dev.working-2` как службы и добавление следующих экземпляров не входят в планы, поэтому цель карточки сейчас неактуальна. Карточка отложена; вернуть её в работу можно только после нового решения Engineer добавить службы раннеров.
 
 #### Решение Engineer D-6 (29.09.2026)
 Для 0.4.2 второй раннер не нужен: полных прогонов будет несколько, а не десятки, одна платформа запускается префиксом ветки, Web-джоба ускоряется RA-56. Карточка — после релиза. Сейчас: удалить офлайн-регистрацию `dev.working-2` (runner id `24`) через `gh api -X DELETE repos/Anfet/yuv_ffi/actions/runners/24` и каталог `D:\actions-runner-yuv-2`; метки `android-emulator`, `web`, `pixel3` на `dev.working` оставить. Это делает RA-54 (уборка).
