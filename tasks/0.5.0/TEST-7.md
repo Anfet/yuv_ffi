@@ -1,5 +1,5 @@
 # TEST 7 — Сверка эталона с libyuv
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** —
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** — · **Depends On:** —
 
 #### Goal
 Эталон `test/reference/test_pattern_512` посчитан нашим же кодом на Dart
@@ -62,4 +62,18 @@
 - Windows: `dart pub publish --dry-run` в корне.
 
 #### Executor Report
+
+- Ветка `task/TEST-7`, HEAD `770fa18`; добавлены `tool/oracle/libyuv_harness.cc` и
+  `tool/oracle/check_reference.sh`. Скрипт закрепляет libyuv на
+  `2dd4257364d39c38d79465c4ddc4b93137fe729b`, собирает его только во временном каталоге и поддерживает
+  негативный контроль через `ORACLE_CORRUPT_I420=1`.
+- Harness сравнивает Y/U/V и BGRA, печатает максимум и долю различающихся пикселей, а при нарушении допуска —
+  пару, канал, координаты и ожидаемое/фактическое значение. Для `NV21` U/V сопоставляются семантически, поскольку
+  пакет хранит U,V, а libyuv `NV21` — V,U. Raw-операции rotate/mirror/crop также сверяются побайтно.
+- Выполнено на Windows: `bash -n tool/oracle/check_reference.sh`, `git diff --check`,
+  `dart pub publish --dry-run`. Windows-предохранитель скрипта подтверждён: без macOS `sips` он завершился с
+  `FAILED: sips is required to decode PNG references.`
+- **BLOCKED:** в этой сессии нет инструмента mac-runner, поэтому Mac-прогон, таблица фактических максимумов и
+  негативный контроль не запускались. Для продолжения на Mac: `bash tool/oracle/check_reference.sh`, затем
+  `ORACLE_CORRUPT_I420=1 bash tool/oracle/check_reference.sh`.
 #### Review
