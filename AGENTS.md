@@ -79,8 +79,8 @@
 `tool/ci/scope_guard.sh` сопоставляет каждый путь с первым подходящим правилом `path_keys()` ниже, проверяет,
 что префикс ветки покрывает полученные ключи, и сам команды не запускает. Для нескольких изменённых файлов
 объедините ключи; повторы можно убрать. `all` означает все локально существующие проверки из таблицы команд,
-а также Linux через CI-интеграцию. Ветка задачи CI не запускает. Ключ `linux` — CI-only: отдельного
-`tool/ci/linux.sh` нет, Linux-проверка находится в `.github/workflows/ci.yml`.
+а также Linux через CI-интеграцию. Ветка задачи CI не запускает. Ключ `linux` — CI-only: Linux проверяется
+job `linux-native-smoke` в `.github/workflows/ci.yml`.
 
 Запускайте только команды для доступных платформ; не требуется включать WSL или Hyper-V. Таблица классов
 повторяет порядок правил в `path_keys()`:
@@ -95,7 +95,6 @@
 | `.github/workflows/ci-macos.yml`, `tool/ci/macos.*` | `macos` | `bash tool/ci/macos.sh` (macOS). |
 | `.github/workflows/ci-ios.yml`, `tool/ci/ios.*` | `ios` | `bash tool/ci/ios.sh` (macOS с Xcode и симулятором). |
 | `.github/workflows/ci-android.yml`, `tool/ci/android.*` | `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
-| `.github/workflows/ci-linux.yml`, `tool/ci/linux.*` | `linux` | Только CI; общий `.github/workflows/ci.yml` на интеграции. Отдельного `.github/workflows/ci-linux.yml` сейчас нет. |
 | `.github/workflows/ci-web.yml`, `tool/ci/web.*` | `web` | `pwsh -File tool/ci/web.ps1` (Windows с настроенными Chrome и Emscripten). |
 | `.github/workflows/ci-example.yml`, `tool/ci/example.*` | `example` | `pwsh -File tool/ci/example.ps1` (Windows). |
 | Остальные `.github/workflows/*`, `tool/ci/*` | `all` | Все доступные команды из таблицы ключей ниже. |
@@ -105,7 +104,6 @@
 | `macos/*`, `example/macos/*` | `macos` | `bash tool/ci/macos.sh` (macOS). |
 | `ios/*`, `example/ios/*` | `ios` | `bash tool/ci/ios.sh` (macOS с Xcode и симулятором). |
 | `android/*`, `example/android/*` | `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
-| `linux/*`, `example/linux/*` | `linux` | Только CI; локального `tool/ci/linux.sh` нет. |
 | `lib/*` (включая `lib/src/widgets/*`) | `vm example` | `pwsh -File tool/ci/vm.ps1` и `pwsh -File tool/ci/example.ps1`. Для `lib/src/widgets/**` дополнительно выберите `contract` и относящиеся к виджету тесты в `example/test/**`. |
 | `test/*`, `analysis_options.yaml`, `dart_test.yaml` | `vm` | `pwsh -File tool/ci/vm.ps1`; при необходимости используйте отдельные TEST 2 селекторы ниже. |
 | `example/*` (кроме ранее перечисленных платформенных и integration путей) | `example` | `pwsh -File tool/ci/example.ps1`. |
@@ -123,7 +121,7 @@
 | `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
 | `web` | `pwsh -File tool/ci/web.ps1` (Windows с настроенными Chrome и Emscripten). |
 | `example` | `pwsh -File tool/ci/example.ps1` (Windows). |
-| `linux` | CI-only через `.github/workflows/ci.yml`; локального платформенного скрипта нет. |
+| `linux` | CI-only: job `linux-native-smoke` в `.github/workflows/ci.yml`; запускается на push в `release/**`, `main` и `ci/**` с учетом `paths-ignore`, а также вручную через `workflow_dispatch` с `jobs=linux`. Job запускает Debug/Release CTest, packaging smoke, Linux example build, app-runtime smoke и native correctness probes. |
 | `all` | Все перечисленные локальные команды на доступных платформах; `linux` проверяется только на CI. |
 
 Платформенные скрипты выполняют собственный набор сборок и проверок; наличие ключа не означает, что скрипт
