@@ -1,5 +1,5 @@
 # TEST 2 — Теги тест-сьюта
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 1
+**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 1
 **Было:** RA-60 (цикл 0.4.2).
 
 #### Goal
@@ -94,7 +94,7 @@ pwsh -File tool/ci/windows.ps1
 
 #### Executor Report
 
-Свежий T3 Executor повторил проверки после отклонения на одном SHA `14d0e5966bf5243794e95812f5ce69e918fa1830` (до изменения этого отчёта). Синхронизированная копия `example/integration_test/helpers/probe/layout_pack_test.dart` и источник `test/probe/layout_pack_test.dart` имеют одинаковый SHA-256 `D6F3620B3197975170DF1FABC310789A523F19E37E79178144AE8674ECC20713`; изменения копии ограничены одобренной аннотацией `@Tags(['probe'])` и пустой строкой.
+Свежий T3 Executor учёл Architect Decision `c064f4e002be50022476c58d028c863b8e927f08`. Проверки ниже уже были выполнены на одном кодовом SHA `14d0e5966bf5243794e95812f5ce69e918fa1830`; эквивалентные прогоны не повторялись. Синхронизированная копия `example/integration_test/helpers/probe/layout_pack_test.dart` и источник `test/probe/layout_pack_test.dart` имеют одинаковый SHA-256 `D6F3620B3197975170DF1FABC310789A523F19E37E79178144AE8674ECC20713`; изменения копии ограничены одобренной аннотацией `@Tags(['probe'])` и пустой строкой.
 
 JSON count method: учитывать только события `testDone` с `hidden: false`; это завершённые тесты. `hidden: true` — служебные загрузчики файлов; skipped включается в completed и отдельно считается как skipped.
 
@@ -108,15 +108,15 @@ JSON count method: учитывать только события `testDone` с 
 | `flutter test --reporter json` | 0 | 732 | 731 | 1 |
 | `flutter test test/tags_coverage_test.dart --reporter json` | 0 | 1 | 1 | 0 |
 
-The four disjoint groups sum exactly to the full run: `569 + 16 + 130 + 17 = 732`. The full run has no failed tests. `tags_coverage_test.dart` is included in `smoke || contract` and also passed when run alone.
-
-The baseline stated by TEST 1 is 731 passed and 1 skipped (732 completed). The observed full count on this TEST 2 SHA is also 731 passed and 1 skipped (732 completed), so the measured delta is 0. The card expects +1 for `tags_coverage_test.dart`, which would produce 733 completed, but that expected delta is not present in the same-SHA evidence. The added coverage test is confirmed passing, and the task diff contains no changes to existing test bodies; therefore this executor cannot explain the missing +1 or claim this DoD item satisfied. Status remains TODO pending reconciliation of the historical baseline / expected count; no Architect decision was made.
+The four disjoint groups sum exactly to the full run: `569 + 16 + 130 + 17 = 732`. The full run has no failed tests. `tags_coverage_test.dart` is included in `smoke || contract` and also passed when run alone. Per Architect Decision, compare completed counts (`testDone`, `hidden: false`) including skipped: the TEST 1 inventory baseline is 731 completed and TEST 2 has 732 completed, a delta of +1. The added coverage test is therefore accounted for once; its standalone run is not added to the group sum.
 
 Additional DoD checks on the same code SHA:
 
 - `pwsh -File tool/ci/vm.ps1` — exit 0; selected `smoke || contract` completed successfully. The script was given an isolated `RUNNER_TEMP` because the shared temp CMake cache referred to another worktree.
 - `pwsh -File tool/ci/windows.ps1` — exit 0; probe selection and Windows integration targets passed, including the probe matrix (1,188 cases).
 - `git diff --check` — passed; source and example copy SHA-256 values matched.
+
+The task changes only tag annotations (and the approved byte-identical example helper copy), plus `tags_coverage_test.dart`; existing test bodies were not changed. All Definition of Done items are satisfied by the recorded same-SHA validation and the clarified completed-count rule.
 
 #### Engineer Decision
 
