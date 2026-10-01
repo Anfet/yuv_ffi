@@ -293,4 +293,7 @@ committed correction head.
 - On `4b2e87b`, source mapping and the restored current-contract tests passed
   until `web_ownership_regression_web_test.dart`; both failures were
   `YUV WASM module is not initialized` immediately after atomicity reset.
-- Full card-local Web command will be rerun on the next clean commit.
+- `$env:FLUTTER_VERSION='3.44.9'; pwsh -File tool/ci/web.ps1` on `a514c62` —
+  PASS: WASM rebuild had no diff; aggregate Web, capabilities, bootstrap,
+  lifecycle, and isolated atomicity targets passed; reference matrix 119
+  passed. Final output: `sources=13; integration cases=62`.
