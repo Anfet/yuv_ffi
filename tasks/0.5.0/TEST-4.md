@@ -1,5 +1,5 @@
 # TEST 4 — Карта «что изменил → что запускать»
-**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 3
+**Status:** ACCEPTED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 3
 **Было:** RA-62 (цикл 0.4.2).
 
 #### Goal
@@ -145,3 +145,21 @@ Validation:
 - Условия и шаги `linux-native-smoke` сверены с `.github/workflows/ci.yml`.
 - `git diff --name-only` — `AGENTS.md` и `tasks/0.5.0/TEST-4.md`.
 - Платформенные проверки не запускались: изменение документационное.
+
+#### Review
+
+**T2 review, GPT-5.6 Terra, 01.10.2026: ACCEPTED. Reviewed `ef3edd5`.**
+
+- Действующий путь `linux/CMakeLists.txt` соответствует правилу `linux/*` в `path_keys()` и строке
+  `linux/*` карты. Обе дают ключ `linux`, который направлен к существующему job `linux-native-smoke` в
+  `.github/workflows/ci.yml`.
+- Условия job совпадают с картой: push в `release/**`, `main` и `ci/**` с `paths-ignore`, либо ручной
+  `workflow_dispatch` с `jobs=linux`; job выполняет Debug/Release CTest, packaging smoke, Linux example
+  build, app-runtime smoke и native correctness probes.
+- В активной карте нет `.github/workflows/ci-linux.yml` или `tool/ci/linux.*`: эти отсутствующие пути
+  остаются только резервными правилами в `scope_guard.sh` и не объявлены действующими проверками.
+- Web-команда передаёт обязательные target/device и Chrome arguments в `drive.ps1`; `gray`/`i420` и строка
+  `PROBE scope` соответствуют селектору. Полные пути workflow и `tool/ci/*` в карте существуют.
+- Review validation: `git diff --check 1eba457..ef3edd5` passed; diff содержит только `AGENTS.md` и эту
+  карточку. Платформенные прогоны не повторялись: Validation карточки для документационного изменения их
+  не требует.
