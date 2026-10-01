@@ -1,5 +1,5 @@
 # TEST 2 — Теги тест-сьюта
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
+**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
 **Было:** RA-60 (цикл 0.4.2).
 
 #### Goal
@@ -79,23 +79,18 @@ pwsh -File tool/ci/windows.ps1
 ```
 
 #### Executor Report
-На ветке `task/TEST-2` изменения из `da7f699` уже присутствовали; повторный cherry-pick не выполнялся. В изолированном `$env:RUNNER_TEMP` собрана native DLL, `flutter pub get --no-example` и `flutter test test/tags_coverage_test.dart` завершились с кодом 0.
 
-Результаты остальных команд Validation (`--reporter json`; число — видимые `testDone`, без скрытых загрузочных записей):
+Свежий T3 Executor выполнил одобренную синхронизацию: `example/integration_test/helpers/probe/layout_pack_test.dart` побайтово скопирован из `test/probe/layout_pack_test.dart`. Diff содержит только `@Tags(['probe'])` и пустую строку; тесты и `probe_copy_sync_test` не менялись.
 
-| Команда | Exit | Тесты | Результат |
+Проверки после синхронизации:
+
+| Команда | Exit | Завершённые тесты | Результат |
 | --- | ---: | ---: | --- |
-| `flutter test --tags "smoke || contract"` | 0 | 569 | прошло |
-| `flutter test --tags probe` | 1 | 16 | 1 ошибка, 1 пропуск |
-| `flutter test --tags reference` | 0 | 130 | прошло |
-| `flutter test --tags release` | 0 | 17 | прошло |
-| `flutter test` | 1 | 732 | 1 ошибка, 1 пропуск |
-| `pwsh -File tool/ci/vm.ps1` | 0 | — | прошло |
-| `pwsh -File tool/ci/windows.ps1` | 1 | — | ошибка в probe-тесте |
+| `flutter test --tags probe --reporter json` | 0 | 16 (15 passed, 1 skipped) | прошло; JSON содержит успешный `done`, ошибок нет |
+| `flutter test --reporter json` | 0 | 732 (731 passed, 1 skipped) | прошло; ошибок нет |
+| `pwsh -File tool/ci/windows.ps1` | 0 | — | прошло; Windows build и все запущенные integration targets завершились успешно |
 
-Точная ошибка во всех трёх неуспешных прогонах: `test/probe/probe_copy_sync_test.dart:15`, `layout_pack_test.dart is out of sync`; исходный `test/probe/layout_pack_test.dart` начинается с `@Tags(['probe'])`, тогда как его копия `example/integration_test/helpers/probe/layout_pack_test.dart` не содержит этой аннотации. `windows.ps1` возвращает exit 1 по той же ошибке. Разница числа тестов от ожидаемых 733 не подтверждена: полный прогон завершил 732 видимых теста и имел одну ошибку и один пропуск.
-
-Блокер: для зелёных `probe`, полного прогона и `windows.ps1` нужно согласовать изменение копии в `example/` с ограничением Scope этой карточки; на момент отчёта Executor статус был `BLOCKED`. Первые прогоны с некорректной PowerShell-обёрткой (Flutter получил пустой список аргументов) не учитывались.
+Расхождение 732/733: полный JSON на этом SHA содержит ровно 732 видимых `testDone` события, из них 731 успешное и 1 пропуск; `test/tags_coverage_test.dart` присутствует в JSON и завершён успешно. Предыдущая ожидаемая оценка 733 не подтверждается: известные счётчики групп из предыдущего Executor (569 + 16 + 130 + 17) также дают 732. Следовательно, текущий прогон не пропустил тест тегов; лишняя единица — ошибка ожидаемой арифметики/сопоставления с исторической базой TEST 1, а не скрытая запись загрузки или незавершённый тест. Точный исторический дельта-состав нельзя вывести из JSON текущего SHA.
 
 #### Engineer Decision
 
