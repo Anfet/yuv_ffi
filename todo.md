@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`). TEST 3 после исправления tag coverage и TEST 6 после исправления JSON preamble приняты/на повторном ревью; TEST 7 принята. Для трёх задач запускается повторная общая интеграционная проверка; TEST 4 ждёт интеграции TEST 3.
+- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`); TEST 3, TEST 6 и TEST 7 приняты. Исправления TEST 3/6 интегрируются перед общей повторной проверкой; TEST 4 ждёт интеграции TEST 3.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Дашборд
@@ -35,10 +35,10 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 3](tasks/0.5.0/TEST-3.md) | REVIEW | T2 | Reviewer | TEST 2 | **Срезы проб по операции и формату.** Добавлен одиночный `probe` tag к новой проверке и синхронной копии; coverage/focused checks и VM 584/584 прошли на `2079fca`. |
+| [TEST 3](tasks/0.5.0/TEST-3.md) | ACCEPTED | T2 | Reviewer | TEST 2 | **Срезы проб по операции и формату.** Повторное ревью подтвердило `probe` tag и идентичные копии; прежние замечания устранены. |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 3 integration | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Карточка требует изменения path-to-command mapping после интеграции TEST 3; открыть после общего validation gate. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | REVIEW | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Инвентаризация не нашла удалений; `lib/` и `src/` не менялись. VM/Windows и указанные suite прошли на `873ff2b`. |
-| [TEST 6](tasks/0.5.0/TEST-6.md) | ACCEPTED | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Повторное ревью подтвердило `--no-pub` после dependency resolution, чистый JSON stdout и сохранение mixed-failure regression на `2a57867`. |
+| [TEST 6](tasks/0.5.0/TEST-6.md) | ACCEPTED | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Review подтвердил `--no-pub` после dependency resolution, чистый JSON stdout и mixed-failure regression на `2a57867`. |
 | [TEST 7](tasks/0.5.0/TEST-7.md) | ACCEPTED | T2 | Reviewer | — | **Сверка эталона с libyuv.** Review принято; общая проверка на `302034a` ждёт исправления TEST 6 reporter (JSON preamble). |
 
 ### Этап 2 — пробы и скорость
