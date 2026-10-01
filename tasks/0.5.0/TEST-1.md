@@ -31,6 +31,19 @@
 - Числа снимаются прогоном с JSON-репортером и сводятся одноразовым скриптом вне репозитория (скрипт не
   коммитится). Файлы `web` и `integration` на Windows не запускаются: число тестов — по объявлениям
   `test(` / `testWidgets(` в коде, время — `—`.
+- Уточнение DECIDED: существующие требования к точным ссылкам и контрактам с единственным покрытием
+  применяются к замечаниям Review; Scope и DoD не меняются.
+  - В строке `test/probe/probe_performance_test.dart` counterpart
+    `example/integration_test/probe_performance_test.dart` —
+    `testWidgets('profile benchmark reports a single complete structured verdict')`.
+  - В строке `example/test/camera_image_to_yuv_image_padding_test.dart` counterpart
+    `example/integration_test/ios_bgra_camera_frame_test.dart` —
+    `testWidgets('preserves each visible pixel of a padded iOS BGRA camera frame')`.
+    Обратные ссылки на эти две VM-проверки остаются `test(...)`.
+  - В «Контракты без второго покрытия» добавить `example/integration_test/example_camera_flow_test.dart`
+    (захват кадра, распознавание лица, crop и effect в demo) и `test/probe/probe_runner_test.dart`
+    (correctness hash, baseline band и strict slowdown verdict). Если чтение исходников выявит реальное
+    второе покрытие, указать точный файл и тест в колонке «Пересечения» вместо включения в этот раздел.
 
 #### Scope
 - Ветка `docs/TEST-1` от `dev`, worktree `.worktrees/TEST-1`.
