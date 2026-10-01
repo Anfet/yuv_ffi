@@ -1,5 +1,5 @@
 # TEST 7 — Сверка эталона с libyuv
-**Status:** ENGINEER_REQUIRED · **Tier:** T2 · **Owner:** — · **Depends On:** —
+**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** —
 
 #### Goal
 Эталон `test/reference/test_pattern_512` посчитан нашим же кодом на Dart
@@ -21,14 +21,19 @@
   | `source_bgra8888.bin` | `ARGBToI420` | `source_i420.yuv` |
   | `source_i420.yuv` | `I420ToARGBMatrix` (`kYuvI601Constants`) | `i420_decoded.png` |
   | `source_i420.yuv` → NV21 | `I420ToNV21`, затем `NV21ToARGBMatrix` | `source_nv21_uv.yuv`, `nv21_uv_decoded.png` |
-  | `source_i420.yuv` | `I420Rotate` 90/180/270 → `I420ToARGBMatrix` | `rotate_90.png`, `rotate_180.png`, `rotate_270.png` |
-  | `source_i420.yuv` | `I420Mirror` → `I420ToARGBMatrix` | `flip_horizontal.png` |
-  | `source_i420.yuv` | `I420Copy` с отрицательной высотой → `I420ToARGBMatrix` | `flip_vertical.png` |
-  | `source_i420.yuv` | смещение указателей + `CopyPlane` → `I420ToARGBMatrix` | `crop_*.png` с чётным началом |
+  | `source_i420.yuv` | `I420Rotate` 90/180/270 → `I420ToARGBMatrix` | `i420_decoded.png`, повёрнутый в harness на тот же угол |
+  | `source_i420.yuv` | `I420Mirror` → `I420ToARGBMatrix` | `i420_decoded.png`, отражённый по горизонтали |
+  | `source_i420.yuv` | `I420Copy` с отрицательной высотой → `I420ToARGBMatrix` | `i420_decoded.png`, отражённый по вертикали |
+  | `source_i420.yuv` | смещение указателей + `CopyPlane` → `I420ToARGBMatrix` | `i420_decoded.png`, обрезанный тем же прямоугольником (только чётное начало) |
+
+  Геометрические PNG эталона (`rotate_*`, `flip_*`, `crop_*`) построены из исходного RGBA, без прохода через I420,
+  и остаются эталонами RGB-операций пакета; в этой сверке не участвуют (решение Engineer 01.10.2026).
 
   Эффекты и blur libyuv не покрывает — они не сверяются.
 - Критерий: по каналу Y и по каждому каналу BGRA печатаются максимум разницы и доля отличающихся пикселей.
-  - Геометрия (поворот, зеркало, crop) — побайтно равна.
+  - Геометрия (поворот, зеркало, crop) — побайтно равна: при чётных размерах и чётном начале блоки 2×2 цветности
+    переходят целиком, поэтому «преобразовать I420, затем декодировать» и «декодировать, затем преобразовать» дают
+    одинаковые байты.
   - Y — разница не больше 1.
   - U/V и BGRA — любая разница больше 2 объясняется в Executor Report: разный алгоритм усреднения 2×2 или
     округления у libyuv (оговорки — в `doc/independent-oracles.md`) либо ошибка нашего эталона.
@@ -82,7 +87,10 @@
   выше несоответствия PNG geometry.
 - Windows: `dart pub publish --dry-run` завершился успешно, `Package has 0 warnings and 1 hint`; в списке архива
   `tool/oracle/` отсутствует.
-- **ENGINEER_REQUIRED.** Нужно утвердить эталон BGRA для геометрии после I420: рекомендую в harness сравнивать
+- **Решение Engineer 01.10.2026:** принят рекомендованный вариант — геометрия сверяется с преобразованным
+  `i420_decoded.png` побайтно; общие эталонные PNG не меняются. Следующий шаг — свежий Executor: обновить harness
+  и повторить проверки DoD.
+- **ENGINEER_REQUIRED (снят).** Нужно утвердить эталон BGRA для геометрии после I420: рекомендую в harness сравнивать
   libyuv-результат с преобразованным `i420_decoded.png`, а текущие `rotate_*`, `flip_*`, `crop_*` оставить для
   RGB-операций. Альтернатива — изменить эти PNG на I420-пайплайн, что меняет общие эталонные артефакты и ожидаемые
   значения backend-ов. До решения нельзя выполнить критерий DoD о BGRA-сверке этих пар.
