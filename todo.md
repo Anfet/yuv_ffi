@@ -35,7 +35,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 2](tasks/0.5.0/TEST-2.md) | IN_PROGRESS | T3 | Luna | — | **Теги тест-сьюта.** Повторная проверка начата с полным доступом: прежний sandbox-блокер снят; исполнитель проверяет все селекторы, полный прогон, VM и Windows. |
+| [TEST 2](tasks/0.5.0/TEST-2.md) | ARCHITECT_REQUIRED | T1 | Sol | — | **Теги тест-сьюта.** Под полным доступом smoke/contract, reference, release и VM прошли; probe, полный suite и Windows падают из-за отсутствующего `probe` тега в `example/integration_test/helpers/probe/layout_pack_test.dart`. Scope TEST 2 запрещает `example/`; нужен выбор Architect по границе Scope. |
 | [TEST 3](tasks/0.5.0/TEST-3.md) | BLOCKED | T2 | TEST 2 | TEST 2 | **Срезы проб по операции и формату.** Было RA-61. Ждёт TEST 2. |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 2/3 | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Было RA-62. Ждёт TEST 2 и TEST 3. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | BLOCKED | T2 | TEST 1, TEST 2, TEST 7 | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Удаление — только с доказательством мутацией; при дублях конвертаций остаётся сверка с эталоном. `src/` не трогается (D-17). |
