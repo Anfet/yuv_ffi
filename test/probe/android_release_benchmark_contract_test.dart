@@ -22,5 +22,6 @@ void main() {
     expect(runner, contains('expected 24 RA26_ANDROID_RUN records'));
     expect(runner, contains('Android release benchmark run integrity failed'));
     expect(runner, contains('Out-String -Width 32767'));
+    expect(runner, contains('@(Read-JsonRecords'));
   });
 }

@@ -97,8 +97,8 @@ function Wait-Ra26ResultLogcat {
   $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
   do {
     $logcat = Read-Ra26Logcat
-    $records = Read-JsonRecords $logcat 'RA26_ANDROID_RESULT'
-    if ($records.Count -gt 0) { return @{ Logcat = $logcat; Records = $records } }
+    $records = @(Read-JsonRecords $logcat 'RA26_ANDROID_RESULT')
+    if ($records.Count -gt 0) { return @{ Logcat = $logcat; Records = @($records) } }
     Start-Sleep -Seconds 2
   } while ([DateTime]::UtcNow -lt $deadline)
   throw "Android release benchmark timed out after $TimeoutSeconds seconds waiting for RA26_ANDROID_RESULT."
@@ -181,8 +181,8 @@ try {
 
   $logcatResult = Wait-Ra26ResultLogcat
   if ($logcatResult.Records.Count -ne 1) { throw "Expected exactly one RA26_ANDROID_RESULT record, found $($logcatResult.Records.Count)." }
-  try { $summary = $logcatResult.Records[0] | ConvertFrom-Json } catch { throw "RA26_ANDROID_RESULT is malformed JSON: $($_.Exception.Message)" }
-  $runRecords = Read-JsonRecords $logcatResult.Logcat 'RA26_ANDROID_RUN'
+  try { $summary = @($logcatResult.Records)[0] | ConvertFrom-Json } catch { throw "RA26_ANDROID_RESULT is malformed JSON: $($_.Exception.Message)" }
+  $runRecords = @(Read-JsonRecords $logcatResult.Logcat 'RA26_ANDROID_RUN')
   if ($runRecords.Count -ne 24) { throw "Android release benchmark expected 24 RA26_ANDROID_RUN records, found $($runRecords.Count)." }
   $runs = @($runRecords | ForEach-Object { $_ | ConvertFrom-Json })
   $uniqueRunIds = @($runs | ForEach-Object id | Sort-Object -Unique)
