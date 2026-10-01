@@ -1,5 +1,5 @@
 # CLEAN 1 — Убрать следы замеров из example
-**Status:** REVIEW · **Tier:** T3 · **Owner:** Luna · **Depends On:** — · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T3 · **Owner:** Luna · **Depends On:** — · **Probe:** none
 
 #### Goal
 Убрать экран `Pack00BenchScreen` и кнопку PACK-00, хуки VIEW-03 (`debugYuvCameraPreviewMobileEvent`, часы, enum), переключатель `kYuvCameraPreviewPackPlanes` (остаётся плотный импорт); `kYuvCameraPreviewFlipAndroid` заменить параметром ориентации.
@@ -70,15 +70,14 @@
 
 #### Review
 
-**Reviewed-Head:** `d3867c73a1d47874f367df10cbf8246a103d7aa9`
+**Reviewed-Head:** `d8981ac81c6668c8d906e7781aa869b73d51e36a`
 
-**Status:** TODO
+**Status:** ACCEPTED
 
-**Blocking:**
-
-- Обязательная валидация не проходит: `$env:FLUTTER_VERSION='3.44.9'; pwsh -File tool/ci/example.ps1` повторно завершается с exit code 1 на `flutter analyze`. Причина — два `library_annotations` info в `example/integration_test/helpers/probe/layout_pack_test.dart:1` и `probe_selection_test.dart:1`. Карточка требует успешный `tool/ci/example.ps1`; без этого DoD не доказан.
+**Blocking:** none.
 
 **Evidence:**
 
-- Выборочная проверка `flutter test test/camera_image_pack_planes_test.dart test/camera_image_to_yuv_image_padding_test.dart` из `example/` — 10 passed.
-- Статический поиск не нашёл удалённые PACK-00/VIEW-03 имена; вызов `CameraScreen` передаёт `flipAndroidCameraHorizontally: true`, что соответствует прежнему значению. Параметр применяется только в Android-ветке.
+- Проверены diff и актуальный вызов: `CameraScreen` передаёт `flipAndroidCameraHorizontally: true`, а mobile backend использует параметр только на Android. PACK-00, VIEW-03 и оба удаляемых `kYuvCameraPreview*` имени в `example/` отсутствуют.
+- Добавленные после первого ревью две library directives стоят после `@Tags(['probe'])` в `layout_pack_test.dart` и `probe_selection_test.dart`.
+- На Reviewed-Head повторно выполнено `$env:FLUTTER_VERSION='3.44.9'; pwsh -File tool/ci/example.ps1` — PASS, exit code 0 (`pub get`, `analyze`, `build web`).
