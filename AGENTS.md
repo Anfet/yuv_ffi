@@ -73,3 +73,83 @@
 - Для workflow использовать `concurrency` с группой `ci-<name>-${{ github.ref }}`. На `release/**` прогоны не отменяются, на `main` и `ci/**` новый прогон отменяет предыдущий.
 - `tool/ci/drive.ps1` запускает `flutter drive` из `example/` и принимает результат только при exit code `0` и строке `All tests passed`. Не вызывать `flutter drive` напрямую из PowerShell workflow. Bash-скрипты macOS/Linux должны соблюдать тот же контракт запуска и проверки результата.
 - `tool/ci/_common.ps1` содержит общие функции для определения корня репозитория, Flutter, временного каталога, native-сборки и добавления каталогов в `PATH`.
+
+## Локальные проверки по изменённым путям
+
+`tool/ci/scope_guard.sh` сопоставляет каждый путь с первым подходящим правилом `path_keys()` ниже, проверяет,
+что префикс ветки покрывает полученные ключи, и сам команды не запускает. Для нескольких изменённых файлов
+объедините ключи; повторы можно убрать. `all` означает все локально существующие проверки из таблицы команд,
+а также Linux через CI-интеграцию. Ветка задачи CI не запускает. Ключ `linux` — CI-only: отдельного
+`tool/ci/linux.sh` нет, Linux-проверка находится в `.github/workflows/ci.yml`.
+
+Запускайте только команды для доступных платформ; не требуется включать WSL или Hyper-V. Таблица классов
+повторяет порядок правил в `path_keys()`:
+
+| Первый совпавший путь | Ключи | Локальная проверка / условие |
+| --- | --- | --- |
+| `*.md`, `doc/*`, `tasks/*` | — | Запуск не нужен. |
+| `lib/src/functions/bindings/*`, `ffigen.yaml`, `src/include/*` | `all` | Все доступные команды из таблицы ключей ниже; native CTest нужен, если этого требует карточка. |
+| `.github/workflows/ci.yml`, `.github/workflows/ci-smoke.yml`, `tool/ci/_common.ps1`, `drive.ps1`, `drive.sh`, `smoke.ps1`, `scope_guard.sh` | `all` | Все доступные команды из таблицы ключей ниже. |
+| `.github/workflows/ci-vm.yml`, `tool/ci/vm.*` | `vm` | `pwsh -File tool/ci/vm.ps1`. |
+| `.github/workflows/ci-windows.yml`, `tool/ci/windows.*` | `windows` | `pwsh -File tool/ci/windows.ps1` (Windows). |
+| `.github/workflows/ci-macos.yml`, `tool/ci/macos.*` | `macos` | `bash tool/ci/macos.sh` (macOS). |
+| `.github/workflows/ci-ios.yml`, `tool/ci/ios.*` | `ios` | `bash tool/ci/ios.sh` (macOS с Xcode и симулятором). |
+| `.github/workflows/ci-android.yml`, `tool/ci/android.*` | `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
+| `.github/workflows/ci-linux.yml`, `tool/ci/linux.*` | `linux` | Только CI; workflow `ci-linux.yml` или общий `.github/workflows/ci.yml` на интеграции. |
+| `.github/workflows/ci-web.yml`, `tool/ci/web.*` | `web` | `pwsh -File tool/ci/web.ps1` (Windows с настроенными Chrome и Emscripten). |
+| `.github/workflows/ci-example.yml`, `tool/ci/example.*` | `example` | `pwsh -File tool/ci/example.ps1` (Windows). |
+| Остальные `.github/workflows/*`, `tool/ci/*` | `all` | Все доступные команды из таблицы ключей ниже. |
+| `src/*`, `lib/src/yuv/impl/io/*`, `lib/src/functions/*`, `test/probe/*`, `example/integration_test/*`, `pubspec.yaml` | `all` | Все доступные команды из таблицы ключей; для `src/**` также используйте дополнительные проверки ниже. |
+| `lib/src/yuv/impl/web/*`, `assets/wasm/*`, `tool/wasm/*` | `web` | `pwsh -File tool/ci/web.ps1`; для Web-пробы см. селекторы ниже. Web остаётся частичным WASM backend. |
+| `windows/*`, `example/windows/*` | `windows` | `pwsh -File tool/ci/windows.ps1`. |
+| `macos/*`, `example/macos/*` | `macos` | `bash tool/ci/macos.sh` (macOS). |
+| `ios/*`, `example/ios/*` | `ios` | `bash tool/ci/ios.sh` (macOS с Xcode и симулятором). |
+| `android/*`, `example/android/*` | `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
+| `linux/*`, `example/linux/*` | `linux` | Только CI; локального `tool/ci/linux.sh` нет. |
+| `lib/*` (включая `lib/src/widgets/*`) | `vm example` | `pwsh -File tool/ci/vm.ps1` и `pwsh -File tool/ci/example.ps1`. Для `lib/src/widgets/**` дополнительно выберите `contract` и относящиеся к виджету тесты в `example/test/**`. |
+| `test/*`, `analysis_options.yaml`, `dart_test.yaml` | `vm` | `pwsh -File tool/ci/vm.ps1`; при необходимости используйте отдельные TEST 2 селекторы ниже. |
+| `example/*` (кроме ранее перечисленных платформенных и integration путей) | `example` | `pwsh -File tool/ci/example.ps1`. |
+| Любой другой путь | `all` | Все доступные команды из таблицы ключей ниже. |
+
+Команда для каждого ключа:
+
+| Ключ | Команда / доступность |
+| --- | --- |
+| `smoke` | `pwsh -File tool/ci/smoke.ps1` (Windows; проверяет CI helpers). |
+| `vm` | `pwsh -File tool/ci/vm.ps1` (Windows). |
+| `windows` | `pwsh -File tool/ci/windows.ps1` (Windows). |
+| `macos` | `bash tool/ci/macos.sh` (macOS). |
+| `ios` | `bash tool/ci/ios.sh` (macOS с Xcode и симулятором). |
+| `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
+| `web` | `pwsh -File tool/ci/web.ps1` (Windows с настроенными Chrome и Emscripten). |
+| `example` | `pwsh -File tool/ci/example.ps1` (Windows). |
+| `linux` | CI-only через `.github/workflows/ci.yml`; локального платформенного скрипта нет. |
+| `all` | Все перечисленные локальные команды на доступных платформах; `linux` проверяется только на CI. |
+
+Платформенные скрипты выполняют собственный набор сборок и проверок; наличие ключа не означает, что скрипт
+запускает каждый тестовый селектор. Выбирайте группы TEST 2 явно из корня пакета:
+
+| TEST 2 группа | Выборочный запуск |
+| --- | --- |
+| `smoke` или `contract` | `flutter test --tags "smoke || contract"` |
+| `probe` | `flutter test --tags probe` |
+| `reference` | `flutter test --tags reference` |
+| `release` | `flutter test --tags release` |
+| Полный набор, когда он требуется карточкой | `flutter test` |
+
+У TEST 3 матрицы пробы по умолчанию полный набор случаев. Для выборочного VM-прогона задайте
+`PROBE_OPS` и/или `PROBE_FORMATS` в окружении; для `flutter drive` передайте те же имена через
+`--dart-define=PROBE_OPS=...` и `--dart-define=PROBE_FORMATS=...`. Подтвердите фактический срез по строке
+`PROBE scope: ops=... formats=... cases=N/total`. Например, VM-проба:
+`$env:PROBE_OPS='gray'; flutter test test/probe/probe_correctness_test.dart`. Web-проба запускается целью
+`example/integration_test/probe_web_test.dart` через `tool/ci/drive.ps1` с `--dart-define=PROBE_OPS=gray`
+при работающем ChromeDriver; полный Web-скрипт `web.ps1` сам запускает свою полную матрицу.
+
+Для `src/**` ключ `all` означает все доступные затронутые платформенные скрипты; дополнительно выполните
+`flutter test --tags probe`, `flutter test --tags reference` и native CTest отдельно от `tool/ci/*`:
+
+```sh
+cmake -S . -B <temp> -DBUILD_TESTING=ON
+cmake --build <temp> --config Release
+ctest --test-dir <temp> -C Release --output-on-failure
+```
