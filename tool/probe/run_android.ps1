@@ -85,7 +85,11 @@ New-Item -ItemType Directory -Force -Path $resolvedResultDirectory | Out-Null
 $resultPath = Join-Path $resolvedResultDirectory "ra26-android-release-$runId.json"
 if (Test-Path -LiteralPath $resultPath) { throw "Unique result path unexpectedly exists: $resultPath" }
 
-function Read-Ra26Logcat { (& $adb -s $Serial logcat -d -v raw 2>&1 | Out-String) }
+function Read-Ra26Logcat {
+  # Keep every JSON marker on one logical line; Out-String's default width
+  # inserts line breaks into otherwise valid Android logcat output.
+  (& $adb -s $Serial logcat -d -v raw 2>&1 | Out-String -Width 32767)
+}
 function Read-JsonRecords([string]$Logcat, [string]$Prefix) {
   @([regex]::Matches($Logcat, "(?m)$Prefix\s+(\{[^\r\n]*\})") | ForEach-Object { $_.Groups[1].Value })
 }
