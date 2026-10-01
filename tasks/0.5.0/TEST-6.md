@@ -1,5 +1,5 @@
 # TEST 6 — Тихий вывод тестов и CI
-**Status:** ACCEPTED · **Tier:** T3 · **Owner:** TEST 2 · **Depends On:** TEST 2
+**Status:** REVIEW · **Tier:** T3 · **Owner:** TEST 2 · **Depends On:** TEST 2
 
 #### Goal
 Сейчас `tool/ci/*` печатают всё: каждую строку `flutter test --reporter expanded`, вывод `pub get`, cmake,
@@ -71,7 +71,10 @@
 - Исправление после review: строки `Passed` печатаются только когда весь прогон завершился успешно и не содержит упавших suites; добавлена `mixed_failure.jsonl` и регрессия, проверяющая код 1, диагностический блок падения и отсутствие успешного suite/его print-вывода.
 - Проверка исправления в Windows с отдельным `RUNNER_TEMP`: `flutter test test/ci_test_report_test.dart` — 5/5; `dart format --line-length 150` — без изменений; `flutter analyze` завершился без ошибок (57 существующих info `library_annotations`); `tool/ci/vm.ps1` — 584/584.
 - `tool/ci/windows.ps1` прошёл: probe 15/15 (1 skipped), reference 123/123, Windows release build и оба drive-target; `tool/ci/smoke.ps1` прошёл. Повторный Mac-прогон этой коррекции не выполнялся в Windows-окружении.
+- Исправление интеграционной проверки: при временно убранном `.dart_tool/package_config.json` сырой `flutter test --reporter json` начал stdout строками `Resolving dependencies...` и `Downloading packages...`; после отдельного `flutter pub get` вариант с `--no-pub` начал поток с JSON-события `start`. `Invoke-CiFlutterTest` и вызов в `macos.sh` теперь передают `--no-pub` после своего явного `pub get`.
+- Windows, отдельный `RUNNER_TEMP`: точный PowerShell-конвейер `Invoke-CiNativeCommand flutter pub get --no-example; Invoke-CiFlutterTest test/ci_test_report_test.dart` прошёл с `5/5 passed`; stdout репортёра содержит только строку suite, итог и время. `bash -n tool/ci/macos.sh` прошёл.
+- Полный `tool/ci/vm.ps1` на объединённом `dev` дошёл до репортёра без ошибки JSON, но завершился `583/584`: `test/tags_coverage_test.dart` сообщает, что `test/probe/probe_selection_test.dart` не имеет ровно одного `@Tags`. Это изменение TEST 3 вне Scope TEST 6; его нужно исправить отдельной карточкой.
 
 #### Review
 
-- **ACCEPTED (T2, 2026-10-01):** исправление после `8cf0ebd` ограничено репортёром, контрактным тестом и маленькой JSONL-фикстурой. В `tool/ci/test_report.dart` условие `showPassedSuites` требует успешного `done`, обычного теста, нулевого счётчика ошибок и отсутствия упавшего suite; поэтому при любом общем неуспехе строки `<path>  Passed …` не выводятся, а блоки упавших тестов, итог и время сохраняются. `mixed_failure.jsonl` содержит успешный suite с `passed diagnostic` и независимый упавший suite; тест проверяет код 1, путь/диагностику падения и отсутствие как `Passed` успешного suite, так и его print-вывода. Executor Report фиксирует для исправленного HEAD: 5/5 контрактных тестов, format без изменений, analyze без ошибок и `vm.ps1` 584/584; Windows/smoke прошли. Повторный Mac не выполнялся в Windows, но изменение не затрагивает macOS-скрипт, а исходный Mac-прогон остаётся применимым.
+- Ожидается независимое ревью интеграционной коррекции `--no-pub` и её доказательств проверки.

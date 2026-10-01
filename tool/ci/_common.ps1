@@ -55,7 +55,7 @@ function Invoke-CiFlutterTest {
     [string[]] $Arguments
   )
 
-  & flutter test --reporter json @Arguments | & dart (Join-Path $PSScriptRoot 'test_report.dart')
+  & flutter test --no-pub --reporter json @Arguments | & dart (Join-Path $PSScriptRoot 'test_report.dart')
   if ($LASTEXITCODE -ne 0) {
     throw "flutter test failed with exit code $LASTEXITCODE"
   }

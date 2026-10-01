@@ -59,7 +59,7 @@ cp "$native_build_directory/libyuv_ffi.dylib" \
   "$FLUTTER_ROOT/bin/cache/artifacts/engine/darwin-x64/libyuv_ffi.dylib"
 
 run_quiet flutter pub get
-flutter test --reporter json test/native_packaging_smoke_test.dart | dart tool/ci/test_report.dart
+flutter test --no-pub --reporter json test/native_packaging_smoke_test.dart | dart tool/ci/test_report.dart
 
 (
   cd example
