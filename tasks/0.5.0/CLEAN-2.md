@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** ACCEPTED · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -174,3 +174,25 @@ committed correction head.
 - Статический поиск не нашёл `@Deprecated` declarations или удалённые exported compatibility names в package/example/test; README и верхний CHANGELOG описывают migration. `pubspec.yaml` и оба podspec содержат `0.5.0-dev.1`; `src/CMakeLists.txt` задаёт numeric `0.5.0` и exact package metadata `0.5.0-dev.1`.
 - Executor evidence на этом head: Windows CI PASS (probe 20/20, reference 134/134, release/runtime smoke); VM PASS (571/571 smoke/contract); Windows probe PASS (24/24, `NO-BASELINE`, без `SLOWER`). Web и example evidence сохраняют силу, поскольку correction #5 не меняет их source, assets, metadata или CI scripts.
 - Reviewer повторил release probes Pixel 3 на этом head: arm64-v8a — `smoke=PASS`, `probe=PASS`, 1188 cases, run `2e093313f7de443e83c89ef168575438`, evidence `%TEMP%\yuv_ffi-clean2-f143278-arm64`; armeabi-v7a — те же PASS/1188, run `31ab84396bb94690aad5c15ce34fcd7d`, evidence `%TEMP%\yuv_ffi-clean2-f143278-armv7`. APK каждого run содержит только ожидаемый ABI и `libyuv_ffi.so`.
+
+#### Integration correction attempt #5 — Executor Report
+
+**Result:** REVIEW
+
+- Ветка задачи содержит актуальный `dev` (`5c873a8`). CLEAN 1 сохраняет
+  удалённые PACK-00/VIEW-03 hooks и явный
+  `flipAndroidCameraHorizontally`; CLEAN 2 заменяет его конфликтный удалённый
+  вызов `rotation.toZero()` на текущий `applyRotation(rotation)`.
+- В integration probe test сохранена директива `library;`. Dashboard взят из
+  `dev`, включая принятое состояние CLEAN 1 и актуальные SPM-карточки.
+- Native C, headers и generated bindings не менялись. Активные CLEAN 2 suites
+  serialization, Web, widget, rotation, ABI и native не удалялись.
+
+**Validation:**
+
+- `flutter analyze --no-fatal-infos lib test example/lib example/integration_test/helpers/probe/probe_selection_test.dart` — PASS без warnings/errors; 55 существующих info diagnostics о library annotations.
+- `flutter test test/probe/probe_selection_test.dart test/yuv_image_rotation_test.dart test/yuv_image_widget_test.dart` — PASS: 26 tests.
+- Targeted `rg` по package/example/test surfaces — PASS: нет `@Deprecated`
+  declarations или ссылок на удалённый public API; `git diff --check` — PASS.
+- `git merge-base --is-ancestor dev HEAD` — PASS: task/CLEAN-2 включает
+  текущий `dev` и готова к чистой интеграции.
