@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -297,3 +297,32 @@ committed correction head.
   PASS: WASM rebuild had no diff; aggregate Web, capabilities, bootstrap,
   lifecycle, and isolated atomicity targets passed; reference matrix 119
   passed. Final output: `sources=13; integration cases=62`.
+
+#### Review
+
+**Reviewed-Head:** `5f795e62cd2fd7d6517798573a98fa0b5ad19b64`
+
+**Status:** ACCEPTED
+
+**Blocking:** none
+
+**Advisory:** none
+
+**Acceptance:**
+
+- `tool/ci/web.ps1` on the Reviewed-Head — PASS: WASM rebuild has no diff;
+  aggregate, capabilities, bootstrap, lifecycle, and isolated atomicity
+  targets pass; Chrome 154.0.8037.58; `sources=13`, `integration cases=62`,
+  reference matrix 119.
+- The source map covers every discovered Web source. Atomicity is deliberately
+  a separate drive target, so its loader reset cannot invalidate the aggregate
+  ownership setup. The restored assertions retain current NV12 chroma swap,
+  static decode, normal copy, padded serialization, and ABI v1 contracts.
+- `flutter analyze --no-fatal-infos` for the four corrected Web sources — PASS.
+- Pixel 3 `8B1X11QLW` release probes on the exact Reviewed-Head: arm64-v8a —
+  `smoke=PASS`, `probe=PASS`, 1188 cases, run
+  `a64c2e1d3f4051728394a5b6c7d8e9f0`, evidence
+  `%TEMP%\\yuv_ffi-clean2-5f795e6-review-arm64-retry`; armeabi-v7a — the same
+  PASS/1188, run `b71d3e2f40516273849a5b6c7d8e9f01`, evidence
+  `%TEMP%\\yuv_ffi-clean2-5f795e6-review-armv7`. Each APK contained only its
+  expected ABI and `libyuv_ffi.so`.
