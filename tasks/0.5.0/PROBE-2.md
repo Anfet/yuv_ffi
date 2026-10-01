@@ -1,5 +1,5 @@
 # PROBE 2 — Правило проб для задач
-**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** PROBE 1, TEST 4 · **Rejection Count:** 0
+**Status:** ACCEPTED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** PROBE 1, TEST 4 · **Rejection Count:** 0
 **Probe:** none
 **Было:** RA-27 (цикл 0.4.2).
 
@@ -20,3 +20,8 @@
 - В правилах `todo.md` добавлено поле `Probe` для шаблона карточки; этой документационной задаче назначено `Probe: none`.
 - Проверка: `git diff --check` — PASS. Проверка проб не требуется (`Probe: none`).
 - Результат: готово к независимому ревью.
+
+#### Reviewer Report
+- ACCEPTED. `AGENTS.md` задаёт `windows+pixel3` для `src/`, `lib/src/yuv/impl/**` и заявок о скорости; `windows` для остальных изменений `lib/`; `none` для документации и CI, с выбором наиболее строгого правила.
+- Подтверждены: Windows-вердикты Executor и обработка `FAIL`/`SLOWER`; Pixel 3 arm64 и armv7 для изменений `src/`; обновление baseline только Reviewer после приёмки отдельным коммитом с причиной; CI-корректность остальных платформ и предрелизная проверка их скорости.
+- `todo.md` содержит поле шаблона, а карточка имеет `Probe: none`. Diff ограничен правилами и карточкой; `git diff --check` — PASS. Проверки проб не требуются.
