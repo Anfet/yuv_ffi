@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`); TEST 3 исправляется. TEST 5 и TEST 6 на ревью, TEST 7 принята. TEST 4 ждёт принятия TEST 3.
+- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`); TEST 3, TEST 5 и TEST 6 на ревью, TEST 7 принята. TEST 4 ждёт принятия TEST 3.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Дашборд
@@ -35,7 +35,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 3](tasks/0.5.0/TEST-3.md) | TODO | T2 | Terra | TEST 2 | **Срезы проб по операции и формату.** Review `8be229e` требует отклонять явный `all`, проверять полный golden ID-набор до фильтрации во всех трёх targets и записать Web охват с точной drive-командой. |
+| [TEST 3](tasks/0.5.0/TEST-3.md) | REVIEW | T2 | Reviewer | TEST 2 | **Срезы проб по операции и формату.** Исправления `all`, проверки golden IDs до фильтрации и отчёта Web выполнены; VM/Windows/Android/Web/macOS/iOS прошли на `1bb400d`. |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 2/3 | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Было RA-62. Ждёт TEST 2 и TEST 3. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | REVIEW | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Инвентаризация не нашла удалений; `lib/` и `src/` не менялись. VM/Windows и указанные suite прошли на `873ff2b`. |
 | [TEST 6](tasks/0.5.0/TEST-6.md) | REVIEW | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Исправлено условие вывода suite `Passed`; reporter-тесты 5/5, `vm.ps1` 584/584, Windows и smoke прошли на `00af357`. |
