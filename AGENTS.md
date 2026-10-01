@@ -89,13 +89,13 @@
 | --- | --- | --- |
 | `*.md`, `doc/*`, `tasks/*` | — | Запуск не нужен. |
 | `lib/src/functions/bindings/*`, `ffigen.yaml`, `src/include/*` | `all` | Все доступные команды из таблицы ключей ниже; native CTest нужен, если этого требует карточка. |
-| `.github/workflows/ci.yml`, `.github/workflows/ci-smoke.yml`, `tool/ci/_common.ps1`, `drive.ps1`, `drive.sh`, `smoke.ps1`, `scope_guard.sh` | `all` | Все доступные команды из таблицы ключей ниже. |
+| `.github/workflows/ci.yml`, `.github/workflows/ci-smoke.yml`, `tool/ci/_common.ps1`, `tool/ci/drive.ps1`, `tool/ci/drive.sh`, `tool/ci/smoke.ps1`, `tool/ci/scope_guard.sh` | `all` | Все доступные команды из таблицы ключей ниже. |
 | `.github/workflows/ci-vm.yml`, `tool/ci/vm.*` | `vm` | `pwsh -File tool/ci/vm.ps1`. |
 | `.github/workflows/ci-windows.yml`, `tool/ci/windows.*` | `windows` | `pwsh -File tool/ci/windows.ps1` (Windows). |
 | `.github/workflows/ci-macos.yml`, `tool/ci/macos.*` | `macos` | `bash tool/ci/macos.sh` (macOS). |
 | `.github/workflows/ci-ios.yml`, `tool/ci/ios.*` | `ios` | `bash tool/ci/ios.sh` (macOS с Xcode и симулятором). |
 | `.github/workflows/ci-android.yml`, `tool/ci/android.*` | `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
-| `.github/workflows/ci-linux.yml`, `tool/ci/linux.*` | `linux` | Только CI; workflow `ci-linux.yml` или общий `.github/workflows/ci.yml` на интеграции. |
+| `.github/workflows/ci-linux.yml`, `tool/ci/linux.*` | `linux` | Только CI; общий `.github/workflows/ci.yml` на интеграции. Отдельного `.github/workflows/ci-linux.yml` сейчас нет. |
 | `.github/workflows/ci-web.yml`, `tool/ci/web.*` | `web` | `pwsh -File tool/ci/web.ps1` (Windows с настроенными Chrome и Emscripten). |
 | `.github/workflows/ci-example.yml`, `tool/ci/example.*` | `example` | `pwsh -File tool/ci/example.ps1` (Windows). |
 | Остальные `.github/workflows/*`, `tool/ci/*` | `all` | Все доступные команды из таблицы ключей ниже. |
@@ -141,9 +141,12 @@
 `PROBE_OPS` и/или `PROBE_FORMATS` в окружении; для `flutter drive` передайте те же имена через
 `--dart-define=PROBE_OPS=...` и `--dart-define=PROBE_FORMATS=...`. Подтвердите фактический срез по строке
 `PROBE scope: ops=... formats=... cases=N/total`. Например, VM-проба:
-`$env:PROBE_OPS='gray'; flutter test test/probe/probe_correctness_test.dart`. Web-проба запускается целью
-`example/integration_test/probe_web_test.dart` через `tool/ci/drive.ps1` с `--dart-define=PROBE_OPS=gray`
-при работающем ChromeDriver; полный Web-скрипт `web.ps1` сам запускает свою полную матрицу.
+`$env:PROBE_OPS='gray'; flutter test test/probe/probe_correctness_test.dart`. Для Web-пробы запустите
+ChromeDriver и выполните из корня пакета:
+`pwsh -File tool/ci/drive.ps1 integration_test/probe_web_test.dart web-server --browser-name=chrome --headless --dart-define=PROBE_OPS=gray --dart-define=PROBE_FORMATS=i420`.
+`drive.ps1` запускает `flutter drive` из `example/`, поэтому target задаётся относительно `example/`, а
+`web-server` и параметры Chrome передаются как device/browser arguments. Подтвердите фактический срез по
+строке `PROBE scope`. Полный Web-скрипт `tool/ci/web.ps1` сам запускает полную матрицу.
 
 Для `src/**` ключ `all` означает все доступные затронутые платформенные скрипты; дополнительно выполните
 `flutter test --tags probe`, `flutter test --tags reference` и native CTest отдельно от `tool/ci/*`:

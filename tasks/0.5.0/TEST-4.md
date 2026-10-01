@@ -1,5 +1,5 @@
 # TEST 4 — Карта «что изменил → что запускать»
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 1
+**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 1
 **Было:** RA-62 (цикл 0.4.2).
 
 #### Goal
@@ -57,17 +57,19 @@
 
 #### Executor Report
 
-Свежий Executor T3, GPT-6 Luna, перенёс worktree на актуальный `dev` `1eba457` с сохранением карточки Architect и
-работал в `task/TEST-4`. В `AGENTS.md` добавлена таблица в порядке `path_keys()` с объединением ключей,
-раскрытием `all`, фактическими командами для существующих платформенных скриптов и явным `linux` CI-only.
-Добавлены отдельные селекторы TEST 2, инструкции TEST 3 для VM и Web, случаи `src/**`, Web/WASM, widgets и
-документации, а также native CTest-команды.
+Свежий Executor T3, GPT-6 Luna, исправил отклонённые пункты в `AGENTS.md`: перечислил полные `tool/ci/*` пути
+в строке `all`, оставил Linux только для CI с существующим `.github/workflows/ci.yml`, а Web-пробу описал
+исполняемой командой `drive.ps1` с target, `web-server`, Chrome arguments, валидными `PROBE_OPS=gray` и
+`PROBE_FORMATS=i420` defines и проверкой `PROBE scope`.
 
 Validation:
 
-- Сверены все строки таблицы с порядком и шаблонами `path_keys()` в `tool/ci/scope_guard.sh`.
-- Проверено наличие командных скриптов; TEST 2 селекторы сверены с карточкой TEST 2, срез и строка `PROBE scope`
-  — с карточкой TEST 3 и реализацией селектора.
+- Все строки карты сверены с порядком/шаблонами `path_keys()` в `tool/ci/scope_guard.sh`; перечисленные пути
+  `tool/ci/*` и команды проверены по текущим файлам скриптов.
+- TEST 2 селекторы сверены с таблицей в `AGENTS.md`; Web-вызов сверён с обязательными параметрами
+  `tool/ci/drive.ps1` и порядком вызова из `tool/ci/web.ps1`. `gray`/`i420` сверены с допустимыми значениями
+  `test/probe/probe_selection.dart`; указана строка `PROBE scope`.
+- `.github/workflows/ci-linux.yml` не существует; Linux отмечен CI-only через имеющийся `.github/workflows/ci.yml`.
 - `git diff --check` — успешно.
 - `git diff --name-only` — `AGENTS.md` и `tasks/0.5.0/TEST-4.md`.
 - Платформенные проверки не запускались: изменение документационное, Validation их не требует.
