@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`). Принятые TEST 3, TEST 6 и TEST 7 влиты в `dev` (`efb76a8`); выполняется общая интеграционная проверка платформ, oracle и package dry-run. TEST 4 зависит от интеграции TEST 3.
+- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`). Общая интеграция TEST 3/6/7 на `302034a` остановлена до старта тестов: Flutter печатает статусные строки перед JSON, и reporter TEST 6 их отвергает. TEST 6 возвращена на исправление; TEST 3 и TEST 7 приняты и ждут повторной общей проверки. TEST 4 ждёт интеграции TEST 3.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Дашборд
@@ -35,11 +35,11 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 3](tasks/0.5.0/TEST-3.md) | IN_PROGRESS | T2 | Integration | TEST 2 | **Срезы проб по операции и формату.** Принятая карточка влита в `dev`; проходит общая интеграционная проверка на `efb76a8`. |
+| [TEST 3](tasks/0.5.0/TEST-3.md) | ACCEPTED | T2 | Reviewer | TEST 2 | **Срезы проб по операции и формату.** Review принято; общая проверка на `302034a` ожидает исправления TEST 6 reporter (JSON preamble). |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 3 integration | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Карточка требует изменения path-to-command mapping после интеграции TEST 3; открыть после общего validation gate. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | REVIEW | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Инвентаризация не нашла удалений; `lib/` и `src/` не менялись. VM/Windows и указанные suite прошли на `873ff2b`. |
-| [TEST 6](tasks/0.5.0/TEST-6.md) | IN_PROGRESS | T2 | Integration | TEST 2 | **Тихий вывод тестов и CI.** Принятая карточка влита в `dev`; проверяются интегрированные reporter и Windows/Mac CI-пути на `efb76a8`. |
-| [TEST 7](tasks/0.5.0/TEST-7.md) | IN_PROGRESS | T2 | Integration | — | **Сверка эталона с libyuv.** Принятая карточка влита в `dev`; повторно проверяются Mac oracle/negative-control и Windows package dry-run на интегрированной базе. |
+| [TEST 6](tasks/0.5.0/TEST-6.md) | TODO | T2 | Terra | TEST 2 | **Тихий вывод тестов и CI.** Интеграция выявила, что Flutter допечатывает статусные строки в JSON stdout; исправить вызов/parser и добавить интеграционный случай до повторной общей проверки. |
+| [TEST 7](tasks/0.5.0/TEST-7.md) | ACCEPTED | T2 | Reviewer | — | **Сверка эталона с libyuv.** Review принято; общая проверка на `302034a` ждёт исправления TEST 6 reporter (JSON preamble). |
 
 ### Этап 2 — пробы и скорость
 
