@@ -36,7 +36,7 @@ Orchestrator записывает для нового пула порядок к
 
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
-| SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | при запуске: `<keys>/STAGE3-SPM` / `.worktrees/STAGE3-SPM` | CLEAN 2 в `dev` | не начат |
+| SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM` не отправлен (ждёт решения Engineer); пул `DONE` |
 
 ## Дашборд
 
@@ -52,6 +52,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
+Нет активных задач.
 | [SPM 1](tasks/0.5.0/SPM-1.md) | TODO | T3 | этап 3 | CLEAN 2 | **Общий каталог `darwin/` для iOS и macOS** (D-12). Podspec и переходники по одному на исходник, `src/` не переносится; сборка пока через CocoaPods. CLEAN 2 смержен в `dev` (`79f9cd6`); задача доступна при запуске пула SPM. |
 | [SPM 2](tasks/0.5.0/SPM-2.md) | BLOCKED | T2 | SPM 1 | SPM 1 | **`Package.swift` и сборка example через SPM.** Динамический продукт `yuv-ffi`; проверка символов, запасного пути CocoaPods и негативный контроль. |
 | [SPM 3](tasks/0.5.0/SPM-3.md) | BLOCKED | T2 | SPM 2 | SPM 2 | **CI: SPM и CocoaPods в `ios.sh` и `macos.sh`.** Проверка фактического режима сборки, короткий CocoaPods-проход, симулятор iOS 18.x (ML Kit). |
