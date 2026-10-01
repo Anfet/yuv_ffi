@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** TODO · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -115,15 +115,16 @@ D-11; вместе с `deprecated_api_test`; миграция в README и CHANG
 
 #### Review
 
-**Reviewed-Head:** `e457518fd83c3c0ff1279245f44fe302179f7673`
+**Reviewed-Head:** `7c9eb72c60d4e6a06cb50a7a027495480123b16f`
 
 **Status:** TODO
 
 **Blocking:**
 
-- Удалены целиком проверки действующего API, хотя Scope разрешает удалить только legacy-фрагменты смешанных тестов и прямо требует сохранить ABI, serialization и Web. В diff вместе с допустимым `test/deprecated_api_test.dart` исчезли текущие контракты сериализации (`test/yuv_serialization_test.dart`, `test/encode_decode_test.dart`, `example/integration_test/serialization_contract_web_test.dart`), виджета/ревизий (`test/yuv_image_widget_test.dart`, `example/integration_test/image_cache_key_web_test.dart`), rotation (`test/yuv_image_rotation_test.dart` вообще не содержит legacy-ссылок), ABI/native operations (`test/io_abi_v1_public_contract_test.dart`, `test/native_allocation_safety_test.dart`, `test/reference_native_conversions_test.dart`) и другие current factory/geometry/layout tests. Вернуть либо перенести актуальные cases на новый API; legacy cases можно удалить отдельно.
+- Исправление вернуло лишь по одному сокращённому case на файл и не сохраняет все действующие контракты. В `test/conversions_test.dart` осталось 1 из 35 cases: отсутствуют проверки current `apply*`, conversion round trips, crop, rotation, effects и padding. В `test/yuv_serialization_test.dart` осталось 2 из 42, а в Web serialization — 1 из 11: потеряны current v2 fixtures, fragmented/trailing payloads и atomic revision state. В `test/yuv_image_widget_test.dart` осталось 1 из 17: исчезли current cache/provider, frame snapshot, padded BGRA и rendering contracts.
+- Аналогично сокращены active factory/geometry/layout/rotation и ABI/native suites: `test/yuv_image_factories_test.dart` 1 из 22, `test/yuv_plane_layout_test.dart` 1 из 15, `test/yuv_image_rotation_test.dart` 1 из 8, `test/io_abi_v1_public_contract_test.dart` 1 из 8, `test/native_allocation_safety_test.dart` 1 из 11. Эти проверки необходимо вернуть или перенести на `YuvPixelFormat` и действующие `apply*`/`to*` методы; удалить можно только assertions, завязанные исключительно на compatibility API.
 
 **Evidence:**
 
-- Reviewer-проба Pixel 3 `8B1X11QLW` на Reviewed-Head прошла: arm64-v8a и armeabi-v7a — `smoke=PASS`, `probe=PASS`, по 1188 cases. Windows evidence Executor также не содержит `FAIL` или необъяснённого `SLOWER`.
-- Статический поиск подтверждает удаление публичных deprecated declarations; README/CHANGELOG содержат намеренную migration mapping. Это не компенсирует потерю действующих тестов.
+- Статический поиск подтверждает отсутствие удалённых публичных declarations; README, CHANGELOG и версии `pubspec.yaml`/podspec/CMake согласованы. Это не доказывает сохранность current test contracts.
+- Reviewer повторил required Pixel 3 release probes на exact Reviewed-Head: `run_release_android.ps1` arm64-v8a — `smoke=PASS`, `probe=PASS`, 1188 cases, run `99958ae53b274ce4baf488b89557ba74`; armeabi-v7a — те же PASS/1188, run `29c6f3e1360b4f819f113d836876ec3b`. Native source/ABI correctness на этом SHA подтверждена, но это не устраняет потерю VM/Web contract coverage.
