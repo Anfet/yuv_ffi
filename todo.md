@@ -35,8 +35,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [PROBE 1](tasks/0.5.0/PROBE-1.md) | REVIEW | T2 | Terra | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** Негативные проверки DLL/package/power закрыты; `vm.ps1` 584/584 и `windows.ps1` прошёл. Кэш TEST 3 не изменён. |
-| [PROBE 2](tasks/0.5.0/PROBE-2.md) | BLOCKED | T3 | PROBE 1 | PROBE 1, TEST 4 | **Правило проб для задач.** Было RA-27. Поле `Probe` в карточке и правило в `AGENTS.md`. Ждёт решения по PROBE 1. |
+| [PROBE 1](tasks/0.5.0/PROBE-1.md) | ACCEPTED | T2 | Terra | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** Независимое ревью принято; provenance и негативные проверки подтверждены. |
+| [PROBE 2](tasks/0.5.0/PROBE-2.md) | TODO | T3 | — | PROBE 1, TEST 4 | **Правило проб для задач.** Было RA-27. Поле `Probe` в карточке и правило в `AGENTS.md`; зависимости приняты. |
 
 ### Этап 3 — уборка
 
