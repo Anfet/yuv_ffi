@@ -155,7 +155,19 @@ try {
     "--dart-define=RA26_COOLDOWN_SECONDS=$CooldownSeconds"
   )
   if ($BaselinePath) {
-    $baselineDocument = Get-Content -LiteralPath $BaselinePath -Raw
+    $baseline = Get-Content -LiteralPath $BaselinePath -Raw | ConvertFrom-Json
+    $baselineDocument = [ordered]@{
+      schema = $baseline.schema
+      hostId = $baseline.hostId
+      runs = @($baseline.runs | ForEach-Object {
+        [ordered]@{
+          id = $_.id
+          hash = $_.hash
+          medianMicros = $_.medianMicros
+          spreadPercent = $_.spreadPercent
+        }
+      })
+    } | ConvertTo-Json -Compress -Depth 4
     $buildArguments += "--dart-define=RA26_BASELINES=$(To-Base64Url $baselineDocument)"
   }
   if ($Strict) { $buildArguments += '--dart-define=RA26_STRICT=true' }

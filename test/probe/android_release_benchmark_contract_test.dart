@@ -24,5 +24,6 @@ void main() {
     expect(runner, contains('Out-String -Width 32767'));
     expect(runner, contains('@(Read-JsonRecords'));
     expect(runner, contains(r'$hostSummary | ConvertTo-Json -Compress'));
+    expect(runner, contains(r'medianMicros = $_.medianMicros'));
   });
 }
