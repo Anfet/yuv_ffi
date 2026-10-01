@@ -38,7 +38,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | [TEST 3](tasks/0.5.0/TEST-3.md) | TODO | T2 | Terra | TEST 2 | **Срезы проб по операции и формату.** Интеграционный VM-гейт выявил новый `test/probe/probe_selection_test.dart` без `@Tags`; синхронизировать single tag и повторить coverage/VM проверки. |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 3 integration | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Карточка требует изменения path-to-command mapping после интеграции TEST 3; открыть после общего validation gate. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | REVIEW | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Инвентаризация не нашла удалений; `lib/` и `src/` не менялись. VM/Windows и указанные suite прошли на `873ff2b`. |
-| [TEST 6](tasks/0.5.0/TEST-6.md) | REVIEW | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Добавлен `--no-pub` после явного dependency resolution; reporter pipeline 5/5 и bash syntax прошли на `2a57867`. Полный VM-гейт остановился далее на теге теста TEST 3. |
+| [TEST 6](tasks/0.5.0/TEST-6.md) | ACCEPTED | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Повторное ревью подтвердило `--no-pub` после dependency resolution, чистый JSON stdout и сохранение mixed-failure regression на `2a57867`. |
 | [TEST 7](tasks/0.5.0/TEST-7.md) | ACCEPTED | T2 | Reviewer | — | **Сверка эталона с libyuv.** Review принято; общая проверка на `302034a` ждёт исправления TEST 6 reporter (JSON preamble). |
 
 ### Этап 2 — пробы и скорость
