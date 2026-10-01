@@ -42,7 +42,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [CLEAN 1](tasks/0.5.0/CLEAN-1.md) | ACCEPTED | T3 | Luna | — | **Убрать следы замеров из example.** Экран PACK-00, хуки VIEW-03, переключатель упаковки. |
-| [CLEAN 2](tasks/0.5.0/CLEAN-2.md) | TODO | T2 | Terra | TEST 2 | **Удалить устаревшее API** (D-11) вместе с его тестами; миграция в README и CHANGELOG. |
+| [CLEAN 2](tasks/0.5.0/CLEAN-2.md) | IN_PROGRESS | Terra | TEST 2 | **Удалить устаревшее API** (D-11) вместе с его тестами; миграция в README и CHANGELOG. |
 | [SPM 1](tasks/0.5.0/SPM-1.md) | BLOCKED | T3 | CLEAN 2 | CLEAN 2 | **Общий каталог `darwin/` для iOS и macOS** (D-12). Podspec и переходники по одному на исходник, `src/` не переносится; сборка пока через CocoaPods. Старт — после слияния CLEAN 2. |
 | [SPM 2](tasks/0.5.0/SPM-2.md) | BLOCKED | T2 | SPM 1 | SPM 1 | **`Package.swift` и сборка example через SPM.** Динамический продукт `yuv-ffi`; проверка символов, запасного пути CocoaPods и негативный контроль. |
 | [SPM 3](tasks/0.5.0/SPM-3.md) | BLOCKED | T2 | SPM 2 | SPM 2 | **CI: SPM и CocoaPods в `ios.sh` и `macos.sh`.** Проверка фактического режима сборки, короткий CocoaPods-проход, симулятор iOS 18.x (ML Kit). |
