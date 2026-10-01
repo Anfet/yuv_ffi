@@ -1,5 +1,5 @@
 # TEST 5 — Чистка дублирующих тестов
-**Status:** REVIEW · **Tier:** T2 · **Owner:** TEST 1, TEST 2, TEST 7 · **Depends On:** TEST 1, TEST 2, TEST 7
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** TEST 1, TEST 2, TEST 7
 
 #### Goal
 Одна регрессия — одно место, где она ловится (плюс эталон). Убрать тесты, чей контракт уже проверяет другой файл,
@@ -70,3 +70,9 @@
 - `git diff dev -- lib src` — empty.
 - `git diff --check` — passed.
 #### Review
+
+ACCEPTED.
+
+- Инвентаризация TEST 1 содержит 95 строк; все 95 значений в колонке «Предложение» начинаются с «оставить». Это исключает кандидаты на удаление или сокращение, поэтому таблица с единственной строкой «Нет допустимых кандидатов» полна, а мутационные прогоны не требовались.
+- Diff `772890e..873ff2b` меняет только эту карточку (14 добавлений, 1 удаление). В `test/**`, `example/test/**` и `example/integration_test/**` нет изменений, следовательно неподтверждённого удаления не было. `git diff --exit-code 772890e 873ff2b -- lib src` пуст; D-17 соблюдён.
+- Поскольку web-тесты не менялись, `tool/ci/web.ps1` не нужен. Записанные `tool/ci/vm.ps1`, `tool/ci/windows.ps1` и `flutter test` в `example/` покрывают обязательный Validation; состав скриптов подтверждает smoke/contract, probe, reference matrix, Windows release и native integration. В отчёте также записаны полные package, probe, reference и example counts/time. `git diff --check` подтверждён.
