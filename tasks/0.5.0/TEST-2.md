@@ -7,6 +7,19 @@
 изменению, и уметь отдельно запустить каждую группу.
 
 #### Architect Decision
+- **DECIDED 01.10.2026 — учёт завершённых проверок.** В инвентаризации TEST 1 на SHA
+  `9fbd1564e70965950b5f552221b85e154fb66ba3` сумма строк пакета равна 731, но колонка ошибочно
+  названа `Passed`: строка `test/probe/probe_performance_test.dart` входит в `probe=16` и пропускается без
+  `PROBE_TIMING=1`. Значит 731 — число зарегистрированных и завершённых проверок, включая один skip;
+  складывать с ним этот skip ещё раз нельзя. В исходниках между этим SHA и `14d0e5966bf5243794e95812f5ce69e918fa1830`
+  из тестовых файлов добавлен только `tags_coverage_test.dart`; у прежних файлов менялись аннотации тегов,
+  тела тестов не менялись. Поэтому сопоставимое ожидание — 731 completed в инвентаризации TEST 1 и 732
+  completed в полном прогоне TEST 2, включая новый тест. Сохранённый исходный JSON TEST 1 не перепроверялся;
+  его формулировка `731 passed, 1 skipped` не используется как арифметическая база. На SHA TEST 2 JSON
+  показывает 731 passed + 1 skipped = 732 completed, а четыре непересекающиеся группы дают те же 732.
+  `tags_coverage_test.dart` относится к `contract` и уже учтён в 569 completed для `smoke || contract`;
+  отдельный запуск 1/1 служит проверкой самого теста, а не прибавляется к сумме групп. Для приёмки
+  сравнивать только `testDone` с `hidden: false` и считать skipped частью completed.
 - **`flutter test` без аргументов — полный прогон.** Выборочный прогон вызывается явно. Причина — устройство
   test runner (`test_core` 0.6.17, `Configuration.merge`): `include_tags` из `dart_test.yaml` пересекается с
   `--tags` из командной строки, а `exclude_tags` объединяется. Поэтому при любом селекторе в `dart_test.yaml`
@@ -54,8 +67,9 @@
 - [ ] `dart_test.yaml` объявляет пять тегов и не задаёт `include_tags` / `exclude_tags`
 - [ ] Каждая из четырёх команд `"smoke || contract"`, `probe`, `reference`, `release` завершается с кодом 0 и выполняет
       хотя бы один тест
-- [ ] На одном SHA число тестов полного `flutter test` равно сумме четырёх частей; отличие от базы TEST 1
-      (731 passed, 1 skipped на `dev`) объяснено — ожидается +1 за `tags_coverage_test`
+- [ ] На одном SHA число completed (`testDone` с `hidden: false`, включая skipped) в полном `flutter test`
+      равно сумме четырёх частей; сравнение с 731 completed по инвентаризации TEST 1 объясняет +1 за
+      `tags_coverage_test.dart` без повторного учёта skipped
 - [ ] `tool/ci/vm.ps1` выбирает `smoke || contract` и проходит; `tool/ci/windows.ps1` проходит
 
 #### Validation
