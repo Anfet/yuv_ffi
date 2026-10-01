@@ -35,7 +35,7 @@ class ProbeCase {
   String get operation => _parts[3];
 }
 
-final probeInputIds = probeCaseIds
+List<String> probeInputIdsFor(Iterable<String> caseIds) => caseIds
     .map((id) => id.split(' ').take(3).join(' '))
     .toSet()
     .map((id) => 'input $id')
@@ -298,9 +298,12 @@ String runProbeInput(String id) {
   return sha256.convert(image.toBytes()).toString().substring(0, 16);
 }
 
-List<String> probeInputMismatches(Map<String, dynamic> golden) {
+List<String> probeInputMismatches(
+  Map<String, dynamic> golden, {
+  Iterable<String>? caseIds,
+}) {
   final mismatches = <String>[];
-  for (final id in probeInputIds) {
+  for (final id in probeInputIdsFor(caseIds ?? probeCaseIds)) {
     final expected = golden[id];
     if (expected == null) {
       mismatches.add('$id: missing input golden');
@@ -339,7 +342,7 @@ Future<bool> recordProbeGolden(
   required String mode,
 }) async {
   final actual = <String, dynamic>{
-    for (final id in probeInputIds) id: runProbeInput(id),
+    for (final id in probeInputIdsFor(probeCaseIds)) id: runProbeInput(id),
   };
   await YuvFfi.initialize();
   for (final id in probeCaseIds) {
