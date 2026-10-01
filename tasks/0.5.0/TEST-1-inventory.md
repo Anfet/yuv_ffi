@@ -33,7 +33,7 @@
 | `example/integration_test/web_ownership_regression_web_test.dart` | integration | WASM planes/conversions/no-ops own independent buffers. | 3 | — | `test/web/independent_results_web_test.dart` › `group('aliasing')` | оставить: ownership regression |
 | `example/integration_test/yuv_web_capabilities_web_test.dart` | integration | ABI exports determine capabilities before mutation. | 5 | — | `test/yuv_capabilities_test.dart` › `group('yuvRequireCapability')` | оставить: real module |
 | `example/test/camera_image_pack_planes_test.dart` | example | Camera I420/NV12/BGRA padded/gapped planes preserve visible samples. | 9 | 8.81 | `test/pack_planes_native_equivalence_test.dart` › `group('padded vs. packed YuvPlane produce identical native output')` | оставить: adapter |
-| `example/test/camera_image_to_yuv_image_padding_test.dart` | example | `toYuvImage` keeps padded BGRA row stride without pixel shift. | 1 | 8.89 | `example/integration_test/ios_bgra_camera_frame_test.dart` › `test('preserves each visible pixel of a padded iOS BGRA camera frame')` | оставить: adapter |
+| `example/test/camera_image_to_yuv_image_padding_test.dart` | example | `toYuvImage` keeps padded BGRA row stride without pixel shift. | 1 | 8.89 | `example/integration_test/ios_bgra_camera_frame_test.dart` › `testWidgets('preserves each visible pixel of a padded iOS BGRA camera frame')` | оставить: adapter |
 | `example/test/camera_preview_lifecycle_test.dart` | example | Mobile preview serializes streams, drops stale frames/errors and captures shown frame. | 27 | 19.23 | `example/test/desktop_camera_preview_test.dart` › `group('desktop preview')` | оставить: mobile controller |
 | `example/test/camera_screen_capture_test.dart` | example | Captured preview frame survives reuse of source image. | 1 | 10.47 | `example/test/desktop_camera_preview_test.dart` › `group('CameraScreen on desktop')` | оставить: capture aliasing |
 | `example/test/desktop_camera_preview_test.dart` | example | Desktop preview stops old stream and returns independent capture. | 10 | 12.68 | `example/test/camera_preview_lifecycle_test.dart` › `group('mobile preview')` | оставить: desktop path |
@@ -126,6 +126,8 @@ JSON events interleave, поэтому spans не складываются. Са
 
 ## Контракты без второго покрытия
 
+- `example/integration_test/example_camera_flow_test.dart`: demo захватывает frame, распознаёт лицо, делает crop и применяет effect.
+- `test/probe/probe_runner_test.dart`: runner сверяет correctness hash, baseline band и strict slowdown verdict.
 - `test/probe/run_release_android_test.dart`: parser принимает ровно один complete `RA25_RESULT` marker от clean checkout.
 - `test/probe/windows_release_package_provenance_contract_test.dart`: package path/revision допускает лишь controlled override.
 - `test/probe/release_probe_core_test.dart`: release core принимает каждый exact golden case.
