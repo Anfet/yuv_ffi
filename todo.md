@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`). Исправления принятых TEST 3/6 и TEST 7 влиты в `dev` (`ad93194`); выполняется финальная общая проверка batch. TEST 4 ждёт её завершения.
+- **Сейчас:** этап 1. TEST 1, TEST 2, TEST 3, TEST 6 и TEST 7 завершены; общая интеграционная проверка TEST 3/6/7 прошла на `c23828d`. TEST 4 и TEST 5 сохраняют текущие карточки и статусы.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Дашборд
@@ -35,11 +35,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 3](tasks/0.5.0/TEST-3.md) | IN_PROGRESS | T2 | Integration | TEST 2 | **Срезы проб по операции и формату.** Принятая коррекция тега влита; повторно проверяются coverage, VM и платформенные срезы на интегрированном SHA. |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 3 integration | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Карточка требует изменения path-to-command mapping после интеграции TEST 3; открыть после общего validation gate. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | REVIEW | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Инвентаризация не нашла удалений; `lib/` и `src/` не менялись. VM/Windows и указанные suite прошли на `873ff2b`. |
-| [TEST 6](tasks/0.5.0/TEST-6.md) | IN_PROGRESS | T2 | Integration | TEST 2 | **Тихий вывод тестов и CI.** Принятый `--no-pub` reporter fix влит; проверяются JSON pipeline и Windows/Mac CI на интегрированном SHA. |
-| [TEST 7](tasks/0.5.0/TEST-7.md) | IN_PROGRESS | T2 | Integration | — | **Сверка эталона с libyuv.** Принятая oracle implementation влита; повторно проверяются Mac normal/negative control и Windows package dry-run на интегрированном SHA. |
 
 ### Этап 2 — пробы и скорость
 
