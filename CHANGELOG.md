@@ -45,6 +45,11 @@
   changed after it was created throws `StateError` on the affected load; create
   a new provider for the changed image.
 - Rebuilt the Web JS/WASM assets.
+- Added Swift Package Manager support for iOS and macOS. CocoaPods remains
+  supported, and the app needs no configuration for either. The Apple plugin
+  sources moved to a shared `darwin/` directory.
+- Raised the minimum macOS version from 10.11 to 10.15, which Flutter already
+  requires for macOS apps.
 
 ### Documentation fixes
 

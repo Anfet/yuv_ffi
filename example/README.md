@@ -16,6 +16,9 @@ For Web, run `flutter run -d chrome`. Web uses the partial WASM backend; it does
 not yet provide feature parity with the native backends. Android, iOS, macOS,
 Windows, and Web runners are checked in here. A Linux runner is not included.
 
+On the iOS Simulator, run the example with an iOS 18.x runtime or on a device:
+`google_mlkit_face_detection` does not support arm64 on the iOS 26+ Simulator.
+
 The camera preview needs a camera and permission to use it. Android and iOS ask
 for camera access at runtime. On macOS and Windows, allow camera access in the
 system privacy settings. In a browser, grant camera access to the site; Web

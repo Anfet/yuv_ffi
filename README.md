@@ -23,10 +23,14 @@ below when upgrading from 0.4.0 or 0.4.2.
 | Flutter | 3.38 or later |
 | Android | API 26 or later; `armeabi-v7a`, `arm64-v8a`, or `x86_64` |
 | iOS | 13 or later |
-| macOS | 10.11 or later |
+| macOS | 10.15 or later |
 | Windows | Native FFI backend |
 | Linux | Native FFI backend |
 | Web | JavaScript Flutter build; Safari 16.4 or later for release WASM SIMD |
+
+On iOS and macOS the plugin builds with either Swift Package Manager (the
+default in Flutter 3.44 and later) or CocoaPods. Nothing needs to be configured
+in your app. The Apple sources live in `darwin/`; the C sources stay in `src/`.
 
 The Web loader currently relies on browser JavaScript APIs, so
 `flutter build web --wasm` is unsupported. Use `flutter build web`.
