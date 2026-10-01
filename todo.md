@@ -36,7 +36,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [PROBE 1](tasks/0.5.0/PROBE-1.md) | ACCEPTED | T2 | Terra | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** Независимое ревью принято; provenance и негативные проверки подтверждены. |
-| [PROBE 2](tasks/0.5.0/PROBE-2.md) | IN_PROGRESS | T3 | Luna | PROBE 1, TEST 4 | **Правило проб для задач.** Было RA-27. Поле `Probe` в шаблоне карточки и правило в `AGENTS.md`; зависимости приняты. |
+| [PROBE 2](tasks/0.5.0/PROBE-2.md) | REVIEW | T3 | Luna | PROBE 1, TEST 4 | **Правило проб для задач.** Реализованы policy и поле `Probe`; документационная проверка `git diff --check` пройдена. |
 
 ### Этап 3 — уборка
 
