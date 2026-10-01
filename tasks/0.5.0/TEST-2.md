@@ -1,5 +1,5 @@
 # TEST 2 — Теги тест-сьюта
-**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 1
+**Status:** ACCEPTED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 1
 **Было:** RA-60 (цикл 0.4.2).
 
 #### Goal
@@ -150,3 +150,19 @@ The task changes only tag annotations (and the approved byte-identical example h
   but the full run is reported as exactly `731 passed, 1 skipped` (732 completed), and the report explicitly says the
   historical delta cannot be determined. Reconcile the baseline/count requirement with reproducible evidence (or obtain an
   Architect decision updating that requirement) before a fresh Executor returns the task to REVIEW.
+
+**T2 review, GPT-5.6 Terra, 01.10.2026: ACCEPTED.**
+
+- Architect Decision `c064f4e` resolves the earlier rejection: TEST 1's inventory total is 731 completed, including its
+  one skipped test. The same-SHA evidence at `14d0e5966bf5243794e95812f5ce69e918fa1830` records 732 completed for the
+  full run, and the disjoint selections remain `569 + 16 + 130 + 17 = 732`. `tags_coverage_test.dart` is already in the
+  `smoke || contract` group, so its separate 1/1 run is not added again.
+- Static review at this task head found all 62 package `*_test.dart` files tagged once according to the approved table:
+  smoke 5, contract 45, probe 6, reference 3, release 3. `dart_test.yaml` declares exactly those five tags and has no
+  selector. `tool/ci/vm.ps1` selects `smoke || contract`; `tool/ci/windows.ps1` retains its required probe and reference
+  selection.
+- The implementation at `14d0e5966bf5243794e95812f5ce69e918fa1830` is unchanged through this review except for task
+  documentation. The allowed source/copy pair resolves to blob `c5438ccae7b7c960b1e4d9b7a0c04f6cd4575c2b` in both paths
+  and has SHA-256 `D6F3620B3197975170DF1FABC310789A523F19E37E79178144AE8674ECC20713`. From task base `770fa18`, existing
+  tests change only their primary tag annotation (and required `library;`); no test body changes are present. Recorded
+  same-SHA VM and Windows results satisfy the remaining execution DoD; they were not rerun during this read-only review.
