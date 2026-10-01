@@ -1,5 +1,5 @@
 # TEST 3 — Срезы проб по операции и формату
-**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 1
+**Status:** ACCEPTED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 1
 **Было:** RA-61 (цикл 0.4.2).
 
 #### Goal
@@ -37,13 +37,13 @@
 - Изменение не затрагивает измерение скорости в `probe_performance_test.dart` и `tool/probe/**`.
 
 #### Definition of Done
-- [ ] Без селекторов все три цели сравнивают полные 1188 случаев с тем же golden; отдельный pack/layout тест
+- [x] Без селекторов все три цели сравнивают полные 1188 случаев с тем же golden; отдельный pack/layout тест
       остаётся в полном `flutter test`.
-- [ ] `PROBE_OPS=gray` выполняет 54 случая, `PROBE_FORMATS=i420` и совместный срез выбирают только соответствующие
+- [x] `PROBE_OPS=gray` выполняет 54 случая, `PROBE_FORMATS=i420` и совместный срез выбирают только соответствующие
       ID; в каждой цели напечатаны фактические операция, формат и `N/1188`.
-- [ ] Ошибочный, пустой и не дающий случаев селектор завершаются ошибкой с причиной; частичный прогон не может
+- [x] Ошибочный, пустой и не дающий случаев селектор завершаются ошибкой с причиной; частичный прогон не может
       заявить `all` или изменить golden, включая режим `PROBE_RECORD`.
-- [ ] Узкие тесты селектора и соответствующие локальные платформенные проверки из Validation проходят.
+- [x] Узкие тесты селектора и соответствующие локальные платформенные проверки из Validation проходят.
 
 #### Validation
 - Windows VM: собрать/добавить native DLL тем же способом, что `tool/ci/vm.ps1`; выполнить полный
@@ -77,7 +77,8 @@
   `tool/ci/macos.sh`, `tool/ci/ios.sh`, and `tool/ci/drive.sh`.
 
 #### Review
-- **Verdict:** TODO. Reviewed `86345e7` (implementation `075fafc`) against the task contract and the diff from `66f1db3`; no tests were rerun.
-- `test/probe/probe_selection.dart` and its example copy treat an explicit `PROBE_OPS=all` or `PROBE_FORMATS=all` as an absent selector (`_parseSelector`). The Architect Decision permits only exact operation/format tokens and reserves `all` in the scope line for an absent filter. Thus an unknown selector succeeds and reports `all` instead of failing. Reject explicit `all` and cover it in the selector tests.
-- All three matrix targets construct `ProbeSelection` before `expectProbeGoldenCaseIdsExact(golden)`. The Architect Decision requires checking the complete golden ID list before selecting a slice. Move the full ID check ahead of selector selection, retaining selected input/output hash checks and the selected first-case negative control.
-- The Executor Report does not give the selected Web scope line or case count, although Validation requires the selected count and result for each required run. Record the actual Web scope output and exact selected drive invocation in the next report; retain the claimed `All tests passed` evidence.
+- **Verdict:** ACCEPTED. Reviewed branch HEAD `1bb400d` (implementation `8b94268`) against the contract and changes since rejected review `8be229e`; no tests were rerun.
+- `_parseSelector` in both byte-identical copies rejects explicit `PROBE_OPS=all` and `PROBE_FORMATS=all` as unknown tokens; the focused selector tests cover both. Empty and zero-case selectors also throw. VM recording is blocked whenever either selector is present.
+- VM, native, and Web matrix targets call `expectProbeGoldenCaseIdsExact(golden)` before `ProbeSelection.fromSelectors`. That check uses the unfiltered `probeCaseIds`; input/output comparisons still receive `selection.caseIds`, and the VM negative control uses the selected first case.
+- The corrected Executor Report records the selected Web command through `tool/ci/drive.ps1`, `All tests passed`, and `PROBE scope: ops=gray formats=all cases=54/1188`. `drive.ps1` forwards those arguments to `flutter drive` and requires the success line.
+- Validation evidence: current report records focused selector/copy tests, full VM, Windows, Android, Web, macOS and iOS passes; the earlier report at `86345e7` records VM `1188/1188`, gray `54/1188`, i420 `396/1188`, gray+i420 `18/1188`, expected invalid/recording failures with unchanged golden, and selected Windows `54/1188`. `layout_pack_test.dart` remains in the default VM suite. Diff from `66f1db3` contains only allowed probe tests/helpers, two integration targets, and this card; golden, native code, public API, performance probes, and TEST 2 tags are unchanged.
