@@ -130,7 +130,9 @@ try {
   } else {
     Join-Path (Split-Path -Parent $packageConfigPath) $packageEntries[0].rootUri
   }
-  $resolvedPackageRoot = (Resolve-Path -LiteralPath $packageRootPath).Path
+  $resolvedPackageRoot = [IO.Path]::GetFullPath(
+    (Resolve-Path -LiteralPath $packageRootPath).Path
+  ).TrimEnd('\', '/')
   if (-not [string]::Equals($resolvedPackageRoot, $packageRoot, [StringComparison]::OrdinalIgnoreCase)) {
     throw "RA-26 package config resolved yuv_ffi to $resolvedPackageRoot, expected $packageRoot."
   }

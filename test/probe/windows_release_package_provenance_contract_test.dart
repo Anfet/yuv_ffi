@@ -21,6 +21,7 @@ void main() {
     expect(source, contains(r'git -C $resolvedPackageRoot rev-parse HEAD'));
     expect(source, contains(r'$packageRootUri.IsAbsoluteUri'));
     expect(source, contains(r'Join-Path (Split-Path -Parent $packageConfigPath)'));
+    expect(source, contains(r").TrimEnd('\', '/')"));
   });
 
   test('records both app and resolved package provenance in the strict host result', () {
