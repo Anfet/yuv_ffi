@@ -42,7 +42,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [CLEAN 1](tasks/0.5.0/CLEAN-1.md) | IN_PROGRESS | T3 | Luna | — | **Убрать следы замеров из example.** Экран PACK-00, хуки VIEW-03, переключатель упаковки. |
-| [CLEAN 2](tasks/0.5.0/CLEAN-2.md) | IN_PROGRESS | T2 | Terra | TEST 2 | **Удалить устаревшее API** (D-11) вместе с его тестами; миграция в README и CHANGELOG. |
+| [CLEAN 2](tasks/0.5.0/CLEAN-2.md) | REVIEW | T2 | Terra | TEST 2 | **Удалено устаревшее API** (D-11) вместе с его тестами; ccf8d38, ожидается независимое ревью. |
 | [SPM 1](tasks/0.5.0/SPM-1.md) | BLOCKED | T1 | этап 2 | — | **Swift Package Manager для iOS/macOS** (D-12). Сначала план переноса native-исходников на одобрение Engineer. |
 
 ### Этап 4 — функциональность

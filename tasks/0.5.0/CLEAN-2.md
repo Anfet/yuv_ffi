@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -80,5 +80,43 @@ D-11; вместе с `deprecated_api_test`; миграция в README и CHANG
   результаты команд; `FAIL` пробы блокирует сдачу, `SLOWER` объяснить/исправить.
 
 #### Executor Report
+
+**Result:** REVIEW
+
+- Удалены compatibility-слой и его публичные объявления: `DeprecatedYuvImageApi`,
+  `YuvFileFormat`, legacy dispatch, `YuvImage.nv21`,
+  `YuvFfi.ensureInitialized()`, `copy(blank:)`, `bytesPerPixes`, `toZero` и
+  связанные forwarding API. Удалены только тесты удалённой поверхности,
+  включая `test/deprecated_api_test.dart`; действующие ABI, codec, serialization
+  и Web-контракты остались в наборе.
+- README содержит таблицу миграции для 0.4.0/0.4.2, а верхняя запись CHANGELOG
+  фиксирует breaking change. `pubspec.yaml`, оба podspec и `src/CMakeLists.txt`
+  согласованы на `0.5.0-dev.1` (CMake использует числовую `0.5.0` по своему
+  формату version); native C и generated bindings не менялись.
+- Статический поиск по `lib/yuv_ffi.dart`, `lib/src/yuv`, `example/lib` и `test`
+  не нашёл `@Deprecated` либо удалённые публичные имена. Совпадения в README и
+  CHANGELOG — намеренная таблица миграции; `ensureInitialized` внутри loader
+  остаётся внутренним backend API.
+
+**Validation:**
+
+- Подтверждённые до этого Executor-проверки: Windows probe — PASS, 22 scenarios,
+  `NO-BASELINE`; `tool/ci/vm.ps1` — 284/284; native CTest — 11/11;
+  `tool/ci/smoke.ps1` — PASS; `flutter analyze` — clean. Выборки TEST 2
+  `smoke || contract`, `probe` и `reference` прошли в составе этой проверки.
+- `FLUTTER_VERSION=3.44.9; pwsh -File tool/ci/example.ps1` — PASS (`pub get`,
+  `analyze`, `build web`). Первая попытка не получила `FLUTTER_VERSION`; это
+  требование скрипта, исправленное только окружением запуска.
+- `RUNNER_TEMP=<fresh>; pwsh -File tool/ci/android.ps1` — PASS: APK для
+  `arm64-v8a`, `armeabi-v7a`, `x86_64`; `native_app_runtime_smoke_test.dart` и
+  `probe_native_test.dart` — PASS на `emulator-5554`. Общий temp CMake cache
+  ссылался на worktree TEST-3, поэтому использован изолированный `RUNNER_TEMP`.
+- `pwsh -File tool/ci/web.ps1` — PASS после коммита рабочей копии, который
+  требуется `pub publish --dry-run`: WASM rebuilt without diff; Chrome
+  154.0.8037.58; sources=9; integration cases=56; reference matrix=119.
+- Pixel 3 arm64 и armv7 остаются проверкой Reviewer по `windows+pixel3` и
+  изменению `src/CMakeLists.txt` соответственно.
+
+**Commit:** `ccf8d38 Removed deprecated public API for 0.5.0`
 
 #### Review
