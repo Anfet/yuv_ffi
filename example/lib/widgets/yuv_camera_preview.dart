@@ -44,6 +44,7 @@ class YuvCameraPreview extends StatefulWidget {
   final VoidCallback? onStreamStopped;
   final Widget? child;
   final bool showDebugInfo;
+  final bool flipAndroidCameraHorizontally;
 
   const YuvCameraPreview({
     super.key,
@@ -53,6 +54,7 @@ class YuvCameraPreview extends StatefulWidget {
     this.onStreamStopped,
     this.child,
     this.showDebugInfo = false,
+    this.flipAndroidCameraHorizontally = false,
   });
 
   @override
@@ -98,6 +100,7 @@ class _YuvCameraPreviewState extends State<YuvCameraPreview> {
           child: impl.buildYuvCameraPreview(
             key: widget.key,
             cameraController: widget.cameraController,
+            flipAndroidCameraHorizontally: widget.flipAndroidCameraHorizontally,
             transform: infoTransformer,
             onFramePresented: onFramePresented,
             onStreamStopped: widget.onStreamStopped,

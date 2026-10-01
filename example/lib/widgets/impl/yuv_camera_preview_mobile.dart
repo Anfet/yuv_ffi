@@ -11,11 +11,19 @@ part of 'yuv_camera_preview_io.dart';
 /// `initialize` and `dispose`; its `isStreamingImages` stays `false`.
 class _YuvCameraPreviewMobile extends StatefulWidget {
   final CameraController cameraController;
+  final bool flipAndroidCameraHorizontally;
   final YuvImage Function(YuvImage image)? transform;
   final VoidCallback? onFramePresented;
   final VoidCallback? onStreamStopped;
 
-  const _YuvCameraPreviewMobile({super.key, required this.cameraController, this.transform, this.onFramePresented, this.onStreamStopped});
+  const _YuvCameraPreviewMobile({
+    super.key,
+    required this.cameraController,
+    required this.flipAndroidCameraHorizontally,
+    this.transform,
+    this.onFramePresented,
+    this.onStreamStopped,
+  });
 
   @override
   State<_YuvCameraPreviewMobile> createState() => _YuvCameraPreviewMobileState();
@@ -112,23 +120,12 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
   }
 
   void onNewImageAvailable(CameraImage image, int generation) {
-    // Null in production, so this is a single
-    // field read plus a virtual call, never a per-frame allocation.
-    final debugEvent = debugYuvCameraPreviewMobileEvent;
-    if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.delivered, debugYuvCameraPreviewMobileClock.elapsed);
-
     // Dropped before the planes are copied: while a frame is still decoding or
     // waiting to be drawn, converting this one would only queue work behind it.
     if (!mounted || generation != streamGeneration) {
-      if (debugEvent != null) {
-        debugEvent(DebugYuvCameraPreviewMobileEventKind.droppedBeforeTransform, debugYuvCameraPreviewMobileClock.elapsed, reason: 'stale');
-      }
       return;
     }
     if (presenter.isBusy) {
-      if (debugEvent != null) {
-        debugEvent(DebugYuvCameraPreviewMobileEventKind.droppedBeforeTransform, debugYuvCameraPreviewMobileClock.elapsed, reason: 'busy');
-      }
       return;
     }
 
@@ -136,12 +133,10 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
     try {
       final rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == widget.cameraController.description.sensorOrientation.abs());
       var yuv = image.toYuvImage();
-      if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.yuvImageReady, debugYuvCameraPreviewMobileClock.elapsed);
       if (_previewPlatform() == TargetPlatform.android) {
         yuv = yuv.applyRotation(rotation.toZero());
-        if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.rotationApplied, debugYuvCameraPreviewMobileClock.elapsed);
 
-        if (kYuvCameraPreviewFlipAndroid) yuv.applyFlipHorizontal();
+        if (widget.flipAndroidCameraHorizontally) yuv.applyFlipHorizontal();
       }
       frame = yuv;
     } catch (ex) {
@@ -149,7 +144,6 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
       return;
     }
 
-    if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.acceptedForTransform, debugYuvCameraPreviewMobileClock.elapsed);
     presentCameraFrame(presenter, frame, widget.transform);
   }
 

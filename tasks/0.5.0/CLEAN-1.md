@@ -1,5 +1,5 @@
 # CLEAN 1 — Убрать следы замеров из example
-**Status:** IN_PROGRESS · **Tier:** T3 · **Owner:** Luna · **Depends On:** — · **Probe:** none
+**Status:** REVIEW · **Tier:** T3 · **Owner:** Luna · **Depends On:** — · **Probe:** none
 
 #### Goal
 Убрать экран `Pack00BenchScreen` и кнопку PACK-00, хуки VIEW-03 (`debugYuvCameraPreviewMobileEvent`, часы, enum), переключатель `kYuvCameraPreviewPackPlanes` (остаётся плотный импорт); `kYuvCameraPreviewFlipAndroid` заменить параметром ориентации.
@@ -57,5 +57,12 @@
   эквивалентности ориентации Android и остальных платформ.
 
 #### Executor Report
+
+- Удалены экран и тест PACK-00, кнопка и маршрут; из мобильного превью удалены VIEW-03 hook, enum и часы.
+- Плотная упаковка стала единственным путём импорта; сохранены тесты видимых пикселей, padding и pixel stride.
+- Android flip передаётся параметром от `CameraScreen` до обработки кадра; значение `true` совпадает с прежним глобальным значением. Flip применяется только в Android ветке, остальные платформенные пути не менялись.
+- Проверка ссылок в `example/` на удалённые имена: совпадений нет.
+- `flutter test test/camera_image_pack_planes_test.dart test/camera_image_to_yuv_image_padding_test.dart test/camera_preview_lifecycle_test.dart test/desktop_camera_preview_test.dart` (из `example/`) — passed.
+- `$env:FLUTTER_VERSION='3.44.9'; pwsh -File tool/ci/example.ps1` — остановился на `flutter analyze`: два info в нетронутых `integration_test/helpers/probe/layout_pack_test.dart` и `probe_selection_test.dart` (`library_annotations`). `pub get` прошёл.
 
 #### Review
