@@ -142,3 +142,8 @@ WIP, остановлено по приказу Engineer; статус карт�
 Не запускалось: нет Windows — `pwsh -File tool/ci/example.ps1` не запускался (изменён только example/pubspec.yaml); формальная сверка DoD Reviewer-ом.
 (прежняя формулировка:) Не выполнено: example.ps1 после SPM-изменений на Windows не перезапускался (изменён только example/pubspec.yaml); формальная сверка DoD Reviewer-ом.
 #### Review
+Вердикт: ACCEPTED. Reviewed head: 1a38dd0 (пул STAGE3-SPM целиком, diff `dev...HEAD`).
+- DoD сверен с диффом и отчётами Executor: переходники/podspec/Package.swift/заголовок соответствуют решениям карточек; отчёты содержат команды и результаты, согласованы с закоммиченными скриптами (определение режима по Podfile.lock, CocoaPods-проход в копии с pod install заранее, выбор iOS 18.x, git status в macos.sh).
+- Windows (Reviewer, из корня worktree): `pwsh -File tool/ci/example.ps1` -> exit 0 (pub get, analyze, build web); `flutter test test/apple_forwarder_sources_test.dart` -> All tests passed (8); `bash -n` scope_guard/ios/macos -> ok; `smoke.ps1` -> exit 0; `vm.ps1` -> 573/573; `dart pub publish --dry-run` -> 0 warnings, darwin/yuv_ffi.podspec, darwin/yuv_ffi/Package.swift, Sources/*.c есть, ios/Classes и macos/Classes и .worktrees/ нет; `git grep ios/Classes|macos/Classes` вне tasks -> пусто.
+- Mac не перезапускался: свидетельства конкретны и непротиворечивы. windows/android/web.ps1 не запускались: после зелёных прогонов Executor изменились только example/pubspec.yaml (ключ flutter.config, покрыт example.ps1), example/ios, example/macos, tool/ci/ios.sh|macos.sh и документация.
+- Blocking: нет. Advisory: нет.
