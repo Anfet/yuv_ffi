@@ -1,5 +1,5 @@
 # TEST 4 — Карта «что изменил → что запускать»
-**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 0
+**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 1
 **Было:** RA-62 (цикл 0.4.2).
 
 #### Goal
@@ -73,3 +73,19 @@ Validation:
 - Платформенные проверки не запускались: изменение документационное, Validation их не требует.
 
 #### Review
+
+**T2 review, GPT-5.6 Terra, 01.10.2026: TODO.**
+
+- Таблица не является точным отображением `path_keys()`: строка `all` сокращает пять путей
+  `tool/ci/drive.ps1`, `tool/ci/drive.sh`, `tool/ci/smoke.ps1`, `tool/ci/scope_guard.sh` до
+  несуществующих корневых `drive.ps1`, `drive.sh`, `smoke.ps1`, `scope_guard.sh`. Вернуть полные
+  пути из `scope_guard.sh`.
+- Linux-строка предлагает workflow `ci-linux.yml`, которого в текущем `.github/workflows/` нет;
+  в наличии только общий `.github/workflows/ci.yml`. Оставить CI-only и назвать существующий путь,
+  сохранив шаблон `ci-linux.yml` как будущее правило только при явной пометке.
+- Описание Web-пробы не даёт исполнимую фактическую команду: `tool/ci/drive.ps1` требует target и
+  device. `web.ps1` вызывает его как `integration_test/probe_web_test.dart web-server
+  --browser-name=chrome --headless ...`; задокументировать эту форму вместе с
+  `--dart-define=PROBE_OPS`/`PROBE_FORMATS` и проверкой `PROBE scope`.
+- Validation review: `git diff --check 1eba457..4827327` passed; name-only diff contains only
+  `AGENTS.md` and this card. No platform run was required for this documentation-only review.
