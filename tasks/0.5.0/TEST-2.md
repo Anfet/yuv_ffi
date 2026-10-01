@@ -79,10 +79,22 @@ pwsh -File tool/ci/windows.ps1
 ```
 
 #### Executor Report
-Изменения из `da7f699` перенесены в worktree; `dart_test.yaml` приведён к пяти тегам без селекторов, добавлены `@Tags`, тест покрытия и выбор группы в `tool/ci/vm.ps1`.
-Статическая сверка: 62 `*_test.dart`, 0 ошибок основного тега и распределения.
-Validation заблокирована средой: после успешной сборки native DLL команда `flutter pub get --no-example` не вывела ничего за 50 секунд и была прервана; отдельный `flutter test --no-pub test/tags_coverage_test.dart` также не вывел ничего за 15 секунд и был прерван. Запущенные Dart процессы остались активны; получение их командных строк вернуло `Access denied`. `flutter test` частей, `flutter test` полного прогона, `pwsh -File tool/ci/vm.ps1` и `pwsh -File tool/ci/windows.ps1` не подтверждены. `New-CiNativeBuild` пишет stdout CMake в pipeline, поэтому прямое присваивание результата в `$dll` ломает `Add-CiPath`; в повторной попытке путь извлечён последним выводом сборки.
+На ветке `task/TEST-2` изменения из `da7f699` уже присутствовали; повторный cherry-pick не выполнялся. В изолированном `$env:RUNNER_TEMP` собрана native DLL, `flutter pub get --no-example` и `flutter test test/tags_coverage_test.dart` завершились с кодом 0.
 
-Блокер: нужны исправленные условия запуска Flutter/Dart в этом окружении, затем повторить все команды Validation и сверить суммы JSON-прогонов.
+Результаты остальных команд Validation (`--reporter json`; число — видимые `testDone`, без скрытых загрузочных записей):
+
+| Команда | Exit | Тесты | Результат |
+| --- | ---: | ---: | --- |
+| `flutter test --tags "smoke || contract"` | 0 | 569 | прошло |
+| `flutter test --tags probe` | 1 | 16 | 1 ошибка, 1 пропуск |
+| `flutter test --tags reference` | 0 | 130 | прошло |
+| `flutter test --tags release` | 0 | 17 | прошло |
+| `flutter test` | 1 | 732 | 1 ошибка, 1 пропуск |
+| `pwsh -File tool/ci/vm.ps1` | 0 | — | прошло |
+| `pwsh -File tool/ci/windows.ps1` | 1 | — | ошибка в probe-тесте |
+
+Точная ошибка во всех трёх неуспешных прогонах: `test/probe/probe_copy_sync_test.dart:15`, `layout_pack_test.dart is out of sync`; исходный `test/probe/layout_pack_test.dart` начинается с `@Tags(['probe'])`, тогда как его копия `example/integration_test/helpers/probe/layout_pack_test.dart` не содержит этой аннотации. `windows.ps1` возвращает exit 1 по той же ошибке. Разница числа тестов от ожидаемых 733 не подтверждена: полный прогон завершил 732 видимых теста и имел одну ошибку и один пропуск.
+
+Блокер: для зелёных `probe`, полного прогона и `windows.ps1` нужно согласовать изменение копии в `example/` с ограничением Scope этой карточки; до решения/изменения Scope статус остаётся `BLOCKED`. Первые прогоны с некорректной PowerShell-обёрткой (Flutter получил пустой список аргументов) не учитывались.
 
 #### Review
