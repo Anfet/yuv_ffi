@@ -35,8 +35,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [PROBE 1](tasks/0.5.0/PROBE-1.md) | REVIEW | T2 | Terra | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** Три Windows receipts подтверждают пакет, EXE/DLL SHA-256 и Balanced/AC; repeat 24/24 SAME. Общие vm/windows скрипты упёрлись в CMake-кэш worktree TEST 3. |
-| [PROBE 2](tasks/0.5.0/PROBE-2.md) | BLOCKED | T3 | PROBE 1 | PROBE 1, TEST 4 | **Правило проб для задач.** Было RA-27. Поле `Probe` в карточке и правило в `AGENTS.md`. Ждёт PROBE 1. |
+| [PROBE 1](tasks/0.5.0/PROBE-1.md) | ENGINEER_REQUIRED | T2 | Engineer | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** После решения Architect ревью не приняло обязательные негативные проверки: отсутствующий DLL и неверные показания питания. Также `vm.ps1`/`windows.ps1` заблокированы общим CMake-кэшем worktree TEST 3. Нужен Engineer для следующего шага. |
+| [PROBE 2](tasks/0.5.0/PROBE-2.md) | BLOCKED | T3 | PROBE 1 | PROBE 1, TEST 4 | **Правило проб для задач.** Было RA-27. Поле `Probe` в карточке и правило в `AGENTS.md`. Ждёт решения по PROBE 1. |
 
 ### Этап 3 — уборка
 
