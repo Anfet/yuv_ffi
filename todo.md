@@ -35,7 +35,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [PROBE 1](tasks/0.5.0/PROBE-1.md) | TODO | T2 | — | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** Было RA-26. Pixel 3 — только release-раннер, не `flutter drive --profile`. |
+| [PROBE 1](tasks/0.5.0/PROBE-1.md) | IN_PROGRESS | T2 | Terra | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** Было RA-26. Pixel 3 — только release-раннер, не `flutter drive --profile`. Исполнитель запущен. |
 | [PROBE 2](tasks/0.5.0/PROBE-2.md) | BLOCKED | T3 | PROBE 1 | PROBE 1, TEST 4 | **Правило проб для задач.** Было RA-27. Поле `Probe` в карточке и правило в `AGENTS.md`. Ждёт PROBE 1. |
 
 ### Этап 3 — уборка
