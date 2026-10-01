@@ -19,6 +19,7 @@ import 'js_util_compat_web.dart' as js_util;
 Widget buildYuvCameraPreview({
   Key? key,
   CameraController? cameraController,
+  bool flipAndroidCameraHorizontally = false,
   YuvImage Function(YuvImage image)? transform,
   VoidCallback? onFramePresented,
   VoidCallback? onStreamStopped,

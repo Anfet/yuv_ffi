@@ -13,50 +13,6 @@ import 'package:yuv_ffi_example/widgets/present_camera_frame.dart';
 part 'yuv_camera_preview_desk.dart';
 part 'yuv_camera_preview_mobile.dart';
 
-/// Android devices tend to mirror camera images horizontally.
-///
-/// This flag enables automatic horizontal flip for Android image stream path.
-bool kYuvCameraPreviewFlipAndroid = true;
-
-/// A single lifecycle event of the mobile preview's one platform subscription,
-/// for [debugYuvCameraPreviewMobileEvent].
-enum DebugYuvCameraPreviewMobileEventKind {
-  /// A platform frame reached `onNewImageAvailable`, before any check or
-  /// conversion runs on it.
-  delivered,
-
-  /// [delivered] was dropped before `transform`: [reason] is `'stale'`
-  /// (unmounted or a stopped/replaced generation) or `'busy'`
-  /// ([YuvFramePresenter.isBusy]).
-  droppedBeforeTransform,
-
-  /// [delivered] finished `CameraImage.toYuvImage()` (plane copy from
-  /// platform data), before any rotation/flip.
-  yuvImageReady,
-
-  /// [yuvImageReady] finished `applyRotation`, before `applyFlipHorizontal`.
-  rotationApplied,
-
-  /// [delivered] finished `toYuvImage()`/rotation and is about to reach
-  /// `transform` through `presentCameraFrame`.
-  acceptedForTransform,
-}
-
-/// Measurement hook: sink for [DebugYuvCameraPreviewMobileEventKind]
-/// events raised by the mobile preview's single platform subscription, with a
-/// monotonic timestamp ([debugYuvCameraPreviewMobileClock]'s elapsed time) and
-/// no per-frame allocation beyond the event itself. `null` by default, so it
-/// costs nothing outside a measurement run; set and cleared only by an
-/// `integration_test`, never read or written by production code.
-void Function(DebugYuvCameraPreviewMobileEventKind kind, Duration at, {String? reason})? debugYuvCameraPreviewMobileEvent;
-
-/// Shared monotonic clock for [debugYuvCameraPreviewMobileEvent] timestamps,
-/// so events raised inside the mobile preview and events the measuring test
-/// raises itself (delivered-to-transform vs. transform-to-presented) share
-/// one time base. Not started by production code; a measurement run starts
-/// it once before creating the preview.
-final Stopwatch debugYuvCameraPreviewMobileClock = Stopwatch();
-
 /// [onFramePresented] fires once per frame drawn from the image stream.
 /// [onStreamStopped] fires when the stream stops while the preview stays on
 /// screen: the controller was replaced or a camera error ended the stream.
@@ -65,6 +21,7 @@ final Stopwatch debugYuvCameraPreviewMobileClock = Stopwatch();
 Widget buildYuvCameraPreview({
   Key? key,
   CameraController? cameraController,
+  bool flipAndroidCameraHorizontally = false,
   YuvImage Function(YuvImage image)? transform,
   VoidCallback? onFramePresented,
   VoidCallback? onStreamStopped,
@@ -78,6 +35,7 @@ Widget buildYuvCameraPreview({
       return _YuvCameraPreviewMobile(
         key: key,
         cameraController: cameraController,
+        flipAndroidCameraHorizontally: flipAndroidCameraHorizontally,
         transform: transform,
         onFramePresented: onFramePresented,
         onStreamStopped: onStreamStopped,

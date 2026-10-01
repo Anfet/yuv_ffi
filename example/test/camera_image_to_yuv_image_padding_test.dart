@@ -7,19 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
 
-/// `camera_desktop`'s BGRA8888 frames report `bytesPerRow` from the
-/// native capture backend, which can exceed `width * 4` (row padding for
-/// alignment). This test does not depend on `camera_desktop` or a physical
-/// camera: it builds the same [CameraImageData] shape the platform interface
-/// hands to [CameraImage.fromPlatformInterface] and exercises the
-/// `isPacked` branch of [CameraImageExt.toYuvImage] with a padded stride,
-/// forcing [kYuvCameraPreviewPackPlanes] off to cover the padded-preserving
-/// path.
+/// Padded BGRA camera rows import as tight planes without changing visible
+/// pixels or letting padding bytes leak into the next row.
 void main() {
-  setUp(() => kYuvCameraPreviewPackPlanes = false);
-  tearDown(() => kYuvCameraPreviewPackPlanes = true);
-
-  test('toYuvImage keeps a padded BGRA row stride without shifting pixels', () {
+  test('toYuvImage packs padded BGRA rows without shifting pixels', () {
     const width = 3;
     const height = 2;
     const tightRowBytes = width * 4; // 12
@@ -63,10 +54,7 @@ void main() {
     expect(yuv.format, YuvPixelFormat.bgra8888);
     expect(yuv.size, const Size(3, 2));
     expect(yuv.planes, hasLength(1));
-    // YuvPlane preserves the source's bytesPerRow rather than tightening it:
-    // the native BGRA→whatever conversion path relies on this stride, and
-    // tightening here would silently reinterpret the padded plugin buffer.
-    expect(yuv.planes.first.bytesPerRow, paddedBytesPerRow);
+    expect(yuv.planes.first.bytesPerRow, tightRowBytes);
 
     final packed = yuv.toBgraBytes();
     expect(packed, hasLength(width * height * 4));
