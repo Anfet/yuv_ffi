@@ -54,6 +54,7 @@ function Assert-WebSourceMatrix {
   $separate = @(
     'wasm_bootstrap_web_test.dart',
     'wasm_loader_lifecycle_web_test.dart',
+    'wasm_swap_nv_atomicity_web_test.dart',
     'yuv_web_capabilities_web_test.dart'
   )
   $aggregate = @(
@@ -65,12 +66,12 @@ function Assert-WebSourceMatrix {
     'serialization_contract_web_test.dart',
     'wasm_abi_v1_descriptor_staging_web_test.dart',
     'wasm_parity_edge_cases_web_test.dart',
-    'wasm_swap_nv_atomicity_web_test.dart',
     'web_ownership_regression_web_test.dart'
   )
   $executionSources = @{
     'wasm_bootstrap_web_test.dart' = @('wasm_bootstrap_web_test.dart')
     'wasm_loader_lifecycle_web_test.dart' = @('wasm_loader_lifecycle_web_test.dart')
+    'wasm_swap_nv_atomicity_web_test.dart' = @('wasm_swap_nv_atomicity_web_test.dart')
     'fake_loader_web_tests.dart' = @('yuv_web_capabilities_web_test.dart')
   }
   $baselineCases = @{

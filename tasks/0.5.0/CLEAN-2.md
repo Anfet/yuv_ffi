@@ -275,3 +275,22 @@ committed correction head.
 - `flutter analyze --no-fatal-infos` for the four corrected Web sources —
   PASS, no issues.
 - Full card-local Web command will be rerun on the next clean commit.
+
+#### Integration correction #8 — Executor Report
+
+**Result:** REVIEW
+
+- The next full run reached the current atomicity source but then failed the
+  following ownership source: atomicity's per-test `debugReset` cleared the
+  shared loader after the combined target had already run ownership's
+  `setUpAll(YuvFfi.initialize)`.
+- The atomicity source is now a separate drive target, alongside bootstrap and
+  lifecycle sources. This preserves its loader-reset isolation and keeps the
+  aggregate target's ownership initialization valid.
+
+**Validation:**
+
+- On `4b2e87b`, source mapping and the restored current-contract tests passed
+  until `web_ownership_regression_web_test.dart`; both failures were
+  `YUV WASM module is not initialized` immediately after atomicity reset.
+- Full card-local Web command will be rerun on the next clean commit.
