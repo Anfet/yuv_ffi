@@ -58,8 +58,11 @@ function Assert-WebSourceMatrix {
   )
   $aggregate = @(
     'getbytes_contract_web_test.dart',
+    'image_cache_key_web_test.dart',
     'nv_chroma_order_web_test.dart',
+    'padded_bgra_constructor_web_test.dart',
     'probe_web_test.dart',
+    'serialization_contract_web_test.dart',
     'wasm_abi_v1_descriptor_staging_web_test.dart',
     'wasm_parity_edge_cases_web_test.dart',
     'web_ownership_regression_web_test.dart'
@@ -71,8 +74,11 @@ function Assert-WebSourceMatrix {
   }
   $baselineCases = @{
     'getbytes_contract_web_test.dart' = 4
+    'image_cache_key_web_test.dart' = 1
     'nv_chroma_order_web_test.dart' = 2
+    'padded_bgra_constructor_web_test.dart' = 1
     'probe_web_test.dart' = 1
+    'serialization_contract_web_test.dart' = 1
     'wasm_abi_v1_descriptor_staging_web_test.dart' = 29
     'wasm_bootstrap_web_test.dart' = 1
     'wasm_loader_lifecycle_web_test.dart' = 9
@@ -92,8 +98,8 @@ function Assert-WebSourceMatrix {
   if ($unmapped.Count -gt 0 -or $missingSources.Count -gt 0 -or $mapped.Count -ne ($aggregate.Count + $separate.Count)) {
     throw "Web source mapping mismatch: unmapped=[$($unmapped -join ', ')]; missing=[$($missingSources -join ', ')]"
   }
-  if ($baselineCases.Count -ne $discovered.Count -or @($baselineCases.Keys | Where-Object { $_ -notin $discovered }).Count -gt 0 -or ($baselineCases.Values | Measure-Object -Sum).Sum -ne 56) {
-    throw 'Web source case baseline must cover all 9 sources and total 56 cases.'
+  if ($baselineCases.Count -ne $discovered.Count -or @($baselineCases.Keys | Where-Object { $_ -notin $discovered }).Count -gt 0 -or ($baselineCases.Values | Measure-Object -Sum).Sum -ne 59) {
+    throw 'Web source case baseline must cover all 12 sources and total 59 cases.'
   }
 
   $aggregatorPath = Join-Path $integrationDirectory $combined
@@ -219,7 +225,7 @@ try {
     throw "Could not refresh generated-file index state: $LASTEXITCODE"
   }
 
-  Write-Output "Web CI passed: Chrome $chromeVersion; sources=9; integration cases=56; reference matrix=119."
+  Write-Output "Web CI passed: Chrome $chromeVersion; sources=12; integration cases=59; reference matrix=119."
 } finally {
   Pop-Location
 }
