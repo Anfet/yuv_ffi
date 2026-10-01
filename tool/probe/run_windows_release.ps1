@@ -99,7 +99,13 @@ try {
   if ($packageEntries.Count -ne 1 -or [string]::IsNullOrWhiteSpace($packageEntries[0].rootUri)) {
     throw 'RA-26 package config must resolve exactly one yuv_ffi package root.'
   }
-  $resolvedPackageRoot = (Resolve-Path -LiteralPath ([uri]$packageEntries[0].rootUri).LocalPath).Path
+  $packageRootUri = [uri]$packageEntries[0].rootUri
+  $packageRootPath = if ($packageRootUri.IsAbsoluteUri) {
+    $packageRootUri.LocalPath
+  } else {
+    Join-Path (Split-Path -Parent $packageConfigPath) $packageEntries[0].rootUri
+  }
+  $resolvedPackageRoot = (Resolve-Path -LiteralPath $packageRootPath).Path
   if (-not [string]::Equals($resolvedPackageRoot, $packageRoot, [StringComparison]::OrdinalIgnoreCase)) {
     throw "RA-26 package config resolved yuv_ffi to $resolvedPackageRoot, expected $packageRoot."
   }

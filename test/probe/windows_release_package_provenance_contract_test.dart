@@ -19,6 +19,8 @@ void main() {
     expect(source, contains('RA-26 package config resolved yuv_ffi to'));
     expect(source, contains('RA-26 resolved package revision is'));
     expect(source, contains(r'git -C $resolvedPackageRoot rev-parse HEAD'));
+    expect(source, contains(r'$packageRootUri.IsAbsoluteUri'));
+    expect(source, contains(r'Join-Path (Split-Path -Parent $packageConfigPath)'));
   });
 
   test('records both app and resolved package provenance in the strict host result', () {
