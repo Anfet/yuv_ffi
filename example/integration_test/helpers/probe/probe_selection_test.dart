@@ -30,6 +30,8 @@ void main() {
 
   test('rejects invalid and empty selectors', () {
     expect(() => ProbeSelection.fromSelectors(operationSelector: 'unknown', formatSelector: null), throwsArgumentError);
+    expect(() => ProbeSelection.fromSelectors(operationSelector: 'all', formatSelector: null), throwsArgumentError);
+    expect(() => ProbeSelection.fromSelectors(operationSelector: null, formatSelector: 'all'), throwsArgumentError);
     expect(() => ProbeSelection.fromSelectors(operationSelector: '', formatSelector: null), throwsArgumentError);
     expect(
       () => ProbeSelection.fromSelectors(operationSelector: 'gray', formatSelector: 'bgra8888', cases: const ['i420 1x1 tight gray']),

@@ -17,9 +17,7 @@ const _dartFormats = String.fromEnvironment('PROBE_FORMATS');
 
 void main() {
   test('native operation matrix matches the exact golden', () async {
-    final document =
-        jsonDecode(await File('test/probe/golden.json').readAsString())
-            as Map<String, dynamic>;
+    final document = jsonDecode(await File('test/probe/golden.json').readAsString()) as Map<String, dynamic>;
     expect(document['schema'], 1);
     final golden = document['cases'] as Map<String, dynamic>;
     final selectors = probeSelectorsForVm(
@@ -29,48 +27,25 @@ void main() {
       dartFormats: _dartFormats,
       environment: Platform.environment,
     );
-    final selection = ProbeSelection.fromSelectors(
-      operationSelector: selectors.operations,
-      formatSelector: selectors.formats,
-    );
+    expectProbeGoldenCaseIdsExact(golden);
+    final selection = ProbeSelection.fromSelectors(operationSelector: selectors.operations, formatSelector: selectors.formats);
     final recordMode = Platform.environment['PROBE_RECORD'];
     if (recordMode != null && selection.hasSelectors) {
-      throw ArgumentError(
-        'PROBE_RECORD cannot be used with PROBE_OPS or PROBE_FORMATS.',
-      );
+      throw ArgumentError('PROBE_RECORD cannot be used with PROBE_OPS or PROBE_FORMATS.');
     }
     if (recordMode != null) {
       final changed = await recordProbeGolden(golden, mode: recordMode);
       if (changed) {
-        await File('test/probe/golden.json').writeAsString(
-          '${const JsonEncoder.withIndent('  ').convert(document)}\n',
-        );
+        await File('test/probe/golden.json').writeAsString('${const JsonEncoder.withIndent('  ').convert(document)}\n');
       }
     }
-    expectProbeGoldenCaseIdsExact(golden);
     debugPrint(selection.scope);
-    final inputMismatches = probeInputMismatches(
-      golden,
-      caseIds: selection.caseIds,
-    );
-    expect(
-      inputMismatches,
-      isEmpty,
-      reason:
-          'Probe input generator diverges on this platform:\n${inputMismatches.take(20).join('\n')}',
-    );
-    expectProbeMismatchesEmpty(
-      await probeMismatches(golden, caseIds: selection.caseIds),
-    );
+    final inputMismatches = probeInputMismatches(golden, caseIds: selection.caseIds);
+    expect(inputMismatches, isEmpty, reason: 'Probe input generator diverges on this platform:\n${inputMismatches.take(20).join('\n')}');
+    expectProbeMismatchesEmpty(await probeMismatches(golden, caseIds: selection.caseIds));
 
-    final negativeGolden = {
-      ...golden,
-      selection.caseIds.first: 'intentionally-wrong',
-    };
-    final negativeControl = await probeMismatches(
-      negativeGolden,
-      caseIds: [selection.caseIds.first],
-    );
+    final negativeGolden = {...golden, selection.caseIds.first: 'intentionally-wrong'};
+    final negativeControl = await probeMismatches(negativeGolden, caseIds: [selection.caseIds.first]);
     expect(negativeControl, hasLength(1));
     expect(negativeControl.single, startsWith('${selection.caseIds.first}:'));
   });

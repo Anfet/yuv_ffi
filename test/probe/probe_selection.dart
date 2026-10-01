@@ -59,7 +59,7 @@ class ProbeSelection {
 }
 
 Set<String>? _parseSelector(String? raw, {required String name, required Set<String> known}) {
-  if (raw == null || raw == 'all') return null;
+  if (raw == null) return null;
   final tokens = raw.split(',');
   for (final token in tokens) {
     if (token.isEmpty) {
