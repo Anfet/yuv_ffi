@@ -1,5 +1,5 @@
 # PROBE 1 — Базовые линии скорости 0.4.0 против dev
-**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 1
+**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 2
 **Было:** RA-26 (цикл 0.4.2).
 
 #### Problem / Goal
@@ -32,7 +32,7 @@ For 0.4.0 ↔ HEAD, build identical benchmark source in separate detached worktr
 
 #### Definition of Done
 - [x] Сценарии замера для всех 12 `YuvOperation`
-- [x] Базовые линии Windows x64 и Pixel 3 arm64 сняты для тега 0.4.0 и для HEAD; таблица сравнения — в отчёте (источник цифр для CHANGELOG RA-18)
+- [ ] Базовые линии Windows x64 и Pixel 3 arm64 сняты для тега 0.4.0 и для HEAD; таблица сравнения — в отчёте (источник цифр для CHANGELOG RA-18)
 - [x] Негативный контроль: искусственное замедление (sleep в тестовой сборке исполнителя, не в `lib/`) даёт `SLOWER`, испорченный golden даёт FAIL
 - [x] Два повторных прогона на одной машине дают `SAME`
 
@@ -49,3 +49,28 @@ For 0.4.0 ↔ HEAD, build identical benchmark source in separate detached worktr
   tool/ci/windows.ps1` — smoke/contract, 123 reference cases, Windows release
   build and native integration probes passed. Pixel 3 release runs: 0.4.0 and
   HEAD, 24/24 each, all sample hashes stable.
+
+#### Review
+
+**Result: TODO (T1, second rejection).** The five committed raw verdicts have
+24 unique, matching scenario IDs each. All runs have nine stable sample hashes;
+the medians and FASTER/SAME comparisons recompute from the recorded samples.
+Windows HEAD repeated 24/24 SAME. The test-only delay and corrupted-baseline
+hash controls are present in `test/probe/probe_runner_test.dart`; no public API
+or native C files changed in the task branch.
+
+The Windows baseline is not yet independently auditable against the Architect
+Decision. `tool/probe/run_windows_release.ps1` hashes the EXE only (line 152),
+never the DLL. The committed Windows raw JSON files are app verdicts only: they
+contain no package-config resolution, package revision, EXE/DLL hashes, or
+actual Balanced scheme name/GUID and AC reading. The archive README asserts
+the contour and revisions but does not include the host result receipts for
+the tag and HEAD builds. Thus the required package/artifact provenance and
+common CPU/power contour cannot be checked from committed evidence.
+
+Required correction: record the Windows DLL SHA-256 alongside the EXE SHA-256
+in the host result; preserve the tag and HEAD host receipts (or an equivalent
+verifiable manifest) with resolved package revision/config path, both artifact
+hashes, and actual scheme GUID/name and AC status for each accepted run. Keep
+the existing raw results and comparison table. A fresh Executor must provide
+the correction and its validation; this Reviewer did not rerun benchmarks.
