@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** ACCEPTED · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -229,3 +229,25 @@ committed correction head.
   run `88fe8d1732384617af96e5bc5150b470`, evidence
   `%TEMP%\\yuv_ffi-clean2-9dcd705-review-armv7`. Каждый APK содержит только
   ожидаемый ABI и `libyuv_ffi.so`.
+
+#### Integration correction #6 — Executor Report
+
+**Result:** REVIEW
+
+- GitHub CI Web run `36900817922` on integration head `080f28c` and a fresh
+  local `pwsh -File tool/ci/web.ps1` both failed before browser execution:
+  `wasm_swap_nv_atomicity_web_test.dart` was discovered but absent from the
+  Web source map.
+- Restored the source to the aggregate target and source/case registry. Its
+  five `testWidgets` declarations register seven cases because two contracts
+  run for both I420 and BGRA. The matrix now has 13 sources and 66 cases.
+- No package, native, generated-binding, Web-backend, or production API source
+  changed.
+
+**Validation:**
+
+- Before the correction: `$env:FLUTTER_VERSION='3.44.9'; pwsh -File
+  tool/ci/web.ps1` — FAIL, deterministic source-map assertion after WASM
+  rebuild and `pub get`; unmapped source named above.
+- The corrected full command reached `pub publish --dry-run`, which requires a
+  clean Git tree; it will be rerun after this correction is committed.
