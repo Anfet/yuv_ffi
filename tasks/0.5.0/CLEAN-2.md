@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** TODO · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -112,6 +112,27 @@ D-11; вместе с `deprecated_api_test`; миграция в README и CHANG
   reviewed SHA. The prior Pixel run `8B1X11QLW` passed 1188 cases per ABI.
 
 **Commit:** `6bb82ed Restored active CLEAN 2 contract tests`
+
+**Correction #4:** Restored the complete removed suites and migrated their
+active contracts to `YuvPixelFormat` and the current `apply*`, `to*`,
+`encodeTo` and static `decode` APIs. The remaining removals are assertions
+whose sole subject was compatibility dispatch, including mutable `load`,
+`copy(blank:)`, legacy plane aliases, `toZero`, and auto-converting NV21
+chroma swap. Codec v2 fixtures, fragmented/trailing payload rejection,
+decode ownership, factory/layout/rotation, ABI atomicity, allocation safety,
+widget cache/frame-snapshot/padded-BGRA rendering, and the Web sources are
+preserved.
+
+**Validation (correction #4):**
+
+- `flutter test --tags contract` — PASS.
+- `flutter test test/yuv_image_widget_test.dart` — PASS, 17 tests.
+- `flutter analyze --no-fatal-infos lib test example/integration_test` — PASS
+  (existing info diagnostics only).
+- `flutter test --tags probe` and `flutter test --tags reference` could not
+  load `yuv_ffi.dll` from this worktree before their matrices started; run the
+  Windows CI script/native build before review. No native sources, headers, or
+  generated bindings changed.
 
 #### Review
 

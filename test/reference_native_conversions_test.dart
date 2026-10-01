@@ -1,23 +1,616 @@
 @Tags(['reference'])
-library;
-
+import 'dart:async';
+import 'dart:convert';
+import 'dart:ffi' show Abi;
+import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-void main() {
-  test('native conversion round-trip retains frame geometry and BGRA storage size', () async {
-    await YuvFfi.initialize();
-    final source = YuvImage.fromRgbaBytes(
-      Uint8List.fromList(<int>[10, 20, 30, 255, 40, 50, 60, 255, 70, 80, 90, 255, 100, 110, 120, 255]),
-      width: 2,
-      height: 2,
-      format: YuvPixelFormat.i420,
-    );
-    final converted = source.toNv12().toI420().toBgra();
+import 'helpers/reference/test_pattern_reference.dart';
 
-    expect(converted.size, source.size);
-    expect(converted.toBgraBytes(), hasLength(16));
+const _manifestPath = 'test/reference/test_pattern_512/manifest.json';
+const _sourcePath = 'test/assets/test_pattern_512.png';
+const _fixtureRoot = 'test/reference/test_pattern_512';
+
+/// Native provenance is deliberately printed by this suite.  The repository
+/// does not contain the ignored DLL, so a local run must not be mistaken for a
+/// clean-checkout or CI binary check.
+void main() {
+  late Map<String, dynamic> manifest;
+  late RgbaFrame source;
+  late Map<String, RgbaFrame> expectedImages;
+  late bool nativeAvailable;
+
+  setUpAll(() async {
+    manifest = jsonDecode(await File(_manifestPath).readAsString()) as Map<String, dynamic>;
+    source = decodePng(await File(_sourcePath).readAsBytes());
+    expectedImages = <String, RgbaFrame>{};
+    final artifacts = manifest['artifacts'] as Map<String, dynamic>;
+    for (final entry in artifacts.entries) {
+      if (entry.key.endsWith('.png')) {
+        final metadata = entry.value as Map<String, dynamic>;
+        expectedImages[entry.key] = decodePng(await File('$_fixtureRoot/${metadata['path']}').readAsBytes());
+      }
+    }
+
+    final nativeLibrary = _nativeLibraryFile();
+    nativeAvailable = nativeLibrary?.existsSync() ?? false;
+    debugPrint(
+      'YUV-11 native provenance: os=${Platform.operatingSystem}, '
+      'arch=${Abi.current()}, dart=${Platform.version.split(' ').first}, '
+      'library=${nativeLibrary?.absolute.path ?? 'unsupported'}, exists=$nativeAvailable, '
+      'sha256=${nativeAvailable ? sha256Hex(await nativeLibrary!.readAsBytes()) : 'not available'}',
+    );
   });
+
+  test('manifest declares the complete native reference matrix', () {
+    final cases = (manifest['cases'] as List<dynamic>).cast<Map<String, dynamic>>();
+    expect(cases, hasLength(119));
+    expect(cases.map((entry) => entry['id']).toSet(), hasLength(cases.length));
+  });
+
+  test('native library required by the backend is available', () {
+    expect(nativeAvailable, isTrue, reason: 'YUV-11 cannot be accepted from a run that skipped every native case');
+  });
+
+  for (final entry in _casesFromManifest()) {
+    test(entry['id'] as String, () async {
+      if (!nativeAvailable) {
+        // markTestSkipped only records the skip: without returning, execution
+        // falls straight into the native call below and the case fails instead
+        // of skipping.
+        markTestSkipped('YUV-11 native library is not available on this host');
+        return;
+      }
+      final result = await _runCase(entry, source);
+      _assertCase(entry, result, expectedImages);
+    }, timeout: const Timeout(Duration(minutes: 2)));
+  }
+}
+
+/// Locates the native library for provenance reporting only.
+///
+/// The search checks the loader's installed-library locations first, then the
+/// local CMake build tree so a development checkout can run the probe too.
+File? _nativeLibraryFile() {
+  final String name = Platform.isWindows
+      ? 'yuv_ffi.dll'
+      : Platform.isLinux
+      ? 'libyuv_ffi.so'
+      : Platform.isMacOS
+      ? 'libyuv_ffi.dylib'
+      : '';
+  if (name.isEmpty) return null;
+
+  final searchPathVariable = Platform.isWindows
+      ? 'PATH'
+      : Platform.isMacOS
+      ? 'DYLD_LIBRARY_PATH'
+      : 'LD_LIBRARY_PATH';
+  final searchPath = Platform.environment[searchPathVariable] ?? '';
+  return _firstExisting(<String>[
+    for (final dir in searchPath.split(Platform.isWindows ? ';' : ':').where((dir) => dir.isNotEmpty)) '$dir${Platform.pathSeparator}$name',
+    'native/src/build/$name',
+  ]);
+}
+
+/// First path that exists, or the first candidate so the log still names what
+/// was looked for when nothing was found.
+File? _firstExisting(List<String> candidates) {
+  for (final path in candidates) {
+    final file = File(path);
+    if (file.existsSync()) return file;
+  }
+  return candidates.isEmpty ? null : File(candidates.first);
+}
+
+List<Map<String, dynamic>> _casesFromManifest() {
+  final bytes = File(_manifestPath).readAsBytesSync();
+  final manifest = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+  return (manifest['cases'] as List<dynamic>).cast<Map<String, dynamic>>();
+}
+
+class _CaseResult {
+  _CaseResult({required this.image, required this.outputBytes, this.imageBytes, this.rawBytes});
+
+  final YuvImage image;
+  final Uint8List outputBytes;
+  final Uint8List? imageBytes;
+  final Uint8List? rawBytes;
+}
+
+Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async {
+  final input = entry['input'] as Map<String, dynamic>;
+  final dimensions = input['dimensions'] as Map<String, dynamic>;
+  final width = dimensions['width'] as int;
+  final height = dimensions['height'] as int;
+  final format = _format(input['format'] as String);
+  final layout = input['layout'] as String;
+  final parameters = (entry['parameters'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+  final frame = _sourceFrame(source, parameters);
+  final operation = entry['operation'] as String;
+  final image = _newImage(format, width, height, _planesFor(format, frame, layout), operation == 'fromRgba8888');
+  final sourceFrameHash = sha256Hex(frame.bytes);
+  final sourcePlaneHash = _planesHash(image.planes);
+  Uint8List? imageBytes;
+  Uint8List? rawBytes;
+
+  switch (operation) {
+    case 'YuvImage.bgra':
+    case 'YuvImage.i420':
+    case 'YuvImage.nv12':
+      break;
+    case 'fromRgba8888':
+      // ignore: deprecated_member_use_from_same_package
+      image.applyRgbaBytes(frame.bytes);
+      break;
+    case 'toBgra8888':
+      // ignore: deprecated_member_use_from_same_package
+      rawBytes = image.toBgraBytes();
+      break;
+    case 'toYuvBgra8888':
+      // ignore: deprecated_member_use_from_same_package
+      _inPlace(entry, image, image.toBgra);
+      break;
+    case 'toYuvI420':
+      // ignore: deprecated_member_use_from_same_package
+      _inPlace(entry, image, image.toI420);
+      break;
+    case 'toYuvNv21':
+      // ignore: deprecated_member_use_from_same_package
+      _inPlace(entry, image, image.toNv12);
+      break;
+    case 'swapNv':
+      final swaps = parameters['swaps'] as int;
+      for (var i = 0; i < swaps; i++) {
+        // ignore: deprecated_member_use_from_same_package
+        _inPlace(entry, image, image.applyChromaSwap);
+      }
+      break;
+    case 'crop':
+      // ignore: deprecated_member_use_from_same_package
+      _inPlace(entry, image, () => image.applyCrop(_rect(parameters)));
+      break;
+    case 'rotate':
+      // ignore: deprecated_member_use_from_same_package
+      _inPlace(entry, image, () => image.applyRotation(_rotation(parameters['degreesClockwise'] as int)));
+      break;
+    case 'flipHorizontally':
+      // ignore: deprecated_member_use_from_same_package
+        _inPlace(entry, image, image.applyFlipHorizontal);
+      break;
+    case 'flipVertically':
+      // ignore: deprecated_member_use_from_same_package
+        _inPlace(entry, image, image.applyFlipVertical);
+      break;
+    case 'grayscale':
+      // ignore: deprecated_member_use_from_same_package
+        _inPlace(entry, image, image.applyGrayscale);
+      break;
+    case 'blackwhite':
+      // ignore: deprecated_member_use_from_same_package
+        _inPlace(entry, image, image.applyBlackWhite);
+      break;
+    case 'negate':
+      // ignore: deprecated_member_use_from_same_package
+        _inPlace(entry, image, image.applyNegate);
+      break;
+    case 'gaussianBlur':
+      // ignore: deprecated_member_use_from_same_package
+      _inPlace(entry, image, () => image.applyGaussianBlur(radius: parameters['radius'] as int, sigma: (parameters['sigma'] as num).toDouble()));
+      break;
+    case 'boxBlur':
+      _inPlace(
+        entry,
+        image,
+        // ignore: deprecated_member_use_from_same_package
+        () => image.applyBoxBlur(
+          radius: parameters['radius'] as int,
+          region: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
+        ),
+      );
+      break;
+    case 'meanBlur':
+      _inPlace(
+        entry,
+        image,
+        // ignore: deprecated_member_use_from_same_package
+        () => image.applyMeanBlur(
+          radius: parameters['radius'] as int,
+          region: parameters.containsKey('rect') ? _rect(parameters['rect'] as Map<String, dynamic>) : null,
+        ),
+      );
+      break;
+    case 'copy':
+      // ignore: deprecated_member_use_from_same_package
+      final copied = parameters['blank'] as bool ? YuvImage.allocate(image.format, image.width, image.height) : image.copy();
+      expect(identical(copied, image), isFalse, reason: '${entry['id']} copy must return a new image instance');
+      expect(sha256Hex(frame.bytes), sourceFrameHash, reason: '${entry['id']} mutated source RGBA fixture');
+      expect(_planesHash(image.planes), sourcePlaneHash, reason: '${entry['id']} mutated input during copy');
+      // ignore: deprecated_member_use_from_same_package
+      return _CaseResult(image: copied, outputBytes: copied.toBgraBytes(), rawBytes: copied.toBytes());
+    case 'getBytes':
+      // ignore: deprecated_member_use_from_same_package
+      rawBytes = image.toBytes();
+      break;
+    case 'save/load':
+      final chunks = <List<int>>[];
+      // ignore: deprecated_member_use_from_same_package
+      await image.encodeTo(_ListSink(chunks));
+      final stream = parameters['stream'] == 'fragmented' ? _fragment(chunks) : chunks;
+      final loaded = await YuvImage.decode(Stream<List<int>>.fromIterable(stream));
+      expect(sha256Hex(frame.bytes), sourceFrameHash, reason: '${entry['id']} mutated source RGBA fixture');
+      expect(_planesHash(image.planes), sourcePlaneHash, reason: '${entry['id']} mutated input during save');
+      // ignore: deprecated_member_use_from_same_package
+      return _CaseResult(image: loaded, outputBytes: loaded.toBgraBytes(), rawBytes: loaded.toBytes());
+    case 'toImage':
+      final decoded = await image.toImage();
+      try {
+        final data = await decoded.toByteData(format: ui.ImageByteFormat.rawRgba);
+        imageBytes = data == null ? null : Uint8List.fromList(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+      } finally {
+        decoded.dispose();
+      }
+      break;
+    default:
+      throw StateError('Unimplemented YUV-11 operation: $operation');
+  }
+
+  expect(sha256Hex(frame.bytes), sourceFrameHash, reason: '${entry['id']} mutated source RGBA fixture');
+  if (operation == 'toBgra8888' || operation == 'getBytes' || operation == 'toImage') {
+    expect(_planesHash(image.planes), sourcePlaneHash, reason: '${entry['id']} mutated input during read-only operation');
+  }
+  // ignore: deprecated_member_use_from_same_package
+  return _CaseResult(image: image, outputBytes: rawBytes ?? image.toBgraBytes(), imageBytes: imageBytes, rawBytes: rawBytes);
+}
+
+void _inPlace(Map<String, dynamic> entry, YuvImage image, YuvImage Function() operation) {
+  expect(identical(operation(), image), isTrue, reason: '${entry['id']} must return the same image instance');
+}
+
+String _planesHash(Iterable<YuvPlane> planes) => sha256Hex(_concat(planes.map((plane) => plane.bytes)));
+
+// ignore: deprecated_member_use_from_same_package
+YuvImage _newImage(YuvPixelFormat format, int width, int height, List<YuvPlane> planes, bool blank) {
+  if (blank) {
+    planes = _blankLogicalSamples(format, width, planes);
+  }
+  return switch (format) {
+    // The named BGRA constructor preserves the declared layout
+    // just like the explicit-format one, so both blank and populated cases can
+    // go through it. This whole file exercises declared strides byte-for-byte
+    // (including custom/padded ones), so every case passes `.preserve`
+    // explicitly (PACK-01B changed the default to `.packed`).
+    // ignore: deprecated_member_use_from_same_package
+    YuvPixelFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
+    // ignore: deprecated_member_use_from_same_package
+    YuvPixelFormat.i420 => YuvImage.i420(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
+    // ignore: deprecated_member_use_from_same_package
+    YuvPixelFormat.nv12 => YuvImage.nv12(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
+  };
+}
+
+// ignore: deprecated_member_use_from_same_package
+List<YuvPlane> _blankLogicalSamples(YuvPixelFormat format, int width, List<YuvPlane> planes) {
+  final chromaWidth = (width + 1) ~/ 2;
+  return List<YuvPlane>.generate(planes.length, (planeIndex) {
+    final plane = planes[planeIndex];
+    final bytes = Uint8List.fromList(plane.bytes);
+    final logicalWidth = planeIndex == 0 ? width : chromaWidth;
+    final sampleBytes = switch (format) {
+      // ignore: deprecated_member_use_from_same_package
+      YuvPixelFormat.bgra8888 => 4,
+      // ignore: deprecated_member_use_from_same_package
+      YuvPixelFormat.nv12 when planeIndex == 1 => 2,
+      _ => 1,
+    };
+    for (var row = 0; row < plane.height; row++) {
+      for (var column = 0; column < logicalWidth; column++) {
+        final offset = row * plane.rowStride + column * plane.pixelStride;
+        bytes.fillRange(offset, offset + sampleBytes, 0);
+      }
+    }
+    return YuvPlane(plane.height, plane.rowStride, plane.pixelStride, bytes);
+  });
+}
+
+// ignore: deprecated_member_use_from_same_package
+YuvPixelFormat _format(String value) => switch (value) {
+  // ignore: deprecated_member_use_from_same_package
+  'bgra8888' => YuvPixelFormat.bgra8888,
+  // ignore: deprecated_member_use_from_same_package
+  'i420' => YuvPixelFormat.i420,
+  // ignore: deprecated_member_use_from_same_package
+  'nv21' => YuvPixelFormat.nv12,
+  _ => throw ArgumentError.value(value, 'format'),
+};
+
+YuvImageRotation _rotation(int degrees) => switch (degrees) {
+  0 => YuvImageRotation.rotation0,
+  90 => YuvImageRotation.rotation90,
+  180 => YuvImageRotation.rotation180,
+  270 => YuvImageRotation.rotation270,
+  _ => throw ArgumentError.value(degrees, 'degrees'),
+};
+
+ui.Rect _rect(Map<String, dynamic> value) => ui.Rect.fromLTWH(
+  (value['left'] as num).toDouble(),
+  (value['top'] as num).toDouble(),
+  (value['width'] as num).toDouble(),
+  (value['height'] as num).toDouble(),
+);
+
+RgbaFrame _sourceFrame(RgbaFrame source, Map<String, dynamic> parameters) {
+  final crop = parameters['sourceCrop'];
+  if (crop is! Map<String, dynamic>) return source;
+  return source.crop(crop['left'] as int, crop['top'] as int, crop['width'] as int, crop['height'] as int);
+}
+
+// ignore: deprecated_member_use_from_same_package
+List<YuvPlane> _planesFor(YuvPixelFormat format, RgbaFrame frame, String layout) {
+  final i420 = rgbaToI420(frame);
+  final tight = switch (format) {
+    // ignore: deprecated_member_use_from_same_package
+    YuvPixelFormat.bgra8888 => <Uint8List>[frame.toBgra()],
+    // ignore: deprecated_member_use_from_same_package
+    YuvPixelFormat.i420 => <Uint8List>[i420.y, i420.u!, i420.v!],
+    // ignore: deprecated_member_use_from_same_package
+    YuvPixelFormat.nv12 => <Uint8List>[i420.y, i420ToNv21Uv(i420).uv!],
+  };
+  final chromaWidth = (frame.width + 1) ~/ 2;
+  final chromaHeight = (frame.height + 1) ~/ 2;
+  final strides = switch (format) {
+    // ignore: deprecated_member_use_from_same_package
+    YuvPixelFormat.bgra8888 => <int>[
+      switch (layout) {
+        'padded' => frame.width * 4 + 16,
+        'customStride' => frame.width * 4 + 7,
+        _ => frame.width * 4,
+      },
+    ],
+    // ignore: deprecated_member_use_from_same_package
+    YuvPixelFormat.i420 => <int>[
+      switch (layout) {
+        'padded' => frame.width + 8,
+        'customStride' => frame.width + 3,
+        _ => frame.width,
+      },
+      switch (layout) {
+        'padded' => chromaWidth + 4,
+        'customStride' => chromaWidth + 2,
+        _ => chromaWidth,
+      },
+      switch (layout) {
+        'padded' => chromaWidth + 4,
+        'customStride' => chromaWidth + 2,
+        _ => chromaWidth,
+      },
+    ],
+    // ignore: deprecated_member_use_from_same_package
+    YuvPixelFormat.nv12 => <int>[
+      switch (layout) {
+        'padded' => frame.width + 8,
+        'customStride' => frame.width + 3,
+        _ => frame.width,
+      },
+      switch (layout) {
+        'padded' => chromaWidth * 2 + 8,
+        'customStride' => chromaWidth * 2 + 3,
+        _ => chromaWidth * 2,
+      },
+    ],
+  };
+  // ignore: deprecated_member_use_from_same_package
+  final heights = format == YuvPixelFormat.bgra8888
+      ? <int>[frame.height]
+      // ignore: deprecated_member_use_from_same_package
+      : <int>[frame.height, chromaHeight, if (format == YuvPixelFormat.i420) chromaHeight];
+  // ignore: deprecated_member_use_from_same_package
+  final useful = format == YuvPixelFormat.bgra8888
+      ? <int>[frame.width * 4]
+      // ignore: deprecated_member_use_from_same_package
+      : <int>[frame.width, if (format == YuvPixelFormat.nv12) chromaWidth * 2 else chromaWidth, if (format == YuvPixelFormat.i420) chromaWidth];
+  // ignore: deprecated_member_use_from_same_package
+  final pixelStrides = format == YuvPixelFormat.bgra8888
+      ? <int>[4]
+      // ignore: deprecated_member_use_from_same_package
+      : <int>[1, if (format == YuvPixelFormat.nv12) 2 else 1, if (format == YuvPixelFormat.i420) 1];
+  return List<YuvPlane>.generate(tight.length, (index) => _plane(tight[index], heights[index], strides[index], pixelStrides[index], useful[index]));
+}
+
+YuvPlane _plane(Uint8List tight, int height, int rowStride, int pixelStride, int usefulRowBytes) {
+  final bytes = Uint8List(height * rowStride);
+  for (var row = 0; row < height; row++) {
+    final destination = row * rowStride;
+    final source = row * usefulRowBytes;
+    bytes.setRange(destination, destination + usefulRowBytes, tight, source);
+    bytes.fillRange(destination + usefulRowBytes, destination + rowStride, 0xa5);
+  }
+  return YuvPlane(height, rowStride, pixelStride, bytes);
+}
+
+void _assertCase(Map<String, dynamic> entry, _CaseResult result, Map<String, RgbaFrame> expectedImages) {
+  final expected = entry['expected'] as Map<String, dynamic>;
+  final expectedDimensions = expected['dimensions'] as Map<String, dynamic>;
+  expect(result.image.width, expectedDimensions['width'], reason: entry['id'] as String);
+  expect(result.image.height, expectedDimensions['height'], reason: entry['id'] as String);
+
+  final operation = entry['operation'] as String;
+  if (operation == 'toYuvBgra8888' ||
+      operation == 'toYuvI420' ||
+      operation == 'toYuvNv21' ||
+      (operation == 'swapNv' && result.image.format == YuvPixelFormat.nv12)) {
+    // The manifest's legacy NV21 label describes the same
+    // canonical semi-planar storage, so the comparison maps nv12 back to that
+    // legacy name rather than expecting the fixture data to be relabeled.
+    final actualFormatName = result.image.format == YuvPixelFormat.nv12 ? 'nv21' : result.image.format.name;
+    expect(actualFormatName, expected['format'], reason: entry['id'] as String);
+  }
+
+  final artifact = expected['artifact'] as String;
+  final expectedFrame = expectedImages[artifact];
+  // A getBytes case asserts the raw concatenated plane layout, not a rendered
+  // frame, so it is checked only by the raw branch below. Without this guard a
+  // padded BGRA case would be compared against the tight artifact purely
+  // because its expected format happens to be named bgra8888 — which is why
+  // the padded I420/NV21 siblings were already exempt.
+  final compareVisual = expectedFrame != null && operation != 'getBytes' && (expected['format'] == 'bgra8888' || entry['comparison'] != 'exact');
+  if (compareVisual) {
+    final expectedBytes = operation == 'toImage' ? expectedFrame.bytes : expectedFrame.toBgra();
+    final actual = result.imageBytes ?? result.outputBytes;
+    final tolerance =
+        (jsonDecode(File(_manifestPath).readAsStringSync()) as Map<String, dynamic>)['tolerances'][entry['comparison']] as Map<String, dynamic>;
+    final metrics = _metrics(actual, expectedBytes, threshold: tolerance['maxChannelError'] as int);
+    debugPrint('${entry['id']}: ${metrics.format()} expected=${entry['comparison']}');
+    expect(metrics.mae, lessThanOrEqualTo((tolerance['mae'] as num).toDouble()), reason: entry['id'] as String);
+    expect(metrics.maxChannelError, lessThanOrEqualTo(tolerance['maxChannelError'] as num), reason: entry['id'] as String);
+    expect(metrics.percentile99ChannelError, lessThanOrEqualTo(tolerance['percentile99ChannelError'] as num), reason: entry['id'] as String);
+    expect(metrics.alphaMismatches, 0, reason: entry['id'] as String);
+    if (entry['comparison'] == 'exact') expect(actual, orderedEquals(expectedBytes), reason: entry['id'] as String);
+  }
+
+  if (operation == 'copy' || operation == 'getBytes' || operation == 'save/load') {
+    final expectedRaw = parametersForRaw(entry);
+    final actualRaw = result.rawBytes!;
+    final metrics = _metrics(actualRaw, expectedRaw);
+    debugPrint('${entry['id']}: raw length=${actualRaw.length}/${expectedRaw.length} ${metrics.format()}');
+    expect(actualRaw, orderedEquals(expectedRaw), reason: entry['id'] as String);
+  } else if (operation != 'toImage') {
+    _assertPlaneReference(entry, result);
+  }
+}
+
+void _assertPlaneReference(Map<String, dynamic> entry, _CaseResult result) {
+  final expected = entry['expected'] as Map<String, dynamic>;
+  final expectedPlanes = (expected['rawPlaneReference']['planes'] as List<dynamic>).cast<Map<String, dynamic>>();
+  final operation = entry['operation'] as String;
+  final actualPlanes = <YuvPlane>[];
+  if (operation == 'toBgra8888' || operation == 'toImage') {
+    final bytes = operation == 'toImage' ? _rgbaToBgra(result.imageBytes!) : result.outputBytes;
+    final dimensions = expected['dimensions'] as Map<String, dynamic>;
+    actualPlanes.add(YuvPlane(dimensions['height'] as int, (dimensions['width'] as int) * 4, 4, bytes));
+  } else {
+    actualPlanes.addAll(result.image.planes);
+  }
+  expect(actualPlanes, hasLength(expectedPlanes.length), reason: entry['id'] as String);
+  for (var index = 0; index < actualPlanes.length; index++) {
+    final actual = actualPlanes[index];
+    final expectedPlane = expectedPlanes[index];
+    final actualHash = sha256Hex(actual.bytes);
+    debugPrint('${entry['id']}: plane[$index] ${actual.bytes.length} bytes sha256=$actualHash');
+    expect(actual.height, expectedPlane['height'], reason: entry['id'] as String);
+    expect(actual.rowStride, expectedPlane['rowStride'], reason: entry['id'] as String);
+    expect(actual.pixelStride, expectedPlane['pixelStride'], reason: entry['id'] as String);
+    expect(actual.bytes.length, expectedPlane['byteLength'], reason: entry['id'] as String);
+    if (entry['comparison'] == 'exact') {
+      expect(actualHash, expectedPlane['sha256'], reason: entry['id'] as String);
+    }
+  }
+}
+
+Uint8List _rgbaToBgra(Uint8List rgba) {
+  final bgra = Uint8List(rgba.length);
+  for (var index = 0; index < rgba.length; index += 4) {
+    bgra[index] = rgba[index + 2];
+    bgra[index + 1] = rgba[index + 1];
+    bgra[index + 2] = rgba[index];
+    bgra[index + 3] = rgba[index + 3];
+  }
+  return bgra;
+}
+
+Uint8List parametersForRaw(Map<String, dynamic> entry) {
+  final input = entry['input'] as Map<String, dynamic>;
+  // BGRA keeps the declared layout because its named constructor preserves the
+  // caller's stride. Build the expectation from the layout the case declares.
+  final layout = input['layout'] as String;
+  final planes = _planesFor(_format(input['format'] as String), _rawSourceFrame(entry), layout);
+  if (entry['operation'] == 'copy' && (entry['parameters'] as Map<String, dynamic>)['blank'] == true) {
+    return Uint8List(planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length));
+  }
+  return _concat(planes.map((plane) => plane.bytes));
+}
+
+RgbaFrame _rawSourceFrame(Map<String, dynamic> entry) {
+  final params = entry['parameters'] as Map<String, dynamic>;
+  final crop = params['sourceCrop'];
+  final full = decodePng(File(_sourcePath).readAsBytesSync());
+  if (crop is Map<String, dynamic>) return full.crop(crop['left'] as int, crop['top'] as int, crop['width'] as int, crop['height'] as int);
+  return full;
+}
+
+Uint8List _concat(Iterable<Uint8List> parts) {
+  final result = BytesBuilder(copy: false);
+  for (final part in parts) {
+    result.add(part);
+  }
+  return result.takeBytes();
+}
+
+List<List<int>> _fragment(List<List<int>> chunks) {
+  final bytes = _concat(chunks.map(Uint8List.fromList));
+  return [for (var start = 0; start < bytes.length; start += 137) bytes.sublist(start, (start + 137).clamp(0, bytes.length))];
+}
+
+class _ListSink implements Sink<List<int>> {
+  _ListSink(this.chunks);
+  final List<List<int>> chunks;
+  @override
+  void add(List<int> data) => chunks.add(List<int>.from(data));
+  @override
+  void close() {}
+}
+
+class _Metrics {
+  _Metrics(this.mae, this.maxChannelError, this.percentile99ChannelError, this.pixelsOutsideThreshold, this.alphaMismatches);
+  final double mae;
+  final int maxChannelError;
+  final int percentile99ChannelError;
+  final int pixelsOutsideThreshold;
+  final int alphaMismatches;
+
+  String format() =>
+      'mae=${mae.toStringAsFixed(3)} max=$maxChannelError p99=$percentile99ChannelError outside=$pixelsOutsideThreshold alpha=$alphaMismatches';
+}
+
+_Metrics _metrics(Uint8List actual, Uint8List expected, {int threshold = 0}) {
+  if (actual.length != expected.length) {
+    return _Metrics(double.infinity, 255, 255, math.max(actual.length, expected.length), 1);
+  }
+  var sum = 0;
+  var maxError = 0;
+  var outside = 0;
+  var alpha = 0;
+  final histogram = List<int>.filled(256, 0);
+  for (var i = 0; i < actual.length; i++) {
+    final error = (actual[i] - expected[i]).abs();
+    sum += error;
+    maxError = math.max(maxError, error);
+    histogram[error]++;
+    if (i % 4 == 3 && error != 0) alpha++;
+    if (i % 4 == 3) {
+      final pixelStart = i - 3;
+      final pixelMax = math.max(
+        math.max((actual[pixelStart] - expected[pixelStart]).abs(), (actual[pixelStart + 1] - expected[pixelStart + 1]).abs()),
+        math.max((actual[pixelStart + 2] - expected[pixelStart + 2]).abs(), (actual[pixelStart + 3] - expected[pixelStart + 3]).abs()),
+      );
+      if (pixelMax > threshold) outside++;
+    }
+  }
+  var rank = (actual.length * 0.99).ceil();
+  var seen = 0;
+  var p99 = 0;
+  for (var error = 0; error < histogram.length; error++) {
+    seen += histogram[error];
+    if (seen >= rank) {
+      p99 = error;
+      break;
+    }
+  }
+  return _Metrics(sum / actual.length, maxError, p99, outside, alpha);
 }
