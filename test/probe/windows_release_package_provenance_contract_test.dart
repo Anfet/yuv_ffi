@@ -12,6 +12,7 @@ void main() {
     expect(source, contains("'dependency_overrides:'"));
     expect(source, contains("'  yuv_ffi:'"));
     expect(source, contains(r'Remove-Item -LiteralPath $overridePath'));
+    expect(source, contains(r'& flutter clean'));
   });
 
   test('rejects a package config whose path or revision differs from the requested tag', () {

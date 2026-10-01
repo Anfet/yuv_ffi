@@ -148,6 +148,10 @@ try {
     $temporaryOverrideCreated = $true
   }
 
+  if (-not $ValidatePackageOnly) {
+    & flutter clean
+    if ($LASTEXITCODE -ne 0) { throw 'Flutter clean failed before the release benchmark build.' }
+  }
   & flutter pub get
   if ($LASTEXITCODE -ne 0) { throw 'Flutter pub get failed before the release benchmark build.' }
 
