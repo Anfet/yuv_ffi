@@ -95,6 +95,8 @@ grep -Fq 'enable-swift-package-manager: false' "$cocoapods_root/example/pubspec.
 
 cd "$cocoapods_root/example"
 flutter pub get
+# Without Pods/ the first build of the migrated project fails to link Pods_Runner; install the pods up front.
+(cd ios && LANG=en_US.UTF-8 pod install)
 flutter build ios --simulator --debug --no-codesign
 if ! grep -q 'yuv_ffi' ios/Podfile.lock; then
   echo 'yuv_ffi is missing from the CocoaPods copy Podfile.lock: the plugin was not built through CocoaPods.' >&2
