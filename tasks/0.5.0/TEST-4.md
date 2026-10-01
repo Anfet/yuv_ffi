@@ -1,5 +1,5 @@
 # TEST 4 — Карта «что изменил → что запускать»
-**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 2
+**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 3
 **Было:** RA-62 (цикл 0.4.2).
 
 #### Goal
@@ -47,7 +47,7 @@
   запускают; таблица не объявляет проверку пройденной до результата реального запуска.
 
 #### Definition of Done
-- [x] В `AGENTS.md` есть таблица классов действующих путей из `path_keys()` с первым совпадением,
+- [ ] В `AGENTS.md` есть таблица классов действующих путей из `path_keys()` с первым совпадением,
       объединением ключей и раскрытием `all`; отсутствующие Linux workflow и скрипт не перечислены как
       действующие пути. Для каждого ключа названа реальная команда или явно указано отсутствие локального скрипта.
 - [x] Примеры `src/**`, `lib/src/yuv/impl/web/**`, `lib/src/widgets/**`, `*.md` совпадают с действующим
@@ -114,3 +114,17 @@ Validation:
 - Validation evidence подтверждено: `git diff --check 1eba457..74144d6` прошёл, а name-only diff содержит
   только `AGENTS.md` и эту карточку. Платформенные прогоны не выполнялись: Validation карточки для
   документационного изменения их не требует.
+
+**T2 review, GPT-5.6 Terra, 01.10.2026: TODO. Reviewed `4813dd4`.**
+
+- `AGENTS.md` не покрывает действующий класс `linux/*`: в `tool/ci/scope_guard.sh` он даёт ключ `linux`, а
+  `linux/CMakeLists.txt` отслеживается Git. Это нарушает Architect Decision о таблице классов действующих
+  путей, включая платформенные каталоги. Добавить строку для существующего `linux/*` с CI-only job
+  `linux-native-smoke` в `.github/workflows/ci.yml`; отсутствующие `.github/workflows/ci-linux.yml` и
+  `tool/ci/linux.*` не перечислять как действующие.
+- Остальные прежние замечания исправлены: отсутствуют `ci-linux.yml` и `tool/ci/linux.*`; все 21 явно
+  перечисленный workflow/script путь существует; Linux job и её условия/шаги совпадают с `ci.yml`; Web
+  вызов передаёт target, device и Chrome arguments, а `gray`/`i420` и строка `PROBE scope` соответствуют
+  селектору.
+- Validation review: `git diff --check 1eba457..4813dd4` прошёл; name-only diff содержит только
+  `AGENTS.md` и эту карточку. Платформенные прогоны не выполнялись: документационная Validation их не требует.
