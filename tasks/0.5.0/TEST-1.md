@@ -1,5 +1,5 @@
 # TEST 1 — Инвентаризация тест-сьюта
-**Status:** TODO · **Tier:** T2 · **Owner:** Terra · **Depends On:** —
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** Terra · **Depends On:** —
 
 #### Goal
 Одна таблица по всем тестовым файлам пакета и example: что каждый файл защищает, сколько стоит и где то же самое
@@ -86,24 +86,18 @@
 
 #### Review
 
-**Decision:** TODO.
+**Decision:** ACCEPTED.
 
 - `git ls-files test example/test example/integration_test` и таблица содержат по 95 уникальных файлов.
-  Суммы слоёв сходятся: `api=425`, `ffi=136`, `reference=130`, `probe=16`, `release=17`; вместе 724,
-  семь VM guard-файлов `test/web/*` дают 731. Example JSON указан как 71.
-- В таблице 85 source-backed ссылок на пересечения. 83 counterpart marker существуют в названном исходном
-  файле. Две ссылки названы неточно: `example/integration_test/probe_performance_test.dart` указывает
-  `test('performance scenarios report correctness hashes and timing verdicts')`, но counterpart объявлен
-  как `testWidgets`; `example/test/camera_image_to_yuv_image_padding_test.dart` так же называет `test`,
-  хотя `ios_bgra_camera_frame_test.dart` объявляет `testWidgets`. Исправить оба exact marker.
-- «Контракты без второго покрытия» не включает `example/integration_test/example_camera_flow_test.dart`
-  (capture, face detection, crop и effect) и `test/probe/probe_runner_test.dart` (hash, baseline band и
-  strict slowdown), хотя в строках таблицы для них нет второго покрытия. Добавить эти конкретные контракты
-  либо зафиксировать source-derived counterpart.
-- Раздел «Медленные файлы» содержит пять конкретных файлов и причины, подтверждаемые кодом. Повторный
-  VM прогон после документационной правки был прерван через три минуты; используются сохранённые JSON
-  результаты исходного прогона на том же SHA `dev`. Это ограничение честно зафиксировано, но новый
-  полный прогон не является доказательством данной коррекции.
-
-Reviewer не запускал широкий Flutter test suite; выводы основаны на commit `8a60616`, таблице и чтении
-названных исходных файлов.
+  Суммы сходятся: `api=425`, `ffi=136`, `reference=130`, `probe=16`, `release=17` — 724; семь VM
+  guard-файлов `test/web/*` дают 731. Example JSON указан как 71.
+- Все 85 ссылок на пересечения имеют форму `файл › group/test/testWidgets`; названный marker найден в
+  указанном counterpart file. Два marker, уточнённых решением `53c09ca`, сверены в обоих направлениях:
+  `probe_performance` использует `testWidgets` только в integration-файле, а padding camera-frame —
+  `testWidgets` только в integration-файле. `example_camera_flow` и `probe_runner` перечислены как
+  контракты без второго покрытия и соответствуют их исходникам.
+- «Медленные файлы» содержит пять конкретных причин, scope от `dev` ограничен карточкой и inventory;
+  `git diff --check` чист.
+- Новый широкий Flutter-прогон не выполнялся: повтор после документационной правки остановился по timeout
+  через три минуты. В inventory честно сохранены исходные JSON-результаты на том же SHA `dev`; это
+  достаточное свидетельство чисел, но не свежее исполнение тестов после правки документации.
