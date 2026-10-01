@@ -21,7 +21,7 @@ if [[ "$actual_commit" != "$libyuv_commit" ]]; then
 fi
 
 mkdir -p "$decoded_root"
-for artifact in i420_decoded.png nv21_uv_decoded.png rotate_90.png rotate_180.png rotate_270.png flip_horizontal.png flip_vertical.png crop_inner.png crop_1x1.png crop_3x5.png crop_127x255.png; do
+for artifact in i420_decoded.png nv21_uv_decoded.png; do
   sips -s format bmp "$artifact_root/$artifact" --out "$decoded_root/$artifact.bmp" >/dev/null
 done
 

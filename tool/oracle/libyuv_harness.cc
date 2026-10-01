@@ -167,6 +167,62 @@ Image Expected(const std::filesystem::path& decoded_root, const std::string& nam
   return ReadBmp(decoded_root / (name + ".bmp"));
 }
 
+Image RotateImage(const Image& source, libyuv::RotationMode mode) {
+  const int output_width = mode == libyuv::kRotate90 || mode == libyuv::kRotate270 ? source.height : source.width;
+  const int output_height = mode == libyuv::kRotate90 || mode == libyuv::kRotate270 ? source.width : source.height;
+  Image output{output_width, output_height, std::vector<uint8_t>(static_cast<size_t>(output_width) * output_height * 4)};
+  for (int y = 0; y < output_height; ++y) {
+    for (int x = 0; x < output_width; ++x) {
+      int source_x = x;
+      int source_y = y;
+      switch (mode) {
+        case libyuv::kRotate90:
+          source_x = y;
+          source_y = source.height - 1 - x;
+          break;
+        case libyuv::kRotate180:
+          source_x = source.width - 1 - x;
+          source_y = source.height - 1 - y;
+          break;
+        case libyuv::kRotate270:
+          source_x = source.width - 1 - y;
+          source_y = x;
+          break;
+        default:
+          break;
+      }
+      std::copy_n(source.bgra.data() + (static_cast<size_t>(source_y) * source.width + source_x) * 4, 4,
+                  output.bgra.data() + (static_cast<size_t>(y) * output_width + x) * 4);
+    }
+  }
+  return output;
+}
+
+Image MirrorImage(const Image& source, bool vertical) {
+  Image output{source.width, source.height, std::vector<uint8_t>(source.bgra.size())};
+  for (int y = 0; y < source.height; ++y) {
+    for (int x = 0; x < source.width; ++x) {
+      const int source_x = vertical ? x : source.width - 1 - x;
+      const int source_y = vertical ? source.height - 1 - y : y;
+      std::copy_n(source.bgra.data() + (static_cast<size_t>(source_y) * source.width + source_x) * 4, 4,
+                  output.bgra.data() + (static_cast<size_t>(y) * source.width + x) * 4);
+    }
+  }
+  return output;
+}
+
+Image CropImage(const Image& source, int left, int top, int width, int height) {
+  if (left < 0 || top < 0 || width <= 0 || height <= 0 || left + width > source.width || top + height > source.height) {
+    Fail("Invalid expected-image crop");
+  }
+  Image output{width, height, std::vector<uint8_t>(static_cast<size_t>(width) * height * 4)};
+  for (int y = 0; y < height; ++y) {
+    std::copy_n(source.bgra.data() + (static_cast<size_t>(top + y) * source.width + left) * 4, width * 4,
+                output.bgra.data() + static_cast<size_t>(y) * width * 4);
+  }
+  return output;
+}
+
 std::vector<uint8_t> ToBgra(const uint8_t* y, int y_stride, const uint8_t* u, int u_stride, const uint8_t* v,
                             int v_stride, int width, int height) {
   std::vector<uint8_t> output(static_cast<size_t>(width) * height * 4);
@@ -269,10 +325,10 @@ void CheckRotation(Result& result, const uint8_t* source_y, const uint8_t* sourc
   CheckRotatedGeometry(result, pair + "_Y", source_y, y, width, height, mode);
   CheckRotatedGeometry(result, pair + "_U", source_u, u, chroma_width, chroma_height, mode);
   CheckRotatedGeometry(result, pair + "_V", source_v, v, chroma_width, chroma_height, mode);
-  CompareImage(result, pair, Expected(decoded_root, pair + ".png"),
+  CompareImage(result, pair, RotateImage(Expected(decoded_root, "i420_decoded.png"), mode),
                ToBgra(y.data(), output_width, u.data(), output_chroma_width, v.data(), output_chroma_width, output_width,
                       output_height),
-               2);
+               0);
 }
 
 void CheckCrop(Result& result, const uint8_t* source_y, const uint8_t* source_u, const uint8_t* source_v,
@@ -306,8 +362,8 @@ void CheckCrop(Result& result, const uint8_t* source_y, const uint8_t* source_u,
                crop_chroma_height, 0);
   ComparePlane(result, "crop_" + name + "_V", "raw", expected_v.data(), v.data(), crop_chroma_width,
                crop_chroma_height, 0);
-  CompareImage(result, "crop_" + name, Expected(decoded_root, "crop_" + name + ".png"),
-               ToBgra(y.data(), width, u.data(), crop_chroma_width, v.data(), crop_chroma_width, width, height), 2);
+  CompareImage(result, "crop_" + name, CropImage(Expected(decoded_root, "i420_decoded.png"), left, top, width, height),
+               ToBgra(y.data(), width, u.data(), crop_chroma_width, v.data(), crop_chroma_width, width, height), 0);
 }
 
 }  // namespace
@@ -388,10 +444,10 @@ int main(int argc, char** argv) {
   CheckMirroredGeometry(result, "flip_horizontal_Y", source_y, mirror_y, kSourceWidth, kSourceHeight, false);
   CheckMirroredGeometry(result, "flip_horizontal_U", source_u, mirror_u, kSourceWidth / 2, kSourceHeight / 2, false);
   CheckMirroredGeometry(result, "flip_horizontal_V", source_v, mirror_v, kSourceWidth / 2, kSourceHeight / 2, false);
-  CompareImage(result, "flip_horizontal", Expected(decoded, "flip_horizontal.png"),
+  CompareImage(result, "flip_horizontal", MirrorImage(Expected(decoded, "i420_decoded.png"), false),
                ToBgra(mirror_y.data(), kSourceWidth, mirror_u.data(), kSourceWidth / 2, mirror_v.data(), kSourceWidth / 2,
                       kSourceWidth, kSourceHeight),
-               2);
+               0);
 
   std::vector<uint8_t> vertical_y(y_size);
   std::vector<uint8_t> vertical_u(chroma_size);
@@ -403,10 +459,10 @@ int main(int argc, char** argv) {
   CheckMirroredGeometry(result, "flip_vertical_Y", source_y, vertical_y, kSourceWidth, kSourceHeight, true);
   CheckMirroredGeometry(result, "flip_vertical_U", source_u, vertical_u, kSourceWidth / 2, kSourceHeight / 2, true);
   CheckMirroredGeometry(result, "flip_vertical_V", source_v, vertical_v, kSourceWidth / 2, kSourceHeight / 2, true);
-  CompareImage(result, "flip_vertical", Expected(decoded, "flip_vertical.png"),
+  CompareImage(result, "flip_vertical", MirrorImage(Expected(decoded, "i420_decoded.png"), true),
                ToBgra(vertical_y.data(), kSourceWidth, vertical_u.data(), kSourceWidth / 2, vertical_v.data(),
                       kSourceWidth / 2, kSourceWidth, kSourceHeight),
-               2);
+               0);
 
   CheckCrop(result, source_y, source_u, source_v, decoded, "inner", 64, 96, 256, 320);
   CheckCrop(result, source_y, source_u, source_v, decoded, "1x1", 0, 0, 1, 1);
