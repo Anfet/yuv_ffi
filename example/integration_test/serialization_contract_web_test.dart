@@ -71,8 +71,7 @@ void main() {
           }
         }
 
-        final target = YuvImage(format, 2, 2);
-        await YuvImage.decode(asStream(await save(source)));
+        final target = await YuvImage.decode(asStream(await save(source)));
 
         expect(target.format, source.format);
         expect(target.width, source.width);
@@ -92,9 +91,7 @@ void main() {
       await YuvFfi.initialize();
 
       final payload = await validPayload();
-      final target = YuvImage.i420(2, 2);
-
-      await YuvImage.decode(asFragmentedStream(payload));
+      final target = await YuvImage.decode(asFragmentedStream(payload));
 
       expect(target.width, 8);
       expect(target.height, 8);
@@ -106,9 +103,7 @@ void main() {
       await YuvFfi.initialize();
 
       final source = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(32))], layout: YuvPlaneLayout.preserve);
-      final target = YuvImage.bgra(1, 1);
-
-      await YuvImage.decode(asStream(await save(source)));
+      final target = await YuvImage.decode(asStream(await save(source)));
 
       expect(target.yPlane.rowStride, 16);
       expect(target.yPlane.bytes.length, 32);

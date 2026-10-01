@@ -229,3 +229,100 @@ committed correction head.
   run `88fe8d1732384617af96e5bc5150b470`, evidence
   `%TEMP%\\yuv_ffi-clean2-9dcd705-review-armv7`. Каждый APK содержит только
   ожидаемый ABI и `libyuv_ffi.so`.
+
+#### Integration correction #6 — Executor Report
+
+**Result:** REVIEW
+
+- GitHub CI Web run `36900817922` on integration head `080f28c` and a fresh
+  local `pwsh -File tool/ci/web.ps1` both failed before browser execution:
+  `wasm_swap_nv_atomicity_web_test.dart` was discovered but absent from the
+  Web source map.
+- Restored the source to the aggregate target and source/case registry.
+- No package, native, generated-binding, Web-backend, or production API source
+  changed.
+
+**Validation:**
+
+- Before the correction: `$env:FLUTTER_VERSION='3.44.9'; pwsh -File
+  tool/ci/web.ps1` — FAIL, deterministic source-map assertion after WASM
+  rebuild and `pub get`; unmapped source named above.
+- The corrected full command reached `pub publish --dry-run`, which requires a
+  clean Git tree; it will be rerun after this correction is committed.
+
+#### Integration correction #7 — Executor Report
+
+**Result:** REVIEW
+
+- The first corrected full Web run passed the source map, then exposed stale
+  compatibility assertions in restored Web sources: automatic I420/BGRA
+  chroma-swap conversion, mutation of an existing image by static `decode`,
+  and padded allocation through the removed `copy(blank:)` behavior.
+- Removed only those compatibility assertions. The surviving tests cover the
+  current NV12 chroma swap, immutable static decode result, normal `copy`, and
+  padded serialization. The fake-WASM atomicity source now has three current
+  cases and is aggregated with the other sources.
+- The Web matrix has 13 sources and 62 integration cases. No package, native,
+  generated-binding, Web-backend, or production API source changed.
+
+**Validation:**
+
+- On `0466907`, the source map passed and browser execution reached the
+  restored tests. It reported the stale assertions above; the outer helper
+  then incorrectly surfaced `ChromeDriver did not become ready` after the test
+  action failed.
+- `dart format --output=none` for the four corrected Web sources — PASS.
+- `flutter analyze --no-fatal-infos` for the four corrected Web sources —
+  PASS, no issues.
+- Full card-local Web command will be rerun on the next clean commit.
+
+#### Integration correction #8 — Executor Report
+
+**Result:** REVIEW
+
+- The next full run reached the current atomicity source but then failed the
+  following ownership source: atomicity's per-test `debugReset` cleared the
+  shared loader after the combined target had already run ownership's
+  `setUpAll(YuvFfi.initialize)`.
+- The atomicity source is now a separate drive target, alongside bootstrap and
+  lifecycle sources. This preserves its loader-reset isolation and keeps the
+  aggregate target's ownership initialization valid.
+
+**Validation:**
+
+- On `4b2e87b`, source mapping and the restored current-contract tests passed
+  until `web_ownership_regression_web_test.dart`; both failures were
+  `YUV WASM module is not initialized` immediately after atomicity reset.
+- `$env:FLUTTER_VERSION='3.44.9'; pwsh -File tool/ci/web.ps1` on `a514c62` —
+  PASS: WASM rebuild had no diff; aggregate Web, capabilities, bootstrap,
+  lifecycle, and isolated atomicity targets passed; reference matrix 119
+  passed. Final output: `sources=13; integration cases=62`.
+
+#### Review
+
+**Reviewed-Head:** `5f795e62cd2fd7d6517798573a98fa0b5ad19b64`
+
+**Status:** ACCEPTED
+
+**Blocking:** none
+
+**Advisory:** none
+
+**Acceptance:**
+
+- `tool/ci/web.ps1` on the Reviewed-Head — PASS: WASM rebuild has no diff;
+  aggregate, capabilities, bootstrap, lifecycle, and isolated atomicity
+  targets pass; Chrome 154.0.8037.58; `sources=13`, `integration cases=62`,
+  reference matrix 119.
+- The source map covers every discovered Web source. Atomicity is deliberately
+  a separate drive target, so its loader reset cannot invalidate the aggregate
+  ownership setup. The restored assertions retain current NV12 chroma swap,
+  static decode, normal copy, padded serialization, and ABI v1 contracts.
+- `flutter analyze --no-fatal-infos` for the four corrected Web sources — PASS.
+- Pixel 3 `8B1X11QLW` release probes on the exact Reviewed-Head: arm64-v8a —
+  `smoke=PASS`, `probe=PASS`, 1188 cases, run
+  `a64c2e1d3f4051728394a5b6c7d8e9f0`, evidence
+  `%TEMP%\\yuv_ffi-clean2-5f795e6-review-arm64-retry`; armeabi-v7a — the same
+  PASS/1188, run `b71d3e2f40516273849a5b6c7d8e9f01`, evidence
+  `%TEMP%\\yuv_ffi-clean2-5f795e6-review-armv7`. Each APK contained only its
+  expected ABI and `libyuv_ffi.so`.

@@ -159,24 +159,17 @@ void main() {
       expect(toBgra.revision, beforeBgra + 1, reason: 'i420 -> bgra8888');
     });
 
-    testWidgets('swapNv advances exactly once even when it converts first', (tester) async {
+    testWidgets('a chroma swap advances an NV12 image exactly once', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
       await YuvFfi.initialize();
 
-      // swapNv() calls toYuvNv21() internally, which bumps on its own. One
-      // public call must still count as exactly one revision.
       final alreadyNv = realImage(YuvPixelFormat.nv12, 8, 8);
       final alreadyNvBefore = alreadyNv.revision;
       alreadyNv.applyChromaSwap();
       expect(alreadyNv.revision, alreadyNvBefore + 1, reason: 'no conversion needed');
-
-      final needsConversion = realImage(YuvPixelFormat.i420, 8, 8);
-      final needsConversionBefore = needsConversion.revision;
-      needsConversion.applyChromaSwap();
-      expect(needsConversion.revision, needsConversionBefore + 1, reason: 'an internal conversion must not double-count');
     });
 
-    testWidgets('a successful load advances it once and a failed load leaves it alone', (tester) async {
+    testWidgets('decoding returns a new image and leaves another image untouched', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
       await YuvFfi.initialize();
 
@@ -187,8 +180,10 @@ void main() {
 
       final target = YuvImage.i420(2, 2);
       final beforeSuccess = target.revision;
-      await YuvImage.decode(Stream<List<int>>.value(payload));
-      expect(target.revision, beforeSuccess + 1, reason: 'a successful load is one new frame');
+      final decoded = await YuvImage.decode(Stream<List<int>>.value(payload));
+      expect(decoded.width, source.width);
+      expect(decoded.height, source.height);
+      expect(target.revision, beforeSuccess, reason: 'a static decode must not mutate another image');
 
       final rejected = YuvImage.i420(2, 2);
       final beforeFailure = rejected.revision;
