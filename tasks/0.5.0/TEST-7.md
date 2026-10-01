@@ -65,7 +65,9 @@
 
 #### Validation
 - Mac через mac-runner (окружение — «Окружение → Mac» в `todo.md`): синхронизировать ветку tar-ом,
-  `bash tool/oracle/check_reference.sh`, затем негативный контроль.
+  `bash tool/oracle/check_reference.sh`, затем негативный контроль. Проверить по таблице: для геометрии
+  Y/U/V совпадают побайтно, B/G/R отличаются не больше чем на 2 и не больше максимума пары `i420_decode`
+  по каждому каналу; BGRA сравнивается с преобразованным `i420_decoded.png`.
 - Windows: `dart pub publish --dry-run` в корне.
 
 #### Executor Report
