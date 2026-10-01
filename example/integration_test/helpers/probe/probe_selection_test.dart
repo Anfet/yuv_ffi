@@ -1,3 +1,4 @@
+@Tags(['probe'])
 import 'package:flutter_test/flutter_test.dart';
 
 import 'probe_selection.dart';
