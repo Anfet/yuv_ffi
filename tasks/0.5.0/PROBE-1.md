@@ -1,5 +1,5 @@
 # PROBE 1 — Базовые линии скорости 0.4.0 против dev
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 3
+**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 3
 **Было:** RA-26 (цикл 0.4.2).
 
 #### Problem / Goal
@@ -140,3 +140,30 @@ package-provenance cases; complete the applicable VM and Windows CI scripts
 when the foreign cache no longer blocks them, without altering or removing
 that other worktree's cache. The accepted measurement files need no rerun if
 the benchmark source and measured package behavior remain unchanged.
+
+#### Executor Report — 01.10.2026, correction after third rejection
+
+- Engineer explicitly authorized this continuation. A fresh clean worktree on
+  `task/PROBE-1-t2-3` started from review commit `93e7058`; no source, public
+  API, native C, baseline, or accepted receipt changed.
+- Exercised `run_windows_release.ps1` fault paths with only its external
+  inputs controlled: a missing `package_config.json` was rejected; valid
+  package resolution identified `93e70581a5b2cb0cdfc4a404f76a47a28ad44533`;
+  an expected revision of forty zeroes was rejected. A release directory with
+  zero and then two `yuv_ffi.dll` candidates was rejected as `found 0` and
+  `found 2`. Invalid `BatteryStatus` readings were rejected both immediately
+  before launch and immediately after process exit as `INVALID-ENV`. These
+  controls did not write a verdict or host receipt.
+- `pwsh -File tool/ci/vm.ps1` used
+  `%TEMP%/yuv-ffi-probe1-t2-3-vm-62244dd1ac484284b6d730623eab99f3` and passed:
+  analysis, its own `yuv-ffi-vm-native` CMake build, and `584/584` tagged
+  tests. `pwsh -File tool/ci/windows.ps1` used the task-owned ignored
+  `_tmp-probe1-t2-3-windows/yuv-ffi-windows` build and passed: 20 probe tests,
+  123 reference cases, Release build, native app runtime smoke, and native
+  probe integration test. Its stderr was empty.
+- `.worktrees/TEST-3/build` stayed clean and retained its prior timestamp
+  `01.10.2026 13:22:28`; its cache was neither read, altered, nor removed.
+
+**Result: REVIEW.** The third review's required negative controls and both
+applicable CI scripts are now evidenced. The accepted measurement files remain
+the prior committed evidence.
