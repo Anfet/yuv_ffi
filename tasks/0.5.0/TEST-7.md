@@ -1,5 +1,5 @@
 # TEST 7 — Сверка эталона с libyuv
-**Status:** REVIEW · **Tier:** T2 · **Owner:** — · **Depends On:** —
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** —
 
 #### Goal
 Эталон `test/reference/test_pattern_512` посчитан нашим же кодом на Dart
@@ -127,3 +127,13 @@
 - Windows: `dart pub publish --dry-run` прошёл с `Package has 0 warnings and 1 hint`; в списке архива
   `tool/oracle/` отсутствует.
 #### Review
+
+- **ACCEPTED — T2 / GPT-5.6 Terra, 01.10.2026.** Reviewed `03b1bd1` against base `770fa18`.
+  The implementation compares raw Y/U/V for all rotate, mirror and crop paths with tolerance 0; geometry BGRA is
+  derived from transformed `i420_decoded.png` and bounded by both 2 and the measured per-channel `i420_decode`
+  maxima. The reported Mac clean-archive run on the unchanged oracle source (`6c92c0d`) passed with B/G/R/A
+  `2/1/1/0`, raw geometry planes `0`, and a failing corruption control that identified pair/channel/coordinate.
+  `03b1bd1` changes only the task record and oracle evidence after that run. Windows `dart pub publish --dry-run`
+  evidence reports success and no `tool/oracle/` in the archive. The diff is limited to the approved oracle tooling,
+  package exclusion/line-ending metadata, documentation and this card; `src/`, `lib/` and reference artifacts are
+  unchanged. `git diff --check` passed. No findings.
