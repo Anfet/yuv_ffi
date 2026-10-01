@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -196,3 +196,36 @@ committed correction head.
   declarations или ссылок на удалённый public API; `git diff --check` — PASS.
 - `git merge-base --is-ancestor dev HEAD` — PASS: task/CLEAN-2 включает
   текущий `dev` и готова к чистой интеграции.
+
+#### Integration correction review
+
+**Reviewed-Head:** `9dcd7055eac5e1dd8adbfa6c5a3e8bfb757bd91d`
+
+**Status:** ACCEPTED
+
+**Acceptance:**
+
+- `dev` является предком Reviewed-Head. Единственный кодовый конфликт сохраняет
+  оба контракта: CLEAN 1 передаёт `flipAndroidCameraHorizontally: true` и
+  удаляет PACK-00/VIEW-03 hooks, а CLEAN 2 заменяет снятый `toZero()` на
+  `applyRotation(rotation)`.
+- Public surface не содержит `@Deprecated`, `DeprecatedYuvImageApi`,
+  `YuvFileFormat`, `YuvImage.nv21`, `YuvFfi.ensureInitialized`,
+  `bytesPerPixes` или `toZero`; удалённые source/test files отсутствуют.
+  Версия согласована: `0.5.0-dev.1` в pubspec и двух podspec, package metadata
+  в CMake совпадают. Активные codec, Web, widget, factory, plane-layout,
+  native и reference suites сохранены.
+- `flutter analyze --no-fatal-infos lib test example/lib
+  example/integration_test/helpers/probe/probe_selection_test.dart` — PASS
+  (55 существующих info diagnostics); актуальные CLEAN 2 tests — PASS;
+  CLEAN 1 example tests — 47/47 PASS. Полный
+  `flutter test --tags "smoke || contract"` с DLL из свежей CMake-сборки —
+  545 PASS. Свежий `tool/ci/windows.ps1` native build и probe suite — 20/20
+  PASS, 1 expected skip.
+- Release probes Pixel 3 (`8B1X11QLW`) на exact Reviewed-Head: arm64-v8a —
+  `smoke=PASS`, `probe=PASS`, 1188 cases, run
+  `a75d32ee75e14aa7b4bc9b44777ccb0e`, evidence
+  `%TEMP%\\yuv_ffi-clean2-9dcd705-review-arm64`; armeabi-v7a — те же PASS/1188,
+  run `88fe8d1732384617af96e5bc5150b470`, evidence
+  `%TEMP%\\yuv_ffi-clean2-9dcd705-review-armv7`. Каждый APK содержит только
+  ожидаемый ABI и `libyuv_ffi.so`.
