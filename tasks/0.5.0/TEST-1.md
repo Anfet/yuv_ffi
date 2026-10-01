@@ -1,5 +1,5 @@
 # TEST 1 — Инвентаризация тест-сьюта
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** —
+**Status:** TODO · **Tier:** T2 · **Owner:** Terra · **Depends On:** —
 
 #### Goal
 Одна таблица по всем тестовым файлам пакета и example: что каждый файл защищает, сколько стоит и где то же самое
@@ -49,8 +49,8 @@
       есть в таблице ровно один раз: 95/95.
 - [x] Сумма package-строк равна 731 passed: 724 native/API/reference/probe/release + 7 VM web guards;
       example JSON — 71 passed.
-- [x] Все найденные пересечения называют файл и группу/тест, где контракт остаётся.
-- [x] Разделы «Медленные файлы» и «Контракты без второго покрытия» заполнены конкретными контрактами.
+- [ ] Все найденные пересечения называют файл и группу/тест, где контракт остаётся.
+- [ ] Разделы «Медленные файлы» и «Контракты без второго покрытия» заполнены конкретными контрактами.
 - [x] В ветке изменены только `tasks/0.5.0/TEST-1-inventory.md` и эта карточка.
 
 #### Validation
@@ -70,8 +70,24 @@
 
 #### Review
 
-**Previous decision:** TODO.
+**Decision:** TODO.
 
-Предыдущая проверка нашла filename-derived contracts, пустые overlaps, отсутствие `release`, расхождение 724/731
-и две неучтённые integration helper rows. Исправление устраняет эти пункты; ожидается независимая выборочная
-проверка source references, reconciliation и scope.
+- `git ls-files test example/test example/integration_test` и таблица содержат по 95 уникальных файлов.
+  Суммы слоёв сходятся: `api=425`, `ffi=136`, `reference=130`, `probe=16`, `release=17`; вместе 724,
+  семь VM guard-файлов `test/web/*` дают 731. Example JSON указан как 71.
+- В таблице 85 source-backed ссылок на пересечения. 83 counterpart marker существуют в названном исходном
+  файле. Две ссылки названы неточно: `example/integration_test/probe_performance_test.dart` указывает
+  `test('performance scenarios report correctness hashes and timing verdicts')`, но counterpart объявлен
+  как `testWidgets`; `example/test/camera_image_to_yuv_image_padding_test.dart` так же называет `test`,
+  хотя `ios_bgra_camera_frame_test.dart` объявляет `testWidgets`. Исправить оба exact marker.
+- «Контракты без второго покрытия» не включает `example/integration_test/example_camera_flow_test.dart`
+  (capture, face detection, crop и effect) и `test/probe/probe_runner_test.dart` (hash, baseline band и
+  strict slowdown), хотя в строках таблицы для них нет второго покрытия. Добавить эти конкретные контракты
+  либо зафиксировать source-derived counterpart.
+- Раздел «Медленные файлы» содержит пять конкретных файлов и причины, подтверждаемые кодом. Повторный
+  VM прогон после документационной правки был прерван через три минуты; используются сохранённые JSON
+  результаты исходного прогона на том же SHA `dev`. Это ограничение честно зафиксировано, но новый
+  полный прогон не является доказательством данной коррекции.
+
+Reviewer не запускал широкий Flutter test suite; выводы основаны на commit `8a60616`, таблице и чтении
+названных исходных файлов.
