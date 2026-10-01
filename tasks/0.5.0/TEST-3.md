@@ -1,5 +1,5 @@
 # TEST 3 — Срезы проб по операции и формату
-**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 0
+**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 1
 **Было:** RA-61 (цикл 0.4.2).
 
 #### Goal
@@ -75,3 +75,7 @@
   were normalized only in that remote scratch copy before execution.
 
 #### Review
+- **Verdict:** TODO. Reviewed `86345e7` (implementation `075fafc`) against the task contract and the diff from `66f1db3`; no tests were rerun.
+- `test/probe/probe_selection.dart` and its example copy treat an explicit `PROBE_OPS=all` or `PROBE_FORMATS=all` as an absent selector (`_parseSelector`). The Architect Decision permits only exact operation/format tokens and reserves `all` in the scope line for an absent filter. Thus an unknown selector succeeds and reports `all` instead of failing. Reject explicit `all` and cover it in the selector tests.
+- All three matrix targets construct `ProbeSelection` before `expectProbeGoldenCaseIdsExact(golden)`. The Architect Decision requires checking the complete golden ID list before selecting a slice. Move the full ID check ahead of selector selection, retaining selected input/output hash checks and the selected first-case negative control.
+- The Executor Report does not give the selected Web scope line or case count, although Validation requires the selected count and result for each required run. Record the actual Web scope output and exact selected drive invocation in the next report; retain the claimed `All tests passed` evidence.
