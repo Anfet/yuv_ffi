@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`). Общая интеграция TEST 3/6/7 на `302034a` остановлена до старта тестов: Flutter печатает статусные строки перед JSON, и reporter TEST 6 их отвергает. TEST 6 возвращена на исправление; TEST 3 и TEST 7 приняты и ждут повторной общей проверки. TEST 4 ждёт интеграции TEST 3.
+- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`). TEST 6 повторно в `REVIEW` после исправления JSON preamble; общий VM-гейт теперь доходит до TEST 3 и падает на отсутствии `@Tags` в `probe_selection_test.dart`. TEST 3 возвращена на точечную коррекцию; TEST 7 принята и ждёт общего gate. TEST 4 ждёт интеграции TEST 3.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Дашборд
@@ -35,10 +35,10 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 3](tasks/0.5.0/TEST-3.md) | ACCEPTED | T2 | Reviewer | TEST 2 | **Срезы проб по операции и формату.** Review принято; общая проверка на `302034a` ожидает исправления TEST 6 reporter (JSON preamble). |
+| [TEST 3](tasks/0.5.0/TEST-3.md) | TODO | T2 | Terra | TEST 2 | **Срезы проб по операции и формату.** Интеграционный VM-гейт выявил новый `test/probe/probe_selection_test.dart` без `@Tags`; синхронизировать single tag и повторить coverage/VM проверки. |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 3 integration | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Карточка требует изменения path-to-command mapping после интеграции TEST 3; открыть после общего validation gate. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | REVIEW | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Инвентаризация не нашла удалений; `lib/` и `src/` не менялись. VM/Windows и указанные suite прошли на `873ff2b`. |
-| [TEST 6](tasks/0.5.0/TEST-6.md) | TODO | T2 | Terra | TEST 2 | **Тихий вывод тестов и CI.** Интеграция выявила, что Flutter допечатывает статусные строки в JSON stdout; исправить вызов/parser и добавить интеграционный случай до повторной общей проверки. |
+| [TEST 6](tasks/0.5.0/TEST-6.md) | REVIEW | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Добавлен `--no-pub` после явного dependency resolution; reporter pipeline 5/5 и bash syntax прошли на `2a57867`. Полный VM-гейт остановился далее на теге теста TEST 3. |
 | [TEST 7](tasks/0.5.0/TEST-7.md) | ACCEPTED | T2 | Reviewer | — | **Сверка эталона с libyuv.** Review принято; общая проверка на `302034a` ждёт исправления TEST 6 reporter (JSON preamble). |
 
 ### Этап 2 — пробы и скорость
