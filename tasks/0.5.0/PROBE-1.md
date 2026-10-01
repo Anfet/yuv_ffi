@@ -1,5 +1,5 @@
 # PROBE 1 — Базовые линии скорости 0.4.0 против dev
-**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 2
+**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 3
 **Было:** RA-26 (цикл 0.4.2).
 
 #### Problem / Goal
@@ -42,7 +42,7 @@ For 0.4.0 ↔ HEAD, build identical benchmark source in separate detached worktr
 
 #### Definition of Done
 - [x] Сценарии замера для всех 12 `YuvOperation`
-- [ ] Базовые линии Windows x64 и Pixel 3 arm64 сняты для тега 0.4.0 и для HEAD; таблица сравнения — в отчёте (источник цифр для CHANGELOG RA-18)
+- [x] Базовые линии Windows x64 и Pixel 3 arm64 сняты для тега 0.4.0 и для HEAD; таблица сравнения — в отчёте (источник цифр для CHANGELOG RA-18)
 - [x] Windows baseline, HEAD and repeat have matching host receipts with actual package, EXE/DLL and power provenance required above.
 - [x] Негативный контроль: искусственное замедление (sleep в тестовой сборке исполнителя, не в `lib/`) даёт `SLOWER`, испорченный golden даёт FAIL
 - [x] Два повторных прогона на одной машине дают `SAME`
@@ -112,3 +112,31 @@ the correction and its validation; this Reviewer did not rerun benchmarks.
   `pwsh -File tool/ci/smoke.ps1` passed. `vm.ps1` and then `windows.ps1` were
   blocked before their checks by the shared external temp CMake cache
   `yuv-ffi-vm-native` pointing at `.worktrees/TEST-3`; it was preserved.
+
+#### Review — 01.10.2026
+
+**Result: TODO (T1, third rejection).** The corrected Windows evidence resolves
+the earlier provenance gap: each of the three archived verdict SHA-256 values
+matches its same-run host receipt; run IDs, package revisions, override states,
+CPU/host ID, EXE/DLL hashes, and observed Balanced/AC readings are present.
+Each verdict has 24 unique IDs, nine stable hashes per ID, and medians matching
+its samples. Baseline comparisons recompute; HEAD repeat is 24/24 `SAME`.
+The committed Windows baseline equals the archived tag verdict byte for byte.
+Pixel 3 benchmark source and measured package code did not change after its
+recorded runs; the comparison report contains all 24 rows.
+
+The Architect's required rejection-path validation is incomplete. The
+Executor Report documents an incorrect-package-revision rejection and a
+source-tree evidence-path rejection, but no exercised rejection for absent or
+ambiguous `yuv_ffi.dll` or absent/invalid pre-launch and post-exit power
+readings. The five contract tests check source strings; they do not exercise
+those branches. Also, `tool/ci/vm.ps1` and `tool/ci/windows.ps1` stopped before
+their checks because their shared temporary CMake cache belonged to
+`.worktrees/TEST-3`. Earlier successful runs predate this correction.
+
+Required correction: provide actual fault-path results for the DLL and power
+cases specified by the 01.10 Architect Decision, plus the missing/invalid
+package-provenance cases; complete the applicable VM and Windows CI scripts
+when the foreign cache no longer blocks them, without altering or removing
+that other worktree's cache. The accepted measurement files need no rerun if
+the benchmark source and measured package behavior remain unchanged.
