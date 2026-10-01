@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +11,12 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// rejection -- and are reachable from the root export.
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
+
+  setUpAll(() async {
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
+  });
 
   group('root export compile check', () {
     test('YuvImage.nv12 and YuvImage.allocate are reachable from package:yuv_ffi/yuv_ffi.dart', () {
@@ -83,14 +88,9 @@ void main() {
       expect(() => YuvImage.nv12(4, 4, planes: [YuvPlane(4, 4, 1)]), throwsArgumentError, reason: 'NV12 requires exactly two planes');
     });
 
-    test('does not affect the legacy nv21 factory: an explicit stride above 2 is still rejected there', () {
+    test('preserves a caller supplied padded chroma stride', () {
       YuvPlane filled(int height, int rowStride, int pixelStride) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
-      expect(
-        // ignore: deprecated_member_use_from_same_package
-        () => YuvImage.nv21(4, 4, planes: [filled(4, 4, 1), filled(2, 6, 3)]),
-        throwsArgumentError,
-        reason: 'the relaxed nv12 check must not leak into the legacy nv21 entry point',
-      );
+      expect(() => YuvImage.nv12(4, 4, planes: [filled(4, 4, 1), filled(2, 6, 3)]), returnsNormally);
     });
 
     test(
@@ -116,7 +116,7 @@ void main() {
         // treating the plane as tightly packed instead of walking it through
         // its declared strides.
         // ignore: deprecated_member_use_from_same_package
-        image.grayscale();
+        image.applyGrayscale();
 
         for (int row = 0; row < 2; row++) {
           final base = row * 6;

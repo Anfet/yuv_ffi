@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -111,7 +110,7 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   /// Simulates an in-place mutation the way the real backends perform one:
   /// change the bytes, then report it from inside the method.
   void mutateInPlace() {
-    _bytes[0] = (_bytes[0] + 1) & 0xFF;
+    _plane.bytes[0] = (_plane.bytes[0] + 1) & 0xFF;
     markDirty();
   }
 
@@ -252,7 +251,7 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
   YuvImage toBgra() => throw UnimplementedError();
 
   @override
-  Uint8List toBytes() => throw UnimplementedError();
+  Uint8List toBytes() => Uint8List.fromList(_bytes);
 
   @override
   Uint8List toBgraBytes() {
@@ -260,7 +259,7 @@ class _FakeBgraImage implements YuvImage, YuvRevisionAware {
     if (_shouldThrow) {
       throw UnsupportedError('fake decode failure');
     }
-    return _bytes;
+    return _plane.bytes;
   }
 }
 
@@ -457,7 +456,7 @@ void main() {
   setUpAll(() async {
     try {
       // ignore: deprecated_member_use_from_same_package
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
     } catch (_) {
       // Widget tests can run without native backend initialization.
     }
@@ -497,7 +496,7 @@ void main() {
   });
 
   testWidgets('YuvImageWidget delegates errorBuilder on provider errors', (tester) async {
-    final broken = _FakeBgraImage(imageFromAsset.width, imageFromAsset.height, bytes: imageFromAsset.getBytes(), shouldThrow: true);
+    final broken = _FakeBgraImage(imageFromAsset.width, imageFromAsset.height, bytes: imageFromAsset.toBytes(), shouldThrow: true);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -574,7 +573,7 @@ void main() {
     });
 
     testWidgets('an unchanged frame is converted once across rebuilds', (tester) async {
-      final image = _FakeBgraImage(imageFromAsset.width, imageFromAsset.height, bytes: imageFromAsset.getBytes());
+      final image = _FakeBgraImage(imageFromAsset.width, imageFromAsset.height, bytes: imageFromAsset.toBytes());
 
       await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image)));
       await tester.pumpAndSettle();
@@ -594,7 +593,7 @@ void main() {
     });
 
     testWidgets('a mutated frame is converted again', (tester) async {
-      final image = _FakeBgraImage(imageFromAsset.width, imageFromAsset.height, bytes: imageFromAsset.getBytes());
+      final image = _FakeBgraImage(imageFromAsset.width, imageFromAsset.height, bytes: imageFromAsset.toBytes());
 
       await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image)));
       await tester.pumpAndSettle();
@@ -622,11 +621,9 @@ void main() {
       final beforeBytes = Uint8List.fromList(image.toBgraBytes());
       image.conversions = 0;
 
-      // Direct write through the mutable plane API, exactly as documented on
-      // `YuvImageInvalidation.markDirty`. This fake's backing bytes are shared
-      // with getBytes()/toBgraBytes() through the constructor, mirroring the
-      // real backends where the plane and the frame's bytes are one buffer.
-      image.getBytes()[0] = 0xAB;
+      // Direct write through the mutable plane API, followed by the required
+      // explicit invalidation.
+      image.yPlane.bytes[0] = 0xAB;
       image.markDirty();
 
       await tester.pumpWidget(
@@ -672,7 +669,7 @@ void main() {
       expect(next, orderedEquals(_solidRgba(2, 2, _frameB)));
     });
 
-    testWidgets('an in-place resize during the decode wait does not fail or distort the queued frame', (tester) async {
+    testWidgets('a plane replacement during the decode wait does not distort the queued frame', (tester) async {
       final image = YuvImage.bgra(4, 2);
       image.yPlane.assignFrom(_solidBgra(4, 2, _frameA));
       image.markDirty();
@@ -680,7 +677,7 @@ void main() {
       final queued = YuvImageProvider(image);
       final result = await tester.runAsync(() async {
         final decoded = _decodeFrom(queued);
-        image.applyCrop(const Rect.fromLTWH(0, 0, 2, 2));
+        image.applyPlanes([YuvPlane(2, 16, 4, _solidBgra(4, 2, _frameB))]);
         final frame = await decoded;
         return (width: frame.width, height: frame.height, rgba: await _rgbaOf(frame));
       });

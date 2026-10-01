@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
@@ -11,33 +10,23 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// same file is meaningful on the VM and in a browser.
 void main() {
   group('plane accessor contract', () {
-    test('BGRA exposes exactly one plane, with u and v null', () {
+    test('BGRA exposes exactly one plane', () {
       final image = YuvImage.bgra(4, 4);
       expect(image.planes, hasLength(1));
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.y, same(image.yPlane));
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.u, isNull);
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.v, isNull);
+      expect(image.yPlane, same(image.planes.single));
     });
 
-    test('NV21 exposes two planes, with v null', () {
+    test('NV12 exposes two planes', () {
       final image = YuvImage.nv12(4, 4);
       expect(image.planes, hasLength(2));
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.u, same(image.uPlane));
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.v, isNull);
+      expect(image.uPlane, same(image.planes[1]));
     });
 
     test('I420 exposes three planes', () {
       final image = YuvImage.i420(4, 4);
       expect(image.planes, hasLength(3));
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.u, same(image.uPlane));
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.v, same(image.vPlane));
+      expect(image.uPlane, same(image.planes[1]));
+      expect(image.vPlane, same(image.planes[2]));
     });
 
     test('planes is an unmodifiable view, so callers cannot resize the state', () {
@@ -45,17 +34,8 @@ void main() {
       expect(() => image.planes.removeLast(), throwsUnsupportedError);
     });
 
-    test('a nullable accessor beyond the format plane count returns null rather than a sentinel', () {
-      // The empty/unavailable-state contract: `u`/`v` are the only accessors
-      // that report absence, and they report it as `null`. There is no
-      // zero-length sentinel plane in the contract -- every format-required
-      // plane accessor (`yPlane`, and `uPlane`/`vPlane` for the formats that
-      // have them) always returns a real, fully allocated plane.
+    test('BGRA luma plane has complete packed storage', () {
       final bgra = YuvImage.bgra(2, 2);
-      // ignore: deprecated_member_use_from_same_package
-      expect(bgra.u, isNull);
-      // ignore: deprecated_member_use_from_same_package
-      expect(bgra.v, isNull);
       expect(bgra.yPlane.bytes, hasLength(2 * 2 * 4));
     });
   });
@@ -82,7 +62,7 @@ void main() {
 
     test('BGRA luma is four bytes per sample regardless of the requested stride', () {
       // ignore: deprecated_member_use_from_same_package
-      final image = YuvImage(YuvFileFormat.bgra8888, 3, 2);
+      final image = YuvImage(YuvPixelFormat.bgra8888, 3, 2);
       expect(image.yPlane.pixelStride, 4);
       expect(image.yPlane.rowStride, 12);
     });
@@ -116,7 +96,7 @@ void main() {
       for (final image in images) {
         image.yPlane.setPixel(0, 0, 77);
         // ignore: deprecated_member_use_from_same_package
-        final blank = image.copy(blank: true);
+        final blank = YuvImage.allocate(image.format, image.width, image.height);
 
         expect(
           blank.planes.map((plane) => (height: plane.height, rowStride: plane.rowStride, pixelStride: plane.pixelStride)),
@@ -175,13 +155,13 @@ void main() {
       final image = YuvImage.i420(4, 4);
       final expected = image.planes.fold<int>(0, (sum, p) => sum + p.bytes.length);
       // ignore: deprecated_member_use_from_same_package
-      expect(image.getBytes(), hasLength(expected));
+      expect(image.toBytes(), hasLength(expected));
     });
 
     test('is a snapshot, not a view onto the live planes', () {
       final image = YuvImage.bgra(2, 2);
       // ignore: deprecated_member_use_from_same_package
-      final bytes = image.getBytes();
+      final bytes = image.toBytes();
       image.yPlane.setPixel(0, 0, 255);
       expect(bytes[0], 0);
     });

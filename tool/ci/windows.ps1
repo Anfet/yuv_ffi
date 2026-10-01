@@ -20,7 +20,7 @@ Push-Location $repositoryRoot
 try {
   Invoke-CiNativeCommand flutter 'pub', 'get'
   Invoke-CiFlutterTest '--tags', 'probe'
-  Invoke-CiFlutterTest 'test/reference_native_conversions_test.dart'
+  Invoke-CiFlutterTest '--tags', 'reference'
 } finally {
   Pop-Location
 }

@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -28,11 +27,11 @@ void main() {
       // replaced rather than honoured; the other formats use it verbatim and
       // must reject a degenerate one.
       // ignore: deprecated_member_use_from_same_package
-      final bgra = YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 0);
+      final bgra = YuvImage(YuvPixelFormat.bgra8888, 8, 8, yPixelStride: 0);
       expect(bgra.yPlane.pixelStride, 4, reason: 'BGRA must normalize the luma stride to four bytes');
       expect(bgra.yPlane.rowStride, 8 * 4);
       // ignore: deprecated_member_use_from_same_package
-      for (final format in const [YuvFileFormat.i420, YuvFileFormat.nv21]) {
+      for (final format in const [YuvPixelFormat.i420, YuvPixelFormat.nv12]) {
         // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, 8, 8, yPixelStride: 0), throwsArgumentError, reason: '${format.name} accepted yPixelStride 0');
         // ignore: deprecated_member_use_from_same_package
@@ -41,24 +40,20 @@ void main() {
     });
 
     test('a degenerate chroma pixel stride never reaches an allocated plane', () {
-      // Interleaved NV chroma is always a packed (U, V) pair, so a smaller
-      // value is raised to two instead of producing an unusable plane.
-      // Legacy nv21 normalizes a degenerate chroma stride; nv12 correctly
-      // rejects it. This case records the retained compatibility contract.
-      // ignore: deprecated_member_use_from_same_package
-      final nv = YuvImage.nv21(8, 8, uvPixelStride: 0);
-      expect(nv.uPlane.pixelStride, 2, reason: 'NV must normalize the chroma stride to a packed pair');
+      // Interleaved NV chroma stores packed (U, V) pairs. A caller cannot
+      // request a degenerate stride that cannot hold the pair.
+      expect(() => YuvImage.nv12(8, 8, uvPixelStride: 0), throwsArgumentError);
 
       // I420 uses the caller's value directly for both chroma planes.
       expect(() => YuvImage.i420(8, 8, uvPixelStride: 0), throwsArgumentError);
       // ignore: deprecated_member_use_from_same_package
-      expect(() => YuvImage(YuvFileFormat.i420, 8, 8, uvPixelStride: 0), throwsArgumentError);
+      expect(() => YuvImage(YuvPixelFormat.i420, 8, 8, uvPixelStride: 0), throwsArgumentError);
       expect(() => YuvImage.i420(8, 8, uvPixelStride: -2), throwsArgumentError);
     });
 
     test('valid default geometry still constructs', () {
       // ignore: deprecated_member_use_from_same_package
-      for (final format in YuvFileFormat.values) {
+      for (final format in YuvPixelFormat.values) {
         // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, 8, 8), returnsNormally, reason: '${format.name} rejected its own default geometry');
       }
@@ -137,7 +132,7 @@ void main() {
       // possible, so this test drives load() with a truncated payload.
       return () async* {
         // ignore: deprecated_member_use_from_same_package
-        await image.save(sink);
+        await image.encodeTo(sink);
         final bytes = chunks.expand((c) => c).toList();
         // Truncate the payload so the plane table cannot be satisfied.
         yield bytes.sublist(0, bytes.length ~/ 2);
@@ -156,7 +151,7 @@ void main() {
 
       // Malformed payloads raise FormatException rather than RangeError or TypeError.
       // ignore: deprecated_member_use_from_same_package
-      await expectLater(image.load(malformedPayload(format: 'i420', width: 8, height: 8, planes: const [])), throwsFormatException);
+      await expectLater(YuvImage.decode(malformedPayload(format: 'i420', width: 8, height: 8, planes: const [])), throwsFormatException);
 
       expect(image.width, before.width, reason: 'width was mutated by a failed load');
       expect(image.height, before.height, reason: 'height was mutated by a failed load');
@@ -165,17 +160,15 @@ void main() {
       expect(image.yPlane.bytes.length, before.yLength, reason: 'plane data was mutated by a failed load');
     });
 
-    test('a valid round-trip still loads', () async {
+    test('a valid round-trip still decodes', () async {
       final source = YuvImage.i420(8, 8);
       source.yPlane.bytes[0] = 42;
 
       final chunks = <List<int>>[];
       // ignore: deprecated_member_use_from_same_package
-      await source.save(_CollectingSink(chunks));
+      await source.encodeTo(_CollectingSink(chunks));
 
-      final target = YuvImage.i420(2, 2);
-      // ignore: deprecated_member_use_from_same_package
-      await target.load(Stream<List<int>>.fromIterable(chunks));
+      final target = await YuvImage.decode(Stream<List<int>>.fromIterable(chunks));
 
       expect(target.width, 8);
       expect(target.height, 8);
@@ -187,7 +180,7 @@ void main() {
   group('padded BGRA survives a native effect', () {
     // ignore: deprecated_member_use_from_same_package
     YuvImage paddedBgra() =>
-        YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [filled(8, 8 * 4 + 16, 4)], layout: YuvPlaneLayout.preserve);
+        YuvImage(YuvPixelFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [filled(8, 8 * 4 + 16, 4)], layout: YuvPlaneLayout.preserve);
 
     test('blur operations accept a padded plane and leave its padding untouched', () {
       // The per-format kernels allocated a tight width * height * 4 scratch

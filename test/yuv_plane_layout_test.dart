@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -205,14 +204,14 @@ void main() {
   });
 
   group('internal paths keep the caller/source layout regardless of the new default', () {
-    test('copy(blank: true) keeps a padded source\'s declared geometry, zero-filled', () {
+    test('YuvImage.allocate returns a tight zero-filled image', () {
       final source = plane(rows: 2, rowStride: 16, columns: 2, pixelStride: 4, sampleBytes: 4, seed: 1);
       final image = YuvImage.bgra(2, 2, planes: [source], layout: YuvPlaneLayout.preserve);
 
       // ignore: deprecated_member_use_from_same_package
-      final blank = image.copy(blank: true);
+      final blank = YuvImage.allocate(image.format, image.width, image.height);
 
-      expect(blank.yPlane.rowStride, 16, reason: 'a blank copy must not silently repack a padded source');
+      expect(blank.yPlane.rowStride, 8);
       expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
     });
 

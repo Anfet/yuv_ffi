@@ -1,10 +1,9 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yuv_ffi/src/loader/loader.dart';
+import 'package:yuv_ffi/src/loader/loader.dart' as backend_loader;
 import 'package:yuv_ffi/src/yuv/impl/io/abi/yuv_abi_v1_runner.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
@@ -22,6 +21,12 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
 
+  setUpAll(() async {
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
+  });
+
   YuvPlane plane(int height, int rowStride, int pixelStride, int fill) =>
       YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride)..fillRange(0, height * rowStride, fill));
 
@@ -32,41 +37,41 @@ void main() {
     /// decision about its failure behaviour.
     final operations = <String, void Function(YuvImage)>{
       // ignore: deprecated_member_use_from_same_package
-      'blackwhite': (image) => image.blackwhite(),
+      'blackwhite': (image) => image.applyBlackWhite(),
       // ignore: deprecated_member_use_from_same_package
-      'grayscale': (image) => image.grayscale(),
+      'grayscale': (image) => image.applyGrayscale(),
       // ignore: deprecated_member_use_from_same_package
-      'negate': (image) => image.negate(),
+      'negate': (image) => image.applyNegate(),
       // ignore: deprecated_member_use_from_same_package
-      'gaussianBlur': (image) => image.gaussianBlur(radius: 1),
+      'gaussianBlur': (image) => image.applyGaussianBlur(radius: 1, sigma: 1),
       // ignore: deprecated_member_use_from_same_package
-      'boxBlur': (image) => image.boxBlur(radius: 1),
+      'boxBlur': (image) => image.applyBoxBlur(radius: 1),
       // ignore: deprecated_member_use_from_same_package
-      'meanBlur': (image) => image.meanBlur(radius: 1),
+      'meanBlur': (image) => image.applyMeanBlur(radius: 1),
       // ignore: deprecated_member_use_from_same_package
-      'flipHorizontally': (image) => image.flipHorizontally(),
+      'flipHorizontally': (image) => image.applyFlipHorizontal(),
       // ignore: deprecated_member_use_from_same_package
-      'flipVertically': (image) => image.flipVertically(),
+      'flipVertically': (image) => image.applyFlipVertical(),
       // ignore: deprecated_member_use_from_same_package
-      'rotate': (image) => image.rotate(YuvImageRotation.rotation90),
+      'rotate': (image) => image.applyRotation(YuvImageRotation.rotation90),
       // ignore: deprecated_member_use_from_same_package
-      'crop': (image) => image.crop(const ui.Rect.fromLTRB(0, 0, 4, 4)),
+      'crop': (image) => image.applyCrop(const ui.Rect.fromLTRB(0, 0, 4, 4)),
       // ignore: deprecated_member_use_from_same_package
-      'toYuvI420': (image) => image.toYuvI420(),
+      'toYuvI420': (image) => image.applyFormat(YuvPixelFormat.i420),
       // Reaches the kernel in one call when the receiver is already NV21,
       // which is the shape this group's fixture uses. The two-call form
       // (convert, then swap) has its own test below, because only that one
       // can fail *after* a successful first call.
       // ignore: deprecated_member_use_from_same_package
-      'swapNv': (image) => image.swapNv(),
+      'swapNv': (image) => image.applyChromaSwap(),
     };
 
     for (final entry in operations.entries) {
       test('${entry.key} publishes nothing when native reports INTERNAL_ERROR', () {
         // ignore: deprecated_member_use_from_same_package
-        final image = YuvImage.nv21(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 8, 2, 0x50)]);
+        final image = YuvImage.nv12(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 8, 2, 0x50)]);
         // ignore: deprecated_member_use_from_same_package
-        final bytesBefore = image.getBytes();
+        final bytesBefore = image.toBytes();
         final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
         // A controlled non-zero status: the whole staging/dispatch path runs
@@ -77,7 +82,7 @@ void main() {
         expect(() => entry.value(image), throwsA(isA<YuvNativeException>().having((e) => e.statusCode, 'statusCode', yuvStatusInternalError)));
 
         // ignore: deprecated_member_use_from_same_package
-        expect(image.getBytes(), bytesBefore, reason: 'bytes changed after a failed ${entry.key}');
+        expect(image.toBytes(), bytesBefore, reason: 'bytes changed after a failed ${entry.key}');
         expect(image.format, YuvPixelFormat.nv12, reason: 'format changed after a failed ${entry.key}');
         expect(image.width, 8, reason: 'width changed after a failed ${entry.key}');
         expect(image.height, 8, reason: 'height changed after a failed ${entry.key}');
@@ -86,99 +91,20 @@ void main() {
     }
   });
 
-  group('swapNv on a non-NV receiver is atomic across both native calls', () {
-    // The review defect (2026-09-23): swapNv on I420/BGRA needs two native
-    // calls -- a conversion to NV12, then the chroma swap. Publishing the
-    // conversion before attempting the swap left a receiver that had failed
-    // swapNv() sitting in NV21, with different bytes and an advanced revision.
-    //
-    // These drive the two calls independently through debugInvokeOverride:
-    // the first returns OK, the second INTERNAL_ERROR. Nothing about the
-    // receiver may have changed once the exception surfaces.
-    tearDown(() => YuvAbiV1Runner.debugInvokeOverride = null);
-
-    /// Fails the [failAt]-th native call (1-based) with INTERNAL_ERROR and
-    /// lets every other call succeed, counting the calls actually made.
-    int installOverrideFailingAt(int failAt) {
-      int calls = 0;
-      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) {
-        calls++;
-        return calls == failAt ? yuvStatusInternalError : yuvStatusOk;
-      };
-      return calls;
-    }
-
+  group('applyChromaSwap rejects non-NV frames atomically', () {
     for (final format in [YuvPixelFormat.i420, YuvPixelFormat.bgra8888]) {
-      test('a failing chroma swap after a successful conversion leaves a $format receiver untouched', () {
-        final YuvImage image = format == YuvPixelFormat.i420
+      test('$format keeps bytes and revision when chroma swap is unsupported', () {
+        final image = format == YuvPixelFormat.i420
             ? YuvImage.i420(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 4, 1, 0x50), plane(4, 4, 1, 0x70)])
             : YuvImage.bgra(8, 8, planes: [plane(8, 32, 4, 0x30)]);
-
-        // ignore: deprecated_member_use_from_same_package
-        final bytesBefore = image.getBytes();
-        final revisionBefore = (image as YuvRevisionAware).internalRevision;
-        final widthBefore = image.width;
-        final heightBefore = image.height;
-
-        int calls = 0;
-        YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) {
-          calls++;
-          // 1 = yuv_convert_v1 (succeeds), 2 = yuv_chroma_swap_v1 (fails).
-          return calls == 1 ? yuvStatusOk : yuvStatusInternalError;
-        };
-
-        // ignore: deprecated_member_use_from_same_package
-        expect(() => image.swapNv(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', YuvOperation.chromaSwap)));
-
-        expect(calls, 2, reason: 'the conversion must have succeeded before the swap was attempted');
-        expect(image.format, format, reason: 'format changed although swapNv failed');
-        // ignore: deprecated_member_use_from_same_package
-        expect(image.getBytes(), bytesBefore, reason: 'bytes changed although swapNv failed');
-        expect(image.width, widthBefore);
-        expect(image.height, heightBefore);
-        expect((image as YuvRevisionAware).internalRevision, revisionBefore, reason: 'revision advanced although swapNv failed');
-      });
-
-      test('a failing conversion leaves a $format receiver untouched', () {
-        final YuvImage image = format == YuvPixelFormat.i420
-            ? YuvImage.i420(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 4, 1, 0x50), plane(4, 4, 1, 0x70)])
-            : YuvImage.bgra(8, 8, planes: [plane(8, 32, 4, 0x30)]);
-
-        // ignore: deprecated_member_use_from_same_package
-        final bytesBefore = image.getBytes();
+        final bytesBefore = image.toBytes();
         final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
-        installOverrideFailingAt(1);
-
-        // ignore: deprecated_member_use_from_same_package
-        expect(() => image.swapNv(), throwsA(isA<YuvNativeException>()));
-
-        expect(image.format, format);
-        // ignore: deprecated_member_use_from_same_package
-        expect(image.getBytes(), bytesBefore);
+        expect(() => image.applyChromaSwap(), throwsUnsupportedError);
+        expect(image.toBytes(), bytesBefore);
         expect((image as YuvRevisionAware).internalRevision, revisionBefore);
       });
     }
-
-    test('both calls succeeding publishes once, as NV21, advancing the revision by one', () {
-      // The positive half of the same path: the two-call form must still
-      // produce exactly one publish, so the fix cannot be "never publish".
-      final image = YuvImage.i420(8, 8, planes: [plane(8, 8, 1, 0x30), plane(4, 4, 1, 0x50), plane(4, 4, 1, 0x70)]);
-      final revisionBefore = (image as YuvRevisionAware).internalRevision;
-
-      int calls = 0;
-      YuvAbiV1Runner.debugInvokeOverride = (src, dst, options) {
-        calls++;
-        return yuvStatusOk;
-      };
-
-      // ignore: deprecated_member_use_from_same_package
-      image.swapNv();
-
-      expect(calls, 2);
-      expect(image.format, YuvPixelFormat.nv12);
-      expect((image as YuvRevisionAware).internalRevision, revisionBefore + 1, reason: 'two native calls must still be one publish');
-    });
   });
 
   group('a successful operation advances the revision exactly once', () {
@@ -187,22 +113,18 @@ void main() {
       final before = image.internalRevision;
 
       // ignore: deprecated_member_use_from_same_package
-      (image as YuvImage).negate();
+      (image as YuvImage).applyNegate();
 
       expect(image.internalRevision, before + 1);
     }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
 
-    test('swapNv bumps it by one despite converting first', () {
-      // The conversion inside swapNv is itself a mutating operation, so this
-      // is the case where a naive implementation advances the counter twice.
-      final image = YuvImage.i420(8, 8) as YuvRevisionAware;
+    test('applyChromaSwap bumps it by one on NV12', () {
+      final image = YuvImage.nv12(8, 8) as YuvRevisionAware;
       final before = image.internalRevision;
 
-      // ignore: deprecated_member_use_from_same_package
-      (image as YuvImage).swapNv();
+      (image as YuvImage).applyChromaSwap();
 
       expect(image.internalRevision, before + 1);
-      expect((image as YuvImage).format, YuvPixelFormat.nv12);
     }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
   });
 
@@ -219,7 +141,8 @@ void main() {
         }
 
         // ignore: deprecated_member_use_from_same_package
-        final image = YuvImage(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: [padded], layout: YuvPlaneLayout.preserve)..negate();
+        final image = YuvImage(YuvPixelFormat.bgra8888, width, height, yPixelStride: 4, planes: [padded], layout: YuvPlaneLayout.preserve)
+          ..applyNegate();
 
         expect(image.yPlane.rowStride, rowStride, reason: 'the row stride was repacked');
         for (int row = 0; row < height; row++) {
@@ -245,9 +168,9 @@ void main() {
         }
 
         // ignore: deprecated_member_use_from_same_package
-        final image = YuvImage.nv21(width, height, planes: [plane(height, width, 1, 0), chroma], layout: YuvPlaneLayout.preserve);
+        final image = YuvImage.nv12(width, height, planes: [plane(height, width, 1, 0), chroma], layout: YuvPlaneLayout.preserve);
         // ignore: deprecated_member_use_from_same_package
-        image.fromRgba8888(Uint8List(width * height * 4)..fillRange(0, width * height * 4, 0x80));
+        image.applyRgbaBytes(Uint8List(width * height * 4)..fillRange(0, width * height * 4, 0x80));
 
         expect(image.uPlane.rowStride, chromaRowStride);
         for (int row = 0; row < 2; row++) {
@@ -269,18 +192,18 @@ void main() {
         // ceil-sized chroma is where a floor-based loop silently drops the last
         // row or column.
         // ignore: deprecated_member_use_from_same_package
-        final image = YuvImage.i420(5, 3)..fromRgba8888(Uint8List(5 * 3 * 4)..fillRange(0, 5 * 3 * 4, 0x90));
+        final image = YuvImage.i420(5, 3)..applyRgbaBytes(Uint8List(5 * 3 * 4)..fillRange(0, 5 * 3 * 4, 0x90));
 
         expect(image.uPlane.height, 2);
         expect(image.uPlane.rowStride, 3);
 
         // ignore: deprecated_member_use_from_same_package
-        image.toYuvNv21();
+        image.applyFormat(YuvPixelFormat.nv12);
         expect(image.uPlane.height, 2);
         expect(image.uPlane.rowStride, 3 * 2);
 
         // ignore: deprecated_member_use_from_same_package
-        image.toYuvI420();
+        image.applyFormat(YuvPixelFormat.i420);
         expect(image.uPlane.height, 2);
         expect(image.uPlane.rowStride, 3);
         expect(image.width, 5);
@@ -291,10 +214,10 @@ void main() {
 
     test('an odd-origin crop keeps visible-pixel semantics', () {
       // ignore: deprecated_member_use_from_same_package
-      final image = YuvImage.i420(8, 8)..fromRgba8888(Uint8List(8 * 8 * 4)..fillRange(0, 8 * 8 * 4, 0x70));
+      final image = YuvImage.i420(8, 8)..applyRgbaBytes(Uint8List(8 * 8 * 4)..fillRange(0, 8 * 8 * 4, 0x70));
 
       // ignore: deprecated_member_use_from_same_package
-      image.crop(const ui.Rect.fromLTRB(1, 1, 6, 4));
+      image.applyCrop(const ui.Rect.fromLTRB(1, 1, 6, 4));
 
       expect(image.width, 5);
       expect(image.height, 3);
@@ -308,10 +231,10 @@ void main() {
       'toBgra8888 returns a fresh buffer, not a view onto the planes',
       () {
         // ignore: deprecated_member_use_from_same_package
-        final image = YuvImage.bgra(4, 4)..fromRgba8888(Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x60));
+        final image = YuvImage.bgra(4, 4)..applyRgbaBytes(Uint8List(4 * 4 * 4)..fillRange(0, 4 * 4 * 4, 0x60));
 
         // ignore: deprecated_member_use_from_same_package
-        final bytes = image.toBgra8888();
+        final bytes = image.toBgraBytes();
         bytes[0] = bytes[0] ^ 0xFF;
 
         expect(image.yPlane.bytes[0], isNot(bytes[0]), reason: 'toBgra8888 handed out the plane buffer itself');
@@ -324,7 +247,7 @@ void main() {
       final before = image.internalRevision;
 
       // ignore: deprecated_member_use_from_same_package
-      expect((image as YuvImage).toYuvI420(), same(image));
+      expect((image as YuvImage).applyFormat(YuvPixelFormat.i420), same(image));
       expect(image.internalRevision, before, reason: 'a no-op conversion advanced the revision');
     });
   });
@@ -332,7 +255,7 @@ void main() {
 
 bool _checkNativeAvailable() {
   try {
-    library;
+    backend_loader.library;
     return true;
   } catch (_) {
     return false;

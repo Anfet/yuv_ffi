@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -46,7 +45,7 @@ void main() {
   group('image dimensions', () {
     test('rejects zero and negative width/height for every format', () {
       // ignore: deprecated_member_use_from_same_package
-      for (final format in YuvFileFormat.values) {
+      for (final format in YuvPixelFormat.values) {
         // ignore: deprecated_member_use_from_same_package
         expect(() => YuvImage(format, 0, 8), throwsArgumentError, reason: '${format.name} accepted width 0');
         // ignore: deprecated_member_use_from_same_package
@@ -68,7 +67,7 @@ void main() {
       expect(() => YuvImage.nv12(8, 8, planes: [plane(8, 8)]), throwsArgumentError, reason: 'NV needs 2 planes');
       expect(
         // ignore: deprecated_member_use_from_same_package
-        () => YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [plane(8, 32, 4), plane(4, 8, 2)]),
+        () => YuvImage(YuvPixelFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [plane(8, 32, 4), plane(4, 8, 2)]),
         throwsArgumentError,
         reason: 'BGRA needs exactly 1 plane',
       );
@@ -107,7 +106,7 @@ void main() {
       expect(YuvImage.i420(8, 8, planes: [plane(8, 8), plane(4, 4), plane(4, 4)]).planes.length, 3);
       expect(YuvImage.nv12(8, 8, planes: [plane(8, 8), plane(4, 8, 2)]).planes.length, 2);
       // ignore: deprecated_member_use_from_same_package
-      expect(YuvImage(YuvFileFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [plane(8, 32, 4)]).planes.length, 1);
+      expect(YuvImage(YuvPixelFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [plane(8, 32, 4)]).planes.length, 1);
     });
 
     test('YuvImage.bgra keeps a valid padded plane instead of repacking it', () {
@@ -128,7 +127,7 @@ void main() {
       const height = 8;
       const paddedRowStride = width * 4 + 16;
       // ignore: deprecated_member_use_from_same_package
-      expect(() => YuvImage(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, planes: [plane(height, paddedRowStride, 4)]), returnsNormally);
+      expect(() => YuvImage(YuvPixelFormat.bgra8888, width, height, yPixelStride: 4, planes: [plane(height, paddedRowStride, 4)]), returnsNormally);
     });
 
     test('accepts padded luma and chroma strides for I420', () {
@@ -150,7 +149,7 @@ void main() {
 
     test('default constructors allocate self-consistent geometry', () {
       // ignore: deprecated_member_use_from_same_package
-      for (final format in YuvFileFormat.values) {
+      for (final format in YuvPixelFormat.values) {
         for (final size in const <List<int>>[
           [1, 1],
           [3, 5],

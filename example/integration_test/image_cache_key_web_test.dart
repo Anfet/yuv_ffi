@@ -40,24 +40,24 @@ void main() {
   }
 
   /// A real, WASM-backed image with content, in the requested format.
-  YuvImage realImage(YuvFileFormat format, int width, int height) {
+  YuvImage realImage(YuvPixelFormat format, int width, int height) {
     final image = switch (format) {
-      YuvFileFormat.bgra8888 => YuvImage.bgra(width, height),
-      YuvFileFormat.i420 => YuvImage.i420(width, height),
-      YuvFileFormat.nv21 => YuvImage.nv21(width, height),
+      YuvPixelFormat.bgra8888 => YuvImage.bgra(width, height),
+      YuvPixelFormat.i420 => YuvImage.i420(width, height),
+      YuvPixelFormat.nv12 => YuvImage.nv12(width, height),
     };
     // fromRgba8888 is itself a tracked mutation, so the image arrives in a
     // known state without the test touching plane bytes behind the seam's back.
-    image.fromRgba8888(rgba(width, height));
+    image.applyRgbaBytes(rgba(width, height));
     return image;
   }
 
   group('the real Web backend reports every one of its own mutations', () {
     testWidgets('the backend implements the revision seam at all', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      for (final format in YuvFileFormat.values) {
+      for (final format in YuvPixelFormat.values) {
         expect(
           YuvRevision.tracksOwnMutations(realImage(format, 4, 4)),
           isTrue,
@@ -68,13 +68,13 @@ void main() {
 
     testWidgets('fromRgba8888 advances the revision exactly once', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      for (final format in YuvFileFormat.values) {
+      for (final format in YuvPixelFormat.values) {
         final image = realImage(format, 8, 8);
         final before = image.revision;
 
-        image.fromRgba8888(rgba(8, 8));
+        image.applyRgbaBytes(rgba(8, 8));
 
         expect(image.revision, before + 1, reason: '${format.name} fromRgba8888');
       }
@@ -82,39 +82,39 @@ void main() {
 
     testWidgets('fromRgba8888 into a padded BGRA plane advances it too', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       // This branch writes planes directly and returns early, so it has to bump
       // the revision itself rather than falling through to the shared path.
       final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(2 * 16))], layout: YuvPlaneLayout.preserve);
       final before = image.revision;
 
-      image.fromRgba8888(rgba(2, 2));
+      image.applyRgbaBytes(rgba(2, 2));
 
       expect(image.revision, before + 1);
     });
 
     testWidgets('in-place effects and flips advance it exactly once', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       const operations = <String>['grayscale', 'negate', 'blackwhite', 'flipHorizontally', 'flipVertically'];
-      for (final format in YuvFileFormat.values) {
+      for (final format in YuvPixelFormat.values) {
         for (final operation in operations) {
           final image = realImage(format, 8, 8);
           final before = image.revision;
 
           switch (operation) {
             case 'grayscale':
-              image.grayscale();
+              image.applyGrayscale();
             case 'negate':
-              image.negate();
+              image.applyNegate();
             case 'blackwhite':
-              image.blackwhite();
+              image.applyBlackWhite();
             case 'flipHorizontally':
-              image.flipHorizontally();
+              image.applyFlipHorizontal();
             case 'flipVertically':
-              image.flipVertically();
+              image.applyFlipVertical();
           }
 
           expect(image.revision, before + 1, reason: '${format.name} $operation must advance the revision exactly once');
@@ -124,75 +124,75 @@ void main() {
 
     testWidgets('a real crop and a real rotate advance it exactly once', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      for (final format in YuvFileFormat.values) {
+      for (final format in YuvPixelFormat.values) {
         final cropped = realImage(format, 8, 8);
         final beforeCrop = cropped.revision;
-        cropped.crop(const ui.Rect.fromLTWH(0, 0, 4, 4));
+        cropped.applyCrop(const ui.Rect.fromLTWH(0, 0, 4, 4));
         expect(cropped.revision, beforeCrop + 1, reason: '${format.name} crop');
 
         final rotated = realImage(format, 8, 8);
         final beforeRotate = rotated.revision;
-        rotated.rotate(YuvImageRotation.rotation90);
+        rotated.applyRotation(YuvImageRotation.rotation90);
         expect(rotated.revision, beforeRotate + 1, reason: '${format.name} rotate');
       }
     });
 
     testWidgets('a format conversion advances it exactly once', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final toNv = realImage(YuvFileFormat.i420, 8, 8);
+      final toNv = realImage(YuvPixelFormat.i420, 8, 8);
       final beforeNv = toNv.revision;
-      toNv.toYuvNv21();
+      toNv.applyFormat(YuvPixelFormat.nv12);
       expect(toNv.revision, beforeNv + 1, reason: 'i420 -> nv21');
 
-      final toI420 = realImage(YuvFileFormat.nv21, 8, 8);
+      final toI420 = realImage(YuvPixelFormat.nv12, 8, 8);
       final beforeI420 = toI420.revision;
-      toI420.toYuvI420();
+      toI420.applyFormat(YuvPixelFormat.i420);
       expect(toI420.revision, beforeI420 + 1, reason: 'nv21 -> i420');
 
-      final toBgra = realImage(YuvFileFormat.i420, 8, 8);
+      final toBgra = realImage(YuvPixelFormat.i420, 8, 8);
       final beforeBgra = toBgra.revision;
-      toBgra.toYuvBgra8888();
+      toBgra.applyFormat(YuvPixelFormat.bgra8888);
       expect(toBgra.revision, beforeBgra + 1, reason: 'i420 -> bgra8888');
     });
 
     testWidgets('swapNv advances exactly once even when it converts first', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       // swapNv() calls toYuvNv21() internally, which bumps on its own. One
       // public call must still count as exactly one revision.
-      final alreadyNv = realImage(YuvFileFormat.nv21, 8, 8);
+      final alreadyNv = realImage(YuvPixelFormat.nv12, 8, 8);
       final alreadyNvBefore = alreadyNv.revision;
-      alreadyNv.swapNv();
+      alreadyNv.applyChromaSwap();
       expect(alreadyNv.revision, alreadyNvBefore + 1, reason: 'no conversion needed');
 
-      final needsConversion = realImage(YuvFileFormat.i420, 8, 8);
+      final needsConversion = realImage(YuvPixelFormat.i420, 8, 8);
       final needsConversionBefore = needsConversion.revision;
-      needsConversion.swapNv();
+      needsConversion.applyChromaSwap();
       expect(needsConversion.revision, needsConversionBefore + 1, reason: 'an internal conversion must not double-count');
     });
 
     testWidgets('a successful load advances it once and a failed load leaves it alone', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final source = realImage(YuvFileFormat.i420, 8, 8);
+      final source = realImage(YuvPixelFormat.i420, 8, 8);
       final chunks = <List<int>>[];
-      await source.save(_CollectingSink(chunks));
+      await source.encodeTo(_CollectingSink(chunks));
       final payload = <int>[for (final chunk in chunks) ...chunk];
 
       final target = YuvImage.i420(2, 2);
       final beforeSuccess = target.revision;
-      await target.load(Stream<List<int>>.value(payload));
+      await YuvImage.decode(Stream<List<int>>.value(payload));
       expect(target.revision, beforeSuccess + 1, reason: 'a successful load is one new frame');
 
       final rejected = YuvImage.i420(2, 2);
       final beforeFailure = rejected.revision;
-      await expectLater(rejected.load(Stream<List<int>>.value(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
+      await expectLater(YuvImage.decode(Stream<List<int>>.value(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
       expect(rejected.revision, beforeFailure, reason: 'a rejected payload must not look like a new frame');
     });
   });
@@ -200,45 +200,45 @@ void main() {
   group('genuine no-ops leave the revision untouched', () {
     testWidgets('rotate by zero', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final image = realImage(YuvFileFormat.bgra8888, 8, 8);
+      final image = realImage(YuvPixelFormat.bgra8888, 8, 8);
       final before = image.revision;
 
-      image.rotate(YuvImageRotation.rotation0);
+      image.applyRotation(YuvImageRotation.rotation0);
 
       expect(image.revision, before, reason: 'rotating by zero changes nothing, so the cache must still hit');
     });
 
     testWidgets('an empty crop', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final image = realImage(YuvFileFormat.bgra8888, 8, 8);
+      final image = realImage(YuvPixelFormat.bgra8888, 8, 8);
       final before = image.revision;
 
-      image.crop(ui.Rect.zero);
+      image.applyCrop(ui.Rect.zero);
 
       expect(image.revision, before);
     });
 
     testWidgets('converting to the format the image already has', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final bgra = realImage(YuvFileFormat.bgra8888, 8, 8);
+      final bgra = realImage(YuvPixelFormat.bgra8888, 8, 8);
       final bgraBefore = bgra.revision;
-      bgra.toYuvBgra8888();
+      bgra.applyFormat(YuvPixelFormat.bgra8888);
       expect(bgra.revision, bgraBefore);
 
-      final i420 = realImage(YuvFileFormat.i420, 8, 8);
+      final i420 = realImage(YuvPixelFormat.i420, 8, 8);
       final i420Before = i420.revision;
-      i420.toYuvI420();
+      i420.applyFormat(YuvPixelFormat.i420);
       expect(i420.revision, i420Before);
 
-      final nv21 = realImage(YuvFileFormat.nv21, 8, 8);
+      final nv21 = realImage(YuvPixelFormat.nv12, 8, 8);
       final nv21Before = nv21.revision;
-      nv21.toYuvNv21();
+      nv21.applyFormat(YuvPixelFormat.nv12);
       expect(nv21.revision, nv21Before);
     });
   });
@@ -246,9 +246,9 @@ void main() {
   group('the image cache follows the real revision', () {
     testWidgets('an untouched real image is served from the cache', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final image = realImage(YuvFileFormat.bgra8888, 8, 8);
+      final image = realImage(YuvPixelFormat.bgra8888, 8, 8);
 
       await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image)));
       await tester.pumpAndSettle();
@@ -277,9 +277,9 @@ void main() {
 
     testWidgets('a real in-place mutation invalidates the cached frame', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final image = realImage(YuvFileFormat.bgra8888, 8, 8);
+      final image = realImage(YuvPixelFormat.bgra8888, 8, 8);
 
       await tester.pumpWidget(MaterialApp(home: YuvImageWidget(image: image)));
       await tester.pumpAndSettle();
@@ -289,7 +289,7 @@ void main() {
 
       // A genuine backend operation, bumping the revision from inside
       // YuvImageImpl rather than from the test.
-      image.negate();
+      image.applyNegate();
 
       final keyAfter = YuvImageProvider(image);
       expect(keyAfter, isNot(equals(keyBefore)), reason: 'a real mutation must produce a different key');
@@ -315,9 +315,9 @@ void main() {
 
     testWidgets('a direct plane write needs markDirty to invalidate the key', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final image = realImage(YuvFileFormat.bgra8888, 4, 4);
+      final image = realImage(YuvPixelFormat.bgra8888, 4, 4);
       final before = YuvImageProvider(image);
 
       // Writing into plane bytes cannot be intercepted, so on its own it must
@@ -331,13 +331,13 @@ void main() {
 
     testWidgets('the cached key keeps its hashCode after a later mutation', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final image = realImage(YuvFileFormat.bgra8888, 4, 4);
+      final image = realImage(YuvPixelFormat.bgra8888, 4, 4);
       final key = YuvImageProvider(image);
       final hashWhenCached = key.hashCode;
 
-      image.negate();
+      image.applyNegate();
 
       // Reading the live revision in hashCode would strand an entry already in
       // the cache, because the map could no longer find it.
@@ -346,17 +346,17 @@ void main() {
 
     testWidgets('two distinct real images never share a key', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      final a = realImage(YuvFileFormat.bgra8888, 4, 4);
-      final b = realImage(YuvFileFormat.bgra8888, 4, 4);
+      final a = realImage(YuvPixelFormat.bgra8888, 4, 4);
+      final b = realImage(YuvPixelFormat.bgra8888, 4, 4);
 
       expect(YuvImageProvider(a), isNot(equals(YuvImageProvider(b))));
     });
 
     testWidgets('a foreign legacy image always misses', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       // A class written before the revision seam existed: it mutates without
       // reporting anything, so an unchanged revision is not evidence that the

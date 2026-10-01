@@ -7,8 +7,8 @@
 #
 # Only the manifest, the source PNG, and the PNG artifacts are copied. The
 # raw .bin/.yuv blobs listed in the manifest are intentionally NOT copied:
-# neither the native suite (test/reference_native_conversions_test.dart) nor
-# its Web port ever reads them from disk -- expected raw plane bytes are
+# the Web reference matrix never reads them from disk -- expected raw plane
+# bytes are
 # always recomputed in pure Dart from the source PNG. Copying them here
 # would add ~2.8 MB of dead weight to the example package and to git.
 #

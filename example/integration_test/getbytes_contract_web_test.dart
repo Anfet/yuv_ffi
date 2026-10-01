@@ -22,7 +22,7 @@ void main() {
   testWidgets('getBytes returns exactly the concatenated plane bytes for 1x1, 3x3, 127x255 and 512x512', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     const sizes = <({int w, int h})>[(w: 1, h: 1), (w: 3, h: 3), (w: 127, h: 255), (w: 512, h: 512)];
 
@@ -33,7 +33,7 @@ void main() {
         final expectedBytes = _concatPlanesDirectly(image);
         final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 
-        final actual = image.getBytes();
+        final actual = image.toBytes();
 
         expect(actual, hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
         expect(actual, orderedEquals(expectedBytes), reason: '${image.format.name} ${size.w}x${size.h} must concatenate planes in format order');
@@ -44,7 +44,7 @@ void main() {
   testWidgets('getBytes matches a padded BGRA plane exactly', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     final plane = YuvPlane(2, 16, 4, Uint8List(32));
     final image = YuvImage.bgra(2, 2, planes: [plane], layout: YuvPlaneLayout.preserve);
@@ -53,33 +53,33 @@ void main() {
     final expectedBytes = _concatPlanesDirectly(image);
 
     expect(expectedBytes, hasLength(32));
-    expect(image.getBytes(), hasLength(32));
-    expect(image.getBytes(), orderedEquals(expectedBytes));
+    expect(image.toBytes(), hasLength(32));
+    expect(image.toBytes(), orderedEquals(expectedBytes));
   });
 
   testWidgets('tight I420 3x3 yields exactly 17 bytes', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     final image = YuvImage.i420(3, 3);
     final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
 
     // Y: 3*3 = 9; U and V: ceil(3/2)*ceil(3/2) = 4 each.
     expect(expectedLength, 17);
-    expect(image.getBytes(), hasLength(17));
+    expect(image.toBytes(), hasLength(17));
   });
 
   testWidgets('getBytes returns an independent copy, decoupled from the plane bytes in both directions', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
 
     final image = YuvImage.i420(4, 4);
     _fillPlanesWithPattern(image);
 
     final firstPlaneOriginalByte = image.planes[0].bytes[0];
-    final returned = image.getBytes();
+    final returned = image.toBytes();
     final returnedOriginalByte = returned[0];
 
     // Mutating the returned buffer must not affect the image's plane bytes.
@@ -103,7 +103,7 @@ void main() {
 
 /// Builds one image per public format, so a contract case covers BGRA, I420
 /// and the legacy `nv21` name without repeating itself.
-List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[YuvImage.bgra(w, h), YuvImage.i420(w, h), YuvImage.nv21(w, h)];
+List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[YuvImage.bgra(w, h), YuvImage.i420(w, h), YuvImage.nv12(w, h)];
 
 /// Writes a per-plane pattern so a misordered or truncated concatenation
 /// cannot coincidentally match an all-zero buffer.

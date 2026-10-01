@@ -2,11 +2,9 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show Uint8List;
-import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_state.dart';
-import 'package:yuv_ffi/src/yuv/shared/yuv_legacy_dispatch.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane_layout.dart';
@@ -20,9 +18,9 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// [YuvImageState] this holds by composition; what remains here is the
 /// no-backend behavior itself -- every processing operation is a no-op, and the
 /// format conversions only restate geometry.
-class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapter {
+class YuvImageImpl implements YuvImage, YuvRevisionAware {
   // I420 stores U and V as separate single-byte-per-sample planes, so the
-  // default pixelStride is 1, unlike NV21's interleaved (U, V) pairs.
+  // default pixelStride is 1, unlike NV12's interleaved (U, V) pairs.
   YuvImageImpl.i420(
     int width,
     int height, {
@@ -32,29 +30,16 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     YuvPlaneLayout layout = YuvPlaneLayout.packed,
   })
     // ignore: deprecated_member_use_from_same_package
-    : this(YuvFileFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
-
-  YuvImageImpl.nv21(
-    int width,
-    int height, {
-    int yPixelStride = 1,
-    int uvPixelStride = 2,
-    Iterable<YuvPlane>? planes,
-    YuvPlaneLayout layout = YuvPlaneLayout.packed,
-  })
-    // ignore: deprecated_member_use_from_same_package
-    : this(YuvFileFormat.nv21, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
+    : this(YuvPixelFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
 
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes, YuvPlaneLayout layout = YuvPlaneLayout.packed})
     // ignore: deprecated_member_use_from_same_package
-    : this(YuvFileFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes, layout: layout);
+    : this(YuvPixelFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes, layout: layout);
 
-  /// Truthfully named replacement for [YuvImageImpl.nv21]: same semi-planar
-  /// storage, same default interleaved chroma pixel stride of 2.
+  /// Creates semi-planar NV12 storage with interleaved chroma pixel stride 2.
   ///
-  /// Unlike [YuvImageImpl.nv21], an explicit [uvPixelStride] above the packed
-  /// pair minimum is honored as a real pixel gap rather than being folded into
-  /// the legacy constructor's own validation; see
+  /// An explicit [uvPixelStride] above the packed pair minimum is honored as a
+  /// real pixel gap; see
   /// [YuvGeometry.validateImage]'s `allowLargerNvChromaStride`.
   YuvImageImpl.nv12(
     int width,
@@ -65,7 +50,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     YuvPlaneLayout layout = YuvPlaneLayout.packed,
   }) : _state = YuvImageState(
          // ignore: deprecated_member_use_from_same_package
-         YuvFileFormat.nv21,
+         YuvPixelFormat.nv12,
          width,
          height,
          yPixelStride: yPixelStride,
@@ -77,7 +62,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
 
   YuvImageImpl(
     // ignore: deprecated_member_use_from_same_package
-    YuvFileFormat format,
+    YuvPixelFormat format,
     int width,
     int height, {
     int yPixelStride = 1,
@@ -98,12 +83,11 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
 
   /// Allocates a new tightly packed, zero-filled image for [format].
   factory YuvImageImpl.allocate(YuvPixelFormat format, int width, int height) {
-    final legacy = format.legacy;
     return YuvImageImpl(
-      legacy,
+      format,
       width,
       height,
-      planes: YuvImageState.allocatePlanes(format: legacy, width: width, height: height),
+      planes: YuvImageState.allocatePlanes(format: format, width: width, height: height),
       layout: YuvPlaneLayout.preserve,
     );
   }
@@ -113,8 +97,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   ///
   /// There is no backend to convert samples with here, so only the exact
   /// length is validated and, for BGRA, the bytes are reordered directly
-  // ignore: deprecated_member_use_from_same_package
-  /// (matching [fromRgba8888]); a non-BGRA target has no conversion and stays
+  /// (matching [applyRgbaBytes]); a non-BGRA target has no conversion and stays
   /// zero-filled, consistent with this stub's no-op processing contract.
   factory YuvImageImpl.fromRgbaBytes(Uint8List bytes, {required int width, required int height, required YuvPixelFormat format}) {
     final expectedLength = width * height * 4;
@@ -122,7 +105,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
       throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${width}x$height');
     }
     final image = YuvImageImpl.allocate(format, width, height);
-    image.legacyFromRgba8888(bytes);
+    image._setRgbaBytes(bytes);
     return image;
   }
 
@@ -135,7 +118,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   void bumpInternalRevision() => _state.bumpRevision();
 
   @override
-  YuvPixelFormat get format => _state.format.pixelFormat;
+  YuvPixelFormat get format => _state.format;
 
   @override
   int get width => _state.width;
@@ -167,14 +150,14 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   }
 
   @override
-  YuvImage copy({bool blank = false}) => YuvImageImpl(
+  YuvImage copy() => YuvImageImpl(
     _state.format,
     width,
     height,
     yPixelStride: _state.yPixelStride,
     uvPixelStride: _state.uvPixelStride,
     allowLargerNvChromaStride: _state.allowsLargerNvChromaStride,
-    planes: _state.copiedPlanes(blank: blank),
+    planes: _state.copiedPlanes(),
     layout: YuvPlaneLayout.preserve,
   );
 
@@ -184,22 +167,18 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   }
 
   @override
-  Future<void> legacyLoad(Stream<List<int>> stream) => _state.decodeAndReplace(stream);
-
-  @override
   String toString() {
     return '$runtimeType(format: ${_state.format.name}, width: $width, '
         'height: $height, planes: ${planes.length})';
   }
 
-  @override
-  void legacyFromRgba8888(Uint8List bytes) {
+  void _setRgbaBytes(Uint8List bytes) {
     if (bytes.length != width * height * 4) {
       return;
     }
 
     // ignore: deprecated_member_use_from_same_package
-    if (_state.format == YuvFileFormat.bgra8888) {
+    if (_state.format == YuvPixelFormat.bgra8888) {
       final bgra = Uint8List(bytes.length);
       for (int i = 0; i < bytes.length; i += 4) {
         bgra[i] = bytes[i + 2];
@@ -218,79 +197,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
     ui.decodeImageFromPixels(toBgraBytes(), width, height, ui.PixelFormat.bgra8888, completer.complete);
     return completer.future;
   }
-
-  // No native or WASM backend exists here, so effects and blurs are no-ops.
-  // Crop and format reinterpretation still update geometry below.
-
-  @override
-  YuvImage legacyBlackWhite() => this;
-
-  @override
-  YuvImage legacyGrayscale() => this;
-
-  @override
-  YuvImage legacyNegate() => this;
-
-  @override
-  YuvImage legacyGaussianBlur({required int radius, required double sigma}) => this;
-
-  @override
-  YuvImage legacyBoxBlur({required int radius, ui.Rect? rect}) => this;
-
-  @override
-  YuvImage legacyMeanBlur({required int radius, ui.Rect? rect}) => this;
-
-  @override
-  YuvImage legacyFlipHorizontal() => this;
-
-  @override
-  YuvImage legacyFlipVertical() => this;
-
-  @override
-  YuvImage legacyRotate(YuvImageRotation rotation) => this;
-
-  @override
-  YuvImage legacyCrop(ui.Rect rect) {
-    // The shared clamp makes an empty rect a no-op, matching the native and Web
-    // backends. It also prevents allocating a degenerate plane after changing
-    // the image geometry.
-    final region = _state.clampCrop(rect);
-    if (region == null) {
-      return this;
-    }
-    _state.replace(
-      format: _state.format,
-      width: region.width,
-      height: region.height,
-      planes: YuvImageState.allocatePlanes(format: _state.format, width: region.width, height: region.height, yPixelStride: _state.yPixelStride),
-    );
-    return this;
-  }
-
-  @override
-  // ignore: deprecated_member_use_from_same_package
-  YuvImage legacyConvertTo(YuvFileFormat target) {
-    // Replaces the planes with a freshly allocated, zeroed set for [target] at
-    // the current geometry. There is no backend to convert samples with, so a
-    // conversion here only restates the layout: the pixel data is lost, which
-    // is the whole point of this being a stub. The luma pixel stride is
-    // carried over so a BGRA source does not silently become a
-    // one-byte-per-sample plane.
-    if (_state.format == target) {
-      return this;
-    }
-    _state.replace(
-      format: target,
-      width: width,
-      height: height,
-      planes: YuvImageState.allocatePlanes(format: target, width: width, height: height, yPixelStride: _state.yPixelStride),
-    );
-    return this;
-  }
-
-  /// No-op because this stub has no backend to convert and swap chroma samples.
-  @override
-  YuvImage legacySwapNv() => this;
 
   // This stub has no backend at all -- neither `dart:ffi` nor
   // `dart:js_interop` -- so it has no capability snapshot to check and every
@@ -358,7 +264,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware, YuvLegacyDispatchAdapt
   @override
   Uint8List toBgraBytes() {
     // ignore: deprecated_member_use_from_same_package
-    if (_state.format == YuvFileFormat.bgra8888) {
+    if (_state.format == YuvPixelFormat.bgra8888) {
       return Uint8List.fromList(yPlane.bytes);
     }
     return Uint8List(width * height * 4);

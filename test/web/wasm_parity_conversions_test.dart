@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -18,7 +17,7 @@ void main() {
 
   setUpAll(() async {
     // ignore: deprecated_member_use_from_same_package
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
   });
 
   test('BGRA -> I420 -> BGRA round-trip keeps acceptable quality', () {
@@ -28,9 +27,9 @@ void main() {
     final expectedBgra = _rgbaToBgra(rgba);
 
     // ignore: deprecated_member_use_from_same_package
-    final image = YuvImage.i420(w, h)..fromRgba8888(rgba);
+    final image = YuvImage.i420(w, h)..applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    final outBgra = image.toBgra8888();
+    final outBgra = image.toBgraBytes();
 
     expect(_mae(outBgra, expectedBgra), lessThan(20.0));
   });
@@ -42,9 +41,9 @@ void main() {
     final expectedBgra = _rgbaToBgra(rgba);
 
     // ignore: deprecated_member_use_from_same_package
-    final image = YuvImage.nv21(w, h)..fromRgba8888(rgba);
+    final image = YuvImage.nv12(w, h)..applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    final outBgra = image.toBgra8888();
+    final outBgra = image.toBgraBytes();
 
     expect(_mae(outBgra, expectedBgra), lessThan(55.0));
   });
@@ -56,13 +55,13 @@ void main() {
     final expectedBgra = _rgbaToBgra(rgba);
 
     // ignore: deprecated_member_use_from_same_package
-    final i420 = YuvImage.i420(w, h)..fromRgba8888(rgba);
+    final i420 = YuvImage.i420(w, h)..applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    final nv21 = i420.toYuvNv21();
+    final nv21 = i420.applyFormat(YuvPixelFormat.nv12);
     // ignore: deprecated_member_use_from_same_package
-    final back = nv21.toYuvI420();
+    final back = nv21.applyFormat(YuvPixelFormat.i420);
     // ignore: deprecated_member_use_from_same_package
-    final outBgra = back.toBgra8888();
+    final outBgra = back.toBgraBytes();
 
     expect(identical(nv21, i420), isTrue);
     expect(identical(back, nv21), isTrue);
@@ -78,10 +77,10 @@ void main() {
     const h = 32;
     final rgba = _buildRgbaPattern(w, h);
     // ignore: deprecated_member_use_from_same_package
-    final nv21 = YuvImage.nv21(w, h)..fromRgba8888(rgba);
+    final nv21 = YuvImage.nv12(w, h)..applyRgbaBytes(rgba);
 
     // ignore: deprecated_member_use_from_same_package
-    final bgra = nv21.toYuvBgra8888();
+    final bgra = nv21.applyFormat(YuvPixelFormat.bgra8888);
     expect(identical(bgra, nv21), isTrue);
     expect(bgra.format, YuvPixelFormat.bgra8888);
     expect(bgra.width, w);

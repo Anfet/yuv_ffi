@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 // Deliberately imports no internal `package:yuv_ffi/src/...` path -- only
 // Dart SDK libraries, the test framework, and `package:yuv_ffi/yuv_ffi.dart`
 // itself -- unlike `rel06_deprecated_api_test.dart`'s hidden-impl check, which
@@ -32,10 +31,10 @@ void main() {
     final YuvImage allocated = YuvImage.allocate(YuvPixelFormat.i420, 4, 4);
     // ignore: deprecated_member_use
     // ignore: deprecated_member_use_from_same_package
-    final YuvImage nv21 = YuvImage.nv21(4, 4);
+    final YuvImage nv21 = YuvImage.nv12(4, 4);
     // ignore: deprecated_member_use
     // ignore: deprecated_member_use_from_same_package
-    final YuvImage explicit = YuvImage(YuvFileFormat.i420, 4, 4);
+    final YuvImage explicit = YuvImage(YuvPixelFormat.i420, 4, 4);
 
     for (final image in <YuvImage>[i420, nv12, bgra, allocated, nv21, explicit]) {
       expect(image.width, 4);
@@ -57,60 +56,11 @@ void main() {
     }
   });
 
-  test('the full deprecated 0.3.0 instance-method surface compiles and runs through the public library alone', () {
-    final YuvImage image = YuvImage.bgra(4, 4);
-
-    // Plane aliases.
-    // ignore: deprecated_member_use
-    // ignore: deprecated_member_use_from_same_package
-    expect(image.y, same(image.yPlane));
-    // ignore: deprecated_member_use
-    // ignore: deprecated_member_use_from_same_package
-    expect(image.u, isNull);
-    // ignore: deprecated_member_use
-    // ignore: deprecated_member_use_from_same_package
-    expect(image.v, isNull);
-
-    // Byte accessors.
-    // ignore: deprecated_member_use
-    // ignore: deprecated_member_use_from_same_package
-    expect(image.getBytes(), image.toBytes());
-    // ignore: deprecated_member_use
-    // ignore: deprecated_member_use_from_same_package
-    expect(image.toBgra8888(), image.toBgraBytes());
-
-    // copy(blank:) with the deprecated named argument.
-    // ignore: deprecated_member_use
-    // ignore: deprecated_member_use_from_same_package
-    final blank = image.copy(blank: true);
-    expect(blank.width, image.width);
-
-    // Every deprecated mutator is a legal call through this public-only
-    // surface -- it type-checks and dispatches all the way into the real
-    // deprecated extension method and its capability-ungated legacy adapter.
-    // This file cannot reach `YuvFfi.initialize()`'s fake-library test seam
-    // (that seam lives outside what a public-surface-only consumer has
-    // access to), so whether the call succeeds depends on whether this host
-    // has a real native/WASM library; either way it must not crash the test
-    // runner with something other than a normal Dart exception.
-    // `rel06_deprecated_api_test.dart` covers successful dispatch and byte
-    // behavior against the fake library deterministically.
-    try {
-      // ignore: deprecated_member_use
-      // ignore: deprecated_member_use_from_same_package
-      image.blackwhite();
-    } catch (_) {
-      // Expected on a host without a real native/WASM library.
-    }
-  });
-
   test('a foreign implements YuvImage still compiles the complete YuvImage surface through the public library alone', () {
     final YuvImage image = _PublicSurfaceOnlyImage(4, 4);
     expect(image.width, 4);
     expect(image.height, 4);
-    // ignore: deprecated_member_use
-    // ignore: deprecated_member_use_from_same_package
-    expect(image.y, same(image.yPlane));
+    expect(image.yPlane, same(image.planes.single));
   });
 }
 

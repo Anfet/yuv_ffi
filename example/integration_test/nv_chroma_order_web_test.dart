@@ -40,7 +40,7 @@ void main() {
 
     final nv12Labeled = YuvImage.nv12(w, h)..applyPlanes([buildYPlane(), buildUvPlane()]);
     // ignore: deprecated_member_use
-    final nv21Labeled = YuvImage.nv21(w, h)..applyPlanes([buildYPlane(), buildUvPlane()]);
+    final nv21Labeled = YuvImage.nv12(w, h)..applyPlanes([buildYPlane(), buildUvPlane()]);
 
     expect(nv12Labeled.uPlane.bytes, orderedEquals(nv21Labeled.uPlane.bytes), reason: 'nv12 and nv21 must store identical chroma bytes');
     for (int i = 0; i < nv12Labeled.uPlane.bytes.length; i += 2) {

@@ -38,8 +38,7 @@ final class YuvFfi {
   /// IO/native retains its previous lazy behavior for constructors, plane
   /// access, [YuvImage.copy], [YuvImage.applyPlanes], [YuvImage.toBytes],
   /// [YuvImage.toBgraBytes], [YuvImage.toImage], [YuvImage.encodeTo],
-  /// [YuvImage.decode], [YuvImage.fromRgbaBytes], and the deprecated legacy
-  /// instance methods.
+  /// [YuvImage.decode], and [YuvImage.fromRgbaBytes].
   ///
   /// ## Repeated calls
   ///
@@ -82,8 +81,4 @@ final class YuvFfi {
   static Future<YuvCapabilities> initialize() async {
     return backend_loader.ensureInitialized();
   }
-
-  /// Deprecated alias for [initialize].
-  @Deprecated('Use initialize().')
-  static Future<YuvCapabilities> ensureInitialized() => initialize();
 }

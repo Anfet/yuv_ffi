@@ -722,7 +722,7 @@
     {
       "id": "CONSTRUCT-NV21-TIGHT",
       "group": "Construction",
-      "operation": "YuvImage.nv21",
+      "operation": "YuvImage.nv12",
       "input": {
         "format": "nv21",
         "layout": "tight",
@@ -764,7 +764,7 @@
     {
       "id": "CONSTRUCT-NV21-PADDED",
       "group": "Construction",
-      "operation": "YuvImage.nv21",
+      "operation": "YuvImage.nv12",
       "input": {
         "format": "nv21",
         "layout": "padded",

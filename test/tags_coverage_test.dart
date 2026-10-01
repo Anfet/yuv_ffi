@@ -13,10 +13,7 @@ const _smokeFiles = {
   'abi_symbol_manifest_test.dart',
 };
 
-const _releaseFiles = {
-  'release_probe_core_test.dart',
-  'windows_release_package_provenance_contract_test.dart',
-};
+const _releaseFiles = {'release_probe_core_test.dart', 'windows_release_package_provenance_contract_test.dart'};
 
 const _tags = {'smoke', 'contract', 'probe', 'reference', 'release'};
 
@@ -24,8 +21,7 @@ String _expectedTag(String path) {
   final name = path.split('/').last;
   if (_smokeFiles.contains(name)) return 'smoke';
   if (path.startsWith('test/reference_')) return 'reference';
-  if (path.startsWith('test/probe/') &&
-      (name.startsWith('run_') || _releaseFiles.contains(name))) {
+  if (path.startsWith('test/probe/') && (name.startsWith('run_') || _releaseFiles.contains(name))) {
     return 'release';
   }
   if (path.startsWith('test/probe/')) return 'probe';
@@ -34,15 +30,9 @@ String _expectedTag(String path) {
 
 void main() {
   test('every test file has one primary tag matching its test group', () {
-    final files = Directory('test')
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((file) => file.path.endsWith('_test.dart'));
+    final files = Directory('test').listSync(recursive: true).whereType<File>().where((file) => file.path.endsWith('_test.dart'));
     final issues = <String>[];
-    final tagPattern = RegExp(
-      r"^@Tags\s*\(\s*\[([^\]]*)\]\s*\)",
-      multiLine: true,
-    );
+    final tagPattern = RegExp(r"^@Tags\s*\(\s*\[([^\]]*)\]\s*\)", multiLine: true);
     final valuePattern = RegExp(r"'([^']+)'");
 
     for (final file in files) {
@@ -53,10 +43,7 @@ void main() {
         continue;
       }
 
-      final values = valuePattern
-          .allMatches(matches.single.group(1)!)
-          .map((match) => match.group(1)!)
-          .toList();
+      final values = valuePattern.allMatches(matches.single.group(1)!).map((match) => match.group(1)!).toList();
       if (values.length != 1 || !_tags.contains(values.single)) {
         issues.add('$path: expected exactly one recognized primary tag');
         continue;

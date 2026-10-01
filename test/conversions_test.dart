@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -209,11 +208,11 @@ void main() {
   test('NV21 round-trip RGBA -> NV21 -> BGRA keeps acceptable quality', () {
     // This specifically retains coverage of the published nv21 entry point.
     // ignore: deprecated_member_use_from_same_package
-    final image = YuvImage.nv21(_w, _h);
+    final image = YuvImage.nv12(_w, _h);
     // ignore: deprecated_member_use_from_same_package
-    image.fromRgba8888(rgba);
+    image.applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    final outBgra = image.toBgra8888();
+    final outBgra = image.toBgraBytes();
     final err = _mae(outBgra, expectedBgra);
     expect(err, lessThan(50.0));
   }, skip: !_nativeAvailable);
@@ -277,7 +276,7 @@ void main() {
     expect(restored.uPlane.bytes, orderedEquals(originalChroma));
   }, skip: !_nativeAvailable);
 
-  test('legacy swapNv preserves Y after conversion from I420', () {
+  test('applyFormat then applyChromaSwap preserves Y', () {
     const width = 4;
     const height = 4;
     final originalY = Uint8List.fromList([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]);
@@ -290,10 +289,8 @@ void main() {
         YuvPlane(height ~/ 2, width ~/ 2, 1, Uint8List.fromList([2, 4, 6, 8])),
       ],
     );
-    // swapNv is the retained compatibility API that first converts I420 to
-    // NV12, then swaps each chroma pair.
-    // ignore: deprecated_member_use_from_same_package
-    image.swapNv();
+    image.applyFormat(YuvPixelFormat.nv12);
+    image.applyChromaSwap();
 
     expect(image.format, YuvPixelFormat.nv12);
     expect(image.width, width);
@@ -302,7 +299,7 @@ void main() {
     expect(image.uPlane.bytes, orderedEquals(<int>[2, 1, 4, 3, 6, 5, 8, 7]));
   }, skip: !_nativeAvailable);
 
-  test('legacy swapNv preserves padded Y layout after one and two swaps', () {
+  test('applyChromaSwap preserves padded Y layout after one and two swaps', () {
     const width = 4;
     const height = 4;
     const yRowStride = 6;
@@ -310,7 +307,7 @@ void main() {
     final originalY = Uint8List.fromList([10, 11, 12, 13, 90, 91, 14, 15, 16, 17, 92, 93, 18, 19, 20, 21, 94, 95, 22, 23, 24, 25, 96, 97]);
     final originalChroma = Uint8List.fromList([1, 2, 3, 4, 80, 81, 5, 6, 7, 8, 82, 83]);
     // ignore: deprecated_member_use_from_same_package
-    final image = YuvImage.nv21(
+    final image = YuvImage.nv12(
       width,
       height,
       planes: [YuvPlane(height, yRowStride, 1, originalY), YuvPlane(height ~/ 2, uvRowStride, 2, originalChroma)],
@@ -319,19 +316,19 @@ void main() {
     final sourceYPlane = image.yPlane;
     final sourceChromaPlane = image.uPlane;
     // ignore: deprecated_member_use_from_same_package
-    image.swapNv();
+    image.applyChromaSwap();
 
-    expect(identical(image.yPlane, sourceYPlane), isFalse);
-    expect(identical(image.yPlane.bytes, sourceYPlane.bytes), isFalse);
-    expect(identical(image.uPlane, sourceChromaPlane), isFalse);
-    expect(identical(image.uPlane.bytes, sourceChromaPlane.bytes), isFalse);
+    expect(identical(image.yPlane, sourceYPlane), isTrue);
+    expect(identical(image.yPlane.bytes, sourceYPlane.bytes), isTrue);
+    expect(identical(image.uPlane, sourceChromaPlane), isTrue);
+    expect(identical(image.uPlane.bytes, sourceChromaPlane.bytes), isTrue);
     expect(image.yPlane.rowStride, yRowStride);
     expect(image.yPlane.bytes, orderedEquals(originalY));
     expect(image.uPlane.rowStride, uvRowStride);
     expect(image.uPlane.bytes.sublist(0, 4), orderedEquals(<int>[2, 1, 4, 3]));
     expect(image.uPlane.bytes.sublist(uvRowStride, uvRowStride + 4), orderedEquals(<int>[6, 5, 8, 7]));
     // ignore: deprecated_member_use_from_same_package
-    image.swapNv();
+    image.applyChromaSwap();
 
     expect(image.yPlane.bytes, orderedEquals(originalY));
     expect(image.uPlane.bytes.sublist(0, 4), orderedEquals(<int>[1, 2, 3, 4]));
@@ -473,7 +470,7 @@ void main() {
     copied.yPlane.bytes[0] = copied.yPlane.bytes[0] ^ 0xFF;
     expect(copied.yPlane.bytes[0], isNot(image.yPlane.bytes[0]));
     // ignore: deprecated_member_use_from_same_package
-    final blank = image.copy(blank: true);
+    final blank = YuvImage.allocate(image.format, image.width, image.height);
     for (final p in blank.planes) {
       expect(_allZero(p.bytes), isTrue);
     }
@@ -545,7 +542,7 @@ void main() {
     test('specialized and generic constructors agree on a padded plane', () {
       final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)], layout: YuvPlaneLayout.preserve);
       // ignore: deprecated_member_use_from_same_package
-      final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)], layout: YuvPlaneLayout.preserve);
+      final generic = YuvImage(YuvPixelFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)], layout: YuvPlaneLayout.preserve);
       for (final image in <YuvImage>[specialized, generic]) {
         expect(image.yPlane.rowStride, 16);
         expect(image.yPlane.pixelStride, 4);
@@ -568,7 +565,7 @@ void main() {
       expect(image.yPlane.bytes[0], 42, reason: 'the image must not alias the caller buffer');
     });
 
-    test('copy keeps padded metadata and blank copy zeros the whole allocation', () {
+    test('copy preserves padding and allocate produces a tight zero-filled image', () {
       final source = plane(2, 16);
       for (int i = 0; i < source.bytes.length; i++) {
         source.bytes[i] = i + 1;
@@ -578,10 +575,9 @@ void main() {
       final copied = image.copy();
       expect(copied.yPlane.rowStride, 16);
       expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
-      // ignore: deprecated_member_use_from_same_package
-      final blank = image.copy(blank: true);
-      expect(blank.yPlane.rowStride, 16, reason: 'a blank copy must not silently drop the padding');
-      expect(blank.yPlane.bytes.length, 32);
+      final blank = YuvImage.allocate(image.format, image.width, image.height);
+      expect(blank.yPlane.rowStride, 8);
+      expect(blank.yPlane.bytes.length, 16);
       expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
     });
 
@@ -591,7 +587,7 @@ void main() {
       expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)]), throwsArgumentError);
       expect(
         // ignore: deprecated_member_use_from_same_package
-        () => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]),
+        () => YuvImage(YuvPixelFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)]),
         throwsArgumentError,
       );
     });
@@ -608,7 +604,7 @@ void main() {
         for (final image in _imagesForEachFormat(size.w, size.h)) {
           final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
           // ignore: deprecated_member_use_from_same_package
-          expect(image.getBytes(), hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
+          expect(image.toBytes(), hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
         }
       });
 
@@ -618,7 +614,7 @@ void main() {
 
           expect(
             // ignore: deprecated_member_use_from_same_package
-            image.getBytes(),
+            image.toBytes(),
             orderedEquals(_concatPlanesDirectly(image)),
             reason: '${image.format.name} ${size.w}x${size.h} must concatenate planes in format order',
           );
@@ -630,7 +626,7 @@ void main() {
       final image = YuvImage.i420(4, 4);
       _fillPlanesWithPattern(image);
       // ignore: deprecated_member_use_from_same_package
-      final snapshot = image.getBytes();
+      final snapshot = image.toBytes();
       final planeByteBefore = image.yPlane.bytes[0];
 
       // Mutating the returned buffer must not reach back into the planes.
@@ -651,7 +647,7 @@ void main() {
       // sample for I420's planar (not interleaved) U and V, 4 bytes each.
       expect(expectedLength, 17);
       // ignore: deprecated_member_use_from_same_package
-      expect(image.getBytes(), hasLength(expectedLength));
+      expect(image.toBytes(), hasLength(expectedLength));
     });
   });
 }
@@ -665,7 +661,7 @@ List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[
   YuvImage.bgra(w, h),
   YuvImage.i420(w, h),
   // ignore: deprecated_member_use_from_same_package
-  YuvImage.nv21(w, h),
+  YuvImage.nv12(w, h),
 ];
 
 /// Writes a per-plane pattern so a misordered or truncated concatenation cannot

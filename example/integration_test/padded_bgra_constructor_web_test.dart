@@ -24,7 +24,7 @@ void main() {
     // ignore: deprecated_member_use
     final generic = YuvImage(
       // ignore: deprecated_member_use
-      YuvFileFormat.bgra8888,
+      YuvPixelFormat.bgra8888,
       2,
       2,
       yPixelStride: 4,
@@ -45,7 +45,7 @@ void main() {
     expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 4)], layout: YuvPlaneLayout.preserve), throwsArgumentError);
     expect(
       // ignore: deprecated_member_use
-      () => YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)], layout: YuvPlaneLayout.preserve),
+      () => YuvImage(YuvPixelFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 4)], layout: YuvPlaneLayout.preserve),
       throwsArgumentError,
     );
   });
@@ -86,7 +86,7 @@ void main() {
 
     // The deprecated option specifically preserves the source padding.
     // ignore: deprecated_member_use
-    final blank = image.copy(blank: true);
+    final blank = YuvImage.allocate(image.format, image.width, image.height);
     expect(blank.yPlane.rowStride, 16);
     expect(blank.yPlane.bytes.length, 32);
     expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
@@ -97,7 +97,7 @@ void main() {
 
     final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 8)]);
     // ignore: deprecated_member_use
-    final generic = YuvImage(YuvFileFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 8)]);
+    final generic = YuvImage(YuvPixelFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 8)]);
 
     for (final image in <YuvImage>[specialized, generic]) {
       expect(image.yPlane.rowStride, 8);
@@ -122,7 +122,7 @@ void main() {
 
     // The deprecated option specifically preserves the source padding.
     // ignore: deprecated_member_use
-    final blank = image.copy(blank: true);
+    final blank = YuvImage.allocate(image.format, image.width, image.height);
     expect(blank.yPlane.rowStride, 8);
     expect(blank.yPlane.bytes.length, 16);
     expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);

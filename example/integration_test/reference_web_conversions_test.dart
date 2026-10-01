@@ -11,16 +11,11 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 
 import 'helpers/reference/test_pattern_reference.dart';
 
-/// Runs the same 119-case reference conversion matrix as
-/// `test/reference_native_conversions_test.dart`, but against the real
-/// Web/WASM backend in a browser instead of the native FFI backend.
+/// Runs the 119-case reference conversion matrix against the real Web/WASM
+/// backend in a browser.
 ///
-/// This intentionally reuses the native suite's case list, expected
-/// artifacts and tolerances -- no Web-specific expected images are invented
-/// here. What changes relative to the native suite is only how fixtures are
-/// loaded (`rootBundle.load` instead of `dart:io File`) and that native
-/// library provenance/skip logic is dropped entirely: it is meaningless on
-/// Web, where there is no native library to find or skip on.
+/// It uses the shared case list, expected artifacts and tolerances. Fixtures
+/// load through `rootBundle`, because browser tests have no file system.
 ///
 /// `flutter test --platform chrome` serves no asset bundle, so it cannot
 /// load `assets/packages/yuv_ffi/assets/wasm/yuv_ffi.js` or this suite's own
@@ -131,7 +126,7 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
   switch (operation) {
     case 'YuvImage.bgra':
     case 'YuvImage.i420':
-    case 'YuvImage.nv21':
+    case 'YuvImage.nv12':
       break;
     case 'fromRgba8888':
       image.applyRgbaBytes(frame.bytes);

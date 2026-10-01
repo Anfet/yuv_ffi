@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -7,18 +6,9 @@ import 'dart:ui' as ui;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies the `encodeTo(sink)` and static `YuvImage.decode(stream)` APIs
-/// and the `save`/`load` migration into `DeprecatedYuvImageApi`
-/// for the public encode and decode APIs.
-///
-/// Covers: `save()` forwards to `encodeTo()` with identical bytes; the static
-/// `decode()` round-trips a real image without mutating any receiver;
-/// `load()` still mutates in place through the package-private atomic
-/// state-replacement adapter and advances the revision exactly once; and a
-/// foreign `implements YuvImage` without that adapter gets `UnsupportedError`
-/// from `load()` without being mutated. These cases only allocate planes in
-/// Dart and never dispatch to a native/WASM backend, so they run without a
-/// real `yuv_ffi` library, the same way `yuv_serialization_test.dart` does.
+/// Verifies the public `encodeTo(sink)` and static `YuvImage.decode(stream)`
+/// APIs. These cases only allocate planes in Dart and never dispatch to a
+/// native/WASM backend, so they run without a real `yuv_ffi` library.
 void main() {
   Stream<List<int>> asStream(List<int> bytes) => Stream<List<int>>.value(bytes);
 
@@ -29,17 +19,16 @@ void main() {
   }
 
   group('encodeTo', () {
-    test('save() forwards to encodeTo() with identical bytes', () async {
+    test('encodes identical bytes through independent sinks', () async {
       final image = YuvImage.i420(4, 4);
       for (int i = 0; i < image.yPlane.bytes.length; i++) {
         image.yPlane.bytes[i] = (i * 7 + 3) & 0xFF;
       }
 
       final viaEncodeTo = await collect(image.encodeTo);
-      // ignore: deprecated_member_use_from_same_package
-      final viaSave = await collect(image.save);
+      final secondEncode = await collect(image.encodeTo);
 
-      expect(viaSave, orderedEquals(viaEncodeTo));
+      expect(secondEncode, orderedEquals(viaEncodeTo));
     });
 
     test('encodeTo() does not mutate the source image', () async {
@@ -112,42 +101,37 @@ void main() {
     });
   });
 
-  group('legacy load() through the atomic state-replacement adapter', () {
-    test('replaces format, geometry and bytes in place and returns void', () async {
+  group('decode produces an independent frame', () {
+    test('preserves format, geometry and bytes in the returned frame', () async {
       final source = YuvImage.i420(8, 8);
       for (int i = 0; i < source.yPlane.bytes.length; i++) {
         source.yPlane.bytes[i] = (i + 5) & 0xFF;
       }
       final payload = await collect(source.encodeTo);
 
-      final target = YuvImage.i420(2, 2);
-      // ignore: deprecated_member_use_from_same_package
-      await target.load(asStream(payload));
+      final target = await YuvImage.decode(asStream(payload));
 
       expect(target.width, 8);
       expect(target.height, 8);
       expect(target.yPlane.bytes, orderedEquals(source.yPlane.bytes));
     });
 
-    test('advances the revision exactly once on success', () async {
+    test('does not advance an unrelated frame revision on success', () async {
       final source = YuvImage.i420(4, 4);
       final payload = await collect(source.encodeTo);
       final target = YuvImage.i420(2, 2);
       final before = target.revision;
 
-      // ignore: deprecated_member_use_from_same_package
-      await target.load(asStream(payload));
+      final decoded = await YuvImage.decode(asStream(payload));
 
-      expect(target.revision, before + 1);
+      expect(decoded.width, source.width);
+      expect(target.revision, before);
     });
 
     test('preserves a gapped NV12 chroma layout', () async {
       final source = YuvImage.nv12(4, 4, uvPixelStride: 3);
       final payload = await collect(source.encodeTo);
-      final target = YuvImage.i420(2, 2);
-
-      // ignore: deprecated_member_use_from_same_package
-      await target.load(asStream(payload));
+      final target = await YuvImage.decode(asStream(payload));
 
       expect(target.format, YuvPixelFormat.nv12);
       expect(target.uPlane.pixelStride, 3);
@@ -169,8 +153,7 @@ void main() {
       final source = YuvImage.i420(8, 8);
       final payload = await collect(source.encodeTo);
 
-      // ignore: deprecated_member_use_from_same_package
-      await expectLater(target.load(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
+      await expectLater(YuvImage.decode(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
 
       expect(target.width, before.width);
       expect(target.height, before.height);
@@ -180,17 +163,16 @@ void main() {
     });
   });
 
-  group('load() on a foreign implements YuvImage', () {
-    test('throws UnsupportedError and does not mutate the receiver', () async {
+  group('decode ownership', () {
+    test('does not mutate a foreign image', () async {
       final image = _ForeignImage(4, 4);
       final bytesBefore = Uint8List.fromList(image.yPlane.bytes);
       final source = YuvImage.bgra(4, 4);
       final payload = await collect(source.encodeTo);
 
-      // ignore: deprecated_member_use_from_same_package
-      expect(() => image.load(asStream(payload)), throwsA(isA<UnsupportedError>()));
+      await YuvImage.decode(asStream(payload));
 
-      expect(image.width, 4, reason: 'geometry must be untouched by a rejected load()');
+      expect(image.width, 4, reason: 'decode must not mutate another frame');
       expect(image.height, 4);
       expect(image.yPlane.bytes, orderedEquals(bytesBefore));
     });
@@ -209,9 +191,7 @@ class _CollectingSink implements Sink<List<int>> {
   void close() {}
 }
 
-/// A minimal foreign `implements YuvImage` with no `YuvLegacyDispatchAdapter`,
-/// the same shape `rel06_deprecated_api_test.dart`'s `_RecordingForeignImage`
-/// uses for `swapNv()`'s equivalent exception.
+/// A minimal foreign `YuvImage` implementation.
 class _ForeignImage implements YuvImage {
   _ForeignImage(this.width, this.height) : _plane = YuvPlane(height, width * 4, 4, Uint8List(height * width * 4));
 
@@ -242,7 +222,7 @@ class _ForeignImage implements YuvImage {
   ui.Size get size => ui.Size(width.toDouble(), height.toDouble());
 
   @override
-  YuvImage copy({bool blank = false}) => _ForeignImage(width, height);
+  YuvImage copy() => _ForeignImage(width, height);
 
   @override
   YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();

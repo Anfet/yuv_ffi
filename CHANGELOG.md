@@ -1,4 +1,12 @@
-## 0.4.2
+## 0.5.0-dev.1
+
+### Breaking changes
+
+- Removed the deprecated 0.2.4/0.4.0 compatibility API, including
+  `YuvFileFormat`, `YuvImage.nv21`, `YuvFfi.ensureInitialized()`, the legacy
+  forwarding methods, and `copy(blank:)`. Migrate with the README mapping:
+  use named format factories, `YuvPixelFormat`, `YuvFfi.initialize()`, and
+  `apply*`/`to*` methods.
 
 ### Highlights
 

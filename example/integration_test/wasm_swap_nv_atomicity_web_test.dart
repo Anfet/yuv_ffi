@@ -90,7 +90,7 @@ Future<void> _useModule(JSObject module) async {
     return YuvModule(module);
   });
   // ignore: deprecated_member_use_from_same_package
-  await YuvFfi.ensureInitialized();
+  await YuvFfi.initialize();
 }
 
 List<String> _calls(JSObject module) => [for (final c in module.getProperty<JSArray>('__calls'.toJS).toDart) (c as JSString).toDart];
@@ -102,7 +102,7 @@ YuvImage _imageOf(YuvPixelFormat format) => switch (format) {
   YuvPixelFormat.i420 => YuvImage.i420(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 4, 1, 0x50), _plane(4, 4, 1, 0x70)]),
   YuvPixelFormat.bgra8888 => YuvImage.bgra(8, 8, planes: [_plane(8, 32, 4, 0x30)]),
   // ignore: deprecated_member_use_from_same_package
-  YuvPixelFormat.nv12 => YuvImage.nv21(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 8, 2, 0x50)]),
+  YuvPixelFormat.nv12 => YuvImage.nv12(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 8, 2, 0x50)]),
 };
 
 void main() {
@@ -124,16 +124,16 @@ void main() {
 
       final image = _imageOf(publicFormat);
       // ignore: deprecated_member_use_from_same_package
-      final bytesBefore = image.getBytes();
+      final bytesBefore = image.toBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
       // ignore: deprecated_member_use_from_same_package
-      expect(() => image.swapNv(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', YuvOperation.chromaSwap)));
+      expect(() => image.applyChromaSwap(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', YuvOperation.chromaSwap)));
 
       expect(_calls(module), [yuvSymbolConvertV1, yuvSymbolChromaSwapV1], reason: 'the conversion must have succeeded before the swap was attempted');
       expect(image.format, publicFormat, reason: 'format changed although swapNv failed');
       // ignore: deprecated_member_use_from_same_package
-      expect(image.getBytes(), bytesBefore, reason: 'bytes changed although swapNv failed');
+      expect(image.toBytes(), bytesBefore, reason: 'bytes changed although swapNv failed');
       expect(image.width, 8);
       expect(image.height, 8);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore, reason: 'revision advanced although swapNv failed');
@@ -145,16 +145,16 @@ void main() {
 
       final image = _imageOf(publicFormat);
       // ignore: deprecated_member_use_from_same_package
-      final bytesBefore = image.getBytes();
+      final bytesBefore = image.toBytes();
       final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
       // ignore: deprecated_member_use_from_same_package
-      expect(() => image.swapNv(), throwsA(isA<YuvNativeException>()));
+      expect(() => image.applyChromaSwap(), throwsA(isA<YuvNativeException>()));
 
       expect(_calls(module), [yuvSymbolConvertV1]);
       expect(image.format, publicFormat);
       // ignore: deprecated_member_use_from_same_package
-      expect(image.getBytes(), bytesBefore);
+      expect(image.toBytes(), bytesBefore);
       expect((image as YuvRevisionAware).internalRevision, revisionBefore);
     });
   }
@@ -167,16 +167,16 @@ void main() {
 
     final image = _imageOf(YuvPixelFormat.nv12);
     // ignore: deprecated_member_use_from_same_package
-    final bytesBefore = image.getBytes();
+    final bytesBefore = image.toBytes();
     final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
     // ignore: deprecated_member_use_from_same_package
-    expect(() => image.swapNv(), throwsA(isA<YuvNativeException>()));
+    expect(() => image.applyChromaSwap(), throwsA(isA<YuvNativeException>()));
 
     expect(_calls(module), [yuvSymbolChromaSwapV1], reason: 'an NV21 receiver needs no conversion');
     expect(image.format, YuvPixelFormat.nv12);
     // ignore: deprecated_member_use_from_same_package
-    expect(image.getBytes(), bytesBefore);
+    expect(image.toBytes(), bytesBefore);
     expect((image as YuvRevisionAware).internalRevision, revisionBefore);
   });
 
@@ -190,7 +190,7 @@ void main() {
     final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
     // ignore: deprecated_member_use_from_same_package
-    image.swapNv();
+    image.applyChromaSwap();
 
     expect(_calls(module), [yuvSymbolConvertV1, yuvSymbolChromaSwapV1]);
     expect(image.format, YuvPixelFormat.nv12);

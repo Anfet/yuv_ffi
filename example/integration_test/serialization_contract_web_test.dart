@@ -22,7 +22,7 @@ void main() {
   /// Serializes [image] the way a caller would.
   Future<Uint8List> save(YuvImage image) async {
     final chunks = <List<int>>[];
-    await image.save(_CollectingSink(chunks));
+    await image.encodeTo(_CollectingSink(chunks));
     final total = chunks.fold<int>(0, (sum, chunk) => sum + chunk.length);
     final out = Uint8List(total);
     int offset = 0;
@@ -34,7 +34,7 @@ void main() {
   }
 
   /// A valid payload for an image whose planes carry a recognisable pattern.
-  Future<Uint8List> validPayload({YuvFileFormat format = YuvFileFormat.i420, int width = 8, int height = 8}) async {
+  Future<Uint8List> validPayload({YuvPixelFormat format = YuvPixelFormat.i420, int width = 8, int height = 8}) async {
     final image = YuvImage(format, width, height);
     for (int i = 0; i < image.planes.length; i++) {
       final bytes = image.planes[i].bytes;
@@ -53,15 +53,15 @@ void main() {
   ]);
 
   setUpAll(() async {
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
   });
 
   group('round-trip', () {
-    for (final format in YuvFileFormat.values) {
+    for (final format in YuvPixelFormat.values) {
       testWidgets('preserves format, dimensions, strides and bytes for ${format.name}', (tester) async {
         expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-        await YuvFfi.ensureInitialized();
+        await YuvFfi.initialize();
 
         final source = YuvImage(format, 8, 8);
         for (int i = 0; i < source.planes.length; i++) {
@@ -72,7 +72,7 @@ void main() {
         }
 
         final target = YuvImage(format, 2, 2);
-        await target.load(asStream(await save(source)));
+        await YuvImage.decode(asStream(await save(source)));
 
         expect(target.format, source.format);
         expect(target.width, source.width);
@@ -89,12 +89,12 @@ void main() {
     testWidgets('survives a fragmented stream', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       final payload = await validPayload();
       final target = YuvImage.i420(2, 2);
 
-      await target.load(asFragmentedStream(payload));
+      await YuvImage.decode(asFragmentedStream(payload));
 
       expect(target.width, 8);
       expect(target.height, 8);
@@ -103,12 +103,12 @@ void main() {
     testWidgets('preserves a padded plane layout', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       final source = YuvImage.bgra(2, 2, planes: <YuvPlane>[YuvPlane(2, 16, 4, Uint8List(32))], layout: YuvPlaneLayout.preserve);
       final target = YuvImage.bgra(1, 1);
 
-      await target.load(asStream(await save(source)));
+      await YuvImage.decode(asStream(await save(source)));
 
       expect(target.yPlane.rowStride, 16);
       expect(target.yPlane.bytes.length, 32);
@@ -119,33 +119,33 @@ void main() {
     testWidgets('an empty payload', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
-      await expectLater(YuvImage.i420(2, 2).load(asStream(const <int>[])), throwsFormatException);
+      await expectLater(YuvImage.decode(asStream(const <int>[])), throwsFormatException);
     });
 
     testWidgets('a truncated header', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       final payload = await validPayload();
-      await expectLater(YuvImage.i420(2, 2).load(asStream(payload.sublist(0, 3))), throwsFormatException);
+      await expectLater(YuvImage.decode(asStream(payload.sublist(0, 3))), throwsFormatException);
     });
 
     testWidgets('a payload truncated midway through the planes', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       final payload = await validPayload();
-      await expectLater(YuvImage.i420(2, 2).load(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
+      await expectLater(YuvImage.decode(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
     });
 
     testWidgets('trailing bytes after a complete payload', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       final payload = await validPayload();
       final withTrailer = Uint8List.fromList(<int>[...payload, 0, 0, 0]);
@@ -157,7 +157,7 @@ void main() {
     testWidgets('after a truncated payload', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       final image = YuvImage.i420(8, 8);
       for (int i = 0; i < image.yPlane.bytes.length; i++) {
@@ -168,47 +168,48 @@ void main() {
         height: image.height,
         format: image.format,
         planeCount: image.planes.length,
-        bytes: Uint8List.fromList(image.getBytes()),
+        bytes: Uint8List.fromList(image.toBytes()),
       );
 
-      final payload = await validPayload(format: YuvFileFormat.nv21, width: 16, height: 16);
-      await expectLater(image.load(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
+      final payload = await validPayload(format: YuvPixelFormat.nv12, width: 16, height: 16);
+      await expectLater(YuvImage.decode(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
 
       expect(image.width, before.width);
       expect(image.height, before.height);
       expect(image.format, before.format);
       expect(image.planes.length, before.planeCount);
-      expect(image.getBytes(), orderedEquals(before.bytes), reason: 'plane bytes were mutated by a failed load');
+      expect(image.toBytes(), orderedEquals(before.bytes), reason: 'plane bytes were mutated by a failed load');
     });
   });
 
-  group('load() and the revision contract', () {
-    testWidgets('a successful load advances the revision exactly once', (tester) async {
+  group('decode returns an independent frame', () {
+    testWidgets('a successful decode returns the serialized frame without mutating another image', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       final payload = await validPayload(width: 16, height: 16);
       final target = YuvImage.i420(2, 2);
       final before = target.revision;
 
-      await target.load(asStream(payload));
+      final decoded = await YuvImage.decode(asStream(payload));
 
-      expect(target.revision, before + 1);
+      expect(decoded.width, 16);
+      expect(target.revision, before);
     });
 
     testWidgets('a rejected payload leaves the revision untouched', (tester) async {
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       final payload = await validPayload(width: 16, height: 16);
       final target = YuvImage.i420(2, 2);
       final before = target.revision;
 
-      await expectLater(target.load(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
+      await expectLater(YuvImage.decode(asStream(payload.sublist(0, payload.length ~/ 2))), throwsFormatException);
 
-      expect(target.revision, before, reason: 'a failed load must not look like a new frame');
+      expect(target.revision, before, reason: 'a failed decode must not mutate another frame');
     });
   });
 
@@ -220,7 +221,7 @@ void main() {
       // trailer.
       expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       final payload = await validPayload(width: 16, height: 16);
 

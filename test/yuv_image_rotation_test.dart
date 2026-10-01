@@ -1,13 +1,10 @@
 @Tags(['contract'])
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 /// Characterization tests for [YuvImageRotation].
 ///
-/// These pin the behaviour that exists today. `toZero()` in particular is
-/// documented here rather than changed: the card requires evidence of an actual
-/// defect before its semantics are touched, and none has been produced.
+/// These pin the behaviour that exists today.
 void main() {
   group('degrees', () {
     test('each value carries its own angle', () {
@@ -53,29 +50,6 @@ void main() {
     test('four clockwise steps return to the start', () {
       for (final rotation in YuvImageRotation.values) {
         expect(rotation.clockwise.clockwise.clockwise.clockwise, rotation);
-      }
-    });
-  });
-
-  group('toZero characterization', () {
-    // The only caller in this repository is the example camera preview:
-    //   yuv.rotate(rotation.toZero())
-    // where `rotation` is the camera sensor orientation. The method currently
-    // returns the receiver, so that call rotates the frame BY the sensor angle.
-    //
-    // Whether that is the intended meaning of "to zero" is deliberately not
-    // decided here: no failing case has been produced, so the behaviour is
-    // recorded rather than changed. If a real defect ever shows up, this test is
-    // what will fail and pin the change.
-    test('returns the receiver unchanged for every value', () {
-      for (final rotation in YuvImageRotation.values) {
-        expect(rotation.toZero(), rotation, reason: '${rotation.name}.toZero() currently returns the receiver');
-      }
-    });
-
-    test('is idempotent', () {
-      for (final rotation in YuvImageRotation.values) {
-        expect(rotation.toZero().toZero(), rotation.toZero());
       }
     });
   });

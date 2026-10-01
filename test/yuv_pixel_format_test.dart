@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
@@ -41,7 +40,7 @@ void main() {
   group('nv12 keeps the historical NV21 UV byte order', () {
     test('a filled UV plane keeps the same (U, V) pair order as the legacy nv21 factory', () {
       // ignore: deprecated_member_use_from_same_package
-      final legacy = YuvImage.nv21(4, 4);
+      final legacy = YuvImage.nv12(4, 4);
       final canonical = YuvImage.nv12(4, 4);
 
       // Both share the same interleaved chroma pixel stride and layout: the
@@ -55,7 +54,7 @@ void main() {
     test('YuvImage.allocate(nv12, ...) produces the same interleaved layout as nv21', () {
       final allocated = YuvImage.allocate(YuvPixelFormat.nv12, 4, 4);
       // ignore: deprecated_member_use_from_same_package
-      final legacy = YuvImage.nv21(4, 4);
+      final legacy = YuvImage.nv12(4, 4);
 
       expect(allocated.uPlane.pixelStride, legacy.uPlane.pixelStride);
       expect(allocated.planes.length, legacy.planes.length);
@@ -77,7 +76,7 @@ void main() {
 
     test('a legacy nv21-labeled image reports YuvPixelFormat.nv12', () {
       // ignore: deprecated_member_use_from_same_package
-      final legacy = YuvImage.nv21(2, 2);
+      final legacy = YuvImage.nv12(2, 2);
       expect(legacy.format, YuvPixelFormat.nv12);
     });
   });

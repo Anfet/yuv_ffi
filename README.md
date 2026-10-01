@@ -9,10 +9,11 @@ WASM backend.
 
 ```yaml
 dependencies:
-  yuv_ffi: ^0.4.2
+  yuv_ffi: 0.5.0-dev.1
 ```
 
-Version 0.4.0 was withdrawn; use 0.4.2 for this API.
+The compatibility API was removed in 0.5.0-dev.1; see the migration table
+below when upgrading from 0.4.0 or 0.4.2.
 
 ## Requirements
 
@@ -79,7 +80,7 @@ native platforms, it must complete before these capability-gated methods:
 `applyFlipHorizontal`, `applyFlipVertical`, `applyRotation`, `applyFormat`,
 `applyChromaSwap`, `cropped`, `rotated`, `toI420`, `toNv12`, and `toBgra`.
 Constructors, plane access, `copy`, `applyPlanes`, byte conversion, encoding,
-decoding, and deprecated instance methods retain native lazy behavior.
+and decoding retain native lazy behavior.
 
 ## Image mutation and revisions
 
@@ -130,9 +131,7 @@ final view = YuvFrameView(presenter: presenter);
 
 `YuvPixelFormat.i420` stores separate Y, U, and V planes.
 `YuvPixelFormat.nv12` stores Y plus interleaved `(U, V)` chroma bytes.
-The deprecated `nv21` constructor is only a legacy label: its bytes are also
-UV order and its `format` reports `YuvPixelFormat.nv12`. `bgra8888` is a
-single packed BGRA plane.
+`bgra8888` is a single packed BGRA plane.
 
 Factories that receive `planes:` default to `YuvPlaneLayout.packed`: they
 copy visible samples into tight planes and discard row padding and per-sample
@@ -197,12 +196,12 @@ use `YuvCapabilities` to query the operations exported by that module instead
 of assuming native parity. Browser runtime limits and the WASM initialization
 lifecycle apply.
 
-## Migrating from 0.2.4
+## Migrating to 0.5.0
 
-The published 0.2.4 API remains available through deprecated forwarding
-methods. New code should use the current API.
+The compatibility declarations from 0.2.4 and 0.4.0 were removed in 0.5.0.
+Use the current API shown below when upgrading from 0.4.0 or 0.4.2.
 
-| 0.2.4 (deprecated) | 0.4.2 |
+| Removed API | Current API |
 | --- | --- |
 | `YuvFfi.ensureInitialized()` | `YuvFfi.initialize()` returning `YuvCapabilities` |
 | `image.fromRgba8888(bytes)` | `image.applyRgbaBytes(bytes)` |

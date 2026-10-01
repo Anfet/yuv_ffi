@@ -5,7 +5,6 @@ export 'src/yuv/shared/yuv_pack.dart' show YuvImagePack;
 export 'src/yuv/shared/yuv_plane.dart';
 export 'src/yuv/shared/yuv_plane_layout.dart';
 export 'src/yuv/shared/yuv_image_rotation.dart';
-export 'src/yuv/shared/yuv_file_format.dart';
 export 'src/yuv/shared/yuv_native_status.dart' show YuvNativeException;
 export 'src/yuv/shared/yuv_operation.dart' show YuvOperation;
 export 'src/yuv/shared/yuv_pixel_format.dart' show YuvPixelFormat;

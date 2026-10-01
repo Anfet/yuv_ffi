@@ -1,10 +1,9 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yuv_ffi/src/loader/loader.dart';
+import 'package:yuv_ffi/src/loader/loader.dart' as backend_loader;
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 /// Verifies that the revision counter that makes a mutable [YuvImage]
@@ -15,6 +14,12 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// stale frame or misses the cache on every rebuild.
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
+
+  setUpAll(() async {
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
+  });
 
   group('revision contract', () {
     test('a fresh image starts at a stable revision', () {
@@ -59,7 +64,7 @@ void main() {
         final before = image.revision;
 
         // ignore: deprecated_member_use_from_same_package
-        image.rotate(YuvImageRotation.rotation0);
+        image.applyRotation(YuvImageRotation.rotation0);
 
         expect(image.revision, before);
       });
@@ -68,20 +73,20 @@ void main() {
         final bgra = YuvImage.bgra(4, 4);
         final bgraBefore = bgra.revision;
         // ignore: deprecated_member_use_from_same_package
-        bgra.toYuvBgra8888();
+        bgra.applyFormat(YuvPixelFormat.bgra8888);
         expect(bgra.revision, bgraBefore);
 
         final i420 = YuvImage.i420(4, 4);
         final i420Before = i420.revision;
         // ignore: deprecated_member_use_from_same_package
-        i420.toYuvI420();
+        i420.applyFormat(YuvPixelFormat.i420);
         expect(i420.revision, i420Before);
 
         // ignore: deprecated_member_use_from_same_package
-        final nv21 = YuvImage.nv21(4, 4);
+        final nv21 = YuvImage.nv12(4, 4);
         final nv21Before = nv21.revision;
         // ignore: deprecated_member_use_from_same_package
-        nv21.toYuvNv21();
+        nv21.applyFormat(YuvPixelFormat.nv12);
         expect(nv21.revision, nv21Before);
       });
 
@@ -90,7 +95,7 @@ void main() {
         final before = image.revision;
 
         // ignore: deprecated_member_use_from_same_package
-        image.crop(const ui.Rect.fromLTWH(4, 4, 0, 0));
+        image.applyCrop(const ui.Rect.fromLTWH(4, 4, 0, 0));
 
         expect(image.revision, before);
       });
@@ -104,25 +109,25 @@ void main() {
         test('in-place effects', () {
           for (final operation in <String>['grayscale', 'negate', 'blackwhite', 'flipHorizontally', 'flipVertically']) {
             // ignore: deprecated_member_use_from_same_package
-            final image = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
+            final image = YuvImage.i420(8, 8)..applyRgbaBytes(rgba(8, 8));
             final before = image.revision;
 
             switch (operation) {
               case 'grayscale':
                 // ignore: deprecated_member_use_from_same_package
-                image.grayscale();
+                image.applyGrayscale();
               case 'negate':
                 // ignore: deprecated_member_use_from_same_package
-                image.negate();
+                image.applyNegate();
               case 'blackwhite':
                 // ignore: deprecated_member_use_from_same_package
-                image.blackwhite();
+                image.applyBlackWhite();
               case 'flipHorizontally':
                 // ignore: deprecated_member_use_from_same_package
-                image.flipHorizontally();
+                image.applyFlipHorizontal();
               case 'flipVertically':
                 // ignore: deprecated_member_use_from_same_package
-                image.flipVertically();
+                image.applyFlipVertical();
             }
 
             expect(image.revision, before + 1, reason: '$operation must advance the revision exactly once');
@@ -134,7 +139,7 @@ void main() {
           final before = image.revision;
 
           // ignore: deprecated_member_use_from_same_package
-          image.fromRgba8888(rgba(8, 8));
+          image.applyRgbaBytes(rgba(8, 8));
 
           expect(image.revision, before + 1);
         });
@@ -146,60 +151,54 @@ void main() {
           final before = image.revision;
 
           // ignore: deprecated_member_use_from_same_package
-          image.fromRgba8888(rgba(2, 2));
+          image.applyRgbaBytes(rgba(2, 2));
 
           expect(image.revision, before + 1);
         });
 
         test('a real crop', () {
           // ignore: deprecated_member_use_from_same_package
-          final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
+          final image = YuvImage.bgra(8, 8)..applyRgbaBytes(rgba(8, 8));
           final before = image.revision;
 
           // ignore: deprecated_member_use_from_same_package
-          image.crop(const ui.Rect.fromLTWH(0, 0, 4, 4));
+          image.applyCrop(const ui.Rect.fromLTWH(0, 0, 4, 4));
 
           expect(image.revision, before + 1);
         });
 
         test('a real rotate', () {
           // ignore: deprecated_member_use_from_same_package
-          final image = YuvImage.bgra(8, 8)..fromRgba8888(rgba(8, 8));
+          final image = YuvImage.bgra(8, 8)..applyRgbaBytes(rgba(8, 8));
           final before = image.revision;
 
           // ignore: deprecated_member_use_from_same_package
-          image.rotate(YuvImageRotation.rotation90);
+          image.applyRotation(YuvImageRotation.rotation90);
 
           expect(image.revision, before + 1);
         });
 
         test('a format conversion', () {
           // ignore: deprecated_member_use_from_same_package
-          final image = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
+          final image = YuvImage.i420(8, 8)..applyRgbaBytes(rgba(8, 8));
           final before = image.revision;
 
           // ignore: deprecated_member_use_from_same_package
-          image.toYuvNv21();
+          image.applyFormat(YuvPixelFormat.nv12);
 
           expect(image.revision, before + 1);
         });
 
-        test('swapNv advances exactly once even when it converts first', () {
-          // swapNv() calls toYuvNv21() internally, which bumps on its own. One
-          // public call must still count as one revision.
+        test('applyChromaSwap advances exactly once on NV12', () {
+          // Chroma swap is an in-place NV12 operation and advances once.
           // ignore: deprecated_member_use_from_same_package
-          final alreadyNv = YuvImage.nv21(8, 8)..fromRgba8888(rgba(8, 8));
+          final alreadyNv = YuvImage.nv12(8, 8)..applyRgbaBytes(rgba(8, 8));
           final alreadyNvBefore = alreadyNv.revision;
           // ignore: deprecated_member_use_from_same_package
-          alreadyNv.swapNv();
+          alreadyNv.applyChromaSwap();
           expect(alreadyNv.revision, alreadyNvBefore + 1, reason: 'no conversion needed');
 
           // ignore: deprecated_member_use_from_same_package
-          final needsConversion = YuvImage.i420(8, 8)..fromRgba8888(rgba(8, 8));
-          final needsConversionBefore = needsConversion.revision;
-          // ignore: deprecated_member_use_from_same_package
-          needsConversion.swapNv();
-          expect(needsConversion.revision, needsConversionBefore + 1, reason: 'an internal conversion must not double-count');
         });
       },
       skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
@@ -209,7 +208,7 @@ void main() {
 
 bool _checkNativeAvailable() {
   try {
-    library;
+    backend_loader.library;
     return true;
   } catch (_) {
     return false;

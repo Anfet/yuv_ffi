@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -18,7 +17,7 @@ void main() {
 
   setUpAll(() async {
     // ignore: deprecated_member_use_from_same_package
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
   });
 
   test('bgra unary ops via wasm do not throw', () {
@@ -32,74 +31,74 @@ void main() {
 
     image
       // ignore: deprecated_member_use_from_same_package
-      ..grayscale()
+      ..applyGrayscale()
       // ignore: deprecated_member_use_from_same_package
-      ..blackwhite()
+      ..applyBlackWhite()
       // ignore: deprecated_member_use_from_same_package
-      ..negate()
+      ..applyNegate()
       // ignore: deprecated_member_use_from_same_package
-      ..flipHorizontally()
+      ..applyFlipHorizontal()
       // ignore: deprecated_member_use_from_same_package
-      ..flipVertically();
+      ..applyFlipVertical();
 
     // ignore: deprecated_member_use_from_same_package
-    expect(image.toBgra8888().length, 16);
+    expect(image.toBgraBytes().length, 16);
   });
 
   test('i420/nv21/bgra pipelines run without throwing', () {
     final rgba = Uint8List(8 * 6 * 4);
     // ignore: deprecated_member_use_from_same_package
-    final i420 = YuvImage.i420(8, 6)..fromRgba8888(rgba);
+    final i420 = YuvImage.i420(8, 6)..applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    final nv21 = YuvImage.nv21(8, 6)..fromRgba8888(rgba);
+    final nv21 = YuvImage.nv12(8, 6)..applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    final bgra = YuvImage.bgra(8, 6)..fromRgba8888(rgba);
+    final bgra = YuvImage.bgra(8, 6)..applyRgbaBytes(rgba);
 
     i420
       // ignore: deprecated_member_use_from_same_package
-      ..gaussianBlur(radius: 2, sigma: 2)
+      ..applyGaussianBlur(radius: 2, sigma: 2)
       // ignore: deprecated_member_use_from_same_package
-      ..boxBlur(radius: 2)
+      ..applyBoxBlur(radius: 2)
       // ignore: deprecated_member_use_from_same_package
-      ..meanBlur(radius: 2)
+      ..applyMeanBlur(radius: 2)
       // ignore: deprecated_member_use_from_same_package
-      ..grayscale()
+      ..applyGrayscale()
       // ignore: deprecated_member_use_from_same_package
-      ..blackwhite()
+      ..applyBlackWhite()
       // ignore: deprecated_member_use_from_same_package
-      ..negate();
+      ..applyNegate();
     nv21
       // ignore: deprecated_member_use_from_same_package
-      ..gaussianBlur(radius: 2, sigma: 2)
+      ..applyGaussianBlur(radius: 2, sigma: 2)
       // ignore: deprecated_member_use_from_same_package
-      ..boxBlur(radius: 2)
+      ..applyBoxBlur(radius: 2)
       // ignore: deprecated_member_use_from_same_package
-      ..meanBlur(radius: 2)
+      ..applyMeanBlur(radius: 2)
       // ignore: deprecated_member_use_from_same_package
-      ..grayscale()
+      ..applyGrayscale()
       // ignore: deprecated_member_use_from_same_package
-      ..blackwhite()
+      ..applyBlackWhite()
       // ignore: deprecated_member_use_from_same_package
-      ..negate();
+      ..applyNegate();
     bgra
       // ignore: deprecated_member_use_from_same_package
-      ..gaussianBlur(radius: 2, sigma: 2)
+      ..applyGaussianBlur(radius: 2, sigma: 2)
       // ignore: deprecated_member_use_from_same_package
-      ..boxBlur(radius: 2)
+      ..applyBoxBlur(radius: 2)
       // ignore: deprecated_member_use_from_same_package
-      ..meanBlur(radius: 2)
+      ..applyMeanBlur(radius: 2)
       // ignore: deprecated_member_use_from_same_package
-      ..grayscale()
+      ..applyGrayscale()
       // ignore: deprecated_member_use_from_same_package
-      ..blackwhite()
+      ..applyBlackWhite()
       // ignore: deprecated_member_use_from_same_package
-      ..negate();
+      ..applyNegate();
 
     // ignore: deprecated_member_use_from_same_package
-    expect(i420.toBgra8888().length, 8 * 6 * 4);
+    expect(i420.toBgraBytes().length, 8 * 6 * 4);
     // ignore: deprecated_member_use_from_same_package
-    expect(nv21.toBgra8888().length, 8 * 6 * 4);
+    expect(nv21.toBgraBytes().length, 8 * 6 * 4);
     // ignore: deprecated_member_use_from_same_package
-    expect(bgra.toBgra8888().length, 8 * 6 * 4);
+    expect(bgra.toBgraBytes().length, 8 * 6 * 4);
   });
 }

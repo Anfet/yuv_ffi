@@ -1,5 +1,4 @@
 @Tags(['reference'])
-
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -76,7 +75,7 @@ void main() {
         containsAll(<String>{
           'YuvImage.bgra',
           'YuvImage.i420',
-          'YuvImage.nv21',
+          'YuvImage.nv12',
           'fromRgba8888',
           'toBgra8888',
           'toYuvBgra8888',
