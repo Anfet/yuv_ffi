@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** TODO · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -120,3 +120,16 @@ D-11; вместе с `deprecated_api_test`; миграция в README и CHANG
 **Commit:** `ccf8d38 Removed deprecated public API for 0.5.0`
 
 #### Review
+
+**Reviewed-Head:** `e457518fd83c3c0ff1279245f44fe302179f7673`
+
+**Status:** TODO
+
+**Blocking:**
+
+- Удалены целиком проверки действующего API, хотя Scope разрешает удалить только legacy-фрагменты смешанных тестов и прямо требует сохранить ABI, serialization и Web. В diff вместе с допустимым `test/deprecated_api_test.dart` исчезли текущие контракты сериализации (`test/yuv_serialization_test.dart`, `test/encode_decode_test.dart`, `example/integration_test/serialization_contract_web_test.dart`), виджета/ревизий (`test/yuv_image_widget_test.dart`, `example/integration_test/image_cache_key_web_test.dart`), rotation (`test/yuv_image_rotation_test.dart` вообще не содержит legacy-ссылок), ABI/native operations (`test/io_abi_v1_public_contract_test.dart`, `test/native_allocation_safety_test.dart`, `test/reference_native_conversions_test.dart`) и другие current factory/geometry/layout tests. Вернуть либо перенести актуальные cases на новый API; legacy cases можно удалить отдельно.
+
+**Evidence:**
+
+- Reviewer-проба Pixel 3 `8B1X11QLW` на Reviewed-Head прошла: arm64-v8a и armeabi-v7a — `smoke=PASS`, `probe=PASS`, по 1188 cases. Windows evidence Executor также не содержит `FAIL` или необъяснённого `SLOWER`.
+- Статический поиск подтверждает удаление публичных deprecated declarations; README/CHANGELOG содержат намеренную migration mapping. Это не компенсирует потерю действующих тестов.
