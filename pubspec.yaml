@@ -33,12 +33,14 @@ flutter:
         ffiPlugin: true
       ios:
         ffiPlugin: true
+        sharedDarwinSource: true
       windows:
         ffiPlugin: true
       linux:
         ffiPlugin: true
       macos:
         ffiPlugin: true
+        sharedDarwinSource: true
       web:
         pluginClass: YuvFfiWebPlugin
         fileName: yuv_ffi_web.dart

@@ -109,9 +109,10 @@ job `linux-native-smoke` в `.github/workflows/ci.yml`.
 | Остальные `.github/workflows/*`, `tool/ci/*` | `all` | Все доступные команды из таблицы ключей ниже. |
 | `src/*`, `lib/src/yuv/impl/io/*`, `lib/src/functions/*`, `test/probe/*`, `example/integration_test/*`, `pubspec.yaml` | `all` | Все доступные команды из таблицы ключей; для `src/**` также используйте дополнительные проверки ниже. |
 | `lib/src/yuv/impl/web/*`, `assets/wasm/*`, `tool/wasm/*` | `web` | `pwsh -File tool/ci/web.ps1`; для Web-пробы см. селекторы ниже. Web остаётся частичным WASM backend. |
+| `darwin/*` | `ios macos` | `bash tool/ci/ios.sh` и `bash tool/ci/macos.sh` (macOS). |
 | `windows/*`, `example/windows/*` | `windows` | `pwsh -File tool/ci/windows.ps1`. |
-| `macos/*`, `example/macos/*` | `macos` | `bash tool/ci/macos.sh` (macOS). |
-| `ios/*`, `example/ios/*` | `ios` | `bash tool/ci/ios.sh` (macOS с Xcode и симулятором). |
+| `example/macos/*` | `macos` | `bash tool/ci/macos.sh` (macOS). |
+| `example/ios/*` | `ios` | `bash tool/ci/ios.sh` (macOS с Xcode и симулятором). |
 | `android/*`, `example/android/*` | `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
 | `linux/*` | `linux` | CI-only: job `linux-native-smoke` в `.github/workflows/ci.yml`; условия запуска и набор проверок — в строке ключа `linux` ниже. |
 | `lib/*` (включая `lib/src/widgets/*`) | `vm example` | `pwsh -File tool/ci/vm.ps1` и `pwsh -File tool/ci/example.ps1`. Для `lib/src/widgets/**` дополнительно выберите `contract` и относящиеся к виджету тесты в `example/test/**`. |

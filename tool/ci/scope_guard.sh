@@ -87,13 +87,16 @@ path_keys() {
     lib/src/yuv/impl/web/*|assets/wasm/*|tool/wasm/*)
       printf 'web\n'
       ;;
+    darwin/*)
+      printf 'ios macos\n'
+      ;;
     windows/*|example/windows/*)
       printf 'windows\n'
       ;;
-    macos/*|example/macos/*)
+    example/macos/*)
       printf 'macos\n'
       ;;
-    ios/*|example/ios/*)
+    example/ios/*)
       printf 'ios\n'
       ;;
     android/*|example/android/*)
