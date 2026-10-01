@@ -1,5 +1,5 @@
 # TEST 1 — Инвентаризация тест-сьюта
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Luna · **Depends On:** —
+**Status:** TODO · **Tier:** T2 · **Owner:** Luna · **Depends On:** —
 
 #### Goal
 Одна таблица по всем тестовым файлам пакета и example: что каждый файл защищает, сколько стоит и где то же самое
@@ -69,3 +69,28 @@
 - Limitation for review: contract labels and overlap fields are a first-pass inventory only; most rows use filename-derived labels and need contract-by-contract source comparison before TEST 5 can use them to remove or merge tests.
 - Validation: native DLL build succeeded; both JSON test runs exited 0; tracked table row count is 95. `dart_test.yaml` unchanged.
 #### Review
+
+**Decision:** TODO
+
+- `git ls-files test example/test example/integration_test` yields 95 matching test paths, and the
+  inventory has 95 rows. The file list is complete.
+- The Contract column does not state protected behavior: all 95 cells are filename-derived
+  `… behavior contract` labels. The Overlap column is `—` in all 95 rows. This does not meet the
+  required contract statement or provide TEST 5 with source-verified overlap groups. For example,
+  `test/conversions_test.dart` tests I420/NV21 BGRA round trips and
+  `test/web/wasm_parity_conversions_test.dart` tests the same round trips, but neither row records
+  the counterpart or its test/group.
+- The package table totals 724 tests (`api` 425 + `ffi` 136 + `reference` 130 + `probe` 33), which
+  does not reconcile with the recorded JSON result of 731 passed and 1 skipped. It also assigns
+  release-runner/provenance files to `probe`, leaving no `release` layer although the card defines
+  that layer explicitly.
+- Windows source-count evidence is incorrect for two rows: the table records 0 for
+  `example/integration_test/helpers/probe/layout_pack_test.dart` and
+  `example/integration_test/helpers/probe/probe_correctness_test.dart`, while their sources contain
+  1 and 2 `test(` declarations respectively.
+- The slow-file section gives code-based causes, but the single-coverage section contains broad
+  categories and globs rather than one concrete contract and its sole test file. It cannot protect
+  those contracts during TEST 5 cleanup.
+
+Reviewer did not rerun the suite; findings are from the committed inventory, the recorded JSON
+totals, and targeted source reads.
