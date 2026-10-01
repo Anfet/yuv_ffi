@@ -1,3 +1,5 @@
+@Tags(['contract'])
+
 import 'dart:ffi' as ffi;
 import 'dart:typed_data';
 

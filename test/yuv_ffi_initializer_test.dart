@@ -1,3 +1,5 @@
+@Tags(['contract'])
+
 import 'dart:ffi' as ffi;
 
 import 'package:flutter_test/flutter_test.dart';
