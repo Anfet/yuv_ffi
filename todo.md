@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 1. TEST 1/2/3/6/7 завершены. TEST 4 добавляет пропущенное отображение `linux/CMakeLists.txt` на реальный Linux CI job; TEST 5 принята и ждёт совместной интеграции.
+- **Сейчас:** этап 1. TEST 1/2/3/6/7 завершены. TEST 4 повторно на ревью после добавления `linux/*` mapping; TEST 5 принята и ждёт совместной интеграции.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Дашборд
@@ -35,7 +35,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 4](tasks/0.5.0/TEST-4.md) | TODO | T3 | Luna | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Review `4394dbd`: добавить путь `linux/CMakeLists.txt` с `linux-native-smoke` в `.github/workflows/ci.yml`, не возвращая отсутствующие пути. |
+| [TEST 4](tasks/0.5.0/TEST-4.md) | REVIEW | T3 | Reviewer | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Добавлена строка `linux/*` → `linux-native-smoke`; 21 workflow/script путь, job и commands проверены на `ef3edd5`. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | ACCEPTED | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Ревью подтвердило все 95 решений «оставить»; task diff не меняет исходники и тесты на `873ff2b`. |
 
 ### Этап 2 — пробы и скорость
