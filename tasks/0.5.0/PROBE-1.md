@@ -1,5 +1,5 @@
 # PROBE 1 — Базовые линии скорости 0.4.0 против dev
-**Status:** IN_PROGRESS · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 1
+**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 1
 **Было:** RA-26 (цикл 0.4.2).
 
 #### Problem / Goal
@@ -31,7 +31,21 @@ Balanced is the intended Windows measurement contour. The machine currently repo
 For 0.4.0 ↔ HEAD, build identical benchmark source in separate detached worktrees with Flutter 3.44.9: a detached `0.4.0` package worktree; a committed HEAD baseline app worktree whose temporary `example/pubspec_overrides.yaml` points `yuv_ffi` to the tag; and a HEAD app worktree with its normal dependency. Verify package_config resolution, package revision, EXE/DLL SHA-256, and common CPU/power contour. Tight benchmark scenarios must be compatible with 0.4.0: omit only `YuvPlaneLayout.preserve` on already-tight inputs and move the deterministic seed helper out of modern `probe_support.dart`. Do not change public API/native C. Persist accepted tag baseline at `test/probe/baseline/windows-<cpu>-x64-release.json`; keep raw runs and comparison report in `doc/archive/release-0.4.2/ra26-windows-release/`.
 
 #### Definition of Done
-- [ ] Сценарии замера для всех 12 `YuvOperation`
-- [ ] Базовые линии Windows x64 и Pixel 3 arm64 сняты для тега 0.4.0 и для HEAD; таблица сравнения — в отчёте (источник цифр для CHANGELOG RA-18)
-- [ ] Негативный контроль: искусственное замедление (sleep в тестовой сборке исполнителя, не в `lib/`) даёт `SLOWER`, испорченный golden даёт FAIL
-- [ ] Два повторных прогона на одной машине дают `SAME`
+- [x] Сценарии замера для всех 12 `YuvOperation`
+- [x] Базовые линии Windows x64 и Pixel 3 arm64 сняты для тега 0.4.0 и для HEAD; таблица сравнения — в отчёте (источник цифр для CHANGELOG RA-18)
+- [x] Негативный контроль: искусственное замедление (sleep в тестовой сборке исполнителя, не в `lib/`) даёт `SLOWER`, испорченный golden даёт FAIL
+- [x] Два повторных прогона на одной машине дают `SAME`
+
+#### Executor Report
+
+- Release benchmarks cover 12 operations × 2 sizes; each accepted run has 24
+  stable result hashes with nine timed samples.
+- Windows x64 and Pixel 3 arm64 accepted 0.4.0 and HEAD release verdicts.
+  The comparison table and raw runs are in
+  `doc/archive/release-0.4.2/ra26-windows-release/README.md`.
+- `test/probe/probe_runner_test.dart` covers injected `SLOWER` and hash
+  mismatch controls; Windows HEAD repeated 24/24 `SAME`.
+- Validation: `pwsh -File tool/ci/vm.ps1` — 584/584 passed; `pwsh -File
+  tool/ci/windows.ps1` — smoke/contract, 123 reference cases, Windows release
+  build and native integration probes passed. Pixel 3 release runs: 0.4.0 and
+  HEAD, 24/24 each, all sample hashes stable.

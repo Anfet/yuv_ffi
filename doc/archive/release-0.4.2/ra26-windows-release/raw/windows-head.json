@@ -1,0 +1,1045 @@
+{
+  "schema": 1,
+  "status": "PASS",
+  "gitSha": "202c03b82347b2fb4895fd416b01935f33036d77",
+  "runId": "ecba047dff01421e9b99d76bdf2f0727",
+  "hostId": "windows-13th-gen-intel-r-core-tm-i9-13980hx-x64-release",
+  "buildMode": "release",
+  "environment": {
+    "valid": true
+  },
+  "runs": [
+    {
+      "id": "convert/i420-to-bgra/1920x1080",
+      "operation": "convert",
+      "scenario": "i420-to-bgra",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "bgra8888 1920x1080 e18afb9f785a9c4e",
+      "samplesMicros": [
+        35001,
+        35289,
+        35581,
+        35768,
+        36015,
+        36026,
+        36470,
+        38378,
+        40106
+      ],
+      "sampleHashes": [
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e"
+      ],
+      "medianMicros": 36015,
+      "spreadPercent": 14.174649451617382,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -80.51273449378562,
+      "thresholdPercent": 28.349298903234764,
+      "baseline": {
+        "hash": "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "medianMicros": 184813,
+        "spreadPercent": 8.659022904232927
+      }
+    },
+    {
+      "id": "convert/i420-to-bgra/720x360",
+      "operation": "convert",
+      "scenario": "i420-to-bgra",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "bgra8888 720x360 75bd97e2c1dab206",
+      "samplesMicros": [
+        5244,
+        5474,
+        5591,
+        5796,
+        5818,
+        5871,
+        5898,
+        6056,
+        6140
+      ],
+      "sampleHashes": [
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206"
+      ],
+      "medianMicros": 5818,
+      "spreadPercent": 15.400481265039533,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -76.40809375126719,
+      "thresholdPercent": 30.800962530079065,
+      "baseline": {
+        "hash": "bgra8888 720x360 75bd97e2c1dab206",
+        "medianMicros": 24661,
+        "spreadPercent": 4.038765662381898
+      }
+    },
+    {
+      "id": "blackWhite/i420-whole-frame/1920x1080",
+      "operation": "blackWhite",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 e036abee13fc63cf",
+      "samplesMicros": [
+        47658,
+        47731,
+        47858,
+        48222,
+        48381,
+        48632,
+        49760,
+        49984,
+        50691
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf"
+      ],
+      "medianMicros": 48381,
+      "spreadPercent": 6.268989892726483,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -88.86338943724219,
+      "thresholdPercent": 15.0,
+      "baseline": {
+        "hash": "i420 1920x1080 e036abee13fc63cf",
+        "medianMicros": 434432,
+        "spreadPercent": 6.718888111373011
+      }
+    },
+    {
+      "id": "blackWhite/i420-whole-frame/720x360",
+      "operation": "blackWhite",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 49ba235362491874",
+      "samplesMicros": [
+        6079,
+        6088,
+        6326,
+        6392,
+        6415,
+        6468,
+        6792,
+        6912,
+        7536
+      ],
+      "sampleHashes": [
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874"
+      ],
+      "medianMicros": 6415,
+      "spreadPercent": 22.712392829306314,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -88.96097191629956,
+      "thresholdPercent": 45.42478565861263,
+      "baseline": {
+        "hash": "i420 720x360 49ba235362491874",
+        "medianMicros": 58112,
+        "spreadPercent": 14.577023678414097
+      }
+    },
+    {
+      "id": "grayscale/i420-whole-frame/1920x1080",
+      "operation": "grayscale",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 8a5eac3fb7da0b3c",
+      "samplesMicros": [
+        46807,
+        47276,
+        47490,
+        48691,
+        48846,
+        49102,
+        49685,
+        52217,
+        53369
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c"
+      ],
+      "medianMicros": 48846,
+      "spreadPercent": 13.434058060025386,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -88.37285141977087,
+      "thresholdPercent": 26.86811612005077,
+      "baseline": {
+        "hash": "i420 1920x1080 8a5eac3fb7da0b3c",
+        "medianMicros": 420103,
+        "spreadPercent": 8.041361285208627
+      }
+    },
+    {
+      "id": "grayscale/i420-whole-frame/720x360",
+      "operation": "grayscale",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 e48567f56493cb9d",
+      "samplesMicros": [
+        5741,
+        5764,
+        5794,
+        5812,
+        5824,
+        5878,
+        5992,
+        6020,
+        6251
+      ],
+      "sampleHashes": [
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d"
+      ],
+      "medianMicros": 5824,
+      "spreadPercent": 8.756868131868131,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -88.89482114255206,
+      "thresholdPercent": 17.513736263736263,
+      "baseline": {
+        "hash": "i420 720x360 e48567f56493cb9d",
+        "medianMicros": 52444,
+        "spreadPercent": 0.9324231561284417
+      }
+    },
+    {
+      "id": "negate/i420-whole-frame/1920x1080",
+      "operation": "negate",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 92e8dff4e8e76143",
+      "samplesMicros": [
+        44025,
+        45141,
+        45753,
+        46631,
+        47301,
+        47355,
+        47803,
+        47977,
+        51065
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143"
+      ],
+      "medianMicros": 47301,
+      "spreadPercent": 14.88340627048054,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -88.9556155888307,
+      "thresholdPercent": 29.76681254096108,
+      "baseline": {
+        "hash": "i420 1920x1080 92e8dff4e8e76143",
+        "medianMicros": 428281,
+        "spreadPercent": 9.210074693950935
+      }
+    },
+    {
+      "id": "negate/i420-whole-frame/720x360",
+      "operation": "negate",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 329eeea5d8bce092",
+      "samplesMicros": [
+        5374,
+        5377,
+        5410,
+        5423,
+        5526,
+        5581,
+        5644,
+        5938,
+        6280
+      ],
+      "sampleHashes": [
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092"
+      ],
+      "medianMicros": 5526,
+      "spreadPercent": 16.395222584147664,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -89.55999319869264,
+      "thresholdPercent": 33.18282292040581,
+      "baseline": {
+        "hash": "i420 720x360 329eeea5d8bce092",
+        "medianMicros": 52931,
+        "spreadPercent": 16.591411460202906
+      }
+    },
+    {
+      "id": "gaussianBlur/i420-r3-s2/1920x1080",
+      "operation": "gaussianBlur",
+      "scenario": "i420-r3-s2",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 9b4c6f9794abcc8d",
+      "samplesMicros": [
+        398333,
+        398599,
+        402229,
+        403563,
+        406217,
+        406410,
+        407535,
+        410696,
+        431019
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d"
+      ],
+      "medianMicros": 406217,
+      "spreadPercent": 8.04643823375191,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -63.681497740246854,
+      "thresholdPercent": 16.09287646750382,
+      "baseline": {
+        "hash": "i420 1920x1080 9b4c6f9794abcc8d",
+        "medianMicros": 1118485,
+        "spreadPercent": 4.792554213959061
+      }
+    },
+    {
+      "id": "gaussianBlur/i420-r3-s2/720x360",
+      "operation": "gaussianBlur",
+      "scenario": "i420-r3-s2",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 c98f0805da5349e1",
+      "samplesMicros": [
+        48384,
+        48569,
+        49172,
+        49358,
+        49491,
+        49608,
+        51026,
+        52302,
+        53699
+      ],
+      "sampleHashes": [
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1"
+      ],
+      "medianMicros": 49491,
+      "spreadPercent": 10.739326342163222,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -64.12707847088329,
+      "thresholdPercent": 21.478652684326445,
+      "baseline": {
+        "hash": "i420 720x360 c98f0805da5349e1",
+        "medianMicros": 137962,
+        "spreadPercent": 6.533683188124266
+      }
+    },
+    {
+      "id": "meanBlur/i420-r2/1920x1080",
+      "operation": "meanBlur",
+      "scenario": "i420-r2",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 b5dcba8edf74413d",
+      "samplesMicros": [
+        100192,
+        100654,
+        100682,
+        101477,
+        101677,
+        102787,
+        104006,
+        104343,
+        104990
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d"
+      ],
+      "medianMicros": 101677,
+      "spreadPercent": 4.7188646399874115,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -80.7608105372108,
+      "thresholdPercent": 15.0,
+      "baseline": {
+        "hash": "i420 1920x1080 b5dcba8edf74413d",
+        "medianMicros": 528489,
+        "spreadPercent": 4.673134161732789
+      }
+    },
+    {
+      "id": "meanBlur/i420-r2/720x360",
+      "operation": "meanBlur",
+      "scenario": "i420-r2",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 ffd984f0b3354c2f",
+      "samplesMicros": [
+        11870,
+        11885,
+        11891,
+        11911,
+        11918,
+        12042,
+        12520,
+        13716,
+        13902
+      ],
+      "sampleHashes": [
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f"
+      ],
+      "medianMicros": 11918,
+      "spreadPercent": 17.04984057727807,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -81.9571865443425,
+      "thresholdPercent": 34.09968115455614,
+      "baseline": {
+        "hash": "i420 720x360 ffd984f0b3354c2f",
+        "medianMicros": 66054,
+        "spreadPercent": 7.330366064129349
+      }
+    },
+    {
+      "id": "boxBlur/i420-r2/1920x1080",
+      "operation": "boxBlur",
+      "scenario": "i420-r2",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 b5dcba8edf74413d",
+      "samplesMicros": [
+        97741,
+        99875,
+        100305,
+        100344,
+        100929,
+        102229,
+        102537,
+        102954,
+        104235
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d"
+      ],
+      "medianMicros": 100929,
+      "spreadPercent": 6.434226040087586,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -80.94003406768971,
+      "thresholdPercent": 15.0,
+      "baseline": {
+        "hash": "i420 1920x1080 b5dcba8edf74413d",
+        "medianMicros": 529534,
+        "spreadPercent": 5.4529076508779415
+      }
+    },
+    {
+      "id": "boxBlur/i420-r2/720x360",
+      "operation": "boxBlur",
+      "scenario": "i420-r2",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 ffd984f0b3354c2f",
+      "samplesMicros": [
+        11893,
+        11914,
+        12049,
+        12163,
+        12175,
+        12438,
+        12700,
+        12792,
+        12983
+      ],
+      "sampleHashes": [
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f"
+      ],
+      "medianMicros": 12175,
+      "spreadPercent": 8.952772073921972,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -81.02400249376558,
+      "thresholdPercent": 33.88403990024938,
+      "baseline": {
+        "hash": "i420 720x360 ffd984f0b3354c2f",
+        "medianMicros": 64160,
+        "spreadPercent": 16.94201995012469
+      }
+    },
+    {
+      "id": "crop/i420-inset-8/1920x1080",
+      "operation": "crop",
+      "scenario": "i420-inset-8",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1904x1064 7fc6bf0cee55f4d9",
+      "samplesMicros": [
+        8637,
+        8708,
+        8833,
+        8930,
+        8937,
+        9062,
+        9136,
+        9580,
+        9622
+      ],
+      "sampleHashes": [
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9"
+      ],
+      "medianMicros": 8937,
+      "spreadPercent": 11.02159561374063,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -91.93163967282379,
+      "thresholdPercent": 22.04319122748126,
+      "baseline": {
+        "hash": "i420 1904x1064 7fc6bf0cee55f4d9",
+        "medianMicros": 110766,
+        "spreadPercent": 4.065326905368074
+      }
+    },
+    {
+      "id": "crop/i420-inset-8/720x360",
+      "operation": "crop",
+      "scenario": "i420-inset-8",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 704x344 7beaffe35e9680ac",
+      "samplesMicros": [
+        819,
+        858,
+        862,
+        869,
+        876,
+        876,
+        1220,
+        1486,
+        1730
+      ],
+      "sampleHashes": [
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac"
+      ],
+      "medianMicros": 876,
+      "spreadPercent": 103.99543378995433,
+      "verdict": "PASS",
+      "comparison": "SAME",
+      "deltaPercent": -93.27240611320175,
+      "thresholdPercent": 207.99086757990867,
+      "baseline": {
+        "hash": "i420 704x344 7beaffe35e9680ac",
+        "medianMicros": 13021,
+        "spreadPercent": 11.304815298364181
+      }
+    },
+    {
+      "id": "flipHorizontal/i420-whole-frame/1920x1080",
+      "operation": "flipHorizontal",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 6fc5fd224ea42eb7",
+      "samplesMicros": [
+        13276,
+        13712,
+        13734,
+        13814,
+        14442,
+        14685,
+        14927,
+        14937,
+        15405
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7"
+      ],
+      "medianMicros": 14442,
+      "spreadPercent": 14.741725522780778,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -87.41405004052393,
+      "thresholdPercent": 29.483451045561555,
+      "baseline": {
+        "hash": "i420 1920x1080 6fc5fd224ea42eb7",
+        "medianMicros": 114747,
+        "spreadPercent": 7.25683460134034
+      }
+    },
+    {
+      "id": "flipHorizontal/i420-whole-frame/720x360",
+      "operation": "flipHorizontal",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 e981f4c29b458e0d",
+      "samplesMicros": [
+        1553,
+        1570,
+        1588,
+        1597,
+        1622,
+        1687,
+        1691,
+        1704,
+        2102
+      ],
+      "sampleHashes": [
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d"
+      ],
+      "medianMicros": 1622,
+      "spreadPercent": 33.847102342786684,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -88.3468639988505,
+      "thresholdPercent": 67.69420468557337,
+      "baseline": {
+        "hash": "i420 720x360 e981f4c29b458e0d",
+        "medianMicros": 13919,
+        "spreadPercent": 15.848839715496803
+      }
+    },
+    {
+      "id": "flipVertical/i420-whole-frame/1920x1080",
+      "operation": "flipVertical",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 0541884e573708f1",
+      "samplesMicros": [
+        7011,
+        7575,
+        7609,
+        7644,
+        7661,
+        7666,
+        7684,
+        8934,
+        13877
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1"
+      ],
+      "medianMicros": 7661,
+      "spreadPercent": 89.62276465213418,
+      "verdict": "PASS",
+      "comparison": "SAME",
+      "deltaPercent": -93.16769078472117,
+      "thresholdPercent": 179.24552930426836,
+      "baseline": {
+        "hash": "i420 1920x1080 0541884e573708f1",
+        "medianMicros": 112129,
+        "spreadPercent": 5.783517198940506
+      }
+    },
+    {
+      "id": "flipVertical/i420-whole-frame/720x360",
+      "operation": "flipVertical",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 955aea9672b9f0da",
+      "samplesMicros": [
+        777,
+        802,
+        833,
+        852,
+        869,
+        875,
+        875,
+        923,
+        1006
+      ],
+      "sampleHashes": [
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da"
+      ],
+      "medianMicros": 869,
+      "spreadPercent": 26.352128883774455,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -93.73829082000289,
+      "thresholdPercent": 52.70425776754891,
+      "baseline": {
+        "hash": "i420 720x360 955aea9672b9f0da",
+        "medianMicros": 13878,
+        "spreadPercent": 10.916558581928232
+      }
+    },
+    {
+      "id": "rotate/i420-90/1920x1080",
+      "operation": "rotate",
+      "scenario": "i420-90",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1080x1920 7b8cf30b010a2ec7",
+      "samplesMicros": [
+        17659,
+        18228,
+        19084,
+        19324,
+        19911,
+        19974,
+        20089,
+        20227,
+        22402
+      ],
+      "sampleHashes": [
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7"
+      ],
+      "medianMicros": 19911,
+      "spreadPercent": 23.821003465421125,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -82.99179102565198,
+      "thresholdPercent": 47.64200693084225,
+      "baseline": {
+        "hash": "i420 1080x1920 7b8cf30b010a2ec7",
+        "medianMicros": 117067,
+        "spreadPercent": 5.83939111790684
+      }
+    },
+    {
+      "id": "rotate/i420-90/720x360",
+      "operation": "rotate",
+      "scenario": "i420-90",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 360x720 f2845313802b3ece",
+      "samplesMicros": [
+        2002,
+        2007,
+        2022,
+        2027,
+        2044,
+        2069,
+        2069,
+        2091,
+        2220
+      ],
+      "sampleHashes": [
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece"
+      ],
+      "medianMicros": 2044,
+      "spreadPercent": 10.66536203522505,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -86.39057194220653,
+      "thresholdPercent": 40.3089420067914,
+      "baseline": {
+        "hash": "i420 360x720 f2845313802b3ece",
+        "medianMicros": 15019,
+        "spreadPercent": 20.1544710033957
+      }
+    },
+    {
+      "id": "chromaSwap/nv12-whole-frame/1920x1080",
+      "operation": "chromaSwap",
+      "scenario": "nv12-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "nv12 1920x1080 5a32d5c5b06c94e9",
+      "samplesMicros": [
+        8003,
+        8640,
+        8653,
+        8734,
+        9024,
+        9117,
+        9391,
+        9641,
+        10573
+      ],
+      "sampleHashes": [
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9"
+      ],
+      "medianMicros": 9024,
+      "spreadPercent": 28.479609929078013,
+      "verdict": "PASS",
+      "comparison": "FASTER",
+      "deltaPercent": -89.95614718518354,
+      "thresholdPercent": 56.959219858156025,
+      "baseline": {
+        "hash": "nv12 1920x1080 5a32d5c5b06c94e9",
+        "medianMicros": 89846,
+        "spreadPercent": 7.253522694388176
+      }
+    },
+    {
+      "id": "chromaSwap/nv12-whole-frame/720x360",
+      "operation": "chromaSwap",
+      "scenario": "nv12-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "nv12 720x360 bfbbed6b79afd492",
+      "samplesMicros": [
+        665,
+        829,
+        864,
+        864,
+        868,
+        892,
+        986,
+        1352,
+        1581
+      ],
+      "sampleHashes": [
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492"
+      ],
+      "medianMicros": 868,
+      "spreadPercent": 105.52995391705069,
+      "verdict": "PASS",
+      "comparison": "SAME",
+      "deltaPercent": -91.96147434710132,
+      "thresholdPercent": 211.05990783410138,
+      "baseline": {
+        "hash": "nv12 720x360 bfbbed6b79afd492",
+        "medianMicros": 10798,
+        "spreadPercent": 18.09594369327653
+      }
+    }
+  ]
+}
