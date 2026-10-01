@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "status": "PASS",
+  "runId": "316fdf35eb604116b62865d4a03119bb",
+  "appCommit": "3c0011f1c88481af9d241be26a75dd7194f1d3a4",
+  "package": {
+    "appGitSha": "3c0011f1c88481af9d241be26a75dd7194f1d3a4",
+    "packageConfigEntry": {
+      "name": "yuv_ffi",
+      "rootUri": "file:///D:/.projects/yuv_ffi/.worktrees/PROBE-1-0.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    "resolvedPackageRoot": "D:\\.projects\\yuv_ffi\\.worktrees\\PROBE-1-0.4.0",
+    "packageRevision": "d5d78eb04cf0b276dbc0a1ba869cd7152daab8f9",
+    "packageOverridden": true,
+    "packageConfigPath": "D:\\.projects\\yuv_ffi\\.worktrees\\PROBE-1-head-clean\\example\\.dart_tool\\package_config.json"
+  },
+  "host": {
+    "cpuModel": "13th Gen Intel(R) Core(TM) i9-13980HX",
+    "hostId": "windows-13th-gen-intel-r-core-tm-i9-13980hx-x64-release"
+  },
+  "artifacts": {
+    "releaseDirectory": "D:\\.projects\\yuv_ffi\\.worktrees\\PROBE-1-head-clean\\example\\build\\windows\\x64\\runner\\Release",
+    "executablePath": "D:\\.projects\\yuv_ffi\\.worktrees\\PROBE-1-head-clean\\example\\build\\windows\\x64\\runner\\Release\\example.exe",
+    "executableSha256": "c7dc22ef72848629adac674a9a734bb732243550e94a49c13547ef2aaf739e8f",
+    "dllPath": "D:\\.projects\\yuv_ffi\\.worktrees\\PROBE-1-head-clean\\example\\build\\windows\\x64\\runner\\Release\\yuv_ffi.dll",
+    "dllSha256": "769f2d45d662759b8870b71d22efa1042fbfc3e200ebfb64eadffe7ea0989cae"
+  },
+  "verdict": {
+    "path": "C:\\Users\\Oleg-T\\AppData\\Local\\Temp\\yuv_ffi-ra26-probe1-3c0011f-clean-baseline\\ra26-windows-release-316fdf35eb604116b62865d4a03119bb.json",
+    "sha256": "c0f9dff76d703a49489bf92ed274b5865d453763a3f9c834f891f5f02af464a8",
+    "runId": "316fdf35eb604116b62865d4a03119bb"
+  },
+  "power": {
+    "beforeLaunch": {
+      "schemeGuid": "381b4222-f694-41f0-9685-ff5bb260df2e",
+      "schemeName": "Balanced",
+      "schemeRaw": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+      "batteryStatus": [
+        {
+          "instanceName": "ACPI\\PNP0C0A\\1_0",
+          "powerOnline": true,
+          "discharging": false
+        }
+      ]
+    },
+    "afterExit": {
+      "schemeGuid": "381b4222-f694-41f0-9685-ff5bb260df2e",
+      "schemeName": "Balanced",
+      "schemeRaw": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+      "batteryStatus": [
+        {
+          "instanceName": "ACPI\\PNP0C0A\\1_0",
+          "powerOnline": true,
+          "discharging": false
+        }
+      ]
+    }
+  },
+  "sourceVerified": true,
+  "baselinePath": null,
+  "scenarioCount": 24
+}
