@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "status": "PASS",
-  "gitSha": "202c03b82347b2fb4895fd416b01935f33036d77",
-  "runId": "04cc98da2b2f457c85205950224a0f86",
+  "gitSha": "3c0011f1c88481af9d241be26a75dd7194f1d3a4",
+  "runId": "3632b07c20c04b199f51b49bb54e631d",
   "hostId": "windows-13th-gen-intel-r-core-tm-i9-13980hx-x64-release",
   "buildMode": "release",
   "environment": {
@@ -19,15 +19,15 @@
       },
       "hash": "bgra8888 1920x1080 e18afb9f785a9c4e",
       "samplesMicros": [
-        35934,
-        37323,
-        37640,
-        37826,
-        37892,
-        38105,
-        38373,
-        38709,
-        44531
+        35051,
+        35403,
+        35407,
+        36235,
+        37534,
+        37901,
+        38031,
+        38208,
+        39477
       ],
       "sampleHashes": [
         "bgra8888 1920x1080 e18afb9f785a9c4e",
@@ -40,16 +40,16 @@
         "bgra8888 1920x1080 e18afb9f785a9c4e",
         "bgra8888 1920x1080 e18afb9f785a9c4e"
       ],
-      "medianMicros": 37892,
-      "spreadPercent": 22.68816636757099,
+      "medianMicros": 37534,
+      "spreadPercent": 11.791975275749987,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 5.211717339997223,
-      "thresholdPercent": 45.37633273514198,
+      "deltaPercent": 1.6465363158749933,
+      "thresholdPercent": 60.36938742349564,
       "baseline": {
         "hash": "bgra8888 1920x1080 e18afb9f785a9c4e",
-        "medianMicros": 36015,
-        "spreadPercent": 14.174649451617382
+        "medianMicros": 36926,
+        "spreadPercent": 30.18469371174782
       }
     },
     {
@@ -62,15 +62,15 @@
       },
       "hash": "bgra8888 720x360 75bd97e2c1dab206",
       "samplesMicros": [
-        5357,
-        5380,
-        5527,
-        5743,
-        5978,
-        6065,
-        6722,
-        6995,
-        8046
+        4937,
+        5231,
+        5245,
+        5263,
+        5430,
+        5457,
+        5462,
+        5506,
+        5561
       ],
       "sampleHashes": [
         "bgra8888 720x360 75bd97e2c1dab206",
@@ -83,16 +83,16 @@
         "bgra8888 720x360 75bd97e2c1dab206",
         "bgra8888 720x360 75bd97e2c1dab206"
       ],
-      "medianMicros": 5978,
-      "spreadPercent": 44.98159919705587,
+      "medianMicros": 5430,
+      "spreadPercent": 11.491712707182321,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 2.750085940185631,
-      "thresholdPercent": 89.96319839411174,
+      "deltaPercent": -2.232625135037811,
+      "thresholdPercent": 29.09614692113792,
       "baseline": {
         "hash": "bgra8888 720x360 75bd97e2c1dab206",
-        "medianMicros": 5818,
-        "spreadPercent": 15.400481265039533
+        "medianMicros": 5554,
+        "spreadPercent": 14.54807346056896
       }
     },
     {
@@ -105,15 +105,15 @@
       },
       "hash": "i420 1920x1080 e036abee13fc63cf",
       "samplesMicros": [
-        47958,
-        48125,
-        48481,
-        49326,
-        49449,
-        49746,
-        50275,
-        50728,
-        50737
+        47337,
+        47384,
+        47614,
+        48430,
+        48810,
+        49430,
+        50729,
+        51215,
+        51728
       ],
       "sampleHashes": [
         "i420 1920x1080 e036abee13fc63cf",
@@ -126,16 +126,16 @@
         "i420 1920x1080 e036abee13fc63cf",
         "i420 1920x1080 e036abee13fc63cf"
       ],
-      "medianMicros": 49449,
-      "spreadPercent": 5.619931646747154,
+      "medianMicros": 48810,
+      "spreadPercent": 8.996107355050194,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 2.207478142245923,
-      "thresholdPercent": 15.0,
+      "deltaPercent": 1.6112915313514864,
+      "thresholdPercent": 17.992214710100388,
       "baseline": {
         "hash": "i420 1920x1080 e036abee13fc63cf",
-        "medianMicros": 48381,
-        "spreadPercent": 6.268989892726483
+        "medianMicros": 48036,
+        "spreadPercent": 7.244566575068698
       }
     },
     {
@@ -148,15 +148,15 @@
       },
       "hash": "i420 720x360 49ba235362491874",
       "samplesMicros": [
-        5843,
-        5884,
-        5884,
-        5925,
-        6050,
-        6369,
-        6529,
-        6535,
-        6874
+        5878,
+        5928,
+        5942,
+        6023,
+        6089,
+        6095,
+        6203,
+        6358,
+        6373
       ],
       "sampleHashes": [
         "i420 720x360 49ba235362491874",
@@ -169,16 +169,16 @@
         "i420 720x360 49ba235362491874",
         "i420 720x360 49ba235362491874"
       ],
-      "medianMicros": 6050,
-      "spreadPercent": 17.041322314049587,
+      "medianMicros": 6089,
+      "spreadPercent": 8.12941369683035,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -5.689789555728761,
-      "thresholdPercent": 45.42478565861263,
+      "deltaPercent": -3.333862517859978,
+      "thresholdPercent": 36.54548341006509,
       "baseline": {
         "hash": "i420 720x360 49ba235362491874",
-        "medianMicros": 6415,
-        "spreadPercent": 22.712392829306314
+        "medianMicros": 6299,
+        "spreadPercent": 18.272741705032544
       }
     },
     {
@@ -191,15 +191,15 @@
       },
       "hash": "i420 1920x1080 8a5eac3fb7da0b3c",
       "samplesMicros": [
-        47026,
-        47640,
-        47794,
-        47866,
-        48496,
-        49394,
-        50349,
-        50446,
-        52064
+        46395,
+        46524,
+        46531,
+        46547,
+        47258,
+        48399,
+        49363,
+        49655,
+        49704
       ],
       "sampleHashes": [
         "i420 1920x1080 8a5eac3fb7da0b3c",
@@ -212,16 +212,16 @@
         "i420 1920x1080 8a5eac3fb7da0b3c",
         "i420 1920x1080 8a5eac3fb7da0b3c"
       ],
-      "medianMicros": 48496,
-      "spreadPercent": 10.388485648300891,
+      "medianMicros": 47258,
+      "spreadPercent": 7.001989081213763,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -0.7165376898824878,
-      "thresholdPercent": 26.86811612005077,
+      "deltaPercent": -1.4678286977190276,
+      "thresholdPercent": 15.808348275718277,
       "baseline": {
         "hash": "i420 1920x1080 8a5eac3fb7da0b3c",
-        "medianMicros": 48846,
-        "spreadPercent": 13.434058060025386
+        "medianMicros": 47962,
+        "spreadPercent": 7.904174137859139
       }
     },
     {
@@ -234,15 +234,15 @@
       },
       "hash": "i420 720x360 e48567f56493cb9d",
       "samplesMicros": [
-        5679,
-        5741,
-        5849,
-        5896,
-        5902,
-        5948,
-        6510,
-        6684,
-        9070
+        5702,
+        5740,
+        5763,
+        5773,
+        5867,
+        5911,
+        6068,
+        6452,
+        6508
       ],
       "sampleHashes": [
         "i420 720x360 e48567f56493cb9d",
@@ -255,16 +255,16 @@
         "i420 720x360 e48567f56493cb9d",
         "i420 720x360 e48567f56493cb9d"
       ],
-      "medianMicros": 5902,
-      "spreadPercent": 57.45509996611318,
+      "medianMicros": 5867,
+      "spreadPercent": 13.73785580364752,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 1.3392857142857142,
-      "thresholdPercent": 114.91019993222636,
+      "deltaPercent": 1.9815748305232053,
+      "thresholdPercent": 27.47571160729504,
       "baseline": {
         "hash": "i420 720x360 e48567f56493cb9d",
-        "medianMicros": 5824,
-        "spreadPercent": 8.756868131868131
+        "medianMicros": 5753,
+        "spreadPercent": 2.972362245784808
       }
     },
     {
@@ -277,15 +277,15 @@
       },
       "hash": "i420 1920x1080 92e8dff4e8e76143",
       "samplesMicros": [
-        43433,
-        43575,
-        44256,
-        45252,
-        45428,
-        45976,
-        46184,
-        46985,
-        48876
+        42453,
+        42571,
+        42730,
+        42868,
+        44402,
+        45268,
+        45517,
+        45972,
+        46091
       ],
       "sampleHashes": [
         "i420 1920x1080 92e8dff4e8e76143",
@@ -298,16 +298,16 @@
         "i420 1920x1080 92e8dff4e8e76143",
         "i420 1920x1080 92e8dff4e8e76143"
       ],
-      "medianMicros": 45428,
-      "spreadPercent": 11.981597252795632,
+      "medianMicros": 44402,
+      "spreadPercent": 8.19332462501689,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -3.9597471512230187,
-      "thresholdPercent": 29.76681254096108,
+      "deltaPercent": 0.8700788295963107,
+      "thresholdPercent": 19.718757809127876,
       "baseline": {
         "hash": "i420 1920x1080 92e8dff4e8e76143",
-        "medianMicros": 47301,
-        "spreadPercent": 14.88340627048054
+        "medianMicros": 44019,
+        "spreadPercent": 9.859378904563938
       }
     },
     {
@@ -320,15 +320,15 @@
       },
       "hash": "i420 720x360 329eeea5d8bce092",
       "samplesMicros": [
-        5353,
-        5362,
-        5380,
-        5539,
-        5544,
-        5637,
-        5882,
-        6345,
-        6543
+        5438,
+        5452,
+        5507,
+        5671,
+        5705,
+        5743,
+        5825,
+        5956,
+        6055
       ],
       "sampleHashes": [
         "i420 720x360 329eeea5d8bce092",
@@ -341,16 +341,16 @@
         "i420 720x360 329eeea5d8bce092",
         "i420 720x360 329eeea5d8bce092"
       ],
-      "medianMicros": 5544,
-      "spreadPercent": 21.464646464646464,
+      "medianMicros": 5705,
+      "spreadPercent": 10.815074496056091,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 0.3257328990228013,
-      "thresholdPercent": 42.92929292929293,
+      "deltaPercent": 1.639052200249421,
+      "thresholdPercent": 27.47194013896312,
       "baseline": {
         "hash": "i420 720x360 329eeea5d8bce092",
-        "medianMicros": 5526,
-        "spreadPercent": 16.395222584147664
+        "medianMicros": 5613,
+        "spreadPercent": 13.73597006948156
       }
     },
     {
@@ -363,15 +363,15 @@
       },
       "hash": "i420 1920x1080 9b4c6f9794abcc8d",
       "samplesMicros": [
-        389706,
-        390677,
-        395559,
-        395727,
-        400815,
-        412471,
-        413280,
-        418076,
-        425207
+        379914,
+        380063,
+        380248,
+        380975,
+        381052,
+        382286,
+        391803,
+        401392,
+        404977
       ],
       "sampleHashes": [
         "i420 1920x1080 9b4c6f9794abcc8d",
@@ -384,16 +384,16 @@
         "i420 1920x1080 9b4c6f9794abcc8d",
         "i420 1920x1080 9b4c6f9794abcc8d"
       ],
-      "medianMicros": 400815,
-      "spreadPercent": 8.85720344797475,
+      "medianMicros": 381052,
+      "spreadPercent": 6.577317531465522,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -1.3298311001262872,
-      "thresholdPercent": 17.7144068959495,
+      "deltaPercent": -3.2420902950586563,
+      "thresholdPercent": 15.0,
       "baseline": {
         "hash": "i420 1920x1080 9b4c6f9794abcc8d",
-        "medianMicros": 406217,
-        "spreadPercent": 8.04643823375191
+        "medianMicros": 393820,
+        "spreadPercent": 4.900969986288152
       }
     },
     {
@@ -406,15 +406,15 @@
       },
       "hash": "i420 720x360 c98f0805da5349e1",
       "samplesMicros": [
-        47518,
-        47675,
-        48200,
-        48421,
-        48456,
-        48527,
-        48718,
-        49398,
-        50573
+        47329,
+        47350,
+        47445,
+        47474,
+        47618,
+        47621,
+        48119,
+        50383,
+        50934
       ],
       "sampleHashes": [
         "i420 720x360 c98f0805da5349e1",
@@ -427,16 +427,16 @@
         "i420 720x360 c98f0805da5349e1",
         "i420 720x360 c98f0805da5349e1"
       ],
-      "medianMicros": 48456,
-      "spreadPercent": 6.304688789829949,
+      "medianMicros": 47618,
+      "spreadPercent": 7.570666554664203,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -2.0912893253318785,
-      "thresholdPercent": 21.478652684326445,
+      "deltaPercent": -3.1406370774175176,
+      "thresholdPercent": 22.688255156421626,
       "baseline": {
         "hash": "i420 720x360 c98f0805da5349e1",
-        "medianMicros": 49491,
-        "spreadPercent": 10.739326342163222
+        "medianMicros": 49162,
+        "spreadPercent": 11.344127578210813
       }
     },
     {
@@ -449,15 +449,15 @@
       },
       "hash": "i420 1920x1080 b5dcba8edf74413d",
       "samplesMicros": [
-        98126,
-        99209,
-        99350,
-        99538,
-        100543,
-        100726,
-        101462,
-        101606,
-        110267
+        95749,
+        95905,
+        96035,
+        96453,
+        96712,
+        97261,
+        99016,
+        101022,
+        102684
       ],
       "sampleHashes": [
         "i420 1920x1080 b5dcba8edf74413d",
@@ -470,16 +470,16 @@
         "i420 1920x1080 b5dcba8edf74413d",
         "i420 1920x1080 b5dcba8edf74413d"
       ],
-      "medianMicros": 100543,
-      "spreadPercent": 12.07543041285818,
+      "medianMicros": 96712,
+      "spreadPercent": 7.170775084787824,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -1.1152964780628853,
-      "thresholdPercent": 24.15086082571636,
+      "deltaPercent": -1.3022002694207453,
+      "thresholdPercent": 17.077601338939463,
       "baseline": {
         "hash": "i420 1920x1080 b5dcba8edf74413d",
-        "medianMicros": 101677,
-        "spreadPercent": 4.7188646399874115
+        "medianMicros": 97988,
+        "spreadPercent": 8.538800669469731
       }
     },
     {
@@ -492,15 +492,15 @@
       },
       "hash": "i420 720x360 ffd984f0b3354c2f",
       "samplesMicros": [
-        11859,
-        11869,
-        11878,
-        11895,
-        11932,
-        11996,
-        12003,
-        12065,
-        12636
+        11788,
+        11791,
+        11793,
+        11811,
+        11842,
+        11847,
+        11879,
+        11900,
+        11985
       ],
       "sampleHashes": [
         "i420 720x360 ffd984f0b3354c2f",
@@ -513,16 +513,16 @@
         "i420 720x360 ffd984f0b3354c2f",
         "i420 720x360 ffd984f0b3354c2f"
       ],
-      "medianMicros": 11932,
-      "spreadPercent": 6.51190077103587,
+      "medianMicros": 11842,
+      "spreadPercent": 1.663570342847492,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 0.11746937405604967,
-      "thresholdPercent": 34.09968115455614,
+      "deltaPercent": -3.926659094596787,
+      "thresholdPercent": 146.35729352588027,
       "baseline": {
         "hash": "i420 720x360 ffd984f0b3354c2f",
-        "medianMicros": 11918,
-        "spreadPercent": 17.04984057727807
+        "medianMicros": 12326,
+        "spreadPercent": 73.17864676294013
       }
     },
     {
@@ -535,15 +535,15 @@
       },
       "hash": "i420 1920x1080 b5dcba8edf74413d",
       "samplesMicros": [
-        97001,
-        98379,
-        98803,
-        100107,
-        100321,
-        100991,
-        101065,
-        101894,
-        107237
+        96230,
+        96416,
+        96668,
+        96681,
+        97121,
+        100758,
+        102220,
+        102644,
+        104827
       ],
       "sampleHashes": [
         "i420 1920x1080 b5dcba8edf74413d",
@@ -556,16 +556,16 @@
         "i420 1920x1080 b5dcba8edf74413d",
         "i420 1920x1080 b5dcba8edf74413d"
       ],
-      "medianMicros": 100321,
-      "spreadPercent": 10.20324757528334,
+      "medianMicros": 97121,
+      "spreadPercent": 8.851844606212868,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -0.602403669906568,
-      "thresholdPercent": 20.40649515056668,
+      "deltaPercent": -2.737970056582044,
+      "thresholdPercent": 35.23108507335637,
       "baseline": {
         "hash": "i420 1920x1080 b5dcba8edf74413d",
-        "medianMicros": 100929,
-        "spreadPercent": 6.434226040087586
+        "medianMicros": 99855,
+        "spreadPercent": 17.615542536678184
       }
     },
     {
@@ -578,15 +578,15 @@
       },
       "hash": "i420 720x360 ffd984f0b3354c2f",
       "samplesMicros": [
-        12096,
-        12457,
-        12575,
-        12671,
-        12701,
-        12769,
-        13017,
-        13192,
-        13953
+        11817,
+        11827,
+        11862,
+        11965,
+        12714,
+        13531,
+        13582,
+        14155,
+        14695
       ],
       "sampleHashes": [
         "i420 720x360 ffd984f0b3354c2f",
@@ -599,16 +599,16 @@
         "i420 720x360 ffd984f0b3354c2f",
         "i420 720x360 ffd984f0b3354c2f"
       ],
-      "medianMicros": 12701,
-      "spreadPercent": 14.62089599244154,
+      "medianMicros": 12714,
+      "spreadPercent": 22.63646374075822,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 4.3203285420944555,
-      "thresholdPercent": 29.24179198488308,
+      "deltaPercent": -2.1924763443341795,
+      "thresholdPercent": 70.39003000230787,
       "baseline": {
         "hash": "i420 720x360 ffd984f0b3354c2f",
-        "medianMicros": 12175,
-        "spreadPercent": 8.952772073921972
+        "medianMicros": 12999,
+        "spreadPercent": 35.195015001153934
       }
     },
     {
@@ -621,15 +621,15 @@
       },
       "hash": "i420 1904x1064 7fc6bf0cee55f4d9",
       "samplesMicros": [
-        8981,
-        9003,
-        9065,
-        9454,
-        9469,
-        9504,
-        9741,
-        10498,
-        12539
+        8440,
+        8501,
+        8604,
+        9115,
+        9183,
+        9191,
+        10120,
+        11927,
+        14058
       ],
       "sampleHashes": [
         "i420 1904x1064 7fc6bf0cee55f4d9",
@@ -642,16 +642,16 @@
         "i420 1904x1064 7fc6bf0cee55f4d9",
         "i420 1904x1064 7fc6bf0cee55f4d9"
       ],
-      "medianMicros": 9469,
-      "spreadPercent": 37.5752455380716,
+      "medianMicros": 9183,
+      "spreadPercent": 61.17826418381792,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 5.952780575137071,
-      "thresholdPercent": 75.1504910761432,
+      "deltaPercent": 0.06538084341288003,
+      "thresholdPercent": 122.35652836763585,
       "baseline": {
         "hash": "i420 1904x1064 7fc6bf0cee55f4d9",
-        "medianMicros": 8937,
-        "spreadPercent": 11.02159561374063
+        "medianMicros": 9177,
+        "spreadPercent": 23.55889724310777
       }
     },
     {
@@ -664,15 +664,15 @@
       },
       "hash": "i420 704x344 7beaffe35e9680ac",
       "samplesMicros": [
-        804,
-        809,
-        812,
-        814,
-        818,
-        820,
-        825,
-        827,
-        833
+        765,
+        766,
+        782,
+        790,
+        792,
+        816,
+        901,
+        942,
+        961
       ],
       "sampleHashes": [
         "i420 704x344 7beaffe35e9680ac",
@@ -685,16 +685,16 @@
         "i420 704x344 7beaffe35e9680ac",
         "i420 704x344 7beaffe35e9680ac"
       ],
-      "medianMicros": 818,
-      "spreadPercent": 3.545232273838631,
+      "medianMicros": 792,
+      "spreadPercent": 24.747474747474747,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -6.621004566210046,
-      "thresholdPercent": 207.99086757990867,
+      "deltaPercent": -7.259953161592506,
+      "thresholdPercent": 49.494949494949495,
       "baseline": {
         "hash": "i420 704x344 7beaffe35e9680ac",
-        "medianMicros": 876,
-        "spreadPercent": 103.99543378995433
+        "medianMicros": 854,
+        "spreadPercent": 22.014051522248245
       }
     },
     {
@@ -707,15 +707,15 @@
       },
       "hash": "i420 1920x1080 6fc5fd224ea42eb7",
       "samplesMicros": [
-        13575,
-        13636,
-        13773,
-        13875,
-        13905,
-        14046,
-        14694,
-        15083,
-        16346
+        12919,
+        13174,
+        13219,
+        13292,
+        13491,
+        13737,
+        13801,
+        14180,
+        14290
       ],
       "sampleHashes": [
         "i420 1920x1080 6fc5fd224ea42eb7",
@@ -728,16 +728,16 @@
         "i420 1920x1080 6fc5fd224ea42eb7",
         "i420 1920x1080 6fc5fd224ea42eb7"
       ],
-      "medianMicros": 13905,
-      "spreadPercent": 19.928083423229054,
+      "medianMicros": 13491,
+      "spreadPercent": 10.162330442517234,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -3.718321562110511,
-      "thresholdPercent": 39.85616684645811,
+      "deltaPercent": -3.9923142613151152,
+      "thresholdPercent": 25.619128949615714,
       "baseline": {
         "hash": "i420 1920x1080 6fc5fd224ea42eb7",
-        "medianMicros": 14442,
-        "spreadPercent": 14.741725522780778
+        "medianMicros": 14052,
+        "spreadPercent": 12.809564474807857
       }
     },
     {
@@ -750,15 +750,15 @@
       },
       "hash": "i420 720x360 e981f4c29b458e0d",
       "samplesMicros": [
-        1529,
-        1560,
-        1594,
-        1600,
-        1699,
-        1735,
-        1780,
-        1829,
-        1962
+        1482,
+        1485,
+        1498,
+        1519,
+        1522,
+        1526,
+        1574,
+        1697,
+        2163
       ],
       "sampleHashes": [
         "i420 720x360 e981f4c29b458e0d",
@@ -771,16 +771,16 @@
         "i420 720x360 e981f4c29b458e0d",
         "i420 720x360 e981f4c29b458e0d"
       ],
-      "medianMicros": 1699,
-      "spreadPercent": 25.48557975279576,
+      "medianMicros": 1522,
+      "spreadPercent": 44.74375821287779,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 4.747225647348952,
-      "thresholdPercent": 67.69420468557337,
+      "deltaPercent": -3.1190324633991087,
+      "thresholdPercent": 89.48751642575559,
       "baseline": {
         "hash": "i420 720x360 e981f4c29b458e0d",
-        "medianMicros": 1622,
-        "spreadPercent": 33.847102342786684
+        "medianMicros": 1571,
+        "spreadPercent": 20.68746021642266
       }
     },
     {
@@ -793,15 +793,15 @@
       },
       "hash": "i420 1920x1080 0541884e573708f1",
       "samplesMicros": [
-        7537,
-        7782,
-        8001,
-        8046,
-        8081,
-        8426,
-        8757,
-        9167,
-        10980
+        6997,
+        7038,
+        7122,
+        7444,
+        7492,
+        7809,
+        7866,
+        8159,
+        8648
       ],
       "sampleHashes": [
         "i420 1920x1080 0541884e573708f1",
@@ -814,16 +814,16 @@
         "i420 1920x1080 0541884e573708f1",
         "i420 1920x1080 0541884e573708f1"
       ],
-      "medianMicros": 8081,
-      "spreadPercent": 42.60611310481376,
+      "medianMicros": 7492,
+      "spreadPercent": 22.036839295248264,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 5.482313013966845,
-      "thresholdPercent": 179.24552930426836,
+      "deltaPercent": 3.4663720480596605,
+      "thresholdPercent": 44.07367859049653,
       "baseline": {
         "hash": "i420 1920x1080 0541884e573708f1",
-        "medianMicros": 7661,
-        "spreadPercent": 89.62276465213418
+        "medianMicros": 7241,
+        "spreadPercent": 12.88496064079547
       }
     },
     {
@@ -836,15 +836,15 @@
       },
       "hash": "i420 720x360 955aea9672b9f0da",
       "samplesMicros": [
-        827,
-        848,
-        855,
-        860,
-        886,
-        1009,
-        1028,
-        1164,
-        1167
+        764,
+        776,
+        778,
+        780,
+        805,
+        819,
+        871,
+        896,
+        913
       ],
       "sampleHashes": [
         "i420 720x360 955aea9672b9f0da",
@@ -857,16 +857,16 @@
         "i420 720x360 955aea9672b9f0da",
         "i420 720x360 955aea9672b9f0da"
       ],
-      "medianMicros": 886,
-      "spreadPercent": 38.37471783295711,
+      "medianMicros": 805,
+      "spreadPercent": 18.509316770186334,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 1.9562715765247412,
-      "thresholdPercent": 76.74943566591422,
+      "deltaPercent": -8.209806157354619,
+      "thresholdPercent": 212.9988597491448,
       "baseline": {
         "hash": "i420 720x360 955aea9672b9f0da",
-        "medianMicros": 869,
-        "spreadPercent": 26.352128883774455
+        "medianMicros": 877,
+        "spreadPercent": 106.4994298745724
       }
     },
     {
@@ -879,15 +879,15 @@
       },
       "hash": "i420 1080x1920 7b8cf30b010a2ec7",
       "samplesMicros": [
-        17579,
-        18240,
-        18440,
-        19026,
-        19211,
-        19341,
-        19706,
-        20664,
-        20892
+        17673,
+        17763,
+        17791,
+        17930,
+        18029,
+        18177,
+        18264,
+        19044,
+        21322
       ],
       "sampleHashes": [
         "i420 1080x1920 7b8cf30b010a2ec7",
@@ -900,16 +900,16 @@
         "i420 1080x1920 7b8cf30b010a2ec7",
         "i420 1080x1920 7b8cf30b010a2ec7"
       ],
-      "medianMicros": 19211,
-      "spreadPercent": 17.245328197386915,
+      "medianMicros": 18029,
+      "spreadPercent": 20.23961395529425,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -3.515644618552559,
-      "thresholdPercent": 47.64200693084225,
+      "deltaPercent": -0.48023846323691766,
+      "thresholdPercent": 368.944579377346,
       "baseline": {
         "hash": "i420 1080x1920 7b8cf30b010a2ec7",
-        "medianMicros": 19911,
-        "spreadPercent": 23.821003465421125
+        "medianMicros": 18116,
+        "spreadPercent": 184.472289688673
       }
     },
     {
@@ -922,15 +922,15 @@
       },
       "hash": "i420 360x720 f2845313802b3ece",
       "samplesMicros": [
-        2030,
-        2034,
-        2040,
-        2043,
-        2056,
-        2079,
-        2090,
-        2098,
-        2382
+        1961,
+        1992,
+        2003,
+        2004,
+        2035,
+        2060,
+        2077,
+        2128,
+        2200
       ],
       "sampleHashes": [
         "i420 360x720 f2845313802b3ece",
@@ -943,16 +943,16 @@
         "i420 360x720 f2845313802b3ece",
         "i420 360x720 f2845313802b3ece"
       ],
-      "medianMicros": 2056,
-      "spreadPercent": 17.120622568093385,
+      "medianMicros": 2035,
+      "spreadPercent": 11.744471744471744,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 0.5870841487279843,
-      "thresholdPercent": 34.24124513618677,
+      "deltaPercent": -0.196174595389897,
+      "thresholdPercent": 23.488943488943487,
       "baseline": {
         "hash": "i420 360x720 f2845313802b3ece",
-        "medianMicros": 2044,
-        "spreadPercent": 10.66536203522505
+        "medianMicros": 2039,
+        "spreadPercent": 9.318293281020107
       }
     },
     {
@@ -965,15 +965,15 @@
       },
       "hash": "nv12 1920x1080 5a32d5c5b06c94e9",
       "samplesMicros": [
-        8247,
-        8650,
-        8987,
-        8993,
-        9105,
-        9218,
-        9374,
-        9515,
-        9785
+        7344,
+        8129,
+        8134,
+        8242,
+        8258,
+        8275,
+        8519,
+        8648,
+        9360
       ],
       "sampleHashes": [
         "nv12 1920x1080 5a32d5c5b06c94e9",
@@ -986,16 +986,16 @@
         "nv12 1920x1080 5a32d5c5b06c94e9",
         "nv12 1920x1080 5a32d5c5b06c94e9"
       ],
-      "medianMicros": 9105,
-      "spreadPercent": 16.89181768259198,
+      "medianMicros": 8258,
+      "spreadPercent": 24.412690724146284,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": 0.8976063829787234,
-      "thresholdPercent": 56.959219858156025,
+      "deltaPercent": -6.403717556386717,
+      "thresholdPercent": 48.82538144829257,
       "baseline": {
         "hash": "nv12 1920x1080 5a32d5c5b06c94e9",
-        "medianMicros": 9024,
-        "spreadPercent": 28.479609929078013
+        "medianMicros": 8823,
+        "spreadPercent": 13.011447353507878
       }
     },
     {
@@ -1008,15 +1008,15 @@
       },
       "hash": "nv12 720x360 bfbbed6b79afd492",
       "samplesMicros": [
-        610,
-        725,
-        730,
-        753,
-        775,
-        776,
-        787,
-        791,
-        849
+        524,
+        619,
+        620,
+        664,
+        760,
+        793,
+        819,
+        846,
+        1315
       ],
       "sampleHashes": [
         "nv12 720x360 bfbbed6b79afd492",
@@ -1029,16 +1029,16 @@
         "nv12 720x360 bfbbed6b79afd492",
         "nv12 720x360 bfbbed6b79afd492"
       ],
-      "medianMicros": 775,
-      "spreadPercent": 30.838709677419356,
+      "medianMicros": 760,
+      "spreadPercent": 104.07894736842105,
       "verdict": "PASS",
       "comparison": "SAME",
-      "deltaPercent": -10.714285714285714,
-      "thresholdPercent": 211.05990783410138,
+      "deltaPercent": 0.0,
+      "thresholdPercent": 208.1578947368421,
       "baseline": {
         "hash": "nv12 720x360 bfbbed6b79afd492",
-        "medianMicros": 868,
-        "spreadPercent": 105.52995391705069
+        "medianMicros": 760,
+        "spreadPercent": 49.473684210526315
       }
     }
   ]

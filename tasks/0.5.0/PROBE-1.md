@@ -1,5 +1,5 @@
 # PROBE 1 — Базовые линии скорости 0.4.0 против dev
-**Status:** TODO · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 2
+**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 2
 **Было:** RA-26 (цикл 0.4.2).
 
 #### Problem / Goal
@@ -43,7 +43,7 @@ For 0.4.0 ↔ HEAD, build identical benchmark source in separate detached worktr
 #### Definition of Done
 - [x] Сценарии замера для всех 12 `YuvOperation`
 - [ ] Базовые линии Windows x64 и Pixel 3 arm64 сняты для тега 0.4.0 и для HEAD; таблица сравнения — в отчёте (источник цифр для CHANGELOG RA-18)
-- [ ] Windows baseline, HEAD and repeat have matching host receipts with actual package, EXE/DLL and power provenance required above.
+- [x] Windows baseline, HEAD and repeat have matching host receipts with actual package, EXE/DLL and power provenance required above.
 - [x] Негативный контроль: искусственное замедление (sleep в тестовой сборке исполнителя, не в `lib/`) даёт `SLOWER`, испорченный golden даёт FAIL
 - [x] Два повторных прогона на одной машине дают `SAME`
 
@@ -85,3 +85,30 @@ verifiable manifest) with resolved package revision/config path, both artifact
 hashes, and actual scheme GUID/name and AC status for each accepted run. Keep
 the existing raw results and comparison table. A fresh Executor must provide
 the correction and its validation; this Reviewer did not rerun benchmarks.
+
+#### Executor Report — 01.10.2026
+
+- Added an atomic per-run Windows host receipt. It binds the app verdict by
+  `runId` and SHA-256, records the actual post-`pub get` package config entry
+  and resolved root, app/package commits, override state, CPU/host ID,
+  EXE/DLL SHA-256, and pre-launch/post-exit Balanced + AC readings. The runner
+  rejects absent or ambiguous DLLs, invalid power readings, package mismatch,
+  and an evidence destination inside the source checkout. It clears generated
+  build output before every evidence run.
+- Fresh accepted Windows AOT evidence: tag `316fdf35eb604116b62865d4a03119bb`,
+  HEAD `c41fc0ba190248a4871cc3fa813185a0`, repeat
+  `3632b07c20c04b199f51b49bb54e631d`. All have 24 unique stable hashes;
+  the repeat is 24/24 `SAME`. Their six verdict/receipt files and the
+  recomputed comparison are in `doc/archive/release-0.4.2/ra26-windows-release/`.
+- The tag DLL SHA-256 is `769f2d45d662759b8870b71d22efa1042fbfc3e200ebfb64eadffe7ea0989cae`;
+  the HEAD and repeat DLL hashes are respectively
+  `18697d972d1efbf549a6fa8147935692e528f5787c2fbd782d493ebe48a24b46` and
+  `e2247acc337fe692553091cf83caef0d08e2bd3e1b5da19b535d54ae88920af2`.
+- Validation: PowerShell parser; `flutter test
+  test/probe/windows_release_package_provenance_contract_test.dart` (5/5);
+  a successful clean-worktree package provenance check; expected rejection for
+  incorrect package revision and source-tree evidence destination. The full
+  runner exercised the accepted DLL and pre/post power paths for all three runs.
+  `pwsh -File tool/ci/smoke.ps1` passed. `vm.ps1` and then `windows.ps1` were
+  blocked before their checks by the shared external temp CMake cache
+  `yuv-ffi-vm-native` pointing at `.worktrees/TEST-3`; it was preserved.
