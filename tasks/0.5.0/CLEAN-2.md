@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -133,6 +133,11 @@ preserved.
   load `yuv_ffi.dll` from this worktree before their matrices started; run the
   Windows CI script/native build before review. No native sources, headers, or
   generated bindings changed.
+- `pwsh -File tool/ci/windows.ps1` — BLOCKED before tests: its native CMake
+  invocation exited 1 (`tool/ci/_common.ps1:49`). The wrapper did not retain
+  the underlying CMake diagnostic. A Windows native-build repair or a fresh
+  worktree with the native asset prepared is required before this card can move
+  to `REVIEW`.
 
 #### Review
 
