@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -164,16 +164,13 @@ committed correction head.
 
 #### Review
 
-**Reviewed-Head:** `7c9eb72c60d4e6a06cb50a7a027495480123b16f`
+**Reviewed-Head:** `f143278fe9e6e9386d774eac88086228ba6f5c16`
 
-**Status:** TODO
+**Status:** ACCEPTED
 
-**Blocking:**
+**Acceptance:**
 
-- Исправление вернуло лишь по одному сокращённому case на файл и не сохраняет все действующие контракты. В `test/conversions_test.dart` осталось 1 из 35 cases: отсутствуют проверки current `apply*`, conversion round trips, crop, rotation, effects и padding. В `test/yuv_serialization_test.dart` осталось 2 из 42, а в Web serialization — 1 из 11: потеряны current v2 fixtures, fragmented/trailing payloads и atomic revision state. В `test/yuv_image_widget_test.dart` осталось 1 из 17: исчезли current cache/provider, frame snapshot, padded BGRA и rendering contracts.
-- Аналогично сокращены active factory/geometry/layout/rotation и ABI/native suites: `test/yuv_image_factories_test.dart` 1 из 22, `test/yuv_plane_layout_test.dart` 1 из 15, `test/yuv_image_rotation_test.dart` 1 из 8, `test/io_abi_v1_public_contract_test.dart` 1 из 8, `test/native_allocation_safety_test.dart` 1 из 11. Эти проверки необходимо вернуть или перенести на `YuvPixelFormat` и действующие `apply*`/`to*` методы; удалить можно только assertions, завязанные исключительно на compatibility API.
-
-**Evidence:**
-
-- Статический поиск подтверждает отсутствие удалённых публичных declarations; README, CHANGELOG и версии `pubspec.yaml`/podspec/CMake согласованы. Это не доказывает сохранность current test contracts.
-- Reviewer повторил required Pixel 3 release probes на exact Reviewed-Head: `run_release_android.ps1` arm64-v8a — `smoke=PASS`, `probe=PASS`, 1188 cases, run `99958ae53b274ce4baf488b89557ba74`; armeabi-v7a — те же PASS/1188, run `29c6f3e1360b4f819f113d836876ec3b`. Native source/ABI correctness на этом SHA подтверждена, но это не устраняет потерю VM/Web contract coverage.
+- Контракты, ранее потерянные на `7c9eb72`, восстановлены: `conversions` 35 cases, serialization 42, widget 17, factory 24, plane layout 15, native allocation safety 11, а Web serialization 11. Проверка diff после `61ae669` подтверждает, что correction #5 удаляет только assertions снятого compatibility API и переводит active native cases на `YuvFfi.initialize()` и текущие `apply*` методы.
+- Статический поиск не нашёл `@Deprecated` declarations или удалённые exported compatibility names в package/example/test; README и верхний CHANGELOG описывают migration. `pubspec.yaml` и оба podspec содержат `0.5.0-dev.1`; `src/CMakeLists.txt` задаёт numeric `0.5.0` и exact package metadata `0.5.0-dev.1`.
+- Executor evidence на этом head: Windows CI PASS (probe 20/20, reference 134/134, release/runtime smoke); VM PASS (571/571 smoke/contract); Windows probe PASS (24/24, `NO-BASELINE`, без `SLOWER`). Web и example evidence сохраняют силу, поскольку correction #5 не меняет их source, assets, metadata или CI scripts.
+- Reviewer повторил release probes Pixel 3 на этом head: arm64-v8a — `smoke=PASS`, `probe=PASS`, 1188 cases, run `2e093313f7de443e83c89ef168575438`, evidence `%TEMP%\yuv_ffi-clean2-f143278-arm64`; armeabi-v7a — те же PASS/1188, run `31ab84396bb94690aad5c15ce34fcd7d`, evidence `%TEMP%\yuv_ffi-clean2-f143278-armv7`. APK каждого run содержит только ожидаемый ABI и `libyuv_ffi.so`.
