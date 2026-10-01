@@ -38,7 +38,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | [TEST 3](tasks/0.5.0/TEST-3.md) | REVIEW | T2 | Reviewer | TEST 2 | **Срезы проб по операции и формату.** Исправления `all`, проверки golden IDs до фильтрации и отчёта Web выполнены; VM/Windows/Android/Web/macOS/iOS прошли на `1bb400d`. |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 2/3 | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Было RA-62. Ждёт TEST 2 и TEST 3. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | REVIEW | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Инвентаризация не нашла удалений; `lib/` и `src/` не менялись. VM/Windows и указанные suite прошли на `873ff2b`. |
-| [TEST 6](tasks/0.5.0/TEST-6.md) | REVIEW | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Исправлено условие вывода suite `Passed`; reporter-тесты 5/5, `vm.ps1` 584/584, Windows и smoke прошли на `00af357`. |
+| [TEST 6](tasks/0.5.0/TEST-6.md) | ACCEPTED | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Повторное ревью подтвердило suppression успешных suites при общем fail и mixed-failure regression на `00af357`. |
 | [TEST 7](tasks/0.5.0/TEST-7.md) | ACCEPTED | T2 | Reviewer | — | **Сверка эталона с libyuv.** Review подтвердил Mac normal/negative-control, Windows dry-run и ограничения Y/U/V, BGRA относительно `i420_decode` на `03b1bd1`. |
 
 ### Этап 2 — пробы и скорость
