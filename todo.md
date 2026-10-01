@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); этап 3 ждёт зелёного CI на `ci/STAGE3-SPM`.
+- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); macOS и iOS CI на `bae5ff8` зелёные, полный CI Engineer отменил.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Пулы задач
@@ -36,7 +36,7 @@ Orchestrator записывает для нового пула порядок к
 
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
-| SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM` не отправлен (ждёт решения Engineer); пул `DONE` |
+| SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
 
 ## Дашборд
 
