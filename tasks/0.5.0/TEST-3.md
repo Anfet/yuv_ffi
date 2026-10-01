@@ -1,5 +1,5 @@
 # TEST 3 — Срезы проб по операции и формату
-**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 1
+**Status:** ACCEPTED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 1
 **Было:** RA-61 (цикл 0.4.2).
 
 #### Goal
@@ -84,8 +84,7 @@
   `tool/ci/macos.sh`, `tool/ci/ios.sh`, and `tool/ci/drive.sh`.
 
 #### Review
-- **Verdict:** ACCEPTED. Reviewed branch HEAD `1bb400d` (implementation `8b94268`) against the contract and changes since rejected review `8be229e`; no tests were rerun.
-- `_parseSelector` in both byte-identical copies rejects explicit `PROBE_OPS=all` and `PROBE_FORMATS=all` as unknown tokens; the focused selector tests cover both. Empty and zero-case selectors also throw. VM recording is blocked whenever either selector is present.
-- VM, native, and Web matrix targets call `expectProbeGoldenCaseIdsExact(golden)` before `ProbeSelection.fromSelectors`. That check uses the unfiltered `probeCaseIds`; input/output comparisons still receive `selection.caseIds`, and the VM negative control uses the selected first case.
-- The corrected Executor Report records the selected Web command through `tool/ci/drive.ps1`, `All tests passed`, and `PROBE scope: ops=gray formats=all cases=54/1188`. `drive.ps1` forwards those arguments to `flutter drive` and requires the success line.
-- Validation evidence: current report records focused selector/copy tests, full VM, Windows, Android, Web, macOS and iOS passes; the earlier report at `86345e7` records VM `1188/1188`, gray `54/1188`, i420 `396/1188`, gray+i420 `18/1188`, expected invalid/recording failures with unchanged golden, and selected Windows `54/1188`. `layout_pack_test.dart` remains in the default VM suite. Diff from `66f1db3` contains only allowed probe tests/helpers, two integration targets, and this card; golden, native code, public API, performance probes, and TEST 2 tags are unchanged.
+- **Verdict:** ACCEPTED. Reviewed branch HEAD `2079fca` and the prior accepted/rejected reports (`1bb400d`, `8be229e`); no tests were rerun.
+- The integration correction adds only one `@Tags(['probe'])` annotation to each `probe_selection_test.dart`; both files are byte-identical (SHA-256 `FAE89A23A48029FF0CF2330B4B77D1E851EA7D82513E9B31DFC202893A36B15E`), and test bodies are unchanged. The tag matches `tags_coverage_test.dart`'s required primary tag for `test/probe/`.
+- The earlier fixes remain present: explicit `all` in either selector is rejected; VM, native, and Web validate complete golden IDs before selection; selected IDs still drive input/output checks and the VM negative control. The prior report records the exact selected Web drive command, `All tests passed`, and `PROBE scope: ops=gray formats=all cases=54/1188`.
+- Executor reports passing `tags_coverage_test.dart`, selector/copy-sync tests, and `flutter test --tags probe test/probe/probe_selection_test.dart`. It also reports `pwsh -File tool/ci/vm.ps1` at `584/584 passed, 0 skipped, 0 failed`; this VM script runs `smoke || contract`, so the separately reported focused commands cover the `probe`-tagged test. Earlier platform and selector evidence remains in the prior reports. No validation was rerun during review.
