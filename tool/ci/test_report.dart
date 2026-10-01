@@ -97,6 +97,8 @@ Future<void> main() async {
     }
   }
 
+  final hasFailedSuite = suites.values.any((suite) => suite.failed.isNotEmpty);
+  final showPassedSuites = doneSuccessfully && sawTest && failed == 0 && !hasFailedSuite;
   for (final suite in suites.values) {
     final suiteFailures = suite.failed.toList();
     if (suiteFailures.isNotEmpty) {
@@ -115,7 +117,7 @@ Future<void> main() async {
           stdout.writeln(message);
         }
       }
-    } else {
+    } else if (showPassedSuites) {
       stdout.writeln('${suite.path}  Passed  ${suite.finished.length}');
     }
   }

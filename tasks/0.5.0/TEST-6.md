@@ -1,5 +1,5 @@
 # TEST 6 — Тихий вывод тестов и CI
-**Status:** TODO · **Tier:** T3 · **Owner:** TEST 2 · **Depends On:** TEST 2
+**Status:** REVIEW · **Tier:** T3 · **Owner:** TEST 2 · **Depends On:** TEST 2
 
 #### Goal
 Сейчас `tool/ci/*` печатают всё: каждую строку `flutter test --reporter expanded`, вывод `pub get`, cmake,
@@ -68,8 +68,10 @@
 - Негативный `drive.ps1`: временный failing expect завершил прогон с кодом 1; в выводе от маркера `EXCEPTION` были Expected/Actual и причина теста.
 - `test/ci_test_report_test.dart`: 4 теста прошли; `dart format --line-length 150` — без изменений. Финальный `vm.ps1` включает `flutter analyze`.
 - Mac: `bash tool/ci/macos.sh` прошёл, включая packaging smoke 1/1, release build и оба drive-target.
+- Исправление после review: строки `Passed` печатаются только когда весь прогон завершился успешно и не содержит упавших suites; добавлена `mixed_failure.jsonl` и регрессия, проверяющая код 1, диагностический блок падения и отсутствие успешного suite/его print-вывода.
+- Проверка исправления в Windows с отдельным `RUNNER_TEMP`: `flutter test test/ci_test_report_test.dart` — 5/5; `dart format --line-length 150` — без изменений; `flutter analyze` завершился без ошибок (57 существующих info `library_annotations`); `tool/ci/vm.ps1` — 584/584.
+- `tool/ci/windows.ps1` прошёл: probe 15/15 (1 skipped), reference 123/123, Windows release build и оба drive-target; `tool/ci/smoke.ps1` прошёл. Повторный Mac-прогон этой коррекции не выполнялся в Windows-окружении.
 
 #### Review
 
-- **TODO (T2, 2026-10-01):** при общем падении репортёр печатает успешные файлы. В `tool/ci/test_report.dart:100-120` для каждого suite без `suite.failed` безусловно выводится `<path>  Passed …`, даже если другой suite содержит failure. Это противоречит Architect Decision: при провале «вывод прошедших тестов не печатается никогда». Текущая фикстура `failure.jsonl` содержит только один suite, а `ci_test_report_test.dart` не проверяет отсутствие такой строки, поэтому регрессия не обнаруживается.
-- **Требуется:** печатать строки `Passed` только при полностью успешном прогоне; при общем провале оставлять блоки упавших тестов, итог и время. Добавить маленькую JSONL-фикстуру с успешным и упавшим suite и прямой тест, который подтверждает код 1, диагностический блок падения и отсутствие строки `Passed`/вывода успешного теста.
+- **Исправлено:** строки `Passed` скрыты при любом неуспешном общем прогоне. Смешанная фикстура и регрессионный тест подтверждают, что блок ошибки сохраняется, а успешный suite и его print-вывод не попадают в stdout.

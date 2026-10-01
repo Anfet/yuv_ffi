@@ -40,6 +40,16 @@ void main() {
     expect(result.stdout, contains('test diagnostic'));
   });
 
+  test('failed run does not print successful suites', () async {
+    final result = await _runReporter('mixed_failure');
+
+    expect(result.exitCode, 1);
+    expect(result.stdout, contains('test/failing_test.dart  FAILED  breaks values'));
+    expect(result.stdout, contains('Expected: <2>'));
+    expect(result.stdout, isNot(contains('test/passing_test.dart  Passed')));
+    expect(result.stdout, isNot(contains('passed diagnostic')));
+  });
+
   test('load error names its file and exits unsuccessfully', () async {
     final result = await _runReporter('load_error');
 
