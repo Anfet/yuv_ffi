@@ -1,5 +1,5 @@
 # TEST 2 — Теги тест-сьюта
-**Status:** ENGINEER_REQUIRED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
+**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
 **Было:** RA-60 (цикл 0.4.2).
 
 #### Goal
@@ -41,12 +41,12 @@
 
 #### Scope
 - Ветка `task/TEST-2` от `dev`, worktree `.worktrees/TEST-2` (уже существуют; продолжить в них).
-- `dart_test.yaml`, `@Tags` в `test/**/*_test.dart`, новый `test/tags_coverage_test.dart`, `tool/ci/vm.ps1`;
+- `dart_test.yaml`, `@Tags` в `test/**/*_test.dart`, новый `test/tags_coverage_test.dart`, `tool/ci/vm.ps1`; побайтовые копии в `example/integration_test/helpers/probe/` (см. Constraints);
   эта карточка.
 
 #### Constraints
 - Тела тестов не меняются — только аннотация `@Tags` и нужный для неё `library;`.
-- Другие `tool/ci/*`, workflow и `example/` не меняются.
+- Другие `tool/ci/*`, workflow и `example/` не меняются. Исключение (решение Engineer 01.10.2026): копии файлов `test/probe/` в `example/integration_test/helpers/probe/` синхронизируются с пакетными побайтово — `cp test/probe/<файл> example/integration_test/helpers/probe/<файл>` для каждого файла, где изменилась только аннотация `@Tags`. Другие правки `example/` запрещены.
 - По D-9 `tool/ci/vm.ps1` проверяется локально тем же скриптом; ветка `ci/**` не нужна.
 
 #### Definition of Done
@@ -97,7 +97,11 @@ pwsh -File tool/ci/windows.ps1
 
 Блокер: для зелёных `probe`, полного прогона и `windows.ps1` нужно согласовать изменение копии в `example/` с ограничением Scope этой карточки; на момент отчёта Executor статус был `BLOCKED`. Первые прогоны с некорректной PowerShell-обёрткой (Flutter получил пустой список аргументов) не учитывались.
 
-#### Engineer Decision Required
+#### Engineer Decision
+
+**Решено 01.10.2026:** вариант 1 — синхронизировать копию `layout_pack_test.dart` (и любую другую копию из `helpers/probe/`, если у её оригинала появилась только аннотация тега). Контракт побайтовой идентичности `probe_copy_sync_test` не ослабляется. Следующий шаг — свежий T3 Executor: синхронизация копии и повтор неуспешных проверок (`--tags probe`, полный `flutter test`, `tool/ci/windows.ps1`).
+
+##### Запрос
 
 **Вопрос:** разрешить ли точечную синхронизацию копии `example/integration_test/helpers/probe/layout_pack_test.dart` в рамках TEST 2 или сохранить запрет на правки `example/` и изменить контракт проверки копий?
 
