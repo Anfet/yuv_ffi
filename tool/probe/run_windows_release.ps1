@@ -204,6 +204,8 @@ try {
   Pop-Location
   if ($temporaryOverrideCreated) {
     Remove-Item -LiteralPath $overridePath -Force -ErrorAction SilentlyContinue
-    & git -C $repoRoot restore --worktree -- example/pubspec.lock example/windows/flutter/generated_plugin_registrant.cc example/windows/flutter/generated_plugin_registrant.h example/windows/flutter/generated_plugins.cmake
   }
+  # The runner required a clean checkout, so these are its own pub-generated
+  # files and restoring them keeps the next comparison source-verified.
+  & git -C $repoRoot restore --worktree -- example/pubspec.lock example/windows/flutter/generated_plugin_registrant.cc example/windows/flutter/generated_plugin_registrant.h example/windows/flutter/generated_plugins.cmake
 }
