@@ -53,15 +53,11 @@ PODS:
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
   - PromisesObjC (2.4.1)
-  - yuv_ffi (0.5.0-dev.1):
-    - Flutter
-    - FlutterMacOS
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - google_mlkit_commons (from `.symlinks/plugins/google_mlkit_commons/ios`)
   - google_mlkit_face_detection (from `.symlinks/plugins/google_mlkit_face_detection/ios`)
-  - yuv_ffi (from `.symlinks/plugins/yuv_ffi/darwin`)
 
 SPEC REPOS:
   trunk:
@@ -84,8 +80,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/google_mlkit_commons/ios"
   google_mlkit_face_detection:
     :path: ".symlinks/plugins/google_mlkit_face_detection/ios"
-  yuv_ffi:
-    :path: ".symlinks/plugins/yuv_ffi/darwin"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
@@ -102,7 +96,6 @@ SPEC CHECKSUMS:
   MLKitVision: 45e79d68845a2de77e2dd4d7f07947f0ed157b0e
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
-  yuv_ffi: 04c306b7cc7c659b88dff1ec3e34b1a2a5e5f5a7
 
 PODFILE CHECKSUM: 9cf0f754fe8b1e9eeaf8bb178ca8d8e9c8d343d6
 
