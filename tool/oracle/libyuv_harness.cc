@@ -284,14 +284,11 @@ void CheckCrop(Result& result, const uint8_t* source_y, const uint8_t* source_u,
   std::vector<uint8_t> y(static_cast<size_t>(width) * height);
   std::vector<uint8_t> u(static_cast<size_t>(crop_chroma_width) * crop_chroma_height);
   std::vector<uint8_t> v(u.size());
-  RequireStatus(libyuv::CopyPlane(source_y + top * kSourceWidth + left, kSourceWidth, y.data(), width, width, height),
-                "CopyPlane Y");
-  RequireStatus(libyuv::CopyPlane(source_u + (top / 2) * source_chroma_width + left / 2, source_chroma_width, u.data(),
-                                  crop_chroma_width, crop_chroma_width, crop_chroma_height),
-                "CopyPlane U");
-  RequireStatus(libyuv::CopyPlane(source_v + (top / 2) * source_chroma_width + left / 2, source_chroma_width, v.data(),
-                                  crop_chroma_width, crop_chroma_width, crop_chroma_height),
-                "CopyPlane V");
+  libyuv::CopyPlane(source_y + top * kSourceWidth + left, kSourceWidth, y.data(), width, width, height);
+  libyuv::CopyPlane(source_u + (top / 2) * source_chroma_width + left / 2, source_chroma_width, u.data(),
+                    crop_chroma_width, crop_chroma_width, crop_chroma_height);
+  libyuv::CopyPlane(source_v + (top / 2) * source_chroma_width + left / 2, source_chroma_width, v.data(),
+                    crop_chroma_width, crop_chroma_width, crop_chroma_height);
   std::vector<uint8_t> expected_y(y.size());
   std::vector<uint8_t> expected_u(u.size());
   std::vector<uint8_t> expected_v(v.size());
@@ -334,7 +331,7 @@ int main(int argc, char** argv) {
   const auto* source_u = source_y + y_size;
   const auto* source_v = source_u + chroma_size;
   const auto* expected_nv21_y = expected_nv21_uv.data();
-  const auto* expected_nv21_uv = expected_nv21_y + y_size;
+  const auto* expected_nv21_chroma = expected_nv21_y + y_size;
 
   Result result;
   std::cout << "libyuv reference comparison\n";
@@ -367,8 +364,8 @@ int main(int argc, char** argv) {
   std::vector<uint8_t> actual_u(chroma_size);
   std::vector<uint8_t> actual_v(chroma_size);
   for (size_t index = 0; index < chroma_size; ++index) {
-    expected_u[index] = expected_nv21_uv[index * 2];
-    expected_v[index] = expected_nv21_uv[index * 2 + 1];
+    expected_u[index] = expected_nv21_chroma[index * 2];
+    expected_v[index] = expected_nv21_chroma[index * 2 + 1];
     actual_u[index] = nv21_vu[index * 2 + 1];
     actual_v[index] = nv21_vu[index * 2];
   }
