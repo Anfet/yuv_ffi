@@ -1,5 +1,5 @@
 # TEST 6 — Тихий вывод тестов и CI
-**Status:** REVIEW · **Tier:** T3 · **Owner:** TEST 2 · **Depends On:** TEST 2
+**Status:** ACCEPTED · **Tier:** T3 · **Owner:** TEST 2 · **Depends On:** TEST 2
 
 #### Goal
 Сейчас `tool/ci/*` печатают всё: каждую строку `flutter test --reporter expanded`, вывод `pub get`, cmake,
@@ -77,4 +77,4 @@
 
 #### Review
 
-- Ожидается независимое ревью интеграционной коррекции `--no-pub` и её доказательств проверки.
+- **ACCEPTED (T2, 2026-10-01, HEAD `2a57867`):** интеграционная коррекция ограничена `--no-pub` в двух JSON-конвейерах. В PowerShell каждый вызов `Invoke-CiFlutterTest` следует за явным `Invoke-CiNativeCommand flutter pub get` в `vm.ps1` или `windows.ps1`; в `macos.sh` `run_quiet flutter pub get` стоит непосредственно перед `flutter test --no-pub --reporter json`. Поэтому `Resolving dependencies...` и `Downloading packages...` не могут попасть в stdin репортёра. Точный PowerShell-конвейер после `pub get` прошёл с 5/5 и чистым stdout репортёра; `bash -n tool/ci/macos.sh` прошёл. Регрессия `mixed_failure.jsonl` и тест подтверждают код 1, блок ошибки и отсутствие успешного suite/его `print`; условие `showPassedSuites` сохраняет это поведение. Полный `vm.ps1` на объединённом `dev` дошёл до репортёра без JSON-ошибки и остановился только на отдельном нарушении TEST 3 (`probe_selection_test.dart` без единственного `@Tags`); это не относится к TEST 6.
