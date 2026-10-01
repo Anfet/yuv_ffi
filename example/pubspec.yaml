@@ -52,6 +52,8 @@ dev_dependencies:
   ffi: ^2.2.0
 
 flutter:
+  config:
+    enable-swift-package-manager: true
   uses-material-design: true
   shaders:
     # VIEW-04 draw bench prototype only; see lib/view04_draw_bench.dart.
