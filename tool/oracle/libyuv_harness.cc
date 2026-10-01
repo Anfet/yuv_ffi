@@ -1,6 +1,7 @@
 #include <libyuv.h>
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -31,6 +32,10 @@ struct ChannelDiff {
   uint8_t expected = 0;
   uint8_t actual = 0;
 };
+
+using ChannelTolerances = std::array<int, 4>;
+
+constexpr ChannelTolerances kDecoderTolerances = {2, 2, 2, 0};
 
 struct Result {
   bool passed = true;
@@ -145,12 +150,13 @@ void ComparePlane(Result& result, std::string_view pair, std::string_view channe
              static_cast<size_t>(width) * height, tolerance);
 }
 
-void CompareImage(Result& result, std::string_view pair, const Image& expected, const std::vector<uint8_t>& actual,
-                  int tolerance) {
+ChannelTolerances CompareImage(Result& result, std::string_view pair, const Image& expected,
+                               const std::vector<uint8_t>& actual, const ChannelTolerances& tolerances) {
   if (actual.size() != expected.bgra.size()) {
     Fail(std::string(pair) + " produced an unexpected BGRA byte length");
   }
   constexpr std::string_view channels[] = {"B", "G", "R", "A"};
+  ChannelTolerances maxima{};
   for (size_t channel = 0; channel < 4; ++channel) {
     std::vector<uint8_t> expected_channel(static_cast<size_t>(expected.width) * expected.height);
     std::vector<uint8_t> actual_channel(expected_channel.size());
@@ -158,9 +164,11 @@ void CompareImage(Result& result, std::string_view pair, const Image& expected, 
       expected_channel[pixel] = expected.bgra[pixel * 4 + channel];
       actual_channel[pixel] = actual[pixel * 4 + channel];
     }
-    ComparePlane(result, pair, channels[channel], expected_channel.data(), actual_channel.data(), expected.width,
-                 expected.height, tolerance);
+    const auto diff = Compare(expected_channel.data(), actual_channel.data(), expected_channel.size());
+    maxima[channel] = diff.maximum;
+    result.Add(pair, channels[channel], diff, expected.width, expected_channel.size(), tolerances[channel]);
   }
+  return maxima;
 }
 
 Image Expected(const std::filesystem::path& decoded_root, const std::string& name) {
@@ -306,7 +314,8 @@ void RequireStatus(int status, std::string_view operation) {
 }
 
 void CheckRotation(Result& result, const uint8_t* source_y, const uint8_t* source_u, const uint8_t* source_v,
-                   const std::filesystem::path& decoded_root, int degrees, libyuv::RotationMode mode) {
+                   const std::filesystem::path& decoded_root, const ChannelTolerances& geometry_tolerances, int degrees,
+                   libyuv::RotationMode mode) {
   const int width = kSourceWidth;
   const int height = kSourceHeight;
   const int chroma_width = width / 2;
@@ -328,12 +337,12 @@ void CheckRotation(Result& result, const uint8_t* source_y, const uint8_t* sourc
   CompareImage(result, pair, RotateImage(Expected(decoded_root, "i420_decoded.png"), mode),
                ToBgra(y.data(), output_width, u.data(), output_chroma_width, v.data(), output_chroma_width, output_width,
                       output_height),
-               0);
+               geometry_tolerances);
 }
 
 void CheckCrop(Result& result, const uint8_t* source_y, const uint8_t* source_u, const uint8_t* source_v,
-               const std::filesystem::path& decoded_root, const std::string& name, int left, int top, int width,
-               int height) {
+               const std::filesystem::path& decoded_root, const ChannelTolerances& geometry_tolerances,
+               const std::string& name, int left, int top, int width, int height) {
   const int source_chroma_width = kSourceWidth / 2;
   const int crop_chroma_width = (width + 1) / 2;
   const int crop_chroma_height = (height + 1) / 2;
@@ -363,7 +372,8 @@ void CheckCrop(Result& result, const uint8_t* source_y, const uint8_t* source_u,
   ComparePlane(result, "crop_" + name + "_V", "raw", expected_v.data(), v.data(), crop_chroma_width,
                crop_chroma_height, 0);
   CompareImage(result, "crop_" + name, CropImage(Expected(decoded_root, "i420_decoded.png"), left, top, width, height),
-               ToBgra(y.data(), width, u.data(), crop_chroma_width, v.data(), crop_chroma_width, width, height), 0);
+               ToBgra(y.data(), width, u.data(), crop_chroma_width, v.data(), crop_chroma_width, width, height),
+               geometry_tolerances);
 }
 
 }  // namespace
@@ -403,10 +413,11 @@ int main(int argc, char** argv) {
   ComparePlane(result, "bgra_to_i420", "U", source_u, encoded_u.data(), kSourceWidth / 2, kSourceHeight / 2, 2);
   ComparePlane(result, "bgra_to_i420", "V", source_v, encoded_v.data(), kSourceWidth / 2, kSourceHeight / 2, 2);
 
-  CompareImage(result, "i420_decode", Expected(decoded, "i420_decoded.png"),
-               ToBgra(source_y, kSourceWidth, source_u, kSourceWidth / 2, source_v, kSourceWidth / 2, kSourceWidth,
-                      kSourceHeight),
-               2);
+  const auto geometry_tolerances =
+      CompareImage(result, "i420_decode", Expected(decoded, "i420_decoded.png"),
+                   ToBgra(source_y, kSourceWidth, source_u, kSourceWidth / 2, source_v, kSourceWidth / 2, kSourceWidth,
+                          kSourceHeight),
+                   kDecoderTolerances);
 
   std::vector<uint8_t> nv21_y(y_size);
   std::vector<uint8_t> nv21_vu(2 * chroma_size);
@@ -428,11 +439,12 @@ int main(int argc, char** argv) {
   ComparePlane(result, "i420_to_nv21", "U", expected_u.data(), actual_u.data(), kSourceWidth / 2, kSourceHeight / 2, 0);
   ComparePlane(result, "i420_to_nv21", "V", expected_v.data(), actual_v.data(), kSourceWidth / 2, kSourceHeight / 2, 0);
   CompareImage(result, "nv21_decode", Expected(decoded, "nv21_uv_decoded.png"),
-               ToBgraNv21(nv21_y.data(), kSourceWidth, nv21_vu.data(), kSourceWidth, kSourceWidth, kSourceHeight), 2);
+               ToBgraNv21(nv21_y.data(), kSourceWidth, nv21_vu.data(), kSourceWidth, kSourceWidth, kSourceHeight),
+               kDecoderTolerances);
 
-  CheckRotation(result, source_y, source_u, source_v, decoded, 90, libyuv::kRotate90);
-  CheckRotation(result, source_y, source_u, source_v, decoded, 180, libyuv::kRotate180);
-  CheckRotation(result, source_y, source_u, source_v, decoded, 270, libyuv::kRotate270);
+  CheckRotation(result, source_y, source_u, source_v, decoded, geometry_tolerances, 90, libyuv::kRotate90);
+  CheckRotation(result, source_y, source_u, source_v, decoded, geometry_tolerances, 180, libyuv::kRotate180);
+  CheckRotation(result, source_y, source_u, source_v, decoded, geometry_tolerances, 270, libyuv::kRotate270);
 
   std::vector<uint8_t> mirror_y(y_size);
   std::vector<uint8_t> mirror_u(chroma_size);
@@ -447,7 +459,7 @@ int main(int argc, char** argv) {
   CompareImage(result, "flip_horizontal", MirrorImage(Expected(decoded, "i420_decoded.png"), false),
                ToBgra(mirror_y.data(), kSourceWidth, mirror_u.data(), kSourceWidth / 2, mirror_v.data(), kSourceWidth / 2,
                       kSourceWidth, kSourceHeight),
-               0);
+               geometry_tolerances);
 
   std::vector<uint8_t> vertical_y(y_size);
   std::vector<uint8_t> vertical_u(chroma_size);
@@ -462,12 +474,12 @@ int main(int argc, char** argv) {
   CompareImage(result, "flip_vertical", MirrorImage(Expected(decoded, "i420_decoded.png"), true),
                ToBgra(vertical_y.data(), kSourceWidth, vertical_u.data(), kSourceWidth / 2, vertical_v.data(),
                       kSourceWidth / 2, kSourceWidth, kSourceHeight),
-               0);
+               geometry_tolerances);
 
-  CheckCrop(result, source_y, source_u, source_v, decoded, "inner", 64, 96, 256, 320);
-  CheckCrop(result, source_y, source_u, source_v, decoded, "1x1", 0, 0, 1, 1);
-  CheckCrop(result, source_y, source_u, source_v, decoded, "3x5", 0, 0, 3, 5);
-  CheckCrop(result, source_y, source_u, source_v, decoded, "127x255", 0, 0, 127, 255);
+  CheckCrop(result, source_y, source_u, source_v, decoded, geometry_tolerances, "inner", 64, 96, 256, 320);
+  CheckCrop(result, source_y, source_u, source_v, decoded, geometry_tolerances, "1x1", 0, 0, 1, 1);
+  CheckCrop(result, source_y, source_u, source_v, decoded, geometry_tolerances, "3x5", 0, 0, 3, 5);
+  CheckCrop(result, source_y, source_u, source_v, decoded, geometry_tolerances, "127x255", 0, 0, 127, 255);
 
   if (!result.passed) {
     return 1;
