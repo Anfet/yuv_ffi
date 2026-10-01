@@ -11,6 +11,7 @@ param(
   [int]$Warmups = 3,
   [ValidateRange(1, 100)]
   [int]$Samples = 9,
+  [switch]$Strict,
   [switch]$AllowDirtySmoke,
   [string]$ExpectedPackagePath = '',
   [ValidatePattern('^[0-9a-f]{40}$')]
@@ -127,6 +128,9 @@ try {
     "--dart-define=RA26_WARMUPS=$Warmups",
     "--dart-define=RA26_SAMPLES=$Samples"
   )
+  if ($Strict) {
+    $buildArguments += '--dart-define=RA26_STRICT=true'
+  }
   if ($BaselinePath) {
     $buildArguments += "--dart-define=RA26_BASELINE_PATH=$([IO.Path]::GetFullPath($BaselinePath))"
   }
