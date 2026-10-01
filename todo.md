@@ -35,8 +35,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [PROBE 1](tasks/0.5.0/PROBE-1.md) | AWAITING_EXTERNAL | T2 | CI macOS | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** Интегрированный SHA `2646db1`; остальные CI runs зелёные, ждём `36875568458`. |
-| [PROBE 2](tasks/0.5.0/PROBE-2.md) | AWAITING_EXTERNAL | T3 | CI macOS | PROBE 1, TEST 4 | **Правило проб для задач.** Интегрированный SHA `2646db1`; остальные CI runs зелёные, ждём `36875568458`. |
+| [PROBE 1](tasks/0.5.0/PROBE-1.md) | DONE | T2 | — | TEST 3 | **Базовые линии 0.4.0 и `dev` приняты.** Batch CI прошёл 9/9 на `2646db1`; слияние в `dev`: `0a724c3`. |
+| [PROBE 2](tasks/0.5.0/PROBE-2.md) | DONE | T3 | — | PROBE 1, TEST 4 | **Правило проб добавлено в `AGENTS.md` и шаблон карточки.** Batch CI прошёл 9/9 на `2646db1`; слияние в `dev`: `0a724c3`. |
 
 ### Этап 3 — уборка
 
