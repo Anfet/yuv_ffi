@@ -88,4 +88,11 @@ Worktree `.worktrees/SPM-1`, ветка `task/SPM-1` от `dev`.
 - В Executor Report — команды и хвосты вывода (строки `PASS …`, `All tests passed`, итог `flutter test`).
 
 #### Executor Report
+WIP, остановлено по приказу Engineer; статус карточки не менялся. Сделано (коммиты all/STAGE3-SPM-wip):
+- darwin/yuv_ffi.podspec, 16 переходников darwin/yuv_ffi/Sources/yuv_ffi/*.c, sharedDarwinSource в pubspec.yaml, git rm ios/ и macos/ (плагин), scope_guard.sh и таблица AGENTS.md (darwin/* -> ios macos), test/apple_forwarder_sources_test.dart (новые инварианты и негативные контроли), Podfile.lock example/ios и example/macos.
+- Проверено: flutter test test/apple_forwarder_sources_test.dart -> All tests passed (8); bash -n tool/ci/scope_guard.sh ok; git grep ios/Classes|macos/Classes вне tasks -> пусто; dart pub publish --dry-run: darwin/yuv_ffi.podspec и darwin/yuv_ffi/Sources/yuv_ffi/*.c есть, ios/Classes и macos/Classes нет.
+- Windows (RUNNER_TEMP в отдельный каталог, иначе общий кэш cmake от другого worktree ломает vm.ps1): smoke.ps1 0; vm.ps1 573/573; windows.ps1 PASS smoke+probe_native; android.ps1 PASS на emulator-5554; example.ps1 (FLUTTER_VERSION=3.44.9) ok; web.ps1 из PowerShell tool: Web CI passed (Chrome 154 = ChromeDriver 154; из Git Bash pwsh падал на `git` not recognized из-за PATH после emsdk).
+- Mac (CocoaPods из darwin/): bash tool/ci/macos.sh EXIT 0 (flutter build macos --release 39 s, без зависания gen_snapshot; PASS native_app_runtime_smoke и probe_native); bash tool/ci/ios.sh EXIT 0 (iOS 18.6, PASS smoke и probe_native). pod install: yuv_ffi из .symlinks/plugins/yuv_ffi/darwin.
+- Заметка: на Mac git archive даёт CRLF в .sh, нужно sed 's/$//' после распаковки.
+Не завершено: формальная сверка отчёта/DoD Reviewer-ом; других хвостов нет.
 #### Review

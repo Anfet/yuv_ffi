@@ -59,4 +59,5 @@ Mac, ветка `ci/**` не нужна).
 - `bash -n tool/ci/ios.sh tool/ci/macos.sh`.
 
 #### Executor Report
+Не начато (остановлено по приказу Engineer). Учесть: Mac-дерево распаковывать в каталог с именем `yuv_ffi` (см. отчёт SPM 2).
 #### Review

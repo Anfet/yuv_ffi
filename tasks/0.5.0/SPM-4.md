@@ -41,4 +41,5 @@ Worktree `.worktrees/SPM-4`, ветка `task/SPM-4` от `dev`.
 - В Executor Report — изменённые разделы и результат сверки версии.
 
 #### Executor Report
+Не начато (остановлено по приказу Engineer).
 #### Review
