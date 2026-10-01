@@ -1,0 +1,6 @@
+{"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"test/broken_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"loading test/broken_test.dart","suiteID":0,"groupIDs":[],"metadata":{"skip":false},"line":null,"column":null,"url":null},"type":"testStart","time":1}
+{"testID":1,"error":"Expected a declaration, but got ';'.","stackTrace":"test/broken_test.dart 2:1","isFailure":false,"type":"error","time":2}
+{"testID":1,"result":"error","skipped":false,"hidden":false,"type":"testDone","time":3}
+{"success":false,"type":"done","time":4}

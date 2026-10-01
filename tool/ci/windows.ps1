@@ -19,8 +19,8 @@ Add-CiPath $nativeLibraryDirectory
 Push-Location $repositoryRoot
 try {
   Invoke-CiNativeCommand flutter 'pub', 'get'
-  Invoke-CiNativeCommand flutter 'test', '--tags', 'probe', '--reporter', 'expanded'
-  Invoke-CiNativeCommand flutter 'test', 'test/reference_native_conversions_test.dart', '--reporter', 'expanded'
+  Invoke-CiFlutterTest '--tags', 'probe'
+  Invoke-CiFlutterTest 'test/reference_native_conversions_test.dart'
 } finally {
   Pop-Location
 }

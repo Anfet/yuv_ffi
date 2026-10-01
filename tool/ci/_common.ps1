@@ -31,9 +31,33 @@ function Invoke-CiNativeCommand {
     [string[]] $Arguments
   )
 
-  & $FilePath @Arguments
+  $timer = [System.Diagnostics.Stopwatch]::StartNew()
+  $output = @(& $FilePath @Arguments 2>&1 | ForEach-Object { $_.ToString() })
+  $exitCode = $LASTEXITCODE
+  $timer.Stop()
+  $command = (@($FilePath) + @($Arguments)) -join ' '
+  if ($env:YUV_CI_VERBOSE -eq '1') {
+    $output | Write-Output
+  }
+  if ($exitCode -eq 0) {
+    Write-Output ("ok {0} ({1:N2} s)" -f $command, $timer.Elapsed.TotalSeconds)
+    return
+  }
+
+  Write-Output "$command failed with exit code $exitCode"
+  $output | Select-Object -Last 80 | Write-Output
+  throw "$FilePath failed with exit code $exitCode"
+}
+
+function Invoke-CiFlutterTest {
+  param(
+    [Parameter(ValueFromRemainingArguments)]
+    [string[]] $Arguments
+  )
+
+  & flutter test --reporter json @Arguments | & dart (Join-Path $PSScriptRoot 'test_report.dart')
   if ($LASTEXITCODE -ne 0) {
-    throw "$FilePath failed with exit code $LASTEXITCODE"
+    throw "flutter test failed with exit code $LASTEXITCODE"
   }
 }
 

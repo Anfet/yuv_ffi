@@ -27,16 +27,20 @@ flutter drive \
   --driver=test_driver/integration_test.dart \
   --target="$target" \
   -d "$device" \
-  "$@" 2>&1 | tee "$output_file"
+  "$@" >"$output_file" 2>&1
 drive_exit_code=${PIPESTATUS[0]}
 set -e
 
 if (( drive_exit_code != 0 )); then
+  marker_line="$(grep -n -m1 -E 'FAILED|EXCEPTION|Error' "$output_file" | cut -d: -f1 || true)"
+  if [[ -n "$marker_line" ]]; then sed -n "${marker_line},$((marker_line + 199))p" "$output_file"; else tail -n 200 "$output_file"; fi
   echo "flutter drive failed for $target on $device with exit code $drive_exit_code" >&2
   exit "$drive_exit_code"
 fi
 
 if ! grep -Fq 'All tests passed' "$output_file"; then
+  marker_line="$(grep -n -m1 -E 'FAILED|EXCEPTION|Error' "$output_file" | cut -d: -f1 || true)"
+  if [[ -n "$marker_line" ]]; then sed -n "${marker_line},$((marker_line + 199))p" "$output_file"; else tail -n 200 "$output_file"; fi
   echo "flutter drive completed for $target on $device without the required All tests passed verdict" >&2
   exit 1
 fi

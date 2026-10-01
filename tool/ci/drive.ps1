@@ -22,15 +22,22 @@ try {
     --driver=test_driver/integration_test.dart `
     "--target=$Target" `
     -d $Device `
-    @FlutterDriveArguments 2>&1 | Tee-Object -FilePath $outputFile
+    @FlutterDriveArguments 2>&1 | Tee-Object -FilePath $outputFile | Out-Null
   $driveExitCode = $LASTEXITCODE
-  $output | Write-Output
 
   if ($driveExitCode -ne 0) {
+    $lines = @(Get-Content -LiteralPath $outputFile -ErrorAction SilentlyContinue)
+    $marker = [Array]::FindIndex($lines, [Predicate[string]]{ param($line) $line -match 'FAILED|EXCEPTION|Error' })
+    if ($marker -ge 0) { $lines | Select-Object -Skip $marker -First 200 | Write-Output }
+    else { $lines | Select-Object -Last 200 | Write-Output }
     throw "flutter drive failed for $Target on $Device with exit code $driveExitCode"
   }
 
   if (-not (Select-String -LiteralPath $outputFile -SimpleMatch 'All tests passed' -Quiet)) {
+    $lines = @(Get-Content -LiteralPath $outputFile)
+    $marker = [Array]::FindIndex($lines, [Predicate[string]]{ param($line) $line -match 'FAILED|EXCEPTION|Error' })
+    if ($marker -ge 0) { $lines | Select-Object -Skip $marker -First 200 | Write-Output }
+    else { $lines | Select-Object -Last 200 | Write-Output }
     throw "flutter drive completed for $Target on $Device without the required All tests passed verdict"
   }
 
