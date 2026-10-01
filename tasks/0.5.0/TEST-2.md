@@ -2,22 +2,84 @@
 **Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
 **Было:** RA-60 (цикл 0.4.2).
 
-#### Problem / Goal
-Любая правка запускает всё: 700+ VM-тестов, 1188 проб, матрицу 119, все платформы. Нужно запускать только то, что относится к изменению.
+#### Goal
+Любая правка запускает всё: 730+ VM-тестов, пробы, эталонную матрицу. Нужно запускать только то, что относится к
+изменению, и уметь отдельно запустить каждую группу.
 
 #### Architect Decision
-В `dart_test.yaml` описать теги и отметить каждый файл `@Tags([...])` по правилу:
+- **`flutter test` без аргументов — полный прогон.** Выборочный прогон вызывается явно. Причина — устройство
+  test runner (`test_core` 0.6.17, `Configuration.merge`): `include_tags` из `dart_test.yaml` пересекается с
+  `--tags` из командной строки, а `exclude_tags` объединяется. Поэтому при любом селекторе в `dart_test.yaml`
+  явный `--tags probe` либо ничего не находит (`No tests match`, exit 79), либо не может включить исключённое.
+  Пресеты (`-P`) сливаются так же и проблему не решают.
+- `dart_test.yaml` объявляет пять тегов и не содержит `include_tags` и `exclude_tags` (нынешний
+  `exclude_tags: release` удаляется).
+- Каждый `*_test.dart` пакета получает ровно один основной `@Tags([...])`:
 
-| Тег | Файлы | Когда |
-| --- | --- | --- |
-| `smoke` | `native_packaging_smoke_test`, `loader_io_test`, `cmake_sources_test`, `apple_forwarder_sources_test`, `abi_symbol_manifest_test` | каждый push, секунды |
-| `contract` | остальные `test/*.dart` | правки `lib/` |
-| `probe` | `test/probe/**` | правки `lib/src/yuv/impl/**`, `src/**` |
-| `reference` | `reference_*_test.dart` | правки `src/**`, конвертаций |
-| `release` | provenance, dry-run, runner-тесты `test/probe/run_*` | только релизная проверка |
+  | Тег | Файлы | Когда запускать |
+  | --- | --- | --- |
+  | `smoke` | `native_packaging_smoke_test`, `loader_io_test`, `cmake_sources_test`, `apple_forwarder_sources_test`, `abi_symbol_manifest_test` | каждый push, секунды |
+  | `contract` | остальные `test/*.dart`, включая `test/web/**` и `tags_coverage_test.dart` | правки `lib/` |
+  | `probe` | `test/probe/**`, кроме `release` | правки `lib/src/yuv/impl/**`, `src/**` |
+  | `reference` | `reference_*_test.dart` | правки `src/**`, конвертаций |
+  | `release` | provenance, dry-run, раннеры проб `test/probe/run_*` (приоритет над `probe`) | только релизная проверка |
 
-`flutter test` без аргументов = `smoke` + `contract` (`release`, `probe`, `reference` исключены по умолчанию через `dart_test.yaml`). Файл без тега — красный тест `test/tags_coverage_test.dart`.
+- Команды:
+  - `flutter test --tags "smoke || contract"` — обычный выборочный прогон;
+  - `flutter test --tags probe`, `--tags reference`, `--tags release` — отдельные группы;
+  - `flutter test` — полный прогон.
+- `tool/ci/vm.ps1`: голый `flutter test` заменяется на `flutter test --tags "smoke || contract"`, иначе VM CI станет
+  полным. `tool/ci/windows.ps1` (`--tags probe` и файл `reference_native_conversions_test`) не меняется: без
+  селектора в `dart_test.yaml` он выбирает то же, что и сейчас, плюс `release`-файлы из `test/probe` больше не
+  попадают под `--tags probe`.
+- Файл без основного тега или с двумя основными находит `test/tags_coverage_test.dart` (читает исходники
+  `test/**/*_test.dart`, `flutter test` внутри себя не запускает).
+- **Готовая разметка уже есть:** коммит `da7f699` в ветке `task/RA-60` размечает 62 файла и добавляет
+  `tags_coverage_test`. Тестовые файлы с `release/0.4.2` в `dev` не менялись, поэтому его можно перенести
+  `git cherry-pick -n da7f699`, затем отбросить `tasks/release-0.4.2/RA-60.md` и привести `dart_test.yaml`
+  к решению выше (там сейчас `include_tags`).
+
+#### Scope
+- Ветка `task/TEST-2` от `dev`, worktree `.worktrees/TEST-2` (уже существуют; продолжить в них).
+- `dart_test.yaml`, `@Tags` в `test/**/*_test.dart`, новый `test/tags_coverage_test.dart`, `tool/ci/vm.ps1`;
+  эта карточка.
+
+#### Constraints
+- Тела тестов не меняются — только аннотация `@Tags` и нужный для неё `library;`.
+- Другие `tool/ci/*`, workflow и `example/` не меняются.
+- По D-9 `tool/ci/vm.ps1` проверяется локально тем же скриптом; ветка `ci/**` не нужна.
 
 #### Definition of Done
-- [ ] Каждый файл имеет ровно один основной тег; `tags_coverage_test` зелёный
-- [ ] `flutter test`, `--tags probe`, `--tags reference` дают в сумме то же число тестов, что прежний полный прогон
+- [ ] Каждый `*_test.dart` пакета имеет ровно один основной тег по таблице; `test/tags_coverage_test.dart` проходит
+- [ ] `dart_test.yaml` объявляет пять тегов и не задаёт `include_tags` / `exclude_tags`
+- [ ] Каждая из четырёх команд `"smoke || contract"`, `probe`, `reference`, `release` завершается с кодом 0 и выполняет
+      хотя бы один тест
+- [ ] На одном SHA число тестов полного `flutter test` равно сумме четырёх частей; отличие от базы TEST 1
+      (731 passed, 1 skipped на `dev`) объяснено — ожидается +1 за `tags_coverage_test`
+- [ ] `tool/ci/vm.ps1` выбирает `smoke || contract` и проходит; `tool/ci/windows.ps1` проходит
+
+#### Validation
+Windows, корень worktree, одна сессия PowerShell (DLL собирается как в `tool/ci/vm.ps1`); в каждом прогоне
+считать завершённые тесты по JSON-выводу:
+
+```powershell
+. ./tool/ci/_common.ps1
+Add-CiPath 'D:\.important\android-sdk\cmake\3.22.1\bin'
+$dll = New-CiNativeBuild -Name 'yuv-ffi-test2-tags' -LibraryName 'yuv_ffi.dll'
+Add-CiPath $dll
+flutter pub get --no-example
+flutter test test/tags_coverage_test.dart
+flutter test --tags "smoke || contract" --reporter json
+flutter test --tags probe --reporter json
+flutter test --tags reference --reporter json
+flutter test --tags release --reporter json
+flutter test --reporter json
+pwsh -File tool/ci/vm.ps1
+pwsh -File tool/ci/windows.ps1
+```
+
+#### Executor Report
+Предыдущая попытка (`4eaceef`) остановлена: карточка требовала селективный `flutter test` по умолчанию вместе с
+рабочими `--tags probe/reference`; runner так не умеет. Решение выше снимает противоречие.
+
+#### Review
