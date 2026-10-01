@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`). TEST 3 и TEST 7 готовы к ревью; TEST 6 выполняется на базе актуального `dev`. TEST 4 ждёт принятия TEST 3, TEST 5 — принятия TEST 7.
+- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`); TEST 3, TEST 6 и TEST 7 находятся в `REVIEW`. TEST 4 ждёт принятия TEST 3, TEST 5 — принятия TEST 7.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Дашборд
@@ -38,7 +38,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | [TEST 3](tasks/0.5.0/TEST-3.md) | REVIEW | T2 | Reviewer | TEST 2 | **Срезы проб по операции и формату.** VM, Windows, Android, Web и macOS/iOS прошли; выбранные Windows/Web drives и отрицательные селекторы проверены на `86345e7`. |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 2/3 | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Было RA-62. Ждёт TEST 2 и TEST 3. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | BLOCKED | T2 | TEST 1, TEST 2, TEST 7 | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Удаление — только с доказательством мутацией; при дублях конвертаций остаётся сверка с эталоном. `src/` не трогается (D-17). |
-| [TEST 6](tasks/0.5.0/TEST-6.md) | TODO | T3 | — | TEST 2 | **Тихий вывод тестов и CI.** TEST 2 уже в `dev` (`5fdcb3c`); свежий Executor должен продолжить от актуальной базы в `.worktrees/TEST-6`, сохранив незакоммиченную правку статуса карточки. |
+| [TEST 6](tasks/0.5.0/TEST-6.md) | REVIEW | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Windows `vm.ps1`, `windows.ps1`, smoke и Mac прошли; ошибки репортера/drive дали диагностику и ненулевой код на `e1e7a85`. |
 | [TEST 7](tasks/0.5.0/TEST-7.md) | REVIEW | T2 | Reviewer | — | **Сверка эталона с libyuv.** Mac oracle прошёл: Y/U/V max 0, BGRA max B/G/R/A `2/1/1/0`; negative control обнаружил ожидаемые мутации; publish dry-run прошёл на `03b1bd1`. |
 
 ### Этап 2 — пробы и скорость
