@@ -1,0 +1,10 @@
+{"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"test/passing_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"passes quietly","suiteID":0,"groupIDs":[],"metadata":{"skip":false},"line":1,"column":1,"url":null},"type":"testStart","time":1}
+{"testID":1,"message":"passed diagnostic","type":"print","time":2}
+{"testID":1,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3}
+{"suite":{"id":2,"platform":"vm","path":"test/failing_test.dart"},"type":"suite","time":4}
+{"test":{"id":3,"name":"breaks values","suiteID":2,"groupIDs":[],"metadata":{"skip":false},"line":1,"column":1,"url":null},"type":"testStart","time":5}
+{"testID":3,"error":"Expected: <2>\n  Actual: <3>","stackTrace":"test/failing_test.dart 4:2 main","isFailure":true,"type":"error","time":6}
+{"testID":3,"result":"failure","skipped":false,"hidden":false,"type":"testDone","time":7}
+{"success":false,"type":"done","time":8}

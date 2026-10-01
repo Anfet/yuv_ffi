@@ -1,5 +1,5 @@
 # TEST 6 — Тихий вывод тестов и CI
-**Status:** BLOCKED · **Tier:** T3 · **Owner:** TEST 2 · **Depends On:** TEST 2
+**Status:** ACCEPTED · **Tier:** T3 · **Owner:** TEST 2 · **Depends On:** TEST 2
 
 #### Goal
 Сейчас `tool/ci/*` печатают всё: каждую строку `flutter test --reporter expanded`, вывод `pub get`, cmake,
@@ -44,15 +44,15 @@
 - Фикстуры — маленькие (десятки строк), записаны реальным `flutter test --reporter json` и обрезаны вручную.
 
 #### Definition of Done
-- [ ] Успешный `tool/ci/vm.ps1`: строки `ok …` для служебных команд, строка на тестовый файл, итог; ни одного
+- [x] Успешный `tool/ci/vm.ps1`: строки `ok …` для служебных команд, строка на тестовый файл, итог; ни одного
       `debugPrint` из тестов (например, строки `YUV-11 native provenance`)
-- [ ] Негативный контроль VM: временно испорченный `expect` (не коммитится) → в выводе файл, имя теста,
+- [x] Негативный контроль VM: временно испорченный `expect` (не коммитится) → в выводе файл, имя теста,
       Expected/Actual; код выхода скрипта ненулевой
-- [ ] Негативный контроль загрузки: временная синтаксическая ошибка в тестовом файле → файл назван, код ненулевой
-- [ ] Негативный контроль `drive.ps1`: цель с падающим тестом → вывод от маркера провала, код ненулевой
-- [ ] `test/ci_test_report_test.dart` покрывает: всё прошло → код 0; есть провал → код 1 и блок провала;
+- [x] Негативный контроль загрузки: временная синтаксическая ошибка в тестовом файле → файл назван, код ненулевой
+- [x] Негативный контроль `drive.ps1`: цель с падающим тестом → вывод от маркера провала, код ненулевой
+- [x] `test/ci_test_report_test.dart` покрывает: всё прошло → код 0; есть провал → код 1 и блок провала;
       ошибка загрузки → код 1; ни одного теста → код 1
-- [ ] `macos.sh` проходит на Mac с тем же видом вывода
+- [x] `macos.sh` проходит на Mac с тем же видом вывода
 
 #### Validation
 - Windows: `tool/ci/vm.ps1`, `tool/ci/windows.ps1`, `tool/ci/smoke.ps1`; негативные контроли из DoD — вывод в
@@ -61,4 +61,17 @@
 - `flutter analyze`, `dart format --line-length 150` для новых Dart-файлов.
 
 #### Executor Report
+
+- Windows `vm.ps1`: 583/583 passed; служебные команды выведены короткими строками `ok`, успешные тесты — построчно по файлам, `debugPrint` скрыт.
+- Windows `windows.ps1`: probe 15/15 (1 skipped), reference 123/123; Windows release сборка и оба drive-target прошли. `smoke.ps1` прошёл.
+- Негативный VM assert-контроль вернул код 1 и блок с файлом, именем теста, Expected/Actual. Контроль синтаксической ошибки: `vm.ps1` остановился на `flutter analyze` с ненулевым кодом; прямой вызов `Invoke-CiFlutterTest` назвал файл и вывел диагностику загрузки с ненулевым кодом.
+- Негативный `drive.ps1`: временный failing expect завершил прогон с кодом 1; в выводе от маркера `EXCEPTION` были Expected/Actual и причина теста.
+- `test/ci_test_report_test.dart`: 4 теста прошли; `dart format --line-length 150` — без изменений. Финальный `vm.ps1` включает `flutter analyze`.
+- Mac: `bash tool/ci/macos.sh` прошёл, включая packaging smoke 1/1, release build и оба drive-target.
+- Исправление после review: строки `Passed` печатаются только когда весь прогон завершился успешно и не содержит упавших suites; добавлена `mixed_failure.jsonl` и регрессия, проверяющая код 1, диагностический блок падения и отсутствие успешного suite/его print-вывода.
+- Проверка исправления в Windows с отдельным `RUNNER_TEMP`: `flutter test test/ci_test_report_test.dart` — 5/5; `dart format --line-length 150` — без изменений; `flutter analyze` завершился без ошибок (57 существующих info `library_annotations`); `tool/ci/vm.ps1` — 584/584.
+- `tool/ci/windows.ps1` прошёл: probe 15/15 (1 skipped), reference 123/123, Windows release build и оба drive-target; `tool/ci/smoke.ps1` прошёл. Повторный Mac-прогон этой коррекции не выполнялся в Windows-окружении.
+
 #### Review
+
+- **ACCEPTED (T2, 2026-10-01):** исправление после `8cf0ebd` ограничено репортёром, контрактным тестом и маленькой JSONL-фикстурой. В `tool/ci/test_report.dart` условие `showPassedSuites` требует успешного `done`, обычного теста, нулевого счётчика ошибок и отсутствия упавшего suite; поэтому при любом общем неуспехе строки `<path>  Passed …` не выводятся, а блоки упавших тестов, итог и время сохраняются. `mixed_failure.jsonl` содержит успешный suite с `passed diagnostic` и независимый упавший suite; тест проверяет код 1, путь/диагностику падения и отсутствие как `Passed` успешного suite, так и его print-вывода. Executor Report фиксирует для исправленного HEAD: 5/5 контрактных тестов, format без изменений, analyze без ошибок и `vm.ps1` 584/584; Windows/smoke прошли. Повторный Mac не выполнялся в Windows, но изменение не затрагивает macOS-скрипт, а исходный Mac-прогон остаётся применимым.
