@@ -221,7 +221,8 @@ try {
     runs = $runs
   }
   Write-JsonAtomically $resultPath $document
-  Write-Output "RA26_ANDROID_HOST_RESULT $($document | Select-Object schema,status,gitSha,runId,hostId,buildMode,packageRevision,packageOverridden,baselinePath,device,model,abi,apkSha256 | ConvertTo-Json -Compress)"
+  $hostSummary = [pscustomobject]$document | Select-Object schema,status,gitSha,runId,hostId,buildMode,packageRevision,packageOverridden,baselinePath,device,model,abi,apkSha256
+  Write-Output "RA26_ANDROID_HOST_RESULT $($hostSummary | ConvertTo-Json -Compress)"
   Write-Output "RA26_ANDROID_RESULT_PATH $resultPath"
 } finally {
   Pop-Location
