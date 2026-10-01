@@ -1,5 +1,5 @@
 # TEST 5 — Чистка дублирующих тестов
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** TEST 1, TEST 2, TEST 7 · **Depends On:** TEST 1, TEST 2, TEST 7
+**Status:** REVIEW · **Tier:** T2 · **Owner:** TEST 1, TEST 2, TEST 7 · **Depends On:** TEST 1, TEST 2, TEST 7
 
 #### Goal
 Одна регрессия — одно место, где она ловится (плюс эталон). Убрать тесты, чей контракт уже проверяет другой файл,
@@ -56,4 +56,17 @@
 - Мутационные прогоны (`lib/`) — только затронутые файлы, команды и результат в таблице удалений.
 
 #### Executor Report
+
+В инвентаризации TEST 1 все 95 строк в колонке «Предложение» имеют значение «оставить». По Architect Decision это единственный допустимый источник кандидатов, поэтому удалений и сокращений матриц не было: иное изменение нарушило бы Scope. `test/**`, `example/test/**`, `example/integration_test/**`, `lib/`, `src/`, эталонные артефакты и `golden.json` не изменялись.
+
+| Удаляемый тест/группа | Регрессия | Способ | Остающийся тест и доказательство |
+| --- | --- | --- | --- |
+| Нет допустимых кандидатов | — | — | Все строки инвентаризации предписывают оставить тест; мутация не применялась. |
+
+Показатели до/после совпадают, так как запуск выполнен от `dev` без изменения тестов: package `flutter test` — 731 passed, 1 skipped, 0 failed, 24,62 s; `flutter test --tags probe` — 15 passed, 1 expected skip, 0 failed, 9,40 s; `flutter test --tags reference` — 130 passed, 0 failed, 13,63 s; `example/flutter test` — 71 passed, 0 skipped, 0 failed, 14,22 s.
+
+- `tool/ci/vm.ps1` — passed: 569 smoke/contract checks. Первый запуск остановился до тестов из-за общего временного CMake cache от worktree TEST 3; повтор с `RUNNER_TEMP=%TEMP%\yuv-ffi-TEST-5` прошёл.
+- `tool/ci/windows.ps1` — passed: probe, reference matrix, Windows release build, native app-runtime smoke и `probe_native_test` integration.
+- `git diff dev -- lib src` — empty.
+- `git diff --check` — passed.
 #### Review
