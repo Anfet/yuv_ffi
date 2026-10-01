@@ -1,5 +1,5 @@
 # TEST 2 — Теги тест-сьюта
-**Status:** BLOCKED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
+**Status:** ENGINEER_REQUIRED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
 **Было:** RA-60 (цикл 0.4.2).
 
 #### Goal
@@ -95,6 +95,19 @@ pwsh -File tool/ci/windows.ps1
 
 Точная ошибка во всех трёх неуспешных прогонах: `test/probe/probe_copy_sync_test.dart:15`, `layout_pack_test.dart is out of sync`; исходный `test/probe/layout_pack_test.dart` начинается с `@Tags(['probe'])`, тогда как его копия `example/integration_test/helpers/probe/layout_pack_test.dart` не содержит этой аннотации. `windows.ps1` возвращает exit 1 по той же ошибке. Разница числа тестов от ожидаемых 733 не подтверждена: полный прогон завершил 732 видимых теста и имел одну ошибку и один пропуск.
 
-Блокер: для зелёных `probe`, полного прогона и `windows.ps1` нужно согласовать изменение копии в `example/` с ограничением Scope этой карточки; до решения/изменения Scope статус остаётся `BLOCKED`. Первые прогоны с некорректной PowerShell-обёрткой (Flutter получил пустой список аргументов) не учитывались.
+Блокер: для зелёных `probe`, полного прогона и `windows.ps1` нужно согласовать изменение копии в `example/` с ограничением Scope этой карточки; на момент отчёта Executor статус был `BLOCKED`. Первые прогоны с некорректной PowerShell-обёрткой (Flutter получил пустой список аргументов) не учитывались.
+
+#### Engineer Decision Required
+
+**Вопрос:** разрешить ли точечную синхронизацию копии `example/integration_test/helpers/probe/layout_pack_test.dart` в рамках TEST 2 или сохранить запрет на правки `example/` и изменить контракт проверки копий?
+
+**Известно:** `probe_copy_sync_test.dart` сравнивает файлы `test/probe` и `example/integration_test/helpers/probe` побайтово. Единственная разница у `layout_pack_test.dart` — добавленные в пакетный файл `@Tags(['probe'])` и пустая строка. `example/tool/copy_reference_fixtures.sh` копирует пакетные probe-файлы в `example/` целиком. Удаление тега из пакетного файла нарушит DoD о теге каждого `*_test.dart` и проверку `tags_coverage_test.dart`. Исправление внутри разрешённых аннотаций пакетных тестов невозможно.
+
+| Вариант | Последствие |
+| --- | --- |
+| Разрешить добавить те же две строки в `example/integration_test/helpers/probe/layout_pack_test.dart` и включить этот путь как точечное исключение в Scope/Constraints | Сохраняет побайтовый контракт копий и все группы тестов; расширяет открытый scope на `example/`. Скрипт копирования уже производит нужный результат. |
+| Оставить `example/` без изменений и разрешить `probe_copy_sync_test.dart` игнорировать только ведущую аннотацию тега при сравнении | Сохраняет запрет на `example/`, но требует изменения тела теста вопреки Constraints и ослабляет существующий контракт побайтовой идентичности. |
+
+**Рекомендация Architect:** разрешить первый вариант как точечное исключение. После решения Engineer обновить Scope/Constraints и передать карточку свежему T3 Executor для синхронизации копии и повторения неуспешных проверок. До решения статус `ENGINEER_REQUIRED`.
 
 #### Review
