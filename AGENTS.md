@@ -104,6 +104,7 @@ job `linux-native-smoke` в `.github/workflows/ci.yml`.
 | `macos/*`, `example/macos/*` | `macos` | `bash tool/ci/macos.sh` (macOS). |
 | `ios/*`, `example/ios/*` | `ios` | `bash tool/ci/ios.sh` (macOS с Xcode и симулятором). |
 | `android/*`, `example/android/*` | `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
+| `linux/*` | `linux` | CI-only: job `linux-native-smoke` в `.github/workflows/ci.yml`; условия запуска и набор проверок — в строке ключа `linux` ниже. |
 | `lib/*` (включая `lib/src/widgets/*`) | `vm example` | `pwsh -File tool/ci/vm.ps1` и `pwsh -File tool/ci/example.ps1`. Для `lib/src/widgets/**` дополнительно выберите `contract` и относящиеся к виджету тесты в `example/test/**`. |
 | `test/*`, `analysis_options.yaml`, `dart_test.yaml` | `vm` | `pwsh -File tool/ci/vm.ps1`; при необходимости используйте отдельные TEST 2 селекторы ниже. |
 | `example/*` (кроме ранее перечисленных платформенных и integration путей) | `example` | `pwsh -File tool/ci/example.ps1`. |

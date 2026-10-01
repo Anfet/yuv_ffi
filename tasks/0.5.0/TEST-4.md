@@ -1,5 +1,5 @@
 # TEST 4 — Карта «что изменил → что запускать»
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 3
+**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 3
 **Было:** RA-62 (цикл 0.4.2).
 
 #### Goal
@@ -47,7 +47,7 @@
   запускают; таблица не объявляет проверку пройденной до результата реального запуска.
 
 #### Definition of Done
-- [ ] В `AGENTS.md` есть таблица классов действующих путей из `path_keys()` с первым совпадением,
+- [x] В `AGENTS.md` есть таблица классов действующих путей из `path_keys()` с первым совпадением,
       объединением ключей и раскрытием `all`; отсутствующие Linux workflow и скрипт не перечислены как
       действующие пути. Для каждого ключа названа реальная команда или явно указано отсутствие локального скрипта.
 - [x] Примеры `src/**`, `lib/src/yuv/impl/web/**`, `lib/src/widgets/**`, `*.md` совпадают с действующим
@@ -128,3 +128,20 @@ Validation:
   селектору.
 - Validation review: `git diff --check 1eba457..4813dd4` прошёл; name-only diff содержит только
   `AGENTS.md` и эту карточку. Платформенные прогоны не выполнялись: документационная Validation их не требует.
+
+#### Executor Report
+
+Свежий Executor T3, GPT-6 Luna, добавил отсутствующий действующий класс `linux/*` в карту `AGENTS.md`.
+Строка направляет ключ `linux` к `linux-native-smoke` в `.github/workflows/ci.yml`; отсутствующие
+`.github/workflows/ci-linux.yml` и `tool/ci/linux.*` не указаны. Предыдущие полные пути, Web drive arguments
+и TEST 2/3 selectors сохранены.
+
+Validation:
+
+- `git diff --check` — успешно.
+- Каждый явно перечисленный workflow/script путь сверен с `git ls-files .github/workflows tool/ci`.
+- Строки карты `path_keys()` сверены с `tool/ci/scope_guard.sh`; `linux/CMakeLists.txt` присутствует в Git и
+  попадает под `linux/*`.
+- Условия и шаги `linux-native-smoke` сверены с `.github/workflows/ci.yml`.
+- `git diff --name-only` — `AGENTS.md` и `tasks/0.5.0/TEST-4.md`.
+- Платформенные проверки не запускались: изменение документационное.
