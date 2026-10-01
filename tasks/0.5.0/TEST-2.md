@@ -80,17 +80,29 @@ pwsh -File tool/ci/windows.ps1
 
 #### Executor Report
 
-Свежий T3 Executor выполнил одобренную синхронизацию: `example/integration_test/helpers/probe/layout_pack_test.dart` побайтово скопирован из `test/probe/layout_pack_test.dart`. Diff содержит только `@Tags(['probe'])` и пустую строку; тесты и `probe_copy_sync_test` не менялись.
+Свежий T3 Executor повторил проверки после отклонения на одном SHA `14d0e5966bf5243794e95812f5ce69e918fa1830` (до изменения этого отчёта). Синхронизированная копия `example/integration_test/helpers/probe/layout_pack_test.dart` и источник `test/probe/layout_pack_test.dart` имеют одинаковый SHA-256 `D6F3620B3197975170DF1FABC310789A523F19E37E79178144AE8674ECC20713`; изменения копии ограничены одобренной аннотацией `@Tags(['probe'])` и пустой строкой.
 
-Проверки после синхронизации:
+JSON count method: учитывать только события `testDone` с `hidden: false`; это завершённые тесты. `hidden: true` — служебные загрузчики файлов; skipped включается в completed и отдельно считается как skipped.
 
-| Команда | Exit | Завершённые тесты | Результат |
-| --- | ---: | ---: | --- |
-| `flutter test --tags probe --reporter json` | 0 | 16 (15 passed, 1 skipped) | прошло; JSON содержит успешный `done`, ошибок нет |
-| `flutter test --reporter json` | 0 | 732 (731 passed, 1 skipped) | прошло; ошибок нет |
-| `pwsh -File tool/ci/windows.ps1` | 0 | — | прошло; Windows build и все запущенные integration targets завершились успешно |
+| Команда на SHA `14d0e5966bf5243794e95812f5ce69e918fa1830` | Exit | Completed | Passed | Skipped |
+| --- | ---: | ---: | ---: | ---: |
+| `flutter test --tags "smoke || contract" --reporter json` | 0 | 569 | 569 | 0 |
+| `flutter test --tags probe --reporter json` | 0 | 16 | 15 | 1 |
+| `flutter test --tags reference --reporter json` | 0 | 130 | 130 | 0 |
+| `flutter test --tags release --reporter json` | 0 | 17 | 17 | 0 |
+| **Sum of groups** | — | **732** | **731** | **1** |
+| `flutter test --reporter json` | 0 | 732 | 731 | 1 |
+| `flutter test test/tags_coverage_test.dart --reporter json` | 0 | 1 | 1 | 0 |
 
-Расхождение 732/733: полный JSON на этом SHA содержит ровно 732 видимых `testDone` события, из них 731 успешное и 1 пропуск; `test/tags_coverage_test.dart` присутствует в JSON и завершён успешно. Предыдущая ожидаемая оценка 733 не подтверждается: известные счётчики групп из предыдущего Executor (569 + 16 + 130 + 17) также дают 732. Следовательно, текущий прогон не пропустил тест тегов; лишняя единица — ошибка ожидаемой арифметики/сопоставления с исторической базой TEST 1, а не скрытая запись загрузки или незавершённый тест. Точный исторический дельта-состав нельзя вывести из JSON текущего SHA.
+The four disjoint groups sum exactly to the full run: `569 + 16 + 130 + 17 = 732`. The full run has no failed tests. `tags_coverage_test.dart` is included in `smoke || contract` and also passed when run alone.
+
+The baseline stated by TEST 1 is 731 passed and 1 skipped (732 completed). The observed full count on this TEST 2 SHA is also 731 passed and 1 skipped (732 completed), so the measured delta is 0. The card expects +1 for `tags_coverage_test.dart`, which would produce 733 completed, but that expected delta is not present in the same-SHA evidence. The added coverage test is confirmed passing, and the task diff contains no changes to existing test bodies; therefore this executor cannot explain the missing +1 or claim this DoD item satisfied. Status remains TODO pending reconciliation of the historical baseline / expected count; no Architect decision was made.
+
+Additional DoD checks on the same code SHA:
+
+- `pwsh -File tool/ci/vm.ps1` — exit 0; selected `smoke || contract` completed successfully. The script was given an isolated `RUNNER_TEMP` because the shared temp CMake cache referred to another worktree.
+- `pwsh -File tool/ci/windows.ps1` — exit 0; probe selection and Windows integration targets passed, including the probe matrix (1,188 cases).
+- `git diff --check` — passed; source and example copy SHA-256 values matched.
 
 #### Engineer Decision
 
