@@ -48,6 +48,14 @@
 - Native code (`src/`) changes only as the work of a task: the task card's Architect Decision states the change explicitly (what and why), or the task itself is a native change with a known solution. An approved card is the permission.
 - No exploratory, experimental, or temporary edits of `src/` for tests or checks.
 
+## Probes
+- Every task card declares `Probe: none`, `Probe: windows`, or `Probe: windows+pixel3`.
+- Set `windows+pixel3` for changes under `src/` or `lib/src/yuv/impl/**`, and for any speed claim. Set `windows` for other changes under `lib/`. Set `none` for documentation and CI changes. When more than one rule applies, use the most demanding probe.
+- The Executor runs the Windows probe for `windows` and `windows+pixel3`, then records the probe's verdict lines in the Executor Report. A `FAIL` prevents submission. Explain or fix a `SLOWER` verdict before submission.
+- For `windows+pixel3`, the Reviewer runs the Pixel 3 probe on arm64; changes under `src/` also require armv7. Accept only when the Windows and required Pixel 3 probes pass and no `SLOWER` verdict remains unexplained.
+- The Reviewer owns baseline updates after acceptance. Make each baseline update in a separate commit that records its reason; the Executor does not update baselines.
+- On other platforms, CI checks correctness on each push. Check speed on those platforms during pre-release validation.
+
 ## История задач
 
 - История выполненной работы — git: коммиты, ветки слияния и теги. В рабочем дереве держать только действующее: правила (`AGENTS.md`), решения, текущий план, открытые карточки и документы, которые описывают текущий контракт (`doc/api-abi-0.4-design.md`).

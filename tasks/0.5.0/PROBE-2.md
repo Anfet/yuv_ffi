@@ -1,5 +1,6 @@
 # PROBE 2 — Правило проб для задач
-**Status:** BLOCKED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** PROBE 1, TEST 4 · **Rejection Count:** 0
+**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** PROBE 1, TEST 4 · **Rejection Count:** 0
+**Probe:** none
 **Было:** RA-27 (цикл 0.4.2).
 
 #### Architect Decision
@@ -11,5 +12,11 @@
 - Остальные платформы: корректность проверяется в CI на каждом push, скорость — на предрелизной проверке.
 
 #### Definition of Done
-- [ ] Раздел добавлен
-- [ ] Шаблон карточки (в `todo.md`) содержит поле `Probe`
+- [x] Раздел добавлен
+- [x] Шаблон карточки (в `todo.md`) содержит поле `Probe`
+
+#### Executor Report
+- Добавлен раздел `Probes` с классификацией задач, обязанностями Executor и Reviewer, правилами вердиктов, владением базой и проверками остальных платформ.
+- В правилах `todo.md` добавлено поле `Probe` для шаблона карточки; этой документационной задаче назначено `Probe: none`.
+- Проверка: `git diff --check` — PASS. Проверка проб не требуется (`Probe: none`).
+- Результат: готово к независимому ревью.
