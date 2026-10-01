@@ -1,5 +1,5 @@
 # PROBE 1 — Базовые линии скорости 0.4.0 против dev
-**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 3
+**Status:** ACCEPTED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 3 · **Rejection Count:** 3
 **Было:** RA-26 (цикл 0.4.2).
 
 #### Problem / Goal
@@ -167,3 +167,24 @@ the benchmark source and measured package behavior remain unchanged.
 **Result: REVIEW.** The third review's required negative controls and both
 applicable CI scripts are now evidenced. The accepted measurement files remain
 the prior committed evidence.
+
+#### Review — 01.10.2026, fourth review
+
+**Result: ACCEPTED (T1).** The correction changed only this task card; the
+runner, benchmark, baseline, and receipts remain at the previously reviewed
+revision. The Executor Report records actual rejection of missing package
+config, wrong package revision, zero and two DLL candidates, and invalid AC
+readings both before launch and after exit. Inspection of
+`tool/probe/run_windows_release.ps1` confirms each rejection occurs before a
+host receipt can be accepted. The task-owned VM log records analysis, native
+build, and 584/584 tests passed; the Windows log records 20/20 probe tests,
+123/123 reference cases, Release build, and both native integration targets
+passed. Windows stderr is empty. The foreign `TEST-3/build` directory retains
+its pre-run timestamp.
+
+The three archived verdicts still have 24 unique IDs and matching run IDs in
+their receipts. Their Git blob SHA-256 values match the receipt hashes; the
+versioned tag baseline has the same bytes as the archived tag Git blob. On
+this Windows checkout, `core.autocrlf=true` changes the raw verdict working
+files to CRLF, so hashing those checkout files directly gives different
+values. Hash the committed Git blobs when auditing the receipt binding.
