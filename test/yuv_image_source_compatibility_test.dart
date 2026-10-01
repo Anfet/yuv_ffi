@@ -5,16 +5,10 @@ import 'dart:ui' as ui;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies source compatibility: a class written against `0.2.4` that
-/// implements [YuvImage] without knowing anything about the revision seam must
-/// still compile and work on `0.2.5`.
-///
-/// This file is the compile-time fixture required by the card. If revision
-/// tracking ever moves back onto the [YuvImage] interface as required members,
-/// [_LegacyExternalImage] stops compiling and this test fails to build — which
-/// is exactly the regression it exists to catch.
+/// Verifies cache behaviour for external [YuvImage] implementations that do
+/// not report revisions.
 void main() {
-  test('a version 0.2.4 external implementation still satisfies YuvImage', () {
+  test('an external implementation satisfies YuvImage', () {
     final YuvImage image = _LegacyExternalImage(2, 2);
 
     expect(image.width, 2);
@@ -139,54 +133,13 @@ class _LegacyExternalImage implements YuvImage {
   ui.Size get size => ui.Size(width.toDouble(), height.toDouble());
 
   @override
-  YuvImage copy({bool blank = false}) => _LegacyExternalImage(width, height);
+  YuvImage copy() => _LegacyExternalImage(width, height);
 
   @override
   YuvImage applyPlanes(Iterable<YuvPlane> planes) => throw UnimplementedError();
 
   @override
   Future<void> encodeTo(Sink<List<int>> sink) => throw UnimplementedError();
-
-  // Legacy instance methods this legacy class already defined on itself,
-  // same as a real `0.2.4`-era implementer would have. They are no longer
-  // `YuvImage` interface members -- `DeprecatedYuvImageApi` covers their name
-  // for every other `YuvImage` -- but a class that already had its own method
-  // of the same name keeps it: Dart resolves an instance member before an
-  // extension one, so these still shadow the extension here, exactly as they
-  // would have before the revision API existed.
-  YuvImage blackwhite() => throw UnimplementedError();
-
-  YuvImage gaussianBlur({int radius = 2, int sigma = 2}) => throw UnimplementedError();
-
-  YuvImage boxBlur({int radius = 10, ui.Rect? rect}) => throw UnimplementedError();
-
-  YuvImage meanBlur({int radius = 2, ui.Rect? rect}) => throw UnimplementedError();
-
-  YuvImage swapNv() => throw UnimplementedError();
-
-  YuvImage toYuvNv21() => throw UnimplementedError();
-
-  YuvImage toYuvI420() => throw UnimplementedError();
-
-  YuvImage toYuvBgra8888() => this;
-
-  YuvImage crop(ui.Rect rect) => throw UnimplementedError();
-
-  YuvImage flipHorizontally() => throw UnimplementedError();
-
-  YuvImage flipVertically() => throw UnimplementedError();
-
-  void fromRgba8888(Uint8List bytes) => throw UnimplementedError();
-
-  YuvImage grayscale() => throw UnimplementedError();
-
-  YuvImage negate() => throw UnimplementedError();
-
-  YuvImage rotate(YuvImageRotation rotation) => throw UnimplementedError();
-
-  Uint8List getBytes() => _plane.bytes;
-
-  Uint8List toBgra8888() => _plane.bytes;
 
   @override
   Future<ui.Image> toImage() => throw UnimplementedError();

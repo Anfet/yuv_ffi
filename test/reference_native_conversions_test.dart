@@ -46,6 +46,9 @@ void main() {
       'library=${nativeLibrary?.absolute.path ?? 'unsupported'}, exists=$nativeAvailable, '
       'sha256=${nativeAvailable ? sha256Hex(await nativeLibrary!.readAsBytes()) : 'not available'}',
     );
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
   });
 
   test('manifest declares the complete native reference matrix', () {
@@ -154,21 +157,20 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
       rawBytes = image.toBgraBytes();
       break;
     case 'toYuvBgra8888':
-      // ignore: deprecated_member_use_from_same_package
-      _inPlace(entry, image, image.toBgra);
+      _inPlace(entry, image, () => image.applyFormat(YuvPixelFormat.bgra8888));
       break;
     case 'toYuvI420':
-      // ignore: deprecated_member_use_from_same_package
-      _inPlace(entry, image, image.toI420);
+      _inPlace(entry, image, () => image.applyFormat(YuvPixelFormat.i420));
       break;
     case 'toYuvNv21':
-      // ignore: deprecated_member_use_from_same_package
-      _inPlace(entry, image, image.toNv12);
+      _inPlace(entry, image, () => image.applyFormat(YuvPixelFormat.nv12));
       break;
     case 'swapNv':
       final swaps = parameters['swaps'] as int;
+      if (image.format != YuvPixelFormat.nv12) {
+        _inPlace(entry, image, () => image.applyFormat(YuvPixelFormat.nv12));
+      }
       for (var i = 0; i < swaps; i++) {
-        // ignore: deprecated_member_use_from_same_package
         _inPlace(entry, image, image.applyChromaSwap);
       }
       break;
@@ -182,23 +184,23 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
       break;
     case 'flipHorizontally':
       // ignore: deprecated_member_use_from_same_package
-        _inPlace(entry, image, image.applyFlipHorizontal);
+      _inPlace(entry, image, image.applyFlipHorizontal);
       break;
     case 'flipVertically':
       // ignore: deprecated_member_use_from_same_package
-        _inPlace(entry, image, image.applyFlipVertical);
+      _inPlace(entry, image, image.applyFlipVertical);
       break;
     case 'grayscale':
       // ignore: deprecated_member_use_from_same_package
-        _inPlace(entry, image, image.applyGrayscale);
+      _inPlace(entry, image, image.applyGrayscale);
       break;
     case 'blackwhite':
       // ignore: deprecated_member_use_from_same_package
-        _inPlace(entry, image, image.applyBlackWhite);
+      _inPlace(entry, image, image.applyBlackWhite);
       break;
     case 'negate':
       // ignore: deprecated_member_use_from_same_package
-        _inPlace(entry, image, image.applyNegate);
+      _inPlace(entry, image, image.applyNegate);
       break;
     case 'gaussianBlur':
       // ignore: deprecated_member_use_from_same_package

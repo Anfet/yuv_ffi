@@ -4,9 +4,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 
 /// Characterization tests for [YuvImageRotation].
 ///
-/// These pin the behaviour that exists today. `toZero()` in particular is
-/// documented here rather than changed: the card requires evidence of an actual
-/// defect before its semantics are touched, and none has been produced.
+/// These pin the behaviour that exists today.
 void main() {
   group('degrees', () {
     test('each value carries its own angle', () {
@@ -55,5 +53,4 @@ void main() {
       }
     });
   });
-
 }

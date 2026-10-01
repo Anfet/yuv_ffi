@@ -1,7 +1,6 @@
 @Tags(['contract'])
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:ffi' as ffi;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart' as backend_loader;
@@ -17,13 +16,10 @@ void main() {
   final bool nativeAvailable = _checkNativeAvailable();
 
   setUpAll(() async {
-    backend_loader.debugResetLoader();
-    backend_loader.debugSetLibraryOpener(ffi.DynamicLibrary.executable);
-    backend_loader.debugSetSymbolChecker((_, __) => true);
-    await YuvFfi.initialize();
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
   });
-
-  tearDownAll(backend_loader.debugResetLoader);
 
   group('revision contract', () {
     test('a fresh image starts at a stable revision', () {
@@ -193,7 +189,7 @@ void main() {
           expect(image.revision, before + 1);
         });
 
-        test('swapNv advances exactly once even when it converts first', () {
+        test('applyChromaSwap advances exactly once on NV12', () {
           // Chroma swap is an in-place NV12 operation and advances once.
           // ignore: deprecated_member_use_from_same_package
           final alreadyNv = YuvImage.nv12(8, 8)..applyRgbaBytes(rgba(8, 8));

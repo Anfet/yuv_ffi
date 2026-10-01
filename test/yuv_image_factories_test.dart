@@ -12,6 +12,12 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
 
+  setUpAll(() async {
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
+  });
+
   group('root export compile check', () {
     test('YuvImage.nv12 and YuvImage.allocate are reachable from package:yuv_ffi/yuv_ffi.dart', () {
       expect(YuvImage.nv12(2, 2), isA<YuvImage>());

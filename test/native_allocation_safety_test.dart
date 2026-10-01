@@ -16,6 +16,12 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
 
+  setUpAll(() async {
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
+  });
+
   const int w = 8;
   const int h = 8;
 

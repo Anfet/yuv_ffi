@@ -15,6 +15,12 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
 
+  setUpAll(() async {
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
+  });
+
   YuvImage patternI420(int width, int height) {
     final uvW = (width + 1) ~/ 2, uvH = (height + 1) ~/ 2;
     final y = Uint8List(width * height);

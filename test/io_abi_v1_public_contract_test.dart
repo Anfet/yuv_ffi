@@ -1,7 +1,6 @@
 @Tags(['contract'])
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:ffi' as ffi;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart' as backend_loader;
@@ -23,13 +22,10 @@ void main() {
   final bool nativeAvailable = _checkNativeAvailable();
 
   setUpAll(() async {
-    backend_loader.debugResetLoader();
-    backend_loader.debugSetLibraryOpener(ffi.DynamicLibrary.executable);
-    backend_loader.debugSetSymbolChecker((_, __) => true);
-    await YuvFfi.initialize();
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
   });
-
-  tearDownAll(backend_loader.debugResetLoader);
 
   YuvPlane plane(int height, int rowStride, int pixelStride, int fill) =>
       YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride)..fillRange(0, height * rowStride, fill));
@@ -122,17 +118,13 @@ void main() {
       expect(image.internalRevision, before + 1);
     }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
 
-    test('swapNv bumps it by one despite converting first', () {
-      // The conversion inside swapNv is itself a mutating operation, so this
-      // is the case where a naive implementation advances the counter twice.
-      final image = YuvImage.i420(8, 8) as YuvRevisionAware;
+    test('applyChromaSwap bumps it by one on NV12', () {
+      final image = YuvImage.nv12(8, 8) as YuvRevisionAware;
       final before = image.internalRevision;
 
-      // ignore: deprecated_member_use_from_same_package
       (image as YuvImage).applyChromaSwap();
 
       expect(image.internalRevision, before + 1);
-      expect((image as YuvImage).format, YuvPixelFormat.nv12);
     }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
   });
 

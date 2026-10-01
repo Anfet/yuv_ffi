@@ -1,5 +1,5 @@
 # CLEAN 2 — Удалить устаревшее API
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** TEST 2 · **Probe:** windows+pixel3
 
 #### Goal
 D-11; вместе с `deprecated_api_test`; миграция в README и CHANGELOG.
@@ -138,6 +138,29 @@ preserved.
   the underlying CMake diagnostic. A Windows native-build repair or a fresh
   worktree with the native asset prepared is required before this card can move
   to `REVIEW`.
+
+**Correction #5:** Fresh worktree validation showed that the CMake failure was
+stale build state, not a native source problem. The restored native reference
+suite also needed the current `YuvFfi.initialize()` bootstrap and current
+`applyFormat`/`applyChromaSwap` composition. Removed only stale compatibility
+assertions and migrated active native tests to the current capability-gated API.
+
+**Validation (correction #5):**
+
+- Fresh `pwsh -File tool/ci/windows.ps1` — PASS: CMake configure/build,
+  probe 20/20, reference 134/134, Windows release build, runtime smoke and
+  native probe integration tests.
+- `pwsh -File tool/ci/vm.ps1` — PASS: analyze and 571/571 smoke/contract
+  tests.
+- `pwsh -File tool/probe/run_windows.ps1` with the fresh DLL on PATH — PASS:
+  24/24 scenarios, every verdict `PASS`, `NO-BASELINE`, no `SLOWER`.
+- Earlier Web and example evidence remains applicable: this correction changes
+  only VM-native test setup and assertions; no Web source, example source,
+  native source, headers, bindings, assets, package metadata, or CI script
+  changed.
+
+Reviewer runs the required Pixel 3 arm64 and armv7 release probes on the
+committed correction head.
 
 #### Review
 

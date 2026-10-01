@@ -276,7 +276,7 @@ void main() {
     expect(restored.uPlane.bytes, orderedEquals(originalChroma));
   }, skip: !_nativeAvailable);
 
-  test('legacy swapNv preserves Y after conversion from I420', () {
+  test('applyFormat then applyChromaSwap preserves Y', () {
     const width = 4;
     const height = 4;
     final originalY = Uint8List.fromList([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]);
@@ -289,9 +289,7 @@ void main() {
         YuvPlane(height ~/ 2, width ~/ 2, 1, Uint8List.fromList([2, 4, 6, 8])),
       ],
     );
-    // swapNv is the retained compatibility API that first converts I420 to
-    // NV12, then swaps each chroma pair.
-    // ignore: deprecated_member_use_from_same_package
+    image.applyFormat(YuvPixelFormat.nv12);
     image.applyChromaSwap();
 
     expect(image.format, YuvPixelFormat.nv12);
@@ -301,7 +299,7 @@ void main() {
     expect(image.uPlane.bytes, orderedEquals(<int>[2, 1, 4, 3, 6, 5, 8, 7]));
   }, skip: !_nativeAvailable);
 
-  test('legacy swapNv preserves padded Y layout after one and two swaps', () {
+  test('applyChromaSwap preserves padded Y layout after one and two swaps', () {
     const width = 4;
     const height = 4;
     const yRowStride = 6;
@@ -320,10 +318,10 @@ void main() {
     // ignore: deprecated_member_use_from_same_package
     image.applyChromaSwap();
 
-    expect(identical(image.yPlane, sourceYPlane), isFalse);
-    expect(identical(image.yPlane.bytes, sourceYPlane.bytes), isFalse);
-    expect(identical(image.uPlane, sourceChromaPlane), isFalse);
-    expect(identical(image.uPlane.bytes, sourceChromaPlane.bytes), isFalse);
+    expect(identical(image.yPlane, sourceYPlane), isTrue);
+    expect(identical(image.yPlane.bytes, sourceYPlane.bytes), isTrue);
+    expect(identical(image.uPlane, sourceChromaPlane), isTrue);
+    expect(identical(image.uPlane.bytes, sourceChromaPlane.bytes), isTrue);
     expect(image.yPlane.rowStride, yRowStride);
     expect(image.yPlane.bytes, orderedEquals(originalY));
     expect(image.uPlane.rowStride, uvRowStride);

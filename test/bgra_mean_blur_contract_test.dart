@@ -15,6 +15,12 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
 
+  setUpAll(() async {
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
+  });
+
   /// Builds a tight BGRA image with a deterministic, non-uniform pattern.
   YuvImage patternImage(int width, int height) {
     final bytes = Uint8List(width * height * 4);
