@@ -6,7 +6,7 @@
 
 ## Цикл 0.5.0
 
-Пока пусто.
+- **TEST 1 — Инвентаризирован тест-сьют:** 95 тестовых файлов сопоставлены с контрактами и проверенными группами пересечений. Влито в `dev` на `da55e06`. Windows `tool/ci/smoke.ps1`, `tool/ci/vm.ps1` (730 passed, 1 skipped), `tool/ci/example.ps1` и `example/flutter test` (71 passed) прошли на этом SHA. Hosted CI не запускался: workflow исключают `tasks/**` и Markdown.
 
 ## Проверенная точка 0.4.2 — закрыта без выпуска, 01.10.2026
 

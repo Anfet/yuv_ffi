@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 1. TEST 2 уже начата в цикле 0.4.2: ветки `task/RA-60` (исполнитель) и `docs/RA-60-architect` (решение архитектора по селекторам тегов) ответвлены от `release/0.4.2`. Следующий шаг — влить решение архитектора в `dev` и продолжить исполнение от `dev`. Карточки этапа 1 расписаны: TEST 1, TEST 2 и TEST 7 можно запускать параллельно, остальные ждут их.
+- **Сейчас:** этап 1. TEST 1 завершён и влит в `dev` (`da55e06`). TEST 2 заблокирован зависанием Flutter runtime; TEST 7 ждёт macOS-проверки и негативного контроля. TEST 3…6 ждут TEST 2/TEST 7 по зависимостям.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Дашборд
@@ -35,13 +35,12 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 1](tasks/0.5.0/TEST-1.md) | TODO | T2 | — | — | **Инвентаризация тест-сьюта.** Таблица «файл → слой → контракт → тестов, время → пересечения → предложение» в `tasks/0.5.0/TEST-1-inventory.md`. Только чтение и документ. |
-| [TEST 2](tasks/0.5.0/TEST-2.md) | TODO | T3 | — | — | **Теги тест-сьюта.** Было RA-60. Влить `docs/RA-60-architect` в `dev`, затем Executor продолжает `task/RA-60` от `dev`. |
+| [TEST 2](tasks/0.5.0/TEST-2.md) | BLOCKED | T3 | Luna | — | **Теги тест-сьюта.** Runtime-проверки зависли даже на `flutter test --no-pub test/tags_coverage_test.dart`; статическая разметка и native build готовы. Нужна рабочая Flutter-среда. |
 | [TEST 3](tasks/0.5.0/TEST-3.md) | BLOCKED | T2 | TEST 2 | TEST 2 | **Срезы проб по операции и формату.** Было RA-61. Ждёт TEST 2. |
 | [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 2/3 | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Было RA-62. Ждёт TEST 2 и TEST 3. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | BLOCKED | T2 | TEST 1, TEST 2, TEST 7 | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Удаление — только с доказательством мутацией; при дублях конвертаций остаётся сверка с эталоном. `src/` не трогается (D-17). |
 | [TEST 6](tasks/0.5.0/TEST-6.md) | BLOCKED | T3 | TEST 2 | TEST 2 | **Тихий вывод тестов и CI.** Репортер `tool/ci/test_report.dart`, тихие `Invoke-CiNativeCommand` и `drive`. Ждёт TEST 2 (те же скрипты). |
-| [TEST 7](tasks/0.5.0/TEST-7.md) | TODO | T2 | — | — | **Сверка эталона с libyuv.** Повторяемый скрипт `tool/oracle/check_reference.sh` на Mac; итог — в `doc/independent-oracles.md`. |
+| [TEST 7](tasks/0.5.0/TEST-7.md) | BLOCKED | T2 | Terra | — | **Сверка эталона с libyuv.** Harness, скрипт и dry-run готовы (`29a09b7`); ждёт Mac-проверки, включая повреждённый I420 negative control. |
 
 ### Этап 2 — пробы и скорость
 
