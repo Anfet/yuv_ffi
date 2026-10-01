@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -25,7 +24,7 @@ void main() {
 
   setUpAll(() async {
     // ignore: deprecated_member_use_from_same_package
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
   });
 
   test('a real WASM ABI v1 operation on a gapped NV12 plane leaves the gap byte untouched', () {
@@ -49,7 +48,7 @@ void main() {
     // treating the plane as tightly packed instead of walking it through its
     // declared strides.
     // ignore: deprecated_member_use_from_same_package
-    image.grayscale();
+    image.applyGrayscale();
 
     for (int row = 0; row < 2; row++) {
       final base = row * 6;

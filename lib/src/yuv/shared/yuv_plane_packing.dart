@@ -1,4 +1,4 @@
-import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 
@@ -18,13 +18,13 @@ abstract final class YuvPlanePacking {
   /// a packed `(U, V)` pair, so packing it to `1` would split the pair rather
   /// than remove padding.
   // ignore: deprecated_member_use_from_same_package
-  static int packedSampleBytes(YuvFileFormat format, int planeIndex) => switch (format) {
+  static int packedSampleBytes(YuvPixelFormat format, int planeIndex) => switch (format) {
     // ignore: deprecated_member_use_from_same_package
-    YuvFileFormat.bgra8888 => 4,
+    YuvPixelFormat.bgra8888 => 4,
     // ignore: deprecated_member_use_from_same_package
-    YuvFileFormat.i420 => 1,
+    YuvPixelFormat.i420 => 1,
     // ignore: deprecated_member_use_from_same_package
-    YuvFileFormat.nv21 => planeIndex == 0 ? 1 : YuvGeometry.nvChromaPixelStride,
+    YuvPixelFormat.nv12 => planeIndex == 0 ? 1 : YuvGeometry.nvChromaPixelStride,
   };
 
   /// The sample columns of the plane at [planeIndex]: [width] for the
@@ -40,7 +40,7 @@ abstract final class YuvPlanePacking {
   /// sampleBytes`) and zero per-sample pixel gap (`pixelStride ==
   /// sampleBytes`).
   // ignore: deprecated_member_use_from_same_package
-  static bool isTightlyPacked(YuvFileFormat format, int width, int height, List<YuvPlane> planes) {
+  static bool isTightlyPacked(YuvPixelFormat format, int width, int height, List<YuvPlane> planes) {
     for (var i = 0; i < planes.length; i++) {
       final plane = planes[i];
       final sampleBytes = packedSampleBytes(format, i);
@@ -53,7 +53,7 @@ abstract final class YuvPlanePacking {
   /// Builds a tightly packed replacement for every plane of [planes], for
   /// [format] at [width] x [height].
   // ignore: deprecated_member_use_from_same_package
-  static List<YuvPlane> packAll(YuvFileFormat format, int width, int height, List<YuvPlane> planes) => [
+  static List<YuvPlane> packAll(YuvPixelFormat format, int width, int height, List<YuvPlane> planes) => [
     for (var i = 0; i < planes.length; i++)
       packPlane(planes[i], rows: planeRows(i, height), columns: planeColumns(i, width), sampleBytes: packedSampleBytes(format, i)),
   ];

@@ -138,7 +138,7 @@ class _YuvCameraPreviewMobileState extends State<_YuvCameraPreviewMobile> {
       var yuv = image.toYuvImage();
       if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.yuvImageReady, debugYuvCameraPreviewMobileClock.elapsed);
       if (_previewPlatform() == TargetPlatform.android) {
-        yuv = yuv.applyRotation(rotation.toZero());
+        yuv = yuv.applyRotation(rotation);
         if (debugEvent != null) debugEvent(DebugYuvCameraPreviewMobileEventKind.rotationApplied, debugYuvCameraPreviewMobileClock.elapsed);
 
         if (kYuvCameraPreviewFlipAndroid) yuv.applyFlipHorizontal();

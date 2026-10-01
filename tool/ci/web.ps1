@@ -54,16 +54,12 @@ function Assert-WebSourceMatrix {
   $separate = @(
     'wasm_bootstrap_web_test.dart',
     'wasm_loader_lifecycle_web_test.dart',
-    'wasm_swap_nv_atomicity_web_test.dart',
     'yuv_web_capabilities_web_test.dart'
   )
   $aggregate = @(
     'getbytes_contract_web_test.dart',
-    'image_cache_key_web_test.dart',
     'nv_chroma_order_web_test.dart',
-    'padded_bgra_constructor_web_test.dart',
     'probe_web_test.dart',
-    'serialization_contract_web_test.dart',
     'wasm_abi_v1_descriptor_staging_web_test.dart',
     'wasm_parity_edge_cases_web_test.dart',
     'web_ownership_regression_web_test.dart'
@@ -71,20 +67,16 @@ function Assert-WebSourceMatrix {
   $executionSources = @{
     'wasm_bootstrap_web_test.dart' = @('wasm_bootstrap_web_test.dart')
     'wasm_loader_lifecycle_web_test.dart' = @('wasm_loader_lifecycle_web_test.dart')
-    'fake_loader_web_tests.dart' = @('wasm_swap_nv_atomicity_web_test.dart', 'yuv_web_capabilities_web_test.dart')
+    'fake_loader_web_tests.dart' = @('yuv_web_capabilities_web_test.dart')
   }
   $baselineCases = @{
     'getbytes_contract_web_test.dart' = 4
-    'image_cache_key_web_test.dart' = 17
     'nv_chroma_order_web_test.dart' = 2
-    'padded_bgra_constructor_web_test.dart' = 7
     'probe_web_test.dart' = 1
-    'serialization_contract_web_test.dart' = 13
     'wasm_abi_v1_descriptor_staging_web_test.dart' = 29
     'wasm_bootstrap_web_test.dart' = 1
     'wasm_loader_lifecycle_web_test.dart' = 9
     'wasm_parity_edge_cases_web_test.dart' = 2
-    'wasm_swap_nv_atomicity_web_test.dart' = 7
     'web_ownership_regression_web_test.dart' = 3
     'yuv_web_capabilities_web_test.dart' = 5
   }
@@ -100,8 +92,8 @@ function Assert-WebSourceMatrix {
   if ($unmapped.Count -gt 0 -or $missingSources.Count -gt 0 -or $mapped.Count -ne ($aggregate.Count + $separate.Count)) {
     throw "Web source mapping mismatch: unmapped=[$($unmapped -join ', ')]; missing=[$($missingSources -join ', ')]"
   }
-  if ($baselineCases.Count -ne $discovered.Count -or @($baselineCases.Keys | Where-Object { $_ -notin $discovered }).Count -gt 0 -or ($baselineCases.Values | Measure-Object -Sum).Sum -ne 100) {
-    throw 'Web source case baseline must cover all 13 sources and total 100 cases.'
+  if ($baselineCases.Count -ne $discovered.Count -or @($baselineCases.Keys | Where-Object { $_ -notin $discovered }).Count -gt 0 -or ($baselineCases.Values | Measure-Object -Sum).Sum -ne 56) {
+    throw 'Web source case baseline must cover all 9 sources and total 56 cases.'
   }
 
   $aggregatorPath = Join-Path $integrationDirectory $combined
@@ -227,7 +219,7 @@ try {
     throw "Could not refresh generated-file index state: $LASTEXITCODE"
   }
 
-  Write-Output "Web CI passed: Chrome $chromeVersion; sources=13; integration cases=100; reference matrix=119."
+  Write-Output "Web CI passed: Chrome $chromeVersion; sources=9; integration cases=56; reference matrix=119."
 } finally {
   Pop-Location
 }

@@ -61,8 +61,8 @@ flutter:
     # from outside its own root (../test/...), so these are a build-time copy
     # of test/reference/test_pattern_512/{manifest.json,artifacts/*.png} and
     # test/assets/test_pattern_512.png. Only the PNG artifacts are copied:
-    # the native suite (test/reference_native_conversions_test.dart) never
-    # opens the raw .bin/.yuv blobs listed in the manifest — expected raw
+    # the Web reference matrix never opens the raw .bin/.yuv blobs listed in
+    # the manifest — expected raw
     # bytes are always recomputed in pure Dart via parametersForRaw() — so
     # copying them here would just be ~2.8 MB of dead weight.
     #

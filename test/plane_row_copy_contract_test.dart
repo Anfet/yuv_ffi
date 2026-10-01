@@ -1,7 +1,5 @@
 @Tags(['contract'])
-
 // ignore_for_file: deprecated_member_use_from_same_package
-
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -20,14 +18,14 @@ void main() {
       Uint8List.fromList(<int>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]),
     ]);
     final padded = YuvPlane(height, 16, 4, Uint8List(32)..fillRange(0, 32, 0xA5));
-    YuvAbiV1ImageTransport.applyTo(result: result, planes: [padded], format: YuvFileFormat.bgra8888, width: width, height: height);
+    YuvAbiV1ImageTransport.applyTo(result: result, planes: [padded], format: YuvPixelFormat.bgra8888, width: width, height: height);
     expect(padded.bytes.sublist(0, 12), result.planes.single.sublist(0, 12));
     expect(padded.bytes.sublist(16, 28), result.planes.single.sublist(12, 24));
     expect(padded.bytes.sublist(12, 16), everyElement(0xA5));
     expect(padded.bytes.sublist(28, 32), everyElement(0xA5));
 
     final gapped = YuvPlane(height, 20, 6, Uint8List(40)..fillRange(0, 40, 0xA5));
-    YuvAbiV1ImageTransport.applyTo(result: result, planes: [gapped], format: YuvFileFormat.bgra8888, width: width, height: height);
+    YuvAbiV1ImageTransport.applyTo(result: result, planes: [gapped], format: YuvPixelFormat.bgra8888, width: width, height: height);
     for (var row = 0; row < height; row++) {
       for (var col = 0; col < width; col++) {
         final sourceOffset = (row * width + col) * 4;
@@ -52,7 +50,7 @@ void main() {
     YuvAbiV1Runner.debugInvokeOverride = (_, _, _) => 0;
     final frame = YuvAbiV1Runner.grayscale(
       source: YuvAbiV1FrameInput(
-        format: YuvAbiV1ImageTransport.abiFormat(YuvFileFormat.bgra8888),
+        format: YuvAbiV1ImageTransport.abiFormat(YuvPixelFormat.bgra8888),
         width: width,
         height: height,
         planes: [YuvAbiV1PlaneInput(bytes: source, rowStride: sourceStride, pixelStride: 6)],
@@ -83,7 +81,7 @@ void main() {
     YuvAbiV1Runner.debugInvokeOverride = (_, _, _) => 0;
     final frame = YuvAbiV1Runner.grayscale(
       source: YuvAbiV1FrameInput(
-        format: YuvAbiV1ImageTransport.abiFormat(YuvFileFormat.bgra8888),
+        format: YuvAbiV1ImageTransport.abiFormat(YuvPixelFormat.bgra8888),
         width: width,
         height: height,
         planes: [YuvAbiV1PlaneInput(bytes: source, rowStride: sourceStride, pixelStride: 4)],

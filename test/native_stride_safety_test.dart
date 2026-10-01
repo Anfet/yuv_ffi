@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -44,6 +43,12 @@ void main() {
   }
 
   group('native stride and odd-size safety', () {
+    setUpAll(() async {
+      if (nativeAvailable) {
+        await YuvFfi.initialize();
+      }
+    });
+
     test('fromRgba8888 reads tight RGBA into a padded Y plane', () {
       const width = 4;
       const height = 4;
@@ -68,7 +73,7 @@ void main() {
       // Before the fix the RGBA row address was derived from the padded Y
       // stride, which reads past the end of a tight input buffer.
       // ignore: deprecated_member_use_from_same_package
-      expect(() => image.fromRgba8888(rgba), returnsNormally);
+      expect(() => image.applyRgbaBytes(rgba), returnsNormally);
 
       // White input must produce a uniform high luma across the active width.
       for (int y = 0; y < height; y++) {
@@ -92,9 +97,9 @@ void main() {
       }
 
       // ignore: deprecated_member_use_from_same_package
-      final baselineBgra = YuvImage.bgra(width, height)..fromRgba8888(rgba);
+      final baselineBgra = YuvImage.bgra(width, height)..applyRgbaBytes(rgba);
       // ignore: deprecated_member_use_from_same_package
-      final paddedBgra = YuvImage(YuvFileFormat.bgra8888, width, height, planes: [canaryPlane(height, width * 4 + 7, 4)])..fromRgba8888(rgba);
+      final paddedBgra = YuvImage(YuvPixelFormat.bgra8888, width, height, planes: [canaryPlane(height, width * 4 + 7, 4)])..applyRgbaBytes(rgba);
       for (int row = 0; row < height; row++) {
         for (int column = 0; column < width; column++) {
           final expected = row * baselineBgra.yPlane.rowStride + column * 4;
@@ -105,7 +110,7 @@ void main() {
       expectPaddingUntouched(paddedBgra.yPlane, logicalWidth: width, sampleBytes: 4);
 
       // ignore: deprecated_member_use_from_same_package
-      final baselineI420 = YuvImage.i420(width, height)..fromRgba8888(rgba);
+      final baselineI420 = YuvImage.i420(width, height)..applyRgbaBytes(rgba);
       final paddedI420 = YuvImage.i420(
         width,
         height,
@@ -115,7 +120,7 @@ void main() {
           canaryPlane(chromaHeight, chromaWidth * 2 + 2, 2),
         ],
         // ignore: deprecated_member_use_from_same_package
-      )..fromRgba8888(rgba);
+      )..applyRgbaBytes(rgba);
       for (int row = 0; row < height; row++) {
         for (int column = 0; column < width; column++) {
           expect(paddedI420.yPlane.getPixel(column, row), baselineI420.yPlane.getPixel(column, row));
@@ -132,14 +137,14 @@ void main() {
       expectPaddingUntouched(paddedI420.vPlane, logicalWidth: chromaWidth, sampleBytes: 1);
 
       // ignore: deprecated_member_use_from_same_package
-      final baselineNv = YuvImage.nv21(width, height)..fromRgba8888(rgba);
+      final baselineNv = YuvImage.nv12(width, height)..applyRgbaBytes(rgba);
       // ignore: deprecated_member_use_from_same_package
-      final paddedNv = YuvImage.nv21(
+      final paddedNv = YuvImage.nv12(
         width,
         height,
         planes: [canaryPlane(height, width * 2 + 3, 2), canaryPlane(chromaHeight, chromaWidth * 2 + 3, 2)],
         // ignore: deprecated_member_use_from_same_package
-      )..fromRgba8888(rgba);
+      )..applyRgbaBytes(rgba);
       for (int row = 0; row < height; row++) {
         for (int column = 0; column < width; column++) {
           expect(paddedNv.yPlane.getPixel(column, row), baselineNv.yPlane.getPixel(column, row));
@@ -169,7 +174,7 @@ void main() {
 
       // A whole-buffer memcpy of the source would run past this destination.
       // ignore: deprecated_member_use_from_same_package
-      expect(() => src.toYuvNv21(), returnsNormally);
+      expect(() => src.applyFormat(YuvPixelFormat.nv12), returnsNormally);
       expect(src.format, YuvPixelFormat.nv12);
       expect(src.width, width);
       expect(src.height, height);
@@ -187,10 +192,10 @@ void main() {
       const height = 4;
 
       // ignore: deprecated_member_use_from_same_package
-      final src = YuvImage.nv21(width, height, planes: [filledPlane(height, width + 16, 1, 0x44), filledPlane(2, 4, 2, 0x55)]);
+      final src = YuvImage.nv12(width, height, planes: [filledPlane(height, width + 16, 1, 0x44), filledPlane(2, 4, 2, 0x55)]);
 
       // ignore: deprecated_member_use_from_same_package
-      expect(() => src.toYuvI420(), returnsNormally);
+      expect(() => src.applyFormat(YuvPixelFormat.i420), returnsNormally);
       expect(src.format, YuvPixelFormat.i420);
 
       for (int y = 0; y < height; y++) {
@@ -216,14 +221,15 @@ void main() {
       }
 
       // ignore: deprecated_member_use_from_same_package
-      final i420 = YuvImage.i420(width, height, planes: [stridedLuma(), filledPlane(2, 3, 1, 100), filledPlane(2, 3, 1, 150)])..toYuvNv21();
+      final i420 = YuvImage.i420(width, height, planes: [stridedLuma(), filledPlane(2, 3, 1, 100), filledPlane(2, 3, 1, 150)])
+        ..applyFormat(YuvPixelFormat.nv12);
       expect([
         for (int row = 0; row < height; row++)
           for (int column = 0; column < width; column++) i420.yPlane.getPixel(column, row),
       ], orderedEquals(expected));
 
       // ignore: deprecated_member_use_from_same_package
-      final nv = YuvImage.nv21(width, height, planes: [stridedLuma(), filledPlane(2, 6, 2, 128)])..toYuvI420();
+      final nv = YuvImage.nv12(width, height, planes: [stridedLuma(), filledPlane(2, 6, 2, 128)])..applyFormat(YuvPixelFormat.i420);
       expect([
         for (int row = 0; row < height; row++)
           for (int column = 0; column < width; column++) nv.yPlane.getPixel(column, row),
@@ -248,10 +254,10 @@ void main() {
       }
 
       // ignore: deprecated_member_use_from_same_package
-      final image = YuvImage.nv21(width, height, planes: [filledPlane(height, width, 1, 0x77), chroma], layout: YuvPlaneLayout.preserve);
+      final image = YuvImage.nv12(width, height, planes: [filledPlane(height, width, 1, 0x77), chroma], layout: YuvPlaneLayout.preserve);
 
       // ignore: deprecated_member_use_from_same_package
-      image.swapNv();
+      image.applyChromaSwap();
 
       for (int row = 0; row < 2; row++) {
         // Each pair is reversed within the active area.
@@ -290,12 +296,12 @@ void main() {
         }
 
         // ignore: deprecated_member_use_from_same_package
-        final i420 = YuvImage.i420(width, height)..fromRgba8888(rgba);
+        final i420 = YuvImage.i420(width, height)..applyRgbaBytes(rgba);
         expect(i420.uPlane.bytes.any((b) => b != 0), isTrue, reason: 'I420 ${width}x$height left the U plane entirely zero');
         expect(i420.uPlane.height, (height + 1) ~/ 2);
 
         // ignore: deprecated_member_use_from_same_package
-        final nv21 = YuvImage.nv21(width, height)..fromRgba8888(rgba);
+        final nv21 = YuvImage.nv12(width, height)..applyRgbaBytes(rgba);
         expect(nv21.uPlane.bytes.any((b) => b != 0), isTrue, reason: 'NV21 ${width}x$height left the chroma plane entirely zero');
         expect(nv21.uPlane.height, (height + 1) ~/ 2);
       }
@@ -319,14 +325,14 @@ void main() {
             canaryPlane(chromaHeight, chromaWidth + 2, 1),
           ],
           // ignore: deprecated_member_use_from_same_package
-        )..fromRgba8888(rgba);
+        )..applyRgbaBytes(rgba);
         // ignore: deprecated_member_use_from_same_package
-        final nv = YuvImage.nv21(
+        final nv = YuvImage.nv12(
           size.width,
           size.height,
           planes: [canaryPlane(size.height, size.width + 3, 1), canaryPlane(chromaHeight, chromaWidth * 2 + 3, 2)],
           // ignore: deprecated_member_use_from_same_package
-        )..fromRgba8888(rgba);
+        )..applyRgbaBytes(rgba);
 
         final expectedU = i420.uPlane.getPixel(0, 0);
         final expectedV = i420.vPlane.getPixel(0, 0);
@@ -359,13 +365,13 @@ void main() {
         final rgba = Uint8List(width * height * 4)..fillRange(0, width * height * 4, 180);
 
         // ignore: deprecated_member_use_from_same_package
-        final image = YuvImage.i420(width, height)..fromRgba8888(rgba);
+        final image = YuvImage.i420(width, height)..applyRgbaBytes(rgba);
         // ignore: deprecated_member_use_from_same_package
-        expect(() => image.toYuvNv21(), returnsNormally, reason: 'I420 -> NV21 failed at ${width}x$height');
+        expect(() => image.applyFormat(YuvPixelFormat.nv12), returnsNormally, reason: 'I420 -> NV21 failed at ${width}x$height');
         // ignore: deprecated_member_use_from_same_package
-        expect(() => image.toYuvI420(), returnsNormally, reason: 'NV21 -> I420 failed at ${width}x$height');
+        expect(() => image.applyFormat(YuvPixelFormat.i420), returnsNormally, reason: 'NV21 -> I420 failed at ${width}x$height');
         // ignore: deprecated_member_use_from_same_package
-        expect(image.toBgra8888().length, width * height * 4);
+        expect(image.toBgraBytes().length, width * height * 4);
       }
     });
 
@@ -383,7 +389,7 @@ void main() {
       }
 
       // ignore: deprecated_member_use_from_same_package
-      final image = YuvImage.i420(width, height)..fromRgba8888(rgba);
+      final image = YuvImage.i420(width, height)..applyRgbaBytes(rgba);
 
       // For a uniform white frame every chroma sample must be the same value,
       // including the partial edge block.

@@ -81,7 +81,7 @@ extension CameraImageExt on CameraImage {
         // The deprecated nv21 constructor is an alias for the same UV-ordered
         // storage as nv12; both preserve these camera bytes as supplied.
         // ignore: deprecated_member_use
-        return YuvImage.nv21(width, height, planes: planes, layout: YuvPlaneLayout.preserve);
+        return YuvImage.nv12(width, height, planes: planes, layout: YuvPlaneLayout.preserve);
       case ImageFormatGroup.bgra8888:
         return YuvImage.bgra(width, height, planes: planes, layout: YuvPlaneLayout.preserve);
       case ImageFormatGroup.unknown:

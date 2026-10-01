@@ -34,13 +34,5 @@ enum YuvImageRotation {
     YuvImageRotation.rotation270 => YuvImageRotation.rotation180,
   };
 
-  /// Returns the normalized rotation relative to zero orientation.
-  YuvImageRotation toZero() => switch (this) {
-    YuvImageRotation.rotation0 => YuvImageRotation.rotation0,
-    YuvImageRotation.rotation90 => YuvImageRotation.rotation90,
-    YuvImageRotation.rotation180 => YuvImageRotation.rotation180,
-    YuvImageRotation.rotation270 => YuvImageRotation.rotation270,
-  };
-
   const YuvImageRotation(this.degrees);
 }

@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -19,7 +18,7 @@ void main() {
 
   setUpAll(() async {
     // ignore: deprecated_member_use_from_same_package
-    await YuvFfi.ensureInitialized();
+    await YuvFfi.initialize();
   });
 
   test('crop on BGRA is exact', () {
@@ -29,11 +28,11 @@ void main() {
     final bgraBefore = _rgbaToBgra(rgba);
 
     // ignore: deprecated_member_use_from_same_package
-    final image = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+    final image = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    image.crop(const ui.Rect.fromLTWH(2, 1, 3, 4));
+    image.applyCrop(const ui.Rect.fromLTWH(2, 1, 3, 4));
     // ignore: deprecated_member_use_from_same_package
-    final out = image.toBgra8888();
+    final out = image.toBgraBytes();
 
     final expected = _cropBgra(bgraBefore, w, 2, 1, 3, 4);
     expect(image.width, 3);
@@ -48,11 +47,11 @@ void main() {
     final bgraBefore = _rgbaToBgra(rgba);
 
     // ignore: deprecated_member_use_from_same_package
-    final image = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+    final image = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    image.rotate(YuvImageRotation.rotation90);
+    image.applyRotation(YuvImageRotation.rotation90);
     // ignore: deprecated_member_use_from_same_package
-    final out = image.toBgra8888();
+    final out = image.toBgraBytes();
 
     final expected = _rotate90CwBgra(bgraBefore, w, h);
     expect(image.width, h);
@@ -67,18 +66,18 @@ void main() {
     final bgraBefore = _rgbaToBgra(rgba);
 
     // ignore: deprecated_member_use_from_same_package
-    final imageH = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+    final imageH = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    imageH.flipHorizontally();
+    imageH.applyFlipHorizontal();
     // ignore: deprecated_member_use_from_same_package
-    expect(imageH.toBgra8888(), orderedEquals(_flipHorizontalBgra(bgraBefore, w, h)));
+    expect(imageH.toBgraBytes(), orderedEquals(_flipHorizontalBgra(bgraBefore, w, h)));
 
     // ignore: deprecated_member_use_from_same_package
-    final imageV = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+    final imageV = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
     // ignore: deprecated_member_use_from_same_package
-    imageV.flipVertically();
+    imageV.applyFlipVertical();
     // ignore: deprecated_member_use_from_same_package
-    expect(imageV.toBgra8888(), orderedEquals(_flipVerticalBgra(bgraBefore, w, h)));
+    expect(imageV.toBgraBytes(), orderedEquals(_flipVerticalBgra(bgraBefore, w, h)));
   });
 
   test('swapNv is reversible', () {
@@ -86,13 +85,13 @@ void main() {
     const h = 10;
     final rgba = _buildRgbaPattern(w, h);
     // ignore: deprecated_member_use_from_same_package
-    final image = YuvImage.nv21(w, h)..fromRgba8888(rgba);
+    final image = YuvImage.nv12(w, h)..applyRgbaBytes(rgba);
     final originalU = Uint8List.fromList(image.uPlane.bytes);
 
     // ignore: deprecated_member_use_from_same_package
-    final swapped = image.swapNv();
+    final swapped = image.applyChromaSwap();
     // ignore: deprecated_member_use_from_same_package
-    final restored = swapped.swapNv();
+    final restored = swapped.applyChromaSwap();
 
     expect(identical(swapped, image), isTrue);
     expect(identical(restored, swapped), isTrue);

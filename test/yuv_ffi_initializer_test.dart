@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:ffi' as ffi;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -69,7 +68,7 @@ void main() {
     });
   });
 
-  group('YuvFfi.ensureInitialized (deprecated forwarder)', () {
+  group('YuvFfi.initialize (deprecated forwarder)', () {
     test('forwards to initialize() and completes successfully', () async {
       var opens = 0;
       loader_io.debugResetLoader();
@@ -80,7 +79,7 @@ void main() {
       });
 
       // ignore: deprecated_member_use_from_same_package
-      await YuvFfi.ensureInitialized();
+      await YuvFfi.initialize();
 
       expect(opens, 1);
     });
@@ -97,7 +96,7 @@ void main() {
       await Future.wait<void>(<Future<void>>[
         YuvFfi.initialize(),
         // ignore: deprecated_member_use_from_same_package
-        YuvFfi.ensureInitialized(),
+        YuvFfi.initialize(),
       ]);
 
       expect(opens, 1);
@@ -116,7 +115,7 @@ void main() {
       });
 
       // ignore: deprecated_member_use_from_same_package
-      await expectLater(YuvFfi.ensureInitialized(), throwsArgumentError);
+      await expectLater(YuvFfi.initialize(), throwsArgumentError);
       await YuvFfi.initialize();
 
       expect(attempts, 2);

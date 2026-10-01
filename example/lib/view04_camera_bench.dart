@@ -137,7 +137,7 @@ class _View04CameraBenchScreenState extends State<View04CameraBenchScreen> {
       final cameras = await availableCameras();
       final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.front, orElse: () => cameras.first);
       // Same rotation the mobile preview derives from the sensor.
-      _rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == camera.sensorOrientation.abs()).toZero();
+      _rotation = YuvImageRotation.values.firstWhere((e) => e.degrees == camera.sensorOrientation.abs());
       for (final (index, (fps, variant)) in _runs.indexed) {
         await _runOne(camera, index, fps, variant);
         await Future<void>.delayed(const Duration(milliseconds: 500));

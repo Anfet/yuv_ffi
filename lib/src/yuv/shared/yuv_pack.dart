@@ -1,5 +1,3 @@
-import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
-import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane_packing.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
@@ -17,13 +15,10 @@ import 'package:yuv_ffi/src/yuv/yuv.dart';
 /// [YuvPlaneLayout.packed] applies the same conversion during factory
 /// construction.
 extension YuvImagePack on YuvImage {
-  // ignore: deprecated_member_use_from_same_package
-  YuvFileFormat get _legacyFormat => format.legacy;
-
   /// Whether every plane of this image is already tightly packed: zero row
   /// padding (`rowStride == columns * pixelStride`) and zero per-sample pixel
   /// gap (`pixelStride == ` the format's packed sample width).
-  bool get isTightlyPacked => YuvPlanePacking.isTightlyPacked(_legacyFormat, width, height, planes);
+  bool get isTightlyPacked => YuvPlanePacking.isTightlyPacked(format, width, height, planes);
 
   /// Repacks this image's planes to remove row padding and pixel gaps, in
   /// place, and returns `this`.
@@ -42,6 +37,6 @@ extension YuvImagePack on YuvImage {
   /// image around.
   YuvImage pack() {
     if (isTightlyPacked) return this;
-    return applyPlanes(YuvPlanePacking.packAll(_legacyFormat, width, height, planes));
+    return applyPlanes(YuvPlanePacking.packAll(format, width, height, planes));
   }
 }

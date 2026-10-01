@@ -1,9 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:yuv_ffi/src/yuv/shared/yuv_codec.dart';
-import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane_layout.dart';
-import 'package:yuv_ffi/src/yuv/shared/yuv_file_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
@@ -11,8 +9,6 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart' show YuvNativeExc
 import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart' show YuvOperation;
 
 import 'impl/yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_image.dart' if (dart.library.js_interop) 'impl/web/yuv_web.dart';
-
-export 'shared/yuv_deprecated_api.dart';
 
 /// Represents an in-memory image in one of supported YUV/BGRA formats.
 ///
@@ -27,14 +23,8 @@ export 'shared/yuv_deprecated_api.dart';
 ///   [applyPlanes].
 /// - Returns a new, independent image: [copy], [cropped], [rotated],
 ///   [toI420], [toNv12], [toBgra], and the static [YuvImage.decode].
-///
-/// Deprecated instance methods remain available through
-/// [DeprecatedYuvImageApi].
 abstract interface class YuvImage {
   /// Pixel format of the current image.
-  ///
-  /// Legacy images labeled `nv21` report [YuvPixelFormat.nv12], which names
-  /// their interleaved UV storage.
   YuvPixelFormat get format;
 
   /// Image width in pixels.
@@ -72,19 +62,6 @@ abstract interface class YuvImage {
   factory YuvImage.i420(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes, YuvPlaneLayout layout}) =
       YuvImageImpl.i420;
 
-  /// Creates an NV21-labeled image.
-  ///
-  /// Its bytes use interleaved UV order.
-  ///
-  /// [width] and [height] are image dimensions in pixels.
-  /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
-  /// when [planes] is omitted.
-  /// If [planes] is provided, plane data is copied from it, according to
-  /// [layout]; see [YuvImage.i420].
-  @Deprecated('Legacy nv21 label contains UV bytes; use YuvImage.nv12().')
-  factory YuvImage.nv21(int width, int height, {int yPixelStride, int uvPixelStride, Iterable<YuvPlane>? planes, YuvPlaneLayout layout}) =
-      YuvImageImpl.nv21;
-
   /// Creates a BGRA8888 image.
   ///
   /// [width] and [height] are image dimensions in pixels.
@@ -92,16 +69,11 @@ abstract interface class YuvImage {
   /// [layout]; see [YuvImage.i420].
   factory YuvImage.bgra(int width, int height, {Iterable<YuvPlane>? planes, YuvPlaneLayout layout}) = YuvImageImpl.bgra;
 
-  /// Creates an image by explicit legacy [format].
+  /// Creates an image for [format].
   ///
-  /// [width] and [height] are image dimensions in pixels.
-  /// [yPixelStride] and [uvPixelStride] define byte step for allocated planes
-  /// when [planes] is omitted.
-  /// If [planes] is provided, plane data is copied from it, according to
-  /// [layout]; see [YuvImage.i420].
-  @Deprecated('Use a named factory (YuvImage.i420, YuvImage.nv12, YuvImage.bgra) or YuvImage.allocate().')
+  /// Prefer a named factory when the format is known statically.
   factory YuvImage(
-    YuvFileFormat format,
+    YuvPixelFormat format,
     int width,
     int height, {
     int yPixelStride,
@@ -130,10 +102,7 @@ abstract interface class YuvImage {
   /// [width] x [height].
   ///
   /// Unlike the named factories, this always produces tight planes with no
-  /// row or pixel padding. It replaces `copy(blank: true)` only when the
-  /// former image was tight. To preserve a padded or pixel-gapped layout,
-  /// use the matching named factory with zeroed [YuvPlane] instances whose
-  /// `height`, `rowStride`, and `pixelStride` match the source planes.
+  /// row or pixel padding.
   ///
   /// Throws [ArgumentError] for a non-positive dimension.
   factory YuvImage.allocate(YuvPixelFormat format, int width, int height) = YuvImageImpl.allocate;
@@ -151,11 +120,7 @@ abstract interface class YuvImage {
       YuvImageImpl.fromRgbaBytes;
 
   /// Creates a copy as a new image instance.
-  ///
-  /// If [blank] is `true`, returns an image with the same geometry, plane
-  /// `rowStride`, and `pixelStride`, with zeroed bytes. Use
-  /// [YuvImage.allocate] only when a tight replacement layout is intended.
-  YuvImage copy({@Deprecated('Use YuvImage.allocate() for a tight blank image.') bool blank = false});
+  YuvImage copy();
 
   /// Validates [planes] against this image's format and geometry, copies
   /// them in, and atomically replaces the current plane set.
@@ -192,8 +157,7 @@ abstract interface class YuvImage {
       draft.width,
       draft.height,
       planes: draft.planes,
-      // ignore: deprecated_member_use_from_same_package
-      allowLargerNvChromaStride: draft.format == YuvFileFormat.nv21 && draft.planes[1].pixelStride > YuvGeometry.nvChromaPixelStride,
+      allowLargerNvChromaStride: draft.format == YuvPixelFormat.nv12 && draft.planes[1].pixelStride > 2,
       layout: YuvPlaneLayout.preserve,
     );
   }

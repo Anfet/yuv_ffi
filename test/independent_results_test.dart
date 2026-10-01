@@ -1,5 +1,4 @@
 @Tags(['contract'])
-
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -64,7 +63,7 @@ void main() {
         const int h = 4;
         final rgba = _solidRgba(w, h, r: 10, g: 20, b: 30);
         // ignore: deprecated_member_use_from_same_package
-        final bgra = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+        final bgra = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
 
         final i420 = bgra.toI420();
 
@@ -94,7 +93,7 @@ void main() {
         const int h = 4;
         final rgba = _solidRgba(w, h, r: 200, g: 100, b: 50);
         // ignore: deprecated_member_use_from_same_package
-        final bgra = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+        final bgra = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
 
         final nv12 = bgra.toNv12();
 
@@ -122,7 +121,7 @@ void main() {
         const int h = 4;
         final rgba = _solidRgba(w, h, r: 5, g: 250, b: 128);
         // ignore: deprecated_member_use_from_same_package
-        final i420 = YuvImage.i420(w, h)..fromRgba8888(rgba);
+        final i420 = YuvImage.i420(w, h)..applyRgbaBytes(rgba);
 
         final bgra = i420.toBgra();
 
@@ -232,37 +231,37 @@ void main() {
         const int h = 4;
         final rgba = _solidRgba(w, h, r: 1, g: 2, b: 3);
         // ignore: deprecated_member_use_from_same_package
-        final source = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+        final source = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
 
         final i420 = source.toI420();
         final nv12 = source.toNv12();
         final bgraCopy = source.toBgra();
         // ignore: deprecated_member_use_from_same_package
-        final i420Before = i420.getBytes();
+        final i420Before = i420.toBytes();
         // ignore: deprecated_member_use_from_same_package
-        final nv12Before = nv12.getBytes();
+        final nv12Before = nv12.toBytes();
         // ignore: deprecated_member_use_from_same_package
-        final bgraBefore = bgraCopy.getBytes();
+        final bgraBefore = bgraCopy.toBytes();
 
         // Mutate the source in place after taking independent results.
         source.applyNegate();
 
         // ignore: deprecated_member_use_from_same_package
-        expect(i420.getBytes(), i420Before, reason: 'toI420() result changed after mutating the source');
+        expect(i420.toBytes(), i420Before, reason: 'toI420() result changed after mutating the source');
         // ignore: deprecated_member_use_from_same_package
-        expect(nv12.getBytes(), nv12Before, reason: 'toNv12() result changed after mutating the source');
+        expect(nv12.toBytes(), nv12Before, reason: 'toNv12() result changed after mutating the source');
         // ignore: deprecated_member_use_from_same_package
-        expect(bgraCopy.getBytes(), bgraBefore, reason: 'toBgra() result changed after mutating the source');
+        expect(bgraCopy.toBytes(), bgraBefore, reason: 'toBgra() result changed after mutating the source');
 
         // And the reverse: mutating a result must not affect the source or the
         // other independently obtained results.
         // ignore: deprecated_member_use_from_same_package
-        final sourceBytesBeforeResultMutation = source.getBytes();
+        final sourceBytesBeforeResultMutation = source.toBytes();
         i420.applyNegate();
         // ignore: deprecated_member_use_from_same_package
-        expect(source.getBytes(), sourceBytesBeforeResultMutation, reason: 'source changed after mutating a toI420() result');
+        expect(source.toBytes(), sourceBytesBeforeResultMutation, reason: 'source changed after mutating a toI420() result');
         // ignore: deprecated_member_use_from_same_package
-        expect(nv12.getBytes(), nv12Before, reason: 'toNv12() result changed after mutating an unrelated toI420() result');
+        expect(nv12.toBytes(), nv12Before, reason: 'toNv12() result changed after mutating an unrelated toI420() result');
       },
       skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
     );
@@ -274,28 +273,28 @@ void main() {
         const int h = 6;
         final rgba = _solidRgba(w, h, r: 9, g: 8, b: 7);
         // ignore: deprecated_member_use_from_same_package
-        final source = YuvImage.bgra(w, h)..fromRgba8888(rgba);
+        final source = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
 
         final crop = source.cropped(const ui.Rect.fromLTWH(1, 1, 3, 3));
         final rotate = source.rotated(YuvImageRotation.rotation90);
         // ignore: deprecated_member_use_from_same_package
-        final cropBefore = crop.getBytes();
+        final cropBefore = crop.toBytes();
         // ignore: deprecated_member_use_from_same_package
-        final rotateBefore = rotate.getBytes();
+        final rotateBefore = rotate.toBytes();
 
         source.applyNegate();
 
         // ignore: deprecated_member_use_from_same_package
-        expect(crop.getBytes(), cropBefore, reason: 'cropped() result changed after mutating the source');
+        expect(crop.toBytes(), cropBefore, reason: 'cropped() result changed after mutating the source');
         // ignore: deprecated_member_use_from_same_package
-        expect(rotate.getBytes(), rotateBefore, reason: 'rotated() result changed after mutating the source');
+        expect(rotate.toBytes(), rotateBefore, reason: 'rotated() result changed after mutating the source');
 
         // ignore: deprecated_member_use_from_same_package
-        final sourceBytesBeforeResultMutation = source.getBytes();
+        final sourceBytesBeforeResultMutation = source.toBytes();
         crop.applyNegate();
         rotate.applyNegate();
         // ignore: deprecated_member_use_from_same_package
-        expect(source.getBytes(), sourceBytesBeforeResultMutation, reason: 'source changed after mutating cropped()/rotated() results');
+        expect(source.toBytes(), sourceBytesBeforeResultMutation, reason: 'source changed after mutating cropped()/rotated() results');
       },
       skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
     );
@@ -345,15 +344,15 @@ void main() {
 
         expect(identical(result, image), isFalse);
         // ignore: deprecated_member_use_from_same_package
-        expect(result.getBytes(), image.getBytes());
+        expect(result.toBytes(), image.toBytes());
         expect((image as YuvRevisionAware).internalRevision, revisionBefore);
 
         // Independent buffers: mutating the copy must not affect the source.
         // ignore: deprecated_member_use_from_same_package
-        final sourceBefore = image.getBytes();
+        final sourceBefore = image.toBytes();
         result.applyNegate();
         // ignore: deprecated_member_use_from_same_package
-        expect(image.getBytes(), sourceBefore);
+        expect(image.toBytes(), sourceBefore);
       },
       skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
     );
@@ -368,14 +367,14 @@ void main() {
 
         expect(identical(result, image), isFalse);
         // ignore: deprecated_member_use_from_same_package
-        expect(result.getBytes(), image.getBytes());
+        expect(result.toBytes(), image.toBytes());
         expect((image as YuvRevisionAware).internalRevision, revisionBefore);
 
         // ignore: deprecated_member_use_from_same_package
-        final sourceBefore = image.getBytes();
+        final sourceBefore = image.toBytes();
         result.applyNegate();
         // ignore: deprecated_member_use_from_same_package
-        expect(image.getBytes(), sourceBefore);
+        expect(image.toBytes(), sourceBefore);
       },
       skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
     );
@@ -395,10 +394,10 @@ void main() {
         expect(identical(result, image), isFalse);
         expect((image as YuvRevisionAware).internalRevision, revisionBefore);
         // ignore: deprecated_member_use_from_same_package
-        final sourceBefore = image.getBytes();
+        final sourceBefore = image.toBytes();
         result.applyNegate();
         // ignore: deprecated_member_use_from_same_package
-        expect(image.getBytes(), sourceBefore);
+        expect(image.toBytes(), sourceBefore);
       },
       skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host',
     );
