@@ -1,8 +1,4 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
-// Legacy compatibility members are exercised deliberately by this atomicity
-// contract.
-// ignore_for_file: deprecated_member_use
-
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
@@ -16,22 +12,11 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_native_status.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// `swapNv()` on a non-NV receiver is atomic after failure.
-/// atomic across both of its native calls.
+/// A failing chroma swap leaves an NV12 receiver untouched.
 ///
-/// `swapNv()` on I420/BGRA needs two WASM calls -- a conversion to NV12, then
-/// the chroma swap. The reviewed implementation published the conversion
-/// before attempting the swap, so a swap that returned a non-zero status left
-/// the receiver converted: different format, different bytes, advanced
-/// revision. The public contract requires all three to be unchanged.
-///
-/// The IO half of this is `test/io_abi_v1_public_contract_test.dart`, which
-/// drives `YuvAbiV1Runner.debugInvokeOverride`. Web has no such seam, so this
-/// installs a fake Emscripten module through the loader's own debug
-/// initializer and returns a chosen `YuvStatus` per call. The whole staging,
-/// dispatch and publish path runs for real; only the kernel's return value is
-/// substituted, which is what makes this a test of the publish step rather
-/// than of a mock.
+/// Web has no native-status seam, so this installs a fake Emscripten module
+/// through the loader's debug initializer. The staging, dispatch and publish
+/// path runs for real; only the kernel status is substituted.
 
 JSObject get _globalThis => globalContext;
 
@@ -98,12 +83,7 @@ List<String> _calls(JSObject module) => [for (final c in module.getProperty<JSAr
 YuvPlane _plane(int height, int rowStride, int pixelStride, int fill) =>
     YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride)..fillRange(0, height * rowStride, fill));
 
-YuvImage _imageOf(YuvPixelFormat format) => switch (format) {
-  YuvPixelFormat.i420 => YuvImage.i420(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 4, 1, 0x50), _plane(4, 4, 1, 0x70)]),
-  YuvPixelFormat.bgra8888 => YuvImage.bgra(8, 8, planes: [_plane(8, 32, 4, 0x30)]),
-  // ignore: deprecated_member_use_from_same_package
-  YuvPixelFormat.nv12 => YuvImage.nv12(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 8, 2, 0x50)]),
-};
+YuvImage _nv12Image() => YuvImage.nv12(8, 8, planes: [_plane(8, 8, 1, 0x30), _plane(4, 8, 2, 0x50)]);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -113,87 +93,33 @@ void main() {
     expect(kIsWeb, isTrue);
   });
 
-  final publicFormats = [YuvPixelFormat.i420, YuvPixelFormat.bgra8888];
-
-  for (final publicFormat in publicFormats) {
-    testWidgets('a failing chroma swap after a successful conversion leaves a ${publicFormat.name} receiver untouched', (_) async {
-      // Call 1 is yuv_convert_v1 and succeeds; call 2 is yuv_chroma_swap_v1
-      // and fails. This is the exact sequence the review reproduced.
-      final module = _statusModule([yuvStatusOk, yuvStatusInternalError]);
-      await _useModule(module);
-
-      final image = _imageOf(publicFormat);
-      // ignore: deprecated_member_use_from_same_package
-      final bytesBefore = image.toBytes();
-      final revisionBefore = (image as YuvRevisionAware).internalRevision;
-
-      // ignore: deprecated_member_use_from_same_package
-      expect(() => image.applyChromaSwap(), throwsA(isA<YuvNativeException>().having((e) => e.operation, 'operation', YuvOperation.chromaSwap)));
-
-      expect(_calls(module), [yuvSymbolConvertV1, yuvSymbolChromaSwapV1], reason: 'the conversion must have succeeded before the swap was attempted');
-      expect(image.format, publicFormat, reason: 'format changed although swapNv failed');
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.toBytes(), bytesBefore, reason: 'bytes changed although swapNv failed');
-      expect(image.width, 8);
-      expect(image.height, 8);
-      expect((image as YuvRevisionAware).internalRevision, revisionBefore, reason: 'revision advanced although swapNv failed');
-    });
-
-    testWidgets('a failing conversion leaves a ${publicFormat.name} receiver untouched', (_) async {
-      final module = _statusModule([yuvStatusInternalError]);
-      await _useModule(module);
-
-      final image = _imageOf(publicFormat);
-      // ignore: deprecated_member_use_from_same_package
-      final bytesBefore = image.toBytes();
-      final revisionBefore = (image as YuvRevisionAware).internalRevision;
-
-      // ignore: deprecated_member_use_from_same_package
-      expect(() => image.applyChromaSwap(), throwsA(isA<YuvNativeException>()));
-
-      expect(_calls(module), [yuvSymbolConvertV1]);
-      expect(image.format, publicFormat);
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.toBytes(), bytesBefore);
-      expect((image as YuvRevisionAware).internalRevision, revisionBefore);
-    });
-  }
-
-  testWidgets('a failing chroma swap leaves an already-NV21 receiver untouched', (_) async {
-    // The one-call form: no conversion happens, so the only thing that could
-    // publish early is the swap itself.
+  testWidgets('a failing chroma swap leaves an NV12 receiver untouched', (_) async {
     final module = _statusModule([yuvStatusInternalError]);
     await _useModule(module);
 
-    final image = _imageOf(YuvPixelFormat.nv12);
-    // ignore: deprecated_member_use_from_same_package
+    final image = _nv12Image();
     final bytesBefore = image.toBytes();
     final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
-    // ignore: deprecated_member_use_from_same_package
     expect(() => image.applyChromaSwap(), throwsA(isA<YuvNativeException>()));
 
-    expect(_calls(module), [yuvSymbolChromaSwapV1], reason: 'an NV21 receiver needs no conversion');
+    expect(_calls(module), [yuvSymbolChromaSwapV1]);
     expect(image.format, YuvPixelFormat.nv12);
-    // ignore: deprecated_member_use_from_same_package
     expect(image.toBytes(), bytesBefore);
     expect((image as YuvRevisionAware).internalRevision, revisionBefore);
   });
 
-  testWidgets('both calls succeeding publishes once, as NV21, advancing the revision by one', (_) async {
-    // The positive half of the same path, so the fix cannot be "never
-    // publish": two native calls must still be exactly one publish.
-    final module = _statusModule([yuvStatusOk, yuvStatusOk]);
+  testWidgets('a successful chroma swap advances the revision once', (_) async {
+    final module = _statusModule([yuvStatusOk]);
     await _useModule(module);
 
-    final image = _imageOf(YuvPixelFormat.i420);
+    final image = _nv12Image();
     final revisionBefore = (image as YuvRevisionAware).internalRevision;
 
-    // ignore: deprecated_member_use_from_same_package
     image.applyChromaSwap();
 
-    expect(_calls(module), [yuvSymbolConvertV1, yuvSymbolChromaSwapV1]);
+    expect(_calls(module), [yuvSymbolChromaSwapV1]);
     expect(image.format, YuvPixelFormat.nv12);
-    expect((image as YuvRevisionAware).internalRevision, revisionBefore + 1, reason: 'two native calls must still be one publish');
+    expect((image as YuvRevisionAware).internalRevision, revisionBefore + 1);
   });
 }

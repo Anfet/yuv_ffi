@@ -238,9 +238,7 @@ committed correction head.
   local `pwsh -File tool/ci/web.ps1` both failed before browser execution:
   `wasm_swap_nv_atomicity_web_test.dart` was discovered but absent from the
   Web source map.
-- Restored the source to the aggregate target and source/case registry. Its
-  five `testWidgets` declarations register seven cases because two contracts
-  run for both I420 and BGRA. The matrix now has 13 sources and 66 cases.
+- Restored the source to the aggregate target and source/case registry.
 - No package, native, generated-binding, Web-backend, or production API source
   changed.
 
@@ -251,3 +249,29 @@ committed correction head.
   rebuild and `pub get`; unmapped source named above.
 - The corrected full command reached `pub publish --dry-run`, which requires a
   clean Git tree; it will be rerun after this correction is committed.
+
+#### Integration correction #7 — Executor Report
+
+**Result:** REVIEW
+
+- The first corrected full Web run passed the source map, then exposed stale
+  compatibility assertions in restored Web sources: automatic I420/BGRA
+  chroma-swap conversion, mutation of an existing image by static `decode`,
+  and padded allocation through the removed `copy(blank:)` behavior.
+- Removed only those compatibility assertions. The surviving tests cover the
+  current NV12 chroma swap, immutable static decode result, normal `copy`, and
+  padded serialization. The fake-WASM atomicity source now has three current
+  cases and is aggregated with the other sources.
+- The Web matrix has 13 sources and 62 integration cases. No package, native,
+  generated-binding, Web-backend, or production API source changed.
+
+**Validation:**
+
+- On `0466907`, the source map passed and browser execution reached the
+  restored tests. It reported the stale assertions above; the outer helper
+  then incorrectly surfaced `ChromeDriver did not become ready` after the test
+  action failed.
+- `dart format --output=none` for the four corrected Web sources — PASS.
+- `flutter analyze --no-fatal-infos` for the four corrected Web sources —
+  PASS, no issues.
+- Full card-local Web command will be rerun on the next clean commit.

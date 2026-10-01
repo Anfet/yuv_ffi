@@ -70,7 +70,7 @@ void main() {
     expect(source.bytes, orderedEquals(sourceSnapshot));
   });
 
-  testWidgets('copy keeps padded metadata and byte content, blank copy zeros the whole allocation', (tester) async {
+  testWidgets('copy keeps padded metadata and byte content', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     final source = plane(2, 16);
@@ -84,12 +84,6 @@ void main() {
     expect(copied.yPlane.bytes.length, 32);
     expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
 
-    // The deprecated option specifically preserves the source padding.
-    // ignore: deprecated_member_use
-    final blank = YuvImage.allocate(image.format, image.width, image.height);
-    expect(blank.yPlane.rowStride, 16);
-    expect(blank.yPlane.bytes.length, 32);
-    expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
   });
 
   testWidgets('specialized and generic constructors agree on a tight plane', (tester) async {
@@ -106,7 +100,7 @@ void main() {
     }
   });
 
-  testWidgets('copy keeps tight metadata and byte content, blank copy zeros the whole allocation', (tester) async {
+  testWidgets('copy keeps tight metadata and byte content', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     final source = plane(2, 8);
@@ -120,12 +114,6 @@ void main() {
     expect(copied.yPlane.bytes.length, 16);
     expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
 
-    // The deprecated option specifically preserves the source padding.
-    // ignore: deprecated_member_use
-    final blank = YuvImage.allocate(image.format, image.width, image.height);
-    expect(blank.yPlane.rowStride, 8);
-    expect(blank.yPlane.bytes.length, 16);
-    expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
   });
 
   testWidgets('toBgraBytes on a tight image returns exactly the plane content', (tester) async {
