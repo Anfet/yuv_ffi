@@ -1,5 +1,5 @@
 # TEST 2 — Теги тест-сьюта
-**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
+**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 1
 **Было:** RA-60 (цикл 0.4.2).
 
 #### Goal
@@ -110,3 +110,17 @@ pwsh -File tool/ci/windows.ps1
 **Рекомендация Architect:** разрешить первый вариант как точечное исключение. После решения Engineer обновить Scope/Constraints и передать карточку свежему T3 Executor для синхронизации копии и повторения неуспешных проверок. До решения статус `ENGINEER_REQUIRED`.
 
 #### Review
+
+**T2 review, GPT-5.6 Terra, 01.10.2026: REJECTED.**
+
+- `e9df413` follows the Engineer Decision narrowly: it changes only the permitted
+  `example/integration_test/helpers/probe/layout_pack_test.dart` copy and this card.
+  The source and copy resolve to the same blob `c5438ccae7b7c960b1e4d9b7a0c04f6cd4575c2b` on this SHA; no test body or
+  `probe_copy_sync_test` change is present. The complete diff from task base `770fa18` changes test files only by their
+  primary `@Tags` annotations (plus the specified `tags_coverage_test.dart`).
+- The executor evidence covers the four tag selections and both CI scripts across the prior and fresh reports; after the
+  synchronization, `probe`, full `flutter test`, and `tool/ci/windows.ps1` are reported green.
+- DoD remains unproven: it requires explaining a `+1` difference from the stated TEST 1 baseline of `731 passed, 1 skipped`,
+  but the full run is reported as exactly `731 passed, 1 skipped` (732 completed), and the report explicitly says the
+  historical delta cannot be determined. Reconcile the baseline/count requirement with reproducible evidence (or obtain an
+  Architect decision updating that requirement) before a fresh Executor returns the task to REVIEW.
