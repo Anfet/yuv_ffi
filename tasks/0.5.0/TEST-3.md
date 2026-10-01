@@ -1,5 +1,5 @@
 # TEST 3 — Срезы проб по операции и формату
-**Status:** IN_PROGRESS · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 1
+**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 1
 **Было:** RA-61 (цикл 0.4.2).
 
 #### Goal
@@ -61,18 +61,20 @@
   В Executor Report указать команды, SHA, выбранное число случаев и результат каждого требуемого прогона.
 
 #### Executor Report
-- **Commit:** `075fafc` — selector parsing, filtered input/output hashes and native/Web integration forwarding.
-- **Windows VM:** `pwsh -File tool/ci/vm.ps1` passed. `flutter test test/probe/probe_correctness_test.dart`
-  passed with scopes `all/all 1188/1188`, `gray/all 54/1188`, `all/i420 396/1188` and
-  `gray/i420 18/1188`; `--dart-define=PROBE_OPS=gray` overrode environment `crop`.
-- **Negative controls:** unknown and empty `PROBE_OPS`, and `PROBE_RECORD=overwrite` with `PROBE_OPS=gray`,
-  each failed with the declared reason; `git hash-object test/probe/golden.json` was unchanged.
-- **Local platforms:** `pwsh -File tool/ci/windows.ps1`, `pwsh -File tool/ci/android.ps1` and
-  `pwsh -File tool/ci/web.ps1` completed; the selected Windows drive and selected Web drive both reported
-  `All tests passed` (`gray/all 54/1188` on Windows; Web selection passed through `--dart-define`).
-- **Mac runner:** archive of `075fafc` at `~/claude-work/yuv_ffi-TEST-3-075fafc`; `bash tool/ci/macos.sh`
-  and `bash tool/ci/ios.sh` each completed with persisted exit status `0`. The archive's CRLF shell scripts
-  were normalized only in that remote scratch copy before execution.
+- **Implementation:** `8b94268` — explicit `all` is rejected; full golden ID validation now precedes
+  selection in VM, native, and Web targets; mirrored probe helpers remain byte-identical.
+- **Focused VM:** `flutter test test/probe/probe_copy_sync_test.dart test/probe/probe_selection_test.dart`
+  passed (4 tests); `pwsh -File tool/ci/vm.ps1` passed, including the full
+  `PROBE scope: ops=all formats=all cases=1188/1188` matrix.
+- **Native:** `pwsh -File tool/ci/windows.ps1` and `pwsh -File tool/ci/android.ps1` passed. Windows
+  printed the full `all/all 1188/1188` scope before the native integration drives.
+- **Web:** `pwsh -File tool/ci/web.ps1` passed. With ChromeDriver on port 4444, the selected drive was
+  `pwsh -File tool/ci/drive.ps1 integration_test/probe_web_test.dart web-server --browser-name=chrome --headless --dart-define=PROBE_OPS=gray`;
+  it reported `All tests passed`. Its selected scope was
+  `PROBE scope: ops=gray formats=all cases=54/1188`.
+- **Mac runner:** archive `8b94268` at `~/claude-work/yuv_ffi-TEST-3-8b94268`; `bash tool/ci/macos.sh`
+  and `bash tool/ci/ios.sh` passed. CRLF was normalized only in that remote scratch archive for
+  `tool/ci/macos.sh`, `tool/ci/ios.sh`, and `tool/ci/drive.sh`.
 
 #### Review
 - **Verdict:** TODO. Reviewed `86345e7` (implementation `075fafc`) against the task contract and the diff from `66f1db3`; no tests were rerun.
