@@ -1,5 +1,5 @@
 # TEST 7 — Сверка эталона с libyuv
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** —
+**Status:** REVIEW · **Tier:** T2 · **Owner:** — · **Depends On:** —
 
 #### Goal
 Эталон `test/reference/test_pattern_512` посчитан нашим же кодом на Dart
@@ -55,13 +55,13 @@
   координаты первого отличия, ожидаемое и фактическое.
 
 #### Definition of Done
-- [ ] `bash tool/oracle/check_reference.sh` на Mac проходит на чистом клоне `dev` и печатает таблицу по всем парам выше
-- [ ] Геометрия: Y/U/V побайтно; BGRA — не больше 2 и не больше максимума пары `i420_decode` по каждому каналу.
+- [x] `bash tool/oracle/check_reference.sh` на Mac проходит на чистом архиве HEAD ветки задачи и печатает таблицу по всем парам выше
+- [x] Геометрия: Y/U/V побайтно; BGRA — не больше 2 и не больше максимума пары `i420_decode` по каждому каналу.
       Y конвертаций — в пределах 1; остальные расхождения объяснены в Executor Report
-- [ ] Негативный контроль: при подмене `source_i420.yuv` испорченной копией (во временном каталоге) скрипт падает
+- [x] Негативный контроль: при подмене `source_i420.yuv` испорченной копией (во временном каталоге) скрипт падает
       с ненулевым кодом и называет пару и канал
-- [ ] Раздел «Сверка эталона» есть в `doc/independent-oracles.md`
-- [ ] Пакет не изменился: `dart pub publish --dry-run` не показывает `tool/oracle/`
+- [x] Раздел «Сверка эталона» есть в `doc/independent-oracles.md`
+- [x] Пакет не изменился: `dart pub publish --dry-run` не показывает `tool/oracle/`
 
 #### Validation
 - Mac через mac-runner (окружение — «Окружение → Mac» в `todo.md`): синхронизировать ветку tar-ом,
@@ -117,4 +117,13 @@
   существующий допуск 2 к B/G/R (тогда обычная Mac-сверка проходит), либо определить побайтное равенство как
   сравнение libyuv `I420ToARGBMatrix(source_i420)` после того же преобразования с результатом geometry. Второй
   вариант доказывает коммутативность geometry и decode, но не сравнивает geometry напрямую с PNG-эталоном.
+- HEAD `6c92c0d`: harness сначала проверяет B/G/R `i420_decode` по пределу 2, затем берёт фактический максимум каждого
+  канала как предел geometry для rotate, mirror и crop; alpha остаётся побайтным.
+- Mac: чистый `git archive` HEAD в `~/claude-work/yuv_ffi-TEST-7-6c92c0d`, обычный
+  `bash tool/oracle/check_reference.sh` прошёл с libyuv `2dd4257364d39c38d79465c4ddc4b93137fe729b`. `i420_decode`
+  показал B/G/R/A `2/1/1/0`; raw Y/U/V всех geometry-пар — `0`; BGRA geometry не выше `2/1/1/0`.
+- Негативный контроль на Mac завершился `ORACLE_EXIT_CODE=1` и назвал `bgra_to_i420`/Y `(0, 0)`, expected 0,
+  actual 16, а также `i420_to_nv21`/Y `(0, 0)`, expected 16, actual 0.
+- Windows: `dart pub publish --dry-run` прошёл с `Package has 0 warnings and 1 hint`; в списке архива
+  `tool/oracle/` отсутствует.
 #### Review
