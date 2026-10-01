@@ -35,7 +35,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [PROBE 1](tasks/0.5.0/PROBE-1.md) | ARCHITECT_REQUIRED | T2 | GPT-6 Sol | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** Второе отклонение: в артефактах Windows нет SHA DLL, подтверждения разрешения пакета и фактического Balanced/AC; требуется решение по проверяемому происхождению бенчмарка. |
+| [PROBE 1](tasks/0.5.0/PROBE-1.md) | TODO | T2 | — | TEST 3 | **Базовые линии скорости 0.4.0 против `dev`.** По решению Architect повторить три Windows-прогона и связать verdict с host receipts: пакет, EXE/DLL SHA-256, Balanced/AC. |
 | [PROBE 2](tasks/0.5.0/PROBE-2.md) | BLOCKED | T3 | PROBE 1 | PROBE 1, TEST 4 | **Правило проб для задач.** Было RA-27. Поле `Probe` в карточке и правило в `AGENTS.md`. Ждёт PROBE 1. |
 
 ### Этап 3 — уборка
