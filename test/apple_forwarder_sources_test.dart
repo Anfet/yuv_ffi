@@ -1,3 +1,5 @@
+@Tags(['smoke'])
+
 @TestOn('vm')
 library;
 

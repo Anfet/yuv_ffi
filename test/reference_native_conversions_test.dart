@@ -1,3 +1,5 @@
+@Tags(['reference'])
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' show Abi;

@@ -17,7 +17,7 @@ try {
   $nativeDllDirectory = Join-Path (Get-CiTemporaryDirectory) 'yuv-ffi-vm-native\Release'
   Add-CiPath $nativeDllDirectory
 
-  Invoke-CiNativeCommand flutter test
+  Invoke-CiNativeCommand flutter test --tags "smoke || contract"
 } finally {
   Pop-Location
 }

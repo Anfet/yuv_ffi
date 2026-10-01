@@ -1,3 +1,5 @@
+@Tags(['contract'])
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 

@@ -1,4 +1,6 @@
 tags:
+  smoke: {}
+  contract: {}
   probe: {}
+  reference: {}
   release: {}
-exclude_tags: release

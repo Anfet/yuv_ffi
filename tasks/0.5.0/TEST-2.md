@@ -1,5 +1,5 @@
 # TEST 2 — Теги тест-сьюта
-**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
+**Status:** BLOCKED · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** — · **Rejection Count:** 0
 **Было:** RA-60 (цикл 0.4.2).
 
 #### Goal
@@ -79,7 +79,10 @@ pwsh -File tool/ci/windows.ps1
 ```
 
 #### Executor Report
-Предыдущая попытка (`4eaceef`) остановлена: карточка требовала селективный `flutter test` по умолчанию вместе с
-рабочими `--tags probe/reference`; runner так не умеет. Решение выше снимает противоречие.
+Изменения из `da7f699` перенесены в worktree; `dart_test.yaml` приведён к пяти тегам без селекторов, добавлены `@Tags`, тест покрытия и выбор группы в `tool/ci/vm.ps1`.
+Статическая сверка: 62 `*_test.dart`, 0 ошибок основного тега и распределения.
+Validation заблокирована средой: после успешной сборки native DLL команда `flutter pub get --no-example` не вывела ничего за 50 секунд и была прервана; отдельный `flutter test --no-pub test/tags_coverage_test.dart` также не вывел ничего за 15 секунд и был прерван. Запущенные Dart процессы остались активны; получение их командных строк вернуло `Access denied`. `flutter test` частей, `flutter test` полного прогона, `pwsh -File tool/ci/vm.ps1` и `pwsh -File tool/ci/windows.ps1` не подтверждены. `New-CiNativeBuild` пишет stdout CMake в pipeline, поэтому прямое присваивание результата в `$dll` ломает `Add-CiPath`; в повторной попытке путь извлечён последним выводом сборки.
+
+Блокер: нужны исправленные условия запуска Flutter/Dart в этом окружении, затем повторить все команды Validation и сверить суммы JSON-прогонов.
 
 #### Review
