@@ -1,5 +1,5 @@
 # TEST 7 — Сверка эталона с libyuv
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** —
+**Status:** ENGINEER_REQUIRED · **Tier:** T2 · **Owner:** — · **Depends On:** —
 
 #### Goal
 Эталон `test/reference/test_pattern_512` посчитан нашим же кодом на Dart
@@ -94,4 +94,20 @@
   libyuv-результат с преобразованным `i420_decoded.png`, а текущие `rotate_*`, `flip_*`, `crop_*` оставить для
   RGB-операций. Альтернатива — изменить эти PNG на I420-пайплайн, что меняет общие эталонные артефакты и ожидаемые
   значения backend-ов. До решения нельзя выполнить критерий DoD о BGRA-сверке этих пар.
+- Свежий Executor T2 (GPT-5.6 Terra) реализовал решение Engineer в `7c97a8b`: harness строит expected BGRA для
+  rotate/mirror/crop только из преобразованного `i420_decoded.png`; общие `rotate_*`, `flip_*`, `crop_*` PNG больше
+  не декодируются. Для этих пар установлен байтовый допуск 0, как требует DoD.
+- Mac, SHA `7c97a8b`: raw Y/U/V всех rotate/mirror/crop-пар совпали побайтно. Однако обычный
+  `bash tool/oracle/check_reference.sh` завершился с кодом 1: BGRA-пары с цветными границами сохраняют расхождение
+  базового `i420_decode` с PNG — B max 2, G/R max 1 (меньшие crop могут совпадать). Это та же разница
+  преобразователей I420 → BGRA, уже разрешённая для `i420_decode` и `nv21_decode`; она переносится при точном
+  преобразовании пикселей и не является ошибкой geometry. Следовательно, утверждённый источник expected и требование
+  DoD о побайтном BGRA-равенстве одновременно невыполнимы.
+- Негативный контроль на Mac `ORACLE_CORRUPT_I420=1 bash tool/oracle/check_reference.sh` завершился с кодом 1 и
+  назвал `bgra_to_i420`/Y и `i420_to_nv21`/Y в `(0, 0)` (expected 0/16, actual 16/0). Windows:
+  `dart pub publish --dry-run` успешно, 0 warnings и 1 version-history hint; `tool/oracle/` в архиве отсутствует.
+- **ENGINEER_REQUIRED.** Уточнить критерий BGRA для geometry с transformed `i420_decoded.png`: либо применить
+  существующий допуск 2 к B/G/R (тогда обычная Mac-сверка проходит), либо определить побайтное равенство как
+  сравнение libyuv `I420ToARGBMatrix(source_i420)` после того же преобразования с результатом geometry. Второй
+  вариант доказывает коммутативность geometry и decode, но не сравнивает geometry напрямую с PNG-эталоном.
 #### Review

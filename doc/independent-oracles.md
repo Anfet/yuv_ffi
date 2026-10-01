@@ -63,3 +63,15 @@ clang++ -std=c++17 -O0 -g0 -w -I <libyuv>/include \
 ```bash
 ORACLE_CORRUPT_I420=1 bash tool/oracle/check_reference.sh
 ```
+
+### Результат сверки 01.10.2026
+
+На Mac для SHA `7c97a8b` скрипт собрал libyuv `2dd4257364d39c38d79465c4ddc4b93137fe729b` и подтвердил: `ARGBToI420`
+даёт Y max 0, U/V max 1; `I420ToARGBMatrix` и `NV21ToARGBMatrix` дают B max 2, G/R max 1; `I420ToNV21` и raw Y/U/V
+rotate/mirror/crop совпадают побайтно. Негативный контроль с испорченной временной копией I420 завершился кодом 1 и
+назвал пару и канал.
+
+Для geometry harness преобразует `i420_decoded.png`, а не использует общие RGB-артефакты `rotate_*`, `flip_*`,
+`crop_*`. Поэтому его BGRA-сверка сохраняет базовую разницу I420 → BGRA (B max 2, G/R max 1) и не проходит при
+байтовом допуске 0. Требуется решение Engineer: применить допуск 2 к BGRA geometry либо проверять байтовое равенство
+между двумя libyuv-пайплайнами после декодирования.
