@@ -45,6 +45,7 @@ _tmp**
 /tool/bench/
 /tool/ci/
 /tool/probe/
+/tool/oracle/
 /doc/perf/archive/
 /tool/bench/fixtures/
 /native-primitives-research.md
