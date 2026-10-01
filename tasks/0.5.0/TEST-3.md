@@ -1,5 +1,5 @@
 # TEST 3 — Срезы проб по операции и формату
-**Status:** ACCEPTED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 1
+**Status:** REVIEW · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Depends On:** TEST 2 · **Rejection Count:** 1
 **Было:** RA-61 (цикл 0.4.2).
 
 #### Goal
@@ -61,6 +61,13 @@
   В Executor Report указать команды, SHA, выбранное число случаев и результат каждого требуемого прогона.
 
 #### Executor Report
+- **Integration correction:** after fast-forward to `f02632a`, added the required sole `@Tags(['probe'])`
+  annotation to `test/probe/probe_selection_test.dart` and its byte-identical integration helper copy;
+  test bodies are unchanged. `flutter test test/tags_coverage_test.dart`,
+  `flutter test test/probe/probe_copy_sync_test.dart test/probe/probe_selection_test.dart`, and
+  `flutter test --tags probe test/probe/probe_selection_test.dart` passed. Full
+  `pwsh -File tool/ci/vm.ps1` passed: `584/584 passed, 0 skipped, 0 failed`; the independently
+  recorded TEST 6 JSON-preamble issue did not reproduce in this run.
 - **Implementation:** `8b94268` — explicit `all` is rejected; full golden ID validation now precedes
   selection in VM, native, and Web targets; mirrored probe helpers remain byte-identical.
 - **Focused VM:** `flutter test test/probe/probe_copy_sync_test.dart test/probe/probe_selection_test.dart`
