@@ -4,20 +4,10 @@ import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// PACK-01C: when `true` (the default), [CameraImageExt.toYuvImage] copies
-/// each plane into a tightly packed buffer (no row padding, and -- for I420
-/// chroma reported at `pixelStride == 2` -- no per-sample pixel gap) instead
-/// of preserving the camera's reported `bytesPerRow`. PACK-00 measured this at
-/// 3.3x faster `applyRotation` and +23% shown FPS on a real Pixel 3 in a
-/// release build, which is why the normal mobile preview now imports densely
-/// by default. Set to `false` to reproduce the previous padded-preserving
-/// import, e.g. for the padded/packed A/B comparison in
-/// `Pack00BenchScreen`/PACK-00's device tests. Flipping it does not change
-/// `YuvImage`'s constructor or native code -- both variants are built here in
-/// `_packPlane`/the padded branch below, then handed to the factory with
-/// `layout: YuvPlaneLayout.preserve` so the factory's own packing default
-/// never runs a second time over either one.
-bool kYuvCameraPreviewPackPlanes = true;
+/// Copies camera planes into a tightly packed buffer (no row padding and, for
+/// I420 chroma with a two-byte pixel stride, no per-sample pixel gap) before
+/// constructing the YUV image. `layout: YuvPlaneLayout.preserve` prevents the
+/// factory from packing the already tight planes a second time.
 
 extension CameraImageExt on CameraImage {
   YuvImage toYuvImage() {
@@ -49,30 +39,19 @@ extension CameraImageExt on CameraImage {
         throw FormatException('Camera plane $i is truncated: expected at least $minimumLength bytes, got ${p.bytes.length}');
       }
 
-      if (kYuvCameraPreviewPackPlanes) {
-        planes.add(
-          _packPlane(
-            source: p.bytes,
-            rows: rows,
-            columns: columns,
-            sourceRowStride: sourceRowStride,
-            sourcePixelStride: pixelStride,
-            sampleBytes: sampleBytes,
-          ),
-        );
-      } else {
-        final expectedLength = rows * sourceRowStride;
-        final bytes = Uint8List(expectedLength);
-        final copyLength = p.bytes.length < expectedLength ? p.bytes.length : expectedLength;
-        bytes.setRange(0, copyLength, p.bytes);
-        planes.add(YuvPlane(rows, sourceRowStride, pixelStride, bytes));
-      }
+      planes.add(
+        _packPlane(
+          source: p.bytes,
+          rows: rows,
+          columns: columns,
+          sourceRowStride: sourceRowStride,
+          sourcePixelStride: pixelStride,
+          sampleBytes: sampleBytes,
+        ),
+      );
     }
 
-    // This method already decides packed vs. padded above (kYuvCameraPreviewPackPlanes),
-    // byte-for-byte; PACK-01B's factory default would otherwise silently
-    // repack the padded branch a second time; here layout is always
-    // `.preserve` regardless of that default.
+    // The factory's default would otherwise pack these planes a second time.
     switch (format.group) {
       case ImageFormatGroup.yuv420:
         return YuvImage.i420(width, height, planes: planes, layout: YuvPlaneLayout.preserve);

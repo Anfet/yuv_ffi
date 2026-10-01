@@ -74,6 +74,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
                     if (_isPreviewReady) {
                       return YuvCameraPreview(
+                        flipAndroidCameraHorizontally: true,
                         cameraController: controller,
                         showDebugInfo: true,
                         transform: imageCapturer,

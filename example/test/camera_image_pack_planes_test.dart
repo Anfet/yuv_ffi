@@ -6,28 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
 
-/// PACK-00/PACK-01C: [kYuvCameraPreviewPackPlanes] switches
-/// [CameraImageExt.toYuvImage] between copying only the visible samples into
-/// a tight buffer (the default since PACK-01C) and preserving the camera's
-/// padded `bytesPerRow` (covered by `camera_image_to_yuv_image_padding_test.dart`).
-/// This file proves the two paths agree on every visible sample they import,
-/// for the plane shapes the experiment cares about: I420 with a gapped U/V
-/// stride, NV12 (interleaved UV), BGRA8888, odd width/height (chroma rounds
-/// up), and a source buffer that omits the padding after its last row.
-///
-/// The derived [YuvImage.toBgraBytes] / [YuvImage.applyRotation] agreement is
-/// exercised separately, in the root package's
-/// `test/pack_planes_native_equivalence_test.dart`: that runs where the
-/// native `yuv_ffi` library and `YuvFfi.initialize()` are already the
-/// established convention for a native-backed test, and this example project
-/// has no `camera`-free way to build the same padded/packed [YuvPlane] pairs
-/// without going through [CameraImage], so duplicating that native comparison
-/// here would only add a second, less-established way to gate on native
-/// availability.
+/// Camera plane imports are tightly packed while preserving every visible
+/// sample, including gapped I420 chroma and padded source rows.
 void main() {
-  setUp(() => kYuvCameraPreviewPackPlanes = false);
-  tearDown(() => kYuvCameraPreviewPackPlanes = false);
-
   int deterministicByte(int seed, int index) => (index * 37 + seed) & 0xff;
 
   Uint8List paddedPlaneBytes({
@@ -56,23 +37,7 @@ void main() {
 
   YuvImage buildFromCameraData(CameraImageData data) => CameraImage.fromPlatformInterface(data).toYuvImage();
 
-  /// Builds the same [CameraImageData] once, then converts it with
-  /// [kYuvCameraPreviewPackPlanes] both off and on, asserting every visible
-  /// sample of every plane is byte-identical between the two -- packing must
-  /// only drop padding (and, where the source pixel stride is wider than a
-  /// sample, de-interleave down to it), never reorder or corrupt a sample.
-  ///
-  /// [planeSourcePixelStrides] is each plane's *input* pixel stride, as the
-  /// camera reports it (`CameraImagePlane.bytesPerPixel`); [planeSampleBytes]
-  /// is how many bytes one visible sample actually occupies -- equal to the
-  /// source pixel stride for a planar Y/U/V sample or an already-interleaved
-  /// NV12/NV21 UV pair or packed BGRA8888 pixel, but *narrower* than it for
-  /// Android's `ImageFormatGroup.yuv420` on devices that expose separate U
-  /// and V planes with `bytesPerPixel == 2` each (the same physically
-  /// interleaved chroma buffer NV12/NV21 uses, split into two `Image.Plane`s
-  /// a single byte apart) -- the case that motivated this parameter split.
-  /// The packed plane's own pixel stride is always [planeSampleBytes], never
-  /// the source's.
+  /// Verifies that importing camera planes drops only row and pixel gaps.
   void expectSameVisibleSamples(
     CameraImageData data, {
     required List<int> planeRows,
@@ -81,29 +46,22 @@ void main() {
     List<int>? planeSampleBytes,
   }) {
     final sampleBytes = planeSampleBytes ?? planeSourcePixelStrides;
-    kYuvCameraPreviewPackPlanes = false;
-    final padded = buildFromCameraData(data);
-    kYuvCameraPreviewPackPlanes = true;
     final packed = buildFromCameraData(data);
-
-    expect(packed.planes, hasLength(padded.planes.length));
-    for (var i = 0; i < padded.planes.length; i++) {
+    expect(packed.planes, hasLength(data.planes.length));
+    for (var i = 0; i < packed.planes.length; i++) {
       final rows = planeRows[i];
       final columns = planeColumns[i];
+      final source = data.planes[i];
       final sourcePixelStride = planeSourcePixelStrides[i];
       final destPixelStride = sampleBytes[i];
-      expect(packed.planes[i].bytesPerRow, columns * destPixelStride, reason: 'plane $i: packed row stride must equal columns * sampleBytes');
-      expect(
-        packed.planes[i].pixelStride,
-        destPixelStride,
-        reason: 'plane $i: packed pixel stride must equal sampleBytes, not the source pixel stride',
-      );
+      expect(packed.planes[i].bytesPerRow, columns * destPixelStride);
+      expect(packed.planes[i].pixelStride, destPixelStride);
       for (var row = 0; row < rows; row++) {
         for (var col = 0; col < columns; col++) {
           for (var b = 0; b < destPixelStride; b++) {
-            final paddedByte = padded.planes[i].bytes[row * padded.planes[i].bytesPerRow + col * sourcePixelStride + b];
+            final sourceByte = source.bytes[row * source.bytesPerRow + col * sourcePixelStride + b];
             final packedByte = packed.planes[i].bytes[row * packed.planes[i].bytesPerRow + col * destPixelStride + b];
-            expect(packedByte, paddedByte, reason: 'plane $i row $row col $col byte $b differs between padded and packed import');
+            expect(packedByte, sourceByte, reason: 'plane $i row $row col $col byte $b differs from the visible camera sample');
           }
         }
       }
@@ -426,7 +384,6 @@ void main() {
         ],
       );
 
-      kYuvCameraPreviewPackPlanes = true;
       final packed = buildFromCameraData(data);
       final inputImage = packed.toInputImage();
 
