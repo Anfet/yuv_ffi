@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`); TEST 3, TEST 5 и TEST 6 на ревью, TEST 7 принята. TEST 4 ждёт принятия TEST 3.
+- **Сейчас:** этап 1. TEST 1 и TEST 2 завершены (`da55e06`, `5fdcb3c`). Принятые TEST 3, TEST 6 и TEST 7 влиты в `dev` (`efb76a8`); выполняется общая интеграционная проверка платформ, oracle и package dry-run. TEST 4 зависит от интеграции TEST 3.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Дашборд
@@ -35,11 +35,11 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [TEST 3](tasks/0.5.0/TEST-3.md) | ACCEPTED | T2 | Reviewer | TEST 2 | **Срезы проб по операции и формату.** Повторное ревью подтвердило исправления селектора `all`, golden IDs до фильтрации и фактический Web scope на `1bb400d`. |
-| [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 2/3 | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Было RA-62. Ждёт TEST 2 и TEST 3. |
+| [TEST 3](tasks/0.5.0/TEST-3.md) | IN_PROGRESS | T2 | Integration | TEST 2 | **Срезы проб по операции и формату.** Принятая карточка влита в `dev`; проходит общая интеграционная проверка на `efb76a8`. |
+| [TEST 4](tasks/0.5.0/TEST-4.md) | BLOCKED | T3 | TEST 3 integration | TEST 2, TEST 3 | **Карта «что изменил → что запускать».** Карточка требует изменения path-to-command mapping после интеграции TEST 3; открыть после общего validation gate. |
 | [TEST 5](tasks/0.5.0/TEST-5.md) | REVIEW | T2 | Reviewer | TEST 1, TEST 2, TEST 7 | **Чистка дублирующих тестов.** Инвентаризация не нашла удалений; `lib/` и `src/` не менялись. VM/Windows и указанные suite прошли на `873ff2b`. |
-| [TEST 6](tasks/0.5.0/TEST-6.md) | ACCEPTED | T3 | Reviewer | TEST 2 | **Тихий вывод тестов и CI.** Повторное ревью подтвердило suppression успешных suites при общем fail и mixed-failure regression на `00af357`. |
-| [TEST 7](tasks/0.5.0/TEST-7.md) | ACCEPTED | T2 | Reviewer | — | **Сверка эталона с libyuv.** Review подтвердил Mac normal/negative-control, Windows dry-run и ограничения Y/U/V, BGRA относительно `i420_decode` на `03b1bd1`. |
+| [TEST 6](tasks/0.5.0/TEST-6.md) | IN_PROGRESS | T2 | Integration | TEST 2 | **Тихий вывод тестов и CI.** Принятая карточка влита в `dev`; проверяются интегрированные reporter и Windows/Mac CI-пути на `efb76a8`. |
+| [TEST 7](tasks/0.5.0/TEST-7.md) | IN_PROGRESS | T2 | Integration | — | **Сверка эталона с libyuv.** Принятая карточка влита в `dev`; повторно проверяются Mac oracle/negative-control и Windows package dry-run на интегрированной базе. |
 
 ### Этап 2 — пробы и скорость
 
