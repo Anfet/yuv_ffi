@@ -41,5 +41,5 @@ Worktree `.worktrees/SPM-4`, ветка `task/SPM-4` от `dev`.
 - В Executor Report — изменённые разделы и результат сверки версии.
 
 #### Executor Report
-Не начато (остановлено по приказу Engineer).
+Коммит 1c5aa11. Изменены: `README.md` (в таблице Requirements macOS 10.15; абзац про SPM/CocoaPods, `darwin/`, настройка не нужна), `CHANGELOG.md` (в верхнюю запись 0.5.0-dev.1, «Changes»: поддержка SPM, CocoaPods сохранён, macOS 10.15), `example/README.md` (ограничение ML Kit на iOS 26+ Simulator). Сверка версии: верхняя запись `## 0.5.0-dev.1` = `version: 0.5.0-dev.1` в pubspec.yaml. Прогоны не нужны (`Probe: none`).
 #### Review

@@ -59,5 +59,12 @@ Mac, ветка `ci/**` не нужна).
 - `bash -n tool/ci/ios.sh tool/ci/macos.sh`.
 
 #### Executor Report
-Не начато (остановлено по приказу Engineer). Учесть: Mac-дерево распаковывать в каталог с именем `yuv_ffi` (см. отчёт SPM 2).
+Выполнено напрямую на Mac в репозитории `/Users/oleg/projects/yuv_ffi` (каталог называется `yuv_ffi`). Коммиты: 6cfb275 (скрипты), 1458e09 (pod install в iOS-копии).
+- `tool/ci/ios.sh`: выбор симулятора по runtime `SimRuntime.iOS-18-*` (jq, самый новый iOS 18.x, iPhone); сообщение при отсутствии; после SPM-сборки проверка «yuv_ffi нет в example/ios/Podfile.lock»; CocoaPods-проход в копии (`mktemp`, trap, rsync без build/.dart_tool/Pods/ephemeral, абсолютный путь к yuv_ffi, `enable-swift-package-manager: false`, копия drive.sh в `<tmp>/tool/ci`), проверка «yuv_ffi есть в Podfile.lock копии», drive только `native_app_runtime_smoke_test`.
+- `tool/ci/macos.sh`: то же для macOS (основная сборка `--release`, CocoaPods-проход `--debug`), в конце проверка `git status --porcelain` пуст.
+- Находка: первый `flutter build ios --simulator` в копии без `Pods/` падал: `Error (Xcode): Linker command failed` / `ld: framework 'Pods_Runner' not found` (второй запуск в той же копии проходит). Исправление: в копии перед сборкой `(cd ios && pod install)`; проверено — сборка проходит с первого раза.
+- Результаты: `bash tool/ci/macos.sh` EXIT 0: `ok flutter build macos --release (39 s)`, `PASS native_app_runtime_smoke_test on macos`, `PASS probe_native_test on macos`, `ok flutter build macos --debug (27 s)`, `PASS native_app_runtime_smoke_test on macos` (CocoaPods); повторный прогон EXIT 0, `git status --porcelain` пуст. `bash tool/ci/ios.sh` EXIT 0 (симулятор iPhone 16 Pro, iOS 18.6): `PASS native_app_runtime_smoke_test`, `PASS probe_native_test`, `✓ Built build/ios/iphonesimulator/Runner.app`, `PASS native_app_runtime_smoke_test` (CocoaPods); `git status --porcelain` после прогона пуст.
+- Негативные контроли (копия дерева вне репозитория `$TMPDIR/neg/yuv_ffi`): `enable-swift-package-manager: false` в example → `macos.sh` EXIT 1: `yuv_ffi is listed in example/macos/Podfile.lock: the plugin was not built through Swift Package Manager.`; подмена фильтра на `iOS-99-` → `ios.sh` EXIT 1: `No available iPhone simulator with an iOS 18.x runtime was found (ML Kit has no arm64 slice for the iOS 26+ Simulator).`
+- `bash -n tool/ci/ios.sh tool/ci/macos.sh` — ок.
+- Не запускалось: нет Windows и отдельных запусков по CI на `ci/**` не было.
 #### Review

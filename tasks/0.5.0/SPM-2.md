@@ -138,5 +138,7 @@ WIP, остановлено по приказу Engineer; статус карт�
 - nm -gU: macOS example/build/macos/Build/Products/Release/yuv_ffi_example.app/Contents/Frameworks/yuv-ffi.framework/Versions/A/yuv-ffi -> 11 символов _yuv_*_v1; iOS simulator Runner.app/Frameworks/yuv-ffi.framework/yuv-ffi (только slice x86_64 из-за ML Kit) -> те же 11.
 - CocoaPods-режим (копия example вне репозитория, абсолютный путь, SPM=false): flutter build macos --debug ok, flutter build ios --simulator --debug ok (первый запуск дал "Linker command failed" при откате с SPM, повтор прошёл), drive native_app_runtime_smoke на macOS: PASS; Podfile.lock копии содержит yuv_ffi из .symlinks/plugins/yuv_ffi/darwin, Frameworks содержит yuv_ffi.framework.
 - Негативный контроль .dynamic (копия без `type: .dynamic`): debug-сборка macOS и drive smoke всё же PASS (debug.dylib содержит 11 символов, nm Runner-бинарника 0); release-сборка: Frameworks без yuv-ffi.framework, nm -gU Contents/MacOS/yuv_ffi_example -> 0 символов _yuv_*_v1 (в версии с .dynamic символы есть во framework). Решение .dynamic оставлено.
-Не выполнено: example.ps1 после SPM-изменений на Windows не перезапускался (изменён только example/pubspec.yaml); формальная сверка DoD Reviewer-ом.
+Повторная проверка на Mac (ветка all/STAGE3-SPM-wip, Flutter 3.44.9): bash tool/ci/macos.sh и bash tool/ci/ios.sh проходят в режиме SPM (подробности — в отчёте SPM 3); release-сборка macOS на этом Mac не зависла.
+Не запускалось: нет Windows — `pwsh -File tool/ci/example.ps1` не запускался (изменён только example/pubspec.yaml); формальная сверка DoD Reviewer-ом.
+(прежняя формулировка:) Не выполнено: example.ps1 после SPM-изменений на Windows не перезапускался (изменён только example/pubspec.yaml); формальная сверка DoD Reviewer-ом.
 #### Review
