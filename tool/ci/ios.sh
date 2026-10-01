@@ -33,9 +33,13 @@ flutter pub get
 cd "$repository_root/example/ios"
 LANG=en_US.UTF-8 pod install
 
-simulator_id="$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')"
-if [[ -z "$simulator_id" || "$simulator_id" == "null" ]]; then
-  echo 'No available iPhone simulator was found.' >&2
+# ML Kit in the example has no arm64 slice for the iOS 26+ Simulator, so pin an iOS 18.x runtime.
+simulator_id="$(xcrun simctl list devices available -j | jq -r '
+  [.devices | to_entries | sort_by(.key) | reverse | .[]
+   | select(.key | startswith("com.apple.CoreSimulator.SimRuntime.iOS-18-"))
+   | .value[] | select(.name | startswith("iPhone"))][0].udid // empty')"
+if [[ -z "$simulator_id" ]]; then
+  echo 'No available iPhone simulator with an iOS 18.x runtime was found (ML Kit has no arm64 slice for the iOS 26+ Simulator).' >&2
   exit 1
 fi
 
@@ -52,6 +56,10 @@ xcodebuild -quiet \
 
 cd "$repository_root/example"
 flutter build ios --simulator --debug --no-codesign
+if grep -q 'yuv_ffi' ios/Podfile.lock; then
+  echo 'yuv_ffi is listed in example/ios/Podfile.lock: the plugin was not built through Swift Package Manager.' >&2
+  exit 1
+fi
 bash "$repository_root/tool/ci/drive.sh" \
   integration_test/native_app_runtime_smoke_test.dart "$simulator_id" --no-pub
 
@@ -68,3 +76,29 @@ for target_path in "${targets[@]}"; do
 done
 
 flutter build ios --debug --no-codesign
+
+# CocoaPods fallback: build a copy of the example with Swift Package Manager disabled and run only the runtime smoke test.
+cocoapods_root="$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/yuv-ffi-ios-cocoapods.XXXXXX")"
+trap 'rm -rf "$cocoapods_root"' EXIT
+mkdir -p "$cocoapods_root/tool/ci"
+rsync -a \
+  --exclude build --exclude .dart_tool --exclude Pods --exclude ephemeral \
+  "$repository_root/example/" "$cocoapods_root/example/"
+cp "$repository_root/tool/ci/drive.sh" "$cocoapods_root/tool/ci/drive.sh"
+sed -i.bak \
+  -e "s|^    path: \.\./\$|    path: $repository_root|" \
+  -e 's|enable-swift-package-manager: true|enable-swift-package-manager: false|' \
+  "$cocoapods_root/example/pubspec.yaml"
+rm -f "$cocoapods_root/example/pubspec.yaml.bak"
+grep -Fq "path: $repository_root" "$cocoapods_root/example/pubspec.yaml"
+grep -Fq 'enable-swift-package-manager: false' "$cocoapods_root/example/pubspec.yaml"
+
+cd "$cocoapods_root/example"
+flutter pub get
+flutter build ios --simulator --debug --no-codesign
+if ! grep -q 'yuv_ffi' ios/Podfile.lock; then
+  echo 'yuv_ffi is missing from the CocoaPods copy Podfile.lock: the plugin was not built through CocoaPods.' >&2
+  exit 1
+fi
+bash "$cocoapods_root/tool/ci/drive.sh" \
+  integration_test/native_app_runtime_smoke_test.dart "$simulator_id" --no-pub

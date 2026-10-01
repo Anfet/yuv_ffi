@@ -23,7 +23,8 @@ run_quiet() {
     return "$status"
   fi
 }
-trap 'rm -f "$command_log"' EXIT
+cocoapods_root=
+trap 'rm -f "$command_log"; if [[ -n "$cocoapods_root" ]]; then rm -rf "$cocoapods_root"; fi' EXIT
 
 for tool_directory in /opt/homebrew/bin /usr/local/bin; do
   if [[ -d "$tool_directory" ]]; then
@@ -65,6 +66,10 @@ flutter test --no-pub --reporter json test/native_packaging_smoke_test.dart | da
   cd example
   run_quiet flutter pub get
   run_quiet flutter build macos --release
+  if grep -q 'yuv_ffi' macos/Podfile.lock; then
+    echo 'yuv_ffi is listed in example/macos/Podfile.lock: the plugin was not built through Swift Package Manager.' >&2
+    exit 1
+  fi
 )
 
 env DYLD_LIBRARY_PATH= bash tool/ci/drive.sh \
@@ -80,3 +85,36 @@ fi
 for target_path in "${targets[@]}"; do
   env DYLD_LIBRARY_PATH= bash tool/ci/drive.sh "${target_path#example/}" macos
 done
+
+# CocoaPods fallback: build a copy of the example with Swift Package Manager disabled and run only the runtime smoke test.
+cocoapods_root="$(mktemp -d "$native_build_parent/yuv-ffi-macos-cocoapods.XXXXXX")"
+mkdir -p "$cocoapods_root/tool/ci"
+rsync -a \
+  --exclude build --exclude .dart_tool --exclude Pods --exclude ephemeral \
+  "$repository_root/example/" "$cocoapods_root/example/"
+cp "$repository_root/tool/ci/drive.sh" "$cocoapods_root/tool/ci/drive.sh"
+sed -i.bak \
+  -e "s|^    path: \.\./\$|    path: $repository_root|" \
+  -e 's|enable-swift-package-manager: true|enable-swift-package-manager: false|' \
+  "$cocoapods_root/example/pubspec.yaml"
+rm -f "$cocoapods_root/example/pubspec.yaml.bak"
+grep -Fq "path: $repository_root" "$cocoapods_root/example/pubspec.yaml"
+grep -Fq 'enable-swift-package-manager: false' "$cocoapods_root/example/pubspec.yaml"
+
+(
+  cd "$cocoapods_root/example"
+  run_quiet flutter pub get
+  run_quiet flutter build macos --debug
+  if ! grep -q 'yuv_ffi' macos/Podfile.lock; then
+    echo 'yuv_ffi is missing from the CocoaPods copy Podfile.lock: the plugin was not built through CocoaPods.' >&2
+    exit 1
+  fi
+)
+env DYLD_LIBRARY_PATH= bash "$cocoapods_root/tool/ci/drive.sh" \
+  integration_test/native_app_runtime_smoke_test.dart macos
+
+if [[ -n "$(git -C "$repository_root" status --porcelain)" ]]; then
+  echo 'The run changed tracked files:' >&2
+  git -C "$repository_root" status --porcelain >&2
+  exit 1
+fi
