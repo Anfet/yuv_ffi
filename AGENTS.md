@@ -25,7 +25,7 @@
 
 ## Worktree Location and Cleanup
 
-- Create linked Git worktrees inside the repository at `.worktrees/<task-id>`; do not create sibling `*-wt` or task-specific temporary checkout directories.
+- Create linked Git worktrees inside the repository at `.worktrees/<pool-id>` for new task pools; existing task worktrees remain valid. Do not create sibling `*-wt` or task-specific temporary checkout directories.
 - `.worktrees/` is ignored by Git and excluded from the published package.
 - When a task is terminal and its worktree is no longer needed, inspect its status before removal. Preserve dirty work. After removing a worktree, check the project worktree directory for unregistered temporary folders and remove only confirmed leftovers.
 
@@ -54,28 +54,29 @@
 - The Executor runs the Windows probe for `windows` and `windows+pixel3`, then records the probe's verdict lines in the Executor Report. A `FAIL` prevents submission. Explain or fix a `SLOWER` verdict before submission.
 - For `windows+pixel3`, the Reviewer runs the Pixel 3 probe on arm64; changes under `src/` also require armv7. Accept only when the Windows and required Pixel 3 probes pass and no `SLOWER` verdict remains unexplained.
 - The Reviewer owns baseline updates after acceptance. Make each baseline update in a separate commit that records its reason; the Executor does not update baselines.
-- On other platforms, CI checks correctness on each push. Check speed on those platforms during pre-release validation.
+- On other platforms, post-merge CI checks correctness when the exact `dev` SHA is pushed through `ci/<pool-id>`. Check speed on those platforms during pre-release validation.
 
 ## История задач
 
 - История выполненной работы — git: коммиты, ветки слияния и теги. В рабочем дереве держать только действующее: правила (`AGENTS.md`), решения, текущий план, открытые карточки и документы, которые описывают текущий контракт (`doc/api-abi-0.4-design.md`).
-- Принятая карточка удаляется, а не архивируется. В плане от неё остаётся одна строка: что сделано, SHA слияния, run CI.
+- После `DONE` карточка удаляется, а не архивируется. В плане от неё остаётся одна строка: что сделано, SHA слияния, run CI или pending; состояние CI обновляется по сообщению Watcher.
 - Отчёты замеров не копятся: вывод, который остаётся в силе, дописывается в `doc/perf-findings.md`, сырые данные и патчи кандидатов в репозиторий не коммитятся.
 - Удалённый файл читается из истории: `git show <sha>:<путь>`.
 
 ## Задачи и дашборд
 
 - План и дашборд (`todo.md`) ведутся строго по `D:\.projects\pre-release-todo-template.md` и `D:\.projects\PROTOCOL.md`: таблица этапов, дашборд по этапам с колонками ID / Status / Tier / Owner / Depends on / Summary, у каждой задачи — файл карточки.
-- ID задачи — слово области и номер. В тексте — через неразрывный пробел (TEST 1, GEOM 1), в имени карточки, ветки и worktree — через дефис (`tasks/<версия>/TEST-1.md`, `task/TEST-1`, `.worktrees/TEST-1`). Коды без расшифровки не использовать.
-- Карточки текущего этапа Architect расписывает до запуска (решение, Scope, DoD, Validation): на дашборде этапа только `TODO` и `BLOCKED`. Задачи будущих этапов — карточки-черновики (Goal) со статусом `BLOCKED`, их дописывают при входе в этап. Строки без карточки не допускаются.
+- ID задачи — слово области и номер. В тексте — через неразрывный пробел (TEST 1, GEOM 1), в имени карточки — через дефис (`tasks/<версия>/TEST-1.md`). У нового пула своя ветка `<keys>/<pool-id>` и worktree `.worktrees/<pool-id>`; `<keys>` покрывает объединение ключей путей из `scope_guard.sh`. Старые ветки задач сохраняют свою историю. Коды без расшифровки не использовать.
+- Карточки плановой работы текущего этапа Architect расписывает до запуска (решение, Scope, DoD, Validation): на дашборде этапа только `TODO` и `BLOCKED`. Задачи будущих этапов — карточки-черновики (Goal) со статусом `BLOCKED`, их дописывают при входе в этап. Исключение: после отказа post-merge CI Orchestrator сам заполняет фактическую карточку в конце этапа упавшего пула (SHA, run/job, упавший шаг, короткий фрагмент ошибки, известный критерий исправления), сообщает Engineer и не запускает расследование без его команды. Строки без карточки не допускаются.
 - `ARCHITECT_REQUIRED` появляется только когда исполнение упёрлось в решение. Вопрос, который решает Engineer, — `ENGINEER_REQUIRED`: вопрос, известное, варианты и рекомендация — в карточке, строка — в открытых вопросах плана.
 
 ## CI соглашения
 
 - Платформенная проверка живёт в `.github/workflows/ci-<name>.yml` и содержит одну джобу. В workflow остаются checkout, выбор runner и запуск одного `tool/ci/<name>`-скрипта.
 - Логику проверки размещать в `tool/ci/<name>.ps1` для Windows и в `tool/ci/<name>.sh` для Linux и macOS. Тот же скрипт запускать локально до push.
-- CI запускается только на интеграции: push в `release/**` и `main`. Ветки задач CI не запускают; задача проверяется локально теми же `tool/ci/<name>`-скриптами на доступных устройствах.
-- Ветка `ci/**` — явное включение полного CI. Используется в двух случаях: интеграционная пачка `ci/<пачка>` от `dev` из принятых карточек (зелёная сливается в `dev`); задача, которая меняет сами workflow или `tool/ci/*`, когда проверить изменение локально нельзя. `dev` CI не запускает.
+- CI запускается на push в `release/**`, `main` и `ci/**`; рабочие ветки пулов и `dev` CI не запускают. Executor проверяет пул локально теми же `tool/ci/<name>`-скриптами на доступных устройствах до ревью.
+- После принятия нового пула Reviewer при чистом fast-forward сливает его в `dev`; карточки получают `DONE` на слиянии. Если нужен полный CI, ветка `ci/<pool-id>` указывает на точный SHA влитого `dev` и её push запускает проверку, пока следующий пул уже работает. CI не является условием `DONE`, но обязателен для выхода из этапа/релизного гейта, если Engineer не решил иначе. При отказе Orchestrator сам заполняет фактическую карточку CI в конце этапа упавшего пула и сообщает Engineer; отдельный Executor расследует только по команде Engineer, Architect в обычном маршруте не участвует.
+- Ветка `ci/**` также используется для задачи, меняющей workflow или `tool/ci/*`, когда изменение нельзя проверить локально. Не добавлять `dev` в триггеры CI без отдельного решения Engineer.
 - Все workflow используют одинаковый `paths-ignore: ["**/*.md", "doc/**", "tasks/**"]`: коммиты только с документацией CI не запускают. `workflow_dispatch` остаётся доступен для workflow, уже попавших в `main`.
 - `tool/ci/scope_guard.sh` в CI не вызывается. Его карта «путь → ключи платформ» подсказывает, какие локальные скрипты запускать для изменённых путей.
 - Для workflow использовать `concurrency` с группой `ci-<name>-${{ github.ref }}`. На `release/**` прогоны не отменяются, на `main` и `ci/**` новый прогон отменяет предыдущий.
