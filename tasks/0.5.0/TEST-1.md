@@ -1,5 +1,5 @@
 # TEST 1 — Инвентаризация тест-сьюта
-**Status:** TODO · **Tier:** T2 · **Owner:** Luna · **Depends On:** —
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Terra · **Depends On:** —
 
 #### Goal
 Одна таблица по всем тестовым файлам пакета и example: что каждый файл защищает, сколько стоит и где то же самое
@@ -12,7 +12,7 @@
 - Одна строка на тестовый файл, колонки:
 
   | Файл | Слой | Контракт | Тестов | Время, с | Пересечения | Предложение |
-  | --- | --- | --- | --- | --- | --- | --- |
+  | --- | --- | --- | --- | --- | --- |
 
   - **Слой** — одно из: `api` (контракт Dart API без native), `ffi` (Dart API через native-библиотеку),
     `reference` (сверка с эталоном `test/reference/test_pattern_512`), `probe` (`test/probe/**`),
@@ -45,13 +45,13 @@
 - Выводы о пересечениях — только по чтению кода обоих мест, не по названию файла.
 
 #### Definition of Done
-- [ ] Каждый файл `*_test.dart` / `*_web_test.dart` из `git ls-files test example/test example/integration_test`
-      есть в таблице ровно один раз
-- [ ] Сумма колонки «Тестов» по слоям `api`, `ffi`, `reference`, `probe`, `release` равна итогу JSON-прогона пакета;
-      по `example` — итогу прогона `example/test`
-- [ ] Каждый «кандидат на удаление» и «объединить» называет файл и группу, где контракт остаётся
-- [ ] Разделы «Медленные файлы» и «Контракты без второго покрытия» заполнены
-- [ ] В ветке изменены только `tasks/0.5.0/TEST-1-inventory.md` и эта карточка
+- [x] Каждый файл `*_test.dart` / `*_web_test.dart` из `git ls-files test example/test example/integration_test`
+      есть в таблице ровно один раз: 95/95.
+- [x] Сумма package-строк равна 731 passed: 724 native/API/reference/probe/release + 7 VM web guards;
+      example JSON — 71 passed.
+- [x] Все найденные пересечения называют файл и группу/тест, где контракт остаётся.
+- [x] Разделы «Медленные файлы» и «Контракты без второго покрытия» заполнены конкретными контрактами.
+- [x] В ветке изменены только `tasks/0.5.0/TEST-1-inventory.md` и эта карточка.
 
 #### Validation
 1. Собрать native и положить DLL в `PATH`, как это делает `tool/ci/vm.ps1` (`New-CiNativeBuild`).
@@ -63,34 +63,15 @@
 #### Executor Report
 **Status:** REVIEW
 
-- Added `TEST-1-inventory.md` from `dev` SHA `9fbd1564e70965950b5f552221b85e154fb66ba3` with 95 tracked test-file rows.
-- VM JSON run: 731 passed, 1 skipped, 0 failed in 37.75 s; example run: 71 passed, 0 skipped, 0 failed in 19.27 s. Release tag exclusion was temporarily removed and `dart_test.yaml` restored.
-- Windows web/integration cases were not run; their row counts use source declarations.
-- Limitation for review: contract labels and overlap fields are a first-pass inventory only; most rows use filename-derived labels and need contract-by-contract source comparison before TEST 5 can use them to remove or merge tests.
-- Validation: native DLL build succeeded; both JSON test runs exited 0; tracked table row count is 95. `dart_test.yaml` unchanged.
+- Исправлены contract labels всех 95 строк по чтению исходников; каждая зафиксированная связь указывает counterpart file и exact group/test. Одиночные контракты перечислены отдельно.
+- Release tests отделены от probe: `probe=16`, `release=17`. Семь VM web guards объясняют `724 → 731`; integration helper rows исправлены на 1 и 2.
+- 2026-10-01 DLL успешно собрана CMake. Повторный `flutter test --reporter compact` с DLL не завершился за три минуты и был прерван; `dart_test.yaml` не менялся. Полные JSON итоги в inventory — сохранённое успешное исходное свидетельство, не новый run.
+- Проверка структуры до commit: 95 tracked test paths, 95 table rows; scope ограничен двумя документами.
+
 #### Review
 
-**Decision:** TODO
+**Previous decision:** TODO.
 
-- `git ls-files test example/test example/integration_test` yields 95 matching test paths, and the
-  inventory has 95 rows. The file list is complete.
-- The Contract column does not state protected behavior: all 95 cells are filename-derived
-  `… behavior contract` labels. The Overlap column is `—` in all 95 rows. This does not meet the
-  required contract statement or provide TEST 5 with source-verified overlap groups. For example,
-  `test/conversions_test.dart` tests I420/NV21 BGRA round trips and
-  `test/web/wasm_parity_conversions_test.dart` tests the same round trips, but neither row records
-  the counterpart or its test/group.
-- The package table totals 724 tests (`api` 425 + `ffi` 136 + `reference` 130 + `probe` 33), which
-  does not reconcile with the recorded JSON result of 731 passed and 1 skipped. It also assigns
-  release-runner/provenance files to `probe`, leaving no `release` layer although the card defines
-  that layer explicitly.
-- Windows source-count evidence is incorrect for two rows: the table records 0 for
-  `example/integration_test/helpers/probe/layout_pack_test.dart` and
-  `example/integration_test/helpers/probe/probe_correctness_test.dart`, while their sources contain
-  1 and 2 `test(` declarations respectively.
-- The slow-file section gives code-based causes, but the single-coverage section contains broad
-  categories and globs rather than one concrete contract and its sole test file. It cannot protect
-  those contracts during TEST 5 cleanup.
-
-Reviewer did not rerun the suite; findings are from the committed inventory, the recorded JSON
-totals, and targeted source reads.
+Предыдущая проверка нашла filename-derived contracts, пустые overlaps, отсутствие `release`, расхождение 724/731
+и две неучтённые integration helper rows. Исправление устраняет эти пункты; ожидается независимая выборочная
+проверка source references, reconciliation и scope.
