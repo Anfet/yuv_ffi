@@ -1,5 +1,5 @@
 # TEST 4 — Карта «что изменил → что запускать»
-**Status:** REVIEW · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 1
+**Status:** TODO · **Tier:** T3 · **Execution Mode:** FAST · **Review Tier:** T2 · **Depends On:** TEST 2, TEST 3 · **Rejection Count:** 2
 **Было:** RA-62 (цикл 0.4.2).
 
 #### Goal
@@ -91,3 +91,20 @@ Validation:
   `--dart-define=PROBE_OPS`/`PROBE_FORMATS` и проверкой `PROBE scope`.
 - Validation review: `git diff --check 1eba457..4827327` passed; name-only diff contains only
   `AGENTS.md` and this card. No platform run was required for this documentation-only review.
+
+**T2 review, GPT-5.6 Terra, 01.10.2026: TODO. Reviewed `74144d6`.**
+
+- Не выполнено условие карты о реальных путях: в `AGENTS.md` всё ещё есть строка с
+  `.github/workflows/ci-linux.yml`, но такого workflow нет. Это также подтверждают перечисление
+  `.github/workflows/` и Executor Report. Удалить отсутствующий путь из таблицы или вернуть карточку
+  Architect для согласования с требованием точного отображения текущего `path_keys()`.
+- Исправления прошлого review подтверждены: пути `tool/ci/drive.ps1`, `tool/ci/drive.sh`,
+  `tool/ci/smoke.ps1` и `tool/ci/scope_guard.sh` полные и существуют; Linux описан как CI-only через
+  существующий `.github/workflows/ci.yml`.
+- Web-команда передаёт обязательные позиционные `Target=integration_test/probe_web_test.dart` и
+  `Device=web-server`, далее аргументы Chrome. `drive.ps1` запускает target из `example/`; target существует.
+  `gray` является операцией матрицы, `i420` входит в допустимые форматы, а строка `PROBE scope` формируется
+  селектором.
+- Validation evidence подтверждено: `git diff --check 1eba457..74144d6` прошёл, а name-only diff содержит
+  только `AGENTS.md` и эту карточку. Платформенные прогоны не выполнялись: Validation карточки для
+  документационного изменения их не требует.
