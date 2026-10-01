@@ -1,5 +1,4 @@
 @Tags(['release'])
-
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -25,9 +24,26 @@ void main() {
   });
 
   test('records both app and resolved package provenance in the strict host result', () {
-    expect(source, contains(r'appGitSha = $packageProvenance.appGitSha'));
-    expect(source, contains(r'packagePath = $packageProvenance.packagePath'));
-    expect(source, contains(r'packageRevision = $packageProvenance.packageRevision'));
-    expect(source, contains(r'packageOverridden = $packageProvenance.packageOverridden'));
+    expect(source, contains(r'packageConfigEntry = $packageEntries[0]'));
+    expect(source, contains(r'resolvedPackageRoot = $resolvedPackageRoot'));
+    expect(source, contains(r'packageRevision = $resolvedPackageRevision'));
+    expect(source, contains(r'packageOverridden = $usesPackageOverride'));
+  });
+
+  test('writes a receipt linked to the verdict and release artifacts', () {
+    expect(source, contains(r'[string]$EvidenceDirectory'));
+    expect(source, contains(r"-Filter 'yuv_ffi.dll' -File"));
+    expect(source, contains(r'found $($dllPaths.Count)'));
+    expect(source, contains(r'dllSha256 = $dllSha256'));
+    expect(source, contains(r'sha256 = $verdictSha256'));
+    expect(source, contains(r'Write-Ra26JsonAtomically $receiptPath $hostReceipt'));
+  });
+
+  test('records and enforces the observed pre-launch and post-exit power readings', () {
+    expect(source, contains(r'schemeGuid = $guidMatch.Value.ToLowerInvariant()'));
+    expect(source, contains("schemeName = \$nameMatch.Groups['name'].Value.Trim()"));
+    expect(source, contains(r'batteryStatus = $readings'));
+    expect(source, contains(r'Assert-Ra26BalancedAc $preLaunchPower'));
+    expect(source, contains(r'Assert-Ra26BalancedAc $postExitPower'));
   });
 }
