@@ -1,0 +1,949 @@
+{
+  "schema": 1,
+  "status": "PASS",
+  "gitSha": "3c0011f1c88481af9d241be26a75dd7194f1d3a4",
+  "runId": "316fdf35eb604116b62865d4a03119bb",
+  "hostId": "windows-13th-gen-intel-r-core-tm-i9-13980hx-x64-release",
+  "buildMode": "release",
+  "environment": {
+    "valid": true
+  },
+  "runs": [
+    {
+      "id": "convert/i420-to-bgra/1920x1080",
+      "operation": "convert",
+      "scenario": "i420-to-bgra",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "bgra8888 1920x1080 e18afb9f785a9c4e",
+      "samplesMicros": [
+        186498,
+        187353,
+        188914,
+        190237,
+        191715,
+        194601,
+        196157,
+        198202,
+        201421
+      ],
+      "sampleHashes": [
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e",
+        "bgra8888 1920x1080 e18afb9f785a9c4e"
+      ],
+      "medianMicros": 191715,
+      "spreadPercent": 7.783950134313955,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "convert/i420-to-bgra/720x360",
+      "operation": "convert",
+      "scenario": "i420-to-bgra",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "bgra8888 720x360 75bd97e2c1dab206",
+      "samplesMicros": [
+        25581,
+        25687,
+        25838,
+        26182,
+        26184,
+        26250,
+        26294,
+        26677,
+        26824
+      ],
+      "sampleHashes": [
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206",
+        "bgra8888 720x360 75bd97e2c1dab206"
+      ],
+      "medianMicros": 26184,
+      "spreadPercent": 4.747173846623893,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "blackWhite/i420-whole-frame/1920x1080",
+      "operation": "blackWhite",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 e036abee13fc63cf",
+      "samplesMicros": [
+        421831,
+        421878,
+        423044,
+        423557,
+        424011,
+        430989,
+        434324,
+        447948,
+        448873
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf",
+        "i420 1920x1080 e036abee13fc63cf"
+      ],
+      "medianMicros": 424011,
+      "spreadPercent": 6.377664730396146,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "blackWhite/i420-whole-frame/720x360",
+      "operation": "blackWhite",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 49ba235362491874",
+      "samplesMicros": [
+        52718,
+        52912,
+        52968,
+        53018,
+        53050,
+        53260,
+        54580,
+        55864,
+        56831
+      ],
+      "sampleHashes": [
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874",
+        "i420 720x360 49ba235362491874"
+      ],
+      "medianMicros": 53050,
+      "spreadPercent": 7.753063147973609,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "grayscale/i420-whole-frame/1920x1080",
+      "operation": "grayscale",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 8a5eac3fb7da0b3c",
+      "samplesMicros": [
+        418853,
+        419322,
+        420431,
+        422290,
+        426057,
+        431483,
+        439746,
+        440845,
+        441689
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c",
+        "i420 1920x1080 8a5eac3fb7da0b3c"
+      ],
+      "medianMicros": 426057,
+      "spreadPercent": 5.359846217759595,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "grayscale/i420-whole-frame/720x360",
+      "operation": "grayscale",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 e48567f56493cb9d",
+      "samplesMicros": [
+        52300,
+        52319,
+        52329,
+        52332,
+        52333,
+        52385,
+        53686,
+        53954,
+        55372
+      ],
+      "sampleHashes": [
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d",
+        "i420 720x360 e48567f56493cb9d"
+      ],
+      "medianMicros": 52333,
+      "spreadPercent": 5.870101083446391,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "negate/i420-whole-frame/1920x1080",
+      "operation": "negate",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 92e8dff4e8e76143",
+      "samplesMicros": [
+        405765,
+        406145,
+        408723,
+        409620,
+        413064,
+        418358,
+        422521,
+        429043,
+        430800
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143",
+        "i420 1920x1080 92e8dff4e8e76143"
+      ],
+      "medianMicros": 413064,
+      "spreadPercent": 6.060804136889199,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "negate/i420-whole-frame/720x360",
+      "operation": "negate",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 329eeea5d8bce092",
+      "samplesMicros": [
+        50767,
+        50788,
+        50828,
+        50887,
+        51673,
+        53605,
+        53840,
+        53846,
+        54327
+      ],
+      "sampleHashes": [
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092",
+        "i420 720x360 329eeea5d8bce092"
+      ],
+      "medianMicros": 51673,
+      "spreadPercent": 6.889478063979254,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "gaussianBlur/i420-r3-s2/1920x1080",
+      "operation": "gaussianBlur",
+      "scenario": "i420-r3-s2",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 9b4c6f9794abcc8d",
+      "samplesMicros": [
+        1072858,
+        1084902,
+        1090697,
+        1097187,
+        1100098,
+        1110922,
+        1119728,
+        1127511,
+        1127863
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d",
+        "i420 1920x1080 9b4c6f9794abcc8d"
+      ],
+      "medianMicros": 1100098,
+      "spreadPercent": 5.000009090099246,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "gaussianBlur/i420-r3-s2/720x360",
+      "operation": "gaussianBlur",
+      "scenario": "i420-r3-s2",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 c98f0805da5349e1",
+      "samplesMicros": [
+        134373,
+        134472,
+        134666,
+        138549,
+        141172,
+        141948,
+        142023,
+        142346,
+        143013
+      ],
+      "sampleHashes": [
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1",
+        "i420 720x360 c98f0805da5349e1"
+      ],
+      "medianMicros": 141172,
+      "spreadPercent": 6.120193806137195,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "meanBlur/i420-r2/1920x1080",
+      "operation": "meanBlur",
+      "scenario": "i420-r2",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 b5dcba8edf74413d",
+      "samplesMicros": [
+        511564,
+        515588,
+        517690,
+        519632,
+        521018,
+        524124,
+        524193,
+        525546,
+        526852
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d"
+      ],
+      "medianMicros": 521018,
+      "spreadPercent": 2.9342556303237126,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "meanBlur/i420-r2/720x360",
+      "operation": "meanBlur",
+      "scenario": "i420-r2",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 ffd984f0b3354c2f",
+      "samplesMicros": [
+        63895,
+        63975,
+        64082,
+        64099,
+        64107,
+        64606,
+        65602,
+        65916,
+        67293
+      ],
+      "sampleHashes": [
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f"
+      ],
+      "medianMicros": 64107,
+      "spreadPercent": 5.30051320448625,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "boxBlur/i420-r2/1920x1080",
+      "operation": "boxBlur",
+      "scenario": "i420-r2",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 b5dcba8edf74413d",
+      "samplesMicros": [
+        519369,
+        520582,
+        522755,
+        529181,
+        532941,
+        533134,
+        535630,
+        549362,
+        572381
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d",
+        "i420 1920x1080 b5dcba8edf74413d"
+      ],
+      "medianMicros": 532941,
+      "spreadPercent": 9.947067311390942,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "boxBlur/i420-r2/720x360",
+      "operation": "boxBlur",
+      "scenario": "i420-r2",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 ffd984f0b3354c2f",
+      "samplesMicros": [
+        63873,
+        64143,
+        64213,
+        64493,
+        64493,
+        64998,
+        67104,
+        68507,
+        84429
+      ],
+      "sampleHashes": [
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f",
+        "i420 720x360 ffd984f0b3354c2f"
+      ],
+      "medianMicros": 64493,
+      "spreadPercent": 31.87322655171879,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "crop/i420-inset-8/1920x1080",
+      "operation": "crop",
+      "scenario": "i420-inset-8",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1904x1064 7fc6bf0cee55f4d9",
+      "samplesMicros": [
+        108024,
+        108290,
+        108908,
+        109817,
+        112011,
+        112673,
+        114623,
+        117189,
+        119572
+      ],
+      "sampleHashes": [
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9",
+        "i420 1904x1064 7fc6bf0cee55f4d9"
+      ],
+      "medianMicros": 112011,
+      "spreadPercent": 10.309701725723366,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "crop/i420-inset-8/720x360",
+      "operation": "crop",
+      "scenario": "i420-inset-8",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 704x344 7beaffe35e9680ac",
+      "samplesMicros": [
+        12864,
+        12889,
+        12914,
+        12916,
+        12925,
+        12964,
+        13448,
+        13610,
+        13872
+      ],
+      "sampleHashes": [
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac",
+        "i420 704x344 7beaffe35e9680ac"
+      ],
+      "medianMicros": 12925,
+      "spreadPercent": 7.7988394584139265,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "flipHorizontal/i420-whole-frame/1920x1080",
+      "operation": "flipHorizontal",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 6fc5fd224ea42eb7",
+      "samplesMicros": [
+        110685,
+        110709,
+        111494,
+        113444,
+        113789,
+        116859,
+        117841,
+        117986,
+        118212
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7",
+        "i420 1920x1080 6fc5fd224ea42eb7"
+      ],
+      "medianMicros": 113789,
+      "spreadPercent": 6.614874900034274,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "flipHorizontal/i420-whole-frame/720x360",
+      "operation": "flipHorizontal",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 e981f4c29b458e0d",
+      "samplesMicros": [
+        14012,
+        14039,
+        14122,
+        14165,
+        14202,
+        14247,
+        14427,
+        14461,
+        14597
+      ],
+      "sampleHashes": [
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d",
+        "i420 720x360 e981f4c29b458e0d"
+      ],
+      "medianMicros": 14202,
+      "spreadPercent": 4.119138149556401,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "flipVertical/i420-whole-frame/1920x1080",
+      "operation": "flipVertical",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1920x1080 0541884e573708f1",
+      "samplesMicros": [
+        110944,
+        112006,
+        112335,
+        112466,
+        114251,
+        114555,
+        114746,
+        118518,
+        119157
+      ],
+      "sampleHashes": [
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1",
+        "i420 1920x1080 0541884e573708f1"
+      ],
+      "medianMicros": 114251,
+      "spreadPercent": 7.188558524651863,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "flipVertical/i420-whole-frame/720x360",
+      "operation": "flipVertical",
+      "scenario": "i420-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 720x360 955aea9672b9f0da",
+      "samplesMicros": [
+        13959,
+        13980,
+        14016,
+        14031,
+        14039,
+        14042,
+        14112,
+        14154,
+        14195
+      ],
+      "sampleHashes": [
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da",
+        "i420 720x360 955aea9672b9f0da"
+      ],
+      "medianMicros": 14039,
+      "spreadPercent": 1.6810314124937673,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "rotate/i420-90/1920x1080",
+      "operation": "rotate",
+      "scenario": "i420-90",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "i420 1080x1920 7b8cf30b010a2ec7",
+      "samplesMicros": [
+        111402,
+        112288,
+        114098,
+        115789,
+        115835,
+        118493,
+        118867,
+        119007,
+        125679
+      ],
+      "sampleHashes": [
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7",
+        "i420 1080x1920 7b8cf30b010a2ec7"
+      ],
+      "medianMicros": 115835,
+      "spreadPercent": 12.325290283593041,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "rotate/i420-90/720x360",
+      "operation": "rotate",
+      "scenario": "i420-90",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "i420 360x720 f2845313802b3ece",
+      "samplesMicros": [
+        13704,
+        13782,
+        13786,
+        13842,
+        13849,
+        14640,
+        14765,
+        14844,
+        15040
+      ],
+      "sampleHashes": [
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece",
+        "i420 360x720 f2845313802b3ece"
+      ],
+      "medianMicros": 13849,
+      "spreadPercent": 9.646905913784389,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "chromaSwap/nv12-whole-frame/1920x1080",
+      "operation": "chromaSwap",
+      "scenario": "nv12-whole-frame",
+      "size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "hash": "nv12 1920x1080 5a32d5c5b06c94e9",
+      "samplesMicros": [
+        85974,
+        86785,
+        86816,
+        87009,
+        87015,
+        88931,
+        89147,
+        89310,
+        91163
+      ],
+      "sampleHashes": [
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9",
+        "nv12 1920x1080 5a32d5c5b06c94e9"
+      ],
+      "medianMicros": 87015,
+      "spreadPercent": 5.963339654082629,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    },
+    {
+      "id": "chromaSwap/nv12-whole-frame/720x360",
+      "operation": "chromaSwap",
+      "scenario": "nv12-whole-frame",
+      "size": {
+        "width": 720,
+        "height": 360
+      },
+      "hash": "nv12 720x360 bfbbed6b79afd492",
+      "samplesMicros": [
+        10195,
+        10697,
+        10770,
+        10789,
+        10810,
+        10963,
+        10997,
+        11466,
+        12187
+      ],
+      "sampleHashes": [
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492",
+        "nv12 720x360 bfbbed6b79afd492"
+      ],
+      "medianMicros": 10810,
+      "spreadPercent": 18.427382053654025,
+      "verdict": "PASS",
+      "comparison": "NO-BASELINE",
+      "deltaPercent": null,
+      "thresholdPercent": null,
+      "baseline": null
+    }
+  ]
+}

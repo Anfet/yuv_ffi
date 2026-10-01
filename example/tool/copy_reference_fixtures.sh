@@ -55,6 +55,8 @@ rm -rf "$PROBE_DEST_DIR"
 mkdir -p "$PROBE_DEST_DIR" "$PROBE_GOLDEN_DEST"
 cp -R "$PROBE_SOURCE_DIR"/. "$PROBE_DEST_DIR"/
 rm -f "$PROBE_DEST_DIR"/operation_coverage_test.dart \
+  "$PROBE_DEST_DIR"/android_release_benchmark_contract_test.dart \
+  "$PROBE_DEST_DIR"/baseline/windows-13th-gen-intel-r-core-tm-i9-13980hx-x64-release.json \
   "$PROBE_DEST_DIR"/probe_copy_sync_test.dart \
   "$PROBE_DEST_DIR"/probe_performance_test.dart \
   "$PROBE_DEST_DIR"/probe_runner.dart \

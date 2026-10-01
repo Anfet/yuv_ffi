@@ -20,6 +20,8 @@ void main() {
 
 // These helpers run from the package root and have no copy in the example.
 const rootOnlyFiles = {
+  'android_release_benchmark_contract_test.dart',
+  'baseline/windows-13th-gen-intel-r-core-tm-i9-13980hx-x64-release.json',
   'operation_coverage_test.dart',
   'probe_copy_sync_test.dart',
   'probe_performance_test.dart',
