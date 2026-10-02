@@ -1,5 +1,5 @@
 # WEB 7 — Web: стоимость импорта кадра в `YuvImage`
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** — · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** — · **Probe:** none
 
 #### Goal
 Подсистема импорта из исследования WEB 4. Сейчас Web-источник камеры отдаёт кадр как `YuvImage.bgra` +
@@ -57,3 +57,8 @@ WEB7 RESULT {"os":"Windows","chrome":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) 
 Release dart2js, CanvasKit default, 1280x720 synthetic source bytes prepared once before the warmup. The temporary probe built successfully in `example/build/web-web7`; its source was removed. No package files changed.
 
 #### Review
+
+- **ACCEPT** (Reviewer, 02.10.2026). Импорт 720p стоит 1,4–1,6 мс во всех вариантах: I420, I420 с выравниванием, NV12 и BGRA практически равны; на выбор пути импорт не влияет. Для WEB 4 важна только строка NV12 — её отдала камера (WEB 6).
+- Не указано: число замеров, режим Chrome (с окном или headless) и что плоскости брались срезами одного буфера (`sublistView`), как требует решение 3. На вывод не влияет — разница вариантов меньше шага таймера браузера (0,1 мс).
+- «machine: this machine» — не описание машины; в документе WEB 4 указать процессор (i9-13980HX).
+- Замечания к отчёту (не блокируют): отчёт на английском, а по правилу 9 отчёты — на русском; исходник прототипа удалён, поэтому метод замера нельзя проверить по коду — в отчёте должно быть описано то, что требует карточка (число кадров, порядок вариантов, режим Chrome).

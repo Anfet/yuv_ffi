@@ -1,5 +1,5 @@
 # WEB 4 — Кадры веб-камеры в исходном формате: вывод и рекомендация
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** WEB 6 · **Depends On:** WEB 6, WEB 7, WEB 8 · **Probe:** none
+**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** WEB 6, WEB 7, WEB 8 · **Probe:** none
 
 #### Goal
 Web-источник камеры (`example/lib/camera/impl/yuv_camera_frame_source_web.dart`) читает кадр через

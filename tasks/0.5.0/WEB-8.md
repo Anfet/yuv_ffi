@@ -1,5 +1,5 @@
 # WEB 8 — Web: стоимость показа кадра
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** — · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** — · **Probe:** none
 
 #### Goal
 Подсистема показа из исследования WEB 4. На Web шейдер выключен (WEB 1): `YuvFrameRenderer` показывает любой кадр
@@ -50,3 +50,15 @@ WEB8 RESULT {"os":"Windows","chrome":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) 
 For each format, the result contains 10 warmups and 60 samples. The temporary probe built successfully in `example/build/web-web8`; its source was removed. No package files changed.
 
 #### Review
+
+- **ACCEPT** (Reviewer, 02.10.2026). Главная цифра подтверждена повтором и разложена на части. Reviewer, release dart2js, Chrome 154 с окном, 1280×720, 10 прогревов + 30 замеров, медианы:
+
+  | Формат | `toBgraBytes()` (WASM) | декод в `ui.Image` | `upload()` целиком |
+  | --- | --- | --- | --- |
+  | I420 | 38,4 мс | 11,5 мс | 50,3 мс |
+  | BGRA | 2,0 мс | 11,6 мс | 13,8 мс |
+
+  Показ I420/NV12 на Web в 4 раза дороже BGRA, и почти всё — конвертация YUV → BGRA в WASM (~38 мс на кадр 720p, это больше бюджета кадра 33 мс при 30 к/с). Декод одинаковый. Это вывод для WEB 4 (путь YUV проиграет на показе, пока нет шейдера) и для WEB 5 (шейдер на Web убирает именно эти 38 мс).
+- `hasShader=false` — как и ожидалось после WEB 1.
+- Не указан режим Chrome (с окном или headless); мой повтор с окном дал те же порядки (50 против 58 мс у Executor). «machine: this machine» — в документе WEB 4 указать процессор.
+- Замечания к отчёту (не блокируют): отчёт на английском, а по правилу 9 отчёты — на русском; исходник прототипа удалён, поэтому метод замера нельзя проверить по коду — в отчёте должно быть описано то, что требует карточка (число кадров, порядок вариантов, режим Chrome).
