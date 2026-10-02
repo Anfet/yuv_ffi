@@ -9,6 +9,7 @@ void main() {
     String? copied;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
       if (call.method == 'Clipboard.setData') copied = (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      return null;
     });
     addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
     await tester.pumpWidget(const MaterialApp(home: DeviceCheckScreen(cameraEnabled: false)));

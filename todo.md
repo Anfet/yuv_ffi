@@ -65,8 +65,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | TODO | T2 | — | CAMERA 2 | **Экран проверки на устройстве.** `Device check` в example: шаги на телефоне в release (FPS без и с обработкой, поворот, зеркало, рамки лиц, снимок), итоговый JSON с кнопкой «Копировать». Пул `STAGE5-DEVICE`. |
-| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | BLOCKED | T2 | DEVICE 1 | DEVICE 1 | **Прогон на Pixel 3 и разбор.** Engineer проходит экран и присылает JSON; разбор по таблице критериев, вывод в `doc/perf-findings.md`; при PASS — удаление прототипа VIEW-04. Пул `STAGE5-DEVICE`. |
+| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | REVIEW | T2 | — | CAMERA 2 | **Экран проверки на устройстве.** Release-ready на Pixel 3 (`25a33e0`); экран и отчёт переданы на проверку. |
+| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | REVIEW | T2 | DEVICE 1 | DEVICE 1 | **Прогон на Pixel 3 и разбор.** FAIL: у `capture` нет обязательного `answer`; VIEW-04 сохранён. Нужны решение Engineer или новая карточка исправления. |
 
 ### Параллельно
 

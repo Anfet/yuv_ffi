@@ -1,5 +1,5 @@
 # DEVICE 1 — Экран проверки на устройстве в example
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 2 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 2 · **Probe:** none
 
 #### Goal
 Этап 5 проверяет на настоящем телефоне то, что не видят CI и интеграционные тесты: FPS живого превью в release, в том
@@ -91,4 +91,11 @@
 - Pixel 3 (`todo.md`, «Окружение»): запуск из DoD.
 
 #### Executor Report
+- Реализован экран Device check, отдельный release entrypoint, JSON-отчёт и общая фоновая Gaussian-обработка для
+  CameraScreen и экрана проверки.
+- `dart format --line-length 150`, `flutter analyze` и `flutter test` в `example/` прошли: 42 теста;
+  `pwsh -File tool/ci/example.ps1` завершился успешно.
+- Pixel 3, release APK, SHA `25a33e0`: `DEVICE-1 ready {"build_mode":"release","shader":true}` есть в logcat.
+  Прогон с касаниями передан DEVICE 2; результат Engineer приложен к её отчёту.
+
 #### Review

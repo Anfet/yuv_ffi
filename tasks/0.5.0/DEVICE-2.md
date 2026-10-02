@@ -1,5 +1,5 @@
 # DEVICE 2 — Прогон на Pixel 3, разбор и удаление прототипа VIEW-04
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** DEVICE 1 · **Depends On:** DEVICE 1 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2 · **Owner:** DEVICE 1 · **Depends On:** DEVICE 1 · **Probe:** none
 
 #### Goal
 Engineer проходит экран проверки DEVICE 1 на Pixel 3 в release и присылает JSON. Исполнитель разбирает его по
@@ -54,4 +54,107 @@ Engineer проходит экран проверки DEVICE 1 на Pixel 3 в 
 - `flutter analyze` в `example/`; `pwsh -File tool/ci/example.ps1` (после удаления).
 
 #### Executor Report
+```json
+{
+  "card": "DEVICE-1",
+  "schema": 1,
+  "build_mode": "release",
+  "git_sha": "25a33e0",
+  "os": "android",
+  "camera": {
+    "lens": "front",
+    "sensor_orientation": 270,
+    "preset": "medium"
+  },
+  "steps": [
+    {
+      "id": "portrait_idle",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 29.5,
+      "shader": true,
+      "rotation": 270,
+      "mirrored": true,
+      "frame": "720x480"
+    },
+    {
+      "id": "portrait_heavy",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 28.9,
+      "shader": true,
+      "rotation": 270,
+      "mirrored": true,
+      "frame": "720x480",
+      "blur_runs": 13,
+      "blur_ms_median": 441.4
+    },
+    {
+      "id": "landscape",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 29.9,
+      "shader": true,
+      "rotation": 180,
+      "mirrored": true,
+      "frame": "720x480",
+      "answer": true
+    },
+    {
+      "id": "face_portrait",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 27.3,
+      "shader": true,
+      "rotation": 270,
+      "mirrored": true,
+      "frame": "720x480",
+      "face_ratio": 1.0,
+      "answer": true
+    },
+    {
+      "id": "face_landscape",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 27.7,
+      "shader": true,
+      "rotation": 180,
+      "mirrored": true,
+      "frame": "720x480",
+      "face_ratio": 0.9,
+      "answer": true
+    },
+    {
+      "id": "mirror",
+      "skipped": false,
+      "seconds": 0.0,
+      "answer": true
+    },
+    {
+      "id": "capture",
+      "skipped": false,
+      "seconds": 0.0,
+      "capture": "720x138"
+    }
+  ],
+  "notes": ""
+}
+```
+
+| Проверка | Факт | Вердикт |
+| --- | --- | --- |
+| Сборка | release, `25a33e0` — SHA пула | PASS |
+| Шейдер | `true` во всех пяти шагах с замером | PASS |
+| Ориентация | portrait: 270 и mirror; landscape: 180 и mirror | PASS |
+| FPS | 28,9 ≥ 0,9 × 29,5 = 26,55 | PASS |
+| Обработка | 13 запусков за 15 с; медиана 441,4 мс | PASS |
+| Лица | 1,0 и 0,9, оба ≥ 0,8 | PASS |
+| Человек | `capture.answer` отсутствует, хотя шаг обязан спросить «Снимок совпадает с превью?» | FAIL |
+| Полнота | пропусков нет | PASS |
+
+Итог: **FAIL**. Числа превью выше прежнего VIEW-04 (20,4–21,1 FPS из 30): idle 29,5, с обработкой 28,9;
+прототип VIEW-04 не удалён. Отсутствие `capture.answer` противоречит нормативной схеме DEVICE 1 и не доказывает
+подтверждение «снимок = видимое». В DEVICE 1 это требует отдельной карточки исправления или решения Engineer;
+текущая карточка завершена в REVIEW согласно решению 3.
+
 #### Review
