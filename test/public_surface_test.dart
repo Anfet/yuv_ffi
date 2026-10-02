@@ -65,6 +65,17 @@ void main() {
     expect(image.height, 4);
     expect(image.yPlane, same(image.planes.single));
   });
+
+  test('frame renderer is reachable through the public library alone', () async {
+    final renderer = await YuvFrameRenderer.load();
+    final texture = await renderer.upload(YuvImage.bgra(1, 1));
+
+    expect(texture.width, 1);
+    expect(texture.height, 1);
+
+    texture.dispose();
+    renderer.dispose();
+  });
 }
 
 Uint8List _solidRgba(int w, int h) {

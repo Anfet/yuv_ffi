@@ -49,3 +49,5 @@ flutter:
   # directory by `tool/wasm/build_wasm.sh`.
   assets:
     - assets/wasm/
+  shaders:
+    - shaders/yuv_frame.frag

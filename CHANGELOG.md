@@ -40,6 +40,8 @@
 - Added `YuvFrameGeometry`, `YuvFrameOrientation`, and `YuvFrameFit` for
   source, upright, and view coordinate mapping, including ML Kit overlays and
   visible-frame extraction.
+- Added `YuvFrameRenderer` and `YuvFrameTexture` for shader-backed I420/NV12
+  display with a pixel-equivalent BGRA fallback.
 
 ### Changes
 

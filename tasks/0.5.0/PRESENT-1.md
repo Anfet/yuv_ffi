@@ -26,7 +26,7 @@
 - `test/yuv_frame_presenter_test.dart`: старые тесты без правок; ориентация 90° меняет `AspectRatio`;
   `onGeometryChanged` вызывается один раз на изменение.
 - `example/integration_test/presenter_shader_native_test.dart`: `YuvFrameView` с `useShader: true` в масштабе 1:1;
-  `RepaintBoundary.toImage()` равен `geometry.apply(frame).toBgraBytes()` (±1), I420 `upright` и «270° + зеркало».
+  `RepaintBoundary.toImage()` равен эталону решения 6 SHADER 2 (±1), I420 `upright` и «270° + зеркало».
 - Замер: варианты `presenter_bgra` и `presenter_shader` в `example/lib/view04_draw_bench.dart`.
 - `README.md` (абзац о `useShader` и ориентации), `CHANGELOG.md`.
 

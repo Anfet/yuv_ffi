@@ -9,6 +9,7 @@ export 'src/yuv/shared/yuv_native_status.dart' show YuvNativeException;
 export 'src/yuv/shared/yuv_operation.dart' show YuvOperation;
 export 'src/yuv/shared/yuv_pixel_format.dart' show YuvPixelFormat;
 export 'src/widgets/yuv_frame_presenter.dart';
+export 'src/widgets/yuv_frame_renderer.dart';
 export 'src/widgets/yuv_image_widget.dart';
 export 'src/geometry/yuv_frame_geometry.dart';
 export 'src/yuv_capabilities.dart' show YuvCapabilities;

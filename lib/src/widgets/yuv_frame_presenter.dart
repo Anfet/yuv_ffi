@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
+import 'package:yuv_ffi/src/widgets/yuv_frame_image_decoder.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 /// Shows a live stream of [YuvImage] frames one at a time, keeping at most one
@@ -103,7 +104,7 @@ class YuvFramePresenter extends ChangeNotifier {
   Future<void> _decode(Uint8List bytes, int width, int height, int generation) async {
     final ui.Image decoded;
     try {
-      decoded = await _decodeBgra(bytes, width, height);
+      decoded = await decodeYuvFrameImage(bytes, width, height, ui.PixelFormat.bgra8888);
     } catch (error, stack) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: error, stack: stack, library: 'yuv_ffi', context: ErrorDescription('decoding a preview frame')),
@@ -132,24 +133,6 @@ class YuvFramePresenter extends ChangeNotifier {
       }
     });
     SchedulerBinding.instance.ensureVisualUpdate();
-  }
-
-  // Mirrors ui.decodeImageFromPixels, which never calls back on failure and
-  // would leave the presenter busy for good.
-  static Future<ui.Image> _decodeBgra(Uint8List bytes, int width, int height) async {
-    final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
-    final descriptor = ui.ImageDescriptor.raw(buffer, width: width, height: height, pixelFormat: ui.PixelFormat.bgra8888);
-    try {
-      final codec = await descriptor.instantiateCodec();
-      try {
-        return (await codec.getNextFrame()).image;
-      } finally {
-        codec.dispose();
-      }
-    } finally {
-      descriptor.dispose();
-      buffer.dispose();
-    }
   }
 }
 

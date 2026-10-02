@@ -1,5 +1,5 @@
 # SHADER 1 — Раскладка плоскостей YUV в одну текстуру
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** — · **Probe:** windows
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Первая из трёх карточек шейдерного пути (SHADER 1 — раскладка, SHADER 2 — шейдер и рендерер, SHADER 3 — проба на
@@ -74,3 +74,18 @@ Advisory: случай «последняя строка chroma длиной 2·
   _max — заменить на dart:math; ветку throw StateError('Validated above.') убрать.
 ```
 Раскладка и адресация по решениям 2–3 верны, тест читает каждый пиксель.
+
+Повторное ревью 02.10.2026:
+```text
+Pool: STAGE4-VIEW; SHADER 1
+Outcome: ACCEPTED
+Reviewed-Head: 0b3eddd
+Merged-Head: none (слияние — вместе с пулом)
+Fixed: none
+Blocking: none
+Advisory: тест Android-строк берёт полные строки chroma; укороченная последняя строка (`2·cw − 1` байт) не
+  проверена — setRange читает ровно столько, риска нет.
+```
+Проверено: chroma `pixelStride 2` у I420 копируется одним `setRange` длиной `2·cw − 1`, NV12 — `2·cw`; `_max` и
+недостижимая ветка убраны; тест побайтно сравнивает строки текстуры с исходными. Перепрогон Reviewer — в Review GEOM 1
+(общий прогон, 26 passed).

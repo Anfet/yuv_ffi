@@ -37,7 +37,7 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
-| Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | запущен; GEOM 1 и SHADER 1 возвращены в TODO по ревью, у SHADER 2 решение Architect записано |
+| Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | запущен; GEOM 1 и SHADER 1 приняты, SHADER 2 в работе |
 | Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — (параллельно с `STAGE4-VIEW` допустимо: общие только строка экспорта в `lib/yuv_ffi.dart` и `CHANGELOG.md`) | не запущен |
 | Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` влит в `dev` | не запущен |
 
@@ -61,10 +61,10 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [GEOM 1](tasks/0.5.0/GEOM-1.md) | REVIEW | T2 | Reviewer | CLEAN 2 | **Геометрия кадра `YuvFrameGeometry`.** Доработка после ревью готова: цветной шум в тесте «`apply()` = нарисованное», dartdoc `apply` о пересчёте U/V; VM/example/probe прошли. |
+| [GEOM 1](tasks/0.5.0/GEOM-1.md) | ACCEPTED | T2 | — | CLEAN 2 | **Геометрия кадра `YuvFrameGeometry`.** Принята на `b903c32`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
 | [PATCH 1](tasks/0.5.0/PATCH-1.md) | TODO | T2 | — | — | **Вставка фрагмента `applyPatch`.** Расширение, чистый Dart, правило chroma 2×2 своё (зависимость от GEOM 1 снята); замер на Pixel 3. Пул `STAGE4-PATCH`. |
-| [SHADER 1](tasks/0.5.0/SHADER-1.md) | REVIEW | T2 | Reviewer | — | **Раскладка плоскостей в одну текстуру.** Доработка после ревью готова: chroma `pixelStride 2` копируется строкой через `setRange`; VM/example/probe прошли. |
-| [SHADER 2](tasks/0.5.0/SHADER-2.md) | BLOCKED | T2 | SHADER 1 | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Решение 6: экран показывает каждый пиксель его цветом из `toBgraBytes()`; эталон пробы — по нему, не `apply()`; BGRA-путь с `FilterQuality.none`. Шейдер не меняется. |
+| [SHADER 1](tasks/0.5.0/SHADER-1.md) | ACCEPTED | T2 | — | — | **Раскладка плоскостей в одну текстуру.** Принята на `0b3eddd`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
+| [SHADER 2](tasks/0.5.0/SHADER-2.md) | REVIEW | T2 | Engineer | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Реализация и короткая shader probe готовы; Windows и Android прошли, `max_diff <= 1`. |
 | [SHADER 3](tasks/0.5.0/SHADER-3.md) | BLOCKED | T2 | SHADER 2 | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Полная матрица, Pixel 3; сбои — по вариантам A/B/C с признаками. Пул `STAGE4-VIEW`. |
 | [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | BLOCKED | T2 | SHADER 3 | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** `YuvFrameRendering.shader`, ориентация в `present`, вписывание в `YuvFrameView`; только добавления; замер на Pixel 3. Пул `STAGE4-VIEW`. |
 | [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | BLOCKED | T2 | GEOM 1 | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). Одна IO-реализация + Web, `YuvCameraFrame` с ленивым импортом без расчередования, ориентация по формуле ML Kit. Пул `STAGE4-CAMERA` после `STAGE4-VIEW`. |

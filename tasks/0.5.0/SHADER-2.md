@@ -1,5 +1,5 @@
 # SHADER 2 — Шейдер и `YuvFrameRenderer`
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** SHADER 1 · **Depends On:** GEOM 1, SHADER 1 · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** GEOM 1, SHADER 1 · **Probe:** windows
 
 #### Goal
 По прототипу VIEW-04 (`example/shaders/view04_i420.frag`, `example/lib/view04_i420_shader.dart`): шейдер
@@ -34,9 +34,10 @@
      функцию пакета, не копировать.
    - `paint`: размер текстуры ≠ `geometry.sourceSize` → `ArgumentError`. Клип по
      `destinationRect ∩ (Offset.zero & viewSize)`. Шейдер — `drawRect` с шейдером; BGRA —
-     `canvas.transform(geometry.sourceToView.storage)` + `drawImage` (`FilterQuality.low`).
+     `canvas.transform(geometry.sourceToView.storage)` + `drawImage` (`FilterQuality.none` — оба пути дают одни и те же
+     пиксели при любом масштабе, решение 6).
 2. **Шейдер** — `shaders/yuv_frame.frag`, в `pubspec.yaml` → `flutter: shaders:`. Эталон (оформление можно менять,
-   формулы — нет):
+   формулы — нет; не сжимать в строку: по выражению на строку, комментарии эталона сохранить):
    ```glsl
    #version 460 core
    precision highp float;
@@ -88,8 +89,19 @@
 4. **Прототип VIEW-04** не трогать до DEVICE 1.
 5. **Короткая проба** `example/integration_test/shader_probe_native_test.dart` (суффикс `_native_test` сам включает её
    в CI-скрипты всех native-платформ): I420 и NV12 `16x9`, шум из `helpers/probe/probe_seed.dart`, 8 ориентаций,
-   масштаб 1:1. Ожидание — `geometry.apply(frame).toBgraBytes()`; рисунок — `PictureRecorder` → `paint` →
-   `toImage` → `toByteData(rawRgba)`. Допуск `max_diff <= 1` по каналу.
+   масштаб 1:1. Ожидание — эталон решения 6 (функция в `example/integration_test/helpers/`, её же берут SHADER 3 и
+   PRESENT 1); рисунок — `PictureRecorder` → `paint` → `toImage` → `toByteData(rawRgba)`. Допуск `max_diff <= 1` по
+   каналу. Кадр `16x9` нечётной высоты оставить: на нём `apply()` и экран расходятся (решение 6).
+6. **Контракт показа** (оба пути рендерера, dartdoc `paint`): пиксель view `(i, j)` внутри
+   `destinationRect ∩ (Offset.zero & viewSize)` — это цвет пикселя `floor(transformPoint(viewToSource, (i + 0.5, j + 0.5)))`
+   из `frame.toBgraBytes()`, с ограничением координат `[0, W−1] × [0, H−1]`; вне — прозрачный. Шейдер получает это
+   формулой решения 2, BGRA-путь — построением. Эталон пробы считает ровно это в Dart.
+   С `geometry.apply(frame)` не сравнивать: `apply()` создаёт новый 4:2:0 кадр и при нечётной стороне или нечётном
+   начале видимой области пересчитывает U/V как среднее блока 2×2 (`yuv_kernel_v1.h`, visible re-encode; Q2 в
+   `doc/api-abi-0.4-design.md`) — на шуме это до 220 уровней. Шейдер кадр не режет и не пересобирает, поэтому
+   нечётная обрезка его не касается; формулы и 16 uniform-ов не меняются.
+   Отклонены: усреднение блока в шейдере (больше uniform-ов, четыре чтения на пиксель, лишнее размытие цвета) и
+   BGRA-путь для нечётных размеров (он показывает то же, что шейдер).
 
 #### Scope
 - `shaders/yuv_frame.frag`, `lib/src/widgets/yuv_frame_renderer.dart`, `pubspec.yaml`, `lib/yuv_ffi.dart`,
@@ -116,4 +128,15 @@
 - Probe `windows`: в составе `tool/ci/windows.ps1`.
 
 #### Executor Report
+- Реализованы `YuvFrameRenderer`/`YuvFrameTexture`, shader asset и общий декодер `ui.Image`; BGRA fallback использует
+  `FilterQuality.none`, а публичный контракт `paint` описывает выбор source-пикселя по центру view-пикселя.
+- Короткая проба использует общий Dart-эталон решения 6 и LCG-шум из `probe_seed.dart`; I420/NV12 `16×9`, все восемь
+  ориентаций: Windows и Android emulator — `hasShader == true`, во всех случаях `max_diff <= 1`.
+- Таргетные renderer/presenter/public-surface тесты — 10 passed; `flutter analyze --no-fatal-infos` — без новых
+  warnings/errors (58 существующих `library_annotations` info), `example` analyze — clean.
+- `tool/ci/windows.ps1` — probe 20/20 (1 expected skip), reference 134/134, release build и три integration targets
+  passed. `tool/ci/android.ps1` — split APK/ABI checks и три integration targets на API 35 emulator passed.
 #### Review
+Architect, 02.10.2026: `ARCHITECT_REQUIRED` снят — решение 6 (контракт показа); решение 1 — BGRA-путь с
+`FilterQuality.none`, решение 5 — эталон по решению 6. В работе Executor остаётся заменить эталон пробы и фильтр
+BGRA-пути и оформить шейдер по решению 2.

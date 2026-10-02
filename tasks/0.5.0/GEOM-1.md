@@ -1,5 +1,5 @@
 # GEOM 1 — Геометрия кадра `YuvFrameGeometry`
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** CLEAN 2 · **Probe:** windows
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** CLEAN 2 · **Probe:** windows
 
 #### Goal
 `YuvFrameGeometry` в `lib/`: размер кадра, ориентация (поворот + зеркало), `contain`/`cover`, `alignment`;
@@ -108,3 +108,18 @@ Advisory: в тестах нет 1:1 со сдвигом, view шире кадр
   стоит в dartdoc YuvFrameOrientation, а не YuvFrameGeometry (решение 1); _min/_max — заменить на dart:math.
 ```
 Формулы 1–7, `uprightToView`, пример и README проверены — верны.
+
+Повторное ревью 02.10.2026:
+```text
+Pool: STAGE4-VIEW; GEOM 1
+Outcome: ACCEPTED
+Reviewed-Head: b903c32
+Merged-Head: none (слияние — вместе с пулом)
+Fixed: none
+Blocking: none
+Advisory: случая «view шире кадра» для contain по-прежнему нет — формулы симметричны, приёмку не блокирует.
+```
+Проверено: тест «`apply()` = нарисованное» на цветном шуме, BGRA `3x5` и I420 `4x6`, 8 ориентаций, сдвиг на 1 по
+вертикали; три выравнивания для contain и cover; dartdoc трёх пространств и `apply`. Перепрогон Reviewer:
+`flutter test test/yuv_frame_geometry_test.dart test/yuv_planes_texture_test.dart` — 26 passed; `dart format` — 0
+changed; targeted `flutter analyze` — только существующие info `library_annotations`.

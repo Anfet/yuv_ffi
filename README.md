@@ -149,6 +149,10 @@ final geometry = YuvFrameGeometry(
 final displayedFrame = geometry.apply(frame);
 ```
 
+`YuvFrameRenderer` uploads I420 and NV12 planes to the package shader when it
+is available. Unsupported layouts, shader-load failures, and Web currently use
+the pixel-equivalent BGRA fallback instead.
+
 ## Formats and plane layout
 
 `YuvPixelFormat.i420` stores separate Y, U, and V planes.
