@@ -156,8 +156,8 @@ final displayedFrame = geometry.apply(frame);
 
 `YuvFrameRenderer` uploads I420 and NV12 planes to the package shader when it
 is available. Unsupported layouts, shader-load failures, and Web currently use
-the pixel-equivalent BGRA fallback instead. On Web, WEB 1 found that CanvasKit
-shader output differs from the CPU reference.
+the pixel-equivalent BGRA fallback instead. On Web the shader is disabled because
+its CanvasKit output differs from the CPU reference.
 
 ## Formats and plane layout
 

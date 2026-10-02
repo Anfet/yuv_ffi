@@ -16,7 +16,7 @@ final class YuvFrameRenderer {
   /// Loads the package shader; unavailable platforms retain the BGRA fallback.
   static Future<YuvFrameRenderer> load() async {
     if (kIsWeb) {
-      // WEB 1: CanvasKit differs from the CPU reference by up to 255 for a 3x5 frame.
+      // WEB 1: CanvasKit differs from the CPU reference by up to 255 in every shader-probe case.
       return YuvFrameRenderer._(null);
     }
     try {
