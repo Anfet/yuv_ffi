@@ -4,8 +4,9 @@ Pixel 3 `8B1X11QLW`, Android 12, Flutter 3.44.9. Движок: Impeller снач
 работает на **OpenGLES** (`Using the Impeller rendering backend (OpenGLES)` в логе). Ветка
 `example/VIEW-04-draw-split` от `release/0.4.2` `7e226c1`, `lib/` и native не менялись.
 
-Стенд: [`example/lib/view04_draw_bench.dart`](../example/lib/view04_draw_bench.dart), отдельная точка
-входа (`flutter build apk --<mode> -t lib/view04_draw_bench.dart`), запуск через `adb shell am start`,
+Стенд удалён после DEVICE 2; исходник доступен из истории:
+`git show fb6687c:example/lib/view04_draw_bench.dart`. Он был отдельной точкой
+входа (`flutter build apk --<mode> -t lib/view04_draw_bench.dart`), запускался через `adb shell am start`,
 результат из logcat. Синтетический I420 (tight), тот же градиент, что в BGRA-00…02. Каждый кадр идёт путём
 `YuvFramePresenter`: `toBgraBytes()` → `ImmutableBuffer` → `ImageDescriptor.raw` → codec → `ui.Image` →
 один нарисованный кадр, строго один кадр в полёте. 10 кадров прогрева, 60 замеров, медианы.
@@ -74,7 +75,7 @@ vsync + build/layout/paint); `total` — всё вместе. `planes_as_rgba_up
 
 - `cpu` — поворот и флип в памяти, затем `toBgraBytes()`, как превью работает сейчас;
 - `canvas` — `toBgraBytes()` неповёрнутого кадра, поворот и зеркало через трансформацию Canvas;
-- `shader` — плоскости I420 одной RGBA-текстурой W/4×H·1,5 ([`example/shaders/view04_i420.frag`](../example/shaders/view04_i420.frag));
+- `shader` — плоскости I420 одной RGBA-текстурой W/4×H·1,5 (`git show fb6687c:example/shaders/view04_i420.frag`);
   конвертация BT.601 (та же целочисленная формула, что в `yuv_convert_v1.c`), поворот и зеркало в шейдере.
 
 **Корректность шейдера:** перед замером выход шейдера сравнивается попиксельно с CPU-путём (поворот, флип,
@@ -98,7 +99,7 @@ GPU-стоимость шейдера в пределах разброса.
 
 ## Живая камера (release, `camera_release_run1.txt`)
 
-Стенд [`example/lib/view04_camera_bench.dart`](../example/lib/view04_camera_bench.dart): фронтальная
+Стенд `git show fb6687c:example/lib/view04_camera_bench.dart`: фронтальная
 камера Pixel 3, `ResolutionPreset.medium`, `ImageFormatGroup.yuv420`, импорт через `toYuvImage()` (плотный I420
 720×480 после PACK-01C), один кадр в полёте, как в `YuvCameraPreview`. `cpu` — путь превью сегодня
 (поворот `rotation270` и флип в памяти, BGRA, текстура); `shader` — плоскости одной текстурой, конвертация,

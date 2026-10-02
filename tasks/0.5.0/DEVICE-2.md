@@ -1,5 +1,5 @@
 # DEVICE 2 — Прогон на Pixel 3, разбор и удаление прототипа VIEW-04
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** DEVICE 1 · **Depends On:** DEVICE 1 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2 · **Owner:** DEVICE 1 · **Depends On:** DEVICE 1 · **Probe:** none
 
 #### Goal
 Engineer проходит экран проверки DEVICE 1 на Pixel 3 в release и присылает JSON. Исполнитель разбирает его по
@@ -43,9 +43,9 @@ Engineer проходит экран проверки DEVICE 1 на Pixel 3 в 
 - `lib/` и native не трогать. Экран DEVICE 1 не менять; найденный в нём дефект — в отчёт.
 
 #### Definition of Done
-- [ ] JSON Engineer — в отчёте; таблица критериев решения 2 с фактическими значениями и вердиктом по каждой строке.
-- [ ] Вывод — в `doc/perf-findings.md`.
-- [ ] При PASS: прототип удалён; `flutter analyze` в `example/` чист, `example/test` проходит; поиск `view04` в
+- [x] JSON Engineer — в отчёте; таблица критериев решения 2 с фактическими значениями и вердиктом по каждой строке.
+- [x] Вывод — в `doc/perf-findings.md`.
+- [x] При PASS: прототип удалён; `flutter analyze` в `example/` чист, `example/test` проходит; поиск `view04` в
       `example/` пуст (кроме ссылок на коммит).
 
 #### Validation
@@ -173,3 +173,108 @@ Advisory: none
 размытием раз в секунду 28,9 (−2 %), против 20,4–21,1 у прежнего пути VIEW-04; лица 1,0 и 0,9; поворот и зеркало
 верны. После исправления DEVICE 1 Engineer проходит экран целиком ещё раз (около 2 минут, шаг capture — в портрете);
 DEVICE 2 разбирает прогон 2 по той же таблице и при PASS удаляет прототип.
+
+Повторный прогон Engineer 02.10.2026:
+
+```json
+{
+  "card": "DEVICE-1",
+  "schema": 1,
+  "build_mode": "release",
+  "git_sha": "053307e",
+  "os": "android",
+  "camera": {
+    "lens": "front",
+    "sensor_orientation": 270,
+    "preset": "medium"
+  },
+  "steps": [
+    {
+      "id": "portrait_idle",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 29.8,
+      "shader": true,
+      "rotation": 270,
+      "mirrored": true,
+      "frame": "720x480"
+    },
+    {
+      "id": "portrait_heavy",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 28.9,
+      "shader": true,
+      "rotation": 270,
+      "mirrored": true,
+      "frame": "720x480",
+      "blur_runs": 13,
+      "blur_ms_median": 439.5
+    },
+    {
+      "id": "landscape",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 29.9,
+      "shader": true,
+      "rotation": 180,
+      "mirrored": true,
+      "frame": "720x480",
+      "answer": true
+    },
+    {
+      "id": "face_portrait",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 28.9,
+      "shader": true,
+      "rotation": 270,
+      "mirrored": true,
+      "frame": "720x480",
+      "face_ratio": 1.0,
+      "answer": true
+    },
+    {
+      "id": "face_landscape",
+      "skipped": false,
+      "seconds": 15.0,
+      "display_fps": 28.9,
+      "shader": true,
+      "rotation": 180,
+      "mirrored": true,
+      "frame": "720x480",
+      "face_ratio": 1.0,
+      "answer": true
+    },
+    {
+      "id": "mirror",
+      "skipped": false,
+      "seconds": 0.0,
+      "answer": true
+    },
+    {
+      "id": "capture",
+      "skipped": false,
+      "seconds": 0.0,
+      "answer": true,
+      "capture": "474x720"
+    }
+  ],
+  "notes": ""
+}
+```
+
+| Проверка | Факт | Вердикт |
+| --- | --- | --- |
+| Сборка | release, `053307e` — SHA пула | PASS |
+| Шейдер | `true` во всех пяти шагах с замером | PASS |
+| Ориентация | portrait: 270 и mirror; landscape: 180 и mirror | PASS |
+| FPS | 28,9 ≥ 0,9 × 29,8 = 26,82 | PASS |
+| Обработка | 13 запусков за 15 с; медиана 439,5 мс | PASS |
+| Лица | 1,0 и 1,0, оба ≥ 0,8 | PASS |
+| Человек | `answer == true` для landscape, face_portrait, face_landscape, mirror и capture | PASS |
+| Полнота | пропусков нет | PASS |
+
+Итог повторного прогона: **PASS**. Прототип VIEW-04 и его shader/entrypoints удалены; `CameraImageExt.toYuvImage`
+сохранён — его используют действующие camera и integration tests. Проверки после удаления: `flutter analyze` — clean,
+`flutter test` в `example/` — 44 passed, `pwsh -File tool/ci/example.ps1` — PASS; поиск `view04` в `example/` пуст.

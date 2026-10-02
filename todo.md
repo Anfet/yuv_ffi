@@ -66,7 +66,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | REVIEW | T2 | — | CAMERA 2 | **Экран проверки на устройстве.** Доработка принята в пул: capture ждёт Yes/No вне списка готовых результатов; добавлен регрессионный тест, ландшафтный footer сжат. |
-| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | BLOCKED | T2 | DEVICE 1 | DEVICE 1 | **Прогон на Pixel 3 и разбор.** Прогон 1: всё PASS, кроме отсутствующего `capture.answer` — дефект экрана DEVICE 1. После исправления — повторный прогон Engineer (шаг capture в портрете). Превью 29,5 / 28,9 кадра/с против 20,4–21,1 у VIEW-04. |
+| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | REVIEW | T2 | DEVICE 1 | DEVICE 1 | **Прогон на Pixel 3 и разбор.** Повторный прогон PASS: 29,8 / 28,9 FPS, blur 13 за 15 с, лица 1,0 / 1,0, capture 474×720 подтверждён; VIEW-04 удалён. |
 
 ### Параллельно
 
