@@ -1,5 +1,5 @@
 # SHADER 1 — Раскладка плоскостей YUV в одну текстуру
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Первая из трёх карточек шейдерного пути (SHADER 1 — раскладка, SHADER 2 — шейдер и рендерер, SHADER 3 — проба на
@@ -50,4 +50,10 @@
 - Probe `windows`: `flutter test --tags probe`.
 
 #### Executor Report
+- Добавлен внутренний `YuvPlanesTexture.pack`: I420 с chroma stride 1/2 и NV12 раскладываются в RGBA-текстуру без
+  row padding; неподдерживаемая геометрия возвращает `null` для BGRA fallback.
+- `flutter test test/yuv_planes_texture_test.dart` — 13 passed: все исходные пиксели через адресацию шейдера для трёх
+  раскладок, четырёх размеров, padding, независимого буфера и отказов.
+- `pwsh -File tool/ci/vm.ps1` — 598/598 passed. `flutter test --tags probe` — 20 passed, 1 expected timing skip,
+  `PROBE scope: ops=all formats=all cases=1188/1188`. Example CI без изменения его путей сохраняет результат GEOM 1.
 #### Review
