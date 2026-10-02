@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -11,54 +13,111 @@ import 'helpers/yuv_frame_render_reference.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('matches CPU conversion for I420 and NV12 in every orientation', (tester) async {
+  testWidgets('matches CPU conversion across formats, sizes, orientations, padding and scale', (tester) async {
     await YuvFfi.initialize();
     final renderer = await YuvFrameRenderer.load();
     expect(renderer.hasShader, isTrue);
-    for (final frame in [_i420(), _nv12()]) {
-      for (final rotation in YuvImageRotation.values) {
-        for (final mirrored in [false, true]) {
-          final viewSize = rotation.swapSize ? const Size(9, 16) : const Size(16, 9);
-          final geometry = YuvFrameGeometry(
-            sourceSize: frame.size,
-            viewSize: viewSize,
-            orientation: YuvFrameOrientation(rotation: rotation, mirrored: mirrored),
+    final maximumBySize = <String, int>{};
+
+    for (final layout in _ShaderLayout.values) {
+      for (final size in [(3, 5), (33, 17), (720, 480), (1920, 1080)]) {
+        final orientations = size.$1 < 100
+            ? [
+                for (final rotation in YuvImageRotation.values)
+                  for (final mirrored in [false, true]) YuvFrameOrientation(rotation: rotation, mirrored: mirrored),
+              ]
+            : const [YuvFrameOrientation.upright, YuvFrameOrientation(rotation: YuvImageRotation.rotation270, mirrored: true)];
+        final frame = _frame(layout, size.$1, size.$2);
+        for (final orientation in orientations) {
+          final viewSize = orientation.rotation.swapSize
+              ? Size(size.$2.toDouble(), size.$1.toDouble())
+              : Size(size.$1.toDouble(), size.$2.toDouble());
+          final maxDiff = await _renderDifference(
+            renderer,
+            frame,
+            YuvFrameGeometry(sourceSize: frame.size, viewSize: viewSize, orientation: orientation),
           );
-          final texture = await renderer.upload(frame);
-          final recorder = PictureRecorder();
-          renderer.paint(Canvas(recorder), texture, geometry);
-          final drawn = await recorder.endRecording().toImage(viewSize.width.toInt(), viewSize.height.toInt());
-          final bytes = (await drawn.toByteData(format: ImageByteFormat.rawRgba))!.buffer.asUint8List();
-          final expected = renderYuvFrameReference(frame, geometry);
-          var maxDiff = 0;
-          for (var i = 0; i < bytes.length; i++) {
-            final difference = (bytes[i] - expected[i]).abs();
-            maxDiff = maxDiff > difference ? maxDiff : difference;
-          }
-          expect(maxDiff, lessThanOrEqualTo(1), reason: '${frame.format}, $rotation, mirrored=$mirrored');
-          drawn.dispose();
-          texture.dispose();
+          maximumBySize.update('${size.$1}x${size.$2}', (value) => math.max(value, maxDiff), ifAbsent: () => maxDiff);
+          expect(maxDiff, lessThanOrEqualTo(1), reason: '$layout ${size.$1}x${size.$2}, ${orientation.rotation}, mirrored=${orientation.mirrored}');
         }
       }
     }
+
+    final padded = _frame(_ShaderLayout.i420, 33, 17, padding: 7);
+    final paddedDiff = await _renderDifference(renderer, padded, YuvFrameGeometry(sourceSize: padded.size, viewSize: padded.size));
+    expect(paddedDiff, lessThanOrEqualTo(1), reason: 'row padding');
+
+    final scaled = _frame(_ShaderLayout.nv12, 33, 17);
+    final scaledDiff = await _renderDifference(renderer, scaled, YuvFrameGeometry(sourceSize: scaled.size, viewSize: const Size(66, 34)));
+    expect(scaledDiff, lessThanOrEqualTo(1), reason: 'scale x2');
+
+    final contained = _frame(_ShaderLayout.i420PixelStride2, 33, 17);
+    final containedDiff = await _renderDifference(renderer, contained, YuvFrameGeometry(sourceSize: contained.size, viewSize: const Size(66, 50)));
+    expect(containedDiff, lessThanOrEqualTo(1), reason: 'contain with transparent bars');
+
+    for (final entry in maximumBySize.entries) {
+      developer.log('SHADER PROBE size=${entry.key} max_diff=${entry.value}', name: 'yuv_ffi');
+    }
+    developer.log('SHADER PROBE padding=$paddedDiff scale_x2=$scaledDiff contain=$containedDiff', name: 'yuv_ffi');
     renderer.dispose();
   });
 }
 
-YuvImage _i420() => YuvImage.i420(16, 9, planes: [_plane(9, 16, 1), _plane(5, 8, 1), _plane(5, 8, 1)], layout: YuvPlaneLayout.preserve);
+enum _ShaderLayout { i420, i420PixelStride2, nv12 }
 
-YuvImage _nv12() => YuvImage.nv12(16, 9, planes: [_plane(9, 16, 1), _plane(5, 16, 2)], layout: YuvPlaneLayout.preserve);
+Future<int> _renderDifference(YuvFrameRenderer renderer, YuvImage frame, YuvFrameGeometry geometry) async {
+  final texture = await renderer.upload(frame);
+  final recorder = PictureRecorder();
+  renderer.paint(Canvas(recorder), texture, geometry);
+  final drawn = await recorder.endRecording().toImage(geometry.viewSize.width.toInt(), geometry.viewSize.height.toInt());
+  final bytes = (await drawn.toByteData(format: ImageByteFormat.rawRgba))!.buffer.asUint8List();
+  final expected = renderYuvFrameReference(frame, geometry);
+  var maxDiff = 0;
+  for (var i = 0; i < bytes.length; i++) {
+    maxDiff = math.max(maxDiff, (bytes[i] - expected[i]).abs());
+  }
+  drawn.dispose();
+  texture.dispose();
+  return maxDiff;
+}
 
-YuvPlane _plane(int height, int rowStride, int pixelStride) {
-  var seed = height * 1000 + rowStride * 10 + pixelStride;
+YuvImage _frame(_ShaderLayout layout, int width, int height, {int padding = 0}) {
+  final chromaWidth = (width + 1) ~/ 2;
+  final chromaHeight = (height + 1) ~/ 2;
+  final yPlane = _plane(height, width + padding, 1, width * 31 + height);
+  return switch (layout) {
+    _ShaderLayout.i420 => YuvImage.i420(
+      width,
+      height,
+      planes: [yPlane, _plane(chromaHeight, chromaWidth + padding, 1, 17), _plane(chromaHeight, chromaWidth + padding, 1, 29)],
+      layout: YuvPlaneLayout.preserve,
+    ),
+    _ShaderLayout.i420PixelStride2 => YuvImage.i420(
+      width,
+      height,
+      planes: [yPlane, _plane(chromaHeight, 2 * chromaWidth - 1 + padding, 2, 43), _plane(chromaHeight, 2 * chromaWidth - 1 + padding, 2, 59)],
+      uvPixelStride: 2,
+      layout: YuvPlaneLayout.preserve,
+    ),
+    _ShaderLayout.nv12 => YuvImage.nv12(
+      width,
+      height,
+      planes: [yPlane, _plane(chromaHeight, 2 * chromaWidth + padding, 2, 71)],
+      layout: YuvPlaneLayout.preserve,
+    ),
+  };
+}
+
+YuvPlane _plane(int height, int rowStride, int pixelStride, int seed) {
+  var current = seed;
   return YuvPlane(
     height,
     rowStride,
     pixelStride,
     Uint8List.fromList(
       List.generate(height * rowStride, (_) {
-        seed = probeNextSeed(seed);
-        return seed & 255;
+        current = probeNextSeed(current);
+        return current & 255;
       }),
     ),
   );

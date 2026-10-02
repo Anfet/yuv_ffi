@@ -1,5 +1,5 @@
 # SHADER 3 — Проба «шейдер против CPU» на всех платформах
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** SHADER 2 · **Depends On:** SHADER 2 · **Probe:** windows+pixel3
+**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor (T2) · **Depends On:** SHADER 2 · **Probe:** windows+pixel3
 
 #### Goal
 Расширить короткую пробу SHADER 2 и прогнать её на всех native-платформах, включая Pixel 3. Расхождения устранить по
