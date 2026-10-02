@@ -1,5 +1,5 @@
 # CI 1 — Запуск CI по тегам `ci/<набор>/<метка>`
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor · **Depends On:** — · **Probe:** none
+**Status:** AWAITING_EXTERNAL · **Tier:** T2 · **Owner:** GitHub Actions · **Depends On:** — · **Probe:** none
 
 #### Goal
 Контрольный CI сейчас запускается push'ем ветки `ci/<пул>` на точный SHA `dev` (D-9, D-18): ветки копятся на
@@ -69,4 +69,13 @@ origin (`ci/stage2-probes`, `ci/stage3-clean`, `ci/STAGE3-SPM-apple`), их мо
 - `actionlint` по изменённым workflow, если доступен; иначе `gh workflow view` каждого после push тега.
 
 #### Executor Report
+2026-10-02
+
+- Head with workflow change: `af895ae4723e55d66d307a9b71d8b37ab4aa77be` (`all/PAR-CI`).
+- `git diff --check` — PASS. `actionlint` is unavailable on this machine.
+- Negative control: pushing `all/PAR-CI` created no workflows (`gh run list --commit af895ae...` returned `[]`).
+- `ci/smoke/CI-1` created exactly `CI smoke` and passed: [run 37058181777](https://github.com/Anfet/yuv_ffi/actions/runs/37058181777).
+- `ci/all/CI-1` created exactly nine push workflows on the same SHA: [Android 37058238085](https://github.com/Anfet/yuv_ffi/actions/runs/37058238085), [VM 37058238047](https://github.com/Anfet/yuv_ffi/actions/runs/37058238047), [Example 37058238031](https://github.com/Anfet/yuv_ffi/actions/runs/37058238031), [macOS 37058238034](https://github.com/Anfet/yuv_ffi/actions/runs/37058238034), [Windows 37058237987](https://github.com/Anfet/yuv_ffi/actions/runs/37058237987), [smoke 37058238180](https://github.com/Anfet/yuv_ffi/actions/runs/37058238180), [iOS 37058238074](https://github.com/Anfet/yuv_ffi/actions/runs/37058238074), [Linux 37058238078](https://github.com/Anfet/yuv_ffi/actions/runs/37058238078), [Web 37058238161](https://github.com/Anfet/yuv_ffi/actions/runs/37058238161). At the recorded check, Android/Linux/macOS were running and the other six were queued.
+- Test tags remain on origin until terminal results are recorded, then both `ci/smoke/CI-1` and `ci/all/CI-1` must be deleted before `REVIEW`.
+
 #### Review
