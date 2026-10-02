@@ -1,5 +1,5 @@
 # WEB 1 — Шейдер `YuvFrameRenderer` на Web: проба и решение
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** SHADER 3 · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** SHADER 3 · **Probe:** windows
 
 #### Goal
 SHADER 2 (решение 1) требовала на Web до WEB 1 рендерер без шейдера, но выключателя нет: `YuvFrameRenderer.load()`
@@ -61,4 +61,9 @@ SHADER 2 (решение 1) требовала на Web до WEB 1 ренде�
 - Probe `windows`: в составе `tool/ci/windows.ps1`.
 
 #### Executor Report
+
+- Вариант B. До выключателя CanvasKit дал `max_diff=255` на `3x5`; Web-шейдер выключен через `kIsWeb`, `hasShader` на Web закреплён как `false`.
+- `pwsh -File tool/ci/web.ps1` — PASS: Chrome 154.0.8037.98; `sources=14; integration cases=63; reference matrix=119; camera smoke=1`.
+- Анализ изменённых файлов — PASS. `example.ps1` — PASS: Flutter 3.44.9, `analyze` и `build web`. `windows.ps1` — PASS: 134/134, release example и все native integration targets, включая `shader_probe_native_test.dart`.
+- `vm.ps1` — PASS: 616/616.
 #### Review
