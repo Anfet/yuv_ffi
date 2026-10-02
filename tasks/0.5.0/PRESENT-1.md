@@ -1,5 +1,5 @@
 # PRESENT 1 — Режимы показа кадров в презентере
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** GEOM 1, SHADER 2, SHADER 3 · **Probe:** windows+pixel3
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** GEOM 1, SHADER 2, SHADER 3 · **Probe:** windows+pixel3
 
 #### Goal
 `YuvFramePresenter` / `YuvFrameView`: шейдерный путь, ориентация при рисовании, вписывание по `YuvFrameGeometry`.
@@ -65,3 +65,18 @@
 - macOS/iOS validation: **postponed** по решению Engineer; зависимые карточки этим не блокируются, проверки будут повторены Engineer на Mac.
 
 #### Review
+Ревью 02.10.2026:
+```text
+Pool: STAGE4-VIEW; PRESENT 1
+Outcome: ACCEPTED
+Reviewed-Head: eaeb0ea
+Merged-Head: none (слияние — вместе с пулом)
+Fixed: none
+Blocking: none
+Advisory: замер present → post-frame квантуется vsync (16,5 мс — один кадр 60 Гц, 32,9 — два), поэтому прямое
+  сравнение с прототипом VIEW-04 (время работы) некорректно — превышение >25 % на 720×480 не блокирует;
+  в shader-пути исключение копирования уходит в FlutterError, а не бросается из present, как обещает dartdoc;
+  example/test/present_camera_frame_test.dart правился ради новой сигнатуры present (неизбежно, файл удалён в CAMERA 2).
+```
+Legacy-дерево без новых параметров сохранено; тесты на AspectRatio и onGeometryChanged есть; macOS/iOS — postponed по
+решению Engineer.

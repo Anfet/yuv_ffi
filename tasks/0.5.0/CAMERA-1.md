@@ -1,5 +1,5 @@
 # CAMERA 1 — Источник кадров камеры в example
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** CLEAN 1, GEOM 1 · **Probe:** none
+**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** CLEAN 1, GEOM 1 · **Probe:** none
 
 #### Goal
 `example/lib/camera/` (D-13): `YuvCameraFrameSource` — одна логика потока для mobile/desktop с платформенными
@@ -115,3 +115,25 @@
 - macOS/iOS device validation: **postponed** по решению Engineer и не блокирует CAMERA 2.
 
 #### Review
+Ревью 02.10.2026:
+```text
+Pool: STAGE4-CAMERA; CAMERA 1
+Outcome: REWORK
+Reviewed-Head: 39d588e
+Merged-Head: none
+Fixed: none
+Blocking:
+  1. Web-источник не работает: он слушает CameraPlatform.onStreamedFrameAvailable, а camera_web 0.3.5 его не
+     реализует (базовый CameraPlatform бросает UnimplementedError, supportsImageStreaming() == false). Решение 5
+     требует перенести логику MediaStreamTrackProcessor/requestVideoFrameCallback из yuv_camera_preview_web.dart
+     (удалён в c53685d: git show c53685d^:example/lib/widgets/impl/yuv_camera_preview_web.dart) вместе с
+     js_util_compat_web.dart в camera/impl/.
+  2. frame_read_loop.dart и stream_start.dart не перенесены, а скопированы с переименованием и без dartdoc: копии в
+     camera/ никем не используются, оригиналы и их тесты остались в widgets/ и test/. Перенести (git mv), тесты — в
+     test/camera/, Web-источник — на них.
+  3. Нет теста Web-источника, поэтому ошибка 1 прошла незамеченной (tool/ci/web.ps1 камеру не запускает). Нужен тест,
+     что Web-источник поднимает поток на фейковом reader, как прежние тесты превью.
+Advisory: IO start() без stop() создаёт вторую подписку с тем же поколением — кадры удвоятся; upright() делает лишнюю
+  копию (copy → pack → rotate).
+```
+Импорт без расчередования, ориентация по таблице и ленивость проверены — верны.

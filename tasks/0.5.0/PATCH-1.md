@@ -1,5 +1,5 @@
 # PATCH 1 — Вставка фрагмента в изображение
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** — · **Probe:** windows
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Было PATCH-00 (план 0.4.3; файл удалён, история — в git). Непрозрачная вставка одного `YuvImage` в область другого:
@@ -87,3 +87,15 @@
 - Validation: `flutter analyze` — без новых warning/error (58 существующих info); `flutter test --tags probe` — 20 PASS, 1 ожидаемый skip, `1188/1188`; `tool/ci/vm.ps1` — 616/616; `tool/ci/example.ps1` — PASS на Flutter 3.44.9.
 
 #### Review
+Ревью 02.10.2026:
+```text
+Pool: STAGE4-PATCH; PATCH 1
+Outcome: ACCEPTED
+Reviewed-Head: b494ccb
+Merged-Head: none
+Fixed: none
+Blocking: none
+Advisory: коммит лёг в ветку all/STAGE4-VIEW, а не в vm+example/STAGE4-PATCH — сливается вместе с ней.
+```
+Решения 2–6 выполнены: проверки до записи, `setRange` для плотных строк, revision +1 (и для внешнего `implements` в
+public_surface_test), замер Pixel 3 — 0,020 мс, native не нужен.

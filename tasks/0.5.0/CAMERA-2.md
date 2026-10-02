@@ -1,5 +1,5 @@
 # CAMERA 2 — Виджеты камеры в example
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** CAMERA 1 · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
 
 #### Goal
 `YuvCameraView` (прямой показ на GPU; `onFrame` с прореживанием вне пути отрисовки; `capture()`; доступ к текущей
@@ -99,3 +99,25 @@
 - Pixel 3 visual behavior, Windows physical-camera smoke, macOS и iOS: **postponed** по решению Engineer; downstream/review не блокируются. Скриншоты не создавались.
 
 #### Review
+Ревью 02.10.2026:
+```text
+Pool: STAGE4-CAMERA; CAMERA 2
+Outcome: REWORK
+Reviewed-Head: c53685d
+Merged-Head: none
+Fixed: none
+Blocking:
+  1. Тестов из Scope нет: в example/test/camera/ нет тестов YuvCameraView/YuvTransformView (интервал и неперекрытие
+     onFrame, onFrame не блокирует показ, capture() = нарисованный кадр и равен geometry.apply, null при остановке,
+     ошибки onFrame/transform). Удалённые тесты (camera_preview_lifecycle — 501 строка, desktop_camera_preview — 357,
+     camera_screen_capture, present_camera_frame) не перенесены, хотя решение 6 запрещает терять их семантику без
+     записи в отчёте; example/test сократился с 75 до 34 тестов.
+  2. Стенд DEVICE 1 не собран по решению 5: нет угла с FPS и `shader: on/off`; тяжёлая обработка идёт синхронно в
+     UI-изоляте без попытки compute(). Довод «YuvImage не передаётся» не подходит: в изолят передаются байты
+     (frame.upright().toBgraBytes() или плоскости), там YuvFfi.initialize() и YuvImage из байтов. Без этого стенд
+     меряет замирание превью, а не FPS при фоновой обработке.
+  3. В CameraScreen остался мёртвый код старого захвата: captureCompleter, captureCandidate, imageCapturer,
+     confirmCapture и ветка takePicture без превью.
+Advisory: YuvCameraViewController.detach() игнорирует аргумент; YuvTransformView не перезапускает источник при смене
+  cameraController; интервал onFrame считается по DateTime.now(), хотя у кадра есть timestamp.
+```

@@ -37,9 +37,9 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
-| Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | все карточки переданы в review; macOS/iOS PRESENT 1 postponed |
-| Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — | передан в review; Pixel 3 native fast path не требуется |
-| Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` | обе карточки в review; device/macOS/iOS checks postponed |
+| Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | все карточки приняты; ветка не влита — коммиты пулов PATCH и CAMERA лежат в ней же, `dev` можно сдвинуть fast-forward до `b494ccb` (VIEW + PATCH) |
+| Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — | принят на `b494ccb`; коммит в ветке `all/STAGE4-VIEW`, вливается вместе с ней |
+| Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` | ревью: CAMERA 1 и CAMERA 2 на доработку; коммиты в ветке `all/STAGE4-VIEW` поверх `b494ccb` |
 
 ## Дашборд
 
@@ -62,13 +62,13 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [GEOM 1](tasks/0.5.0/GEOM-1.md) | ACCEPTED | T2 | — | CLEAN 2 | **Геометрия кадра `YuvFrameGeometry`.** Принята на `b903c32`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
-| [PATCH 1](tasks/0.5.0/PATCH-1.md) | REVIEW | T2 | Engineer | — | **Вставка фрагмента `applyPatch`.** Чистый Dart, правило chroma 2×2, Pixel 3 256×256 tight I420 = 0,020 мс; native не нужен. |
+| [PATCH 1](tasks/0.5.0/PATCH-1.md) | ACCEPTED | T2 | — | — | **Вставка фрагмента `applyPatch`.** Принята на `b494ccb`; native не нужен (Pixel 3, 256×256 I420 — 0,020 мс). |
 | [SHADER 1](tasks/0.5.0/SHADER-1.md) | ACCEPTED | T2 | — | — | **Раскладка плоскостей в одну текстуру.** Принята на `0b3eddd`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
-| [SHADER 2](tasks/0.5.0/SHADER-2.md) | REVIEW | T2 | Engineer | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Реализация и короткая shader probe готовы; Windows и Android прошли, `max_diff <= 1`. |
-| [SHADER 3](tasks/0.5.0/SHADER-3.md) | REVIEW | T2 | Engineer | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Windows, Android emulator, Pixel 3, macOS и iOS Simulator прошли; Linux post-merge CI pending. |
-| [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | REVIEW | T2 | Engineer | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** Shader/BGRA, ориентация и геометрия реализованы; Windows/Android/Pixel 3 зелёные, macOS/iOS postponed. Пул `STAGE4-VIEW`. |
-| [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | REVIEW | T2 | Engineer | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). IO/Web source, lazy immutable frame, import без расчередования и ML Kit orientation готовы; Mac/iOS device postponed. |
-| [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | REVIEW | T2 | Engineer | CAMERA 1, PRESENT 1 | **Виджеты камеры.** Новый GPU view/controller, capture, ML Kit overlay и heavy stand готовы; device/macOS/iOS visual checks postponed. |
+| [SHADER 2](tasks/0.5.0/SHADER-2.md) | ACCEPTED | T2 | — | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Принята на `7f4425c`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
+| [SHADER 3](tasks/0.5.0/SHADER-3.md) | ACCEPTED | T2 | — | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Принята на `54f8fff`; Linux — post-merge CI. |
+| [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | ACCEPTED | T2 | — | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** Принята на `eaeb0ea`; macOS/iOS — postponed по решению Engineer. |
+| [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | TODO | T2 | — | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). Ревью: доработка — Web-источник на `onStreamedFrameAvailable` не работает (camera_web его не реализует), вернуть логику `MediaStreamTrackProcessor`; `frame_read_loop`/`stream_start` перенести, а не копировать; тест Web-источника. |
+| [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | BLOCKED | T2 | CAMERA 1 | CAMERA 1, PRESENT 1 | **Виджеты камеры.** Ревью: доработка — тесты из Scope и перенос удалённых тестов; угол FPS + `shader: on/off`; тяжёлая обработка через `compute()`; убрать мёртвый код захвата в `CameraScreen`. |
 
 ### Этап 5 — проверка на устройстве
 
@@ -80,7 +80,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [WEB 1](tasks/0.5.0/WEB-1.md) | BLOCKED | T1 | SHADER 3 | SHADER 3 | **Веб: шейдер и кадры камеры в YUV.** Шейдерная проба в Chrome решает, включать ли шейдер на вебе; `VideoFrame.copyTo()` в исходном формате — исследование с рекомендацией. Старт после слияния `STAGE4-VIEW`. |
+| [WEB 1](tasks/0.5.0/WEB-1.md) | TODO | T1 | — | SHADER 3 | **Веб: шейдер и кадры камеры в YUV.** Разблокирована принятием SHADER 3. Шейдерная проба в Chrome решает, включать ли шейдер на вебе; `VideoFrame.copyTo()` в исходном формате — исследование с рекомендацией. Старт после слияния `STAGE4-VIEW` в `dev`. |
 | [WEB 2](tasks/0.5.0/WEB-2.md) | BLOCKED | T2 | Engineer | — | **Веб: паритет WASM с native.** Было WAIT-01. Черновик: старт — по решению Engineer, до постановки Architect дописывает карточку. |
 
 ## Открытые вопросы

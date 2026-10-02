@@ -1,5 +1,5 @@
 # WEB 1 — Веб: шейдер и кадры камеры в YUV без RGBA
-**Status:** BLOCKED · **Tier:** T1 · **Owner:** SHADER 3 · **Depends On:** SHADER 3 · **Probe:** windows
+**Status:** TODO · **Tier:** T1 · **Owner:** — · **Depends On:** SHADER 3 · **Probe:** windows
 
 #### Goal
 Исследование и, где проба это позволяет, включение: (1) шейдер `YuvFrameRenderer` (SHADER 2) на Web;

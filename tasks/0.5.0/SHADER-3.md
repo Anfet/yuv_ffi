@@ -1,5 +1,5 @@
 # SHADER 3 — Проба «шейдер против CPU» на всех платформах
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** SHADER 2 · **Probe:** windows+pixel3
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** SHADER 2 · **Probe:** windows+pixel3
 
 #### Goal
 Расширить короткую пробу SHADER 2 и прогнать её на всех native-платформах, включая Pixel 3. Расхождения устранить по
@@ -67,3 +67,15 @@
   `max_diff = 255`; нормативные строки восстановлены, повторная положительная probe прошла.
 - Варианты A/B/C не понадобились: признаков потери precision, искажения четвёртого байта или ошибки масштаба нет.
 #### Review
+Ревью 02.10.2026:
+```text
+Pool: STAGE4-VIEW; SHADER 3
+Outcome: ACCEPTED
+Reviewed-Head: 54f8fff
+Merged-Head: none (слияние — вместе с пулом)
+Fixed: none
+Blocking: none
+Advisory: в таблице отчёта «≤1» вместо фактических максимумов — проба их печатает (SHADER PROBE size=... max_diff=...).
+```
+Матрица по решению 2 (три раскладки × четыре размера, padding, ×2, contain), негативный контроль `uU`/`uV` = 255,
+Pixel 3 arm64 пройден; Linux — post-merge CI.

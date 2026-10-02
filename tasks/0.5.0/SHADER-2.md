@@ -1,5 +1,5 @@
 # SHADER 2 — Шейдер и `YuvFrameRenderer`
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** GEOM 1, SHADER 1 · **Probe:** windows
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** GEOM 1, SHADER 1 · **Probe:** windows
 
 #### Goal
 По прототипу VIEW-04 (`example/shaders/view04_i420.frag`, `example/lib/view04_i420_shader.dart`): шейдер
@@ -140,3 +140,16 @@
 Architect, 02.10.2026: `ARCHITECT_REQUIRED` снят — решение 6 (контракт показа); решение 1 — BGRA-путь с
 `FilterQuality.none`, решение 5 — эталон по решению 6. В работе Executor остаётся заменить эталон пробы и фильтр
 BGRA-пути и оформить шейдер по решению 2.
+Ревью 02.10.2026:
+```text
+Pool: STAGE4-VIEW; SHADER 2
+Outcome: ACCEPTED
+Reviewed-Head: 7f4425c
+Merged-Head: none (слияние — вместе с пулом)
+Fixed: none
+Blocking: none
+Advisory: проба рисует через PictureRecorder без трансформации холста; случай со сдвигом/масштабом холста (позиция
+  виджета, DPR) не покрыт — на Skia FlutterFragCoord() — это gl_FragCoord; на устройстве это проверит DEVICE 1.
+```
+Решения 1–6 выполнены: 16 uniform-ов, `FilterQuality.none` в BGRA-пути, общий декодер, эталон решения 6, шейдер
+оформлен по образцу. Перепрогон Reviewer 02.10.2026: `flutter test` patch/presenter/renderer/public_surface — 22 passed; `example/` `flutter test` — 34 passed, `flutter analyze` — no issues.
