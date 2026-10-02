@@ -54,7 +54,7 @@
 - The Executor runs the Windows probe for `windows` and `windows+pixel3`, then records the probe's verdict lines in the Executor Report. A `FAIL` prevents submission. Explain or fix a `SLOWER` verdict before submission.
 - For `windows+pixel3`, the Reviewer runs the Pixel 3 probe on arm64; changes under `src/` also require armv7. Accept only when the Windows and required Pixel 3 probes pass and no `SLOWER` verdict remains unexplained.
 - The Reviewer owns baseline updates after acceptance. Make each baseline update in a separate commit that records its reason; the Executor does not update baselines.
-- On other platforms, post-merge CI checks correctness when the exact `dev` SHA is pushed through `ci/<pool-id>`. Check speed on those platforms during pre-release validation.
+- On other platforms, post-merge CI checks correctness when a `ci/<set>/<label>` tag is placed on the exact `dev` SHA. Check speed on those platforms during pre-release validation.
 
 ## История задач
 
@@ -74,12 +74,12 @@
 
 - Платформенная проверка живёт в `.github/workflows/ci-<name>.yml` и содержит одну джобу. В workflow остаются checkout, выбор runner и запуск одного `tool/ci/<name>`-скрипта.
 - Логику проверки размещать в `tool/ci/<name>.ps1` для Windows и в `tool/ci/<name>.sh` для Linux и macOS. Тот же скрипт запускать локально до push.
-- CI запускается на push в `release/**`, `main` и `ci/**`; рабочие ветки пулов и `dev` CI не запускают. Executor проверяет пул локально теми же `tool/ci/<name>`-скриптами на доступных устройствах до ревью.
-- После принятия нового пула Reviewer при чистом fast-forward сливает его в `dev`; карточки получают `DONE` на слиянии. Если нужен полный CI, ветка `ci/<pool-id>` указывает на точный SHA влитого `dev` и её push запускает проверку, пока следующий пул уже работает. CI не является условием `DONE`, но обязателен для выхода из этапа/релизного гейта, если Engineer не решил иначе. При отказе Orchestrator сам заполняет фактическую карточку CI в конце этапа упавшего пула и сообщает Engineer; отдельный Executor расследует только по команде Engineer, Architect в обычном маршруте не участвует.
-- Ветка `ci/**` также используется для задачи, меняющей workflow или `tool/ci/*`, когда изменение нельзя проверить локально. Не добавлять `dev` в триггеры CI без отдельного решения Engineer.
+- CI запускается на push в `release/**`, `main` и тегов `ci/<набор>/<метка>`; рабочие ветки пулов и `dev` CI не запускают. Набор — `all` или одна платформа: `vm`, `windows`, `macos`, `ios`, `android`, `web`, `example`, `smoke`, `linux`. Executor проверяет пул локально теми же `tool/ci/<name>`-скриптами на доступных устройствах до ревью.
+- После принятия нового пула Reviewer при чистом fast-forward сливает его в `dev`; карточки получают `DONE` на слиянии. Если нужен полный CI, Reviewer или Orchestrator ставит тег `ci/all/<pool-id>` на точный SHA влитого `dev`; результат сохраняется ссылкой в `COMPLETION.md`, пока следующий пул уже работает. Теги `ci/*` удаляются пачкой в конце этапа, запуски при этом остаются. CI не является условием `DONE`, но обязателен для выхода из этапа/релизного гейта, если Engineer не решил иначе. При отказе Orchestrator сам заполняет фактическую карточку CI в конце этапа упавшего пула и сообщает Engineer; отдельный Executor расследует только по команде Engineer, Architect в обычном маршруте не участвует.
+- Для задачи, меняющей workflow или `tool/ci/*`, когда изменение нельзя проверить локально, ставится соответствующий тег на коммит ветки задачи. Не добавлять `dev` в триггеры CI без отдельного решения Engineer.
 - Все workflow используют одинаковый `paths-ignore: ["**/*.md", "doc/**", "tasks/**"]`: коммиты только с документацией CI не запускают. `workflow_dispatch` остаётся доступен для workflow, уже попавших в `main`.
 - `tool/ci/scope_guard.sh` в CI не вызывается. Его карта «путь → ключи платформ» подсказывает, какие локальные скрипты запускать для изменённых путей.
-- Для workflow использовать `concurrency` с группой `ci-<name>-${{ github.ref }}`. На `release/**` прогоны не отменяются, на `main` и `ci/**` новый прогон отменяет предыдущий.
+- Для workflow использовать `concurrency` с группой `ci-<name>-${{ github.ref }}`. На `release/**` прогоны не отменяются, на `main` и тегах `ci/*` новый прогон отменяет предыдущий.
 - `tool/ci/drive.ps1` запускает `flutter drive` из `example/` и принимает результат только при exit code `0` и строке `All tests passed`. Не вызывать `flutter drive` напрямую из PowerShell workflow. Bash-скрипты macOS/Linux должны соблюдать тот же контракт запуска и проверки результата.
 - `tool/ci/_common.ps1` содержит общие функции для определения корня репозитория, Flutter, временного каталога, native-сборки и добавления каталогов в `PATH`.
 
@@ -132,7 +132,7 @@ job `linux-native-smoke` в `.github/workflows/ci.yml`.
 | `android` | `pwsh -File tool/ci/android.ps1` (Windows с Android SDK и AVD). |
 | `web` | `pwsh -File tool/ci/web.ps1` (Windows с настроенными Chrome и Emscripten). |
 | `example` | `pwsh -File tool/ci/example.ps1` (Windows). |
-| `linux` | CI-only: job `linux-native-smoke` в `.github/workflows/ci.yml`; запускается на push в `release/**`, `main` и `ci/**` с учетом `paths-ignore`, а также вручную через `workflow_dispatch` с `jobs=linux`. Job запускает Debug/Release CTest, packaging smoke, Linux example build, app-runtime smoke и native correctness probes. |
+| `linux` | CI-only: job `linux-native-smoke` в `.github/workflows/ci.yml`; запускается на push в `release/**`, `main` и тег `ci/linux/<метка>` либо `ci/all/<метка>`, а также вручную через `workflow_dispatch` с `jobs=linux`. Job запускает Debug/Release CTest, packaging smoke, Linux example build, app-runtime smoke и native correctness probes. |
 | `all` | Все перечисленные локальные команды на доступных платформах; `linux` проверяется только на CI. |
 
 Платформенные скрипты выполняют собственный набор сборок и проверок; наличие ключа не означает, что скрипт

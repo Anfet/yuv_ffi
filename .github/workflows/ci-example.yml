@@ -9,7 +9,9 @@ on:
     branches:
       - "release/**"
       - main
-      - "ci/**"
+    tags:
+      - "ci/all/**"
+      - "ci/example/**"
     paths-ignore: ["**/*.md", "doc/**", "tasks/**"]
   workflow_dispatch:
 
