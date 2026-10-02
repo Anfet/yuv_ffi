@@ -38,7 +38,7 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
-| Веб параллельно (`PAR-WEB`) | WEB 1 → WEB 4 | T1 / T1 | `all/PAR-WEB` / `.worktrees/PAR-WEB` | WEB 4 — камера Mac (или запуск Engineer) | не запущен |
+| Веб параллельно (`PAR-WEB`) | WEB 1 → WEB 4 | T1 / T1 | `all/PAR-WEB` / `.worktrees/PAR-WEB` | WEB 4 — камера Mac (или запуск Engineer) | WEB 1 влита в `dev` (`e33f951`); CI не запускался |
 | CI по тегам (`PAR-CI`) | CI 1 | T2 / T2 | `all/PAR-CI` / `.worktrees/PAR-CI` | push тестовых тегов в origin (разрешён карточкой) | тег `ci/all/CI-1` — он же post-merge CI этапов 4–5 |
 
 ## Дашборд
@@ -83,9 +83,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [WEB 1](tasks/0.5.0/WEB-1.md) | TODO | T2 | — | SHADER 3 | **Шейдер на Web: проба и решение.** Шейдер сейчас грузится и на Web без проверки (выключателя из SHADER 2 нет). Проба SHADER 3 в Chrome: совпадает — шейдер остаётся и проба входит в `web.ps1`; нет — выключатель `kIsWeb`. Пул `PAR-WEB`. |
 | [WEB 2](tasks/0.5.0/WEB-2.md) | BLOCKED | T2 | Engineer | — | **Веб: паритет WASM с native.** Было WAIT-01. Черновик: старт — по решению Engineer, до постановки Architect дописывает карточку. |
-| [WEB 4](tasks/0.5.0/WEB-4.md) | BLOCKED | T1 | WEB 1 | WEB 1 | **Кадры веб-камеры в исходном формате: исследование.** `VideoFrame.copyTo()` без `format`: формат, `PlaneLayout`, стоимость против BGRA, реальная камера на Mac; вывод и рекомендация — `doc/web-camera-yuv.md`. Пул `PAR-WEB`. |
+| [WEB 4](tasks/0.5.0/WEB-4.md) | TODO | T1 | — | WEB 1 | **Кадры веб-камеры в исходном формате: исследование.** `VideoFrame.copyTo()` без `format`: формат, `PlaneLayout`, стоимость против BGRA, реальная камера на Mac; вывод и рекомендация — `doc/web-camera-yuv.md`. Пул `PAR-WEB`. |
 | [CI 1](tasks/0.5.0/CI-1.md) | TODO | T2 | — | — | **Запуск CI по тегам `ci/<набор>/<метка>`.** Набор — `all` или платформа (`macos`, `ios`, `web`…); ветки `ci/**` из триггеров убираются (D-20). Проверка — тегами на коммит пула; `ci/all/CI-1` заодно прогоняет отложенный CI этапов 4–5. Пул `PAR-CI`. |
 
 ## Открытые вопросы
