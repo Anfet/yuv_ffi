@@ -1,5 +1,5 @@
 # WEB 1 — Шейдер `YuvFrameRenderer` на Web: проба и решение
-**Status:** REVIEW · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** SHADER 3 · **Probe:** windows
+**Status:** DONE · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** SHADER 3 · **Probe:** windows
 
 #### Goal
 SHADER 2 (решение 1) требовала на Web до WEB 1 рендерер без шейдера, но выключателя нет: `YuvFrameRenderer.load()`
@@ -62,8 +62,21 @@ SHADER 2 (решение 1) требовала на Web до WEB 1 ренде�
 
 #### Executor Report
 
-- Вариант B. До выключателя CanvasKit дал `max_diff=255` на `3x5`; Web-шейдер выключен через `kIsWeb`, `hasShader` на Web закреплён как `false`.
+- Вариант B. Web-шейдер выключен через `kIsWeb`, `hasShader` на Web закреплён как `false`. Расхождения CanvasKit до
+  выключателя (`has_shader=true`, повтор Reviewer, Chrome 154, headless):
+
+  | Случай | 3x5 | 33x17 | 720x480 | 1920x1080 | padding | scale_x2 | contain |
+  | --- | --- | --- | --- | --- | --- | --- | --- |
+  | `max_diff` | 255 | 255 | 255 | 255 | 255 | 255 | 255 |
 - `pwsh -File tool/ci/web.ps1` — PASS: Chrome 154.0.8037.98; `sources=14; integration cases=63; reference matrix=119; camera smoke=1`.
 - Анализ изменённых файлов — PASS. `example.ps1` — PASS: Flutter 3.44.9, `analyze` и `build web`. `windows.ps1` — PASS: 134/134, release example и все native integration targets, включая `shader_probe_native_test.dart`.
 - `vm.ps1` — PASS: 616/616.
 #### Review
+
+- **ACCEPT** (Reviewer, 02.10.2026). Вариант B подтверждён повтором: без выключателя шейдер грузится и расходится с
+  CPU во всех 7 случаях (таблица выше) — это же негативный контроль Web-пробы. `dart format`, `flutter analyze` по
+  изменённым файлам — чисто; `web.ps1`, `windows.ps1`, `vm.ps1`, `example.ps1` — по отчёту Executor, не повторялись.
+- Исправлено Reviewer: комментарий в `load()` («3x5» → «every shader-probe case»), из README убран внутренний ID,
+  таблица расхождений — в отчёт. Ветка перенесена на `dev` `6843782` (конфликты только в `todo.md` и карточке).
+- Замечания без доработки: причина падения native-пробы называет размер, а не раскладку и ориентацию; равенство
+  строк `SHADER PROBE` native до и после в отчёте не показано.
