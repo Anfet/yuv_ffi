@@ -1,5 +1,5 @@
 # WEB 8 — Web: стоимость показа кадра
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** none
+**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** — · **Probe:** none
 
 #### Goal
 Подсистема показа из исследования WEB 4. На Web шейдер выключен (WEB 1): `YuvFrameRenderer` показывает любой кадр
@@ -41,4 +41,12 @@ I420, NV12 и BGRA. Камера не нужна. Захват — WEB 6, имп
 Ключи: `tasks/*` → —. Ветка `all/PAR-WEB` в основной копии (D-22). CI-скрипты не нужны.
 
 #### Executor Report
+Windows, Chrome 154.0.8037.98, this machine; release dart2js, CanvasKit default, 1280x720 synthetic images:
+
+```text
+WEB8 RESULT {"os":"Windows","chrome":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36","machine":"this machine","hasShader":false,"uploadMs":{"I420":{"median":57.8000000002794,"p90":59.799999999813735},"NV12":{"median":57.89999999990687,"p90":59.799999999813735},"BGRA":{"median":13.899999999906868,"p90":15.100000000093132}},"presentMs":{"I420":{"median":63.90000000037253,"p90":70.3000000002794},"NV12":{"median":63.799999999813735,"p90":67.59999999962747},"BGRA":{"median":18.5,"p90":24.799999999813735}}}
+```
+
+For each format, the result contains 10 warmups and 60 samples. The temporary probe built successfully in `example/build/web-web8`; its source was removed. No package files changed.
+
 #### Review
