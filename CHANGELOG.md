@@ -36,7 +36,8 @@
   `pack()` removes row padding and I420 per-sample pixel gaps in place while
   preserving visible samples, format, geometry, and orientation.
 - Added `YuvFramePresenter` and `YuvFrameView` for displaying a stream of
-  `YuvImage` frames with one frame in flight.
+  `YuvImage` frames with one frame in flight, optional shader rendering,
+  draw-time orientation, fit/alignment, and geometry reporting.
 - Added `YuvFrameGeometry`, `YuvFrameOrientation`, and `YuvFrameFit` for
   source, upright, and view coordinate mapping, including ML Kit overlays and
   visible-frame extraction.

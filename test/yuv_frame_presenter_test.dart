@@ -181,6 +181,28 @@ void main() {
     expect(presented, drawn, reason: 'one report per frame actually drawn');
     expect(received, greaterThan(presented));
   });
+
+  testWidgets('rotation changes the aspect ratio and reports geometry only when it changes', (tester) async {
+    final geometries = <YuvFrameGeometry>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: YuvFrameView(presenter: presenter, onGeometryChanged: geometries.add),
+        ),
+      ),
+    );
+
+    await tester.runAsync(() async => presenter.present(_frame(90), orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90)));
+    await _waitUntil(tester, () => presenter.image != null, reason: 'the oriented frame');
+    await tester.pump();
+
+    expect(tester.widget<AspectRatio>(find.byType(AspectRatio)).aspectRatio, _height / _width);
+    expect(geometries, hasLength(1));
+    expect(geometries.single.orientation.rotation, YuvImageRotation.rotation90);
+
+    await tester.pump();
+    expect(geometries, hasLength(1));
+  });
 }
 
 T require<T extends Object>(T? value) => value ?? (throw StateError('Expected a non-null $T'));

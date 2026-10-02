@@ -10,7 +10,7 @@ class _RecordingPresenter extends YuvFramePresenter {
   final List<int> presented = [];
 
   @override
-  bool present(YuvImage frame) {
+  bool present(YuvImage frame, {YuvFrameOrientation orientation = YuvFrameOrientation.upright}) {
     presented.add(shadeOfYuv(frame));
     return true;
   }

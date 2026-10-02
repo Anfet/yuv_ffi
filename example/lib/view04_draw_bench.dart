@@ -48,6 +48,7 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
   final _results = <Map<String, Object?>>[];
   final _timings = <ui.FrameTiming>[];
   ui.Image? _shown;
+  YuvFramePresenter? _presenter;
   int _repaintTick = 0;
   _DrawOrientation _drawOrientation = _DrawOrientation.none;
   View04I420Shader? _shader;
@@ -84,6 +85,7 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final presenter = _presenter;
     return Scaffold(
       appBar: AppBar(title: Text('VIEW-04 draw bench ($_buildMode)')),
       body: SafeArea(
@@ -93,7 +95,9 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
             Expanded(
               // Keeps the status text out of the measured frames' raster work.
               child: RepaintBoundary(
-                child: CustomPaint(painter: _FramePainter(_shown, _repaintTick, _drawOrientation, _drawWithShader ? _shaderDraw : null)),
+                child: presenter == null
+                    ? CustomPaint(painter: _FramePainter(_shown, _repaintTick, _drawOrientation, _drawWithShader ? _shaderDraw : null))
+                    : YuvFrameView(presenter: presenter, fit: YuvFrameFit.contain),
               ),
             ),
             Padding(padding: const EdgeInsets.all(8), child: Text(_error == null ? _status : 'Error: $_error')),
@@ -144,6 +148,8 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
           await _measureFullPath('full_path_cpu_orientation', frame, _PathVariant.cpu);
           await _measureFullPath('full_path_draw_orientation', frame, _PathVariant.canvas);
           await _measureFullPath('full_path_shader', frame, _PathVariant.shader);
+          await _measurePresenter('presenter_bgra', frame, useShader: false, round: round);
+          await _measurePresenter('presenter_shader', frame, useShader: true, round: round);
         }
       }
       // Left on screen so a screenshot can confirm the on-screen shader
@@ -159,6 +165,55 @@ class _View04DrawBenchScreenState extends State<View04DrawBenchScreen> {
       debugPrint('VIEW-04 failed: $ex\n$stack');
       if (mounted) setState(() => _error = ex);
     }
+  }
+
+  Future<void> _measurePresenter(String scenario, YuvImage source, {required bool useShader, required int round}) async {
+    _setStatus('$scenario ${source.width}x${source.height}, run ${round + 1}...');
+    Completer<void>? presented;
+    final presenter = YuvFramePresenter(useShader: useShader, onFramePresented: () => presented?.complete());
+    setState(() => _presenter = presenter);
+    if (useShader) {
+      while (!presenter.hasShader) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+    }
+    await SchedulerBinding.instance.endOfFrame;
+    final samples = <int>[];
+    final stopwatch = Stopwatch();
+    for (var i = 0; i < _warmupFrames + _measuredFrames; i++) {
+      presented = Completer<void>();
+      stopwatch
+        ..reset()
+        ..start();
+      if (!presenter.present(source, orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation270, mirrored: true))) {
+        throw StateError('$scenario rejected frame $i.');
+      }
+      await presented.future;
+      if (i >= _warmupFrames) {
+        samples.add(stopwatch.elapsedMicroseconds);
+      }
+    }
+    final result = <String, Object?>{
+      'card': 'PRESENT-1',
+      'build_mode': _buildMode,
+      'scenario': scenario,
+      'run': round + 1,
+      'width': source.width,
+      'height': source.height,
+      'samples': _measuredFrames,
+      'median_ms': samples.median / 1000,
+      'p90_ms': samples.p90 / 1000,
+      'shader_loaded': presenter.hasShader,
+    };
+    debugPrint('PRESENT-1 result: ${jsonEncode(result)}');
+    presenter.dispose();
+    if (mounted) {
+      setState(() {
+        _presenter = null;
+        _results.add(result);
+      });
+    }
+    await SchedulerBinding.instance.endOfFrame;
   }
 
   Future<void> _measureUpload(

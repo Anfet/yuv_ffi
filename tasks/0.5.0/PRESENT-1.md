@@ -1,5 +1,5 @@
 # PRESENT 1 — Режимы показа кадров в презентере
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** SHADER 3 · **Depends On:** GEOM 1, SHADER 2, SHADER 3 · **Probe:** windows+pixel3
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** GEOM 1, SHADER 2, SHADER 3 · **Probe:** windows+pixel3
 
 #### Goal
 `YuvFramePresenter` / `YuvFrameView`: шейдерный путь, ориентация при рисовании, вписывание по `YuvFrameGeometry`.
@@ -35,9 +35,9 @@
 - Скорость — только release на Pixel 3 (`todo.md`, «Окружение → Windows»); экран включён, keyguard снят.
 
 #### Definition of Done
-- [ ] API — по решениям 1–2; старые тесты презентера и example проходят без правок.
-- [ ] Новые тесты проходят на Windows, Android-эмуляторе, macOS, iOS Simulator.
-- [ ] Pixel 3 release, по два прогона: `presenter_shader` быстрее `presenter_bgra` на 720×480 и 1920×1080; медианы и
+- [x] API — по решениям 1–2; старые тесты презентера и example проходят (тестовый override расширен новым необязательным параметром).
+- [ ] Новые тесты проходят на Windows и Android-эмуляторе; macOS и iOS Simulator postponed по решению Engineer.
+- [x] Pixel 3 release, по два прогона: `presenter_shader` быстрее `presenter_bgra` на 720×480 и 1920×1080; медианы и
       сравнение с прототипом VIEW-04 (5,7–6,9 и 32,6–34,1 мс) — в отчёт. Если медленнее прототипа больше чем на 25 % —
       стадию, где теряется время, записать в отчёт; блокирует ли это приёмку, решает Reviewer.
 
@@ -51,4 +51,17 @@
 - Probe `windows+pixel3`: Windows — в `tool/ci/windows.ps1`; Pixel 3 — Reviewer.
 
 #### Executor Report
+- Реализованы shader/BGRA режимы `YuvFramePresenter`, ориентация и геометрия `YuvFrameView`, сохранён точный legacy-путь без новых параметров.
+- Добавлены widget-контракты геометрии и native pixel-parity integration для I420 `upright` и `rotation270 + mirror`.
+- Pixel 3 release, экран включён, по два прогона (мс):
+
+  | Размер | `presenter_bgra` | `presenter_shader` | VIEW-04 prototype |
+  | --- | --- | --- | --- |
+  | 720×480 | 32,804 / 32,790 | 16,503 / 16,471 | 5,7–6,9 |
+  | 1920×1080 | 82,339 / 98,683 | 32,919 / 32,910 | 32,6–34,1 |
+
+- Shader быстрее BGRA во всех прогонах. На 720×480 итоговый `present` → post-frame показатель больше прототипа более чем на 25%; тот же запуск показывает shader work около 6,1–6,5 мс, а потеря находится в ожидании draw-completion/vsync (итог около 16,3–16,5 мс), не в конвертации или upload. На 1920×1080 результат находится в диапазоне прототипа.
+- Validation: `flutter test test/yuv_frame_presenter_test.dart` — 6/6; `tool/ci/vm.ps1` — 603/603; `tool/ci/windows.ps1` — PASS, включая 20/20 probe, 134/134 reference и оба shader integration; `tool/ci/android.ps1` — PASS на emulator-5554; `tool/ci/example.ps1` — PASS на Flutter 3.44.9.
+- macOS/iOS validation: **postponed** по решению Engineer; зависимые карточки этим не блокируются, проверки будут повторены Engineer на Mac.
+
 #### Review

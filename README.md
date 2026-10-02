@@ -131,6 +131,11 @@ presenter.present(image);
 final view = YuvFrameView(presenter: presenter);
 ```
 
+Pass `useShader: true` to `YuvFramePresenter` for shader-backed live frames,
+and pass a `YuvFrameOrientation` to `present` to rotate or mirror at draw time.
+`YuvFrameView.fit` and `alignment` use `YuvFrameGeometry`; its
+`onGeometryChanged` callback exposes the exact overlay mapping.
+
 ### Frame geometry and ML Kit
 
 `YuvFrameGeometry` keeps source pixels, ML Kit's upright pixels, and widget

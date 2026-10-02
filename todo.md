@@ -37,7 +37,7 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
-| Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | запущен; GEOM 1 и SHADER 1 приняты, SHADER 2 в работе |
+| Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | все карточки переданы в review; macOS/iOS PRESENT 1 postponed |
 | Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — (параллельно с `STAGE4-VIEW` допустимо: общие только строка экспорта в `lib/yuv_ffi.dart` и `CHANGELOG.md`) | не запущен |
 | Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` влит в `dev` | не запущен |
 
@@ -66,8 +66,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | [SHADER 1](tasks/0.5.0/SHADER-1.md) | ACCEPTED | T2 | — | — | **Раскладка плоскостей в одну текстуру.** Принята на `0b3eddd`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
 | [SHADER 2](tasks/0.5.0/SHADER-2.md) | REVIEW | T2 | Engineer | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Реализация и короткая shader probe готовы; Windows и Android прошли, `max_diff <= 1`. |
 | [SHADER 3](tasks/0.5.0/SHADER-3.md) | REVIEW | T2 | Engineer | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Windows, Android emulator, Pixel 3, macOS и iOS Simulator прошли; Linux post-merge CI pending. |
-| [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | BLOCKED | T2 | SHADER 3 | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** `YuvFrameRendering.shader`, ориентация в `present`, вписывание в `YuvFrameView`; только добавления; замер на Pixel 3. Пул `STAGE4-VIEW`. |
-| [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | BLOCKED | T2 | GEOM 1 | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). Одна IO-реализация + Web, `YuvCameraFrame` с ленивым импортом без расчередования, ориентация по формуле ML Kit. Пул `STAGE4-CAMERA` после `STAGE4-VIEW`. |
+| [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | REVIEW | T2 | Engineer | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** Shader/BGRA, ориентация и геометрия реализованы; Windows/Android/Pixel 3 зелёные, macOS/iOS postponed. Пул `STAGE4-VIEW`. |
+| [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | TODO | T2 | — | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). Одна IO-реализация + Web, `YuvCameraFrame` с ленивым импортом без расчередования, ориентация по формуле ML Kit. Пул `STAGE4-CAMERA`; зависимость разблокирована. |
 | [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | BLOCKED | T2 | CAMERA 1 | CAMERA 1, PRESENT 1 | **Виджеты камеры.** `YuvCameraView` (шейдер, `onFrame` с прореживанием, `capture()` = видимое), `YuvTransformView`; `CameraScreen` с рамками лиц; старое превью удаляется. Пул `STAGE4-CAMERA`. |
 
 ### Этап 5 — проверка на устройстве
