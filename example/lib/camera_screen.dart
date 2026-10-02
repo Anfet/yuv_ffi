@@ -21,10 +21,9 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  CameraController? cameraController;
+  CameraController? _cameraController;
 
-  CameraController get controller => cameraController!;
-  bool get _isPreviewReady => cameraController?.value.isInitialized == true;
+  bool get _isPreviewReady => _cameraController?.value.isInitialized == true;
 
   Object? cameraError;
   final YuvCameraViewController viewController = YuvCameraViewController();
@@ -39,15 +38,15 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   void initState() {
-    initCamera();
     super.initState();
+    _initializeCamera();
   }
 
   @override
   void dispose() {
     viewController.dispose();
     _faceDetector?.close().ignore();
-    cameraController?.dispose();
+    _cameraController?.dispose();
     super.dispose();
   }
 
@@ -82,7 +81,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       );
                     }
 
-                    if (_isPreviewReady) {
+                    if (_cameraController case final controller? when controller.value.isInitialized) {
                       return YuvCameraView(
                         cameraController: controller,
                         viewController: viewController,
@@ -101,33 +100,12 @@ class _CameraScreenState extends State<CameraScreen> {
                 ),
               ),
               if (_isPreviewReady)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 64,
-                  child: Center(
-                    child: IconButton(
-                      onPressed: takePicture,
-                      icon: Icon(Icons.camera, color: Colors.white, size: 64),
-                      tooltip: 'Capture frame',
-                    ),
-                  ),
-                ),
-              if (_isPreviewReady)
-                Positioned(
-                  top: 12,
-                  left: 56,
-                  child: Text('$_fps fps  shader: ${_shaderEnabled ? 'on' : 'off'}', style: const TextStyle(color: Colors.white)),
-                ),
-              if (_isPreviewReady)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton(
-                    onPressed: () => setState(() => _heavyProcessing = !_heavyProcessing),
-                    icon: Icon(_heavyProcessing ? Icons.speed : Icons.speed_outlined, color: Colors.white),
-                    tooltip: 'Heavy processing once per second',
-                  ),
+                _CameraOverlay(
+                  fps: _fps,
+                  shaderEnabled: _shaderEnabled,
+                  heavyProcessing: _heavyProcessing,
+                  onCapture: takePicture,
+                  onHeavyProcessingChanged: () => setState(() => _heavyProcessing = !_heavyProcessing),
                 ),
               Positioned(
                 top: 8,
@@ -144,7 +122,7 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
-  Future initCamera() async {
+  Future<void> _initializeCamera() async {
     try {
       final cameras = await availableCameras();
       // Closed during the lookup: dispose ran before a controller existed, so
@@ -158,7 +136,8 @@ class _CameraScreenState extends State<CameraScreen> {
       }
 
       final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.front, orElse: () => cameras.first);
-      cameraController = CameraController(camera, ResolutionPreset.medium, enableAudio: false, fps: 30);
+      final controller = CameraController(camera, ResolutionPreset.medium, enableAudio: false, fps: 30);
+      _cameraController = controller;
       await controller.initialize();
     } catch (ex) {
       cameraError = '$ex';
@@ -219,7 +198,6 @@ class _CameraScreenState extends State<CameraScreen> {
         return;
       }
 
-      await Future.delayed(Duration(milliseconds: 500));
       if (!mounted) {
         return;
       }
@@ -230,4 +208,52 @@ class _CameraScreenState extends State<CameraScreen> {
       debugPrint('$stack');
     }
   }
+}
+
+class _CameraOverlay extends StatelessWidget {
+  const _CameraOverlay({
+    required this.fps,
+    required this.shaderEnabled,
+    required this.heavyProcessing,
+    required this.onCapture,
+    required this.onHeavyProcessingChanged,
+  });
+
+  final int fps;
+  final bool shaderEnabled;
+  final bool heavyProcessing;
+  final VoidCallback onCapture;
+  final VoidCallback onHeavyProcessingChanged;
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    children: [
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: 64,
+        child: Center(
+          child: IconButton(
+            onPressed: onCapture,
+            icon: const Icon(Icons.camera, color: Colors.white, size: 64),
+            tooltip: 'Capture frame',
+          ),
+        ),
+      ),
+      Positioned(
+        top: 12,
+        left: 56,
+        child: Text('$fps fps  shader: ${shaderEnabled ? 'on' : 'off'}', style: const TextStyle(color: Colors.white)),
+      ),
+      Positioned(
+        top: 8,
+        right: 8,
+        child: IconButton(
+          onPressed: onHeavyProcessingChanged,
+          icon: Icon(heavyProcessing ? Icons.speed : Icons.speed_outlined, color: Colors.white),
+          tooltip: 'Heavy processing once per second',
+        ),
+      ),
+    ],
+  );
 }

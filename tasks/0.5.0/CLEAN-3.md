@@ -1,5 +1,5 @@
 # CLEAN 3 — Уборка example: экран редактора и камерный экран
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** windows
+**Status:** AWAITING_EXTERNAL · **Tier:** T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Example — витрина пакета, а `main.dart` (345 строк) собран до этапа 4: экран, состояние и все операции лежат в
@@ -69,4 +69,25 @@ example к текущему API пакета и пути показа этапа
 - Probe `windows`: в составе `tool/ci/windows.ps1`.
 
 #### Executor Report
+Implemented on branch `all/CLEAN-3`:
+
+- moved the editor from `main.dart` to `editor/editor_screen.dart`; it displays frames through `YuvFramePresenter` and `YuvFrameView`, and maps the face box through reported frame geometry;
+- replaced in-place format conversion with `toI420()`, `toNv12()`, and `toBgra()`; reset copies the original frame;
+- centralized camera-frame import in `camera/camera_image_import.dart`, removed the duplicate extension and `crop_targets.dart`, and updated all consumers/tests;
+- retained camera FPS/shader and heavy-processing controls, removed the artificial capture delays, and extracted the camera overlay;
+- updated integration consumers and added `test/editor/editor_screen_test.dart`.
+
+Validation completed:
+
+- `dart format --line-length 150 lib test integration_test` — PASS (only scoped files changed).
+- `flutter analyze` in `example/` — PASS.
+- with `C:\Users\Oleg-T\AppData\Local\Temp\yuv-ffi-windows\Release` on `PATH`: `flutter test test/editor/editor_screen_test.dart test/camera/camera_image_import_test.dart test/camera_image_to_yuv_image_padding_test.dart` — PASS, 6 tests.
+- `pwsh -File tool/ci/windows.ps1` — native build and root `probe`/`reference`: PASS, 20/20 (1 skipped), no `SLOWER` verdict. The terminal has a 30-second per-process limit and did not return the following Windows example build/drive result.
+
+External evidence still required before `REVIEW`:
+
+- run `pwsh -File tool/ci/windows.ps1` to completion from the repository root;
+- run `pwsh -File tool/ci/web.ps1` to completion from the repository root. Direct `flutter build web` generated `example/build/web/main.dart.js`, but the terminal cut off before a terminal `PASS`/`FAIL`, so it is not counted;
+- manually verify on Windows: load an image, apply operations, reset; open camera, observe FPS/shader and heavy-processing control, capture into the editor.
+
 #### Review

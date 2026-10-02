@@ -12,7 +12,7 @@
 // controller's initialization, disposal, and lifecycle handling.
 //
 // Verdict: the final line is `SMOKE COMPLETE` only if all five frames were
-// imported through `toYuvImage()`/`toBgraBytes()` without throwing and the
+// imported through `importCameraImage()`/`toBgraBytes()` without throwing and the
 // stream was stopped cleanly afterwards; any other outcome (conversion
 // failure, stream error, timeout, no camera) prints `SMOKE FAILED` with the
 // reason and calls `exit(1)`, so a rerun gives an unambiguous result even
@@ -23,7 +23,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/material.dart';
-import 'package:yuv_ffi_example/ext.dart';
+import 'package:yuv_ffi_example/camera/camera_image_import.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -135,15 +135,15 @@ class _SmokeBodyState extends State<_SmokeBody> {
               );
 
               try {
-                final yuv = image.toYuvImage();
+                final yuv = importCameraImage(image);
                 final bgra = yuv.toBgraBytes();
                 _append(
-                  'toYuvImage/toBgraBytes ok: format=${yuv.format} '
+                  'importCameraImage/toBgraBytes ok: format=${yuv.format} '
                   'firstPixel=${bgra.sublist(0, 4)}',
                 );
                 framesImported++;
               } catch (e) {
-                fail('toYuvImage/toBgraBytes threw on frame $frameNumber: $e');
+                fail('importCameraImage/toBgraBytes threw on frame $frameNumber: $e');
                 if (!framesDone.isCompleted) {
                   framesDone.complete();
                 }

@@ -5,12 +5,12 @@ import 'package:camera/camera.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'package:yuv_ffi_example/ext.dart';
+import 'package:yuv_ffi_example/camera/camera_image_import.dart';
 
 /// Padded BGRA camera rows import as tight planes without changing visible
 /// pixels or letting padding bytes leak into the next row.
 void main() {
-  test('toYuvImage packs padded BGRA rows without shifting pixels', () {
+  test('importCameraImage packs padded BGRA rows without shifting pixels', () {
     const width = 3;
     const height = 2;
     const tightRowBytes = width * 4; // 12
@@ -49,7 +49,7 @@ void main() {
     );
     final image = CameraImage.fromPlatformInterface(data);
 
-    final yuv = image.toYuvImage();
+    final yuv = importCameraImage(image);
 
     expect(yuv.format, YuvPixelFormat.bgra8888);
     expect(yuv.size, const Size(3, 2));

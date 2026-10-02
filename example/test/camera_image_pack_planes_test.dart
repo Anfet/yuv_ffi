@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi_example/camera/camera_image_import.dart';
 import 'package:yuv_ffi_example/ext.dart';
 
 /// Camera plane imports are tightly packed while preserving every visible
@@ -35,7 +36,7 @@ void main() {
     return bytes;
   }
 
-  YuvImage buildFromCameraData(CameraImageData data) => CameraImage.fromPlatformInterface(data).toYuvImage();
+  YuvImage buildFromCameraData(CameraImageData data) => importCameraImage(CameraImage.fromPlatformInterface(data));
 
   /// Verifies that importing camera planes drops only row and pixel gaps.
   void expectSameVisibleSamples(

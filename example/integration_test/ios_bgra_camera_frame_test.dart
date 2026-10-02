@@ -4,7 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'package:yuv_ffi_example/ext.dart';
+import 'package:yuv_ffi_example/camera/camera_image_import.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +41,7 @@ void main() {
       ],
     });
 
-    final yuv = cameraImage.toYuvImage();
+    final yuv = importCameraImage(cameraImage);
 
     expect(yuv.format, YuvPixelFormat.bgra8888);
     expect(yuv.yPlane.pixelStride, 4);

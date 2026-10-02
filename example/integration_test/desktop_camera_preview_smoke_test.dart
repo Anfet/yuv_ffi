@@ -8,6 +8,7 @@ import 'package:image/image.dart' as img;
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/camera_screen.dart';
+import 'package:yuv_ffi_example/editor/editor_screen.dart';
 import 'package:yuv_ffi_example/main.dart' as demo;
 
 /// Where the smoke writes the drawn and the captured frame as PNG, if set.
@@ -24,7 +25,7 @@ void main() {
 
   testWidgets('desktop preview shows the camera stream and captures the drawn frame', (tester) async {
     await YuvFfi.initialize();
-    await tester.pumpWidget(const demo.MyApp());
+    await tester.pumpWidget(const demo.YuvExampleApp());
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Take photo'));
@@ -75,8 +76,8 @@ void main() {
     beforeTap?.dispose();
 
     await _pumpUntil(tester, () => find.byType(CameraScreen).evaluate().isEmpty, 'the captured frame should return to the demo');
-    await _pumpUntil(tester, () => find.byType(YuvImageWidget).evaluate().isNotEmpty, 'the captured frame should be displayed');
-    final captured = tester.widget<YuvImageWidget>(find.byType(YuvImageWidget)).image;
+    await _pumpUntil(tester, () => find.byType(YuvFrameView).evaluate().isNotEmpty, 'the captured frame should be displayed');
+    final captured = tester.state<EditorScreenState>(find.byType(EditorScreen)).image!;
     final capturedRgba = _bgraToRgba(captured.toBgraBytes());
     debugPrint('[view01b_smoke] captured: $captured');
 
