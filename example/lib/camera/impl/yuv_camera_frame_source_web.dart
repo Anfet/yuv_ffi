@@ -26,7 +26,6 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
   final web.HTMLCanvasElement _canvas = web.HTMLCanvasElement();
   web.MediaStream? _stream;
   web.ReadableStreamDefaultReader? _reader;
-  int? _animationFrame;
   int? _videoFrameRequest;
   int _generation = 0;
   bool _running = false;
@@ -83,6 +82,8 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
       _readLoop(reader, generation).ignore();
       return true;
     } catch (_) {
+      // Not a failure: browsers without MediaStreamTrackProcessor (Firefox,
+      // Safari) throw here, and the caller switches to the canvas path.
       _reader = null;
       return false;
     }
@@ -109,17 +110,21 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
       final width = videoFrame.displayWidth;
       final height = videoFrame.displayHeight;
       if (width <= 0 || height <= 0) return;
-      final bytes = Uint8List(width * height * 4);
+      // copyTo writes into the JS array; under dart2wasm `Uint8List.toJS` is a
+      // copy, so the bytes are read back from the array it filled.
+      final buffer = Uint8List(width * height * 4).toJS;
       var bgra = _useBgra;
       try {
-        await videoFrame.copyTo(bytes.toJS, bgra ? _bgraOptions : _rgbaOptions).toDart;
+        await videoFrame.copyTo(buffer, bgra ? _bgraOptions : _rgbaOptions).toDart;
       } catch (_) {
+        // A browser that cannot convert to BGRA rejects the call; RGBA is then
+        // converted on import, and every later frame skips the failing attempt.
         if (!bgra) rethrow;
         _useBgra = false;
         bgra = false;
-        await videoFrame.copyTo(bytes.toJS, _rgbaOptions).toDart;
+        await videoFrame.copyTo(buffer, _rgbaOptions).toDart;
       }
-      if (generation == _generation && !_disposed) _deliverBgra(width, height, bytes, bgra);
+      if (generation == _generation && !_disposed) _deliverBgra(width, height, buffer.toDart, bgra);
     } finally {
       _processing = false;
       _closeVideoFrame(videoFrame);
@@ -192,9 +197,6 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
     final reader = _reader;
     _reader = null;
     reader?.cancel();
-    final animationFrame = _animationFrame;
-    if (animationFrame != null) web.window.cancelAnimationFrame(animationFrame);
-    _animationFrame = null;
     final videoFrameRequest = _videoFrameRequest;
     if (videoFrameRequest != null) _video.cancelVideoFrameCallback(videoFrameRequest);
     _videoFrameRequest = null;

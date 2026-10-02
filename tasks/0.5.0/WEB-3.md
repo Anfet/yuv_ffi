@@ -1,5 +1,5 @@
 # WEB 3 — Убрать `dart:html`: `package:web` в загрузчике и Web-источнике камеры
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** CAMERA 1 · **Probe:** windows
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 1 · **Probe:** windows
 
 #### Goal
 `dart:html` устарел: его заменили `package:web` и `dart:js_interop`, и код с ним не компилируется в WebAssembly
@@ -82,3 +82,25 @@ CAMERA 1 уже один раз сломала Web незаметно.
 - `pwsh -File tool/ci/windows.ps1`: PASS; Windows probe прошла в составе скрипта.
 
 #### Review
+
+Ревью 02.10.2026:
+```text
+Pool: STAGE4-CAMERA; WEB 3
+Outcome: ACCEPTED
+Reviewed-Head: 2ddf677 + правки Reviewer (не закоммичены)
+Merged-Head: none
+Fixed:
+  - yuv_camera_frame_source_web.dart: copyTo пишет в JS-массив и байты читаются из него (под dart2wasm
+    Uint8List.toJS — копия, и кадр остался бы нулевым); мёртвое поле _animationFrame удалено (запасной путь через
+    requestAnimationFrame исполнитель убрал, requestVideoFrameCallback есть во всех текущих браузерах);
+    оба catch (_) получили комментарий по решению 3.
+  - CHANGELOG.md: загрузчик на package:web и новая зависимость web (Scope).
+Blocking: none
+Advisory: в lib/src/yuv/impl/web/** и трёх web-тестах остался ignore_for_file: avoid_web_libraries_in_flutter —
+  они на dart:js_interop, подавление, вероятно, лишнее; вне Scope. Попутные правки web.ps1 по делу: Start-WebDriver
+  раньше ловил исключение самой проверки в цикле ожидания драйвера и повторял её; git add --refresh перед dry-run.
+```
+`dart:html` в lib/, example/lib/ и example/integration_test/ — 0 совпадений. Перепрогон Reviewer после правок:
+`example/` `flutter analyze` — no issues, `flutter test` — 39 passed, `flutter build web` — PASS. Браузерную пробу
+после правок не перезапускал: правки — комментарии, удаление мёртвого поля и буфер copyTo, который под dart2js
+делит память с Uint8List; полный `tool/ci/web.ps1` с camera smoke прошёл у Executor на 2ddf677.

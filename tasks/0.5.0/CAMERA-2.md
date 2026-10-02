@@ -1,5 +1,5 @@
 # CAMERA 2 — Виджеты камеры в example
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
 
 #### Goal
 `YuvCameraView` (прямой показ на GPU; `onFrame` с прореживанием вне пути отрисовки; `capture()`; доступ к текущей
@@ -156,3 +156,19 @@ Advisory: onStreamStopped: () {} в CameraScreen ничего не делает 
 - `onFrame` error не останавливает source; новая Windows integration-проверка подтверждает `capture() == geometry.apply(frame.image)` для нарисованного кадра.
 - Семантика удалённых `camera_preview_lifecycle` и `desktop_camera_preview` перенесена в source/view tests: остановка, смена источника, busy drop, transform error. Старые тесты `CameraScreen` заменены public API view/controller; устаревший `presentCameraFrame` не имеет самостоятельного контракта.
 - Validation: `flutter test test/camera/yuv_camera_view_test.dart` — 4 passed; `flutter analyze` в example — clean; `drive.ps1 integration_test/camera_capture_native_test.dart windows --no-pub` — PASS. Pixel 3, physical camera, macOS/iOS — postponed по решению Engineer.
+
+Третье ревью 02.10.2026:
+```text
+Pool: STAGE4-CAMERA; CAMERA 2
+Outcome: ACCEPTED
+Reviewed-Head: 2ddf677 + правки Reviewer (не закоммичены)
+Merged-Head: none
+Fixed: example/integration_test/camera_capture_native_test.dart — onFrame теперь возвращает незавершённый Future,
+  так что тест заодно доказывает «onFrame не задерживает показ» (последний недостающий тест Scope).
+Blocking: none
+Advisory: none
+```
+FPS и `shader: on/off` считаются по подтверждённому показу; capture() побайтно равен geometry.apply нарисованного
+кадра; ошибка onFrame не останавливает поток; сводка удалённых тестов — в Rework Report 2. Перепрогон Reviewer:
+`example/` `flutter test` — 39 passed, `flutter analyze` — no issues;
+`pwsh -File tool/ci/drive.ps1 integration_test/camera_capture_native_test.dart windows` — PASS.

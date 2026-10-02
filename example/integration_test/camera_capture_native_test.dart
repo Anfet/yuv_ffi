@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +15,8 @@ import '../test/support/fake_camera.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('capture equals the geometry applied to its drawn frame', (tester) async {
+  // onFrame never completes here, so a finished capture also shows that drawing does not wait for onFrame.
+  testWidgets('capture equals the geometry applied to its drawn frame while onFrame is still running', (tester) async {
     await YuvFfi.initialize();
     final platform = FakeCameraPlatform();
     CameraPlatform.instance = platform;
@@ -23,9 +26,17 @@ void main() {
     final controller = YuvCameraViewController();
     addTearDown(controller.dispose);
     YuvCameraFrame? drawn;
+    final pendingOnFrame = Completer<void>();
     await tester.pumpWidget(
       MaterialApp(
-        home: YuvCameraView(cameraController: camera, viewController: controller, onFrame: (frame) => drawn ??= frame),
+        home: YuvCameraView(
+          cameraController: camera,
+          viewController: controller,
+          onFrame: (frame) {
+            drawn ??= frame;
+            return pendingOnFrame.future;
+          },
+        ),
       ),
     );
     await tester.pump();

@@ -53,6 +53,8 @@
   changed after it was created throws `StateError` on the affected load; create
   a new provider for the changed image.
 - Rebuilt the Web JS/WASM assets.
+- The Web WASM loader now uses `package:web` instead of the deprecated
+  `dart:html`; `web` is a new package dependency.
 - Added Swift Package Manager support for iOS and macOS. CocoaPods remains
   supported, and the app needs no configuration for either. The Apple plugin
   sources moved to a shared `darwin/` directory.
