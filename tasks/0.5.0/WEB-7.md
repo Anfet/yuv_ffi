@@ -1,5 +1,5 @@
 # WEB 7 — Web: стоимость импорта кадра в `YuvImage`
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** none
+**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** — · **Probe:** none
 
 #### Goal
 Подсистема импорта из исследования WEB 4. Сейчас Web-источник камеры отдаёт кадр как `YuvImage.bgra` +
@@ -48,4 +48,12 @@
 Ключи: `tasks/*` → —. Ветка `all/PAR-WEB` в основной копии (D-22). CI-скрипты не нужны.
 
 #### Executor Report
+Windows, Chrome 154.0.8037.98, this machine:
+
+```text
+WEB7 RESULT {"os":"Windows","chrome":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36","machine":"this machine","importMs":{"I420":{"median":1.3999999999068677,"p90":1.7000000001862645},"I420_padded":{"median":1.3999999999068677,"p90":1.8000000002793968},"NV12":{"median":1.3999999999068677,"p90":1.6000000000931323},"BGRA":{"median":1.6000000000931323,"p90":1.900000000372529}}}
+```
+
+Release dart2js, CanvasKit default, 1280x720 synthetic source bytes prepared once before the warmup. The temporary probe built successfully in `example/build/web-web7`; its source was removed. No package files changed.
+
 #### Review
