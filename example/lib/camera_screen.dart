@@ -1,10 +1,16 @@
 import 'dart:async';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'package:yuv_ffi_example/widgets/yuv_camera_preview.dart';
+import 'package:yuv_ffi_example/camera/yuv_camera_frame.dart';
+import 'package:yuv_ffi_example/camera/yuv_camera_view.dart';
+import 'package:yuv_ffi_example/camera/yuv_camera_view_controller.dart';
+import 'package:yuv_ffi_example/ext.dart';
+import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -20,6 +26,11 @@ class _CameraScreenState extends State<CameraScreen> {
   bool get _isPreviewReady => cameraController?.value.isInitialized == true;
 
   Object? cameraError;
+  final YuvCameraViewController viewController = YuvCameraViewController();
+  FaceDetector? _faceDetector;
+  Rect? _faceBox;
+  bool _heavyProcessing = false;
+  DateTime? _lastHeavyProcessing;
   Completer<YuvImage?>? captureCompleter;
 
   // A copy of the frame the preview is about to show while a capture waits.
@@ -37,6 +48,8 @@ class _CameraScreenState extends State<CameraScreen> {
     // The preview is gone and no frame will arrive; a capture still waiting
     // would otherwise never complete.
     cancelCapture();
+    viewController.dispose();
+    _faceDetector?.close().ignore();
     cameraController?.dispose();
     super.dispose();
   }
@@ -73,12 +86,15 @@ class _CameraScreenState extends State<CameraScreen> {
                     }
 
                     if (_isPreviewReady) {
-                      return YuvCameraPreview(
-                        flipAndroidCameraHorizontally: true,
+                      return YuvCameraView(
                         cameraController: controller,
-                        showDebugInfo: true,
-                        transform: imageCapturer,
-                        onFramePresented: confirmCapture,
+                        viewController: viewController,
+                        onFrame: _handleFrame,
+                        overlayBuilder: (context, geometry) => _faceBox == null
+                            ? const SizedBox.shrink()
+                            : CustomPaint(
+                                painter: FaceRectPainter(rect: _faceBox!, geometry: geometry, strokeWidth: 4),
+                              ),
                         onStreamStopped: cancelCapture,
                       );
                     }
@@ -98,6 +114,16 @@ class _CameraScreenState extends State<CameraScreen> {
                       icon: Icon(Icons.camera, color: Colors.white, size: 64),
                       tooltip: 'Capture frame',
                     ),
+                  ),
+                ),
+              if (_isPreviewReady)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    onPressed: () => setState(() => _heavyProcessing = !_heavyProcessing),
+                    icon: Icon(_heavyProcessing ? Icons.speed : Icons.speed_outlined, color: Colors.white),
+                    tooltip: 'Heavy processing once per second',
                   ),
                 ),
               Positioned(
@@ -142,6 +168,36 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
+  bool get _supportsFaceDetection => !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+
+  Future<void> _handleFrame(YuvCameraFrame frame) async {
+    if (_supportsFaceDetection) await _detectFace(frame);
+    final now = DateTime.now();
+    if (_heavyProcessing && (_lastHeavyProcessing == null || now.difference(_lastHeavyProcessing!) >= const Duration(seconds: 1))) {
+      _lastHeavyProcessing = now;
+      frame.upright().copy().applyGaussianBlur(radius: 10, sigma: 10);
+    }
+  }
+
+  Future<void> _detectFace(YuvCameraFrame frame) async {
+    final rotation = switch (frame.orientation.rotation) {
+      YuvImageRotation.rotation0 => InputImageRotation.rotation0deg,
+      YuvImageRotation.rotation90 => InputImageRotation.rotation90deg,
+      YuvImageRotation.rotation180 => InputImageRotation.rotation180deg,
+      YuvImageRotation.rotation270 => InputImageRotation.rotation270deg,
+    };
+    final detector = _faceDetector ??= FaceDetector(options: FaceDetectorOptions(performanceMode: FaceDetectorMode.fast, enableTracking: true));
+    final List<Face> faces;
+    try {
+      faces = await detector.processImage(frame.image.toInputImage(rotation: rotation));
+    } on MissingPluginException {
+      return;
+    }
+    if (!mounted) return;
+    faces.sort((a, b) => (b.boundingBox.width * b.boundingBox.height).compareTo(a.boundingBox.width * a.boundingBox.height));
+    setState(() => _faceBox = faces.firstOrNull?.boundingBox);
+  }
+
   Future<void> takePicture() async {
     // A second tap before the frame arrives joins the pending capture; a new
     // completer would leave the first one waiting forever.
@@ -150,8 +206,7 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     try {
-      Completer<YuvImage?> capturer = captureCompleter = Completer();
-      var yuv = await capturer.future;
+      final yuv = _isPreviewReady ? await viewController.capture() : await (captureCompleter = Completer<YuvImage?>()).future;
       if (yuv == null) {
         return;
       }

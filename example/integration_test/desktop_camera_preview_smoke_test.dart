@@ -28,7 +28,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Take photo'));
-    final preview = find.descendant(of: find.byType(CameraScreen), matching: find.byType(RawImage));
+    final preview = find.descendant(of: find.byType(CameraScreen), matching: find.byType(YuvFrameView));
     await _pumpUntil(tester, () => preview.evaluate().isNotEmpty, 'the first camera frame should be drawn');
 
     final watch = Stopwatch()..start();

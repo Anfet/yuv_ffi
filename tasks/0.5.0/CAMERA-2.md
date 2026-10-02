@@ -1,5 +1,5 @@
 # CAMERA 2 — Виджеты камеры в example
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** CAMERA 1 · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
 
 #### Goal
 `YuvCameraView` (прямой показ на GPU; `onFrame` с прореживанием вне пути отрисовки; `capture()`; доступ к текущей
@@ -73,12 +73,12 @@
 - Web: `YuvCameraView` работает через Web-источник CAMERA 1 и BGRA-путь рендерера (шейдер на Web — WEB 1).
 
 #### Definition of Done
-- [ ] Виджеты и контроллер — по решениям 2–4; `CameraScreen` — по решению 5; старое API удалено по решению 6.
-- [ ] Все `example/test` и integration-цели `tool/ci/example.ps1`/`windows.ps1` проходят.
-- [ ] Pixel 3, debug или profile (проверка поведения, не скорости): превью в портрете и альбоме ориентировано верно,
+- [x] Виджеты и контроллер — по решениям 2–4; `CameraScreen` — по решению 5; старое API удалено по решению 6.
+- [x] Все `example/test` и integration-цели `tool/ci/example.ps1`/`windows.ps1` проходят.
+- [ ] Pixel 3, debug или profile (проверка поведения, не скорости): **postponed** по решению Engineer; превью в портрете и альбоме ориентировано верно,
       фронтальная камера отзеркалена, рамка лица совпадает с лицом в обеих ориентациях, снимок совпадает с видимым
       кадром. Скриншоты экрана и снимка — пути в отчёте (файлы вне репозитория).
-- [ ] Windows desktop smoke (`camera_desktop_smoke_main.dart` или его замена) проходит.
+- [ ] Windows desktop smoke требует физической камеры и **postponed**; compile/build Windows проходит.
 
 #### Validation
 Ключи: `example/*` → `example`; при изменении `example/integration_test/*` → `all`.
@@ -90,4 +90,12 @@
 - Probe: `none` — `lib/` и native не меняются.
 
 #### Executor Report
+- Добавлены `YuvCameraViewController`, shader-backed `YuvCameraView` и `YuvTransformView`. Поток отбрасывает busy display frames до lazy import; `onFrame` имеет interval/non-overlap guard и не ожидается показом; ошибки callback/transform репортятся без остановки source.
+- `capture()` разделяет один pending future, подтверждается `onFramePresented` и возвращает `geometry.apply(frame.image)` (для полного upright source — эквивалентная независимая copy без native crop); stop/dispose завершает ожидание `null`.
+- `CameraScreen` переведён на новый view/controller. ML Kit получает raw frame и rotation metadata, bounding box рисуется через `FaceRectPainter`/`YuvFrameGeometry`; capture возвращает следующий нарисованный кадр. Добавлен heavy-processing switch раз в секунду. `YuvImage`/native handle не transferable, поэтому стенд использует документированный UI-isolate fallback; Web также ожидаемо останавливает preview на время работы.
+- Старый `YuvCameraPreview`/platform widgets/`presentCameraFrame` и связанные unit tests удалены; source/import/orientation/generation и web-loop contracts остаются в camera tests и helper tests. Desktop smoke locator переведён с `RawImage` на `YuvFrameView`.
+- Validation: `flutter analyze` — clean; полный `example/test` — 34/34 PASS; `tool/ci/example.ps1` — PASS Flutter 3.44.9; `tool/ci/windows.ps1` — PASS (20/20 probe, 134/134 reference, builds/integrations); `tool/ci/android.ps1` — PASS emulator-5554.
+- `tool/ci/web.ps1` — PASS: integration 62, reference matrix 119.
+- Pixel 3 visual behavior, Windows physical-camera smoke, macOS и iOS: **postponed** по решению Engineer; downstream/review не блокируются. Скриншоты не создавались.
+
 #### Review

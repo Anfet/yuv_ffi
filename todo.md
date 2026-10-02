@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); macOS и iOS CI на `bae5ff8` зелёные, полный CI Engineer отменил. Этап 3 завершён. **Этап 4 открыт** по команде Engineer 02.10.2026: Architect расписал карточки, к запуску готовы пулы `STAGE4-VIEW` (GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1) и `STAGE4-PATCH` (PATCH 1).
+- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); macOS и iOS CI на `bae5ff8` зелёные, полный CI Engineer отменил. Этап 3 завершён. **Все карточки этапа 4 переданы в review**; визуальные/device и новые macOS/iOS проверки postponed по решению Engineer и не блокируют review.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Пулы задач
@@ -39,7 +39,7 @@ Orchestrator записывает для нового пула порядок к
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
 | Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | все карточки переданы в review; macOS/iOS PRESENT 1 postponed |
 | Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — | передан в review; Pixel 3 native fast path не требуется |
-| Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` | CAMERA 1 в review; CAMERA 2 разблокирован |
+| Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` | обе карточки в review; device/macOS/iOS checks postponed |
 
 ## Дашборд
 
@@ -68,7 +68,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | [SHADER 3](tasks/0.5.0/SHADER-3.md) | REVIEW | T2 | Engineer | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Windows, Android emulator, Pixel 3, macOS и iOS Simulator прошли; Linux post-merge CI pending. |
 | [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | REVIEW | T2 | Engineer | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** Shader/BGRA, ориентация и геометрия реализованы; Windows/Android/Pixel 3 зелёные, macOS/iOS postponed. Пул `STAGE4-VIEW`. |
 | [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | REVIEW | T2 | Engineer | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). IO/Web source, lazy immutable frame, import без расчередования и ML Kit orientation готовы; Mac/iOS device postponed. |
-| [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | TODO | T2 | — | CAMERA 1, PRESENT 1 | **Виджеты камеры.** `YuvCameraView` (шейдер, `onFrame` с прореживанием, `capture()` = видимое), `YuvTransformView`; `CameraScreen` с рамками лиц; старое превью удаляется. Пул `STAGE4-CAMERA`; зависимости разблокированы. |
+| [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | REVIEW | T2 | Engineer | CAMERA 1, PRESENT 1 | **Виджеты камеры.** Новый GPU view/controller, capture, ML Kit overlay и heavy stand готовы; device/macOS/iOS visual checks postponed. |
 
 ### Этап 5 — проверка на устройстве
 

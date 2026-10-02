@@ -136,24 +136,19 @@ extension YuvImageToCameraExt on YuvImage {
   /// whatever row padding or pixel gap the source planes declare, and labels
   /// the result [InputImageFormat.nv21]. iOS gets a tight packed BGRA buffer
   /// (`bytesPerRow == width * 4`), the only geometry `bgra8888` promises.
-  InputImage toInputImage() {
+  InputImage toInputImage({InputImageRotation rotation = InputImageRotation.rotation0deg}) {
     switch (format) {
       case YuvPixelFormat.i420:
       case YuvPixelFormat.nv12:
         final bytes = _toNv21Bytes();
-        final meta = InputImageMetadata(size: size, rotation: InputImageRotation.rotation0deg, format: InputImageFormat.nv21, bytesPerRow: width);
+        final meta = InputImageMetadata(size: size, rotation: rotation, format: InputImageFormat.nv21, bytesPerRow: width);
         return InputImage.fromBytes(bytes: bytes, metadata: meta);
 
       case YuvPixelFormat.bgra8888:
         // pack() is a no-op copy when already tight, so this only allocates
         // a second time for a genuinely padded source.
         final tight = copy().pack();
-        final meta = InputImageMetadata(
-          size: size,
-          rotation: InputImageRotation.rotation0deg,
-          format: InputImageFormat.bgra8888,
-          bytesPerRow: width * 4,
-        );
+        final meta = InputImageMetadata(size: size, rotation: rotation, format: InputImageFormat.bgra8888, bytesPerRow: width * 4);
         return InputImage.fromBytes(bytes: tight.yPlane.bytes, metadata: meta);
     }
   }

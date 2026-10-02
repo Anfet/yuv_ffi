@@ -32,5 +32,14 @@ used by the ML Kit camera example and mirrors front-camera output. Desktop and
 Web frames are upright and unmirrored. iOS is currently also treated as upright
 and unmirrored; this rule has not yet been verified on a physical iOS device.
 
+`YuvCameraView` renders through the shader presenter, exposes current geometry,
+throttles independent `onFrame` processing, and captures the next frame that is
+actually drawn. `YuvTransformView` is the synchronous transform variant. The
+camera screen sends raw frames plus their rotation to ML Kit and maps upright
+face boxes through the display geometry. Its speed button runs the blur stand
+once per second. The current fallback runs that native operation on the UI
+isolate (the image/native handle is not transferable); on Web `compute` would
+also use the main thread, so a temporary preview pause is expected.
+
 For package setup, API migration, and platform/backend limitations, see the
 [package README](../README.md).
