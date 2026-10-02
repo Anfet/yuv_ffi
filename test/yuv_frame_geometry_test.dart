@@ -44,13 +44,21 @@ void main() {
   test('contain and cover place the destination and visible source according to alignment', () {
     final contain = YuvFrameGeometry(sourceSize: const Size(4, 2), viewSize: const Size(8, 8));
     final cover = contain.copyWith(fit: YuvFrameFit.cover);
-    final topLeft = contain.copyWith(alignment: Alignment.topLeft);
 
     expect(contain.destinationRect, const Rect.fromLTWH(0, 2, 8, 4));
     expect(contain.visibleSourceRect, const Rect.fromLTWH(0, 0, 4, 2));
     expect(cover.destinationRect, const Rect.fromLTWH(-4, 0, 16, 8));
     expect(cover.visibleSourceRect, const Rect.fromLTWH(1, 0, 2, 2));
-    expect(topLeft.destinationRect, const Rect.fromLTWH(0, 0, 8, 4));
+
+    final placements = <(Alignment, Rect, Rect)>[
+      (Alignment.topLeft, const Rect.fromLTWH(0, 0, 8, 4), const Rect.fromLTWH(0, 0, 2, 2)),
+      (Alignment.center, const Rect.fromLTWH(0, 2, 8, 4), const Rect.fromLTWH(1, 0, 2, 2)),
+      (Alignment.bottomRight, const Rect.fromLTWH(0, 4, 8, 4), const Rect.fromLTWH(2, 0, 2, 2)),
+    ];
+    for (final (alignment, containDestination, coverSource) in placements) {
+      expect(contain.copyWith(alignment: alignment).destinationRect, containDestination);
+      expect(cover.copyWith(alignment: alignment).visibleSourceRect, coverSource);
+    }
   });
 
   test('requires positive sizes and a matching source image', () {
@@ -81,20 +89,26 @@ void main() {
     expect(source.toBgraBytes(), sourceBefore);
   });
 
-  test('apply equals the Canvas result for every orientation and supported source format', () async {
+  test('apply equals the visible Canvas pixels for every orientation and supported source format', () async {
     await YuvFfi.initialize();
-    for (final format in <YuvPixelFormat>[YuvPixelFormat.bgra8888, YuvPixelFormat.i420]) {
+    for (final (format, size) in <(YuvPixelFormat, Size)>[(YuvPixelFormat.bgra8888, const Size(3, 5)), (YuvPixelFormat.i420, const Size(4, 6))]) {
       for (final rotation in YuvImageRotation.values) {
         for (final mirrored in <bool>[false, true]) {
-          final source = YuvImage.fromRgbaBytes(_uniqueGrayscaleRgba(3, 5), width: 3, height: 5, format: format);
+          final source = YuvImage.fromRgbaBytes(
+            _colorNoiseRgba(size.width.toInt(), size.height.toInt()),
+            width: size.width.toInt(),
+            height: size.height.toInt(),
+            format: format,
+          );
           final orientation = YuvFrameOrientation(rotation: rotation, mirrored: mirrored);
+          final uprightSize = rotation.swapSize ? Size(size.height, size.width) : size;
           final geometry = YuvFrameGeometry(
             sourceSize: source.size,
-            viewSize: rotation.swapSize ? const Size(5, 3) : const Size(3, 5),
+            viewSize: Size(uprightSize.width, uprightSize.height + 2),
             orientation: orientation,
           );
 
-          final canvasBytes = await _drawSourceToView(source, geometry);
+          final canvasBytes = await _drawSourceToView(source, geometry, geometry.destinationRect);
           final applied = geometry.apply(source);
 
           expect(canvasBytes, _bgraToRgba(applied.toBgraBytes()), reason: '$format, $rotation, mirrored=$mirrored');
@@ -118,22 +132,21 @@ Uint8List _uniqueRgba(int width, int height) {
   return bytes;
 }
 
-Uint8List _uniqueGrayscaleRgba(int width, int height) {
+Uint8List _colorNoiseRgba(int width, int height) {
   final bytes = Uint8List(width * height * 4);
   for (var y = 0; y < height; y++) {
     for (var x = 0; x < width; x++) {
       final offset = (y * width + x) * 4;
-      final value = x * 30 + y * 40;
-      bytes[offset] = value;
-      bytes[offset + 1] = value;
-      bytes[offset + 2] = value;
+      bytes[offset] = (x * 61 + y * 17 + 13) & 0xff;
+      bytes[offset + 1] = (x * 29 + y * 73 + 41) & 0xff;
+      bytes[offset + 2] = (x * 47 + y * 37 + 97) & 0xff;
       bytes[offset + 3] = 255;
     }
   }
   return bytes;
 }
 
-Future<Uint8List> _drawSourceToView(YuvImage source, YuvFrameGeometry geometry) async {
+Future<Uint8List> _drawSourceToView(YuvImage source, YuvFrameGeometry geometry, Rect sampleRect) async {
   final sourceImage = await source.toImage();
   final recorder = PictureRecorder();
   final canvas = Canvas(recorder);
@@ -146,7 +159,15 @@ Future<Uint8List> _drawSourceToView(YuvImage source, YuvFrameGeometry geometry) 
   picture.dispose();
   final data = await rendered.toByteData(format: ImageByteFormat.rawRgba);
   rendered.dispose();
-  return data!.buffer.asUint8List();
+  final sourceBytes = data!.buffer.asUint8List();
+  final sampleWidth = sampleRect.width.toInt();
+  final sampleHeight = sampleRect.height.toInt();
+  final sample = Uint8List(sampleWidth * sampleHeight * 4);
+  for (var y = 0; y < sampleHeight; y++) {
+    final sourceOffset = ((sampleRect.top.toInt() + y) * geometry.viewSize.width.toInt() + sampleRect.left.toInt()) * 4;
+    sample.setRange(y * sampleWidth * 4, (y + 1) * sampleWidth * 4, sourceBytes, sourceOffset);
+  }
+  return sample;
 }
 
 Uint8List _bgraToRgba(Uint8List bgra) {

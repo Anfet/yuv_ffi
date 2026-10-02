@@ -46,6 +46,10 @@
    7. `visibleSourceRect` = `transformRect(viewToSource, destinationRect ∩ (0, 0, Vw, Vh))`.
 6. **`apply(source)`** = `orientation.applyTo(source.cropped(visibleSourceRect))`. Округление и нечётное начало делает
    сам `cropped()` (публичный crop их поддерживает, Q2 в `doc/api-abi-0.4-design.md`). Источник не меняется.
+   `apply()` — операция над данными, не снимок экрана: у 4:2:0 кадра, если видимая область нечётного размера или с
+   нечётным началом, crop/rotate пересчитывают U/V как среднее пикселей блока 2×2, и цвет может отличаться от
+   показанного (экран показывает каждый пиксель его собственным цветом, решение 6 в SHADER 2). Одно предложение об
+   этом — в dartdoc `apply`.
 7. **ML Kit** (dartdoc `uprightToView`, `example/README.md`): ML Kit получает сырой кадр и `orientation.rotation`;
    рамки переводит на экран `MatrixUtils.transformRect(geometry.uprightToView, box)`.
 8. **Файлы:** `lib/src/geometry/yuv_frame_geometry.dart` (все три типа), экспорт строкой в `lib/yuv_ffi.dart`.
@@ -70,7 +74,8 @@
       шире и выше кадра, `alignment` по углам; отказы из решения 4.
 - [ ] Тест «`apply()` = нарисованное»: кадр рисуется через `canvas.transform(sourceToView.storage)` + `drawImage`
       (`FilterQuality.none`) в масштабе 1:1 со сдвигом; видимая часть побайтно равна
-      `apply(frame).toBgraBytes()`. 8 ориентаций; I420 и BGRA; нечётный размер.
+      `apply(frame).toBgraBytes()`. Цветной шум (не серый: у серого U/V постоянны и ошибка цвета не видна);
+      8 ориентаций; BGRA нечётного размера (`3x5`) и I420 чётного размера (`4x6`).
 - [ ] `FaceRectPainter` на геометрии; `example/test` проходит.
 
 #### Validation
@@ -81,12 +86,25 @@
 - Probe `windows`: `flutter test --tags probe` — вердикты в отчёт.
 
 #### Executor Report
-- Реализованы `YuvFrameGeometry`, `YuvFrameOrientation` и `YuvFrameFit`; API экспортирован. `FaceRectPainter` и
-  `_ImageWidget` используют `uprightToView` из одной геометрии; README описывает контракт ML Kit.
-- `test/yuv_frame_geometry_test.dart`: 12 passed. Проверены восемь поворотов/зеркал, `contain`/`cover`, выравнивание,
-  отказы, независимость `apply()` и Canvas-пиксели для I420/BGRA.
-- `flutter analyze` — без warnings/errors (56 существующих info `library_annotations`); `flutter analyze` в `example/`
-  — passed; `pwsh -File tool/ci/vm.ps1` — 585/585 passed; `pwsh -File tool/ci/example.ps1` при
-  `FLUTTER_VERSION=3.44.9` — passed; `flutter test --tags probe` — 20 passed, 1 expected timing skip,
+- После `REWORK` исправлены замечания: `YuvFrameGeometry` документирует три пространства; dartdoc `apply()` объясняет
+  пересчёт chroma 4:2:0; для масштаба используются `dart:math`.
+- `test/yuv_frame_geometry_test.dart`: 12 passed. Проверены восемь поворотов/зеркал, contain/cover с тремя
+  выравниваниями, отказы, независимость `apply()` и цветной BGRA `3×5`/I420 `4×6` шум: Canvas рисуется с
+  `FilterQuality.none` в масштабе 1:1 со сдвигом, видимые пиксели совпадают с `apply()`.
+- `flutter analyze --no-fatal-infos` — без warnings/errors (58 существующих `library_annotations` info);
+  `pwsh -File tool/ci/vm.ps1` — 600/600 passed; `pwsh -File tool/ci/example.ps1` при `FLUTTER_VERSION=3.44.9` —
+  analyze и Web build passed; `flutter test --tags probe` — 20 passed, 1 expected timing skip,
   `PROBE scope: ops=all formats=all cases=1188/1188`.
 #### Review
+```text
+Pool: STAGE4-VIEW; GEOM 1
+Outcome: REWORK
+Reviewed-Head: 92a7162
+Merged-Head: none
+Fixed: none
+Blocking: тест «apply() = нарисованное» на сером кадре (_uniqueGrayscaleRgba) не проверяет U/V — перевести на
+  цветной шум по DoD (BGRA 3x5, I420 4x6, 8 ориентаций); dartdoc apply — предложение из решения 6.
+Advisory: в тестах нет 1:1 со сдвигом, view шире кадра и alignment кроме topLeft (DoD); описание трёх пространств
+  стоит в dartdoc YuvFrameOrientation, а не YuvFrameGeometry (решение 1); _min/_max — заменить на dart:math.
+```
+Формулы 1–7, `uprightToView`, пример и README проверены — верны.

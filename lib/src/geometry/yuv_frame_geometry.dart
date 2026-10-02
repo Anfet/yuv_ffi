@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart' show Alignment, Matrix4, MatrixUtils;
@@ -39,6 +40,10 @@ final class YuvFrameOrientation {
 enum YuvFrameFit { contain, cover }
 
 /// Maps a frame between source, upright, and view coordinate spaces.
+///
+/// Source coordinates are pixels as the frame arrived. Upright coordinates are
+/// source pixels after rotation but before mirroring. View coordinates are the
+/// logical pixels of the widget that displays the frame.
 ///
 /// ML Kit receives the raw source with [YuvFrameOrientation.rotation] in its
 /// metadata. Its upright bounding boxes map to the display with
@@ -82,8 +87,8 @@ final class YuvFrameGeometry {
 
   late final Size _uprightSize = orientation.rotation.swapSize ? Size(sourceSize.height, sourceSize.width) : sourceSize;
   late final double _scale = switch (fit) {
-    YuvFrameFit.contain => _min(viewSize.width / _uprightSize.width, viewSize.height / _uprightSize.height),
-    YuvFrameFit.cover => _max(viewSize.width / _uprightSize.width, viewSize.height / _uprightSize.height),
+    YuvFrameFit.contain => math.min(viewSize.width / _uprightSize.width, viewSize.height / _uprightSize.height),
+    YuvFrameFit.cover => math.max(viewSize.width / _uprightSize.width, viewSize.height / _uprightSize.height),
   };
   late final double _translationX = (viewSize.width - _uprightSize.width * _scale) * (alignment.x + 1) / 2;
   late final double _translationY = (viewSize.height - _uprightSize.height * _scale) * (alignment.y + 1) / 2;
@@ -103,6 +108,10 @@ final class YuvFrameGeometry {
 
   /// Returns an independent image containing the visible source area, with
   /// the configured rotation and mirror applied.
+  ///
+  /// This is a data operation rather than a screenshot: for 4:2:0 frames an
+  /// odd crop size or origin recomputes chroma from 2×2 pixel blocks, so its
+  /// colors can differ from pixels shown on screen.
   YuvImage apply(YuvImage source) {
     if (source.size != sourceSize) {
       throw ArgumentError.value(source.size, 'source', 'must match sourceSize.');
@@ -158,7 +167,3 @@ Matrix4 _affine({double a = 1, double b = 0, double c = 0, double d = 1, double 
   ..setEntry(1, 0, c)
   ..setEntry(1, 1, d)
   ..setEntry(1, 3, ty);
-
-double _min(double left, double right) => left < right ? left : right;
-
-double _max(double left, double right) => left > right ? left : right;
