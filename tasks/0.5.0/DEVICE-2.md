@@ -1,5 +1,5 @@
 # DEVICE 2 — Прогон на Pixel 3, разбор и удаление прототипа VIEW-04
-**Status:** REVIEW · **Tier:** T2 · **Owner:** DEVICE 1 · **Depends On:** DEVICE 1 · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** DEVICE 1 · **Probe:** none
 
 #### Goal
 Engineer проходит экран проверки DEVICE 1 на Pixel 3 в release и присылает JSON. Исполнитель разбирает его по
@@ -278,3 +278,19 @@ DEVICE 2 разбирает прогон 2 по той же таблице и �
 Итог повторного прогона: **PASS**. Прототип VIEW-04 и его shader/entrypoints удалены; `CameraImageExt.toYuvImage`
 сохранён — его используют действующие camera и integration tests. Проверки после удаления: `flutter analyze` — clean,
 `flutter test` в `example/` — 44 passed, `pwsh -File tool/ci/example.ps1` — PASS; поиск `view04` в `example/` пуст.
+
+Повторное ревью 02.10.2026:
+```text
+Pool: STAGE5-DEVICE; DEVICE 2
+Outcome: ACCEPTED
+Reviewed-Head: 7182196 + правки Reviewer (не закоммичены)
+Merged-Head: none
+Fixed: todo.md — ссылка на удалённые стенды view04 заменена ссылкой на коммит fb6687c; doc/perf-findings.md —
+  формулировка причины удаления (по итогу PASS, а не «потому что FPS выше»).
+Blocking: none
+Advisory: none
+```
+Таблица критериев по прогону 2 (`053307e`) проверена по JSON: все строки PASS. Снимок в портрете 474×720 согласуется
+с cover для 480×720 upright. Прототип удалён по решению 5; `toYuvImage` оставлен обоснованно (его используют
+`camera_desktop_smoke_main.dart` и `ios_bgra_camera_frame_test.dart`); ссылки в `doc/view04-yuv-shader.md` ведут на
+`fb6687c`, где файлы ещё есть. Поиск `view04` в `example/` пуст.

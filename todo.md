@@ -37,7 +37,7 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
-| Устройство этапа 5 (`STAGE5-DEVICE`) | DEVICE 1 → DEVICE 2 | T2 / T2 | `example/STAGE5-DEVICE` / `.worktrees/STAGE5-DEVICE` | DEVICE 2 — прогон Engineer на Pixel 3 | DEVICE 1 в REVIEW после доработки; затем повторный прогон Engineer для DEVICE 2 |
+| Устройство этапа 5 (`STAGE5-DEVICE`) | DEVICE 1 → DEVICE 2 | T2 / T2 | `example/STAGE5-DEVICE` / `.worktrees/STAGE5-DEVICE` | DEVICE 2 — прогон Engineer на Pixel 3 | принят на `7182196`; слияние в `dev` — по команде Engineer |
 
 ## Дашборд
 
@@ -65,8 +65,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | REVIEW | T2 | — | CAMERA 2 | **Экран проверки на устройстве.** Доработка принята в пул: capture ждёт Yes/No вне списка готовых результатов; добавлен регрессионный тест, ландшафтный footer сжат. |
-| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | REVIEW | T2 | DEVICE 1 | DEVICE 1 | **Прогон на Pixel 3 и разбор.** Повторный прогон PASS: 29,8 / 28,9 FPS, blur 13 за 15 с, лица 1,0 / 1,0, capture 474×720 подтверждён; VIEW-04 удалён. |
+| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | ACCEPTED | T2 | — | CAMERA 2 | **Экран проверки на устройстве.** Принята на `7182196`; вопрос последнего шага исправлен. |
+| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | ACCEPTED | T2 | — | DEVICE 1 | **Прогон на Pixel 3 и разбор.** Прогон 2 (`053307e`) — PASS по всем критериям: 29,8 / 28,9 кадра/с без и с обработкой (VIEW-04 был 20,4–21,1); прототип VIEW-04 удалён. |
 
 ### Параллельно
 
@@ -179,7 +179,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 ## Основание для этапа 4
 
-Исследование VIEW-04 ([`doc/view04-yuv-shader.md`](doc/view04-yuv-shader.md), стенды `example/lib/view04_*.dart`):
+Исследование VIEW-04 ([`doc/view04-yuv-shader.md`](doc/view04-yuv-shader.md), стенды удалены в DEVICE 2, исходники — `git show fb6687c:example/lib/view04_draw_bench.dart`):
 Pixel 3, release, живая фронтальная камера 720×480 — текущий путь показывает 20,4–21,1 из 30 кадров/с (~22 мс на
 кадр), прототип шейдера — 29,8–29,9 (~6,5 мс); выход шейдера совпадает с CPU-путём попиксельно.
 

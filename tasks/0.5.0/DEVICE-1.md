@@ -1,5 +1,5 @@
 # DEVICE 1 — Экран проверки на устройстве в example
-**Status:** REVIEW · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 2 · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 2 · **Probe:** none
 
 #### Goal
 Этап 5 проверяет на настоящем телефоне то, что не видят CI и интеграционные тесты: FPS живого превью в release, в том
@@ -133,3 +133,18 @@ Executor rework 02.10.2026:
 - `flutter test` в `example/`: 43 passed; `flutter analyze` и `pwsh -File tool/ci/example.ps1`: clean. Pixel 3 release,
   SHA `053307e`: `DEVICE-1 ready {"build_mode":"release","shader":true}` есть в logcat. Device 2 ждёт повторного
   ручного прогона.
+
+Повторное ревью 02.10.2026:
+```text
+Pool: STAGE5-DEVICE; DEVICE 1
+Outcome: ACCEPTED
+Reviewed-Head: 7182196
+Merged-Head: none
+Fixed: none
+Blocking: none
+Advisory: AppBar убран во всех ориентациях, не только в альбомной — в портрете нет кнопки «назад» (остаётся
+  системный жест); на результат проверки не влияет.
+```
+Ответ ждёт в `_pendingResult`, итог открывается только после ответа; тест последнего шага проверяет Yes/No и
+`capture.answer` в JSON. Прогон 2 Engineer это подтверждает (`capture.answer == true`). Перепрогон Reviewer:
+`example/` `flutter analyze` — no issues, `flutter test` — 44 passed.
