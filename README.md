@@ -131,6 +131,24 @@ presenter.present(image);
 final view = YuvFrameView(presenter: presenter);
 ```
 
+### Frame geometry and ML Kit
+
+`YuvFrameGeometry` keeps source pixels, ML Kit's upright pixels, and widget
+pixels in separate coordinate spaces. Give ML Kit the raw frame with
+`orientation.rotation`, then map its bounding boxes through
+`MatrixUtils.transformRect(geometry.uprightToView, box)`. Mirroring is applied
+only after rotation, so the preview and overlay stay aligned.
+
+```dart
+final geometry = YuvFrameGeometry(
+  sourceSize: frame.size,
+  viewSize: widgetSize,
+  orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90, mirrored: true),
+  fit: YuvFrameFit.cover,
+);
+final displayedFrame = geometry.apply(frame);
+```
+
 ## Formats and plane layout
 
 `YuvPixelFormat.i420` stores separate Y, U, and V planes.

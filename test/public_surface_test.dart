@@ -41,6 +41,9 @@ void main() {
       expect(image.height, 4);
     }
 
+    final geometry = YuvFrameGeometry(sourceSize: const ui.Size(4, 4), viewSize: const ui.Size(8, 8));
+    expect(geometry.destinationRect, const ui.Rect.fromLTWH(0, 0, 8, 8));
+
     // YuvImage.fromRgbaBytes() type-checks the same way. Its factory body
     // always converts through the real backend (no capability gate on this
     // path), so it succeeds on a host with a real native/WASM library and

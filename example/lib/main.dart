@@ -307,25 +307,29 @@ class _ImageWidget extends StatelessWidget {
 
     final i = image!;
 
-    return FittedBox(
-      fit: BoxFit.contain,
-      alignment: Alignment.center,
-      clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        width: i.width.toDouble(),
-        height: i.height.toDouble(),
-        child: Stack(
-          clipBehavior: Clip.antiAlias,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final geometry = YuvFrameGeometry(sourceSize: i.size, viewSize: constraints.biggest);
+        return Stack(
           fit: StackFit.expand,
           children: [
-            YuvImageWidget(image: i, boxFit: BoxFit.none),
+            FittedBox(
+              fit: BoxFit.contain,
+              alignment: Alignment.center,
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                width: i.width.toDouble(),
+                height: i.height.toDouble(),
+                child: YuvImageWidget(image: i, boxFit: BoxFit.none),
+              ),
+            ),
             if (faceBox != null)
               CustomPaint(
-                painter: FaceRectPainter(rect: faceBox!, image: i, strokeWidth: 10),
+                painter: FaceRectPainter(rect: faceBox!, geometry: geometry, strokeWidth: 10),
               ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

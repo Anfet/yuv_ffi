@@ -1,24 +1,83 @@
 # PATCH 1 — Вставка фрагмента в изображение
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** — · **Depends On:** GEOM 1
+**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** windows
 
 #### Goal
-Перенесено из `todo-0.4.3.md` (карточка PATCH-00; файл удалён, история — в git) без изменений.
+Было PATCH-00 (план 0.4.3; файл удалён, история — в git). Непрозрачная вставка одного `YuvImage` в область другого:
+`cropped(region) → rotated(rotation) → applyPatch(fragment, x: ..., y: ...)`. Источник вставляется целиком в
+целочисленные координаты назначения без масштабирования и смешивания. Одинаковые форматы; выход за границы
+отклоняется, а не обрезается. tight, padded и pixel-gapped layout. Ошибка оставляет содержимое и revision без
+изменений; успешная вставка повышает revision ровно один раз. Стоимость небольшой вставки замеряется на устройстве
+до решения о native-реализации. `srcIn/srcOut`, альфа, масштабирование и попиксельное рисование — не в задаче.
 
-Добавить непрозрачную вставку одного `YuvImage` в область другого: `cropped(region) → rotated(rotation) → applyPatch(fragment, x: ..., y: ...)`.
-
-Предполагаемый контракт: источник вставляется целиком в целочисленные координаты назначения без масштабирования и смешивания с прозрачностью. Первая версия принимает одинаковые форматы и отклоняет выход за границы вместо неявного обрезания. Для I420/NV12 необходимо явно определить и проверить выравнивание границ по блокам chroma 2×2; нечётные внешние размеры изображения не должны приводить к чтению или записи за пределами плоскостей.
-
-Приёмка: вставленный фрагмент совпадает с источником, остальные видимые пиксели и padding назначения сохраняются; поддержаны tight, padded и pixel-gapped layout. Ошибка оставляет содержимое и revision без изменений; успешная вставка повышает revision ровно один раз. Проверить на BGRA, I420 и NV12, включая фрагмент после поворота на 90° и границы нечётного кадра. Замерить стоимость небольшой вставки на устройстве до выбора native-реализации.
-
-При проектировании публичного API сохранить совместимость с внешними `implements YuvImage`: добавление обязательного метода в интерфейс требует отдельного решения о версии API. `srcIn/srcOut`, альфа-смешивание, масштабирование и попиксельное рисование не входят в задачу.
+Отдельный пул этапа 4: с пулом «показ кадров» не пересекается, кроме строки экспорта в `lib/yuv_ffi.dart` и записи
+в `CHANGELOG.md`.
 
 #### Architect Decision
-Черновик из плана 0.5.0 (раздел Goal). Architect уточняет решение, Scope, Constraints, Definition of Done и
-Validation при старте этапа; до этого карточка не исполняется.
+1. **Зависимость от GEOM 1 снята.** Общего правила 2×2 с геометрией нет: `YuvFrameGeometry.apply` режет кадр точно по
+   видимой области, а публичный crop поддерживает нечётное начало (`doc/api-abi-0.4-design.md`, Q2). Правило
+   выравнивания ниже принадлежит только вставке.
+2. **API — расширение, не метод интерфейса:**
+   ```dart
+   extension YuvImagePatch on YuvImage {
+     YuvImage applyPatch(YuvImage fragment, {required int x, required int y});
+   }
+   ```
+   `lib/src/yuv/shared/yuv_patch.dart`, экспорт `show YuvImagePatch` строкой в `lib/yuv_ffi.dart` — как
+   `YuvImagePack`. Добавление метода в `abstract interface class YuvImage` сломало бы внешние `implements YuvImage`;
+   расширение работает с любым `YuvImage` через `planes` и `markDirty()`.
+3. **Реализация — чистый Dart над плоскостями назначения**, без native (D-17) и без копии всего кадра: запись прямо
+   в `planes[i].bytes` назначения, затем `YuvRevision.bump(this)` один раз. Строка — `setRange`, когда у обеих сторон
+   `pixelStride == sampleBytes`; иначе посэмпльно. Пишутся только видимые сэмплы; row padding и байты pixel gap
+   назначения не трогаются. На Web тот же код: плоскости обоих backend-ов — память Dart (`YuvImageState`).
+4. **Проверки до первой записи** (все — `ArgumentError`, сообщение называет правило):
+   - `fragment.format == format`;
+   - `identical(fragment, this)` запрещено;
+   - `x >= 0`, `y >= 0`, `x + fragment.width <= width`, `y + fragment.height <= height`;
+   - I420/NV12 — **правило chroma 2×2**: `x` и `y` чётные; `fragment.width` чётная или `x + fragment.width == width`;
+     `fragment.height` чётная или `y + fragment.height == height`. Тогда каждый chroma-сэмпл назначения в области
+     вставки покрыт только пикселями фрагмента, и chroma копируется блоками `[x/2, x/2 + ceil(w/2))` ×
+     `[y/2, y/2 + ceil(h/2))` из `[0, ceil(w/2)) × [0, ceil(h/2))` фрагмента без пересчёта. Нечётная ширина у правого края
+     назначения ложится на его неполный последний chroma-столбец — за плоскость не выходит.
+   - BGRA — без выравнивания.
+   После проверок запись не может бросить, поэтому частичного состояния нет.
+5. **Revision:** успех — ровно +1 (и для внешнего `implements YuvImage` через `Expando`); отказ — без изменений.
+   Источник (`fragment`) не меняется.
+6. **Замер до решения о native.** Pixel 3, release: вставка 64×64 и 256×256 в 1920×1080, I420/NV12/BGRA, tight и
+   padded, медиана из 30 после 5 прогревов, подготовка вне таймера. Временная точка входа в `example/` не
+   коммитится; вывод — в `doc/perf-findings.md`. Если 256×256 в tight I420 дольше 2 мс, Executor пишет в отчёт
+   рекомендацию о native-карточке; сама native-реализация не входит в задачу.
 
 #### Scope
+- Создать `lib/src/yuv/shared/yuv_patch.dart`; экспорт в `lib/yuv_ffi.dart`.
+- `test/yuv_image_patch_test.dart` (тег `contract`).
+- `README.md` — раздел о вставке с правилом 2×2 и примером `cropped → rotated → applyPatch`;
+  `CHANGELOG.md` — `0.5.0-dev.1`; `doc/perf-findings.md` — вывод замера; `test/public_surface_test.dart`.
+
 #### Constraints
+- Native и `lib/src/yuv/impl/**` не трогать. Интерфейс `YuvImage` не менять.
+- Ветка пула от `dev`; при параллельном пуле «показ кадров» конфликт возможен только в `lib/yuv_ffi.dart` и
+  `CHANGELOG.md` — интеграцию после слияния соседнего пула делает Executor, не Reviewer.
+
 #### Definition of Done
+- [ ] API и правила — по решениям 2–5.
+- [ ] Тесты: для I420, NV12 и BGRA — вставка в (0,0), во внутреннюю чётную позицию и к правому нижнему краю
+      нечётного кадра; один случай с padded и один с gap layout (у назначения и у фрагмента); фрагмент после
+      `rotated(rotation90)`. Ожидание — посэмпльный оракул в тесте: вставленная
+      область равна фрагменту, остальные видимые сэмплы и все байты padding/gap назначения не изменились.
+- [ ] Отказы: другой формат, `identical`, выход за любую границу, отрицательные координаты, нечётные `x`/`y` (YUV),
+      нечётная ширина/высота не у края (YUV) → `ArgumentError`; байты и revision назначения не изменились.
+- [ ] Revision +1 на успех; внешний `implements YuvImage` (тестовый fake) получает вставку и +1 через `revision`.
+- [ ] Замер решения 6 — в отчёте и `doc/perf-findings.md`, с рекомендацией по native.
+- [ ] README/CHANGELOG/public surface обновлены.
+
 #### Validation
+Ключи: `lib/*` → `vm example`, `test/*` → `vm`. Ветка пула — `vm+example/STAGE4-PATCH`.
+
+- `dart format --line-length 150`; `flutter analyze`.
+- `pwsh -File tool/ci/vm.ps1`, `pwsh -File tool/ci/example.ps1`.
+- `flutter test test/yuv_image_patch_test.dart` — число тестов в отчёт.
+- Probe `windows`: `flutter test --tags probe` — вердикты в отчёт.
+- Pixel 3 release — замер решения 6.
+
 #### Executor Report
 #### Review

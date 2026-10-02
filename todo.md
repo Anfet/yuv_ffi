@@ -16,7 +16,7 @@
 | **1. Тест-сьют** | TEST 1…7 | теги работают, эталон сверен с libyuv, дубли убраны, вывод тихий |
 | **2. Пробы и скорость** | PROBE 1, PROBE 2 | базовые линии 0.4.0 и `dev` сняты в release; правило проб в `AGENTS.md` |
 | **3. Уборка** | CLEAN 1, CLEAN 2, SPM 1…4 | в example нет стендов прошлых замеров; устаревшего API нет; SPM собирается |
-| **4. Функциональность** | GEOM 1, PATCH 1, SHADER 1, PRESENT 1, CAMERA 1, CAMERA 2 | всё принято и влито в `dev` |
+| **4. Функциональность** | GEOM 1, PATCH 1, SHADER 1…3, PRESENT 1, CAMERA 1, CAMERA 2 | всё принято и влито в `dev` |
 | **5. Проверка на устройстве** | DEVICE 1 | Pixel 3 в release: FPS, рамки лиц, «снимок = видимое» |
 | **6. Релизный цикл** | RELEASE 1 (карточка — при старте этапа) | финальный гейт пройден, Engineer подписал |
 | **Параллельно** | WEB 1, WEB 2 | не блокируют этапы |
@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); macOS и iOS CI на `bae5ff8` зелёные, полный CI Engineer отменил.
+- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); macOS и iOS CI на `bae5ff8` зелёные, полный CI Engineer отменил. Этап 3 завершён. **Этап 4 открыт** по команде Engineer 02.10.2026: Architect расписал карточки, к запуску готовы пулы `STAGE4-VIEW` (GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1) и `STAGE4-PATCH` (PATCH 1).
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Пулы задач
@@ -37,6 +37,9 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
+| Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | не запущен |
+| Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — (параллельно с `STAGE4-VIEW` допустимо: общие только строка экспорта в `lib/yuv_ffi.dart` и `CHANGELOG.md`) | не запущен |
+| Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` влит в `dev` | не запущен |
 
 ## Дашборд
 
@@ -58,12 +61,14 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [GEOM 1](tasks/0.5.0/GEOM-1.md) | BLOCKED | T1 | этап 3 | CLEAN 2 | **Геометрия кадра `FrameGeometry`.** Ориентация, вписывание, зум, обрезка кадра по видимой области; рамки и оверлеи из одного источника. |
-| [PATCH 1](tasks/0.5.0/PATCH-1.md) | BLOCKED | T2 | этап 3 | GEOM 1 | **Вставка фрагмента в изображение.** Было PATCH-00 (план 0.4.3). Общее с GEOM 1 правило выравнивания 2×2. |
-| [SHADER 1](tasks/0.5.0/SHADER-1.md) | BLOCKED | T1 | этап 3 | GEOM 1 | **YUV-шейдер в пакете.** По прототипу VIEW-04; проверка «шейдер против CPU» — операцией пробы на всех платформах. |
-| [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | BLOCKED | T2 | этап 3 | GEOM 1, SHADER 1 | **Режимы показа кадров в презентере.** Ориентация при рисовании и шейдерный путь; только добавления в API. |
-| [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | BLOCKED | T2 | этап 3 | CLEAN 1, PRESENT 1 | **Источник кадров камеры в example** (D-13). Одна логика потока, `CameraFrame` с ленивым `upright()`. |
-| [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | BLOCKED | T2 | этап 3 | CAMERA 1 | **Виджеты камеры в example.** `YuvCameraView` и `YuvTransformView`; `CameraScreen` на новом API. |
+| [GEOM 1](tasks/0.5.0/GEOM-1.md) | REVIEW | T2 | Reviewer | CLEAN 2 | **Геометрия кадра `YuvFrameGeometry`.** Реализована и ждёт ревью; проверки VM/example/probe прошли. |
+| [PATCH 1](tasks/0.5.0/PATCH-1.md) | TODO | T2 | — | — | **Вставка фрагмента `applyPatch`.** Расширение, чистый Dart, правило chroma 2×2 своё (зависимость от GEOM 1 снята); замер на Pixel 3. Пул `STAGE4-PATCH`. |
+| [SHADER 1](tasks/0.5.0/SHADER-1.md) | TODO | T2 | — | — | **Раскладка плоскостей в одну текстуру.** Чистый Dart `YuvPlanesTexture.pack`: таблица раскладок, тест читает каждый пиксель по адресации шейдера. Пул `STAGE4-VIEW`. |
+| [SHADER 2](tasks/0.5.0/SHADER-2.md) | BLOCKED | T2 | SHADER 1 | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Эталонный GLSL и uniform-ы в карточке, BGRA-запасной путь, короткая проба на Windows. Пул `STAGE4-VIEW`. |
+| [SHADER 3](tasks/0.5.0/SHADER-3.md) | BLOCKED | T2 | SHADER 2 | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Полная матрица, Pixel 3; сбои — по вариантам A/B/C с признаками. Пул `STAGE4-VIEW`. |
+| [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | BLOCKED | T2 | SHADER 3 | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** `YuvFrameRendering.shader`, ориентация в `present`, вписывание в `YuvFrameView`; только добавления; замер на Pixel 3. Пул `STAGE4-VIEW`. |
+| [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | BLOCKED | T2 | GEOM 1 | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). Одна IO-реализация + Web, `YuvCameraFrame` с ленивым импортом без расчередования, ориентация по формуле ML Kit. Пул `STAGE4-CAMERA` после `STAGE4-VIEW`. |
+| [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | BLOCKED | T2 | CAMERA 1 | CAMERA 1, PRESENT 1 | **Виджеты камеры.** `YuvCameraView` (шейдер, `onFrame` с прореживанием, `capture()` = видимое), `YuvTransformView`; `CameraScreen` с рамками лиц; старое превью удаляется. Пул `STAGE4-CAMERA`. |
 
 ### Этап 5 — проверка на устройстве
 
@@ -75,7 +80,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [WEB 1](tasks/0.5.0/WEB-1.md) | BLOCKED | T1 | SHADER 1 | SHADER 1 | **Веб: кадры камеры в YUV без RGBA.** Исследование `VideoFrame.copyTo()` в I420/NV12 и шейдера на вебе. |
+| [WEB 1](tasks/0.5.0/WEB-1.md) | BLOCKED | T1 | SHADER 3 | SHADER 3 | **Веб: шейдер и кадры камеры в YUV.** Шейдерная проба в Chrome решает, включать ли шейдер на вебе; `VideoFrame.copyTo()` в исходном формате — исследование с рекомендацией. Старт после слияния `STAGE4-VIEW`. |
 | [WEB 2](tasks/0.5.0/WEB-2.md) | BLOCKED | T2 | Engineer | — | **Веб: паритет WASM с native.** Было WAIT-01. Черновик: старт — по решению Engineer, до постановки Architect дописывает карточку. |
 
 ## Открытые вопросы
@@ -168,6 +173,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | D-17 | 01.10.2026 | Native C (`src/`) меняется только как работа задачи: изменение явно описано в Architect Decision карточки (что и зачем) или сама задача — native-изменение с известным решением. Пробные, экспериментальные и временные правки `src/` ради тестов и проверок не делаются. Одобренная Engineer карточка — это и есть разрешение. |
 | D-16 | 01.10.2026 | Полный CI для работы в `dev` — пачками, без правки workflow: принятые карточки сливаются в ветку `ci/<пачка>` от `dev`, её push запускает полный CI (`ci/**` — триггер D-9); зелёная пачка сливается в `dev`, карточки получают `DONE`. Красная — виновник ищется локальными прогонами, его карточка уходит на доработку, остальные повторяют пачку. `dev` в триггеры не добавляется. |
 | D-18 | 01.10.2026 | Для новых пулов D-16 заменён порядком: один Executor выполняет упорядоченные карточки пула в общей ветке, один Reviewer принимает результат и при чистом fast-forward сливает его в `dev`; карточки получают `DONE` на слиянии. При необходимости полный CI запускается после слияния на точном SHA через `ci/<ID-пула>`, не задерживает старт следующего пула, но остаётся обязательным гейтом выхода из этапа/релиза. При отказе Watcher сообщает Orchestrator, тот сам заполняет карточку CI с SHA, run/job, упавшим шагом и фрагментом ошибки в конце этапа упавшего пула и сообщает Engineer. Только по команде Engineer отдельный Executor расследует отказ; Architect в обычном маршруте не участвует. |
+| D-19 | 02.10.2026 | `zoom`, `focus` и `crop` геометрии кадра (план GEOM 1) перенесены до появления потребителя: на этапе 4 их никто не использует. Зум превью — `CameraController.setZoomLevel()`, часть кадра на экране — `cover` + `alignment`, вырезание данных — `cropped()`/`applyCrop()`. |
 | D-15 | 01.10.2026 | 0.4.2 не публикуется, поэтому её записи в `CHANGELOG.md` объединяются с записью 0.5.0: одна запись с миграцией от 0.4.0 / 0.2.4. Делается при первом повышении версии до `0.5.0-dev.1`. |
 
 Действуют и решения цикла 0.4.2:

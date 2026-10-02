@@ -37,6 +37,9 @@
   preserving visible samples, format, geometry, and orientation.
 - Added `YuvFramePresenter` and `YuvFrameView` for displaying a stream of
   `YuvImage` frames with one frame in flight.
+- Added `YuvFrameGeometry`, `YuvFrameOrientation`, and `YuvFrameFit` for
+  source, upright, and view coordinate mapping, including ML Kit overlays and
+  visible-frame extraction.
 
 ### Changes
 
