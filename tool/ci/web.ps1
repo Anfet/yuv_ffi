@@ -15,18 +15,22 @@ function Start-WebDriver {
   $driverProcess = Start-Process -FilePath $DriverPath -ArgumentList '--port=4444' -WindowStyle Hidden -PassThru
   try {
     $deadline = (Get-Date).AddSeconds(15)
+    $isReady = $false
     do {
       try {
         if ((Invoke-RestMethod -Uri 'http://127.0.0.1:4444/status' -TimeoutSec 2).value.ready) {
-          & $Action
-          return
+          $isReady = $true
+          break
         }
       } catch {
         Start-Sleep -Seconds 1
       }
     } while ((Get-Date) -lt $deadline)
 
-    throw 'ChromeDriver did not become ready on port 4444'
+    if (-not $isReady) {
+      throw 'ChromeDriver did not become ready on port 4444'
+    }
+    & $Action
   } finally {
     if ($driverProcess -and -not $driverProcess.HasExited) {
       Stop-Process -Id $driverProcess.Id -Force
@@ -177,6 +181,10 @@ try {
     }
   }
   Invoke-CiNativeCommand git restore --worktree -- example/windows/flutter/generated_plugin_registrant.cc example/windows/flutter/generated_plugin_registrant.h example/windows/flutter/generated_plugins.cmake
+  & git add --refresh -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
+  if ($LASTEXITCODE -ne 0) {
+    throw "Could not refresh WASM asset index state: $LASTEXITCODE"
+  }
   $publishOutput = & flutter pub publish --dry-run 2>&1
   if ($LASTEXITCODE -ne 0) {
     $publishOutput | Write-Output

@@ -208,7 +208,7 @@ final class YuvWasmLoader {
       ..src = scriptPath
       ..async = true
       ..defer = true
-      ..dataset['yuv-ffi-wasm-loader'] = '1';
+      ..dataset['yuvFfiWasmLoader'] = '1';
 
     script.onLoad.listen((_) {
       if (!completer.isCompleted) {
