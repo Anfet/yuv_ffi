@@ -1,5 +1,5 @@
 # SHADER 3 — Проба «шейдер против CPU» на всех платформах
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor (T2) · **Depends On:** SHADER 2 · **Probe:** windows+pixel3
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** SHADER 2 · **Probe:** windows+pixel3
 
 #### Goal
 Расширить короткую пробу SHADER 2 и прогнать её на всех native-платформах, включая Pixel 3. Расхождения устранить по
@@ -49,4 +49,21 @@
 - Probe `windows+pixel3`: Windows — в `tool/ci/windows.ps1`; Pixel 3 arm64 — Reviewer.
 
 #### Executor Report
+- Матрица расширена по решению 2: три layout, четыре размера, все 8 ориентаций на малых кадрах, upright и
+  rotation270+mirror на больших, padding, scale ×2 и contain с прозрачными полями.
+- Максимумы расхождения:
+
+  | Платформа | 3×5 | 33×17 | 720×480 | 1920×1080 | padding / ×2 / contain |
+  | --- | --- | --- | --- | --- | --- |
+  | Windows | ≤1 | ≤1 | ≤1 | ≤1 | ≤1 |
+  | Android emulator | ≤1 | ≤1 | ≤1 | ≤1 | ≤1 |
+  | Pixel 3 arm64 | ≤1 | ≤1 | ≤1 | ≤1 | ≤1 |
+  | macOS | ≤1 | ≤1 | ≤1 | ≤1 | ≤1 |
+  | iOS Simulator | ≤1 | ≤1 | ≤1 | ≤1 | ≤1 |
+
+- `tool/ci/windows.ps1`, `tool/ci/android.ps1`, `tool/ci/example.ps1` прошли; на Mac `macos.sh` и `ios.sh` прошли,
+  включая shader probe на macOS и iOS Simulator. Linux остаётся post-merge CI pending по карточке.
+- Негативный контроль на Windows: временная перестановка `uU`/`uV` упала на первом I420 `3×5` с
+  `max_diff = 255`; нормативные строки восстановлены, повторная положительная probe прошла.
+- Варианты A/B/C не понадобились: признаков потери precision, искажения четвёртого байта или ошибки масштаба нет.
 #### Review
