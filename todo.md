@@ -17,7 +17,7 @@
 | **2. Пробы и скорость** | PROBE 1, PROBE 2 | базовые линии 0.4.0 и `dev` сняты в release; правило проб в `AGENTS.md` |
 | **3. Уборка** | CLEAN 1, CLEAN 2, SPM 1…4 | в example нет стендов прошлых замеров; устаревшего API нет; SPM собирается |
 | **4. Функциональность** | GEOM 1, PATCH 1, SHADER 1…3, PRESENT 1, CAMERA 1, CAMERA 2, WEB 3 | все карточки влиты в `dev` (`00a82aa`); post-merge CI pending
-| **5. Проверка на устройстве** | DEVICE 1 | Pixel 3 в release: FPS, рамки лиц, «снимок = видимое» |
+| **5. Проверка на устройстве** | DEVICE 1, DEVICE 2 | экран проверки в example; прогон Engineer на Pixel 3 в release прошёл по критериям DEVICE 2 (FPS при обработке, поворот и зеркало, рамки лиц, «снимок = видимое»); прототип VIEW-04 удалён |
 | **6. Релизный цикл** | RELEASE 1 (карточка — при старте этапа) | финальный гейт пройден, Engineer подписал |
 | **Параллельно** | WEB 1, WEB 2 | не блокируют этапы |
 
@@ -37,6 +37,7 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
+| Устройство этапа 5 (`STAGE5-DEVICE`) | DEVICE 1 → DEVICE 2 | T2 / T2 | `example/STAGE5-DEVICE` / `.worktrees/STAGE5-DEVICE` | DEVICE 2 — прогон Engineer на Pixel 3 | не запущен |
 
 ## Дашборд
 
@@ -64,7 +65,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | BLOCKED | T2 | Architect | CAMERA 2 | **Проверка на Pixel 3.** Этап 4 влит; перед запуском нужно расписать карточку этапа 5. |
+| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | TODO | T2 | — | CAMERA 2 | **Экран проверки на устройстве.** `Device check` в example: шаги на телефоне в release (FPS без и с обработкой, поворот, зеркало, рамки лиц, снимок), итоговый JSON с кнопкой «Копировать». Пул `STAGE5-DEVICE`. |
+| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | BLOCKED | T2 | DEVICE 1 | DEVICE 1 | **Прогон на Pixel 3 и разбор.** Engineer проходит экран и присылает JSON; разбор по таблице критериев, вывод в `doc/perf-findings.md`; при PASS — удаление прототипа VIEW-04. Пул `STAGE5-DEVICE`. |
 
 ### Параллельно
 
