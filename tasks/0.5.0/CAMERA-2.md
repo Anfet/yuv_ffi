@@ -1,5 +1,5 @@
 # CAMERA 2 — Виджеты камеры в example
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
+**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
 
 #### Goal
 `YuvCameraView` (прямой показ на GPU; `onFrame` с прореживанием вне пути отрисовки; `capture()`; доступ к текущей
@@ -127,3 +127,26 @@ Advisory: YuvCameraViewController.detach() игнорирует аргумент
 - `onFrame` использует `frame.timestamp`; `YuvTransformView` перезапускает source при смене `cameraController`; старый capture-код экрана удалён.
 - DEVICE 1: угол выводит FPS и фактическое `shader: on/off`; heavy mode передаёт BGRA-байты в `compute()`, где инициализируется backend и запускается blur. На Web `compute()` выполняется в UI-isolate по контракту Flutter.
 - Проверки: `flutter test` в `example/` — 38 passed; `flutter analyze` — clean; `flutter build web` — PASS. Pixel 3, Windows physical camera, macOS/iOS device checks — **postponed** по решению Engineer и не блокируют review.
+
+Повторное ревью 02.10.2026:
+```text
+Pool: STAGE4-CAMERA; CAMERA 2
+Outcome: REWORK
+Reviewed-Head: 071de35
+Merged-Head: none
+Fixed: none
+Blocking:
+  1. FPS в углу считает вызовы onFrame (_updateFps в _handleFrame), а onFrame прорежен до 200 мс и не перекрывается:
+     число не больше 5 и падает во время размытия и ML Kit. DEVICE 1 нужна частота показа — считать по
+     onFramePresented презентера (проброс из YuvCameraView, например onFramePresented).
+  2. Из тестов Scope по-прежнему нет: capture() возвращает нарисованный кадр и он побайтно равен
+     geometry.apply(frame.image) — главная проверка «снимок = видимое»; onFrame не задерживает показ (onFrame
+     висит на незавершённом Future — кадры всё равно показываются); ошибка onFrame не останавливает поток.
+  3. Решение 6: семантика удалённых тестов (camera_preview_lifecycle, desktop_camera_preview,
+     camera_screen_capture, present_camera_frame) не сведена в отчёт — перечислить, что куда перенесено и что
+     сознательно отброшено.
+Advisory: onStreamStopped: () {} в CameraScreen ничего не делает — убрать; onShaderChanged — параметр вне решения 3,
+  допустим, но проще читать hasShader по onFramePresented вместе с FPS.
+```
+Исправлено с прошлого ревью: compute() с байтами и YuvFfi.initialize() в изоляте, угол `shader: on/off`, мёртвый код
+захвата удалён, интервал по timestamp, detach() и перезапуск YuvTransformView.

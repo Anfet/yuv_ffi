@@ -1,5 +1,5 @@
 # CAMERA 1 — Источник кадров камеры в example
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** CLEAN 1, GEOM 1 · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** — · **Depends On:** CLEAN 1, GEOM 1 · **Probe:** none
 
 #### Goal
 `example/lib/camera/` (D-13): `YuvCameraFrameSource` — одна логика потока для mobile/desktop с платформенными
@@ -142,3 +142,19 @@ Advisory: IO start() без stop() создаёт вторую подписку 
 - `frame_read_loop.dart`, `stream_start.dart`, их тесты и `js_util_compat_web.dart` перенесены в `camera/`; Web-источник использует перенесённые helper-ы. IO `start()` предварительно останавливает предыдущую подписку.
 - Проверки: `flutter test` в `example/` — 38 passed; `flutter analyze` — clean; `flutter build web` — PASS. macOS/iOS device validation остаётся **postponed** по решению Engineer и не блокирует review.
 Импорт без расчередования, ориентация по таблице и ленивость проверены — верны.
+
+Повторное ревью 02.10.2026:
+```text
+Pool: STAGE4-CAMERA; CAMERA 1
+Outcome: ACCEPTED
+Reviewed-Head: 071de35
+Merged-Head: none (слияние — вместе с пулом)
+Fixed: none
+Blocking: none
+Advisory: Web-источник снова на MediaStreamTrackProcessor с canvas-запасным путём, но написан на устаревшем dart:html
+  с подавлением deprecated_member_use и ничем не проверяется в браузере — оба пункта переданы в WEB 3 (package:web и
+  проба с фейковой камерой Chrome). Тест «перезапуск ждёт остановки» для IO-источника не добавлен; catch (_) в
+  Web-источнике без комментария — тоже в WEB 3.
+```
+Перепрогон Reviewer: `example/` `flutter test` — 38 passed, `flutter analyze` — no issues. Хелперы и их тесты
+перенесены `git mv`, дубли удалены; IO `start()` сначала останавливает прежнюю подписку.
