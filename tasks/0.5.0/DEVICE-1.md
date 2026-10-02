@@ -130,4 +130,6 @@ Executor rework 02.10.2026:
   режиме у экрана шагов нет AppBar, footer сжат (8 px, короткий шаг и однострочная инструкция), поэтому всё
   оставшееся место получает превью. Инструкция capture требует портретную ориентацию.
 - Случайные изменения `example/windows/flutter/generated_plugin*` отменены.
-- `flutter test` в `example/`: 43 passed; `flutter analyze`: clean. Device 2 ждёт повторного ручного прогона.
+- `flutter test` в `example/`: 43 passed; `flutter analyze` и `pwsh -File tool/ci/example.ps1`: clean. Pixel 3 release,
+  SHA `053307e`: `DEVICE-1 ready {"build_mode":"release","shader":true}` есть в logcat. Device 2 ждёт повторного
+  ручного прогона.
