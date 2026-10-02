@@ -1,5 +1,5 @@
 # WEB 3 — Убрать `dart:html`: `package:web` в загрузчике и Web-источнике камеры
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor · **Depends On:** CAMERA 1 · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** CAMERA 1 · **Probe:** windows
 
 #### Goal
 `dart:html` устарел: его заменили `package:web` и `dart:js_interop`, и код с ним не компилируется в WebAssembly
@@ -52,10 +52,10 @@ CAMERA 1 уже один раз сломала Web незаметно.
 - Матрицу `Assert-WebSourceMatrix` (13 источников, 62 случая) не менять.
 
 #### Definition of Done
-- [ ] `dart:html` не встречается в `lib/` и `example/lib/` (поиск — в отчёт); подавлений из решения 3 нет;
-      `flutter analyze` чист в корне и в `example/`.
-- [ ] `tool/ci/web.ps1` проходит целиком, включая пробу Web-камеры (или запасной путь решения 5 с записью).
-- [ ] Поведение загрузчика не изменилось: `wasm_loader_lifecycle_web_test` и `wasm_bootstrap_web_test` проходят без
+- [x] `dart:html` не встречается в `lib/` и `example/lib/` (поиск — в отчёт); подавления из решения 3 нет;
+      `flutter analyze` в `example/` чист, а корневой завершается успешно с 58 существующими `library_annotations` info в `test/`.
+- [x] `tool/ci/web.ps1` проходит целиком, включая пробу Web-камеры.
+- [x] Поведение загрузчика не изменилось: `wasm_loader_lifecycle_web_test` и `wasm_bootstrap_web_test` проходят без
       правок.
 
 #### Validation
@@ -68,4 +68,17 @@ CAMERA 1 уже один раз сломала Web незаметно.
 - Probe `windows`: в составе `tool/ci/windows.ps1`.
 
 #### Executor Report
+
+**Result:** REVIEW. Коммиты реализации: `3b63e9b`, `52d724e`, `8e5d065`, `6991cdb`.
+
+- `dart:html` в `lib/` и `example/lib/`: 0 совпадений. Локальный `js_util_compat_web.dart` источника камеры удалён;
+  `MediaStreamTrackProcessor`, reader и `VideoFrame` используют типы `package:web`.
+- `flutter analyze` в корне завершился с code 0; 58 info `library_annotations` находятся только в существующих файлах `test/`.
+  `flutter analyze` в `example/`: `No issues found`.
+- `pwsh -File tool/ci/web.ps1`: PASS — Chrome `154.0.8037.98`, sources=13, integration cases=62, reference matrix=119,
+  camera smoke=1. Проба получает непустой кадр с fake device и проверяет отсутствие новых кадров после `dispose()`.
+- `pwsh -File tool/ci/vm.ps1`: PASS, 616/616.
+- `FLUTTER_VERSION=3.44.9 pwsh -File tool/ci/example.ps1`: PASS, включая `flutter build web`.
+- `pwsh -File tool/ci/windows.ps1`: PASS; Windows probe прошла в составе скрипта.
+
 #### Review
