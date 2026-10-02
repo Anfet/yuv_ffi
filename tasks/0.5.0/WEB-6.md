@@ -52,4 +52,18 @@
 Ключи: `tasks/*` → —. Ветка `all/PAR-WEB` в основной копии (D-22). CI-скрипты не нужны.
 
 #### Executor Report
+Windows, Chrome 154.0.8037.98, integrated camera `Integrated Webcam (0bda:555d)`, 1280x720 at 30 fps:
+
+```text
+WEB6 RESULT {"os":"Windows","chrome":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36","camera":{"label":"Integrated Webcam (0bda:555d)","settings":{"width":1280,"height":720,"frameRate":30,"deviceId":"39eecde6b991897330290db6bf3b827e12c037bf1ac574db6afde7c1e8dfcb3e","facingMode":"user"}},"frame":{"format":"NV12","coded":{"width":1280,"height":720},"visibleRect":{"x":0,"y":0,"width":1280,"height":720},"display":{"width":1280,"height":720},"allocationSize":1382400,"layouts":[{"offset":0,"stride":1280},{"offset":921600,"stride":1280}]},"copyToMs":{"source":{"median":4.2999999998137355,"p90":7.600000000093132},"BGRA":{"median":10.300000000279397,"p90":21.199999999720603},"RGBA":{"median":10.100000000093132,"p90":20.800000000279397}}}
+```
+
+Windows, Chrome 154.0.8037.98, fake camera `fake_device_0`, 1280x720 at 20 fps (facts only; timings excluded from conclusions):
+
+```text
+WEB6 RESULT {"os":"Windows","chrome":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36","camera":{"label":"fake_device_0","settings":{"width":1280,"height":720,"frameRate":20,"deviceId":"f5631a585b2355483b0ead0fd76bf38e20b13718fff817d749ea54a24e804f46","facingMode":null}},"frame":{"format":"NV12","coded":{"width":1280,"height":720},"visibleRect":{"x":0,"y":0,"width":1280,"height":720},"display":{"width":1280,"height":720},"allocationSize":1382400,"layouts":[{"offset":0,"stride":1280},{"offset":921600,"stride":1280}]},"copyToMs":{"source":{"median":0.8999999999068677,"p90":1.100000000093132},"BGRA":{"median":9.700000000186265,"p90":15.600000000093132},"RGBA":{"median":9.600000000093132,"p90":19.199999999720603}}}
+```
+
+The temporary probe built successfully in `example/build/web-web6`; it and its source were removed. No package files changed.
+
 #### Review
