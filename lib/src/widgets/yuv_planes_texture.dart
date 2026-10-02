@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
@@ -44,11 +45,7 @@ final class YuvPlanesTexture {
       return null;
     }
 
-    final byteWidth = switch (u.pixelStride) {
-      1 => _max(frame.width, chromaWidth * 2),
-      2 => _max(frame.width, chromaWidth * 2 - 1),
-      _ => throw StateError('Validated above.'),
-    };
+    final byteWidth = math.max(frame.width, u.pixelStride == 1 ? chromaWidth * 2 : chromaWidth * 2 - 1);
     final textureWidth = (byteWidth + 3) ~/ 4;
     final textureHeight = frame.height + (u.pixelStride == 1 ? chromaHeight : chromaHeight * 2);
     if (textureWidth > 4096 || textureHeight > 4096) {
@@ -72,20 +69,20 @@ final class YuvPlanesTexture {
       );
     }
 
-    _copyStridedChroma(
+    _copyChromaRows(
       source: u,
       target: texture,
       targetRow: frame.height,
       rows: chromaHeight,
-      columns: chromaWidth,
+      byteLength: chromaWidth * 2 - 1,
       targetRowStride: textureWidth * 4,
     );
-    _copyStridedChroma(
+    _copyChromaRows(
       source: v,
       target: texture,
       targetRow: frame.height + chromaHeight,
       rows: chromaHeight,
-      columns: chromaWidth,
+      byteLength: chromaWidth * 2 - 1,
       targetRowStride: textureWidth * 4,
     );
     return YuvPlanesTexture._(
@@ -103,7 +100,7 @@ final class YuvPlanesTexture {
       return null;
     }
 
-    final byteWidth = _max(frame.width, chromaWidth * 2);
+    final byteWidth = math.max(frame.width, chromaWidth * 2);
     final textureWidth = (byteWidth + 3) ~/ 4;
     final textureHeight = frame.height + chromaHeight;
     if (textureWidth > 4096 || textureHeight > 4096) {
@@ -134,22 +131,18 @@ final class YuvPlanesTexture {
     }
   }
 
-  static void _copyStridedChroma({
+  static void _copyChromaRows({
     required YuvPlane source,
     required Uint8List target,
     required int targetRow,
     required int rows,
-    required int columns,
+    required int byteLength,
     required int targetRowStride,
   }) {
     for (var row = 0; row < rows; row++) {
       final sourceOffset = row * source.rowStride;
       final targetOffset = (targetRow + row) * targetRowStride;
-      for (var column = 0; column < columns; column++) {
-        target[targetOffset + column * 2] = source.bytes[sourceOffset + column * source.pixelStride];
-      }
+      target.setRange(targetOffset, targetOffset + byteLength, source.bytes, sourceOffset);
     }
   }
 }
-
-int _max(int left, int right) => left > right ? left : right;

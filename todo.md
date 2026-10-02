@@ -63,7 +63,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | --- | --- | --- | --- | --- | --- |
 | [GEOM 1](tasks/0.5.0/GEOM-1.md) | REVIEW | T2 | Reviewer | CLEAN 2 | **Геометрия кадра `YuvFrameGeometry`.** Доработка после ревью готова: цветной шум в тесте «`apply()` = нарисованное», dartdoc `apply` о пересчёте U/V; VM/example/probe прошли. |
 | [PATCH 1](tasks/0.5.0/PATCH-1.md) | TODO | T2 | — | — | **Вставка фрагмента `applyPatch`.** Расширение, чистый Dart, правило chroma 2×2 своё (зависимость от GEOM 1 снята); замер на Pixel 3. Пул `STAGE4-PATCH`. |
-| [SHADER 1](tasks/0.5.0/SHADER-1.md) | TODO | T2 | — | — | **Раскладка плоскостей в одну текстуру.** Ревью: доработка — chroma `pixelStride 2` копировать строкой через `setRange`, не побайтно. |
+| [SHADER 1](tasks/0.5.0/SHADER-1.md) | REVIEW | T2 | Reviewer | — | **Раскладка плоскостей в одну текстуру.** Доработка после ревью готова: chroma `pixelStride 2` копируется строкой через `setRange`; VM/example/probe прошли. |
 | [SHADER 2](tasks/0.5.0/SHADER-2.md) | BLOCKED | T2 | SHADER 1 | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Решение 6: экран показывает каждый пиксель его цветом из `toBgraBytes()`; эталон пробы — по нему, не `apply()`; BGRA-путь с `FilterQuality.none`. Шейдер не меняется. |
 | [SHADER 3](tasks/0.5.0/SHADER-3.md) | BLOCKED | T2 | SHADER 2 | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Полная матрица, Pixel 3; сбои — по вариантам A/B/C с признаками. Пул `STAGE4-VIEW`. |
 | [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | BLOCKED | T2 | SHADER 3 | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** `YuvFrameRendering.shader`, ориентация в `present`, вписывание в `YuvFrameView`; только добавления; замер на Pixel 3. Пул `STAGE4-VIEW`. |

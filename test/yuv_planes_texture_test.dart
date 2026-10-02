@@ -29,6 +29,19 @@ void main() {
     expect(YuvPlanesTexture.pack(YuvImage.i420(2, 2, uvPixelStride: 3)), isNull);
     expect(YuvPlanesTexture.pack(YuvImage.i420(1, 4097)), isNull);
   });
+
+  test('copies Android I420 chroma rows without per-sample repacking', () {
+    final frame = _i420(3, 5, 2);
+    final texture = YuvPlanesTexture.pack(frame)!;
+    const byteLength = 3;
+    for (final (plane, firstTextureRow) in [(frame.uPlane, frame.height), (frame.vPlane, frame.height + frame.uPlane.height)]) {
+      for (var row = 0; row < plane.height; row++) {
+        final sourceOffset = row * plane.rowStride;
+        final textureOffset = (firstTextureRow + row) * texture.width * 4;
+        expect(texture.bytes.sublist(textureOffset, textureOffset + byteLength), plane.bytes.sublist(sourceOffset, sourceOffset + byteLength));
+      }
+    }
+  });
 }
 
 void _expectSamples(YuvPlanesTexture texture, YuvImage frame) {
