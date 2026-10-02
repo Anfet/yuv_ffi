@@ -14,14 +14,14 @@
 | Этап | Работа | Выход из этапа |
 | --- | --- | --- |
 | **1–5. Тест-сьют, скорость, уборка, функциональность, устройство** | завершены | итоги — `COMPLETION.md`; post-merge CI этапов 4–5 pending (закрывает CI 1) |
-| **6. Уборка** | CLEAN 3, CLEAN 4, CI 2 (отказ Linux-CI, решение Engineer) | example на текущем API и пути показа; документация и комментарии по стандартам pub.dev — код практически предрелизный |
+| **6. Уборка** | CLEAN 3, CLEAN 4, CI 2, CI 3 (отказы CI, решение Engineer) | example на текущем API и пути показа; документация и комментарии по стандартам pub.dev — код практически предрелизный |
 | **7. Платформы: Web и Apple** | WEB 5, APPLE 1, WEB 2 | на Web и Apple известно, что работает и как, риски записаны; Web-шейдер включён или его отказ обоснован; macOS и iOS проверены |
 | **8. Релизный цикл** | RELEASE 1 (карточка — при старте этапа) | финальный гейт пройден, Engineer подписал |
 | **Вне этапов** | CI 1 | остаток CI 1 (решение 5, итоги `ci/all/CI-1`) — после этапа 6 |
 
 ## Текущее состояние
 
-- **Сейчас:** этап 6. Пул `PAR-CI` влит в `dev` частично (`fda538d`): CI запускается тегами `ci/<набор>/<метка>`, остаток CI 1 перенесён после этапа 6. **Можно начинать:** CLEAN 3. Решения Engineer ждёт CI 2 (отказ Linux-CI).
+- **Сейчас:** этап 6. Пул `PAR-CI` влит в `dev` частично (`fda538d`): CI запускается тегами `ci/<набор>/<метка>`, остаток CI 1 перенесён после этапа 6. **Можно начинать:** CLEAN 3. Решения Engineer ждут CI 2 (Linux-CI) и CI 3 (Flutter 3.38).
 - **Очередь пулов.** Worktree нет (D-22), поэтому в основной копии одновременно идёт один пул — одна ветка: этап 6 (CLEAN 3 → CLEAN 4) → остаток CI 1 → этап 7 (WEB 5 ∥ APPLE 1 → WEB 2) → этап 8.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
@@ -43,9 +43,10 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CLEAN 3](tasks/0.5.0/CLEAN-3.md) | TODO | T2 | — | — | **Уборка example.** Редактор выносится из `main.dart` и показывает кадр через `YuvFramePresenter`/`YuvFrameView`; конвертации — `toI420/toNv12/toBgra`; камерный экран прибирается с сохранением FPS и «heavy processing»; один импорт `CameraImage`. Карточка расписана. |
+| [CLEAN 3](tasks/0.5.0/CLEAN-3.md) | TODO | T2 | — | — | **Уборка example — доработка после ревью.** Вернуть прежнюю семантику `importCameraImage()` (strides как есть — живой поток камеры), удалить `toYuvImage()`, запустить `example.ps1`; мелочи — в Review карточки. |
 | [CLEAN 4](tasks/0.5.0/CLEAN-4.md) | BLOCKED | T2 | CLEAN 3 | CLEAN 3 | **Документация и комментарии по стандартам pub.dev.** README, CHANGELOG, dartdoc, комментарии без внутренних ID и шума, `.pubignore`, `doc/archive/`; эталон — `pana`, `pub publish --dry-run`, `dart doc`. Черновик. |
 | [CI 2](tasks/0.5.0/CI-2.md) | ENGINEER_REQUIRED | — | Engineer | — | **Отказ Linux-CI: тест камеры.** `ci/all/CI-1`, джоба `linux-native-smoke`: `camera_capture_native_test.dart` падает — у плагина `camera` нет Linux-реализации (`UnimplementedError`). Расследование — по команде Engineer. |
+| [CI 3](tasks/0.5.0/CI-3.md) | ENGINEER_REQUIRED | — | Engineer | — | **Отказ VM-CI: пакет не собирается на Flutter 3.38.** `setImageSampler(filterQuality:)` из SHADER 2 есть только с 3.41, а `pubspec` обещает `>=3.38.0`. Рекомендация — убрать аргумент (по умолчанию то же `none`) и проверить шейдерную пробу на 3.38; иначе поднять минимум до 3.41. |
 
 ### Этап 7 — платформы: Web и Apple
 
@@ -66,6 +67,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 ## Открытые вопросы
 
 - **CI 2** — Linux-CI падает на тесте камеры (у плагина `camera` нет Linux). Нужна команда Engineer на расследование и исправление или решение отложить.
+- **CI 3** — на Flutter 3.38 (минимум из `pubspec`) пакет не компилируется: убрать аргумент `filterQuality` или поднять минимум до 3.41.
 
 ## Правила работы
 
@@ -109,10 +111,15 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 ## Окружение
 
-### Linux
+### Linux (Ubuntu в VirtualBox)
 
-**Локальной Linux-машины нет.** WSL/Hyper-V не включать. Linux проверяется только GitHub-hosted джобой CI (D-2);
-задачи, которым нужна локальная проверка на Linux, откладываются или решаются через CI.
+- Ubuntu 24.04.5 LTS x86_64 — как `ubuntu-latest` в CI (`ubuntu-24.04`); 8 ядер, 11 ГБ, адрес `192.168.1.29`, пользователь `oleg`. Пакеты CI (`clang`, `cmake`, `ninja-build`, `libgtk-3-dev`, `libgstreamer*-dev`, `xvfb`) стоят; `sudo` — с паролем, ставит Engineer.
+- Доступ с Windows: `D:\.projects\.tools\linux-runner\linux-run.sh '<команда>'` (ключ `~/.ssh/linux_dev_runner`, адрес — в `host.env` рядом, не в git). Окружение — префиксом: `linux-run.sh "$(cat D:/.projects/.tools/linux-runner/linux-env.sh) && flutter --version"`.
+- Flutter 3.44.9 — `~/storage/flutter_3.44/flutter` (shallow clone, `flutter doctor` ругается на канал — не мешает).
+- Синхронизация — tar через SSH в `~/claude-work/yuv_ffi`: `git -c core.autocrlf=false archive --format=tar <ref> | ssh … 'tar -xf - -C ~/claude-work/yuv_ffi'`. **Без `core.autocrlf=false` скрипты приезжают с CRLF**, и `bash tool/ci/*.sh` падает на `$'
+'`.
+- Проверки — как в джобе `linux-native-smoke`: в `example/` `flutter create --platforms=linux .`, затем `xvfb-run -a bash tool/ci/drive.sh integration_test/<target> linux`. Отказ CI 2 воспроизводится на `c4e72dc` тем же `UnimplementedError`.
+- WSL/Hyper-V по-прежнему не включать; VirtualBox и эмулятор Android могут конфликтовать за виртуализацию — запускать по очереди.
 
 ### Windows (эта машина; она же self-hosted раннер `dev.working`)
 
