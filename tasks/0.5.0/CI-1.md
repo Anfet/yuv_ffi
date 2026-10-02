@@ -1,5 +1,5 @@
 # CI 1 — Запуск CI по тегам `ci/<набор>/<метка>`
-**Status:** AWAITING_EXTERNAL · **Tier:** T2 · **Owner:** GitHub Actions · **Depends On:** — · **Probe:** none
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** CLEAN 4 · **Depends On:** этап 6 · **Probe:** none
 
 #### Goal
 Контрольный CI сейчас запускается push'ем ветки `ci/<пул>` на точный SHA `dev` (D-9, D-18): ветки копятся на
@@ -95,4 +95,9 @@ origin (`ci/stage2-probes`, `ci/stage3-clean`, `ci/STAGE3-SPM-apple`), их мо
 - `ci/all/CI-1` created exactly nine push workflows on the same SHA: [Android 37058238085](https://github.com/Anfet/yuv_ffi/actions/runs/37058238085), [VM 37058238047](https://github.com/Anfet/yuv_ffi/actions/runs/37058238047), [Example 37058238031](https://github.com/Anfet/yuv_ffi/actions/runs/37058238031), [macOS 37058238034](https://github.com/Anfet/yuv_ffi/actions/runs/37058238034), [Windows 37058237987](https://github.com/Anfet/yuv_ffi/actions/runs/37058237987), [smoke 37058238180](https://github.com/Anfet/yuv_ffi/actions/runs/37058238180), [iOS 37058238074](https://github.com/Anfet/yuv_ffi/actions/runs/37058238074), [Linux 37058238078](https://github.com/Anfet/yuv_ffi/actions/runs/37058238078), [Web 37058238161](https://github.com/Anfet/yuv_ffi/actions/runs/37058238161). At the recorded check, Android/Linux/macOS were running and the other six were queued.
 - Test tags remain on origin until terminal results are recorded, then both `ci/smoke/CI-1` and `ci/all/CI-1` must be deleted before `REVIEW`.
 
+- **Частичное слияние** (Reviewer, 02.10.2026, по команде Engineer): решения 1–4 влиты в `dev` на `fda538d`; CI
+  перенесён после этапа 6. Итоги `ci/all/CI-1` к моменту слияния: Android, iOS, macOS, Windows, Web зелёные; Linux
+  красный — платформа, не триггер (карточка CI 2); VM, smoke, Example ещё шли. Остаток пула: дописать итоги,
+  решение 5 (D-23), повторный негативный контроль и `ci/smoke/CI-1-2`, удалить тестовые теги. Продолжать в ветке
+  `all/PAR-CI` от актуального `dev`.
 #### Review
