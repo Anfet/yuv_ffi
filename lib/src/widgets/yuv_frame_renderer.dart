@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:yuv_ffi/src/geometry/yuv_frame_geometry.dart';
 import 'package:yuv_ffi/src/widgets/yuv_frame_image_decoder.dart';
@@ -14,6 +15,10 @@ final class YuvFrameRenderer {
 
   /// Loads the package shader; unavailable platforms retain the BGRA fallback.
   static Future<YuvFrameRenderer> load() async {
+    if (kIsWeb) {
+      // WEB 1: CanvasKit differs from the CPU reference by up to 255 for a 3x5 frame.
+      return YuvFrameRenderer._(null);
+    }
     try {
       return YuvFrameRenderer._((await ui.FragmentProgram.fromAsset('packages/yuv_ffi/shaders/yuv_frame.frag')).fragmentShader());
     } catch (_) {
@@ -23,6 +28,9 @@ final class YuvFrameRenderer {
   }
 
   /// Whether YUV planes can be rendered by the loaded shader.
+  ///
+  /// Always `false` on Web because WEB 1 found a CanvasKit mismatch with the
+  /// CPU reference.
   bool get hasShader => _shader != null;
 
   /// Copies [frame] before awaiting so it may be reused immediately.

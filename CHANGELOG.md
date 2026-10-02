@@ -12,6 +12,8 @@
 
 - Added a packed-plane API and frame-presentation widgets, rebuilt the Web
   JS/WASM assets, and updated the package and example documentation.
+- Disabled `YuvFrameRenderer`'s shader on Web because the CanvasKit output
+  differs from the CPU reference; Web uses the BGRA fallback.
 
 ### Performance
 
