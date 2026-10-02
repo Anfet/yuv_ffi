@@ -1,5 +1,5 @@
 # CLEAN 3 — Уборка example: экран редактора и камерный экран
-**Status:** AWAITING_EXTERNAL · **Tier:** T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Example — витрина пакета, а `main.dart` (345 строк) собран до этапа 4: экран, состояние и все операции лежат в
@@ -85,8 +85,6 @@ Validation completed:
 - `pwsh -File tool/ci/windows.ps1` — PASS: native build, root `probe`/`reference` (20/20, 1 skipped; 134/134), Windows release build and all native integration tests. No `SLOWER` verdict.
 - `pwsh -File tool/ci/web.ps1` — PASS: WASM build has no generated-asset diff; `integration_test/all_web_test.dart` passed on `web-server`.
 
-External evidence still required before `REVIEW`:
-
-- manually verify on Windows: load an image, apply operations, reset; verify the heavy-processing control; capture from camera into the editor. Camera preview was manually confirmed at 20 FPS with shader enabled.
+Manual Windows validation: editor image loading, operations and reset; camera preview with shader enabled at 20 FPS; heavy-processing control; and camera capture into the editor — PASS.
 
 #### Review
