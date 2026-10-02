@@ -25,6 +25,7 @@
 ## Dart-копирование
 
 - Построчный `setRange` вместо посэмпльного копирования при плотном pixel stride (в production): ROI seed 49,4 → 27,2 мс, copy-back `applyTo` 45,2 → 11,8 мс на padded BGRA 1080p. Row padding назначения не трогается; gapped pixel stride идёт прежним путём.
+- `applyPatch`, Pixel 3 release, назначение 1920×1080, медиана 30 после 5 прогревов, мкс (`64×64 / 256×256`): I420 tight `3 / 20`, padded `3 / 21`; NV12 tight `2 / 17`, padded `2 / 16`; BGRA tight `2 / 27`, padded `2 / 28`. Tight I420 256×256 значительно быстрее порога 2 мс; native-карточка не нужна.
 
 ## Кадры камеры
 

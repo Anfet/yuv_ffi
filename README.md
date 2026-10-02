@@ -190,6 +190,20 @@ samples, format, UV order, size, and orientation. Padding discarded by
 `pack()` cannot be recovered; use `copy().pack()` to retain an independent
 original image.
 
+### Inserting a patch
+
+`applyPatch` copies an opaque, unscaled image into another image of the same
+format without touching destination padding or pixel-gap bytes:
+
+```dart
+final fragment = source.cropped(region).rotated(YuvImageRotation.rotation90);
+destination.applyPatch(fragment, x: 100, y: 40);
+```
+
+The fragment must fit completely. For I420 and NV12, `x` and `y` must be even;
+an odd fragment width or height is accepted only at the corresponding right or
+bottom edge. This keeps every chroma 2×2 sample wholly inside the patch.
+
 ## Capabilities and errors
 
 Call `capabilities.supports(operation, sourceFormat: ..., destinationFormat:

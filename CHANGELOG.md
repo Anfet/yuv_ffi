@@ -35,6 +35,8 @@
 - Added `isTightlyPacked` and `pack()` through the `YuvImagePack` extension.
   `pack()` removes row padding and I420 per-sample pixel gaps in place while
   preserving visible samples, format, geometry, and orientation.
+- Added `applyPatch()` through `YuvImagePatch` for opaque, unscaled insertion
+  into I420, NV12, and BGRA images while preserving plane padding and gaps.
 - Added `YuvFramePresenter` and `YuvFrameView` for displaying a stream of
   `YuvImage` frames with one frame in flight, optional shader rendering,
   draw-time orientation, fit/alignment, and geometry reporting.

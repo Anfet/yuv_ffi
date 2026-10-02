@@ -38,7 +38,7 @@ Orchestrator записывает для нового пула порядок к
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
 | Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | все карточки переданы в review; macOS/iOS PRESENT 1 postponed |
-| Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — (параллельно с `STAGE4-VIEW` допустимо: общие только строка экспорта в `lib/yuv_ffi.dart` и `CHANGELOG.md`) | не запущен |
+| Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — | передан в review; Pixel 3 native fast path не требуется |
 | Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` влит в `dev` | не запущен |
 
 ## Дашборд
@@ -62,7 +62,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [GEOM 1](tasks/0.5.0/GEOM-1.md) | ACCEPTED | T2 | — | CLEAN 2 | **Геометрия кадра `YuvFrameGeometry`.** Принята на `b903c32`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
-| [PATCH 1](tasks/0.5.0/PATCH-1.md) | TODO | T2 | — | — | **Вставка фрагмента `applyPatch`.** Расширение, чистый Dart, правило chroma 2×2 своё (зависимость от GEOM 1 снята); замер на Pixel 3. Пул `STAGE4-PATCH`. |
+| [PATCH 1](tasks/0.5.0/PATCH-1.md) | REVIEW | T2 | Engineer | — | **Вставка фрагмента `applyPatch`.** Чистый Dart, правило chroma 2×2, Pixel 3 256×256 tight I420 = 0,020 мс; native не нужен. |
 | [SHADER 1](tasks/0.5.0/SHADER-1.md) | ACCEPTED | T2 | — | — | **Раскладка плоскостей в одну текстуру.** Принята на `0b3eddd`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
 | [SHADER 2](tasks/0.5.0/SHADER-2.md) | REVIEW | T2 | Engineer | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Реализация и короткая shader probe готовы; Windows и Android прошли, `max_diff <= 1`. |
 | [SHADER 3](tasks/0.5.0/SHADER-3.md) | REVIEW | T2 | Engineer | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Windows, Android emulator, Pixel 3, macOS и iOS Simulator прошли; Linux post-merge CI pending. |

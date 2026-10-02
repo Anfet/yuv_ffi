@@ -76,6 +76,14 @@ void main() {
     texture.dispose();
     renderer.dispose();
   });
+
+  test('patch extension is reachable and tracks a foreign implementation', () {
+    final target = _PublicSurfaceOnlyImage(4, 4);
+    final fragment = _PublicSurfaceOnlyImage(2, 2);
+
+    expect(target.applyPatch(fragment, x: 1, y: 1), same(target));
+    expect(target.revision, 1);
+  });
 }
 
 Uint8List _solidRgba(int w, int h) {

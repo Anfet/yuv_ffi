@@ -2,6 +2,7 @@
 export 'src/yuv/yuv.dart';
 export 'src/yuv/shared/yuv_revision.dart' show YuvImageInvalidation;
 export 'src/yuv/shared/yuv_pack.dart' show YuvImagePack;
+export 'src/yuv/shared/yuv_patch.dart' show YuvImagePatch;
 export 'src/yuv/shared/yuv_plane.dart';
 export 'src/yuv/shared/yuv_plane_layout.dart';
 export 'src/yuv/shared/yuv_image_rotation.dart';

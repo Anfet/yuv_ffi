@@ -1,5 +1,5 @@
 # PATCH 1 — Вставка фрагмента в изображение
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Было PATCH-00 (план 0.4.3; файл удалён, история — в git). Непрозрачная вставка одного `YuvImage` в область другого:
@@ -59,16 +59,16 @@
   `CHANGELOG.md` — интеграцию после слияния соседнего пула делает Executor, не Reviewer.
 
 #### Definition of Done
-- [ ] API и правила — по решениям 2–5.
-- [ ] Тесты: для I420, NV12 и BGRA — вставка в (0,0), во внутреннюю чётную позицию и к правому нижнему краю
+- [x] API и правила — по решениям 2–5.
+- [x] Тесты: для I420, NV12 и BGRA — вставка в (0,0), во внутреннюю чётную позицию и к правому нижнему краю
       нечётного кадра; один случай с padded и один с gap layout (у назначения и у фрагмента); фрагмент после
       `rotated(rotation90)`. Ожидание — посэмпльный оракул в тесте: вставленная
       область равна фрагменту, остальные видимые сэмплы и все байты padding/gap назначения не изменились.
-- [ ] Отказы: другой формат, `identical`, выход за любую границу, отрицательные координаты, нечётные `x`/`y` (YUV),
+- [x] Отказы: другой формат, `identical`, выход за любую границу, отрицательные координаты, нечётные `x`/`y` (YUV),
       нечётная ширина/высота не у края (YUV) → `ArgumentError`; байты и revision назначения не изменились.
-- [ ] Revision +1 на успех; внешний `implements YuvImage` (тестовый fake) получает вставку и +1 через `revision`.
-- [ ] Замер решения 6 — в отчёте и `doc/perf-findings.md`, с рекомендацией по native.
-- [ ] README/CHANGELOG/public surface обновлены.
+- [x] Revision +1 на успех; внешний `implements YuvImage` (тестовый fake) получает вставку и +1 через `revision`.
+- [x] Замер решения 6 — в отчёте и `doc/perf-findings.md`, с рекомендацией по native.
+- [x] README/CHANGELOG/public surface обновлены.
 
 #### Validation
 Ключи: `lib/*` → `vm example`, `test/*` → `vm`. Ветка пула — `vm+example/STAGE4-PATCH`.
@@ -80,4 +80,10 @@
 - Pixel 3 release — замер решения 6.
 
 #### Executor Report
+- Добавлено публичное расширение `YuvImagePatch`: все проверки выполняются до записи, tight rows копируются через `setRange`, gapped samples — посэмпльно; revision назначения повышается один раз.
+- Контрактный файл: 10 тестов; вместе с public-surface — 14/14 PASS. Покрыты I420/NV12/BGRA, origin/interior/odd edge, padded/gapped layout, rotated fragment, все отказы и foreign `implements YuvImage`.
+- Pixel 3 release, медиана 30 после 5 прогревов, мкс (`64×64 / 256×256`): I420 tight `3 / 20`, padded `3 / 21`; NV12 tight `2 / 17`, padded `2 / 16`; BGRA tight `2 / 27`, padded `2 / 28`.
+- Tight I420 256×256 = 0,020 мс, значительно ниже порога 2 мс. Native-реализация не рекомендуется.
+- Validation: `flutter analyze` — без новых warning/error (58 существующих info); `flutter test --tags probe` — 20 PASS, 1 ожидаемый skip, `1188/1188`; `tool/ci/vm.ps1` — 616/616; `tool/ci/example.ps1` — PASS на Flutter 3.44.9.
+
 #### Review
