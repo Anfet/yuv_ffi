@@ -17,14 +17,14 @@
 | **2. Пробы и скорость** | PROBE 1, PROBE 2 | базовые линии 0.4.0 и `dev` сняты в release; правило проб в `AGENTS.md` |
 | **3. Уборка** | CLEAN 1, CLEAN 2, SPM 1…4 | в example нет стендов прошлых замеров; устаревшего API нет; SPM собирается |
 | **4. Функциональность** | GEOM 1, PATCH 1, SHADER 1…3, PRESENT 1, CAMERA 1, CAMERA 2, WEB 3 | все карточки влиты в `dev` (`00a82aa`); post-merge CI pending
-| **5. Проверка на устройстве** | DEVICE 1, DEVICE 2 | экран проверки в example; прогон Engineer на Pixel 3 в release прошёл по критериям DEVICE 2 (FPS при обработке, поворот и зеркало, рамки лиц, «снимок = видимое»); прототип VIEW-04 удалён |
+| **5. Проверка на устройстве** | DEVICE 1, DEVICE 2 | влиты в `dev` (`f607882`); прогон на Pixel 3 — PASS; post-merge CI pending |
 | **6. Релизный цикл** | RELEASE 1 (карточка — при старте этапа) | финальный гейт пройден, Engineer подписал |
 | **Параллельно** | WEB 1, WEB 2 | не блокируют этапы |
 
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); macOS и iOS CI на `bae5ff8` зелёные, полный CI Engineer отменил. Этап 3 завершён. **Этап 4 завершён:** все карточки влиты в `dev` на `00a82aa`; post-merge CI pending. Визуальные/device и новые macOS/iOS проверки postponed по решению Engineer.
+- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); macOS и iOS CI на `bae5ff8` зелёные, полный CI Engineer отменил. Этап 3 завершён. **Этап 4 завершён:** все карточки влиты в `dev` на `00a82aa`; post-merge CI pending. Визуальные/device и новые macOS/iOS проверки postponed по решению Engineer. **Этап 5 завершён:** DEVICE 1 и DEVICE 2 влиты в `dev` на `f607882`; Pixel 3 release — PASS (29,8 / 28,9 кадра/с без и с обработкой); прототип VIEW-04 удалён; post-merge CI pending.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Пулы задач
@@ -37,7 +37,6 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
-| Устройство этапа 5 (`STAGE5-DEVICE`) | DEVICE 1 → DEVICE 2 | T2 / T2 | `example/STAGE5-DEVICE` / `.worktrees/STAGE5-DEVICE` | DEVICE 2 — прогон Engineer на Pixel 3 | принят на `7182196`; слияние в `dev` — по команде Engineer |
 
 ## Дашборд
 
@@ -65,8 +64,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | ACCEPTED | T2 | — | CAMERA 2 | **Экран проверки на устройстве.** Принята на `7182196`; вопрос последнего шага исправлен. |
-| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | ACCEPTED | T2 | — | DEVICE 1 | **Прогон на Pixel 3 и разбор.** Прогон 2 (`053307e`) — PASS по всем критериям: 29,8 / 28,9 кадра/с без и с обработкой (VIEW-04 был 20,4–21,1); прототип VIEW-04 удалён. |
+Нет активных задач. Результаты этапа 5 записаны в `COMPLETION.md`.
 
 ### Параллельно
 
