@@ -25,5 +25,12 @@ system privacy settings. In a browser, grant camera access to the site; Web
 camera access requires HTTPS or localhost. Image transforms can be explored
 without a camera by loading an image from the app bar.
 
+The camera layer in `lib/camera/` exposes `YuvCameraFrameSource` and immutable
+`YuvCameraFrame` deliveries. Import to `YuvImage` is lazy and shared by display,
+processing, and capture. Android orientation follows the sensor/device formula
+used by the ML Kit camera example and mirrors front-camera output. Desktop and
+Web frames are upright and unmirrored. iOS is currently also treated as upright
+and unmirrored; this rule has not yet been verified on a physical iOS device.
+
 For package setup, API migration, and platform/backend limitations, see the
 [package README](../README.md).

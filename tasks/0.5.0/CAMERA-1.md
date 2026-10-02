@@ -1,5 +1,5 @@
 # CAMERA 1 — Источник кадров камеры в example
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** GEOM 1 · **Depends On:** CLEAN 1, GEOM 1 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Engineer · **Depends On:** CLEAN 1, GEOM 1 · **Probe:** none
 
 #### Goal
 `example/lib/camera/` (D-13): `YuvCameraFrameSource` — одна логика потока для mobile/desktop с платформенными
@@ -91,11 +91,11 @@
 - Поведение нынешнего `CameraScreen` не меняется до CAMERA 2.
 
 #### Definition of Done
-- [ ] Типы и правила — по решениям 1–5.
-- [ ] Импорт Pixel 3-кадра (`pixelStride 2`) не расчередует chroma: одна копия на плоскость; тест сравнивает
+- [x] Типы и правила — по решениям 1–5.
+- [x] Импорт Pixel 3-кадра (`pixelStride 2`) не расчередует chroma: одна копия на плоскость; тест сравнивает
       `toBgraBytes()` результата с нынешним `ext.dart`-импортом на том же синтетическом кадре — побайтно.
-- [ ] Все тесты `example/test` проходят, включая перенесённые.
-- [ ] Вариант по A выбран и записан.
+- [x] Все тесты `example/test` проходят, включая перенесённые.
+- [x] Вариант по A выбран и записан.
 
 #### Validation
 Ключи: `example/*` → `example`. Ветка пула «камера» — `all/STAGE4-CAMERA`: CAMERA 2 переносит
@@ -106,4 +106,12 @@
 - Probe: `none` — `lib/` и native не меняются.
 
 #### Executor Report
+- Добавлены `YuvCameraFrameSource`, `YuvCameraFrame`, stride-preserving camera import и чистая функция ориентации. IO использует единый `CameraPlatform` stream с generation guard и ожиданием предыдущей остановки; Web реализует тот же контракт.
+- Android orientation проверена таблицей: обе камеры × 4 device orientation × sensor 90/270. Формула соответствует `google_mlkit_commons` example `camera_view.dart::_inputImageFromCameraImage`; Pixel 3 front portrait даёт 270° + mirror. iOS остаётся upright/unmirrored и не проверен на устройстве.
+- Pixel-stride-2 I420 сохраняется без расчередования и одной `setRange`-копией на плоскость; синтетический тест сравнивает все видимые samples с прежним импортом. Укороченный последний ряд дополняется нулями.
+- Выбран вариант **A1**: platform-interface deliveries держат отдельные `Uint8List` в `CameraImageData`; ленивый importer читает доставленный объект. Web delivery не использует прежний reusable BGRA frame. Если конкретный plugin backend нарушит владение `CameraImageData`, для него потребуется A2 eager import.
+- Новые camera tests: 8/8 PASS; весь `example/test`: 75/75 PASS; `flutter analyze`: no issues.
+- `tool/ci/example.ps1`: PASS на Flutter 3.44.9, включая Web build условной реализации source.
+- macOS/iOS device validation: **postponed** по решению Engineer и не блокирует CAMERA 2.
+
 #### Review
