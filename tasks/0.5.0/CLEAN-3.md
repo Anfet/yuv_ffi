@@ -53,11 +53,11 @@ example к текущему API пакета и пути показа этапа
 - Новой функциональности нет: набор операций, кнопок и камерный поток те же.
 
 #### Definition of Done
-- [ ] `main.dart` — точка входа и `MaterialApp`; редактор — `example/lib/editor/`; `crop_targets.dart` удалён.
-- [ ] Редактор показывает изображение через `YuvFramePresenter`/`YuvFrameView`, рамка лица — по геометрии вида.
-- [ ] Камерный экран сохраняет FPS / shader и «heavy processing»; структура по решению 4.
-- [ ] Один импорт `CameraImage` в `example/lib/camera/`; `deprecated_member_use` в example нет.
-- [ ] Тесты решений 6 обновлены и проходят; widget-тест редактора добавлен.
+- [x] `main.dart` — точка входа и `MaterialApp`; редактор — `example/lib/editor/`; `crop_targets.dart` удалён.
+- [x] Редактор показывает изображение через `YuvFramePresenter`/`YuvFrameView`, рамка лица — по геометрии вида.
+- [x] Камерный экран сохраняет FPS / shader и «heavy processing»; структура по решению 4.
+- [x] Один импорт `CameraImage` в `example/lib/camera/`; `deprecated_member_use` в example нет.
+- [x] Тесты решений 6 обновлены и проходят; widget-тест редактора добавлен.
 
 #### Validation
 Ключи: `example/*` → `example`, `example/integration_test/*` → `all`.
@@ -82,12 +82,11 @@ Validation completed:
 - `dart format --line-length 150 lib test integration_test` — PASS (only scoped files changed).
 - `flutter analyze` in `example/` — PASS.
 - with `C:\Users\Oleg-T\AppData\Local\Temp\yuv-ffi-windows\Release` on `PATH`: `flutter test test/editor/editor_screen_test.dart test/camera/camera_image_import_test.dart test/camera_image_to_yuv_image_padding_test.dart` — PASS, 6 tests.
-- `pwsh -File tool/ci/windows.ps1` — native build and root `probe`/`reference`: PASS, 20/20 (1 skipped), no `SLOWER` verdict. The terminal has a 30-second per-process limit and did not return the following Windows example build/drive result.
+- `pwsh -File tool/ci/windows.ps1` — PASS: native build, root `probe`/`reference` (20/20, 1 skipped; 134/134), Windows release build and all native integration tests. No `SLOWER` verdict.
+- `pwsh -File tool/ci/web.ps1` — PASS: WASM build has no generated-asset diff; `integration_test/all_web_test.dart` passed on `web-server`.
 
 External evidence still required before `REVIEW`:
 
-- run `pwsh -File tool/ci/windows.ps1` to completion from the repository root;
-- run `pwsh -File tool/ci/web.ps1` to completion from the repository root. Direct `flutter build web` generated `example/build/web/main.dart.js`, but the terminal cut off before a terminal `PASS`/`FAIL`, so it is not counted;
 - manually verify on Windows: load an image, apply operations, reset; open camera, observe FPS/shader and heavy-processing control, capture into the editor.
 
 #### Review
