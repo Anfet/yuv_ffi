@@ -12,7 +12,8 @@ void main() {
     expect(kIsWeb, isTrue);
     final cameras = await availableCameras();
     expect(cameras, isNotEmpty, reason: 'Chrome fake-media flags must expose a camera');
-    final controller = CameraController(cameras.first, ResolutionPreset.medium, enableAudio: false);
+    final camera = cameras.firstWhere((camera) => camera.lensDirection == CameraLensDirection.front, orElse: () => cameras.first);
+    final controller = CameraController(camera, ResolutionPreset.medium, enableAudio: false);
     addTearDown(controller.dispose);
     await controller.initialize();
 
@@ -21,7 +22,7 @@ void main() {
     addTearDown(source.dispose);
     await source.start();
     await _waitFor(tester, () => frames.isNotEmpty);
-    final frame = frames.single;
+    final frame = frames.last;
     expect(frame.width, greaterThan(0));
     expect(frame.height, greaterThan(0));
     expect(frame.image.toBgraBytes().any((byte) => byte != 0), isTrue);
