@@ -1,5 +1,5 @@
 # WEB 1 — Шейдер `YuvFrameRenderer` на Web: проба и решение
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** SHADER 3 · **Probe:** windows
+**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** SHADER 3 · **Probe:** windows
 
 #### Goal
 SHADER 2 (решение 1) требовала на Web до WEB 1 рендерер без шейдера, но выключателя нет: `YuvFrameRenderer.load()`

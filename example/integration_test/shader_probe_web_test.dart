@@ -9,21 +9,17 @@ import 'helpers/shader_probe_cases.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('matches CPU conversion across formats, sizes, orientations, padding and scale', (tester) async {
+  testWidgets('matches CPU conversion in CanvasKit', (tester) async {
     await YuvFfi.initialize();
     final renderer = await YuvFrameRenderer.load();
+    developer.log('SHADER PROBE web has_shader=${renderer.hasShader}', name: 'yuv_ffi');
     expect(renderer.hasShader, isTrue);
+
     final maximumByCase = await runShaderProbeCases(renderer);
     for (final entry in maximumByCase.entries) {
+      developer.log('SHADER PROBE web ${entry.key} max_diff=${entry.value}', name: 'yuv_ffi');
       expect(entry.value, lessThanOrEqualTo(1), reason: entry.key);
     }
-    for (final entry in maximumByCase.entries.take(4)) {
-      developer.log('SHADER PROBE size=${entry.key} max_diff=${entry.value}', name: 'yuv_ffi');
-    }
-    developer.log(
-      'SHADER PROBE padding=${maximumByCase['padding']} scale_x2=${maximumByCase['scale_x2']} contain=${maximumByCase['contain']}',
-      name: 'yuv_ffi',
-    );
     renderer.dispose();
   });
 }
