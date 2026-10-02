@@ -36,6 +36,10 @@
 - Все шаги DEVICE 2 прошли: поворот, зеркало, рамки лиц и `capture.answer == true`; снимок в портрете — 474×720.
   Это выше VIEW-04 (20,4–21,1 FPS из 30); по итогу PASS прототип VIEW-04 удалён в пуле `STAGE5-DEVICE`.
 
+## Web
+
+- Chrome 154, Windows, i9-13980HX, release dart2js, кадр 1280×720 (WEB 6…8, `doc/web-camera-yuv.md`): показ YUV через `YuvFrameRenderer.upload()` — 58 мс против 14 мс у BGRA, потому что шейдер на Web выключен и кадр переводится в BGRA в WASM (`toBgraBytes()` ~38 мс, примерно в 3 раза медленнее native); декод в `ui.Image` — ~11,5 мс в обоих случаях. Камера отдаёт `NV12`, `copyTo` без `format` — 4,3 мс против 10,3 мс у BGRA; импорт в `YuvImage` — 1,4–1,6 мс в любом формате.
+
 ## Blur (эксперименты, в production не перенесены)
 
 - Базовая линия Pixel 3, release: Box/Mean 8,6 мс (720×360) и 54,9 мс (1477×1065); Gaussian r10 — 225 и 1427 мс. Box и Mean — одно и то же uniform-ядро.
