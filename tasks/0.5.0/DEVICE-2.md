@@ -1,5 +1,5 @@
 # DEVICE 2 — Прогон на Pixel 3, разбор и удаление прототипа VIEW-04
-**Status:** REVIEW · **Tier:** T2 · **Owner:** DEVICE 1 · **Depends On:** DEVICE 1 · **Probe:** none
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** DEVICE 1 · **Depends On:** DEVICE 1 · **Probe:** none
 
 #### Goal
 Engineer проходит экран проверки DEVICE 1 на Pixel 3 в release и присылает JSON. Исполнитель разбирает его по
@@ -158,3 +158,18 @@ Engineer проходит экран проверки DEVICE 1 на Pixel 3 в 
 текущая карточка завершена в REVIEW согласно решению 3.
 
 #### Review
+Ревью 02.10.2026:
+```text
+Pool: STAGE5-DEVICE; DEVICE 2
+Outcome: REWORK (повторный прогон после DEVICE 1)
+Reviewed-Head: 8d71e8e
+Merged-Head: none
+Fixed: none
+Blocking: прогон 1 неполон из-за дефекта экрана (DEVICE 1, Blocking 1): вопрос шага capture не показывался, поэтому
+  `capture.answer` нет. Разбор по решению 3 верен, прототип VIEW-04 сохранён правильно.
+Advisory: none
+```
+Числа прогона 1 (`25a33e0`) действительны и остаются в отчёте и `doc/perf-findings.md`: превью 29,5 кадра/с, с
+размытием раз в секунду 28,9 (−2 %), против 20,4–21,1 у прежнего пути VIEW-04; лица 1,0 и 0,9; поворот и зеркало
+верны. После исправления DEVICE 1 Engineer проходит экран целиком ещё раз (около 2 минут, шаг capture — в портрете);
+DEVICE 2 разбирает прогон 2 по той же таблице и при PASS удаляет прототип.

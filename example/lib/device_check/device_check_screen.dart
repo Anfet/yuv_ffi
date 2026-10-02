@@ -42,7 +42,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
     ),
     _DeviceCheckStep('face_landscape', 'Turn horizontally with a face in frame.', measures: true, face: true, question: 'Is the frame on the face?'),
     _DeviceCheckStep('mirror', 'Raise your right hand.', question: 'Is the hand on the right side of the screen?'),
-    _DeviceCheckStep('capture', 'Tap Capture.', question: 'Does the capture match the preview?', capture: true),
+    _DeviceCheckStep('capture', 'Hold the phone vertically and tap Capture.', question: 'Does the capture match the preview?', capture: true),
   ];
 
   final YuvCameraViewController _viewController = YuvCameraViewController();
@@ -66,6 +66,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
   bool _readyLogged = false;
   Duration? _lastBlur;
   Object? _cameraError;
+  DeviceCheckStepResult? _pendingResult;
 
   _DeviceCheckStep get _step => _steps[_stepIndex];
 
@@ -88,8 +89,8 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
   @override
   Widget build(BuildContext context) {
     if (_results.length == _steps.length) return _buildResult(context);
+    final compact = MediaQuery.orientationOf(context) == Orientation.landscape;
     return Scaffold(
-      appBar: AppBar(title: const Text('Device check')),
       body: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.max,
@@ -102,14 +103,14 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
               ),
             Expanded(child: _buildPreview()),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(compact ? 8 : 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 12,
+                spacing: compact ? 6 : 12,
                 children: [
-                  Text('Step ${_stepIndex + 1}/${_steps.length}: ${_step.id}', style: Theme.of(context).textTheme.titleMedium),
-                  Text(_step.instruction),
+                  Text('Step ${_stepIndex + 1}/${_steps.length}: ${_step.id}', style: Theme.of(context).textTheme.titleSmall),
+                  Text(_step.instruction, maxLines: compact ? 1 : null, overflow: TextOverflow.ellipsis),
                   if (_measuring) const LinearProgressIndicator(),
                   if (_awaitingAnswer) _answerControls() else _actionControls(),
                 ],
@@ -155,7 +156,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
         spacing: 12,
         children: [
           Expanded(
-            child: FilledButton(onPressed: _cameraReady ? _capture : null, child: const Text('Capture')),
+            child: FilledButton(onPressed: _cameraReady || !widget.cameraEnabled ? _capture : null, child: const Text('Capture')),
           ),
           OutlinedButton(onPressed: _skip, child: const Text('Skip')),
         ],
@@ -289,7 +290,9 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
   }
 
   void _answer(bool value) {
-    final current = _results.removeLast();
+    final current = _pendingResult;
+    if (current == null) return;
+    _pendingResult = null;
     _advance(
       DeviceCheckStepResult(
         id: current.id,
@@ -315,7 +318,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
       return;
     }
     setState(() {
-      _results.add(result);
+      _pendingResult = result;
       _awaitingAnswer = true;
     });
   }

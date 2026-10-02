@@ -37,7 +37,7 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
-| Устройство этапа 5 (`STAGE5-DEVICE`) | DEVICE 1 → DEVICE 2 | T2 / T2 | `example/STAGE5-DEVICE` / `.worktrees/STAGE5-DEVICE` | DEVICE 2 — прогон Engineer на Pixel 3 | не запущен |
+| Устройство этапа 5 (`STAGE5-DEVICE`) | DEVICE 1 → DEVICE 2 | T2 / T2 | `example/STAGE5-DEVICE` / `.worktrees/STAGE5-DEVICE` | DEVICE 2 — прогон Engineer на Pixel 3 | DEVICE 1 в REVIEW после доработки; затем повторный прогон Engineer для DEVICE 2 |
 
 ## Дашборд
 
@@ -65,8 +65,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | REVIEW | T2 | — | CAMERA 2 | **Экран проверки на устройстве.** Release-ready на Pixel 3 (`25a33e0`); экран и отчёт переданы на проверку. |
-| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | REVIEW | T2 | DEVICE 1 | DEVICE 1 | **Прогон на Pixel 3 и разбор.** FAIL: у `capture` нет обязательного `answer`; VIEW-04 сохранён. Нужны решение Engineer или новая карточка исправления. |
+| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | REVIEW | T2 | — | CAMERA 2 | **Экран проверки на устройстве.** Доработка принята в пул: capture ждёт Yes/No вне списка готовых результатов; добавлен регрессионный тест, ландшафтный footer сжат. |
+| [DEVICE 2](tasks/0.5.0/DEVICE-2.md) | BLOCKED | T2 | DEVICE 1 | DEVICE 1 | **Прогон на Pixel 3 и разбор.** Прогон 1: всё PASS, кроме отсутствующего `capture.answer` — дефект экрана DEVICE 1. После исправления — повторный прогон Engineer (шаг capture в портрете). Превью 29,5 / 28,9 кадра/с против 20,4–21,1 у VIEW-04. |
 
 ### Параллельно
 
