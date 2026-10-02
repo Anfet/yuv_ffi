@@ -16,7 +16,7 @@
 | **1. Тест-сьют** | TEST 1…7 | теги работают, эталон сверен с libyuv, дубли убраны, вывод тихий |
 | **2. Пробы и скорость** | PROBE 1, PROBE 2 | базовые линии 0.4.0 и `dev` сняты в release; правило проб в `AGENTS.md` |
 | **3. Уборка** | CLEAN 1, CLEAN 2, SPM 1…4 | в example нет стендов прошлых замеров; устаревшего API нет; SPM собирается |
-| **4. Функциональность** | GEOM 1, PATCH 1, SHADER 1…3, PRESENT 1, CAMERA 1, CAMERA 2, WEB 3 | GEOM/PATCH/SHADER/PRESENT влиты в `dev`; CAMERA 2 и WEB 3 в review
+| **4. Функциональность** | GEOM 1, PATCH 1, SHADER 1…3, PRESENT 1, CAMERA 1, CAMERA 2, WEB 3 | все карточки влиты в `dev` (`00a82aa`); post-merge CI pending
 | **5. Проверка на устройстве** | DEVICE 1 | Pixel 3 в release: FPS, рамки лиц, «снимок = видимое» |
 | **6. Релизный цикл** | RELEASE 1 (карточка — при старте этапа) | финальный гейт пройден, Engineer подписал |
 | **Параллельно** | WEB 1, WEB 2 | не блокируют этапы |
@@ -24,7 +24,7 @@
 ## Текущее состояние
 
 - **Сделано:** цикл 0.4.2 закрыт без выпуска, его код — проверенная точка в `dev` (`COMPLETION.md`).
-- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); macOS и iOS CI на `bae5ff8` зелёные, полный CI Engineer отменил. Этап 3 завершён. **Все карточки этапа 4 приняты** (камера и WEB 3 — 02.10.2026, ждут слияния в `dev`); визуальные/device и новые macOS/iOS проверки postponed по решению Engineer и не блокируют review.
+- **Сейчас:** этап 2 завершён: PROBE 1 и PROBE 2 влиты в `dev` (`0a724c3`), полный batch CI прошёл 9/9 на `2646db1`. Этап 1 завершён: TEST 1…7 влиты в `dev`; TEST 4 и TEST 5 прошли финальную интеграционную проверку документации, карты команд и inventory. CLEAN 1 и CLEAN 2 влиты в `dev` на `2f1b907` и `79f9cd6`; полный CI прошёл 9/9 на `79f9cd6`. Пул SPM 1…4 принят и влит в `dev` (`d3bb2cc`); macOS и iOS CI на `bae5ff8` зелёные, полный CI Engineer отменил. Этап 3 завершён. **Этап 4 завершён:** все карточки влиты в `dev` на `00a82aa`; post-merge CI pending. Визуальные/device и новые macOS/iOS проверки postponed по решению Engineer.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Пулы задач
@@ -37,9 +37,6 @@ Orchestrator записывает для нового пула порядок к
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка / worktree | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
-| Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | все карточки приняты; ветка не влита — коммиты пулов PATCH и CAMERA лежат в ней же, `dev` можно сдвинуть fast-forward до `b494ccb` (VIEW + PATCH) |
-| Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — | принят на `b494ccb`; коммит в ветке `all/STAGE4-VIEW`, вливается вместе с ней |
-| Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 → WEB 3 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` | CAMERA 1, CAMERA 2 и WEB 3 приняты; не влиты — слияние в `dev` по команде Engineer; правки Reviewer не закоммичены |
 
 ## Дашборд
 
@@ -61,21 +58,13 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [GEOM 1](tasks/0.5.0/GEOM-1.md) | ACCEPTED | T2 | — | CLEAN 2 | **Геометрия кадра `YuvFrameGeometry`.** Принята на `b903c32`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
-| [PATCH 1](tasks/0.5.0/PATCH-1.md) | ACCEPTED | T2 | — | — | **Вставка фрагмента `applyPatch`.** Принята на `b494ccb`; native не нужен (Pixel 3, 256×256 I420 — 0,020 мс). |
-| [SHADER 1](tasks/0.5.0/SHADER-1.md) | ACCEPTED | T2 | — | — | **Раскладка плоскостей в одну текстуру.** Принята на `0b3eddd`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
-| [SHADER 2](tasks/0.5.0/SHADER-2.md) | ACCEPTED | T2 | — | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Принята на `7f4425c`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
-| [SHADER 3](tasks/0.5.0/SHADER-3.md) | ACCEPTED | T2 | — | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Принята на `54f8fff`; Linux — post-merge CI. |
-| [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | ACCEPTED | T2 | — | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** Принята на `eaeb0ea`; macOS/iOS — postponed по решению Engineer. |
-| [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | ACCEPTED | T2 | — | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). Принята на `071de35`; `dart:html` и браузерная проба Web-камеры — в WEB 3. |
-| [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | ACCEPTED | T2 | — | CAMERA 1, PRESENT 1 | **Виджеты камеры.** Принята на `2ddf677` с правкой Reviewer (тест «`onFrame` не задерживает показ»); Pixel 3 — в DEVICE 1. |
-| [WEB 3](tasks/0.5.0/WEB-3.md) | ACCEPTED | T2 | — | CAMERA 1 | **Убрать `dart:html`.** Принята на `2ddf677` с правками Reviewer (буфер `copyTo` под dart2wasm, комментарии, CHANGELOG); `tool/ci/web.ps1` с пробой Web-камеры прошёл. |
+Нет активных задач. Результаты этапа 4 записаны в `COMPLETION.md`.
 
 ### Этап 5 — проверка на устройстве
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | BLOCKED | T2 | этап 4 | CAMERA 2 | **Проверка на Pixel 3.** Release: FPS превью при фоновой обработке, рамки лиц, «снимок = видимое», повтор стенда VIEW-04. |
+| [DEVICE 1](tasks/0.5.0/DEVICE-1.md) | BLOCKED | T2 | Architect | CAMERA 2 | **Проверка на Pixel 3.** Этап 4 влит; перед запуском нужно расписать карточку этапа 5. |
 
 ### Параллельно
 

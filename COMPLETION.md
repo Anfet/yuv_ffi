@@ -6,6 +6,16 @@
 
 ## Цикл 0.5.0
 
+- **GEOM 1 — Добавлена геометрия кадров `YuvFrameGeometry`:** нормализация ориентации и зеркала, отображение точек и прямоугольников, применение преобразования к изображению. Влито в `dev` на `00a82aa`; post-merge CI pending.
+- **PATCH 1 — Добавлена вставка фрагмента `applyPatch`:** проверки выполняются до записи, поддержаны I420, NV12/NV21 и BGRA. Влито в `dev` на `00a82aa`; post-merge CI pending.
+- **SHADER 1 — Добавлена упаковка YUV-плоскостей в текстуру:** deterministic layout и побайтовая проверка раскладки. Влито в `dev` на `00a82aa`; post-merge CI pending.
+- **SHADER 2 — Добавлены YUV-шейдер и `YuvFrameRenderer`:** renderer выбирает GPU-шейдер либо BGRA fallback и применяет геометрию кадра. Влито в `dev` на `00a82aa`; post-merge CI pending.
+- **SHADER 3 — Добавлена проба шейдера против CPU:** полная матрица ловит подмену U/V и сверяет рендер с CPU-эталоном. Влито в `dev` на `00a82aa`; post-merge CI pending.
+- **PRESENT 1 — Добавлены режимы показа кадров:** презентер сообщает подтверждённую геометрию показанного кадра и поддерживает shader/fallback-путь. Влито в `dev` на `00a82aa`; macOS/iOS postponed по решению Engineer, post-merge CI pending.
+- **CAMERA 1 — Перенесён камерный источник в `example/lib/camera/`:** источник разделён от UI, корректно управляет жизненным циклом потока и имеет IO/Web реализации. Влито в `dev` на `00a82aa`; macOS/iOS postponed по решению Engineer, post-merge CI pending.
+- **CAMERA 2 — Добавлены виджеты камеры:** показ, capture видимого кадра, прореженный не блокирующий `onFrame`, трансформации и тесты публичного контракта. Влито в `dev` на `00a82aa`; Pixel 3 — в DEVICE 1, post-merge CI pending.
+- **WEB 3 — Убрано использование `dart:html`:** WASM loader и Web-источник камеры переведены на `package:web`, добавлена Chrome fake-camera smoke-проверка. Влито в `dev` на `00a82aa`; `tool/ci/web.ps1` прошёл локально, post-merge CI pending.
+
 - **CLEAN 1 — Удалены следы замеров из example:** экран PACK-00, хуки VIEW-03 и переключатель упаковки. Влито в `dev` на `2f1b907`. Полный CI прошёл 9/9 на последующем общем SHA `79f9cd6` (включает CLEAN 1 и CLEAN 2).
 - **CLEAN 2 — Удалено устаревшее API:** удалены compatibility API и относящиеся к нему тесты, обновлены README и CHANGELOG. Влито в `dev` на `79f9cd6`. Полный CI прошёл 9/9 на этом SHA: [CI](https://github.com/Anfet/yuv_ffi/actions/runs/36907863925), [Example](https://github.com/Anfet/yuv_ffi/actions/runs/36907863889), [iOS](https://github.com/Anfet/yuv_ffi/actions/runs/36907863919), [Web](https://github.com/Anfet/yuv_ffi/actions/runs/36907863778), [VM](https://github.com/Anfet/yuv_ffi/actions/runs/36907863809), [Android](https://github.com/Anfet/yuv_ffi/actions/runs/36907863829), [Windows](https://github.com/Anfet/yuv_ffi/actions/runs/36907864042), [smoke](https://github.com/Anfet/yuv_ffi/actions/runs/36907863819), [macOS](https://github.com/Anfet/yuv_ffi/actions/runs/36907863818) — 9/9 успешно.
 
