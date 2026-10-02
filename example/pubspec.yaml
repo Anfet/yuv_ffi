@@ -27,6 +27,7 @@ dependencies:
   # CameraPlatform.instance.onStreamedFrameAvailable directly, bypassing
   # CameraController.startImageStream's Android/iOS-only assert on desktop.
   camera_platform_interface: ^2.10.0
+  web: ^1.1.1
   google_mlkit_face_detection: ^0.13.1
 
 dev_dependencies:

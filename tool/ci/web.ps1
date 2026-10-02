@@ -222,13 +222,16 @@ try {
   Start-WebDriver -DriverPath $chromeDriver -Action {
     Invoke-WebDrive -Target 'integration_test/reference_web_conversions_test.dart' -Arguments @('--profile')
   }
+  Start-WebDriver -DriverPath $chromeDriver -Action {
+    Invoke-WebDrive -Target 'integration_test/camera_source_web_smoke_test.dart' -Arguments @('--web-browser-flag=--use-fake-device-for-media-stream', '--web-browser-flag=--use-fake-ui-for-media-stream')
+  }
 
   & git add --refresh -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm example/windows/flutter/generated_plugin_registrant.cc example/windows/flutter/generated_plugin_registrant.h example/windows/flutter/generated_plugins.cmake
   if ($LASTEXITCODE -ne 0) {
     throw "Could not refresh generated-file index state: $LASTEXITCODE"
   }
 
-  Write-Output "Web CI passed: Chrome $chromeVersion; sources=13; integration cases=62; reference matrix=119."
+  Write-Output "Web CI passed: Chrome $chromeVersion; sources=13; integration cases=62; reference matrix=119; camera smoke=1."
 } finally {
   Pop-Location
 }

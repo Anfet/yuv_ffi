@@ -1,9 +1,8 @@
-// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
-
 import 'dart:async';
-import 'dart:html' as html;
 import 'dart:js_interop';
 import 'dart:typed_data';
+
+import 'package:web/web.dart' as web;
 
 import 'package:camera/camera.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
@@ -23,11 +22,11 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
   final void Function(YuvCameraFrame frame) onFrame;
   final void Function(Object error) onError;
   final Stopwatch _clock = Stopwatch();
-  final html.VideoElement _video = html.VideoElement()
+  final web.HTMLVideoElement _video = web.HTMLVideoElement()
     ..autoplay = true
     ..muted = true;
-  final html.CanvasElement _canvas = html.CanvasElement();
-  html.MediaStream? _stream;
+  final web.HTMLCanvasElement _canvas = web.HTMLCanvasElement();
+  web.MediaStream? _stream;
   Object? _reader;
   int? _animationFrame;
   int? _videoFrameRequest;
@@ -48,21 +47,20 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
     }
     final generation = _generation;
     _video.setAttribute('playsinline', 'true');
-    await runStreamStart<html.MediaStream>(
+    await runStreamStart<web.MediaStream>(
       open: () async {
-        final stream = await html.window.navigator.mediaDevices?.getUserMedia({
-          'audio': false,
-          'video': {'facingMode': _facingMode(controller.description.lensDirection)},
-        });
-        if (stream == null) throw StateError('Could not access user media stream');
-        return stream;
+        final constraints = web.MediaStreamConstraints(
+          audio: false.toJS,
+          video: js_util.jsify({'facingMode': _facingMode(controller.description.lensDirection)}) as JSAny,
+        );
+        return (await web.window.navigator.mediaDevices.getUserMedia(constraints).toDart);
       },
       isCurrent: () => !_disposed && generation == _generation,
       release: _release,
       attach: (stream) async {
         _stream = stream;
         _video.srcObject = stream;
-        await _video.play();
+        await _video.play().toDart;
       },
       onStarted: () {
         _clock
@@ -77,11 +75,11 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
 
   bool _startTrackProcessor(int generation) {
     final stream = _stream;
-    if (stream == null || !js_util.hasProperty(html.window, 'MediaStreamTrackProcessor')) return false;
-    final tracks = stream.getVideoTracks();
+    if (stream == null || !js_util.hasProperty(web.window, 'MediaStreamTrackProcessor')) return false;
+    final tracks = stream.getVideoTracks().toDart;
     if (tracks.isEmpty) return false;
     try {
-      final constructor = js_util.getProperty<Object>(html.window, 'MediaStreamTrackProcessor');
+      final constructor = js_util.getProperty<Object>(web.window, 'MediaStreamTrackProcessor');
       final processor = js_util.callConstructor<Object>(constructor, [
         js_util.jsify({'track': tracks.first}),
       ]);
@@ -146,10 +144,12 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
       _videoFrameRequest = (request as num).toInt();
       return;
     }
-    _animationFrame = html.window.requestAnimationFrame((_) {
-      _captureCanvas();
-      _scheduleNext();
-    });
+    _animationFrame = web.window.requestAnimationFrame(
+      ((num _) {
+        _captureCanvas();
+        _scheduleNext();
+      }).toJS,
+    );
   }
 
   void _captureCanvas() {
@@ -163,8 +163,8 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
         ..width = width
         ..height = height;
       final context = _canvas.context2D;
-      context.drawImageScaled(_video, 0, 0, width.toDouble(), height.toDouble());
-      _deliverBgra(width, height, Uint8List.fromList(context.getImageData(0, 0, width, height).data), false);
+      context.drawImage(_video, 0, 0, width, height);
+      _deliverBgra(width, height, Uint8List.fromList(context.getImageData(0, 0, width, height).data.toDart), false);
     } catch (error) {
       _fail(error, _generation);
     } finally {
@@ -209,7 +209,7 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
     _reader = null;
     if (reader != null) js_util.callMethod<Object?>(reader, 'cancel', const []);
     final animationFrame = _animationFrame;
-    if (animationFrame != null) html.window.cancelAnimationFrame(animationFrame);
+    if (animationFrame != null) web.window.cancelAnimationFrame(animationFrame);
     _animationFrame = null;
     final videoFrameRequest = _videoFrameRequest;
     if (videoFrameRequest != null && js_util.hasProperty(_video, 'cancelVideoFrameCallback')) {
@@ -231,8 +231,8 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
 
   void _closeVideoFrame(Object frame) => js_util.callMethod<void>(frame, 'close', const []);
 
-  void _release(html.MediaStream stream) {
-    for (final track in stream.getTracks()) {
+  void _release(web.MediaStream stream) {
+    for (final track in stream.getTracks().toDart) {
       track.stop();
     }
   }

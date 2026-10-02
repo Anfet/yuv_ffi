@@ -1,11 +1,10 @@
-// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
-//
 // This file is the Web-only WASM bootstrap implementation and is imported
 // through a conditional export (`wasm_loader.dart`), so web libraries here are
 // intentional and isolated from non-web targets.
 import 'dart:async';
-import 'dart:html' as html;
 import 'dart:js_interop';
+
+import 'package:web/web.dart' as web;
 
 import 'package:yuv_ffi/src/web/impl/js_util_compat_web.dart' as js_util;
 
@@ -87,7 +86,7 @@ final class YuvWasmLoader {
   ///
   /// Not exported publicly, like the rest of the debug surface.
   static void debugRemoveInjectedScript() {
-    html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]')?.remove();
+    web.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]')?.remove();
   }
 
   /// Whether an injected loader script is currently in the document.
@@ -95,7 +94,7 @@ final class YuvWasmLoader {
   /// Exists so a test can assert the failure path really dropped the dead tag;
   /// the marker attribute is what makes injection idempotent, so its absence
   /// is the only direct evidence that a retry will inject again.
-  static bool get debugHasInjectedScript => html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]') != null;
+  static bool get debugHasInjectedScript => web.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]') != null;
 
   /// Returns initialized module if available in current process, otherwise null.
   static YuvModule? get moduleIfInitialized => _module;
@@ -198,13 +197,13 @@ final class YuvWasmLoader {
   /// Concurrent callers cannot race here: [ensureInitialized] coalesces them onto
   /// one in-flight attempt, so this runs alone.
   static Future<void> _injectScriptOnce(String scriptPath) async {
-    final existing = html.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]');
+    final existing = web.document.querySelector('script[data-yuv-ffi-wasm-loader="1"]');
     if (existing != null) {
       return;
     }
 
     final completer = Completer<void>();
-    final script = html.ScriptElement()
+    final script = web.HTMLScriptElement()
       ..type = 'text/javascript'
       ..src = scriptPath
       ..async = true
@@ -224,7 +223,7 @@ final class YuvWasmLoader {
       }
     });
 
-    html.document.head?.append(script);
+    web.document.head?.append(script);
     await completer.future;
   }
 }

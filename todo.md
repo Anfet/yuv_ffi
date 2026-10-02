@@ -69,7 +69,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | ACCEPTED | T2 | — | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** Принята на `eaeb0ea`; macOS/iOS — postponed по решению Engineer. |
 | [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | ACCEPTED | T2 | — | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). Принята на `071de35`; `dart:html` и браузерная проба Web-камеры — в WEB 3. |
 | [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | REVIEW | T2 | Reviewer | CAMERA 1, PRESENT 1 | **Виджеты камеры.** FPS по показанным кадрам; capture-contract на Windows native runner PASS; готова к повторному review. |
-| [WEB 3](tasks/0.5.0/WEB-3.md) | TODO | T2 | — | CAMERA 1 | **Убрать `dart:html`.** Загрузчик WASM пакета и Web-источник камеры — на `package:web`, подавления `deprecated_member_use` уходят; браузерная проба Web-камеры с фейковым устройством Chrome в `tool/ci/web.ps1`. Пул `STAGE4-CAMERA` после CAMERA 2. |
+| [WEB 3](tasks/0.5.0/WEB-3.md) | IN_PROGRESS | T2 | Executor | CAMERA 1 | **Убрать `dart:html`.** Загрузчик WASM пакета и Web-источник камеры — на `package:web`, подавления `deprecated_member_use` уходят; браузерная проба Web-камеры с фейковым устройством Chrome в `tool/ci/web.ps1`. Пул `STAGE4-CAMERA` после CAMERA 2. |
 
 ### Этап 5 — проверка на устройстве
 

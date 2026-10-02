@@ -1,5 +1,5 @@
 # WEB 3 — Убрать `dart:html`: `package:web` в загрузчике и Web-источнике камеры
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** CAMERA 1 · **Probe:** windows
+**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor · **Depends On:** CAMERA 1 · **Probe:** windows
 
 #### Goal
 `dart:html` устарел: его заменили `package:web` и `dart:js_interop`, и код с ним не компилируется в WebAssembly
