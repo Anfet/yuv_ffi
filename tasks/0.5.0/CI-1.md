@@ -1,5 +1,5 @@
 # CI 1 — Запуск CI по тегам `ci/<набор>/<метка>`
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** none
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** PAR-WEB · **Depends On:** пул `PAR-WEB` (одна ветка за раз, D-22) · **Probe:** none
 
 #### Goal
 Контрольный CI сейчас запускается push'ем ветки `ci/<пул>` на точный SHA `dev` (D-9, D-18): ветки копятся на

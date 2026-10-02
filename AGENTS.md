@@ -23,11 +23,11 @@
 - For all agents: completely exclude any `build/` directories from content retrieval.
 - Do not read, index, search, analyze, or summarize files under `build/` paths.
 
-## Worktree Location and Cleanup
+## Pool Branches
 
-- Create linked Git worktrees inside the repository at `.worktrees/<pool-id>` for new task pools; existing task worktrees remain valid. Do not create sibling `*-wt` or task-specific temporary checkout directories.
-- `.worktrees/` is ignored by Git and excluded from the published package.
-- When a task is terminal and its worktree is no longer needed, inspect its status before removal. Preserve dirty work. After removing a worktree, check the project worktree directory for unregistered temporary folders and remove only confirmed leftovers.
+- Work in the main checkout `D:\.projects\yuv_ffi`; do not create linked Git worktrees. Pools run one after another.
+- A pool works on its branch `<keys>/<pool-id>` from `dev`. Switch branches only with a clean working tree; commit plan and card edits first.
+- `.worktrees/` stays ignored by Git and the published package only so that old leftovers cannot leak.
 
 ## Platform Implementation Layout Policy
 
@@ -65,8 +65,8 @@
 
 ## Задачи и дашборд
 
-- План и дашборд (`todo.md`) ведутся строго по `D:\.projects\pre-release-todo-template.md` и `D:\.projects\PROTOCOL.md`: таблица этапов, дашборд по этапам с колонками ID / Status / Tier / Owner / Depends on / Summary, у каждой задачи — файл карточки.
-- ID задачи — слово области и номер. В тексте — через неразрывный пробел (TEST 1, GEOM 1), в имени карточки — через дефис (`tasks/<версия>/TEST-1.md`). У нового пула своя ветка `<keys>/<pool-id>` и worktree `.worktrees/<pool-id>`; `<keys>` покрывает объединение ключей путей из `scope_guard.sh`. Старые ветки задач сохраняют свою историю. Коды без расшифровки не использовать.
+- План и дашборд (`todo.md`) ведутся строго по `D:\.projects\pre-release-todo-template.md` и `D:\.projects\ENGINEERING_PROTOCOL.md`: таблица этапов, дашборд по этапам с колонками ID / Status / Tier / Owner / Depends on / Summary, у каждой задачи — файл карточки.
+- ID задачи — слово области и номер. В тексте — через неразрывный пробел (TEST 1, GEOM 1), в имени карточки — через дефис (`tasks/<версия>/TEST-1.md`). У нового пула своя ветка `<keys>/<pool-id>` в основной копии (worktree не используются); `<keys>` покрывает объединение ключей путей из `scope_guard.sh`. Старые ветки задач сохраняют свою историю. Коды без расшифровки не использовать.
 - Карточки плановой работы текущего этапа Architect расписывает до запуска (решение, Scope, DoD, Validation): на дашборде этапа только `TODO` и `BLOCKED`. Задачи будущих этапов — карточки-черновики (Goal) со статусом `BLOCKED`, их дописывают при входе в этап. Исключение: после отказа post-merge CI Orchestrator сам заполняет фактическую карточку в конце этапа упавшего пула (SHA, run/job, упавший шаг, короткий фрагмент ошибки, известный критерий исправления), сообщает Engineer и не запускает расследование без его команды. Строки без карточки не допускаются.
 - `ARCHITECT_REQUIRED` появляется только когда исполнение упёрлось в решение. Вопрос, который решает Engineer, — `ENGINEER_REQUIRED`: вопрос, известное, варианты и рекомендация — в карточке, строка — в открытых вопросах плана.
 
