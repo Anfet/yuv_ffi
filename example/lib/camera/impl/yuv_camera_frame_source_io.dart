@@ -24,6 +24,7 @@ final class YuvCameraFrameSourceImpl implements YuvCameraFrameSource {
 
   @override
   Future<void> start() async {
+    stop();
     final generation = _generation;
     await _previousStop;
     if (_disposed || generation != _generation) return;

@@ -15,7 +15,7 @@ class YuvCameraViewController extends ChangeNotifier {
   void attach(Future<YuvImage?> Function() capture) => _capture = capture;
 
   void detach(Future<YuvImage?> Function() capture) {
-    _capture = null;
+    if (_capture == capture) _capture = null;
   }
 
   void setGeometry(YuvFrameGeometry geometry) => _setGeometry(geometry);

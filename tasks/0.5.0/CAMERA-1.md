@@ -1,5 +1,5 @@
 # CAMERA 1 — Источник кадров камеры в example
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** CLEAN 1, GEOM 1 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** CLEAN 1, GEOM 1 · **Probe:** none
 
 #### Goal
 `example/lib/camera/` (D-13): `YuvCameraFrameSource` — одна логика потока для mobile/desktop с платформенными
@@ -136,4 +136,9 @@ Blocking:
 Advisory: IO start() без stop() создаёт вторую подписку с тем же поколением — кадры удвоятся; upright() делает лишнюю
   копию (copy → pack → rotate).
 ```
+
+#### Rework Report
+- Web-источник восстановлен на `getUserMedia` + `MediaStreamTrackProcessor` с `requestVideoFrameCallback`/canvas fallback; он больше не вызывает не реализованный `camera_web.onStreamedFrameAvailable`.
+- `frame_read_loop.dart`, `stream_start.dart`, их тесты и `js_util_compat_web.dart` перенесены в `camera/`; Web-источник использует перенесённые helper-ы. IO `start()` предварительно останавливает предыдущую подписку.
+- Проверки: `flutter test` в `example/` — 38 passed; `flutter analyze` — clean; `flutter build web` — PASS. macOS/iOS device validation остаётся **postponed** по решению Engineer и не блокирует review.
 Импорт без расчередования, ориентация по таблице и ленивость проверены — верны.

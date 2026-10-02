@@ -30,12 +30,11 @@ class _CameraScreenState extends State<CameraScreen> {
   FaceDetector? _faceDetector;
   Rect? _faceBox;
   bool _heavyProcessing = false;
-  DateTime? _lastHeavyProcessing;
-  Completer<YuvImage?>? captureCompleter;
-
-  // A copy of the frame the preview is about to show while a capture waits.
-  // It becomes the capture only once the preview reports it drawn.
-  YuvImage? captureCandidate;
+  Duration? _lastHeavyProcessing;
+  int _framesSinceFpsSample = 0;
+  int _fps = 0;
+  bool _shaderEnabled = false;
+  DateTime _fpsSampleStarted = DateTime.now();
 
   @override
   void initState() {
@@ -45,9 +44,6 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   void dispose() {
-    // The preview is gone and no frame will arrive; a capture still waiting
-    // would otherwise never complete.
-    cancelCapture();
     viewController.dispose();
     _faceDetector?.close().ignore();
     cameraController?.dispose();
@@ -95,7 +91,10 @@ class _CameraScreenState extends State<CameraScreen> {
                             : CustomPaint(
                                 painter: FaceRectPainter(rect: _faceBox!, geometry: geometry, strokeWidth: 4),
                               ),
-                        onStreamStopped: cancelCapture,
+                        onStreamStopped: () {},
+                        onShaderChanged: (enabled) {
+                          if (_shaderEnabled != enabled && mounted) setState(() => _shaderEnabled = enabled);
+                        },
                       );
                     }
 
@@ -115,6 +114,12 @@ class _CameraScreenState extends State<CameraScreen> {
                       tooltip: 'Capture frame',
                     ),
                   ),
+                ),
+              if (_isPreviewReady)
+                Positioned(
+                  top: 12,
+                  left: 56,
+                  child: Text('$_fps fps  shader: ${_shaderEnabled ? 'on' : 'off'}', style: const TextStyle(color: Colors.white)),
                 ),
               if (_isPreviewReady)
                 Positioned(
@@ -171,12 +176,23 @@ class _CameraScreenState extends State<CameraScreen> {
   bool get _supportsFaceDetection => !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
 
   Future<void> _handleFrame(YuvCameraFrame frame) async {
+    _updateFps();
     if (_supportsFaceDetection) await _detectFace(frame);
-    final now = DateTime.now();
-    if (_heavyProcessing && (_lastHeavyProcessing == null || now.difference(_lastHeavyProcessing!) >= const Duration(seconds: 1))) {
-      _lastHeavyProcessing = now;
-      frame.upright().copy().applyGaussianBlur(radius: 10, sigma: 10);
+    if (_heavyProcessing && (_lastHeavyProcessing == null || frame.timestamp - _lastHeavyProcessing! >= const Duration(seconds: 1))) {
+      _lastHeavyProcessing = frame.timestamp;
+      final image = frame.upright();
+      await compute(_blurBgra, (bytes: image.toBgraBytes(), width: image.width, height: image.height));
     }
+  }
+
+  void _updateFps() {
+    _framesSinceFpsSample++;
+    final now = DateTime.now();
+    final elapsed = now.difference(_fpsSampleStarted);
+    if (elapsed < const Duration(seconds: 1)) return;
+    if (mounted) setState(() => _fps = (_framesSinceFpsSample * 1000 / elapsed.inMilliseconds).round());
+    _framesSinceFpsSample = 0;
+    _fpsSampleStarted = now;
   }
 
   Future<void> _detectFace(YuvCameraFrame frame) async {
@@ -199,14 +215,8 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> takePicture() async {
-    // A second tap before the frame arrives joins the pending capture; a new
-    // completer would leave the first one waiting forever.
-    if (captureCompleter?.isCompleted == false) {
-      return;
-    }
-
     try {
-      final yuv = _isPreviewReady ? await viewController.capture() : await (captureCompleter = Completer<YuvImage?>()).future;
+      final yuv = _isPreviewReady ? await viewController.capture() : null;
       if (yuv == null) {
         return;
       }
@@ -222,36 +232,13 @@ class _CameraScreenState extends State<CameraScreen> {
       debugPrint('$stack');
     }
   }
+}
 
-  YuvImage imageCapturer(YuvImage image) {
-    if (captureCompleter?.isCompleted == false) {
-      // Not completed here: the frame may still be dropped before it is drawn
-      // (stream stopped, decode failed). A candidate of a dropped frame is
-      // replaced by the next one. Copied because the web preview writes every
-      // next frame into the same instance.
-      captureCandidate = image.copy();
-    }
-
-    return image;
-  }
-
-  // The frame from the latest imageCapturer call is on screen now.
-  void confirmCapture() {
-    final candidate = captureCandidate;
-    final capture = captureCompleter;
-    captureCandidate = null;
-    if (candidate != null && capture != null && !capture.isCompleted) {
-      capture.complete(candidate);
-    }
-  }
-
-  // The stream stopped or the screen closed before a candidate was drawn:
-  // the capture ends without a frame rather than returning one never shown.
-  void cancelCapture() {
-    captureCandidate = null;
-    final capture = captureCompleter;
-    if (capture != null && !capture.isCompleted) {
-      capture.complete(null);
-    }
-  }
+Future<Uint8List> _blurBgra(({List<int> bytes, int width, int height}) input) async {
+  await YuvFfi.initialize();
+  final image = YuvImage.bgra(input.width, input.height);
+  image.yPlane.assignFrom(Uint8List.fromList(input.bytes));
+  image.markDirty();
+  image.applyGaussianBlur(radius: 10, sigma: 10);
+  return image.toBgraBytes();
 }

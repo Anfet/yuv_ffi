@@ -1,5 +1,5 @@
 # CAMERA 2 — Виджеты камеры в example
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** CAMERA 1 · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Reviewer · **Depends On:** CAMERA 1, PRESENT 1 · **Probe:** none
 
 #### Goal
 `YuvCameraView` (прямой показ на GPU; `onFrame` с прореживанием вне пути отрисовки; `capture()`; доступ к текущей
@@ -121,3 +121,9 @@ Blocking:
 Advisory: YuvCameraViewController.detach() игнорирует аргумент; YuvTransformView не перезапускает источник при смене
   cameraController; интервал onFrame считается по DateTime.now(), хотя у кадра есть timestamp.
 ```
+
+#### Rework Report
+- Добавлены widget tests для интервала и non-overlap `onFrame`, `capture() -> null` при остановке и продолжения потока после ошибки transform; `detach()` сохраняет более новый handler.
+- `onFrame` использует `frame.timestamp`; `YuvTransformView` перезапускает source при смене `cameraController`; старый capture-код экрана удалён.
+- DEVICE 1: угол выводит FPS и фактическое `shader: on/off`; heavy mode передаёт BGRA-байты в `compute()`, где инициализируется backend и запускается blur. На Web `compute()` выполняется в UI-isolate по контракту Flutter.
+- Проверки: `flutter test` в `example/` — 38 passed; `flutter analyze` — clean; `flutter build web` — PASS. Pixel 3, Windows physical camera, macOS/iOS device checks — **postponed** по решению Engineer и не блокируют review.

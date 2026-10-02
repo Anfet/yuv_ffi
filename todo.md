@@ -16,7 +16,7 @@
 | **1. Тест-сьют** | TEST 1…7 | теги работают, эталон сверен с libyuv, дубли убраны, вывод тихий |
 | **2. Пробы и скорость** | PROBE 1, PROBE 2 | базовые линии 0.4.0 и `dev` сняты в release; правило проб в `AGENTS.md` |
 | **3. Уборка** | CLEAN 1, CLEAN 2, SPM 1…4 | в example нет стендов прошлых замеров; устаревшего API нет; SPM собирается |
-| **4. Функциональность** | GEOM 1, PATCH 1, SHADER 1…3, PRESENT 1, CAMERA 1, CAMERA 2 | всё принято и влито в `dev` |
+| **4. Функциональность** | GEOM 1, PATCH 1, SHADER 1…3, PRESENT 1, CAMERA 1, CAMERA 2 | GEOM/PATCH/SHADER/PRESENT влиты в `dev`; CAMERA 1 и CAMERA 2 на повторном review |
 | **5. Проверка на устройстве** | DEVICE 1 | Pixel 3 в release: FPS, рамки лиц, «снимок = видимое» |
 | **6. Релизный цикл** | RELEASE 1 (карточка — при старте этапа) | финальный гейт пройден, Engineer подписал |
 | **Параллельно** | WEB 1, WEB 2 | не блокируют этапы |
@@ -39,7 +39,7 @@ Orchestrator записывает для нового пула порядок к
 | SPM этапа 3 | SPM 1 → SPM 2 → SPM 3, SPM 4 | T2 / T2 | `all/STAGE3-SPM-wip` (от `dev` `f4a4f2e`); влит fast-forward, `dev` = `d3bb2cc` | CLEAN 2 в `dev` — выполнена | `ci/STAGE3-SPM-apple` (`bae5ff8`): macOS и iOS CI зелёные; полный CI не нужен (решение Engineer); пул `DONE` |
 | Показ кадров этапа 4 (`STAGE4-VIEW`) | GEOM 1 → SHADER 1 → SHADER 2 → SHADER 3 → PRESENT 1 | T2 / T1 | `all/STAGE4-VIEW` / `.worktrees/STAGE4-VIEW` | — | все карточки приняты; ветка не влита — коммиты пулов PATCH и CAMERA лежат в ней же, `dev` можно сдвинуть fast-forward до `b494ccb` (VIEW + PATCH) |
 | Вставка этапа 4 (`STAGE4-PATCH`) | PATCH 1 | T2 / T2 | `vm+example/STAGE4-PATCH` / `.worktrees/STAGE4-PATCH` | — | принят на `b494ccb`; коммит в ветке `all/STAGE4-VIEW`, вливается вместе с ней |
-| Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` | ревью: CAMERA 1 и CAMERA 2 на доработку; коммиты в ветке `all/STAGE4-VIEW` поверх `b494ccb` |
+| Камера этапа 4 (`STAGE4-CAMERA`) | CAMERA 1 → CAMERA 2 | T2 / T2 | `all/STAGE4-CAMERA` / `.worktrees/STAGE4-CAMERA` | `STAGE4-VIEW` | повторное review: Web-source, lifecycle/test contracts и DEVICE 1 стенд доработаны; коммиты лежат поверх `b494ccb` |
 
 ## Дашборд
 
@@ -67,8 +67,8 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | [SHADER 2](tasks/0.5.0/SHADER-2.md) | ACCEPTED | T2 | — | GEOM 1, SHADER 1 | **Шейдер и `YuvFrameRenderer`.** Принята на `7f4425c`; слияние в `dev` — вместе с пулом `STAGE4-VIEW`. |
 | [SHADER 3](tasks/0.5.0/SHADER-3.md) | ACCEPTED | T2 | — | SHADER 2 | **Проба «шейдер против CPU» на всех платформах.** Принята на `54f8fff`; Linux — post-merge CI. |
 | [PRESENT 1](tasks/0.5.0/PRESENT-1.md) | ACCEPTED | T2 | — | GEOM 1, SHADER 2, SHADER 3 | **Режимы показа в презентере.** Принята на `eaeb0ea`; macOS/iOS — postponed по решению Engineer. |
-| [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | TODO | T2 | — | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). Ревью: доработка — Web-источник на `onStreamedFrameAvailable` не работает (camera_web его не реализует), вернуть логику `MediaStreamTrackProcessor`; `frame_read_loop`/`stream_start` перенести, а не копировать; тест Web-источника. |
-| [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | BLOCKED | T2 | CAMERA 1 | CAMERA 1, PRESENT 1 | **Виджеты камеры.** Ревью: доработка — тесты из Scope и перенос удалённых тестов; угол FPS + `shader: on/off`; тяжёлая обработка через `compute()`; убрать мёртвый код захвата в `CameraScreen`. |
+| [CAMERA 1](tasks/0.5.0/CAMERA-1.md) | REVIEW | T2 | Reviewer | CLEAN 1, GEOM 1 | **Источник кадров камеры** (D-13). Повторное review: Web `MediaStreamTrackProcessor`/fallback, перенесённые helper-ы и lifecycle checks. |
+| [CAMERA 2](tasks/0.5.0/CAMERA-2.md) | REVIEW | T2 | Reviewer | CAMERA 1, PRESENT 1 | **Виджеты камеры.** Повторное review: callback/capture/transform tests, DEVICE 1 FPS/shader и compute, старый capture-код удалён. |
 
 ### Этап 5 — проверка на устройстве
 

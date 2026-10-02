@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yuv_ffi_example/widgets/frame_read_loop.dart';
+import 'package:yuv_ffi_example/camera/frame_read_loop.dart';
 
 void main() {
   group('runFrameReadLoop', () {

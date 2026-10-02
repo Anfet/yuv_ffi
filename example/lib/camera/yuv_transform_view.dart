@@ -45,6 +45,18 @@ class _YuvTransformViewState extends State<YuvTransformView> {
     source.start();
   }
 
+  @override
+  void didUpdateWidget(covariant YuvTransformView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cameraController != widget.cameraController) {
+      _source?.dispose();
+      _source = null;
+      _presenter.reset();
+      _error = null;
+      _start();
+    }
+  }
+
   void _onFrame(YuvCameraFrame frame) {
     if (_presenter.isBusy) return;
     try {

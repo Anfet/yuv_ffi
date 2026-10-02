@@ -1,4 +1,9 @@
-Future<void> runYuvStreamStart<S extends Object>({
+/// Opens and attaches the camera stream for one start of a source, handing
+/// results on only while that start is still current.
+///
+/// A stream whose start was superseded after [open] completes is handed to
+/// [release]. Errors from superseded starts are ignored.
+Future<void> runStreamStart<S extends Object>({
   required Future<S> Function() open,
   required bool Function() isCurrent,
   required void Function(S stream) release,

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yuv_ffi_example/widgets/stream_start.dart';
+import 'package:yuv_ffi_example/camera/stream_start.dart';
 
 /// Models the web preview state `runStreamStart` touches: the generation,
 /// the attached stream (`_mediaStream`), the started loop and `_lastError`.

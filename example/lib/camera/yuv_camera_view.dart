@@ -22,6 +22,7 @@ class YuvCameraView extends StatefulWidget {
     this.onFrameInterval = const Duration(milliseconds: 200),
     this.overlayBuilder,
     this.onStreamStopped,
+    this.onShaderChanged,
   });
 
   final CameraController cameraController;
@@ -32,6 +33,7 @@ class YuvCameraView extends StatefulWidget {
   final Duration onFrameInterval;
   final Widget Function(BuildContext context, YuvFrameGeometry geometry)? overlayBuilder;
   final VoidCallback? onStreamStopped;
+  final ValueChanged<bool>? onShaderChanged;
 
   @override
   State<YuvCameraView> createState() => _YuvCameraViewState();
@@ -43,7 +45,7 @@ class _YuvCameraViewState extends State<YuvCameraView> {
   YuvCameraFrame? _presentedCandidate;
   YuvFrameGeometry? _geometry;
   Completer<YuvImage?>? _capture;
-  DateTime? _lastOnFrame;
+  Duration? _lastOnFrame;
   bool _onFrameRunning = false;
   Object? _error;
 
@@ -78,7 +80,10 @@ class _YuvCameraViewState extends State<YuvCameraView> {
     _dispatchFrameCallback(frame);
     if (_presenter.isBusy) return;
     try {
-      if (_presenter.present(frame.image, orientation: frame.orientation)) _presentedCandidate = frame;
+      if (_presenter.present(frame.image, orientation: frame.orientation)) {
+        _presentedCandidate = frame;
+        widget.onShaderChanged?.call(_presenter.hasShader);
+      }
     } catch (error, stack) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: error, stack: stack, library: 'yuv_ffi example', context: ErrorDescription('presenting a camera frame')),
@@ -89,9 +94,8 @@ class _YuvCameraViewState extends State<YuvCameraView> {
   void _dispatchFrameCallback(YuvCameraFrame frame) {
     final callback = widget.onFrame;
     if (callback == null || _onFrameRunning) return;
-    final now = DateTime.now();
-    if (_lastOnFrame case final last? when now.difference(last) < widget.onFrameInterval) return;
-    _lastOnFrame = now;
+    if (_lastOnFrame case final last? when frame.timestamp - last < widget.onFrameInterval) return;
+    _lastOnFrame = frame.timestamp;
     _onFrameRunning = true;
     Future<void>.sync(() => callback(frame))
         .catchError((Object error, StackTrace stack) {
