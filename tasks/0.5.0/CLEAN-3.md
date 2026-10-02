@@ -87,6 +87,6 @@ Validation completed:
 
 External evidence still required before `REVIEW`:
 
-- manually verify on Windows: load an image, apply operations, reset; open camera, observe FPS/shader and heavy-processing control, capture into the editor.
+- manually verify on Windows: load an image, apply operations, reset; verify the heavy-processing control; capture from camera into the editor. Camera preview was manually confirmed at 20 FPS with shader enabled.
 
 #### Review
