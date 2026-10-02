@@ -8,6 +8,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/camera_screen.dart';
+import 'package:yuv_ffi_example/device_check/device_check_screen.dart';
 import 'package:yuv_ffi_example/ext.dart';
 import 'package:yuv_ffi_example/widgets/crop_targets.dart';
 import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
@@ -56,6 +57,11 @@ class _MyAppState extends State<MyApp> {
               forceMaterialTransparency: true,
               title: const Text('YUV FFI'),
               actions: [
+                IconButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const DeviceCheckScreen())),
+                  icon: const Icon(Icons.fact_check),
+                  tooltip: 'Device check',
+                ),
                 IconButton(onPressed: () => takePhoto(context), icon: Icon(Icons.camera), tooltip: 'Take photo'),
                 IconButton(onPressed: () => loadExisting(), icon: Icon(Icons.undo), tooltip: 'Load existing'),
                 IconButton(onPressed: () => loadImage(), icon: Icon(Icons.drive_folder_upload), tooltip: 'Load image'),

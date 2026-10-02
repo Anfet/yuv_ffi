@@ -43,3 +43,15 @@ also use the main thread, so a temporary preview pause is expected.
 
 For package setup, API migration, and platform/backend limitations, see the
 [package README](../README.md).
+
+## Device check
+
+Run the guided release-device check directly on Android or iOS:
+
+```sh
+flutter run --release -d <device-id> -t lib/device_check_main.dart --dart-define=GIT_SHA=$(git rev-parse --short HEAD)
+```
+
+Keep the screen on and unlock the phone. Charging is optional. Complete every
+step and copy the final JSON, including the build mode, camera metadata, and
+all step results, for the DEVICE-2 review.

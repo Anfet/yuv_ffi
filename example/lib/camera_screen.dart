@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
+import 'package:yuv_ffi_example/camera/heavy_blur.dart';
 import 'package:yuv_ffi_example/camera/yuv_camera_frame.dart';
 import 'package:yuv_ffi_example/camera/yuv_camera_view.dart';
 import 'package:yuv_ffi_example/camera/yuv_camera_view_controller.dart';
@@ -177,7 +178,7 @@ class _CameraScreenState extends State<CameraScreen> {
     if (_heavyProcessing && (_lastHeavyProcessing == null || frame.timestamp - _lastHeavyProcessing! >= const Duration(seconds: 1))) {
       _lastHeavyProcessing = frame.timestamp;
       final image = frame.upright();
-      await compute(_blurBgra, (bytes: image.toBgraBytes(), width: image.width, height: image.height));
+      await compute(blurBgra, (bytes: image.toBgraBytes(), width: image.width, height: image.height));
     }
   }
 
@@ -229,13 +230,4 @@ class _CameraScreenState extends State<CameraScreen> {
       debugPrint('$stack');
     }
   }
-}
-
-Future<Uint8List> _blurBgra(({List<int> bytes, int width, int height}) input) async {
-  await YuvFfi.initialize();
-  final image = YuvImage.bgra(input.width, input.height);
-  image.yPlane.assignFrom(Uint8List.fromList(input.bytes));
-  image.markDirty();
-  image.applyGaussianBlur(radius: 10, sigma: 10);
-  return image.toBgraBytes();
 }
