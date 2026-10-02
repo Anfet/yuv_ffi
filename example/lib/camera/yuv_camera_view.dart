@@ -22,7 +22,7 @@ class YuvCameraView extends StatefulWidget {
     this.onFrameInterval = const Duration(milliseconds: 200),
     this.overlayBuilder,
     this.onStreamStopped,
-    this.onShaderChanged,
+    this.onFramePresented,
   });
 
   final CameraController cameraController;
@@ -33,7 +33,9 @@ class YuvCameraView extends StatefulWidget {
   final Duration onFrameInterval;
   final Widget Function(BuildContext context, YuvFrameGeometry geometry)? overlayBuilder;
   final VoidCallback? onStreamStopped;
-  final ValueChanged<bool>? onShaderChanged;
+
+  /// Reports each frame confirmed as drawn; [hasShader] is its renderer state.
+  final ValueChanged<bool>? onFramePresented;
 
   @override
   State<YuvCameraView> createState() => _YuvCameraViewState();
@@ -82,7 +84,6 @@ class _YuvCameraViewState extends State<YuvCameraView> {
     try {
       if (_presenter.present(frame.image, orientation: frame.orientation)) {
         _presentedCandidate = frame;
-        widget.onShaderChanged?.call(_presenter.hasShader);
       }
     } catch (error, stack) {
       FlutterError.reportError(
@@ -109,10 +110,16 @@ class _YuvCameraViewState extends State<YuvCameraView> {
   void _onGeometry(YuvFrameGeometry geometry) {
     _geometry = geometry;
     widget.viewController?.setGeometry(geometry);
+    _completeCaptureForPresentedFrame();
     if (mounted) setState(() {});
   }
 
   void _onPresented() {
+    _completeCaptureForPresentedFrame();
+    widget.onFramePresented?.call(_presenter.hasShader);
+  }
+
+  void _completeCaptureForPresentedFrame() {
     final capture = _capture;
     final frame = _presentedCandidate;
     final geometry = _geometry;

@@ -75,6 +75,26 @@ void main() {
     controller.dispose();
   });
 
+  testWidgets('onFrame errors are reported without stopping the source', (tester) async {
+    var calls = 0;
+    await pumpView(
+      tester,
+      onFrame: (_) {
+        calls++;
+        if (calls == 1) throw StateError('callback failed');
+      },
+    );
+
+    platform.emit(camera.cameraId, cameraFrame(10));
+    await tester.pump();
+    expect(tester.takeException(), isStateError);
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 250)));
+    platform.emit(camera.cameraId, cameraFrame(11));
+    await tester.pump();
+    expect(calls, 2);
+    expect(platform.isStreaming(camera.cameraId), isTrue);
+  });
+
   testWidgets('transform errors drop only that frame and keep the source running', (tester) async {
     var calls = 0;
     await tester.pumpWidget(

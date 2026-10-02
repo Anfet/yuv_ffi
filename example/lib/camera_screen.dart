@@ -91,10 +91,7 @@ class _CameraScreenState extends State<CameraScreen> {
                             : CustomPaint(
                                 painter: FaceRectPainter(rect: _faceBox!, geometry: geometry, strokeWidth: 4),
                               ),
-                        onStreamStopped: () {},
-                        onShaderChanged: (enabled) {
-                          if (_shaderEnabled != enabled && mounted) setState(() => _shaderEnabled = enabled);
-                        },
+                        onFramePresented: _onFramePresented,
                       );
                     }
 
@@ -176,7 +173,6 @@ class _CameraScreenState extends State<CameraScreen> {
   bool get _supportsFaceDetection => !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
 
   Future<void> _handleFrame(YuvCameraFrame frame) async {
-    _updateFps();
     if (_supportsFaceDetection) await _detectFace(frame);
     if (_heavyProcessing && (_lastHeavyProcessing == null || frame.timestamp - _lastHeavyProcessing! >= const Duration(seconds: 1))) {
       _lastHeavyProcessing = frame.timestamp;
@@ -185,8 +181,9 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  void _updateFps() {
+  void _onFramePresented(bool hasShader) {
     _framesSinceFpsSample++;
+    _shaderEnabled = hasShader;
     final now = DateTime.now();
     final elapsed = now.difference(_fpsSampleStarted);
     if (elapsed < const Duration(seconds: 1)) return;
