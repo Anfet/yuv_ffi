@@ -1,5 +1,5 @@
 # APPLE 1 — Проверка работы на macOS и iOS
-**Status:** TODO · **Tier:** T2 (T1 — если шейдерная проба на Metal разойдётся: отдельная карточка) · **Owner:** Executor · **Depends On:** — · **Probe:** none · **Base:** —
+**Status:** IN_PROGRESS · **Tier:** T2 (T1 — если шейдерная проба на Metal разойдётся: отдельная карточка) · **Owner:** Executor · **Depends On:** — · **Probe:** none · **Base:** `6f71a45`
 
 #### Goal
 Последний прогон на Apple — `macos.sh` и `ios.sh` на `bae5ff8` (код `d3bb2cc`, этап 3). Всё, что добавили этапы 4 и
