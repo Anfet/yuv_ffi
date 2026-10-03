@@ -1,5 +1,5 @@
 # WEB 5 — Web: причина расхождения шейдера и скорость показа
-**Status:** TODO · **Tier:** T1 · **Owner:** Executor · **Depends On:** `ci/all/STAGE6` · **Probe:** windows+pixel3 · **Base:** —
+**Status:** TODO · **Tier:** T1 · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3 · **Base:** —
 
 #### Goal
 WEB 1 выключила шейдер `YuvFrameRenderer` на Web: в CanvasKit (Chrome 154, headless) проба SHADER 3 дала
