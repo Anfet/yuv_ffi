@@ -121,7 +121,7 @@ origin (`ci/stage2-probes`, `ci/stage3-clean`, `ci/STAGE3-SPM-apple`), их мо
 
 2026-10-03
 
-- Current head: `41f444f3d25cb8c94b15abdd3657e4feaf26c243` (`all/PAR-CI`); D-23 leaves only the two tag patterns in
+- Workflow head: `41f444f3d25cb8c94b15abdd3657e4feaf26c243` (`all/PAR-CI`); D-23 leaves only the two tag patterns in
   every workflow and removes the release-specific concurrency condition. `git diff --check` and the tags-only
   assertion for all nine workflow files passed. `actionlint` is unavailable on this machine.
 - Negative control: pushed `all/PAR-CI` at this SHA; `gh run list --commit 41f444f3d25cb8c94b15abdd3657e4feaf26c243`
