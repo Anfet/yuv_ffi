@@ -1,6 +1,4 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
-
-// ignore_for_file: public_member_api_docs
+// ignore_for_file: avoid_web_libraries_in_flutter, public_member_api_docs
 
 import 'dart:async';
 import 'dart:typed_data';

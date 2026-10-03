@@ -14,6 +14,7 @@
 
 - **Причина регрессии 0.4 против 0.2.4:** общий попиксельный драйвер `yuv_kernel_v1.c` — косвенный `map()` на пиксель и `yuv_checked_sample_offset` (две деления `SIZE_MAX / b`, не инлайнится) на каждый sample. Blur декодировал кадр в RGB и считал полное 2D-ядро `(2r+1)²` дважды на пиксель. Итог — flip/convert в 10–350 раз медленнее 0.2.4.
 - **C-01…C-11 добавили tight fast paths** (Windows Release, до → после): flip V до 426×, convert I420→I420 410×, crop aligned 734×, rotate ~10–11×, grayscale ~13–15×, black-white 11–30×. Padded/gapped layout остаются на общем пути.
+- **Итог против 0.4.0** (PROBE 1, AOT Release, медиана 9 вызовов, 12 операций × 1920×1080 и 720×360): Windows x64 и Pixel 3 arm64 быстрее на 52–94 % во всех случаях, замедлений нет (convert I420→BGRA 1080p: 191,7 → 36,9 мс Windows, 101,4 → 26,7 мс Pixel 3; gaussianBlur — наименьший выигрыш, 58–65 %). Таблица — `git show 3962d7c:doc/archive/release-0.4.2/ra26-windows-release/README.md`, baseline — `test/probe/baseline/`.
 - **Fast path включается, только если все плоскости плотные** (`pixelStride == sampleBytes` и нет row padding). Одна неплотная плоскость отключает его для всей операции.
 
 ## YUV → BGRA

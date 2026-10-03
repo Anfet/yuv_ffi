@@ -1,5 +1,5 @@
 # CLEAN 4 — Документация и комментарии по стандартам pub.dev
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Executor (T2) · **Depends On:** — · **Probe:** windows
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** Executor (T2) · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Привести публикуемый пакет к обычному виду пакета pub.dev: README, CHANGELOG, `example/README.md`, dartdoc
@@ -153,3 +153,12 @@
 
 Коммиты исполнения: `5f10d4c`, `a55d860`.
 #### Review
+
+- **ACCEPT** (Reviewer, 03.10.2026, `5f10d4c`, `a55d860`). Проверено Reviewer: `flutter analyze` в корне и в `example/`
+  — «No issues found»; `flutter pub publish --dry-run` — 0 предупреждений, 1 подсказка о версии, архив 673 КБ, в нём только
+  `lib/`, `src/`, платформенные каталоги, `assets/`, `shaders/`, `example/` и пакетные документы; в `lib/src/yuv/impl/**`
+  — только директивы `ignore_for_file`, `src/` не тронут — Probe `windows` достаточен. `pana` 160/160 (Linux).
+  `dart doc` локально падает в dartdoc 9.0.4 из Flutter 3.44.9 (dart-lang/dartdoc#4180), dartdoc 9.0.9 и pana — без
+  предупреждений: принято. Поправлено Reviewer: решение 5 — вывод удалённого `doc/archive/` (PROBE 1, 0.4.0 против
+  `dev`) дописан строкой в `doc/perf-findings.md`; в `yuv_web.dart` две директивы `ignore_for_file` слиты в одну.
+  Комментарии с «legacy nv21» и «previously» в `lib/` описывают контракт API, а не историю — оставлены.
