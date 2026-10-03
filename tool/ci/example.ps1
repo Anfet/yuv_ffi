@@ -5,8 +5,8 @@ $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = Get-CiRepositoryRoot
 $flutterVersion = $env:FLUTTER_VERSION
-if ($flutterVersion -notin @('3.41.0', '3.44.9')) {
-  throw "FLUTTER_VERSION must be 3.41.0 or 3.44.9; got '$flutterVersion'"
+if ($flutterVersion -ne '3.44.9') {
+  throw "FLUTTER_VERSION must be 3.44.9; got '$flutterVersion'"
 }
 
 $installDirectory = Join-Path (Get-CiTemporaryDirectory) "yuv-ffi-flutter-$flutterVersion"
