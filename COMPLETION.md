@@ -44,6 +44,7 @@
 - **CI 2 — Починен тест камеры на Linux:** фейк камеры реализует `onCameraError`, которого требует `camera` 0.11.4 (его резолвит `flutter create` на Linux). Linux VM — все `*_native_test.dart`. Влито в `dev` на `5061c26`; post-merge CI pending.
 - **CI 3 — Минимум поднят до Dart 3.12 / Flutter 3.44 (D-24):** `setImageSampler` с явным `FilterQuality.none` больше не ломает сборку на старом SDK; матрица VM-CI — 3.44.9. Влито в `dev` на `5061c26`; post-merge CI pending.
 - **CLEAN 4 — Пакет приведён к стандартам pub.dev:** dartdoc публичного API (`public_member_api_docs`), комментарии без ID задач, `.pubignore` оставляет в архиве только пакет и example (673 КБ), удалён `doc/archive/`, замечания анализатора Dart 3.12 устранены; `pana` 160/160. Влито в `dev` на `05799fe`; post-merge CI pending.
+- **CI 1 — CI запускается только тегами `ci/<набор>/<метка>` или вручную (D-20, D-23):** в 9 workflow остались только теги и `workflow_dispatch`, push веток CI не запускает; `scope_guard.sh` сравнивает с `dev`; Linux CI восстанавливает закоммиченный lock example после `flutter create`. Принято на `ad8a214`. Триггеры: [`ci/smoke/CI-1-2`](https://github.com/Anfet/yuv_ffi/actions/runs/37134018981), [`ci/linux/CI-1-3`](https://github.com/Anfet/yuv_ffi/actions/runs/37146614596) зелёные; `ci/all/CI-1` на `af895ae` запустил 9/9, красные VM 3.38 и Linux-камера закрыты CI 3 и CI 2.
 
 ## Проверенная точка 0.4.2 — закрыта без выпуска, 01.10.2026
 
