@@ -1,5 +1,5 @@
 # CI 1 — Запуск CI по тегам `ci/<набор>/<метка>`
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** CLEAN 4 · **Depends On:** этап 6 · **Probe:** none
+**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** none
 
 #### Goal
 Контрольный CI сейчас запускается push'ем ветки `ci/<пул>` на точный SHA `dev` (D-9, D-18): ветки копятся на
@@ -54,12 +54,27 @@ origin (`ci/stage2-probes`, `ci/stage3-clean`, `ci/STAGE3-SPM-apple`), их мо
      `paths-ignore` и про `concurrency` на `release/**`, строка `linux` в таблице ключей; «Probes» — без изменений.
    - `todo.md`: «CI и проверки» → «Триггеры (D-23)»; правило 4 — ссылка на D-23; решение D-23 записано Architect.
 
+6. **Документы после чистки `AGENTS.md`** (Orchestrator, 03.10.2026, `dev` после CLEAN 4). `AGENTS.md` переписан:
+   раздел «CI» уже описывает D-23, таблица «путь → ключи» заменена ссылкой на `scope_guard.sh`. Документная часть
+   решений 4–5 для `AGENTS.md` сводится к проверке: после перевода workflow убрать из строки «Автозапуска нет»
+   оговорку «workflow переводятся на теги в CI 1». `todo.md` — как в решении 5.
+7. **`scope_guard.sh` сравнивает с `origin/release/0.4.2`** — ветка прошлого цикла. Заменить базу на `dev`
+   (`git merge-base dev HEAD`); сообщение об ошибке — тоже. Проверка: на ветке пула `bash tool/ci/scope_guard.sh` —
+   exit 0; на временной ветке `vm/scope-check` с изменённым `lib/` файлом — exit 1 с сообщением про `vm example`
+   (ветку удалить).
+8. **Lock example на Linux.** В джобе `linux-native-smoke` `flutter create --platforms=linux .` пересобирает
+   `example/pubspec.lock` (CI 2: `camera` 0.11.0+2 → 0.11.4), и Linux проверяет другие версии, чем остальные
+   платформы. Проверить на Linux VM `flutter create --platforms=linux --no-pub .` + `flutter pub get`: если lock не
+   меняется (`git diff --exit-code example/pubspec.lock`) — так и сделать в `ci.yml`; если меняется — в отчёт
+   причину, `ci.yml` не менять.
+
 #### Scope
-- `.github/workflows/ci*.yml` (9 файлов, только `on.push`).
+- `.github/workflows/ci*.yml` (9 файлов, `on.push`; в `ci.yml` — ещё шаг `flutter create` по решению 8).
+- `tool/ci/scope_guard.sh` (решение 7).
 - `AGENTS.md` (разделы решения 4), `todo.md` (правило 4, «CI и проверки»).
 
 #### Constraints
-- Джобы, runner'ы, шаги и `tool/ci/*` не трогать.
+- Джобы, runner'ы, шаги и `tool/ci/*` не трогать, кроме решений 7–8.
 - Push тегов `ci/*/CI-1` и `ci/*/CI-1-<n>` и ветки пула в origin разрешён этой карточкой; другие теги и ветки — нет.
 
 #### Definition of Done
@@ -76,6 +91,9 @@ origin (`ci/stage2-probes`, `ci/stage3-clean`, `ci/STAGE3-SPM-apple`), их мо
 - [ ] Красный Linux в `ci/all/CI-1` (`camera_capture_native_test.dart`: у плагина `camera` нет Linux-реализации) —
       причина в платформе, не в триггере: в отчёт ссылкой; карточку отказа заводит Orchestrator, Executor не чинит.
 - [ ] Тестовые теги `ci/*/CI-1` и `ci/*/CI-1-<n>` удалены из origin после записи ссылок.
+
+- [ ] Решение 7: `scope_guard.sh` — база `dev`, оба прогона проверки в отчёте.
+- [ ] Решение 8: результат проверки lock на Linux VM в отчёте; `ci.yml` — по результату.
 
 #### Validation
 Ключи: `.github/workflows/ci.yml`, `ci-smoke.yml` → `all`. Ветка пула — `all/PAR-CI`. Локально триггеры не

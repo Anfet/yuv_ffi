@@ -43,6 +43,7 @@
 - **CLEAN 3 — Убран example:** редактор вынесен из `main.dart` в `editor/` и показывает кадры через `YuvFramePresenter`/`YuvFrameView`, рамка лица — по геометрии вида; один импорт кадра камеры (strides как есть); камерный экран сохранил FPS / shader и heavy processing. Влито в `dev` на `5061c26`; post-merge CI pending.
 - **CI 2 — Починен тест камеры на Linux:** фейк камеры реализует `onCameraError`, которого требует `camera` 0.11.4 (его резолвит `flutter create` на Linux). Linux VM — все `*_native_test.dart`. Влито в `dev` на `5061c26`; post-merge CI pending.
 - **CI 3 — Минимум поднят до Dart 3.12 / Flutter 3.44 (D-24):** `setImageSampler` с явным `FilterQuality.none` больше не ломает сборку на старом SDK; матрица VM-CI — 3.44.9. Влито в `dev` на `5061c26`; post-merge CI pending.
+- **CLEAN 4 — Пакет приведён к стандартам pub.dev:** dartdoc публичного API (`public_member_api_docs`), комментарии без ID задач, `.pubignore` оставляет в архиве только пакет и example (673 КБ), удалён `doc/archive/`, замечания анализатора Dart 3.12 устранены; `pana` 160/160. Влито в `dev` на `05799fe`; post-merge CI pending.
 
 ## Проверенная точка 0.4.2 — закрыта без выпуска, 01.10.2026
 
