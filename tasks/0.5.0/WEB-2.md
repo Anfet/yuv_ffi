@@ -1,5 +1,5 @@
 # WEB 2 — Web: оценка паритета WASM с native
-**Status:** BLOCKED · **Tier:** T1 · **Owner:** APPLE 1 · **Depends On:** WEB 5, APPLE 1 · **Probe:** windows
+**Status:** BLOCKED · **Tier:** T2, Reviewer T1 · **Owner:** APPLE 1 · **Depends On:** WEB 5, APPLE 1 · **Probe:** windows
 
 #### Goal
 Web — частичный WASM-бэкенд (README): набор операций сверяется по `YuvCapabilities`, эталонная матрица на Web — 119
