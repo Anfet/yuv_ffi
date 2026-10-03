@@ -1,5 +1,5 @@
 # APPLE 1 — Проверка работы на macOS и iOS
-**Status:** BLOCKED · **Tier:** T2 (T1 — если шейдерная проба на Metal разойдётся: отдельная карточка) · **Owner:** WEB 5 · **Depends On:** WEB 5 (один пул за раз, D-25) · **Probe:** none · **Base:** —
+**Status:** TODO · **Tier:** T2 (T1 — если шейдерная проба на Metal разойдётся: отдельная карточка) · **Owner:** Executor · **Depends On:** — · **Probe:** none · **Base:** —
 
 #### Goal
 Последний прогон на Apple — `macos.sh` и `ios.sh` на `bae5ff8` (код `d3bb2cc`, этап 3). Всё, что добавили этапы 4 и
