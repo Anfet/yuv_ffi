@@ -57,7 +57,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 1](tasks/0.5.0/CI-1.md) | IN_PROGRESS | T2 | Executor (T2) | — | **Запуск CI по тегам, без автозапуска.** Решения 1–4 влиты (`fda538d`). В работе: решение 5 (D-23), итоги `ci/all/CI-1`, `scope_guard.sh` на базе `dev`, lock example на Linux, удаление тестовых тегов. |
+| [CI 1](tasks/0.5.0/CI-1.md) | REVIEW | T2 | Executor (T2) | — | **Запуск CI по тегам, без автозапуска.** D-23 применено: push веток не запускает CI; `ci/smoke/CI-1-2` создал один зелёный smoke run; исходный `ci/all/CI-1` записан, тестовые теги удалены. |
 
 ## Открытые вопросы
 

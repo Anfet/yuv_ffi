@@ -1,5 +1,5 @@
 # CI 1 — Запуск CI по тегам `ci/<набор>/<метка>`
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor (T2) · **Depends On:** — · **Probe:** none
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Executor (T2) · **Depends On:** — · **Probe:** none
 
 #### Goal
 Контрольный CI сейчас запускается push'ем ветки `ci/<пул>` на точный SHA `dev` (D-9, D-18): ветки копятся на
@@ -118,4 +118,35 @@ origin (`ci/stage2-probes`, `ci/stage3-clean`, `ci/STAGE3-SPM-apple`), их мо
   красный — платформа, не триггер (карточка CI 2); VM, smoke, Example ещё шли. Остаток пула: дописать итоги,
   решение 5 (D-23), повторный негативный контроль и `ci/smoke/CI-1-2`, удалить тестовые теги. Продолжать в ветке
   `all/PAR-CI` от актуального `dev`.
+
+2026-10-03
+
+- Current head: `41f444f3d25cb8c94b15abdd3657e4feaf26c243` (`all/PAR-CI`); D-23 leaves only the two tag patterns in
+  every workflow and removes the release-specific concurrency condition. `git diff --check` and the tags-only
+  assertion for all nine workflow files passed. `actionlint` is unavailable on this machine.
+- Negative control: pushed `all/PAR-CI` at this SHA; `gh run list --commit 41f444f3d25cb8c94b15abdd3657e4feaf26c243`
+  returned `[]` (exit 0).
+- Original `ci/all/CI-1` is terminal: [Android](https://github.com/Anfet/yuv_ffi/actions/runs/37058238085),
+  [Example](https://github.com/Anfet/yuv_ffi/actions/runs/37058238031),
+  [macOS](https://github.com/Anfet/yuv_ffi/actions/runs/37058238034),
+  [Windows](https://github.com/Anfet/yuv_ffi/actions/runs/37058237987),
+  [smoke](https://github.com/Anfet/yuv_ffi/actions/runs/37058238180),
+  [iOS](https://github.com/Anfet/yuv_ffi/actions/runs/37058238074), and
+  [Web](https://github.com/Anfet/yuv_ffi/actions/runs/37058238161) succeeded. [VM](https://github.com/Anfet/yuv_ffi/actions/runs/37058238047)
+  failed only in the removed Flutter 3.38 matrix (`filterQuality` unavailable); [Linux](https://github.com/Anfet/yuv_ffi/actions/runs/37058238078)
+  failed at `camera_capture_native_test.dart` because the `camera` plugin has no Linux implementation. Neither is a
+  tag-routing failure.
+- `ci/smoke/CI-1-2` at the current SHA created exactly one workflow and succeeded:
+  [CI smoke 37134018981](https://github.com/Anfet/yuv_ffi/actions/runs/37134018981).
+- `scope_guard.sh`: `all/PAR-CI` passed (exit 0); a temporary `vm/scope-check` branch with only a `lib/` fixture
+  failed as required (exit 1): `does not cover vm example required by lib/.scope_guard_ci1`. Its base is now
+  `git merge-base dev HEAD`.
+- Linux lock check used an isolated clone with Flutter 3.44.9. After `flutter create --platforms=linux --no-pub .`
+  and `flutter pub get`, `example/pubspec.lock` changed (66 additions, 66 deletions). Therefore `ci.yml` keeps the
+  existing `flutter create --platforms=linux .` step; `--no-pub` does not preserve the lock once dependencies resolve.
+- Local validation passed: `tool/ci/smoke.ps1`; `tool/ci/vm.ps1` (616/616); `tool/ci/windows.ps1`;
+  `tool/ci/web.ps1` (63 integration, 119 reference, camera smoke); `tool/ci/example.ps1`; and
+  `tool/ci/android.ps1` (native runtime, camera, presenter shader, probe, shader probe on `emulator-5554`).
+- After all run links were recorded, removed from origin and locally: `ci/all/CI-1`, `ci/smoke/CI-1`, and
+  `ci/smoke/CI-1-2` (cleanup exit 0).
 #### Review
