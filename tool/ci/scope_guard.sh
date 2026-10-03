@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
+# Prints the check keys required by the paths changed since <base>
+# (committed, uncommitted and untracked): `bash tool/ci/scope_guard.sh <base-sha>`.
+
 set -euo pipefail
 
-event_name="${GITHUB_EVENT_NAME:-}"
-prefix="${GITHUB_REF_NAME:-$(git branch --show-current)}"
-
-if [[ "$event_name" == "workflow_dispatch" || "$event_name" == "pull_request" ||
-  "$prefix" == "main" || "$prefix" == release/* ]]; then
-  exit 0
+if [[ $# -ne 1 ]]; then
+  printf 'usage: scope_guard.sh <base-sha>\n' >&2
+  exit 2
 fi
+base="$1"
 
 path_keys() {
   case "$1" in
@@ -120,38 +121,23 @@ path_keys() {
   esac
 }
 
-prefix_tokens="+$prefix"
-covers_key() {
-  local key="$1"
-  [[ "$prefix_tokens" == *"+all/"* || "$prefix_tokens" == *"+all+"* ||
-    "$prefix_tokens" == *"+$key/"* || "$prefix_tokens" == *"+$key+"* ]]
-}
-
-if ! base="$(git merge-base dev HEAD)"; then
-  printf 'scope: could not determine merge base against dev\n' >&2
+if ! changed_paths="$(git diff --no-renames --name-only "$base" -- && git ls-files --others --exclude-standard)"; then
+  printf 'scope: could not enumerate changed paths since %s\n' "$base" >&2
   exit 1
 fi
 
-if ! changed_paths="$(mktemp)"; then
-  printf 'scope: could not create a temporary path list\n' >&2
-  exit 1
-fi
-trap 'rm -f "$changed_paths"' EXIT
-
-if ! git diff --no-renames --name-only -z "$base" HEAD > "$changed_paths"; then
-  printf 'scope: could not enumerate changed paths\n' >&2
-  exit 1
-fi
-
-while IFS= read -r -d '' path; do
+declare -A required=()
+while IFS= read -r path; do
   [[ -n "$path" ]] || continue
-  keys="$(path_keys "$path")"
-  [[ -n "$keys" ]] || continue
-  for key in $keys; do
-    if ! covers_key "$key"; then
-      printf "scope: branch prefix '%s' does not cover %s required by %s\n" \
-        "$prefix" "$keys" "$path" >&2
-      exit 1
-    fi
+  for key in $(path_keys "$path"); do
+    required[$key]=1
   done
-done < "$changed_paths"
+done <<< "$changed_paths"
+
+if [[ -n "${required[all]:-}" ]]; then
+  printf 'scope: all\n'
+elif [[ ${#required[@]} -eq 0 ]]; then
+  printf 'scope: none\n'
+else
+  printf 'scope: %s\n' "$(printf '%s\n' "${!required[@]}" | sort | tr '\n' ' ' | sed 's/ $//')"
+fi
