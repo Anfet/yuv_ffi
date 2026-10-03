@@ -1,4 +1,4 @@
-# CI 3 — VM-CI: пакет не собирается на Flutter 3.38; минимум — 3.41
+# CI 3 — VM-CI: пакет не собирается на Flutter 3.38; минимум — 3.44
 **Status:** TODO · **Tier:** T2 · **Owner:** STAGE6 · **Depends On:** — · **Probe:** windows
 
 #### Goal
@@ -34,30 +34,27 @@
 Engineer дал команду чинить (03.10.2026).
 
 #### Architect Decision
-**Engineer (03.10.2026): минимум пакета поднимается до Flutter 3.41 (D-24).** Причина: example требует Dart 3.11
-(`camera_desktop` 2.0.0, `sdk: ^3.11.0`, коммит `af5ea6d`), поэтому на 3.38–3.40 шейдерную пробу не запустить, а
-поддержку этих версий без пробы не обещаем. Пакет и example получают один минимум. Прежнее решение (убрать аргумент,
-проба на 3.38) отменено.
+**Engineer (03.10.2026): минимум пакета поднимается до Flutter 3.44 / Dart 3.12 (D-24).** Причины: на 3.44 идёт вся
+работа и все прогоны на всех платформах; 3.38–3.41 не тестируются (example требует Dart 3.11 из-за `camera_desktop`
+2.0.0, коммит `af5ea6d`, поэтому на 3.38 шейдерную пробу не запустить); стабильная линия уже 3.47. Обещаем только
+проверенное. Прежние варианты (убрать аргумент с пробой на 3.38; минимум 3.41) отменены.
 
 1. **Сэмплер.** Вернуть явный аргумент: `_shader.setImageSampler(0, texture._image, filterQuality: FilterQuality.none);`
-   — на 3.41+ он есть, а явное значение не зависит от умолчания движка.
+   — на 3.44 он есть, а явное значение не зависит от умолчания движка.
 2. **Минимум.**
-   - `pubspec.yaml`: `sdk: ^3.11.0`, `flutter: '>=3.41.0'`;
-   - `README.md`, «Requirements»: Dart 3.11 or later, Flutter 3.41 or later;
-   - `CHANGELOG.md`, `0.5.0-dev.1` → «Breaking changes»: «Raised the minimum supported SDK to Dart `^3.11.0` /
-     Flutter `>=3.41.0`.» (строка 0.4.0 про 3.38 — история, не трогать);
-   - `.github/workflows/ci-vm.yml`: в матрице `'3.38.10'` → последний патч 3.41
-     (`git ls-remote --tags https://github.com/flutter/flutter 'refs/tags/3.41.*'`; на Mac есть 3.41.9).
-   `example/pubspec.yaml` уже требует `>=3.11.0` — не менять.
-3. **Проверка на минимуме — Linux VM.** Поставить выбранный патч 3.41 рядом с 3.44.9
-   (`~/storage/flutter_3.41/flutter`, `git clone --depth 1 -b <патч>`); 3.38.10 с VM можно удалить. На 3.41:
+   - `pubspec.yaml`: `sdk: ^3.12.0`, `flutter: '>=3.44.0'`;
+   - `README.md`, «Requirements»: Dart 3.12 or later, Flutter 3.44 or later;
+   - `CHANGELOG.md`, `0.5.0-dev.1` → «Breaking changes»: «Raised the minimum supported SDK to Dart `^3.12.0` /
+     Flutter `>=3.44.0`.» (строка 0.4.0 про 3.38 — история, не трогать);
+   - `.github/workflows/ci-vm.yml`: матрица — только `'3.44.9'` (минимальная и рабочая версия совпадают).
+   `example/pubspec.yaml` (`>=3.11.0`) не менять: example зависит от пакета, и резолв всё равно требует 3.12.
+3. **Проверка — Linux VM, Flutter 3.44.9.** После решений 1–2:
    - в корне — как `tool/ci/vm.ps1`: `flutter pub get --no-example`, `flutter analyze --no-fatal-infos lib test`,
      `flutter test`;
    - шейдерная проба: в `example/` `flutter create --platforms=linux .`, затем
      `xvfb-run -a bash tool/ci/drive.sh integration_test/shader_probe_native_test.dart linux` — строки `SHADER PROBE`
-     в отчёт. Проба на 3.44.9 уже прошла (Executor Report) — повторить после решения 1, она дешёвая.
-   Если на 3.41 под xvfb шейдер не грузится (`hasShader == false`) — проба на Mac с 3.41.9 (`~/storage/flutter_3.41.9`
-   или где лежит, macOS desktop, debug).
+     в отчёт.
+   Flutter 3.38.10 с VM удалить (`~/storage/flutter_3.38`).
 
 #### Scope
 - `lib/src/widgets/yuv_frame_renderer.dart` (одна строка), `pubspec.yaml`, `README.md`, `CHANGELOG.md`,
@@ -65,11 +62,11 @@ Engineer дал команду чинить (03.10.2026).
 
 #### Constraints
 - Шейдер и native не трогать; зависимости пакета и example не менять.
-- CI-тег на ветке не нужен: `ci-vm.yml` меняет только версию в матрице; `ci/vm` — после слияния, на выходе из этапа.
+- CI-тег на ветке не нужен: `ci-vm.yml` меняет только матрицу версий; `ci/vm` — после слияния, на выходе из этапа.
 
 #### Definition of Done
-- [ ] На Linux VM на 3.41.x и 3.44.9: `pub get --no-example`, `analyze`, `flutter test` в корне — PASS.
-- [ ] Шейдерная проба на 3.41.x и 3.44.9 — PASS, строки `SHADER PROBE` в отчёте.
+- [ ] На Linux VM на 3.44.9: `pub get --no-example`, `analyze`, `flutter test` в корне — PASS.
+- [ ] Шейдерная проба на 3.44.9 — PASS, строки `SHADER PROBE` в отчёте.
 - [ ] `pubspec.yaml`, README, CHANGELOG, матрица `ci-vm.yml` — по решению 2.
 
 #### Validation
