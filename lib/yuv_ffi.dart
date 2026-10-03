@@ -1,4 +1,6 @@
-// Public API for `package:yuv_ffi`.
+/// Public API for processing and presenting YUV images.
+library;
+
 export 'src/yuv/yuv.dart';
 export 'src/yuv/shared/yuv_revision.dart' show YuvImageInvalidation;
 export 'src/yuv/shared/yuv_pack.dart' show YuvImagePack;
