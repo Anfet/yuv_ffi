@@ -44,7 +44,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CLEAN 4](tasks/0.5.0/CLEAN-4.md) | IN_PROGRESS | T2 | Executor (T2) | — | **Документация и комментарии по стандартам pub.dev.** Комментарии без ID и истории, `public_member_api_docs`, README/CHANGELOG/`example/README.md`, `.pubignore` без `test/`, `tool/`, `doc/`, удаление `doc/archive/`, замечания анализатора Dart 3.12; эталон — `pana`, `pub publish --dry-run`, `dart doc`. |
+| [CLEAN 4](tasks/0.5.0/CLEAN-4.md) | REVIEW | T2 | Executor (T2) | — | **Документация и комментарии по стандартам pub.dev.** Готово к ревью: комментарии без ID/истории, `public_member_api_docs`, README/CHANGELOG/`example/README.md`, чистый `.pubignore`, удалён `doc/archive/`; `pana` 160/160, publish dry-run без warnings. |
 
 ### Этап 7 — платформы: Web и Apple
 

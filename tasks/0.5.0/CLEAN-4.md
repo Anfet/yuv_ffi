@@ -1,5 +1,5 @@
 # CLEAN 4 — Документация и комментарии по стандартам pub.dev
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor (T2) · **Depends On:** — · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Executor (T2) · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Привести публикуемый пакет к обычному виду пакета pub.dev: README, CHANGELOG, `example/README.md`, dartdoc
@@ -131,4 +131,25 @@
 - `flutter pub publish --dry-run`, `dart doc`, `pana` — по DoD.
 
 #### Executor Report
+
+Выполнено:
+
+- Публичные README и example README приведены к текущему API/Flutter 3.44; Web описан как частичный WASM backend, а сборка из исходников явно требует checkout репозитория.
+- Включено `public_member_api_docs`; добавлены dartdoc экспортируемым библиотекам, Web registration entrypoint и публичным геометрическим/кодековым типам. Внутренние `impl`-файлы получили точечный `ignore_for_file`.
+- Убраны ID и история из комментариев; оставшиеся совпадения поиска — разрешённые JSON/log marker `DEVICE-1` и `expect`-строки RA-25/RA-26 в `test/probe/`.
+- Удалён `doc/archive/`; `.pubignore` исключает тесты, native-тесты, tool, doc, CMake/ffigen и внутренние документы. Tooltip исправлен на `Rotate Counterclockwise`.
+- Для Dart 3.12 добавлены `library;` после `@Tags`, применён `prefer_initializing_formals`; форматирование выполнено с line length 150.
+
+Проверки:
+
+- `flutter analyze` в корне и `example/` — PASS, `No issues found`.
+- `pwsh -File tool/ci/vm.ps1` — PASS, 616/616, exit 0.
+- `pwsh -File tool/ci/example.ps1` — PASS, exit 0.
+- `pwsh -File tool/ci/web.ps1` — PASS, Chrome 154.0.8037.98, 14 source files, 63 integration cases, 119 reference cases, camera smoke; exit 0.
+- `pwsh -File tool/ci/windows.ps1` — PASS, включая `shader_probe_native_test.dart`; exit 0.
+- `dart pub publish --dry-run` — PASS, 0 warnings, 1 допустимая hint о предыдущей версии 0.2.4, архив 673 KB; exit 0.
+- Linux/Flutter 3.44.9: `pana --flutter-sdk ... .` — PASS, 160/160, 152/152 public API documented; `CLEAN4_LINUX_PANA_EXIT=0`. Встроенный pana dartdoc завершился с 0 warnings/0 errors.
+- Локальный `dart doc` из Flutter 3.44.9 использует dartdoc 9.0.4 и падает внутри `_stripDocImports` с известным RangeError ([dart-lang/dartdoc#4180](https://github.com/dart-lang/dartdoc/issues/4180)); это не ошибка пакета. Актуальный dartdoc 9.0.9 и dartdoc в Linux pana сгенерировали документацию без предупреждений.
+
+Коммиты исполнения: `5f10d4c`, `a55d860`.
 #### Review
