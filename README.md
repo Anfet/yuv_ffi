@@ -19,8 +19,8 @@ below when upgrading from 0.4.0 or 0.4.2.
 
 | Platform | Requirement |
 | --- | --- |
-| Dart | 3.10 or later |
-| Flutter | 3.38 or later |
+| Dart | 3.12 or later |
+| Flutter | 3.44 or later |
 | Android | API 26 or later; `armeabi-v7a`, `arm64-v8a`, or `x86_64` |
 | iOS | 13 or later |
 | macOS | 10.15 or later |

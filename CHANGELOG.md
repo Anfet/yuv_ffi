@@ -2,6 +2,7 @@
 
 ### Breaking changes
 
+- Raised the minimum supported SDK to Dart `^3.12.0` / Flutter `>=3.44.0`.
 - Removed the deprecated 0.2.4/0.4.0 compatibility API, including
   `YuvFileFormat`, `YuvImage.nv21`, `YuvFfi.ensureInitialized()`, the legacy
   forwarding methods, and `copy(blank:)`. Migrate with the README mapping:

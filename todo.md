@@ -46,7 +46,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | [CLEAN 3](tasks/0.5.0/CLEAN-3.md) | ACCEPTED | T2 | STAGE6 | — | **Уборка example.** Принята после доработки: редактор на `YuvFramePresenter`/`YuvFrameView`, один импорт кадра камеры (strides как есть). Ждёт слияния пула `STAGE6`. |
 | [CLEAN 4](tasks/0.5.0/CLEAN-4.md) | BLOCKED | T2 | CI 3 | CLEAN 3, CI 3 (очередь пула) | **Документация и комментарии по стандартам pub.dev.** Карточка расписана: комментарии без ID и истории, `public_member_api_docs`, README/CHANGELOG/`example/README.md`, `.pubignore` без `test/`, `tool/`, `doc/`, удаление `doc/archive/`; эталон — `pana`, `pub publish --dry-run`, `dart doc`. Следующая в пуле после CI 3. |
 | [CI 2](tasks/0.5.0/CI-2.md) | REVIEW | T2 | STAGE6 | — | **Linux-CI: тест камеры.** `onCameraError` реализован незакрывающимся потоком; Linux и Windows camera tests прошли. `flutter create` обновляет lockfile до `camera` 0.11.4; `pub get` затем его не меняет. |
-| [CI 3](tasks/0.5.0/CI-3.md) | TODO | T2 | STAGE6 | — | **VM-CI: минимум — Flutter 3.44 (D-24).** Вернуть `filterQuality: FilterQuality.none`; `pubspec.yaml` `sdk: ^3.12.0` / `flutter: '>=3.44.0'`, README, CHANGELOG, матрица `ci-vm.yml` — только 3.44.9; analyze, тесты и шейдерная проба на 3.44.9 (Linux VM). |
+| [CI 3](tasks/0.5.0/CI-3.md) | REVIEW | T2 | STAGE6 | — | **VM-CI: минимум — Flutter 3.44 (D-24).** Явный `filterQuality`, публичные SDK-минимумы и VM-матрица обновлены; Linux и Windows проверки на 3.44.9 прошли. |
 
 ### Этап 7 — платформы: Web и Apple
 

@@ -1,5 +1,5 @@
 # CI 3 — VM-CI: пакет не собирается на Flutter 3.38; минимум — 3.44
-**Status:** TODO · **Tier:** T2 · **Owner:** STAGE6 · **Depends On:** — · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2 · **Owner:** STAGE6 · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Фактическая карточка отказа post-merge CI (правило 4 `todo.md`). Отложенный CI этапов 4–5 прогнан тегом
@@ -87,5 +87,21 @@ Engineer дал команду чинить (03.10.2026).
   `PASS integration_test/shader_probe_native_test.dart on linux`, `CI3_SHADER_344_EXIT=0`.
 - Требуется решение Engineer по публичному минимуму. Вариант 2 Architect Decision поднимает его до Flutter 3.41;
   вариант 1 требует отдельного контракта/версии зависимостей example и не входит в текущий Scope.
+
+03.10.2026, после D-24:
+
+- Возвращён `_shader.setImageSampler(0, texture._image, filterQuality: FilterQuality.none);` и применён минимум
+  Dart `^3.12.0` / Flutter `>=3.44.0` в `pubspec.yaml`, README, CHANGELOG и `ci-vm.yml` (только 3.44.9).
+- Linux VM, Flutter 3.44.9: CMake собрал `libyuv_ffi.so`; `flutter pub get --no-example`,
+  `flutter analyze --no-fatal-infos lib test`, `flutter test --tags "smoke || contract"` и
+  `xvfb-run -a bash tool/ci/drive.sh integration_test/shader_probe_native_test.dart linux` — PASS,
+  terminal result `CI3_LINUX_344_EXIT=0` / `CI3_LINUX_344_PASS`.
+  Полный `flutter test` на Linux не является VM-CI эквивалентом: он запускает Windows-only tagged `release` тест
+  `run_release_android_test.dart`, которому нужны PowerShell и Git checkout; `tool/ci/vm.ps1` запускает
+  `smoke || contract`, и именно этот селектор выполнен.
+- Windows, Flutter 3.44.9: `pwsh -File tool/ci/vm.ps1` — exit 0, 616/616; `FLUTTER_VERSION=3.44.9
+  pwsh -File tool/ci/example.ps1` — exit 0; `pwsh -File tool/ci/windows.ps1` — exit 0, включая native runtime,
+  camera, presenter shader, probe и shader probe integration tests.
+- Удалён устаревший Flutter 3.38 с Linux VM: `/home/oleg/storage/flutter_3.38` (`CI3_FLUTTER_338_REMOVED`).
 
 #### Review
