@@ -114,20 +114,27 @@ class EditorScreenState extends State<EditorScreen> {
     try {
       final Uint8List bytes = await file.readAsBytes();
       final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      final decoded = frame.image;
-      final width = decoded.width;
-      final height = decoded.height;
-      final rgba = await decoded.toByteData(format: ui.ImageByteFormat.rawRgba);
-      decoded.dispose();
-      if (!mounted || rgba == null) return;
-      _setImage(YuvImage.bgra(width, height)..applyRgbaBytes(rgba.buffer.asUint8List()));
+      try {
+        final frame = await codec.getNextFrame();
+        final decoded = frame.image;
+        try {
+          final width = decoded.width;
+          final height = decoded.height;
+          final rgba = await decoded.toByteData(format: ui.ImageByteFormat.rawRgba);
+          if (!mounted || rgba == null) return;
+          _setImage(YuvImage.bgra(width, height)..applyRgbaBytes(rgba.buffer.asUint8List()));
+        } finally {
+          decoded.dispose();
+        }
+      } finally {
+        codec.dispose();
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _detectFace() async {
+  Future<void> detectFace() async {
     final current = image;
     if (current == null) return;
     final detector = FaceDetector(
@@ -143,8 +150,6 @@ class EditorScreenState extends State<EditorScreen> {
       detector.close().ignore();
     }
   }
-
-  Future<void> detectFace() => _detectFace();
 
   void _runNamedOperation(EditorOperation operation) {
     final current = image;

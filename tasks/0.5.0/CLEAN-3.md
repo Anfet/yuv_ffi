@@ -115,3 +115,18 @@ Manual Windows validation: editor image loading, operations and reset; camera pr
   `YuvCameraView` показывает 20,2 и 19,8 — каждый пришедший кадр. Плагин `camera_windows`/драйвер выбирает режим
   20 к/с (вероятно, автоэкспозиция при слабом свете); конвейер ничего не теряет.
 
+#### Rework
+
+- `importCameraImage()` again preserves the plugin plane strides and pixel strides with `YuvPlaneLayout.preserve`; it
+  zero-fills only a missing final-row tail. Tight plane tests tied to the removed `toYuvImage()` path were deleted;
+  `toInputImage()` remains the opt-in packing path for ML Kit.
+- Removed the unused `MyApp` alias, disposed the decoded image and codec on every `_loadImage` path, and made
+  `detectFace()` the directly public method used by the integration test.
+- `flutter analyze` in `example/` — PASS.
+- With `C:\Users\Oleg-T\AppData\Local\Temp\yuv-ffi-windows\Release` on `PATH`: `flutter test
+  test/camera/camera_image_import_test.dart test/editor/editor_screen_test.dart test/yuv_image_to_input_image_test.dart`
+  — PASS, 8 tests.
+- `FLUTTER_VERSION=3.44.9; pwsh -File tool/ci/example.ps1` — `pub get` and `analyze` PASS; the local execution
+  interface ended the process at its 30-second limit while `flutter build web` was running, so no terminal result was
+  received.
+

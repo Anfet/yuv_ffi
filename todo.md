@@ -43,7 +43,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CLEAN 3](tasks/0.5.0/CLEAN-3.md) | TODO | T2 | — | — | **Уборка example — доработка после ревью.** Вернуть прежнюю семантику `importCameraImage()` (strides как есть — живой поток камеры), удалить `toYuvImage()`, запустить `example.ps1`; мелочи — в Review карточки. |
+| [CLEAN 3](tasks/0.5.0/CLEAN-3.md) | IN_PROGRESS | T2 | Executor | — | **Уборка example — доработка после ревью.** Вернуть прежнюю семантику `importCameraImage()` (strides как есть — живой поток камеры), удалить `toYuvImage()`, запустить `example.ps1`; мелочи — в Review карточки. |
 | [CLEAN 4](tasks/0.5.0/CLEAN-4.md) | BLOCKED | T2 | CLEAN 3 | CLEAN 3 | **Документация и комментарии по стандартам pub.dev.** README, CHANGELOG, dartdoc, комментарии без внутренних ID и шума, `.pubignore`, `doc/archive/`; эталон — `pana`, `pub publish --dry-run`, `dart doc`. Черновик. |
 | [CI 2](tasks/0.5.0/CI-2.md) | BLOCKED | T2 | CLEAN 3 | CLEAN 3 | **Linux-CI: тест камеры.** Причина — не Linux: `FakeCameraPlatform` не реализует `onCameraError`, который вызывает `camera` 0.11.4 (на Linux резолвится он, в lock — 0.11.0+2). Реализовать в фейке, проверить на Linux VM. |
 | [CI 3](tasks/0.5.0/CI-3.md) | BLOCKED | T2 | CI 2 | CI 2 | **VM-CI: Flutter 3.38.** Убрать аргумент `filterQuality` у `setImageSampler`; analyze, тесты и шейдерная проба на 3.38.10 (Linux VM); расходится — поднять минимум до 3.41. |

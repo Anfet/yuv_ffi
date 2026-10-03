@@ -14,5 +14,3 @@ class YuvExampleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const MaterialApp(debugShowCheckedModeBanner: false, home: EditorScreen());
 }
-
-typedef MyApp = YuvExampleApp;
