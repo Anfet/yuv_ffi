@@ -1,5 +1,5 @@
 # WEB 5 — Web: причина расхождения шейдера и скорость показа
-**Status:** REVIEW · **Tier:** T1 · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3 · **Base:** `12a7118`
+**Status:** TODO · **Tier:** T1 · **Owner:** — · **Depends On:** — · **Probe:** windows+pixel3 · **Base:** `12a7118`
 
 #### Goal
 WEB 1 выключила шейдер `YuvFrameRenderer` на Web: в CanvasKit (Chrome 154, headless) проба SHADER 3 дала
@@ -126,3 +126,9 @@ NV12 для камеры теперь дешевле BGRA (18,4 против 27,
 в APPLE 1. skwasm/`--wasm` не проверялись (WEB 2). Харнессы диагностики и замера удалены, в коммиты не попали.
 
 #### Review
+
+**REWORK** (Reviewer, 04.10.2026; диапазон `12a7118..ff8443c`). Блокирующее замечание:
+
+1. Решение 5 требует для I420 и NV12 медиану полного кадра `upload() + paint() + toImage()` в release dart2js и сравнение с BGRA-путём. Отчёт и `doc/web-camera-yuv.md` вместо этого приводят время от `YuvFramePresenter.present()` до `onFramePresented`: callback вызывается после очередного кадра Flutter и не ждёт `toImage()`. Значение 16,8 мс ограничено 60 Гц; по нему нельзя подтвердить условие решения 6 о скорости шейдера. Повторить именно указанный замер (10 прогревов + 30 измерений, I420/NV12 через шейдер и BGRA-путь, BGRA-кадр для сравнения), записать метод и медианы в отчёт и `doc/perf-findings.md`, пересчитать вывод для камеры. Если условие решения 6 не выполнено, вернуть BGRA fallback на Web и описать причину в dartdoc и README.
+
+Подтверждено независимо: Web-проба `shader_probe_web_test.dart` — PASS; негативный контроль `bytesPerTexel: 4` на Web — FAIL с `max_diff=255`, исходник восстановлен; Pixel 3 arm64 `shader_probe_native_test.dart` — PASS; `flutter test test/yuv_planes_texture_test.dart` — 28/28 PASS. Код упаковки и точность шейдера замечаний не вызвали. Повторить эти проверки после доработки только если она затронет соответствующий код.
