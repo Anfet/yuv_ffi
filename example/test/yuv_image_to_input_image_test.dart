@@ -57,7 +57,7 @@ void main() {
     final yPlane = paddedPlane(rows: height, columns: width, pixelStride: 1, sampleBytes: 1, rowPadding: 5, seed: 1);
     // Real pixel gap: one visible byte per sample, one gap byte -- the
     // interleaved-chroma-exposed-as-two-planes layout some Android devices
-    // report for I420 (see `CameraImageExt.toYuvImage`'s doc comment).
+    // report for I420.
     final uPlane = paddedPlane(rows: chromaHeight, columns: chromaWidth, pixelStride: 2, sampleBytes: 1, rowPadding: 4, seed: 100);
     final vPlane = paddedPlane(rows: chromaHeight, columns: chromaWidth, pixelStride: 2, sampleBytes: 1, rowPadding: 4, seed: 200);
 

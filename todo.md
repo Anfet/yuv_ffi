@@ -21,7 +21,7 @@
 
 ## Текущее состояние
 
-- **Сейчас:** этап 6. Пул `PAR-CI` влит в `dev` частично (`fda538d`): CI запускается тегами `ci/<набор>/<метка>`, остаток CI 1 перенесён после этапа 6. **Можно начинать:** CLEAN 3. В пуле этапа 6 после CLEAN 3 — CI 2 и CI 3 (отказы CI, Engineer: чинить).
+- **Сейчас:** этап 6. Пул `PAR-CI` влит в `dev` частично (`fda538d`): CI запускается тегами `ci/<набор>/<метка>`, остаток CI 1 перенесён после этапа 6. **Можно начинать:** CI 2 (CLEAN 3 принята). В пуле этапа 6 после CLEAN 3 — CI 2 и CI 3 (отказы CI, Engineer: чинить).
 - **Очередь пулов.** Worktree нет (D-22), поэтому в основной копии одновременно идёт один пул — одна ветка: этап 6 (CLEAN 3 → CLEAN 4) → остаток CI 1 → этап 7 (WEB 5 ∥ APPLE 1 → WEB 2) → этап 8.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
@@ -43,9 +43,9 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CLEAN 3](tasks/0.5.0/CLEAN-3.md) | REVIEW | T2 | Executor | — | **Уборка example — повторно готова к ревью.** Сохранены strides живого потока камеры, `toYuvImage()` удалён, `example.ps1` — PASS. |
+| [CLEAN 3](tasks/0.5.0/CLEAN-3.md) | ACCEPTED | T2 | STAGE6 | — | **Уборка example.** Принята после доработки: редактор на `YuvFramePresenter`/`YuvFrameView`, один импорт кадра камеры (strides как есть). Ждёт слияния пула `STAGE6`. |
 | [CLEAN 4](tasks/0.5.0/CLEAN-4.md) | BLOCKED | T2 | CLEAN 3 | CLEAN 3 | **Документация и комментарии по стандартам pub.dev.** README, CHANGELOG, dartdoc, комментарии без внутренних ID и шума, `.pubignore`, `doc/archive/`; эталон — `pana`, `pub publish --dry-run`, `dart doc`. Черновик. |
-| [CI 2](tasks/0.5.0/CI-2.md) | BLOCKED | T2 | CLEAN 3 | CLEAN 3 | **Linux-CI: тест камеры.** Причина — не Linux: `FakeCameraPlatform` не реализует `onCameraError`, который вызывает `camera` 0.11.4 (на Linux резолвится он, в lock — 0.11.0+2). Реализовать в фейке, проверить на Linux VM. |
+| [CI 2](tasks/0.5.0/CI-2.md) | TODO | T2 | — | — | **Linux-CI: тест камеры.** Причина — не Linux: `FakeCameraPlatform` не реализует `onCameraError`, который вызывает `camera` 0.11.4 (на Linux резолвится он, в lock — 0.11.0+2). Реализовать в фейке, проверить на Linux VM. |
 | [CI 3](tasks/0.5.0/CI-3.md) | BLOCKED | T2 | CI 2 | CI 2 | **VM-CI: Flutter 3.38.** Убрать аргумент `filterQuality` у `setImageSampler`; analyze, тесты и шейдерная проба на 3.38.10 (Linux VM); расходится — поднять минимум до 3.41. |
 
 ### Этап 7 — платформы: Web и Apple

@@ -1,5 +1,5 @@
 # CI 2 — Linux: `camera_capture_native_test.dart` падает в CI
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** CLEAN 3 · **Depends On:** CLEAN 3 (тот же пул) · **Probe:** none
+**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** none
 
 #### Goal
 Фактическая карточка отказа post-merge CI (правило 4 `todo.md`). Отложенный CI этапов 4–5 прогнан тегом

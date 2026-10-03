@@ -1,5 +1,5 @@
 # CLEAN 3 — Уборка example: экран редактора и камерный экран
-**Status:** REVIEW · **Tier:** T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** STAGE6 · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Example — витрина пакета, а `main.dart` (345 строк) собран до этапа 4: экран, состояние и все операции лежат в
@@ -128,4 +128,14 @@ Manual Windows validation: editor image loading, operations and reset; camera pr
   — PASS, 8 tests.
 - `FLUTTER_VERSION=3.44.9; pwsh -File tool/ci/example.ps1` — PASS: `pub get` (2.25 s), `analyze` (8.13 s),
   `build web` (41.65 s).
+
+- **ACCEPT** после доработки (Reviewer, 03.10.2026, коммиты `b505467`…`dc395d2`). `importCameraImage()` совпадает с
+  `dev` (strides как есть, `preserve`, нулевое дополнение хвоста) — живой поток камеры прежний; тесты упаковки
+  `toYuvImage()` удалены как дубли, `camera_image_import_test.dart` вернул прежние утверждения. `MyApp`, обёртка
+  `detectFace()` убраны, `codec` и `decoded` освобождаются на всех путях. Проверено Reviewer: `flutter analyze` в
+  `example/` — без замечаний, `flutter test` в `example/` — 35/35; `dart format` по файлам задачи — чисто
+  (`padded_bgra_constructor_web_test.dart` не отформатирован ещё до задачи). Поправлено Reviewer: в
+  `yuv_image_to_input_image_test.dart` убрана ссылка на удалённый `toYuvImage`. `windows.ps1` после доработки не
+  повторялся: изменён только импорт, вернувшийся к коду `dev`.
+- Карточка ждёт слияния пула `STAGE6` (дальше — CI{N}2, CI{N}3).
 
