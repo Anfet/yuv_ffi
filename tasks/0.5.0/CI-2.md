@@ -1,5 +1,5 @@
 # CI 2 — Linux: `camera_capture_native_test.dart` падает в CI
-**Status:** REVIEW · **Tier:** T2 · **Owner:** STAGE6 · **Depends On:** — · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** STAGE6 · **Depends On:** — · **Probe:** none
 
 #### Goal
 Фактическая карточка отказа post-merge CI (правило 4 `todo.md`). Отложенный CI этапов 4–5 прогнан тегом
@@ -79,3 +79,10 @@ Engineer дал команду чинить (03.10.2026).
   `pubspec.lock` не менялись.
 
 #### Review
+
+- **ACCEPT** (Reviewer, 03.10.2026, `9046db9`, `d55fb7e`). `onCameraError` в фейке — отфильтрованный поток событий, а не
+  `Stream.empty()`: пустой поток закрывается сразу, и `camera` 0.11.4 падал на `Bad state: No element` — отклонение от
+  решения 1 обосновано и по существу то же (ошибок фейк не шлёт). Linux VM: все четыре `*_native_test.dart` прошли;
+  Windows: тест камеры прошёл. Причина 0.11.4 на Linux: `flutter create --platforms=linux .` пересобирает
+  `example/pubspec.lock` (camera 0.11.0+2 → 0.11.4) — Linux-джоба CI проверяет другие версии зависимостей, чем lock;
+  это учесть в остатке CI 1. Проверено Reviewer: `flutter analyze` в `example/` — без замечаний.

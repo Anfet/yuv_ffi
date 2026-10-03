@@ -1,5 +1,5 @@
 # CLEAN 4 — Документация и комментарии по стандартам pub.dev
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** CI 3 · **Depends On:** CLEAN 3, CI 3 (очередь пула `STAGE6`) · **Probe:** windows
+**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Привести публикуемый пакет к обычному виду пакета pub.dev: README, CHANGELOG, `example/README.md`, dartdoc
@@ -17,8 +17,7 @@
 Эталон проверки — `pana` (оценка и замечания), `dart pub publish --dry-run` без предупреждений, `dart doc` без
 предупреждений. Поведение кода не меняется; `lib/src/functions/bindings/` (сгенерированный) не трогать.
 
-Этап 6, последняя карточка пула `STAGE6` (после CI 3: тот может поднять минимум Flutter и править README и
-CHANGELOG).
+Этап 6, пул `CLEAN4` в ветке `all/CLEAN-4` от `dev` (после слияния CLEAN 3, CI 2, CI 3).
 
 Замеры Architect на `045d761` (03.10.2026):
 
@@ -83,6 +82,14 @@ CHANGELOG).
 8. **Probe `windows`, а не `windows+pixel3`.** В `lib/src/yuv/impl/**` и `src/` меняются только комментарии и
    директивы `ignore_for_file` — машинный код не меняется. Reviewer проверяет это по diff; если в этих путях
    изменилось что-то кроме комментариев, карточка возвращается.
+9. **Dart 3.12 (минимум по D-24).** Код под новый язык — только то, что подсказывает анализатор, без массовой
+   модернизации:
+   - `prefer_initializing_formals` — 2 места в `test/yuv_image_widget_test.dart` (private named parameters, Dart 3.12):
+     `dart fix --apply --code=prefer_initializing_formals`;
+   - `library_annotations` — 58 тестов с `@Tags` перед импортами без `library;`: добавить `library;` после аннотации;
+   - primary constructors не использовать: в 3.12 экспериментальные, стабильны с 3.13 — выше минимума;
+   - dot shorthands (Dart 3.10) — не мигрировать массово, только в строках, которые и так правятся.
+   После этого `flutter analyze` в корне и в `example/` — «No issues found» (с infos).
 
 #### Scope
 - Комментарии и dartdoc: `lib/` (кроме `lib/src/functions/bindings/`), `darwin/`, `example/lib/`; ID в комментариях
@@ -91,6 +98,7 @@ CHANGELOG).
   `doc/perf-findings.md` (при необходимости, решение 5).
 - `example/lib/editor/editor_screen.dart` — tooltip (решение 7).
 - `pubspec.yaml` — только метаданные по решению 6.
+- `test/**` — директивы `library;` и 2 initializing formals по решению 9.
 
 #### Constraints
 - Поведение не меняется: ни строки исполняемого кода, кроме текста tooltip.
@@ -104,7 +112,8 @@ CHANGELOG).
 - [ ] В `lib/`, `src/`, `darwin/`, `example/lib/`, `test/`, `example/test/` нет внутренних ID в комментариях
       (кроме ограничений выше): `git grep -nE '\b(PACK|RA|TEST|GEOM|VIEW|SHADER|CAMERA|CLEAN|WEB|CI|SPM|DEVICE|PERF|APPLE|D)[- ][0-9]+'`
       — вывод с объяснением оставшихся строк в отчёте.
-- [ ] `public_member_api_docs` включено; `flutter analyze` в корне — без замечаний.
+- [ ] `public_member_api_docs` включено; `flutter analyze` в корне и в `example/` — «No issues found», включая infos
+      (решение 9).
 - [ ] `dart doc` в корне — 0 предупреждений (вывод — в `doc/api/`, он в `.gitignore`).
 - [ ] `flutter pub publish --dry-run` — 0 предупреждений; в архиве нет `test/`, `test_native/`, `tool/`, `doc/`,
       внутренних `.md`; размер архива — в отчёте. Подсказка о скачке версии с 0.2.4 допустима.

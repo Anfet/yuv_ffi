@@ -1,5 +1,5 @@
 # CI 3 — VM-CI: пакет не собирается на Flutter 3.38; минимум — 3.44
-**Status:** REVIEW · **Tier:** T2 · **Owner:** STAGE6 · **Depends On:** — · **Probe:** windows
+**Status:** ACCEPTED · **Tier:** T2 · **Owner:** STAGE6 · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Фактическая карточка отказа post-merge CI (правило 4 `todo.md`). Отложенный CI этапов 4–5 прогнан тегом
@@ -105,3 +105,11 @@ Engineer дал команду чинить (03.10.2026).
 - Удалён устаревший Flutter 3.38 с Linux VM: `/home/oleg/storage/flutter_3.38` (`CI3_FLUTTER_338_REMOVED`).
 
 #### Review
+
+- **ACCEPT** (Reviewer, 03.10.2026, `d405410`). Сэмплер с явным `FilterQuality.none`; минимум Dart `^3.12.0` / Flutter
+  `>=3.44.0` в `pubspec.yaml`, README, CHANGELOG; матрица `ci-vm.yml` — `3.44.9`. Linux VM: analyze, `smoke || contract`
+  и шейдерная проба на 3.44.9 — PASS; Windows: `vm.ps1` 616/616, `example.ps1`, `windows.ps1` — PASS. Изменение
+  `example/pubspec.lock` (раздел `sdks`) — следствие нового минимума пакета, допустимо. Проверено Reviewer: остатков
+  3.38 / Dart 3.10 в пакете нет (кроме истории 0.4.0 в CHANGELOG и `doc/api-abi-0.4-design.md`); `flutter analyze` на
+  языке 3.12 даёт 2 новых info `prefer_initializing_formals` в `test/yuv_image_widget_test.dart` (private named
+  parameters Dart 3.12) плюс 58 прежних `library_annotations` — переданы в CLEAN 4, решение 9.
