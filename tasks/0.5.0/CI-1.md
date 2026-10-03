@@ -150,3 +150,23 @@ origin (`ci/stage2-probes`, `ci/stage3-clean`, `ci/STAGE3-SPM-apple`), их мо
 - After all run links were recorded, removed from origin and locally: `ci/all/CI-1`, `ci/smoke/CI-1`, and
   `ci/smoke/CI-1-2` (cleanup exit 0).
 #### Review
+
+2026-10-03 — Reviewer: **принято**, кроме причины в решении 8 (исправлена ниже).
+
+- Workflow: все 9 файлов разобраны YAML-парсером — в `on` только `push.tags` (`ci/all/**`, `ci/<name>/**`) и
+  `workflow_dispatch`; `branches`, `paths-ignore` и особый `concurrency` для `release/**` убраны.
+- Запуски (`gh run list --commit`): `af895ae` — ровно 9 push-run от `ci/all/CI-1` и один `CI smoke` от
+  `ci/smoke/CI-1`; `41f444f` — только `CI smoke` от `ci/smoke/CI-1-2`, success; `ef4c8f3`, `b124f1f`, `7540343`
+  (голова `origin/all/PAR-CI`) — `[]`. Причины красных подтверждены логами: VM — только `vm (3.38.10)`,
+  `filterQuality` не определён; Linux — `linux-native-smoke`, `camera_capture_native_test.dart:24`.
+- Тегов `ci/*` нет ни в origin (`git ls-remote --tags`), ни локально.
+- `scope_guard.sh` (во временном клоне): `all/PAR-CI` — exit 0; `vm/scope-check` от `dev` с файлом в `lib/` —
+  exit 1, `does not cover vm example required by lib/...`.
+- Документы: оговорка из строки «Автозапуска нет» в `AGENTS.md` убрана; `ci/**` в `AGENTS.md`, `todo.md`,
+  `.github/` — только в D-9.
+- **Решение 8 — причина в отчёте неверна.** Lock меняет не `pub get`, а сам `flutter create`: даже с `--no-pub` он
+  перезаписывает `example/pubspec.lock` шаблонным (53 строки вместо 552), и `pub get` затем резолвит всё заново.
+  Проверено на Windows, Flutter 3.44.9 (lock от платформы не зависит): `create --no-pub` + `pub get` — 66/66
+  строк; `create --no-pub`, затем `git checkout -- pubspec.lock`, затем `pub get` — lock без изменений. По
+  карточке `ci.yml` верно не изменён; восстановление lock между `create` и `pub get` — вне вариантов решения 8,
+  выбор за Engineer (дополнить CI 1 или отдельной карточкой).
