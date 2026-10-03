@@ -45,7 +45,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 | --- | --- | --- | --- | --- | --- |
 | [CLEAN 3](tasks/0.5.0/CLEAN-3.md) | ACCEPTED | T2 | STAGE6 | — | **Уборка example.** Принята после доработки: редактор на `YuvFramePresenter`/`YuvFrameView`, один импорт кадра камеры (strides как есть). Ждёт слияния пула `STAGE6`. |
 | [CLEAN 4](tasks/0.5.0/CLEAN-4.md) | BLOCKED | T2 | CI 3 | CLEAN 3, CI 3 (очередь пула) | **Документация и комментарии по стандартам pub.dev.** Карточка расписана: комментарии без ID и истории, `public_member_api_docs`, README/CHANGELOG/`example/README.md`, `.pubignore` без `test/`, `tool/`, `doc/`, удаление `doc/archive/`; эталон — `pana`, `pub publish --dry-run`, `dart doc`. Следующая в пуле после CI 3. |
-| [CI 2](tasks/0.5.0/CI-2.md) | TODO | T2 | — | — | **Linux-CI: тест камеры.** Причина — не Linux: `FakeCameraPlatform` не реализует `onCameraError`, который вызывает `camera` 0.11.4 (на Linux резолвится он, в lock — 0.11.0+2). Реализовать в фейке, проверить на Linux VM. |
+| [CI 2](tasks/0.5.0/CI-2.md) | BLOCKED | T2 | Linux VM | Linux VM | **Linux-CI: тест камеры.** Фейк реализует `onCameraError`; Windows-прогон зелёный. Linux VM недоступна по SSH, поэтому обязательная матрица и diff lockfile ожидают восстановления доступа. |
 | [CI 3](tasks/0.5.0/CI-3.md) | BLOCKED | T2 | CI 2 | CI 2 | **VM-CI: Flutter 3.38.** Убрать аргумент `filterQuality` у `setImageSampler`; analyze, тесты и шейдерная проба на 3.38.10 (Linux VM); расходится — поднять минимум до 3.41. |
 
 ### Этап 7 — платформы: Web и Apple

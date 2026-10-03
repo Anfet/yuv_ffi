@@ -1,5 +1,5 @@
 # CI 2 — Linux: `camera_capture_native_test.dart` падает в CI
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** none
+**Status:** BLOCKED · **Tier:** T2 · **Owner:** Linux VM · **Depends On:** Linux VM · **Probe:** none
 
 #### Goal
 Фактическая карточка отказа post-merge CI (правило 4 `todo.md`). Отложенный CI этапов 4–5 прогнан тегом
@@ -60,4 +60,17 @@ Engineer дал команду чинить (03.10.2026).
 - `flutter analyze` в `example/`; `dart format --line-length 150` для изменённого файла.
 
 #### Executor Report
+03.10.2026:
+
+- Реализован `FakeCameraPlatform.onCameraError(int)` как пустой
+  `Stream<CameraErrorEvent>`. Дополнительных нереализованных методов на Windows не обнаружено.
+- `dart format --line-length 150 example/test/support/fake_camera.dart` — PASS.
+- `flutter analyze` в `example/` — PASS.
+- `pwsh -File tool/ci/drive.ps1 integration_test/camera_capture_native_test.dart windows --no-pub` — PASS.
+- `pwsh -File tool/ci/windows.ps1` — PASS (20/20, 1 skipped, 0 failed).
+- Linux VM недоступна: команда `D:\.projects\.tools\linux-runner\linux-run.sh 'cd ~/claude-work/yuv_ffi && git status --short'`
+  завершилась с `ssh: connect to host 192.168.1.29 port 22: Connection timed out`.
+  До восстановления SSH нельзя выполнить обязательные Linux `*_native_test.dart` и установить, что именно меняет
+  `example/pubspec.lock` при разрешении `camera` 0.11.4.
+
 #### Review
