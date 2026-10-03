@@ -77,7 +77,7 @@ ctest --test-dir <temp> -C Release --output-on-failure
 
 ## CI
 
-- Автозапуска нет (D-23; workflow переводятся на теги в CI 1): CI запускается тегом `ci/<набор>/<метка>` на точный SHA или вручную (`workflow_dispatch`).
+- Автозапуска нет (D-23): CI запускается тегом `ci/<набор>/<метка>` на точный SHA или вручную (`workflow_dispatch`).
   Набор — `all` или одна платформа: `vm`, `windows`, `macos`, `ios`, `android`, `web`, `example`, `smoke`, `linux`.
   Основная проверка — локальные скрипты выше.
 - Один workflow — одна платформа: `.github/workflows/ci-<name>.yml` (Linux и регенерация bindings — `ci.yml`) делает

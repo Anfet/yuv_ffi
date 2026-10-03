@@ -127,8 +127,8 @@ covers_key() {
     "$prefix_tokens" == *"+$key/"* || "$prefix_tokens" == *"+$key+"* ]]
 }
 
-if ! base="$(git merge-base origin/release/0.4.2 HEAD)"; then
-  printf 'scope: could not determine merge base against origin/release/0.4.2\n' >&2
+if ! base="$(git merge-base dev HEAD)"; then
+  printf 'scope: could not determine merge base against dev\n' >&2
   exit 1
 fi
 

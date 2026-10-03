@@ -2,17 +2,13 @@ name: CI macOS
 
 concurrency:
   group: ci-macos-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
+  cancel-in-progress: true
 
 on:
   push:
-    branches:
-      - "release/**"
-      - main
     tags:
       - "ci/all/**"
       - "ci/macos/**"
-    paths-ignore: ["**/*.md", "doc/**", "tasks/**"]
   workflow_dispatch:
 
 jobs:

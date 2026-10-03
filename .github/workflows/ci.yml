@@ -2,17 +2,13 @@ name: CI
 
 concurrency:
   group: ci-${{ github.ref }}-${{ inputs.jobs || 'full' }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
+  cancel-in-progress: true
 
 on:
   push:
-    branches:
-      - "release/**"
-      - main
     tags:
       - "ci/all/**"
       - "ci/linux/**"
-    paths-ignore: ["**/*.md", "doc/**", "tasks/**"]
   workflow_dispatch:
     inputs:
       jobs:
