@@ -170,3 +170,7 @@ origin (`ci/stage2-probes`, `ci/stage3-clean`, `ci/STAGE3-SPM-apple`), их мо
   строк; `create --no-pub`, затем `git checkout -- pubspec.lock`, затем `pub get` — lock без изменений. По
   карточке `ci.yml` верно не изменён; восстановление lock между `create` и `pub get` — вне вариантов решения 8,
   выбор за Engineer (дополнить CI 1 или отдельной карточкой).
+- **Решение 8 доделано по команде Engineer** (03.10.2026): в `ci.yml` — `flutter create --platforms=linux --no-pub .`,
+  `git checkout -- pubspec.lock`, `flutter pub get`, `git diff --exit-code pubspec.lock`. Тег `ci/linux/CI-1-3` на
+  `a08c007` запустил только `CI`: [run 37146614596](https://github.com/Anfet/yuv_ffi/actions/runs/37146614596) —
+  `linux-native-smoke` и `bindings-regeneration` success, lock не изменился. Тег удалён.
