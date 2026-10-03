@@ -1,5 +1,5 @@
 # CI 2 — Linux: `camera_capture_native_test.dart` падает в CI
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** Linux VM · **Depends On:** Linux VM · **Probe:** none
+**Status:** REVIEW · **Tier:** T2 · **Owner:** STAGE6 · **Depends On:** — · **Probe:** none
 
 #### Goal
 Фактическая карточка отказа post-merge CI (правило 4 `todo.md`). Отложенный CI этапов 4–5 прогнан тегом
@@ -62,15 +62,20 @@ Engineer дал команду чинить (03.10.2026).
 #### Executor Report
 03.10.2026:
 
-- Реализован `FakeCameraPlatform.onCameraError(int)` как пустой
-  `Stream<CameraErrorEvent>`. Дополнительных нереализованных методов на Windows не обнаружено.
+- `FakeCameraPlatform.onCameraError(int)` реализован как отфильтрованный незакрывающийся поток
+  `CameraErrorEvent`. `Stream.empty()` закрывался немедленно и на `camera` 0.11.4 приводил к
+  `Bad state: No element`; других нереализованных методов не потребовалось.
 - `dart format --line-length 150 example/test/support/fake_camera.dart` — PASS.
 - `flutter analyze` в `example/` — PASS.
-- `pwsh -File tool/ci/drive.ps1 integration_test/camera_capture_native_test.dart windows --no-pub` — PASS.
-- `pwsh -File tool/ci/windows.ps1` — PASS (20/20, 1 skipped, 0 failed).
-- Linux VM недоступна: команда `D:\.projects\.tools\linux-runner\linux-run.sh 'cd ~/claude-work/yuv_ffi && git status --short'`
-  завершилась с `ssh: connect to host 192.168.1.29 port 22: Connection timed out`.
-  До восстановления SSH нельзя выполнить обязательные Linux `*_native_test.dart` и установить, что именно меняет
-  `example/pubspec.lock` при разрешении `camera` 0.11.4.
+- `pwsh -NoProfile -Command "& ./tool/ci/drive.ps1 integration_test/camera_capture_native_test.dart windows --no-pub; ..."`
+  — PASS, `CI2_WINDOWS_EXIT=0`. Предыдущий запуск `tool/ci/windows.ps1` не имел terminal result и не использован
+  как доказательство.
+- Linux VM, Flutter 3.44.9: все `example/integration_test/*_native_test.dart` прошли через
+  `xvfb-run -a bash tool/ci/drive.sh integration_test/<target> linux`:
+  `camera_capture_native_test.dart`, `presenter_shader_native_test.dart`, `probe_native_test.dart`,
+  `shader_probe_native_test.dart`; итоговая строка удалённого запуска — `CI2_FULL_LINUX_PASS`.
+- `flutter create --platforms=linux .` меняет `example/pubspec.lock`, в частности `camera` `0.11.0+2` → `0.11.4`
+  и Flutter/Dart SDK bounds до 3.44; следующий `flutter pub get` lockfile не меняет. Локальные `pubspec.yaml` и
+  `pubspec.lock` не менялись.
 
 #### Review

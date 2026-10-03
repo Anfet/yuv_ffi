@@ -1,5 +1,5 @@
 # CI 3 — VM-CI: пакет не собирается на минимальном Flutter 3.38
-**Status:** BLOCKED · **Tier:** T2 · **Owner:** CI 2 · **Depends On:** CI 2 (тот же пул) · **Probe:** windows
+**Status:** ENGINEER_REQUIRED · **Tier:** T2 · **Owner:** Engineer · **Depends On:** public minimum · **Probe:** windows
 
 #### Goal
 Фактическая карточка отказа post-merge CI (правило 4 `todo.md`). Отложенный CI этапов 4–5 прогнан тегом
@@ -72,4 +72,16 @@ Engineer дал команду чинить (03.10.2026).
 - `dart format --line-length 150`.
 
 #### Executor Report
+03.10.2026:
+
+- `_shader.setImageSampler(0, texture._image);` собран без `filterQuality`.
+- На Linux VM установлен Flutter 3.38.10 (Dart 3.10.9). `flutter pub get` останавливается до analyze/test/probe:
+  `yuv_ffi_example requires SDK version >=3.11.0`.
+- Причина порога — намеренная: commit `af5ea6d` поднял `example/pubspec.yaml` с Dart 3.10 до 3.11 для
+  `camera_desktop`. Flutter 3.38.10 предоставить Dart 3.11 не может.
+- На Flutter 3.44.9 Linux shader probe прошла:
+  `PASS integration_test/shader_probe_native_test.dart on linux`, `CI3_SHADER_344_EXIT=0`.
+- Требуется решение Engineer по публичному минимуму. Вариант 2 Architect Decision поднимает его до Flutter 3.41;
+  вариант 1 требует отдельного контракта/версии зависимостей example и не входит в текущий Scope.
+
 #### Review

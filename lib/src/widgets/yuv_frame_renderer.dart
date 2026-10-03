@@ -89,7 +89,7 @@ final class YuvFrameRenderer {
       for (var i = 0; i < values.length; i++) {
         _shader.setFloat(i, values[i]);
       }
-      _shader.setImageSampler(0, texture._image, filterQuality: FilterQuality.none);
+      _shader.setImageSampler(0, texture._image);
       canvas.drawRect(clip, Paint()..shader = _shader);
     } else {
       canvas.transform(geometry.sourceToView.storage);

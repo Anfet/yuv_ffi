@@ -110,7 +110,8 @@ class FakeCameraPlatform extends CameraPlatform {
   Stream<DeviceOrientationChangedEvent> onDeviceOrientationChanged() => const Stream.empty();
 
   @override
-  Stream<CameraErrorEvent> onCameraError(int cameraId) => const Stream.empty();
+  Stream<CameraErrorEvent> onCameraError(int cameraId) =>
+      _events.stream.where((event) => event.cameraId == cameraId && event is CameraErrorEvent).cast<CameraErrorEvent>();
 
   @override
   Stream<CameraImageData> onStreamedFrameAvailable(int cameraId, {CameraImageStreamOptions? options}) {
