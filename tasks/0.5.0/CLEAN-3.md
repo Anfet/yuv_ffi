@@ -1,5 +1,5 @@
 # CLEAN 3 — Уборка example: экран редактора и камерный экран
-**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Example — витрина пакета, а `main.dart` (345 строк) собран до этапа 4: экран, состояние и все операции лежат в
@@ -126,7 +126,6 @@ Manual Windows validation: editor image loading, operations and reset; camera pr
 - With `C:\Users\Oleg-T\AppData\Local\Temp\yuv-ffi-windows\Release` on `PATH`: `flutter test
   test/camera/camera_image_import_test.dart test/editor/editor_screen_test.dart test/yuv_image_to_input_image_test.dart`
   — PASS, 8 tests.
-- `FLUTTER_VERSION=3.44.9; pwsh -File tool/ci/example.ps1` — `pub get` and `analyze` PASS; the local execution
-  interface ended the process at its 30-second limit while `flutter build web` was running, so no terminal result was
-  received.
+- `FLUTTER_VERSION=3.44.9; pwsh -File tool/ci/example.ps1` — PASS: `pub get` (2.25 s), `analyze` (8.13 s),
+  `build web` (41.65 s).
 
