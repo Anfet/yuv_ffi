@@ -39,7 +39,7 @@
 
 ## Web
 
-- Chrome 154, Windows, i9-13980HX, release dart2js, кадр 1280×720 (WEB 6…8, `doc/web-camera-yuv.md`): до WEB 5 показ YUV через `YuvFrameRenderer.upload()` стоил 58 мс против 14 мс у BGRA: шейдер был выключен, кадр переводился в BGRA в WASM (`toBgraBytes()` ~38 мс, примерно в 3 раза медленнее native); декод в `ui.Image` — ~11,5 мс в обоих случаях. С шейдером (WEB 5) `upload()` I420/NV12 — 13,6/12,7 мс против 15,7 мс у BGRA, кадр через `YuvFramePresenter` — 16,8 мс (упор в 60 Гц) против 59–66 мс через BGRA-путь. Камера отдаёт `NV12`, `copyTo` без `format` — 4,3 мс против 10,3 мс у BGRA; импорт в `YuvImage` — 1,4–1,6 мс в любом формате.
+- Chrome 154, Windows, i9-13980HX, release dart2js, кадр 1280×720 (WEB 6…8, `doc/web-camera-yuv.md`): до WEB 5 показ YUV через `YuvFrameRenderer.upload()` стоил 58 мс против 14 мс у BGRA: шейдер был выключен, кадр переводился в BGRA в WASM (`toBgraBytes()` ~38 мс, примерно в 3 раза медленнее native); декод в `ui.Image` — ~11,5 мс в обоих случаях. С шейдером (WEB 5) полный кадр `upload()` + `paint()` + `toImage()` I420/NV12 — ~26 мс против 67–69 мс через BGRA-путь и ~31 мс у BGRA-кадра; один `upload()` — 13,6/12,7 мс против 15,7 мс у BGRA. Камера отдаёт `NV12`, `copyTo` без `format` — 4,3 мс против 10,3 мс у BGRA; импорт в `YuvImage` — 1,4–1,6 мс в любом формате.
 
 ## Blur (эксперименты, в production не перенесены)
 
