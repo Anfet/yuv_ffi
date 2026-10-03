@@ -21,8 +21,8 @@
 
 ## Текущее состояние
 
-- **Сейчас:** этап 6. Пул `PAR-CI` влит в `dev` частично (`fda538d`): CI запускается тегами `ci/<набор>/<метка>`, остаток CI 1 перенесён после этапа 6. Пул `STAGE6`: CLEAN 3 принята, CI 2 — `REVIEW`, **можно продолжать:** CI 3 (минимум Flutter 3.44, D-24), затем CLEAN 4.
-- **Очередь пулов.** Worktree нет (D-22), поэтому в основной копии одновременно идёт один пул — одна ветка: этап 6 (CLEAN 3 → CLEAN 4) → остаток CI 1 → этап 7 (WEB 5 ∥ APPLE 1 → WEB 2) → этап 8.
+- **Сейчас:** этап 6. CLEAN 3, CI 2, CI 3 влиты в `dev` (`5061c26`), post-merge CI — тегом на выходе из этапа. **Можно начинать:** CLEAN 4 (ветка `all/CLEAN-4`). Затем остаток CI 1 и этап 7.
+- **Очередь пулов.** Worktree нет (D-22), поэтому в основной копии одновременно идёт один пул — одна ветка: этап 6 (CLEAN 4) → остаток CI 1 → этап 7 (WEB 5 ∥ APPLE 1 → WEB 2) → этап 8.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Пулы задач
@@ -31,6 +31,7 @@ Orchestrator записывает для пула порядок карточе�
 
 | Пул | Порядок карточек | Tier Executor / Reviewer | Ветка | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
+| Уборка документации (`CLEAN4`) | CLEAN 4 | T2 / T2 | `all/CLEAN-4` | — | — |
 | CI по тегам (`PAR-CI`) | CI 1 | T2 / T2 | `all/PAR-CI` | push тестовых тегов в origin (разрешён карточкой) | решения 1–4 влиты в `dev` (`fda538d`); пул приостановлен до конца этапа 6 |
 
 ## Дашборд
@@ -39,14 +40,11 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 ### Этап 6 — уборка
 
-Этап открыт. Пул `STAGE6` в ветке `all/CLEAN-3`: CLEAN 3 (доработка) → CI 2 → CI 3; затем CLEAN 4. Выход — код и документация практически предрелизные.
+Этап открыт. CLEAN 3, CI 2, CI 3 влиты в `dev` (`5061c26`). Пул `CLEAN4` в ветке `all/CLEAN-4`: CLEAN 4. Выход — код и документация практически предрелизные.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CLEAN 3](tasks/0.5.0/CLEAN-3.md) | ACCEPTED | T2 | STAGE6 | — | **Уборка example.** Принята после доработки: редактор на `YuvFramePresenter`/`YuvFrameView`, один импорт кадра камеры (strides как есть). Ждёт слияния пула `STAGE6`. |
-| [CLEAN 4](tasks/0.5.0/CLEAN-4.md) | BLOCKED | T2 | CI 3 | CLEAN 3, CI 3 (очередь пула) | **Документация и комментарии по стандартам pub.dev.** Карточка расписана: комментарии без ID и истории, `public_member_api_docs`, README/CHANGELOG/`example/README.md`, `.pubignore` без `test/`, `tool/`, `doc/`, удаление `doc/archive/`; эталон — `pana`, `pub publish --dry-run`, `dart doc`. Следующая в пуле после CI 3. |
-| [CI 2](tasks/0.5.0/CI-2.md) | REVIEW | T2 | STAGE6 | — | **Linux-CI: тест камеры.** `onCameraError` реализован незакрывающимся потоком; Linux и Windows camera tests прошли. `flutter create` обновляет lockfile до `camera` 0.11.4; `pub get` затем его не меняет. |
-| [CI 3](tasks/0.5.0/CI-3.md) | REVIEW | T2 | STAGE6 | — | **VM-CI: минимум — Flutter 3.44 (D-24).** Явный `filterQuality`, публичные SDK-минимумы и VM-матрица обновлены; Linux и Windows проверки на 3.44.9 прошли. |
+| [CLEAN 4](tasks/0.5.0/CLEAN-4.md) | TODO | T2 | — | — | **Документация и комментарии по стандартам pub.dev.** Комментарии без ID и истории, `public_member_api_docs`, README/CHANGELOG/`example/README.md`, `.pubignore` без `test/`, `tool/`, `doc/`, удаление `doc/archive/`, замечания анализатора Dart 3.12; эталон — `pana`, `pub publish --dry-run`, `dart doc`. |
 
 ### Этап 7 — платформы: Web и Apple
 
