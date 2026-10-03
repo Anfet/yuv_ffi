@@ -24,6 +24,7 @@ yuv_ffi.dll
 .vscode/
 _tmp**
 /todo.md
+/.memory/
 /COMPLETION.md
 /dart_test.yaml
 /tasks/
