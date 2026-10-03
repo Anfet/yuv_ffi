@@ -8,22 +8,36 @@ import 'package:yuv_ffi/src/widgets/yuv_planes_texture.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 void main() {
-  for (final size in <(int, int)>[(1, 1), (3, 5), (33, 17), (720, 480)]) {
-    for (final pixelStride in <int>[1, 2]) {
-      test('packs I420 ${size.$1}x${size.$2} with chroma stride $pixelStride', () {
-        final frame = _i420(size.$1, size.$2, pixelStride);
-        final texture = YuvPlanesTexture.pack(frame)!;
-        _expectSamples(texture, frame);
-        final before = texture.bytes[0];
-        frame.yPlane.bytes[0] ^= 0xff;
-        expect(texture.bytes[0], before);
+  for (final bytesPerTexel in <int>[4, 3]) {
+    for (final size in <(int, int)>[(1, 1), (3, 5), (33, 17), (720, 480)]) {
+      for (final pixelStride in <int>[1, 2]) {
+        test('packs I420 ${size.$1}x${size.$2} with chroma stride $pixelStride, $bytesPerTexel bytes per texel', () {
+          final frame = _i420(size.$1, size.$2, pixelStride);
+          final texture = YuvPlanesTexture.pack(frame, bytesPerTexel: bytesPerTexel)!;
+          _expectSamples(texture, frame);
+          final before = texture.bytes[0];
+          frame.yPlane.bytes[0] ^= 0xff;
+          expect(texture.bytes[0], before);
+        });
+      }
+      test('packs NV12 ${size.$1}x${size.$2}, $bytesPerTexel bytes per texel', () {
+        final frame = _nv12(size.$1, size.$2);
+        _expectSamples(YuvPlanesTexture.pack(frame, bytesPerTexel: bytesPerTexel)!, frame);
       });
     }
-    test('packs NV12 ${size.$1}x${size.$2}', () {
-      final frame = _nv12(size.$1, size.$2);
-      _expectSamples(YuvPlanesTexture.pack(frame)!, frame);
-    });
   }
+
+  test('keeps samples out of alpha with three bytes per texel', () {
+    final texture = YuvPlanesTexture.pack(_nv12(33, 17), bytesPerTexel: 3)!;
+    expect(texture.bytes.length, texture.width * texture.height * 4);
+    for (var i = 3; i < texture.bytes.length; i += 4) {
+      expect(texture.bytes[i], 255);
+    }
+  });
+
+  test('rejects unsupported bytes per texel', () {
+    expect(() => YuvPlanesTexture.pack(_nv12(2, 2), bytesPerTexel: 2), throwsArgumentError);
+  });
 
   test('returns null for unsupported layouts and oversized textures', () {
     expect(YuvPlanesTexture.pack(YuvImage.bgra(1, 1)), isNull);
@@ -58,7 +72,8 @@ void _expectSamples(YuvPlanesTexture texture, YuvImage frame) {
   }
 }
 
-int _textureByte(YuvPlanesTexture texture, int row, int byte) => texture.bytes[(row * texture.width + byte ~/ 4) * 4 + byte % 4];
+int _textureByte(YuvPlanesTexture texture, int row, int byte) =>
+    texture.bytes[(row * texture.width + byte ~/ texture.bytesPerTexel) * 4 + byte % texture.bytesPerTexel];
 
 int _u(YuvImage frame, int x, int y) => frame.uPlane.bytes[y * frame.uPlane.rowStride + x * frame.uPlane.pixelStride];
 

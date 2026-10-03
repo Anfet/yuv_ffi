@@ -13,8 +13,9 @@
 
 - Added a packed-plane API and frame-presentation widgets, rebuilt the Web
   JS/WASM assets, and updated the package and example documentation.
-- Disabled `YuvFrameRenderer`'s shader on Web because the CanvasKit output
-  differs from the CPU reference; Web uses the BGRA fallback.
+- `YuvFrameRenderer` renders I420 and NV12 through the shader on Web too:
+  CanvasKit premultiplies sampled colors, so Web packs three plane bytes per
+  texel and keeps alpha opaque.
 
 ### Performance
 

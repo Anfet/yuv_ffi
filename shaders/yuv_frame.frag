@@ -10,13 +10,14 @@ uniform highp vec4 uLinear;       // (m00, m10, m01, m11)
 uniform highp vec2 uTranslate;    // (t0, t1)
 uniform highp vec3 uU;            // row, offset, step
 uniform highp vec3 uV;
+uniform highp float uBytesPerTexel;  // 4, or 3 when alpha is not a sample
 uniform sampler2D uPlanes;
 
 out vec4 fragColor;
 
 float planeByte(highp float row, highp float byteIndex) {
-  highp float texel = floor(byteIndex / 4.0);
-  highp float channel = byteIndex - texel * 4.0;
+  highp float texel = floor(byteIndex / uBytesPerTexel);
+  highp float channel = byteIndex - texel * uBytesPerTexel;
   vec4 value = texture(uPlanes, (vec2(texel, row) + 0.5) / uTextureSize);
   vec4 mask = vec4(1.0) - min(abs(vec4(channel) - vec4(0.0, 1.0, 2.0, 3.0)), vec4(1.0));
   return floor(dot(value, mask) * 255.0 + 0.5);

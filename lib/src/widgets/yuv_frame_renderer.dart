@@ -15,10 +15,6 @@ final class YuvFrameRenderer {
 
   /// Loads the package shader; unavailable platforms retain the BGRA fallback.
   static Future<YuvFrameRenderer> load() async {
-    if (kIsWeb) {
-      // CanvasKit differs from the CPU reference in every shader-probe case, so Web uses BGRA.
-      return YuvFrameRenderer._(null);
-    }
     try {
       return YuvFrameRenderer._((await ui.FragmentProgram.fromAsset('packages/yuv_ffi/shaders/yuv_frame.frag')).fragmentShader());
     } catch (_) {
@@ -28,13 +24,12 @@ final class YuvFrameRenderer {
   }
 
   /// Whether YUV planes can be rendered by the loaded shader.
-  ///
-  /// Always `false` on Web because CanvasKit differs from the CPU reference.
   bool get hasShader => _shader != null;
 
   /// Copies [frame] before awaiting so it may be reused immediately.
   Future<YuvFrameTexture> upload(YuvImage frame) {
-    final packed = hasShader ? YuvPlanesTexture.pack(frame) : null;
+    // CanvasKit premultiplies sampled colors by alpha, so Web keeps samples out of the alpha byte.
+    final packed = hasShader ? YuvPlanesTexture.pack(frame, bytesPerTexel: kIsWeb ? 3 : 4) : null;
     if (packed != null) {
       return decodeYuvFrameImage(
         packed.bytes,
@@ -84,6 +79,7 @@ final class YuvFrameRenderer {
         packed.v.row.toDouble(),
         packed.v.offset.toDouble(),
         packed.v.step.toDouble(),
+        packed.bytesPerTexel.toDouble(),
       ];
       for (var i = 0; i < values.length; i++) {
         _shader.setFloat(i, values[i]);
