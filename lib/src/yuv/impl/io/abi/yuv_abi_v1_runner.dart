@@ -1,3 +1,5 @@
+// ignore_for_file: public_member_api_docs
+
 import 'dart:ffi' as ffi;
 import 'dart:typed_data';
 

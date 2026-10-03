@@ -1,3 +1,5 @@
+// ignore_for_file: public_member_api_docs
+
 /// The wasm32 byte offsets and sizes of every ABI v1 struct
 /// (`src/yuv/abi/h/yuv_abi_v1.h`), as the Web runner stages them into WASM
 /// linear memory.

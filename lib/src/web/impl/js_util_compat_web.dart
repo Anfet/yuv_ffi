@@ -1,4 +1,4 @@
-// ignore_for_file: invalid_runtime_check_with_js_interop_types
+// ignore_for_file: public_member_api_docs, invalid_runtime_check_with_js_interop_types
 
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';

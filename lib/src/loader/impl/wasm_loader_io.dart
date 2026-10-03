@@ -1,3 +1,5 @@
+// ignore_for_file: public_member_api_docs
+
 /// Non-web fallback for the WASM loader API.
 ///
 /// This file intentionally provides the same surface as the web loader so

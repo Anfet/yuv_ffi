@@ -1,10 +1,12 @@
 @Tags(['contract'])
+library;
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies PACK-01A: `isTightlyPacked` and `pack()` report and remove row
+/// Verifies that `isTightlyPacked` and `pack()` report and remove row
 /// padding and per-sample pixel gaps without a native/WASM backend, changing
 /// format, geometry, visible content or UV order.
 ///

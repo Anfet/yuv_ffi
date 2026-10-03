@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
+// ignore_for_file: avoid_web_libraries_in_flutter, public_member_api_docs
 
 import 'package:yuv_ffi/src/web/impl/js_util_compat_web.dart' as js_util;
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';

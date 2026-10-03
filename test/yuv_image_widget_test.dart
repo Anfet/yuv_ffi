@@ -1,4 +1,6 @@
 @Tags(['contract'])
+library;
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -79,10 +81,8 @@ Future<_FakeBgraImage> _loadFakeBgraFromAsset() async {
 /// reports nothing, is covered separately in
 /// `yuv_image_source_compatibility_test.dart`.
 class _FakeBgraImage implements YuvImage, YuvRevisionAware {
-  _FakeBgraImage(this.width, this.height, {required Uint8List bytes, bool shouldThrow = false, _FakeBgraImage? origin})
-    : _shouldThrow = shouldThrow,
-      _origin = origin,
-      _bytes = bytes,
+  _FakeBgraImage(this.width, this.height, {required Uint8List bytes, this._shouldThrow = false, this._origin})
+    : _bytes = bytes,
       _plane = YuvPlane(height, width * 4, 4, bytes);
 
   final bool _shouldThrow;

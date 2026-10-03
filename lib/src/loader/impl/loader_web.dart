@@ -1,3 +1,5 @@
+// ignore_for_file: public_member_api_docs
+
 import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 import 'package:yuv_ffi/src/yuv/impl/web/yuv_abi_v1_dispatch_web.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_operation.dart';

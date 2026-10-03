@@ -276,7 +276,7 @@ class EditorOperations extends StatelessWidget {
       spacing: 12,
       children: [
         _action(EditorOperation.rotateClockwise, const Icon(Icons.rotate_right, size: 32), 'Rotate Clockwise'),
-        _action(EditorOperation.rotateCounterclockwise, const Icon(Icons.rotate_left, size: 32), 'Rotate Couterclockwise'),
+        _action(EditorOperation.rotateCounterclockwise, const Icon(Icons.rotate_left, size: 32), 'Rotate Counterclockwise'),
         _action(EditorOperation.flipVertical, const Icon(CupertinoIcons.arrow_up_arrow_down, size: 32), 'Flip vertically'),
         _action(EditorOperation.flipHorizontal, const Icon(CupertinoIcons.arrow_left_right, size: 32), 'Flip horizontally'),
         _action(EditorOperation.crop, const Icon(Icons.crop, size: 32), 'crop image'),

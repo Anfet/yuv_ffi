@@ -1,4 +1,6 @@
 @Tags(['contract'])
+library;
+
 import 'dart:ui';
 import 'dart:typed_data';
 

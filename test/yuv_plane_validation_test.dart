@@ -1,4 +1,6 @@
 @Tags(['contract'])
+library;
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -114,7 +116,7 @@ void main() {
       // a tight buffer, which would destroy the
       // caller's layout. Producing a tight buffer is the job of toBgra8888();
       // the constructor deep-copies the plane exactly as declared when passed
-      // YuvPlaneLayout.preserve (PACK-01B changed the default to `.packed`).
+      // YuvPlaneLayout.preserve because `.packed` is the default.
       final image = YuvImage.bgra(8, 8, planes: [plane(8, 32 + 16, 4)], layout: YuvPlaneLayout.preserve);
       expect(image.yPlane.rowStride, 32 + 16);
       expect(image.yPlane.pixelStride, 4);

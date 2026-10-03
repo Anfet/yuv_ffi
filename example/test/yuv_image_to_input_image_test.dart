@@ -6,7 +6,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 import 'package:yuv_ffi_example/ext.dart';
 
-/// PACK-01D: `YuvImageToCameraExt.toInputImage()` must hand `google_mlkit_commons`
+/// `YuvImageToCameraExt.toInputImage()` passes `google_mlkit_commons`
 /// 0.11.0's Android byte-array path real NV21 bytes (`Y` then interleaved
 /// **V, U** chroma) -- the only semi-planar layout it recognizes -- rather
 /// than this package's UV-ordered `nv12` storage or three separate I420

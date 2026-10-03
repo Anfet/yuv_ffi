@@ -17,12 +17,18 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 /// objects stay mutable — that is the package's public model — but each one here
 /// was freshly built by the decoder and is not shared with any caller.
 class YuvValidatedImageDraft {
+  /// Creates a decoded image draft with validated format, geometry, and planes.
   YuvValidatedImageDraft({required this.format, required this.width, required this.height, required List<YuvPlane> planes})
     : planes = List<YuvPlane>.unmodifiable(planes);
 
+  /// Pixel format declared by the decoded payload.
   // ignore: deprecated_member_use_from_same_package
   final YuvPixelFormat format;
+
+  /// Decoded image width in pixels.
   final int width;
+
+  /// Decoded image height in pixels.
   final int height;
 
   /// Decoded planes, in format order. Unmodifiable.

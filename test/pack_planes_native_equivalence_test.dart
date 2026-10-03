@@ -1,11 +1,13 @@
 @Tags(['contract'])
+library;
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// PACK-00: the packed-vs-padded plane comparison in `example/test/
+/// The packed-vs-padded plane comparison in `example/test/
 /// camera_image_pack_planes_test.dart` only proves the two imports copy the
 /// same visible sample bytes -- it cannot call native operations in that
 /// project's own `flutter test` run because `yuv_ffi`'s dynamic library is
@@ -15,7 +17,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// [YuvImage.applyRotation] produce byte-identical output for both, for I420
 /// (gapped U/V), NV12 (interleaved UV) and BGRA8888, including odd
 /// width/height. Equal output after equal-but-differently-laid-out input is
-/// the correctness precondition PACK-00's raw-data report builds its speed
+/// the correctness precondition that its raw-data report builds its speed
 /// comparison on.
 void main() {
   final bool nativeAvailable = _checkNativeAvailable();
@@ -45,7 +47,7 @@ void main() {
   }
 
   /// Same visible content as [plane], but with `rowStride == columns * pixelStride`
-  /// (no row padding) -- what PACK-00's packing import produces.
+  /// (no row padding) -- what the packing import produces.
   YuvPlane tightPlane({required int rows, required int columns, required int pixelStride, required int sampleBytes, required int seed}) =>
       plane(rows: rows, rowStride: columns * pixelStride, columns: columns, pixelStride: pixelStride, sampleBytes: sampleBytes, seed: seed);
 

@@ -17,7 +17,7 @@ import 'package:yuv_ffi_example/device_check/device_check_report.dart';
 import 'package:yuv_ffi_example/ext.dart';
 import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
 
-/// Guided on-device validation for the DEVICE-1 release checklist.
+/// Guided on-device validation for the release checklist.
 class DeviceCheckScreen extends StatefulWidget {
   const DeviceCheckScreen({super.key, this.cameraEnabled = true});
 
@@ -390,7 +390,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
       );
       setState(() => _faceBox = faces.firstOrNull?.boundingBox);
     } on MissingPluginException {
-      // Desktop test runners have no ML Kit registration; DEVICE-1 only runs on Android or iOS.
+      // Desktop test runners have no ML Kit registration; this check runs only on Android or iOS.
     }
   }
 

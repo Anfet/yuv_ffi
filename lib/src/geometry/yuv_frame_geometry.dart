@@ -37,7 +37,13 @@ final class YuvFrameOrientation {
 }
 
 /// Chooses whether a frame remains entirely visible or fills its view.
-enum YuvFrameFit { contain, cover }
+enum YuvFrameFit {
+  /// Scales the entire frame into the view, leaving unused space if necessary.
+  contain,
+
+  /// Scales the frame to fill the view, clipping excess pixels if necessary.
+  cover,
+}
 
 /// Maps a frame between source, upright, and view coordinate spaces.
 ///

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 
 const Duration deviceCheckMeasurementDuration = Duration(seconds: 15);
 
-/// Collects one release-device validation result in the DEVICE-1 schema.
+/// Collects one release-device validation result in the documented schema.
 final class DeviceCheckReport {
   DeviceCheckReport({
     required this.gitSha,
@@ -36,7 +36,7 @@ final class DeviceCheckReport {
   };
 }
 
-/// Values recorded for one ordered DEVICE-1 step.
+/// Values recorded for one ordered device-check step.
 final class DeviceCheckStepResult {
   const DeviceCheckStepResult({
     required this.id,

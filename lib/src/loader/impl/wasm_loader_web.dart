@@ -1,3 +1,5 @@
+// ignore_for_file: public_member_api_docs
+
 // This file is the Web-only WASM bootstrap implementation and is imported
 // through a conditional export (`wasm_loader.dart`), so web libraries here are
 // intentional and isolated from non-web targets.

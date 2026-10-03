@@ -16,7 +16,7 @@ final class YuvFrameRenderer {
   /// Loads the package shader; unavailable platforms retain the BGRA fallback.
   static Future<YuvFrameRenderer> load() async {
     if (kIsWeb) {
-      // WEB 1: CanvasKit differs from the CPU reference by up to 255 in every shader-probe case.
+      // CanvasKit differs from the CPU reference in every shader-probe case, so Web uses BGRA.
       return YuvFrameRenderer._(null);
     }
     try {
@@ -29,8 +29,7 @@ final class YuvFrameRenderer {
 
   /// Whether YUV planes can be rendered by the loaded shader.
   ///
-  /// Always `false` on Web because WEB 1 found a CanvasKit mismatch with the
-  /// CPU reference.
+  /// Always `false` on Web because CanvasKit differs from the CPU reference.
   bool get hasShader => _shader != null;
 
   /// Copies [frame] before awaiting so it may be reused immediately.
@@ -104,6 +103,7 @@ final class YuvFrameRenderer {
 
 /// An uploaded immutable frame texture owned by a renderer client.
 final class YuvFrameTexture {
+  /// Source frame dimensions in pixels.
   final int width, height;
   final ui.Image _image;
   final YuvPlanesTexture? _packed;

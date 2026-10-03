@@ -1,10 +1,12 @@
 @Tags(['contract'])
+library;
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Verifies PACK-01B: the `layout` option every `planes`-accepting `YuvImage`
+/// Verifies the `layout` option every `planes`-accepting `YuvImage`
 /// factory now takes, and its `YuvPlaneLayout.packed` default.
 ///
 /// Runs without `YuvFfi.initialize()`: the layout decision happens in

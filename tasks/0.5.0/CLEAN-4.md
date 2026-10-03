@@ -1,5 +1,5 @@
 # CLEAN 4 — Документация и комментарии по стандартам pub.dev
-**Status:** TODO · **Tier:** T2 · **Owner:** — · **Depends On:** — · **Probe:** windows
+**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor (T2) · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Привести публикуемый пакет к обычному виду пакета pub.dev: README, CHANGELOG, `example/README.md`, dartdoc

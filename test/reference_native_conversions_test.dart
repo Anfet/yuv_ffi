@@ -1,4 +1,6 @@
 @Tags(['reference'])
+library;
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' show Abi;
@@ -287,7 +289,7 @@ YuvImage _newImage(YuvPixelFormat format, int width, int height, List<YuvPlane> 
     // just like the explicit-format one, so both blank and populated cases can
     // go through it. This whole file exercises declared strides byte-for-byte
     // (including custom/padded ones), so every case passes `.preserve`
-    // explicitly (PACK-01B changed the default to `.packed`).
+    // explicitly because `.packed` is the default.
     // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.bgra8888 => YuvImage.bgra(width, height, planes: planes, layout: YuvPlaneLayout.preserve),
     // ignore: deprecated_member_use_from_same_package

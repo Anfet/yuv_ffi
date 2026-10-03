@@ -279,10 +279,11 @@ through an application-owned representation containing format, dimensions,
 plane strides, and plane bytes, then recreate the image with the matching
 named factory and encode it with `encodeTo`.
 
-## Building from source
+## Building from a repository checkout
 
 Native sources live in `src/` and are built through the platform plugin build
-configuration. Build the Web module from macOS/Linux shell, Git Bash, or WSL:
+configuration. From a repository checkout, build the Web module from a
+macOS/Linux shell, Git Bash, or WSL:
 
 ```sh
 sh ./tool/wasm/build_wasm.sh

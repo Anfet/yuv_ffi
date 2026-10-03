@@ -7,7 +7,10 @@ analyzer:
   exclude:
     - lib/src/functions/bindings/yuv_ffi_bingings.dart
     - _tmp_*.dart
-    - doc/archive/**
+
+linter:
+  rules:
+    - public_member_api_docs
 
 formatter:
   page_width: 150

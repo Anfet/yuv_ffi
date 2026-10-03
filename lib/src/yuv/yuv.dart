@@ -168,9 +168,9 @@ abstract interface class YuvImage {
   Future<ui.Image> toImage() => throw UnimplementedError();
 
   /// The `apply*` methods validate backend capability before changing this
-  /// image. Successful calls mutate it in place, advance [revision] once, and
+  /// image. Successful calls mutate it in place, advance [YuvImageInvalidation.revision] once, and
   /// return `this`. Rejected calls leave its bytes, format, geometry, and
-  /// revision unchanged. A no-op does not advance [revision].
+  /// revision unchanged. A no-op does not advance [YuvImageInvalidation.revision].
 
   /// Replaces the current pixel content from tight RGBA8888 [bytes], in this
   /// image's own format and geometry, and returns `this`.

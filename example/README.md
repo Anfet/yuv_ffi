@@ -54,4 +54,4 @@ flutter run --release -d <device-id> -t lib/device_check_main.dart --dart-define
 
 Keep the screen on and unlock the phone. Charging is optional. Complete every
 step and copy the final JSON, including the build mode, camera metadata, and
-all step results, for the DEVICE-2 review.
+all step results, for the release review.
