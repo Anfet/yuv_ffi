@@ -32,6 +32,11 @@ Metal/Impeller и сходится ли с CPU, каким путём идёт �
    правилам `AGENTS.md`); крупнее или с выбором решения — отдельная карточка, Engineer решает, блокирует ли она
    релиз.
 
+6. **`Package.swift` — решение Engineer (04.10.2026):** Flutter 3.44 предупреждает, что у SPM-пакета плагина нет
+   зависимости на `FlutterFramework` («Plugin yuv_ffi has a Package.swift … missing a dependency on
+   FlutterFramework»); соседнее предупреждение о плагинах без SPM Flutter прямо называет будущей ошибкой. Зависимость
+   добавляется в этой карточке, вопреки ограничению на `darwin/`; проверка — `macos.sh` и `ios.sh` (SPM и CocoaPods).
+
 #### Scope
 Проверки и отчёт; исправления — по решению 5. Ограничения, которые остаются, — в README (раздел платформ) и
 `example/README.md`.

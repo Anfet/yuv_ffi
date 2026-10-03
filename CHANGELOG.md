@@ -52,6 +52,9 @@
 
 ### Changes
 
+- The Swift package (`darwin/yuv_ffi/Package.swift`) depends on
+  `FlutterFramework`, as Flutter's Swift Package Manager integration expects
+  of every plugin.
 - `YuvImageProvider` copies a package `YuvImage` when decoding starts, so a
   later source mutation cannot change the queued frame. A provider whose image
   changed after it was created throws `StateError` on the affected load; create
