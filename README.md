@@ -227,8 +227,8 @@ Public calls can throw:
 | Platform | Support | Checked in CI | Checked manually |
 | --- | --- | --- | --- |
 | Android | Native FFI: `armeabi-v7a`, `arm64-v8a`, `x86_64` | Build, app-runtime smoke, and the 1188-case correctness matrix | Release builds on a physical Pixel 3 for `arm64-v8a` and `armeabi-v7a` |
-| iOS | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | — |
-| macOS | Native FFI | Example build, app-runtime smoke, and the 1188-case correctness matrix | — |
+| iOS | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | Debug build on a physical iPhone (iOS 18.7): camera, shader display, and the device check |
+| macOS | Native FFI | Example build, app-runtime smoke, and the 1188-case correctness matrix | Camera stream smoke with the built-in camera |
 | Windows | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | — |
 | Linux | Native FFI | Example build, packaging, app-runtime smoke, and the 1188-case correctness matrix | — |
 | Web | Partial WASM backend | Package checks, browser tests, and the reference correctness matrix | — |

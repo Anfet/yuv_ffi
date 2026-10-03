@@ -29,8 +29,9 @@ The camera layer in `lib/camera/` exposes `YuvCameraFrameSource` and immutable
 `YuvCameraFrame` deliveries. Import to `YuvImage` is lazy and shared by display,
 processing, and capture. Android orientation follows the sensor/device formula
 used by the ML Kit camera example and mirrors front-camera output. Desktop and
-Web frames are upright and unmirrored. iOS is currently also treated as upright
-and unmirrored; this rule has not yet been verified on a physical iOS device.
+Web frames are upright and unmirrored. On iOS the camera plugin already delivers
+upright frames and mirrors the front camera, so they are drawn as delivered;
+checked on a physical iPhone in portrait and landscape.
 
 `YuvCameraView` renders through the shader presenter, exposes current geometry,
 throttles independent `onFrame` processing, and captures the next frame that is

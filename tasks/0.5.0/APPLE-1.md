@@ -1,5 +1,5 @@
 # APPLE 1 — Проверка работы на macOS и iOS
-**Status:** IN_PROGRESS · **Tier:** T2 (T1 — если шейдерная проба на Metal разойдётся: отдельная карточка) · **Owner:** Executor · **Depends On:** — · **Probe:** none · **Base:** `6f71a45`
+**Status:** REVIEW · **Tier:** T2 (T1 — если шейдерная проба на Metal разойдётся: отдельная карточка) · **Owner:** Executor · **Depends On:** — · **Probe:** none · **Base:** `6f71a45`
 
 #### Goal
 Последний прогон на Apple — `macos.sh` и `ios.sh` на `bae5ff8` (код `d3bb2cc`, этап 3). Всё, что добавили этапы 4 и
@@ -57,4 +57,48 @@ Metal/Impeller и сходится ли с CPU, каким путём идёт �
   `ci/macos/APPLE-1`, `ci/ios/APPLE-1` на принятом SHA.
 
 #### Executor Report
+**Итог: PASS по решению 4**; найдено и исправлено 2 дефекта. Код — `0a7ac5a`, документы — до `HEAD` (база `6f71a45`).
+
+**Оценка** (решение 2):
+- *Шейдер на Metal/Impeller* — грузится и сходится с CPU: `shader_probe_native_test` PASS на macOS и iOS-симуляторе в
+  `ci/all/WEB-5` (`6f71a45`, с правкой упаковки WEB 5) и `ci/macos|ios/APPLE-1` (`0a7ac5a`); на iPhone экран
+  проверки — `shader: true`.
+- *Путь камеры* — на iOS (`camera_avfoundation`) и macOS (`camera_desktop`) кадры приходят BGRA, поэтому камера идёт
+  BGRA-путём; шейдер работает для I420/NV12 (редактор, презентер). Риск низкий.
+- *Ориентация* — наш код на не-Android считает кадр прямым (`camera_orientation.dart`). На iPhone подтверждено:
+  плагин сам поворачивает кадр (480×640 в портрете, 640×480 в альбоме) и зеркалит фронтальную камеру; ответы
+  `landscape`, `mirror` — да. Запись в `example/README.md` («не проверено на устройстве») заменена.
+- *Презентер и захват* — `presenter_shader_native_test`, `camera_capture_native_test` PASS на macOS и iOS; на
+  iPhone `capture` — да (418×640, видимая часть кадра).
+- *Сборка* — SPM и CocoaPods проходят в обоих скриптах. Риск: Flutter 3.44 предупреждал, что у SPM-пакета нет
+  зависимости на `FlutterFramework` (соседнее предупреждение Flutter называет будущей ошибкой) — исправлено (решение 6).
+
+**Проверки** (решение 3):
+- `macos.sh`, `ios.sh` — через CI на раннере Mac (по SSH release-сборка виснет): [`ci/macos/APPLE-1`](https://github.com/Anfet/yuv_ffi/actions/runs/37156823727),
+  [`ci/ios/APPLE-1`](https://github.com/Anfet/yuv_ffi/actions/runs/37156823976) на `0a7ac5a` — success; все
+  `*_native_test` PASS, runtime-смоук — в режиме SPM и CocoaPods; предупреждения про `FlutterFramework` в логах нет.
+  До правки — `ci/all/WEB-5` 9/9.
+- Камера macOS (MacBook Pro, macOS 15.6.1, debug, по SSH через `open`): `camera_desktop_smoke_main.dart` — `SMOKE
+  COMPLETE (5/5 frames, clean stop)`, встроенная FaceTime HD 640×480 BGRA, кадры с изображением; разрешение дал
+  Engineer.
+- iPhone (iOS 18.7.8, debug, `flutter run` запускал Engineer — подпись по SSH падает на `errSecInternalComponent`):
+  DEVICE 1 — все шаги и ответы «да», 30 к/с на всех шагах (частота камеры), `face_ratio` 1,0 в портрете и альбоме,
+  `shader: true`. Engineer: «картинка прекрасная — плавная».
+
+**Дефекты:**
+1. Рамка лица на экране проверки не сбрасывалась после шагов с лицом (на любой платформе) — рамка обнуляется в конце
+   замера, поздний результат распознавания игнорируется (`device_check_screen.dart`). Повтор на iPhone — рамка
+   исчезает. `flutter test test/device_check` 5/5, `example.ps1` PASS.
+2. `Package.swift` без `FlutterFramework` — зависимость добавлена (решение 6); на Mac предупреждение исчезло,
+   `yuv_ffi` нет в `Podfile.lock`, символы `_yuv_*_v1` в `yuv-ffi.framework` есть.
+
+**Не дефекты / ограничения:**
+- `PlatformException: No active stream to cancel` от `camera_avfoundation` 0.9.19 при старте — шум плагина при
+  отмене ещё не начатого потока, кадры идут; в пакете не исправляется.
+- `blur_ms_median 1074,9` и жёлтая плашка «Run this check in release mode» — debug-сборка, так задумано; скорость в
+  критерий не входит. Release на iPhone не запускался.
+- Редактор после снимка на iPhone отдельно не проверялся (шаг `capture` экрана проверки — да).
+- Документы: `README.md` (ручные проверки iOS и macOS в таблице платформ), `example/README.md` (ориентация на iOS),
+  `CHANGELOG.md` (`Package.swift`).
+
 #### Review
