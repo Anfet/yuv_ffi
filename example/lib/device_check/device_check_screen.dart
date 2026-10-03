@@ -263,7 +263,10 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
         faceRatio: _step.face && _faceFrames > 0 ? _faceFramesWithFace / _faceFrames : null,
       );
       _log('DEVICE-1 step ${jsonEncode(result.toJson())}');
-      setState(() => _measuring = false);
+      setState(() {
+        _measuring = false;
+        _faceBox = null;
+      });
       _awaitAnswerOrAdvance(result);
     });
   }
@@ -382,7 +385,8 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
     final detector = _faceDetector ??= FaceDetector(options: FaceDetectorOptions(performanceMode: FaceDetectorMode.fast, enableTracking: true));
     try {
       final faces = await detector.processImage(frame.image.toInputImage(rotation: rotation));
-      if (!mounted) return;
+      // A detection finishing after its step ended must not bring the box back.
+      if (!mounted || !_measuring) return;
       _faceFrames++;
       if (faces.isNotEmpty) _faceFramesWithFace++;
       faces.sort(
