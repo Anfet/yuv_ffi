@@ -1,5 +1,5 @@
 # CLEAN 3 — Уборка example: экран редактора и камерный экран
-**Status:** TODO · **Tier:** T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows
+**Status:** IN_PROGRESS · **Tier:** T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows
 
 #### Goal
 Example — витрина пакета, а `main.dart` (345 строк) собран до этапа 4: экран, состояние и все операции лежат в
