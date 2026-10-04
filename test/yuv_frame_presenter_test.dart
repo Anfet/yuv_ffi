@@ -62,6 +62,17 @@ void main() {
     ),
   );
 
+  testWidgets('synchronous BGRA copy errors leave the presenter free for the next frame', (tester) async {
+    await pumpView(tester);
+    expect(() => presenter.present(_ThrowingImage(_frame(1))), throwsA(isA<StateError>()));
+    expect(presenter.isBusy, isFalse);
+
+    await tester.runAsync(() async => expect(presenter.present(_frame(2)), isTrue));
+    await _waitUntil(tester, () => presenter.image != null, reason: 'the valid frame to decode');
+    await tester.pump();
+    expect(await _shadeOf(tester, require(_drawnImage(tester))), 2);
+  });
+
   testWidgets('keeps one frame in flight, drops frames arriving meanwhile and then shows the latest finished one', (tester) async {
     await pumpView(tester);
 
@@ -205,6 +216,24 @@ void main() {
     await tester.pump();
     expect(geometries, hasLength(1));
   });
+}
+
+class _ThrowingImage implements YuvImage {
+  final YuvImage _delegate;
+
+  _ThrowingImage(this._delegate);
+
+  @override
+  int get width => _delegate.width;
+
+  @override
+  int get height => _delegate.height;
+
+  @override
+  Uint8List toBgraBytes() => throw StateError('copy failed');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 T require<T extends Object>(T? value) => value ?? (throw StateError('Expected a non-null $T'));

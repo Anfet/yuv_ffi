@@ -37,6 +37,10 @@ void main() {
       }
       expect(presenter.hasShader, isTrue);
       final frame = _frame();
+      expect(() => presenter.present(_ThrowingSizeFrame(frame)), throwsA(isA<StateError>()));
+      expect(presenter.isBusy, isFalse);
+      expect(() => presenter.present(_ThrowingPlanesFrame(frame)), throwsA(isA<StateError>()));
+      expect(presenter.isBusy, isFalse);
       expect(presenter.present(frame, orientation: orientation), isTrue);
       for (var i = 0; i < 200 && presenter.isBusy; i++) {
         await tester.pump(const Duration(milliseconds: 5));
@@ -72,4 +76,49 @@ YuvPlane _plane(int height, int rowStride, int pixelStride, int seed) {
       }),
     ),
   );
+}
+
+class _ThrowingPlanesFrame implements YuvImage {
+  final YuvImage _delegate;
+
+  _ThrowingPlanesFrame(this._delegate);
+
+  @override
+  int get width => _delegate.width;
+
+  @override
+  int get height => _delegate.height;
+
+  @override
+  YuvPixelFormat get format => _delegate.format;
+
+  @override
+  Size get size => _delegate.size;
+
+  @override
+  List<YuvPlane> get planes => throw StateError('plane packing failed');
+
+  @override
+  YuvPlane get yPlane => throw StateError('plane packing failed');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _ThrowingSizeFrame implements YuvImage {
+  final YuvImage _delegate;
+
+  _ThrowingSizeFrame(this._delegate);
+
+  @override
+  int get width => _delegate.width;
+
+  @override
+  int get height => _delegate.height;
+
+  @override
+  Size get size => throw StateError('size read failed');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

@@ -91,22 +91,28 @@ class YuvFramePresenter extends ChangeNotifier {
   /// it while another frame is in flight or after [dispose].
   ///
   /// The frame is copied synchronously before this returns, so the caller may
-  /// overwrite or reuse [frame] right away. Throws what the copy or conversion
-  /// throws; the presenter stays free in that case.
+  /// overwrite or reuse [frame] right away. Synchronous errors reading frame
+  /// metadata or copying/converting its pixels are thrown from this method and
+  /// leave the presenter free. Errors while decoding the copied pixels are
+  /// reported through [FlutterError.onError].
   bool present(YuvImage frame, {YuvFrameOrientation orientation = YuvFrameOrientation.upright}) {
     if (_isDisposed || _isBusy) {
       return false;
     }
 
-    _isBusy = true;
     final renderer = _renderer;
+    final generation = _generation;
     if (useShader && renderer != null) {
-      _upload(renderer, frame, orientation, _generation).ignore();
+      final frameSize = frame.size;
+      final upload = renderer.upload(frame);
+      _isBusy = true;
+      _upload(upload, frameSize, orientation, generation).ignore();
     } else {
       final width = frame.width;
       final height = frame.height;
       final bytes = frame.toBgraBytes();
-      _decode(bytes, width, height, orientation, _generation).ignore();
+      _isBusy = true;
+      _decode(bytes, width, height, orientation, generation).ignore();
     }
     return true;
   }
@@ -162,11 +168,10 @@ class YuvFramePresenter extends ChangeNotifier {
     _finishPresentation(generation);
   }
 
-  Future<void> _upload(YuvFrameRenderer renderer, YuvImage frame, YuvFrameOrientation orientation, int generation) async {
-    final Size frameSize = frame.size;
+  Future<void> _upload(Future<YuvFrameTexture> upload, Size frameSize, YuvFrameOrientation orientation, int generation) async {
     final YuvFrameTexture texture;
     try {
-      texture = await renderer.upload(frame);
+      texture = await upload;
     } catch (error, stack) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: error, stack: stack, library: 'yuv_ffi', context: ErrorDescription('uploading a preview frame')),
