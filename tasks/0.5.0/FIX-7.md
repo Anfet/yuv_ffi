@@ -85,8 +85,9 @@
 - PASS: `dart analyze lib test`; `flutter test test/public_surface_test.dart` (4); `vm.ps1` (636/636);
   `example.ps1`; `android.ps1`; `smoke.ps1`; `ios.sh` (5 integration targets); `macos.sh` (native targets,
   CocoaPods build/smoke). Web-проверка — `web.ps1` (64 integration, 119 reference, 1 camera), выполнена в FIX 6.
-- Windows `windows.ps1`: один запуск завершился на очистке `SemanticsHandle` в неизменённом
-  `shader_probe_native_test.dart`; повтор целевого drive прошёл, полный `windows.ps1` ранее прошёл в FIX 5.
+- Windows: первый прогон после FIX 7 завершился на очистке `SemanticsHandle` в неизменённом
+  `shader_probe_native_test.dart`; последующий полный `windows.ps1` прошёл: 134/134, release build и 5 integration
+  targets PASS.
 - Linux PASS на VM: `native_app_runtime_smoke_test`, `camera_capture_native_test`, `presenter_shader_native_test`,
   `probe_native_test`, `shader_probe_native_test` (все 5 targets; `tool/ci/drive.sh` подтвердил `All tests passed`).
 
