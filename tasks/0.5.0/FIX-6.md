@@ -1,5 +1,5 @@
 # FIX 6 — Документация 0.5.0 от опубликованной 0.2.4
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
 
 **Base SHA:** `78eca6c6071004175431f58c27fc8101664d501b`
 

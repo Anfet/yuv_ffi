@@ -1,5 +1,5 @@
 # FIX 5 — Ошибка `present()` не оставляет `YuvFramePresenter` занятым
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** windows
 
 **Base SHA:** `78eca6c6071004175431f58c27fc8101664d501b`
 

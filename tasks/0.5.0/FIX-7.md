@@ -1,5 +1,5 @@
 # FIX 7 — Уборка следов удалённого API и ID задач
-**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows (понижено: в `lib/src/yuv/impl/**` меняются только комментарии)
+**Status:** REVIEW · **Tier:** T2, Reviewer T2 · **Owner:** — · **Depends On:** — · **Probe:** windows (понижено: в `lib/src/yuv/impl/**` меняются только комментарии)
 
 **Base SHA:** `78eca6c6071004175431f58c27fc8101664d501b`
 
