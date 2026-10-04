@@ -58,6 +58,8 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
   ui.Image? _capturePreview;
   int _stepIndex = 0;
   int _blurRuns = 0;
+  // Identifies the current measurement so a late result of an earlier step cannot enter a later one.
+  int _measurementId = 0;
   int _faceFrames = 0;
   int _faceFramesWithFace = 0;
   bool _measuring = false;
@@ -253,9 +255,10 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
     _faceFrames = 0;
     _faceFramesWithFace = 0;
     _measurement.start();
+    final measurementId = ++_measurementId;
     setState(() => _measuring = true);
     Future<void>.delayed(deviceCheckMeasurementDuration, () {
-      if (!mounted || !_measuring) return;
+      if (!mounted || !_measuring || measurementId != _measurementId) return;
       final result = _measurement.finish(
         id: _step.id,
         blurRuns: _step.heavy ? _blurRuns : null,
@@ -361,21 +364,23 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
   }
 
   Future<void> _handleFrame(YuvCameraFrame frame) async {
+    final measurementId = _measurementId;
     if (_step.heavy && _measuring && (_lastBlur == null || frame.timestamp - _lastBlur! >= const Duration(seconds: 1))) {
       _lastBlur = frame.timestamp;
       final image = frame.upright();
       final stopwatch = Stopwatch()..start();
       await compute(blurBgra, (bytes: image.toBgraBytes(), width: image.width, height: image.height));
       stopwatch.stop();
+      if (!mounted || !_measuring || measurementId != _measurementId) return;
       _blurRuns++;
       _blurDurations.add(stopwatch.elapsed);
     }
-    if (_step.face && _measuring && _supportsFaceDetection) await _detectFace(frame);
+    if (_step.face && _measuring && _supportsFaceDetection) await _detectFace(frame, measurementId);
   }
 
   bool get _supportsFaceDetection => !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
 
-  Future<void> _detectFace(YuvCameraFrame frame) async {
+  Future<void> _detectFace(YuvCameraFrame frame, int measurementId) async {
     final rotation = switch (frame.orientation.rotation) {
       YuvImageRotation.rotation0 => InputImageRotation.rotation0deg,
       YuvImageRotation.rotation90 => InputImageRotation.rotation90deg,
@@ -385,8 +390,8 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
     final detector = _faceDetector ??= FaceDetector(options: FaceDetectorOptions(performanceMode: FaceDetectorMode.fast, enableTracking: true));
     try {
       final faces = await detector.processImage(frame.image.toInputImage(rotation: rotation));
-      // A detection finishing after its step ended must not bring the box back.
-      if (!mounted || !_measuring) return;
+      // A detection finishing after its measurement ended must neither bring the box back nor count in a later step.
+      if (!mounted || !_measuring || measurementId != _measurementId) return;
       _faceFrames++;
       if (faces.isNotEmpty) _faceFramesWithFace++;
       faces.sort(
