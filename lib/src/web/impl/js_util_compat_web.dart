@@ -1,4 +1,4 @@
-// ignore_for_file: public_member_api_docs
+// ignore_for_file: public_member_api_docs, invalid_runtime_check_with_js_interop_types
 
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
@@ -49,8 +49,8 @@ JSAny? _toJs(Object? value) {
   if (value == null) {
     return null;
   }
-  if (value.isA<JSAny>()) {
-    return value as JSAny;
+  if (value is JSAny) {
+    return value;
   }
   return value.jsify();
 }
@@ -63,7 +63,7 @@ T _fromJs<T>(JSAny? value) {
     throw StateError('Expected $T from JavaScript, got null.');
   }
 
-  if (T == Object) {
+  if (T == Object || T == JSAny) {
     if (value.isA<JSNumber>() || value.isA<JSBoolean>() || value.isA<JSString>()) {
       return value.dartify() as T;
     }
