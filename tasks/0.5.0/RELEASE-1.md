@@ -1,5 +1,5 @@
 # RELEASE 1 — Финальный аудит и релизный гейт 0.5.0
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** FIX 5, FIX 6, FIX 7, FIX 8, FIX 9 · **Probe:** windows+pixel3
+**Status:** ACCEPTED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** FIX 5, FIX 6, FIX 7, FIX 8, FIX 9 · **Probe:** windows+pixel3
 **Base SHA:** `df14dc8e5d42d9330d4bfa8592194a52d3a09556` (кандидат — `3e4c645`, см. отчёт)
 
 Предыдущие раунды (кандидаты `f2130c2` и `98ce771`, CI `ci/all/0.5.0` и `ci/all/0.5.0-v2`, FIX 1–4) — в git-истории
@@ -133,7 +133,7 @@ CI `ci/all/0.5.0-v4`, 9/9 success, `head_sha` у всех = SHA РК:
 | iOS CI | [37229763313](https://github.com/Anfet/yuv_ffi/actions/runs/37229763313) |
 | CI smoke | [37229763294](https://github.com/Anfet/yuv_ffi/actions/runs/37229763294) |
 
-**Аудит:** `doc/release-0.5.0-audit.md`. Блокер один (формат `lib/`), закрыт FIX 10. После релиза: тесты на обещания `YuvFramePresenter.present` об ошибках декодирования и `applyPatch` о неизменном fragment; ~224 мёртвых `ignore: deprecated_member_use_from_same_package` в `test/`. Документировать: `card: DEVICE-1` в JSON example (FIX 7), README «not tested» вместо «not verified», строка iOS про debug. Сниппеты README и вызовы таблицы миграции компилируются (`flutter analyze` чисто). Удалены рабочие артефакты `analyze-rework.log`, `doc/api/`. Версия 0.5.0 в четырёх файлах D-14 и `example/pubspec.lock` не менялась.
+**Аудит:** `doc/release-0.5.0-audit.md`. Блокер один (формат `lib/`), закрыт FIX 10. После релиза: тест асинхронных ошибок `YuvFramePresenter.present`; 419 мёртвых `ignore: deprecated_member_use_from_same_package` в `test/`. Документировать: `card: DEVICE-1` в JSON example (FIX 7), README «not tested» вместо «not verified», строка iOS про debug. Сниппеты README и вызовы таблицы миграции компилируются (`flutter analyze` чисто). Удалены рабочие артефакты `analyze-rework.log`, `doc/api/`. Версия 0.5.0 в четырёх файлах D-14 и `example/pubspec.lock` не менялась.
 
 **Известные ограничения:** Web — частичный WASM backend; `flutter build web --wasm` собирается, но операции падают в runtime; Safari и Firefox — not verified (D-27).
 
@@ -150,3 +150,49 @@ flutter pub publish
 Затем слить `release/0.5.0` в `main` через PR. После публикации — удалить теги `ci/*` (локально и на origin; сейчас есть и `ci/all/0.5.0-v3`, `-v4`) и устаревшие ветки (п. 7 решения).
 
 #### Review
+
+**ACCEPTED, 04.10.2026.** Принят SHA РК `3e4c645798032149d301f548237664d9251e9c43`; диапазон
+`df14dc8e5d42d9330d4bfa8592194a52d3a09556..3e4c645` и отчёт `7266274`. Блокирующих замечаний нет.
+Релизная ветка остаётся на SHA РК; правки Reviewer затрагивают только внутренние документы в `dev`.
+Публикация, тег `0.5.0`, push релизной ветки и слияние в `main` — решение Engineer; карточка остаётся до публикации.
+
+Проверки выполнены на отдельных временных checkout точного SHA РК, без worktree и делегирования.
+
+| Проверка Reviewer | Команда / машина | Exit | Результат |
+| --- | --- | --- | --- |
+| FIX 5 и публичные контракты | Windows: `flutter test test/yuv_frame_presenter_test.dart test/public_surface_test.dart test/yuv_image_patch_test.dart test/yuv_pack_test.dart test/yuv_frame_geometry_test.dart test/yuv_frame_renderer_test.dart --reporter expanded`, DLL собрана через `New-CiNativeBuild` из SHA РК | 0 | 55/55 PASS; обе проверки синхронного сбоя presenter и следующий показанный кадр прошли |
+| Независимая native-проба | Windows: `flutter test test/probe/probe_correctness_test.dart --reporter expanded`, DLL в PATH | 0 | `PROBE scope: ops=all formats=all cases=1188/1188`; PASS, встроенный негативный контроль прошёл |
+| Формат FIX 10 | Windows: `dart format --output=none --set-exit-if-changed lib` | 0 | 46 файлов, 0 изменений |
+| Сниппеты и миграция | Windows, временный пакет с path-зависимостью на checkout SHA РК: `flutter pub get`, `flutter analyze` | 0 | `No issues found`; автоматически извлечены все 7 Dart-блоков README и 1 блок MIGRATION.md; отдельно вызваны методы всех строк таблицы миграции |
+| Пакет | Windows: `flutter pub publish --dry-run` после восстановления трёх `example/windows/flutter/generated_plugin*` в проверочном checkout | 0 | 0 warnings, 1 version hint (0.2.4), 678 КБ; MIGRATION.md и WASM входят, внутренние карточки/отчёты/тесты не входят; `git status --short` пуст |
+| Pixel 3 arm64 | `pwsh -File tool/probe/run_release_android.ps1 -GitSha 3e4c645798032149d301f548237664d9251e9c43 -Serial 8B1X11QLW -Abi arm64` | 0 | smoke PASS, probe PASS, 1188/1188; APK только arm64-v8a, установка `adb install -r` |
+| Pixel 3 armv7 | Та же команда с `-Abi armv7`, после восстановления сгенерированных Windows-файлов в checkout | 0 | smoke PASS, probe PASS, 1188/1188; APK только armeabi-v7a, установка `adb install -r` |
+| CI и SHA | `gh run list --repo Anfet/yuv_ffi --commit 3e4c645798032149d301f548237664d9251e9c43 --limit 30 --json databaseId,workflowName,headSha,conclusion,status,url,headBranch` | 0 | Все 9 run из Executor Report: completed/success, head_sha точно SHA РК, тег `ci/all/0.5.0-v4` |
+
+CI v4 заменил v3 после FIX 10 и смены кандидата; результаты предыдущего SHA не использованы. Linux VM локально
+не проверена (Executor: SSH timeout); Linux CI на точном SHA РК — success. Mac/pana не перезапускались Reviewer:
+проверены соответствующие CI run и SHA, локальные результаты Mac остаются свидетельством Executor.
+
+**Выборочная перепроверка аудита:** три области с находками — формат, контракты dartdoc/тесты, следы работы;
+три области без находок — публичное API/миграция относительно 0.2.4 и 0.4.0, компиляция сниппетов, состав пакета
+и согласованность версий. Сверены старые экспорты и методы с MIGRATION.md, четыре версии D-14 и
+`example/pubspec.lock` равны 0.5.0, в `assets/` только два используемых WASM-файла. Новых блокеров нет.
+Небольшие однозначные замечания исправлены по правилу 8 `todo.md`: аудит переведён на новый SHA и закрытый FIX 10;
+удалена ошибочная находка про fragment (`_expectPatch` прямо сравнивает все его байты), число мёртвых ignore
+уточнено до 419 в 25 файлах, число Dart-блоков README — до 7. Остался долг после релиза: тест асинхронной ошибки
+декодирования/загрузки presenter и уборка ignore. Ограничения Web, `--wasm`, Safari/Firefox not verified сохранены.
+
+**Логи и доказательства** (вне репозитория, под `C:/Users/Oleg-T/AppData/Local/Temp/`):
+- `yuv-release-review-verify-native.log`: сборка DLL, 55/55, проба 1188/1188 и формат; первый dry-run в нём отклонён
+  из-за generated_plugin*, окончательный успешный — `yuv-release-review-publish.log`.
+- `yuv-release-review-snippets.log`, фикстуры `yuv-release-snippets-b9785bec/lib/`.
+- `yuv-release-review-pixel.log` — arm64 PASS; общая оболочка затем вернула 1 на проверке чистоты перед armv7
+  из-за generated_plugin*. После восстановления этих файлов armv7 повторён: `yuv-release-review-pixel-armv7.log`, exit 0.
+- Host/device JSON: `yuv_ffi-ra25-release/ra25-arm64-16b13faac109454da6118c13ab189ab6-{host,device}.json` и
+  `ra25-armv7-c2f43e41b2794eab8a2d4fdf18db9059-{host,device}.json`; gitSha/revision, ABI и строгий RA25_RESULT сверены.
+- APK SHA256: arm64 `e588637daf7c86394c318b7a06f0f7002bffe4898b4d6ef0b0358ea595dc4e4b`,
+  armv7 `877db4bcbc2dc2f38c0703aba5c3f3c2658d087916cfbefb1cc50df6736577ab`.
+
+Первый запуск целевых тестов без DLL дал ошибки загрузки native library; после сборки DLL весь набор прошёл.
+Основная копия оставалась в `dev`, без изменений кода. Процессы проверок завершены; приложение пробы остановлено,
+данные не удалялись. Memory: без изменений.
