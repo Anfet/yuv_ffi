@@ -109,6 +109,95 @@ void main() {
     expect(source.height, 3);
   });
 
+  test('applies an explicit full visible rect with matching I420 and BGRA bytes', () async {
+    await YuvFfi.initialize();
+    final geometry = YuvFrameGeometry(
+      sourceSize: const Size(5, 3),
+      viewSize: const Size(3, 5),
+      orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90, mirrored: true),
+    );
+    expect(geometry.visibleSourceRect, const Rect.fromLTWH(0, 0, 5, 3));
+
+    final i420 = YuvImage.i420(5, 3);
+    i420.yPlane.bytes.setAll(0, List<int>.generate(15, (index) => index));
+    i420.uPlane.bytes.setAll(0, List<int>.generate(6, (index) => 20 + index));
+    i420.vPlane.bytes.setAll(0, List<int>.generate(6, (index) => 40 + index));
+    expect(
+      geometry.apply(i420).toBytes(),
+      orderedEquals(<int>[0, 5, 10, 1, 6, 11, 2, 7, 12, 3, 8, 13, 4, 9, 14, 121, 118, 120, 117, 119, 116, 119, 115, 118, 114, 117, 113]),
+    );
+
+    final bgra = YuvImage.bgra(5, 3);
+    for (var index = 0; index < 15; index++) {
+      bgra.yPlane.bytes.setRange(index * 4, index * 4 + 4, <int>[index, index + 40, index + 80, 255]);
+    }
+    expect(
+      geometry.apply(bgra).toBgraBytes(),
+      orderedEquals(<int>[
+        0,
+        40,
+        80,
+        255,
+        5,
+        45,
+        85,
+        255,
+        10,
+        50,
+        90,
+        255,
+        1,
+        41,
+        81,
+        255,
+        6,
+        46,
+        86,
+        255,
+        11,
+        51,
+        91,
+        255,
+        2,
+        42,
+        82,
+        255,
+        7,
+        47,
+        87,
+        255,
+        12,
+        52,
+        92,
+        255,
+        3,
+        43,
+        83,
+        255,
+        8,
+        48,
+        88,
+        255,
+        13,
+        53,
+        93,
+        255,
+        4,
+        44,
+        84,
+        255,
+        9,
+        49,
+        89,
+        255,
+        14,
+        54,
+        94,
+        255,
+      ]),
+    );
+  });
+
   test('apply equals the visible Canvas pixels for every orientation and supported source format', () async {
     await YuvFfi.initialize();
     for (final (format, size) in <(YuvPixelFormat, Size)>[(YuvPixelFormat.bgra8888, const Size(3, 5)), (YuvPixelFormat.i420, const Size(4, 6))]) {

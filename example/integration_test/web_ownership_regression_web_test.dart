@@ -74,43 +74,231 @@ void main() {
 
     expect(crop.toBytes(), orderedEquals(cropBefore));
     expect(rotation.toBytes(), orderedEquals(rotationBefore));
+  });
 
-    for (final format in YuvPixelFormat.values) {
-      final target = YuvImage.allocate(format, 7, 5);
-      final fragment = YuvImage.allocate(format, 3, 3);
-      for (var planeIndex = 0; planeIndex < fragment.planes.length; planeIndex++) {
-        fragment.planes[planeIndex].bytes.fillRange(0, fragment.planes[planeIndex].bytes.length, 0x71 + planeIndex);
-      }
+  testWidgets('patch bytes and odd YUV rejection match the explicit geometry contract on WASM', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This regression must execute in a browser.');
+
+    final patchCases = <({int x, int y, List<int> expected})>[
+      (
+        x: 1,
+        y: 1,
+        expected: <int>[
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+        ],
+      ),
+      (
+        x: 2,
+        y: 2,
+        expected: <int>[
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+        ],
+      ),
+    ];
+    for (final patchCase in patchCases) {
+      final target = YuvImage.bgra(4, 3);
+      target.yPlane.bytes.setAll(0, List<int>.generate(48, (index) => index));
+      final fragment = YuvImage.bgra(2, 1);
+      fragment.yPlane.bytes.setAll(0, <int>[100, 101, 102, 103, 104, 105, 106, 107]);
+      final fragmentBefore = Uint8List.fromList(fragment.toBytes());
       final revisionBefore = target.revision;
-      target.applyPatch(fragment, x: 4, y: 2);
+
+      target.applyPatch(fragment, x: patchCase.x, y: patchCase.y);
+
+      expect(target.toBytes(), orderedEquals(patchCase.expected));
+      expect(fragment.toBytes(), orderedEquals(fragmentBefore));
       expect(target.revision, revisionBefore + 1);
-      for (var planeIndex = 0; planeIndex < fragment.planes.length; planeIndex++) {
-        expect(target.planes[planeIndex].bytes.any((byte) => byte == 0x71 + planeIndex), isTrue);
-      }
     }
 
-    final target = YuvImage.bgra(7, 5);
-    final beforeBytes = target.toBytes();
-    final beforeRevision = target.revision;
-    expect(() => target.applyPatch(YuvImage.bgra(3, 3), x: 5, y: 2), throwsArgumentError);
-    expect(target.toBytes(), orderedEquals(beforeBytes));
-    expect(target.revision, beforeRevision);
+    final yuvTarget = YuvImage.i420(5, 3);
+    yuvTarget.yPlane.bytes.setAll(0, List<int>.generate(15, (index) => index));
+    yuvTarget.uPlane.bytes.setAll(0, List<int>.generate(6, (index) => 20 + index));
+    yuvTarget.vPlane.bytes.setAll(0, List<int>.generate(6, (index) => 40 + index));
+    final yuvBefore = Uint8List.fromList(yuvTarget.toBytes());
+    final yuvRevision = yuvTarget.revision;
+    expect(() => yuvTarget.applyPatch(YuvImage.i420(2, 2), x: 1, y: 0), throwsArgumentError);
+    expect(yuvTarget.toBytes(), orderedEquals(yuvBefore));
+    expect(yuvTarget.revision, yuvRevision);
 
-    final geometrySource = YuvImage.bgra(5, 3);
-    for (var i = 0; i < geometrySource.yPlane.bytes.length; i++) {
-      geometrySource.yPlane.bytes[i] = i;
-    }
     final geometry = YuvFrameGeometry(
-      sourceSize: geometrySource.size,
-      viewSize: const ui.Size(1, 5),
+      sourceSize: const ui.Size(5, 3),
+      viewSize: const ui.Size(3, 5),
       orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90, mirrored: true),
-      fit: YuvFrameFit.cover,
     );
-    final actual = geometry.apply(geometrySource);
-    final expected = geometrySource.cropped(geometry.visibleSourceRect).rotated(YuvImageRotation.rotation90)..applyFlipHorizontal();
-    expect(actual.width, expected.width);
-    expect(actual.height, expected.height);
-    expect(actual.toBytes(), orderedEquals(expected.toBytes()));
+    expect(geometry.visibleSourceRect, const ui.Rect.fromLTWH(0, 0, 5, 3));
+
+    final i420 = YuvImage.i420(5, 3);
+    i420.yPlane.bytes.setAll(0, List<int>.generate(15, (index) => index));
+    i420.uPlane.bytes.setAll(0, List<int>.generate(6, (index) => 20 + index));
+    i420.vPlane.bytes.setAll(0, List<int>.generate(6, (index) => 40 + index));
+    expect(
+      geometry.apply(i420).toBytes(),
+      orderedEquals(<int>[0, 5, 10, 1, 6, 11, 2, 7, 12, 3, 8, 13, 4, 9, 14, 121, 118, 120, 117, 119, 116, 119, 115, 118, 114, 117, 113]),
+    );
+
+    final bgra = YuvImage.bgra(5, 3);
+    for (var index = 0; index < 15; index++) {
+      bgra.yPlane.bytes.setRange(index * 4, index * 4 + 4, <int>[index, index + 40, index + 80, 255]);
+    }
+    expect(
+      geometry.apply(bgra).toBgraBytes(),
+      orderedEquals(<int>[
+        0,
+        40,
+        80,
+        255,
+        5,
+        45,
+        85,
+        255,
+        10,
+        50,
+        90,
+        255,
+        1,
+        41,
+        81,
+        255,
+        6,
+        46,
+        86,
+        255,
+        11,
+        51,
+        91,
+        255,
+        2,
+        42,
+        82,
+        255,
+        7,
+        47,
+        87,
+        255,
+        12,
+        52,
+        92,
+        255,
+        3,
+        43,
+        83,
+        255,
+        8,
+        48,
+        88,
+        255,
+        13,
+        53,
+        93,
+        255,
+        4,
+        44,
+        84,
+        255,
+        9,
+        49,
+        89,
+        255,
+        14,
+        54,
+        94,
+        255,
+      ]),
+    );
   });
 
   testWidgets('byte copies, padding and semantic no-ops hold on WASM', (tester) async {
