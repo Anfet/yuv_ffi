@@ -15,6 +15,10 @@ The capability surface contains 12 `YuvOperation` values. The table counts meani
 | `chromaSwap` | NV12 only | NV12 only | 3 source-format checks; 1 supported | Same: 1; unsupported: 2 | Web NV chroma and edge-case tests |
 | **Total** |  |  | **42** | **Same: 40; differs: 0; unsupported: 2; untested: 0** | |
 
+The two unsupported pairs are `chromaSwap` with I420 and BGRA8888. The other 40 meaningful pairs are supported when the loaded WASM module exports the required ABI symbol. The Web initializer derives capabilities from actual module exports; the browser tests exercise a complete export manifest and deliberately incomplete manifests. RGBA8888 is an input to `convert`/`applyRgbaBytes`, not a stored pixel format and therefore is outside the table's stored-format denominator.
+
+The common probe is **22 operation scenarios × 3 stored formats × 6 dimensions × 3 plane layouts = 1,188 cases**. Its full selector scope is `ops=all formats=all`; Chrome and native completed the same golden-backed matrix with zero mismatches. The separate Web reference conversion matrix contains **119** cases and also passed. It is an independent conversion oracle, not an alternative count for the common probe.
+
 ## Current Flutter-WASM verification
 
 After the interop fix for 0.5.1, Chrome 154.0.8037.98 passed the operation
@@ -25,10 +29,6 @@ shader to load and every output to differ from CPU conversion by at most one
 channel value. The JavaScript build's Web CI also passed the 14-source,
 64-case integration set, reference conversions, and camera smoke on the same
 Chrome version; Safari and Firefox remain not verified.
-
-The two unsupported pairs are `chromaSwap` with I420 and BGRA8888. The other 40 meaningful pairs are supported when the loaded WASM module exports the required ABI symbol. The Web initializer derives capabilities from actual module exports; the browser tests exercise a complete export manifest and deliberately incomplete manifests. RGBA8888 is an input to `convert`/`applyRgbaBytes`, not a stored pixel format and therefore is outside the table's stored-format denominator.
-
-The common probe is **22 operation scenarios × 3 stored formats × 6 dimensions × 3 plane layouts = 1,188 cases**. Its full selector scope is `ops=all formats=all`; Chrome and native completed the same golden-backed matrix with zero mismatches. The separate Web reference conversion matrix contains **119** cases and also passed. It is an independent conversion oracle, not an alternative count for the common probe.
 
 ## Other public paths
 
@@ -113,4 +113,4 @@ The sampled results do not establish complete native/Web parity. No implementati
 - Flutter 3.44.9, Chrome 154.0.8037.98, `--wasm`: `probe_web_test.dart`,
   `reference_web_conversions_test.dart --profile`, `shader_probe_web_test.dart`,
   and `all_web_test.dart` all passed. The mandatory CI `--wasm` targets also
-  passed in `tool/ci/web.ps1`; elapsed time was 1:38.
+  passed in `tool/ci/web.ps1`.

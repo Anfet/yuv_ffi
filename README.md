@@ -2,8 +2,8 @@
 
 `yuv_ffi` processes I420, NV12, and BGRA8888 images in Flutter. It provides
 conversion, crop, rotation, flips, effects, blur, serialization, and Flutter
-image presentation. Native platforms use C through FFI; Web uses the WASM
-backend through Flutter's JavaScript build.
+image presentation. Native platforms use C through FFI; Web uses a WASM
+backend on Flutter's JavaScript and `--wasm` builds.
 
 ## Installation
 
