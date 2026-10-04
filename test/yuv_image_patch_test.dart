@@ -71,6 +71,33 @@ void main() {
     expect(target.applyPatch(source, x: 0, y: 0), same(target));
     expect(target.revision, revision + 1);
   });
+
+  test('rejects a malformed external destination before writing any plane', () {
+    final backing = _image(YuvPixelFormat.i420, 4, 4, seed: 23);
+    final target = _ForeignImage(backing, (planes) => planes.take(2).toList());
+    final fragment = _image(YuvPixelFormat.i420, 2, 2, seed: 109);
+    final before = backing.planes.map((plane) => Uint8List.fromList(plane.bytes)).toList();
+    final geometry = (target.format, target.width, target.height);
+    final planeGeometry = target.planes.map((plane) => (plane.height, plane.rowStride, plane.pixelStride)).toList();
+    final revision = target.revision;
+
+    expect(() => target.applyPatch(fragment, x: 0, y: 0), throwsArgumentError);
+
+    expect((target.format, target.width, target.height), geometry);
+    expect(target.revision, revision);
+    expect(target.planes.map((plane) => (plane.height, plane.rowStride, plane.pixelStride)), planeGeometry);
+    for (int i = 0; i < before.length; i++) {
+      expect(backing.planes[i].bytes, before[i]);
+    }
+  });
+
+  test('successfully patches an external destination and bumps its revision once', () {
+    final backing = _image(YuvPixelFormat.i420, 4, 4, seed: 31);
+    final target = _ForeignImage(backing, (planes) => planes);
+    final fragment = _image(YuvPixelFormat.i420, 2, 2, seed: 127);
+
+    _expectPatch(target, fragment, 0, 0);
+  });
 }
 
 class _ForeignImage implements YuvImage {
