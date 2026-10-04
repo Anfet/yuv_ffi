@@ -13,6 +13,7 @@
 
 - Added a packed-plane API and frame-presentation widgets, rebuilt the Web
   JS/WASM assets, and updated the package and example documentation.
+- Aligned the example lockfile's local package version with 0.5.0.
 - `YuvFrameRenderer` renders I420 and NV12 through the shader on Web too:
   CanvasKit premultiplies sampled colors, so Web packs three plane bytes per
   texel and keeps alpha opaque.

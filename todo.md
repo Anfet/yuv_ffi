@@ -18,7 +18,7 @@
 
 ## Текущее состояние
 
-- **Сейчас:** этапы 1–7 закрыты; FIX 1–3 приняты. RELEASE 1 не принят Reviewer: кандидат `release/0.5.0` — `f2130c2c5ccc64f314417f520146a075f8a5749b`; локальные проверки, Pixel 3 и дополнительная Linux VM проверка Executor прошли; `pana` — 160/160, dry-run без предупреждений. `ci/all/0.5.0` завершился 7/9: Linux и macOS CI упали из-за версии `0.5.0-dev.1` в `example/pubspec.lock`; решение о FIX или исключении — за Engineer. Версия в `dev` — `0.5.0`.
+- **Сейчас:** этапы 1–7 закрыты; FIX 1–3 приняты. RELEASE 1 не принят Reviewer: кандидат `release/0.5.0` — `f2130c2c5ccc64f314417f520146a075f8a5749b`; `ci/all/0.5.0` завершился 7/9 из-за версии `0.5.0-dev.1` в `example/pubspec.lock`. Engineer направил исправить версию; FIX 4 обновил lockfile до `0.5.0` и ждёт ревью. После принятия нужны новый SHA РК и повтор релизного гейта.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Пулы задач
@@ -37,14 +37,14 @@ ID ведёт к карточке в `tasks/0.5.0/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | ENGINEER_REQUIRED | T2 / T1 + Engineer | Engineer | FIX 1–3 (DONE) | **Финальный аудит и релизный гейт 0.5.0.** Reviewer не принял кандидат `f2130c2`: CI 7/9 из-за `example/pubspec.lock`; Engineer решает FIX или исключение. |
+| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | BLOCKED | T2 / T1 + Engineer | — | FIX 1–3 (DONE), FIX 4 (REVIEW) | **Финальный аудит и релизный гейт 0.5.0.** После принятия FIX 4 — новый SHA РК и повтор релизного гейта. |
+| [FIX 4](tasks/0.5.0/FIX-4.md) | REVIEW | T1 / T1 | Executor | FIX 1–3 (DONE) | **Версия path-зависимости example.** `example/pubspec.lock` обновлён до `0.5.0`; повторный pub get и example CI локально прошли. |
 | [FOLLOWUP 1](tasks/0.5.0/FOLLOWUP-1.md) | BLOCKED | T2 / T2 | — | RELEASE 1 | **Тест публичной поверхности.** После релизного гейта убрать устаревшее описание deprecated API; выпуск не задерживает. |
 
 Отложено: [RUNNER 1](tasks/0.5.0/RUNNER-1.md) — `DEFERRED` (новые службы раннеров не планируются).
 
 ## Открытые вопросы
 
-- **CI для RELEASE 1:** `example/pubspec.lock` в РК хранит `0.5.0-dev.1` при версии пакета `0.5.0`, поэтому Linux и macOS CI упали. Рекомендация Reviewer — отдельный `FIX N`, новый SHA РК и повтор обязательных проверок; альтернатива — явное исключение Engineer.
 - **Safari и Firefox для RELEASE 1.** На Mac Safari 18.6, но «Allow Remote Automation» выключен (Safari → Develop или `sudo safaridriver --enable`, нужен пароль); Firefox и `geckodriver` не установлены. Варианты: включить и установить до гейта — или выпустить с записью «не проверено» (как в README и `doc/web-parity.md`). Рекомендация: выпустить с записью — Web заявлен как частичный, проверен Chrome.
 
 ## Правила работы

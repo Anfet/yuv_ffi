@@ -1,5 +1,5 @@
 # RELEASE 1 — Финальный аудит и релизный гейт 0.5.0
-**Status:** ENGINEER_REQUIRED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Engineer · **Depends On:** FIX 1, FIX 2, FIX 3 (DONE) · **Probe:** windows+pixel3
+**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** FIX 1, FIX 2, FIX 3 (DONE), FIX 4 (REVIEW) · **Probe:** windows+pixel3
 **Base SHA:** 4a485d8b8c1b5475bf0c02309b8d0dec56d0437c (Executor записывает SHA `dev` на старте)
 
 #### Goal
@@ -115,3 +115,5 @@
 **Повторные проверки:** `pwsh -File tool/ci/vm.ps1` — exit 0, 635/635, 0 skip; `flutter test --no-pub test/probe/probe_correctness_test.dart` с собранной native DLL — exit 0, `cases=1188/1188`; `flutter pub publish --dry-run` — exit 0, архив 675 КБ, 0 warnings, 1 hint. Первичный прямой запуск трёх contract-файлов без native DLL не был валидной проверкой; вместо него использован штатный `vm.ps1`. Созданное локальными командами изменение `example/pubspec.lock` откатил до исходного чистого дерева. Pixel 3 arm64/armv7 Reviewer повторно не запускал: гейт уже заблокирован, после нового SHA РК пробы нужно пройти на обоих ABI вместе с упавшими CI.
 
 **Решение Engineer:** рекомендую отдельную карточку `FIX N` для синхронизации `example/pubspec.lock` с `0.5.0`, затем новый SHA РК и повтор Linux/macOS CI и Pixel 3 по требованиям карточки. Альтернатива — явное исключение из релизного гейта; текущий DoD его не допускает без решения Engineer. Тег `v0.5.0` и публикация не выполнялись.
+
+Engineer указал на исправление версии lockfile; работа оформлена как FIX 4. RELEASE 1 ждёт принятия FIX 4 и нового SHA РК.
