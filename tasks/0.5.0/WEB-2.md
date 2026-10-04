@@ -1,5 +1,6 @@
 # WEB 2 — Web: оценка паритета WASM с native
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Codex · **Depends On:** — · **Probe:** windows
+**Base SHA:** `8c3d88d1c6256a6f3e10f2e2db4e09d9f571c068`
 
 #### Goal
 Web — частичный WASM-бэкенд (README): набор операций сверяется по `YuvCapabilities`, проверяется только Chrome,
@@ -71,5 +72,15 @@ Web — частичный WASM-бэкенд (README): набор операци
   сверить числители/знаменатели `doc/web-parity.md` с логами.
 
 #### Executor Report
+
+- **SHA:** `7446a72f3d5b5c428141e10f70d0df46d9f1f545`; база: `8c3d88d1c6256a6f3e10f2e2db4e09d9f571c068`.
+- **Инвентарь и отчёт:** [`doc/web-parity.md`](../../doc/web-parity.md). В матрице возможностей 42 значимые пары операция/формат источника: 40 поддерживаются, две не поддерживаются (`chromaSwap` для I420 и BGRA8888). RGBA8888 — вход конвертации, а не хранимый формат.
+- **Общая проба:** native Windows и Web Chrome прошли общую матрицу из 1 188 golden-backed случаев (22 сценария × 3 хранимых формата × 6 размеров × 3 раскладки), несовпадений нет. Web-матрица эталонных конвертаций прошла 119/119. Итог Web CI: Chrome 154.0.8037.98, 14 источников, 63 integration cases.
+- **Пути вне матрицы:** добавлена Web-проверка вставки фрагмента на нечётной правой/нижней границе для I420/NV12/BGRA8888 и отказа с сохранением bytes/revision; одинаковая geometry-проверка нечётного кадра 5×3 с crop/поворотом 90°/mirror добавлена для native и Web. Ссылки: `test/yuv_image_patch_test.dart`, `test/yuv_frame_geometry_test.dart`, `example/integration_test/web_ownership_regression_web_test.dart`.
+- **Chrome `--wasm`:** сборка Flutter 3.44.9 прошла. `flutter drive --wasm` в Chrome 154.0.8037.95 загрузил приложение, затем упал при первой RGBA-конвертации: `yuv_convert_v1 returned JSValue instead of a YuvStatus number`. Это подтверждает документированное ограничение runtime; README остаётся точным.
+- **Safari/Firefox:** Safari 18.6 установлен на macOS 15.6.1, но `safaridriver` сообщает, что remote automation выключен. `/usr/bin/safaridriver --enable` не прошёл sudo-аутентификацию. Firefox и `geckodriver` отсутствуют. Эти браузеры не проверены; это не ошибка Web.
+- **Обязательные проверки на этом SHA:** `pwsh -File tool/ci/windows.ps1` — native probe/reference прошли (20/20 и 134/134), Windows release build и пять integration targets прошли. `pwsh -File tool/ci/web.ps1` — PASS с указанными выше результатами. `bash tool/ci/scope_guard.sh 8c3d88d1c6256a6f3e10f2e2db4e09d9f571c068` — `scope: all`.
+- **Другие доступные gates:** VM 631/631; пять Android integration targets; macOS release/debug и CocoaPods smoke; iOS simulator/device builds и integration targets; Example analyze/Web build; `smoke.ps1` — PASS. Linux integration host `192.168.1.29` не ответил на двух SSH-попытках; Linux отмечен недоступным.
+- **Рекомендация:** оставить текущий частичный Web-набор и ограничение `--wasm` в README. В проверенной выборке поддерживаемых сценариев различий реализации не найдено. Safari/Firefox следует проверить, когда появится доступ к browser automation.
 
 #### Review
