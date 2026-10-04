@@ -74,10 +74,6 @@ void main() {
 
     expect(crop.toBytes(), orderedEquals(cropBefore));
     expect(rotation.toBytes(), orderedEquals(rotationBefore));
-  });
-
-  testWidgets('patch insertion and odd frame geometry work on WASM', (tester) async {
-    expect(kIsWeb, isTrue, reason: 'This regression must execute in a browser.');
 
     for (final format in YuvPixelFormat.values) {
       final target = YuvImage.allocate(format, 7, 5);
