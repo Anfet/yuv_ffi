@@ -37,7 +37,7 @@ ID ведёт к карточке в `tasks/0.5.0/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | REVIEW | T2 / T1 + Engineer | — | FIX 1–4 (DONE) | **Финальный аудит и релизный гейт 0.5.0.** Кандидат `98ce771`; CI 9/9, Pixel 3 arm64/armv7 и проверки пакета PASS; ожидается подпись Engineer. |
+| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | ACCEPTED | T2 / T1 + Engineer | — | FIX 1–4 (DONE) | **Финальный аудит и релизный гейт 0.5.0.** Кандидат `98ce771`; CI 9/9, Pixel 3 arm64/armv7 и проверки пакета PASS; ожидается подпись Engineer. |
 | [FOLLOWUP 1](tasks/0.5.0/FOLLOWUP-1.md) | BLOCKED | T2 / T2 | — | RELEASE 1 | **Тест публичной поверхности.** После релизного гейта убрать устаревшее описание deprecated API; выпуск не задерживает. |
 
 Отложено: [RUNNER 1](tasks/0.5.0/RUNNER-1.md) — `DEFERRED` (новые службы раннеров не планируются).

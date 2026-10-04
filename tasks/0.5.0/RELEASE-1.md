@@ -1,5 +1,5 @@
 # RELEASE 1 — Финальный аудит и релизный гейт 0.5.0
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** FIX 1, FIX 2, FIX 3, FIX 4 (DONE) · **Probe:** windows+pixel3
+**Status:** ACCEPTED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** FIX 1, FIX 2, FIX 3, FIX 4 (DONE) · **Probe:** windows+pixel3
 **Base SHA:** 4a485d8b8c1b5475bf0c02309b8d0dec56d0437c (Executor записывает SHA `dev` на старте)
 
 #### Goal
