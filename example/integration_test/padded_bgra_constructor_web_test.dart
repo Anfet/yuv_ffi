@@ -83,7 +83,6 @@ void main() {
     expect(copied.yPlane.rowStride, 16);
     expect(copied.yPlane.bytes.length, 32);
     expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
-
   });
 
   testWidgets('specialized and generic constructors agree on a tight plane', (tester) async {
@@ -113,7 +112,6 @@ void main() {
     expect(copied.yPlane.rowStride, 8);
     expect(copied.yPlane.bytes.length, 16);
     expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
-
   });
 
   testWidgets('toBgraBytes on a tight image returns exactly the plane content', (tester) async {

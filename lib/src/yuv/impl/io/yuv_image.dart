@@ -72,8 +72,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     int uvPixelStride = 1,
     Iterable<YuvPlane>? planes,
     YuvPlaneLayout layout = YuvPlaneLayout.packed,
-  })
-    : this(YuvPixelFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
+  }) : this(YuvPixelFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
 
   /// Creates semi-planar NV12 storage with interleaved chroma pixel stride 2.
   ///

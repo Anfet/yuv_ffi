@@ -291,7 +291,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
 
   void _skip() {
     final result = DeviceCheckStepResult(id: _step.id, skipped: true, seconds: 0);
-      _log('Device check step ${jsonEncode(result.toJson())}');
+    _log('Device check step ${jsonEncode(result.toJson())}');
     _advance(result);
   }
 

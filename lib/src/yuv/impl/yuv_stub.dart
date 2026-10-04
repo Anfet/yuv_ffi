@@ -30,8 +30,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     int uvPixelStride = 1,
     Iterable<YuvPlane>? planes,
     YuvPlaneLayout layout = YuvPlaneLayout.packed,
-  })
-    : this(YuvPixelFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
+  }) : this(YuvPixelFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
 
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes, YuvPlaneLayout layout = YuvPlaneLayout.packed})
     : this(YuvPixelFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes, layout: layout);
