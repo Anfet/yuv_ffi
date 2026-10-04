@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.10)
 # CMake's project VERSION accepts only numeric components; retain the package
 # prerelease identifier separately for consumers that need the exact release.
 project(yuv_ffi_library VERSION 0.5.0 LANGUAGES C)
-set(YUV_FFI_PACKAGE_VERSION "0.5.0-dev.1")
+set(YUV_FFI_PACKAGE_VERSION "0.5.0")
 
 # Explicit source list (rooted at CMAKE_CURRENT_SOURCE_DIR so paths are
 # correct whether this file is configured standalone or pulled in via

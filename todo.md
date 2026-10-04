@@ -37,7 +37,7 @@ ID ведёт к карточке в `tasks/0.5.0/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | TODO | T2 / T1 + Engineer | — | FIX 1–3 (DONE) | **Финальный аудит и релизный гейт 0.5.0.** Дополнить аудит, поднять версию, создать `release/0.5.0` и проверить один SHA: локальные команды, 9 workflow, Pixel 3, `pana`, dry-run. |
+| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | IN_PROGRESS | T2 / T1 + Engineer | Executor | FIX 1–3 (DONE) | **Финальный аудит и релизный гейт 0.5.0.** Дополнить аудит, поднять версию, создать `release/0.5.0` и проверить один SHA: локальные команды, 9 workflow, Pixel 3, `pana`, dry-run. |
 | [FOLLOWUP 1](tasks/0.5.0/FOLLOWUP-1.md) | BLOCKED | T2 / T2 | — | RELEASE 1 | **Тест публичной поверхности.** После релизного гейта убрать устаревшее описание deprecated API; выпуск не задерживает. |
 
 Отложено: [RUNNER 1](tasks/0.5.0/RUNNER-1.md) — `DEFERRED` (новые службы раннеров не планируются).
