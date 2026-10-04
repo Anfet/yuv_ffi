@@ -1,5 +1,5 @@
 # RELEASE 1 — Финальный аудит и релизный гейт 0.5.0
-**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** FIX 1 · **Probe:** windows+pixel3
+**Status:** TODO · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** FIX 1, FIX 2, FIX 3 (DONE) · **Probe:** windows+pixel3
 **Base SHA:** — (Executor записывает SHA `dev` на старте)
 
 #### Goal
