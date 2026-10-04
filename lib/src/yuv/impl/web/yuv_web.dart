@@ -51,14 +51,12 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     Iterable<YuvPlane>? planes,
     YuvPlaneLayout layout = YuvPlaneLayout.packed,
   })
-    // ignore: deprecated_member_use_from_same_package
     : this(YuvPixelFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
 
   /// Creates semi-planar NV12 storage with interleaved chroma pixel stride 2.
   ///
   /// An explicit [uvPixelStride] above the packed pair minimum is honored as a
-  /// real pixel gap; see
-  /// [YuvGeometry.validateImage]'s `allowLargerNvChromaStride`.
+  /// real pixel gap; operations preserve and validate that declared layout.
   YuvImageImpl.nv12(
     int width,
     int height, {
@@ -67,7 +65,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     Iterable<YuvPlane>? planes,
     YuvPlaneLayout layout = YuvPlaneLayout.packed,
   }) : _state = YuvImageState(
-         // ignore: deprecated_member_use_from_same_package
          YuvPixelFormat.nv12,
          width,
          height,
@@ -79,11 +76,9 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
        );
 
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes, YuvPlaneLayout layout = YuvPlaneLayout.packed})
-    // ignore: deprecated_member_use_from_same_package
     : this(YuvPixelFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes, layout: layout);
 
   YuvImageImpl(
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat format,
     int width,
     int height, {
@@ -340,7 +335,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   /// A conversion to the format this image already has is a no-op rather than
   /// a deep copy through WASM: the public contract is in-place and the receiver
   /// already holds the requested representation.
-  // ignore: deprecated_member_use_from_same_package
   YuvImage _convertTo(YuvPixelFormat target) {
     if (_state.format == target) {
       return this;
@@ -466,7 +460,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   YuvImage applyChromaSwap() {
-    // ignore: deprecated_member_use_from_same_package
     if (_state.format != YuvPixelFormat.nv12) {
       throw UnsupportedError('applyChromaSwap is only supported for NV12 images, not ${_state.format}.');
     }
@@ -520,20 +513,16 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   }
 
   @override
-  // ignore: deprecated_member_use_from_same_package
   YuvImage toI420() => _toIndependent(YuvPixelFormat.i420, YuvOperation.convert);
 
   @override
-  // ignore: deprecated_member_use_from_same_package
   YuvImage toNv12() => _toIndependent(YuvPixelFormat.nv12, YuvOperation.convert);
 
   @override
-  // ignore: deprecated_member_use_from_same_package
   YuvImage toBgra() => _toIndependent(YuvPixelFormat.bgra8888, YuvOperation.convert);
 
   /// Shared body of [toI420]/[toNv12]/[toBgra]: independent conversion that
   /// never mutates or aliases the receiver, even for a same-format request.
-  // ignore: deprecated_member_use_from_same_package
   YuvImage _toIndependent(YuvPixelFormat target, YuvOperation operation) {
     _requireCapability(operation, sourceFormat: _state.format, destinationFormat: target);
     if (_state.format == target) {
@@ -558,7 +547,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   Uint8List toBgraBytes() {
-    // ignore: deprecated_member_use_from_same_package
     if (_state.format == YuvPixelFormat.bgra8888) {
       // Shared with the native reference through YuvImageState.packedBgraBytes,
       // which is what keeps the two backends byte-identical here: it walks the
@@ -571,7 +559,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     final result = YuvAbiV1WebRunner.convert(
       module: _requireModule(),
       source: _sourceFrame(),
-      // ignore: deprecated_member_use_from_same_package
       destinationLayout: YuvAbiV1ImageTransport.destination(format: YuvPixelFormat.bgra8888, width: width, height: height),
     );
     // The BGRA destination layout is tight by construction, so its single

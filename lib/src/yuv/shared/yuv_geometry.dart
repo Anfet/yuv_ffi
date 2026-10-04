@@ -12,18 +12,13 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 /// Every failure throws [ArgumentError] before any native allocation happens.
 abstract final class YuvGeometry {
   /// Number of planes required by [format].
-  // ignore: deprecated_member_use_from_same_package
   static int planeCountFor(YuvPixelFormat format) => switch (format) {
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.bgra8888 => 1,
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.nv12 => 2,
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.i420 => 3,
   };
 
   /// Bytes per sample in the luma/packed plane of [format].
-  // ignore: deprecated_member_use_from_same_package
   static int _lumaSampleBytes(YuvPixelFormat format) => format == YuvPixelFormat.bgra8888 ? 4 : 1;
 
   /// Chroma plane height for [height] rows, rounded up for odd sizes.
@@ -59,13 +54,12 @@ abstract final class YuvGeometry {
   /// [planes] must already be in format order: `[Y]` for BGRA8888, `[Y, UV]`
   /// for NV, and `[Y, U, V]` for I420.
   ///
-  /// [allowLargerNvChromaStride] permits an interleaved chroma pixel stride
-  /// greater than [nvChromaPixelStride]. When `false`, the stride must equal
+  /// For NV12, [allowLargerNvChromaStride] permits a gap between interleaved
+  /// chroma pairs. When `false`, the stride must equal
   /// [nvChromaPixelStride].
   ///
   /// Throws [ArgumentError] when the geometry is inconsistent.
   static void validateImage({
-    // ignore: deprecated_member_use_from_same_package
     required YuvPixelFormat format,
     required int width,
     required int height,
@@ -81,7 +75,6 @@ abstract final class YuvGeometry {
 
     validatePlane(plane: planes[0], label: 'yPlane', expectedHeight: height, expectedWidth: width, sampleBytes: _lumaSampleBytes(format));
 
-    // ignore: deprecated_member_use_from_same_package
     if (format == YuvPixelFormat.bgra8888) {
       return;
     }
@@ -89,15 +82,14 @@ abstract final class YuvGeometry {
     final uvHeight = chromaHeight(height);
     final uvWidth = chromaWidth(width);
 
-    // NV keeps one interleaved chroma plane; I420 keeps two planar ones. An
+    // NV12 keeps one interleaved chroma plane; I420 keeps two planar ones. An
     // interleaved NV row holds a (U, V) pair per chroma sample, so its last
     // sample needs one extra byte beyond the luma-style minimum.
-    // ignore: deprecated_member_use_from_same_package
     if (format == YuvPixelFormat.nv12) {
       // The converters index chroma as a packed pair, so a stride below two
       // cannot hold it and is always rejected. A stride above two is a pixel
       // gap -- real padding a generic stride-aware kernel supports -- but the
-      // legacy nv21 entry points keep rejecting it unless the caller opted into
+      // strict layouts reject it unless the caller opts into
       // the relaxed nv12 check above.
       final bool valid = allowLargerNvChromaStride ? planes[1].pixelStride >= nvChromaPixelStride : planes[1].pixelStride == nvChromaPixelStride;
       if (!valid) {
@@ -137,7 +129,6 @@ abstract final class YuvGeometry {
   /// judge a plane from its metadata, before buffering the bytes that metadata
   /// describes.
   static ({int height, int minRowStride})? expectedPlaneMetadata({
-    // ignore: deprecated_member_use_from_same_package
     required YuvPixelFormat format,
     required int width,
     required int height,
@@ -150,7 +141,6 @@ abstract final class YuvGeometry {
     if (planeIndex == 0) {
       return (height: height, minRowStride: (width - 1) * pixelStride + _lumaSampleBytes(format));
     }
-    // ignore: deprecated_member_use_from_same_package
     final sampleBytes = format == YuvPixelFormat.nv12 ? nvChromaPixelStride : 1;
     return (height: chromaHeight(height), minRowStride: (chromaWidth(width) - 1) * pixelStride + sampleBytes);
   }

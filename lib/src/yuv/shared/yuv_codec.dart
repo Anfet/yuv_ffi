@@ -22,7 +22,6 @@ class YuvValidatedImageDraft {
     : planes = List<YuvPlane>.unmodifiable(planes);
 
   /// Pixel format declared by the decoded payload.
-  // ignore: deprecated_member_use_from_same_package
   final YuvPixelFormat format;
 
   /// Decoded image width in pixels.
@@ -83,7 +82,6 @@ abstract final class YuvCodec {
   static final Map<int, YuvPixelFormat> _pixelFormatByWireId = <int, YuvPixelFormat>{for (final value in YuvPixelFormat.values) value.wireId: value};
 
   /// Encodes [format], [width], [height] and [planes] into one byte buffer.
-  // ignore: deprecated_member_use_from_same_package
   static Uint8List encode({required YuvPixelFormat format, required int width, required int height, required List<YuvPlane> planes}) {
     final header = utf8.encode(jsonEncode(<String, Object>{'version': version, 'formatId': format.wireId, 'width': width, 'height': height}));
 
@@ -252,14 +250,12 @@ abstract final class YuvCodec {
           '(pixelStride $pixelStride)',
         );
       }
-      // ignore: deprecated_member_use_from_same_package
       if (format == YuvPixelFormat.nv12 && i == 1 && pixelStride < YuvGeometry.nvChromaPixelStride) {
         throw FormatException(
           'Malformed yuv_ffi payload: interleaved NV chroma requires a pixel stride of at least '
           '${YuvGeometry.nvChromaPixelStride}, plane $i declares $pixelStride',
         );
       }
-      // ignore: deprecated_member_use_from_same_package
       if (format == YuvPixelFormat.i420 && i > 0) {
         // Native code walks both I420 chroma planes with one shared stride pair,
         // so a mismatch would make one of them be read with the other's
@@ -293,14 +289,13 @@ abstract final class YuvCodec {
 
     try {
       // Codec v2 preserves caller-declared strides. A semi-planar payload with
-      // a chroma pixel stride above two is the public nv12 layout with a real
-      // gap, not malformed legacy nv21 data.
+      // a chroma pixel stride above two is a valid NV12 layout with a real
+      // gap, not malformed semi-planar data.
       YuvGeometry.validateImage(
         format: format,
         width: width,
         height: height,
         planes: planes,
-        // ignore: deprecated_member_use_from_same_package
         allowLargerNvChromaStride: format == YuvPixelFormat.nv12,
       );
     } on ArgumentError catch (error) {

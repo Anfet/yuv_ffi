@@ -27,15 +27,11 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 abstract final class YuvAbiV1ImageTransport {
   /// The ABI v1 numeric format id for [format].
   ///
-  /// The public `nv21` label maps to the ABI's NV12 format id and retains
-  /// interleaved `(U, V)` byte order.
-  // ignore: deprecated_member_use_from_same_package
+  /// NV12 maps to the ABI's semi-planar format id and uses interleaved
+  /// `(U, V)` byte order.
   static int abiFormat(YuvPixelFormat format) => switch (format) {
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.i420 => yuvFormatI420,
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.nv12 => yuvFormatNv12,
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.bgra8888 => yuvFormatBgra8888,
   };
 
@@ -44,7 +40,6 @@ abstract final class YuvAbiV1ImageTransport {
   /// The planes' own row and pixel strides are passed through verbatim: ABI
   /// validation walks active samples through both strides, so a padded source
   /// needs no repacking here.
-  // ignore: deprecated_member_use_from_same_package
   static YuvAbiV1FrameInput source({required YuvPixelFormat format, required int width, required int height, required List<YuvPlane> planes}) {
     return YuvAbiV1FrameInput(
       format: abiFormat(format),
@@ -72,7 +67,6 @@ abstract final class YuvAbiV1ImageTransport {
   /// Used where the caller needs to name a destination format the runner would
   /// not otherwise derive from the source -- that is, conversions. Every other
   /// operation keeps the source format and lets the runner build this itself.
-  // ignore: deprecated_member_use_from_same_package
   static YuvAbiV1DestinationLayout destination({required YuvPixelFormat format, required int width, required int height}) {
     final int abi = abiFormat(format);
     final int planeCount = yuvAbiV1PlaneCount(abi);
@@ -94,7 +88,6 @@ abstract final class YuvAbiV1ImageTransport {
   /// need: the receiver adopts a whole new plane set, so there is no prior
   /// padding to preserve and the runner's tight buffers can be adopted
   /// directly.
-  // ignore: deprecated_member_use_from_same_package
   static List<YuvPlane> planesOf({required YuvAbiV1FrameResult result, required YuvPixelFormat format, required int width, required int height}) {
     final int abi = abiFormat(format);
     final planes = <YuvPlane>[];
@@ -117,7 +110,6 @@ abstract final class YuvAbiV1ImageTransport {
   static void applyTo({
     required YuvAbiV1FrameResult result,
     required List<YuvPlane> planes,
-    // ignore: deprecated_member_use_from_same_package
     required YuvPixelFormat format,
     required int width,
     required int height,

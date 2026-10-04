@@ -23,7 +23,7 @@ const _sourceAssetPath = 'assets/reference/test_pattern_512.png';
 const _variant = String.fromEnvironment('YUV40_VARIANT', defaultValue: 'isolated');
 
 void _marker(String message) {
-  final line = 'YUV-40 MARKER $_variant: $message';
+  final line = 'MARKER $_variant: $message';
   debugPrint(line);
   _consoleLog(line.toJS);
 }
@@ -32,7 +32,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('BGRA to NV21 abort boundary', (tester) async {
-    expect(kIsWeb, isTrue, reason: 'YUV-40 must run in Chrome.');
+    expect(kIsWeb, isTrue, reason: 'This test must run in Chrome.');
     _marker('before ensureInitialized');
     await YuvFfi.initialize();
     _marker('after ensureInitialized');
@@ -61,7 +61,7 @@ void main() {
     try {
       candidate.applyFormat(YuvPixelFormat.nv12);
     } catch (error, stackTrace) {
-      final line = 'YUV-40 candidate caught $error\n$stackTrace';
+      final line = 'Candidate caught $error\n$stackTrace';
       debugPrint(line);
       _consoleError(line.toJS);
       rethrow;

@@ -60,6 +60,6 @@ void main() {
 
     // Recorded so a CI log names the platform that produced this evidence; a
     // green run with no line here would be a run that never executed.
-    debugPrint('YUV-06 app-runtime smoke passed on ${Platform.operatingSystem}');
+    debugPrint('App runtime smoke passed on ${Platform.operatingSystem}');
   });
 }

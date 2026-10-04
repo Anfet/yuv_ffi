@@ -265,7 +265,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
         blurDurations: _blurDurations,
         faceRatio: _step.face && _faceFrames > 0 ? _faceFramesWithFace / _faceFrames : null,
       );
-      _log('DEVICE-1 step ${jsonEncode(result.toJson())}');
+      _log('Device check step ${jsonEncode(result.toJson())}');
       setState(() {
         _measuring = false;
         _faceBox = null;
@@ -291,7 +291,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
 
   void _skip() {
     final result = DeviceCheckStepResult(id: _step.id, skipped: true, seconds: 0);
-    _log('DEVICE-1 step ${jsonEncode(result.toJson())}');
+      _log('Device check step ${jsonEncode(result.toJson())}');
     _advance(result);
   }
 
@@ -335,7 +335,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
       _results.add(result);
       if (_results.length < _steps.length) _stepIndex++;
     });
-    if (_results.length == _steps.length) _log('DEVICE-1 result ${_report.json}');
+    if (_results.length == _steps.length) _log('Device check result ${_report.json}');
   }
 
   DeviceCheckStepResult _emptyResult({String? capture}) => DeviceCheckStepResult(id: _step.id, skipped: false, seconds: 0, capture: capture);
@@ -354,7 +354,7 @@ class _DeviceCheckScreenState extends State<DeviceCheckScreen> {
     if (!_readyLogged) {
       _readyLogged = true;
       debugPrint(
-        'DEVICE-1 ready {"build_mode":"${kReleaseMode
+        'Device ready {"build_mode":"${kReleaseMode
             ? 'release'
             : kProfileMode
             ? 'profile'

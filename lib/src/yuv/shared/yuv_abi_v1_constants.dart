@@ -13,9 +13,8 @@ const int yuvFormatI420 = 1;
 /// Semi-planar YUV 4:2:0, two planes (Y, interleaved UV),
 /// `sampleBytes` 1 for Y and 2 for UV.
 ///
-/// This is the canonical ABI v1 storage. The legacy `nv21` label maps to this
-/// format id and stores interleaved `(U, V)` bytes; ABI v1 has no separate
-/// NV21 format value.
+/// This is the canonical ABI v1 storage for interleaved `(U, V)` chroma. ABI v1
+/// has no separate format id for another semi-planar chroma order.
 const int yuvFormatNv12 = 2;
 
 /// Packed BGRA, one plane, `sampleBytes` 4.

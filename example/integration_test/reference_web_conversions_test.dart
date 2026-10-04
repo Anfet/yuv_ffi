@@ -51,7 +51,7 @@ void main() {
   testWidgets('the full 119-case reference conversion matrix runs on the real Web/WASM backend', (tester) async {
     // This is the required, non-negotiable gate: without it, this test could
     // silently "pass" by running on the VM instead of Chrome.
-    expect(kIsWeb, isTrue, reason: 'YUV-12 must execute on the real Web/WASM backend, not the VM.');
+    expect(kIsWeb, isTrue, reason: 'This test must execute on the real Web/WASM backend, not the VM.');
 
     await YuvFfi.initialize();
 
@@ -74,7 +74,7 @@ void main() {
       }
     }
 
-    debugPrint('YUV-12 web provenance: kIsWeb=$kIsWeb, cases=${cases.length}');
+    debugPrint('Web provenance: kIsWeb=$kIsWeb, cases=${cases.length}');
 
     final failures = <String>[];
     var executed = 0;
@@ -84,17 +84,17 @@ void main() {
         final result = await _runCase(entry, source);
         _assertCase(entry, result, expectedImages, manifest, source);
         executed++;
-        debugPrint('YUV-12 case PASSED: $id');
+        debugPrint('Reference case PASSED: $id');
       } catch (error, stackTrace) {
         executed++;
         failures.add(id);
-        debugPrint('YUV-12 case FAILED: $id\n$error\n$stackTrace');
+        debugPrint('Reference case FAILED: $id\n$error\n$stackTrace');
       }
     }
 
-    debugPrint('YUV-12 summary: executed=$executed passed=${executed - failures.length} failed=${failures.length} ids=$failures');
+    debugPrint('Reference summary: executed=$executed passed=${executed - failures.length} failed=${failures.length} ids=$failures');
 
-    expect(failures, isEmpty, reason: 'YUV-12: ${failures.length}/${cases.length} case(s) failed on the Web backend: $failures');
+    expect(failures, isEmpty, reason: '${failures.length}/${cases.length} reference case(s) failed on the Web backend: $failures');
   }, timeout: const Timeout(Duration(minutes: 20)));
 }
 
@@ -226,7 +226,7 @@ Future<_CaseResult> _runCase(Map<String, dynamic> entry, RgbaFrame source) async
       }
       break;
     default:
-      throw StateError('Unimplemented YUV-12 operation: $operation');
+      throw StateError('Unimplemented reference operation: $operation');
   }
 
   expect(sha256Hex(frame.bytes), sourceFrameHash, reason: '${entry['id']} mutated source RGBA fixture');

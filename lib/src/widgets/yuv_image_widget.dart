@@ -59,7 +59,7 @@ class YuvImageWidget extends StatelessWidget {
 /// key for each provider, so every rebuild re-converts. Such a class may mutate
 /// without reporting it, so identity alone cannot prove the frame is unchanged.
 /// Re-converting is a cost; showing the wrong frame is a defect, and only the
-/// cost is acceptable to trade in a patch release.
+/// cost is acceptable for package maintenance releases.
 ///
 /// When decoding starts, the provider takes its own copy of this package's
 /// images, so the caller may mutate or reuse [image] right after the frame is

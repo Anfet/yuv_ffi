@@ -31,18 +31,16 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     Iterable<YuvPlane>? planes,
     YuvPlaneLayout layout = YuvPlaneLayout.packed,
   })
-    // ignore: deprecated_member_use_from_same_package
     : this(YuvPixelFormat.i420, width, height, yPixelStride: yPixelStride, uvPixelStride: uvPixelStride, planes: planes, layout: layout);
 
   YuvImageImpl.bgra(int width, int height, {Iterable<YuvPlane>? planes, YuvPlaneLayout layout = YuvPlaneLayout.packed})
-    // ignore: deprecated_member_use_from_same_package
     : this(YuvPixelFormat.bgra8888, width, height, yPixelStride: 4, uvPixelStride: 1, planes: planes, layout: layout);
 
   /// Creates semi-planar NV12 storage with interleaved chroma pixel stride 2.
   ///
   /// An explicit [uvPixelStride] above the packed pair minimum is honored as a
-  /// real pixel gap; see
-  /// [YuvGeometry.validateImage]'s `allowLargerNvChromaStride`.
+  /// real pixel gap; [YuvGeometry.validateImage] validates that declared
+  /// layout and operations preserve it.
   YuvImageImpl.nv12(
     int width,
     int height, {
@@ -51,7 +49,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
     Iterable<YuvPlane>? planes,
     YuvPlaneLayout layout = YuvPlaneLayout.packed,
   }) : _state = YuvImageState(
-         // ignore: deprecated_member_use_from_same_package
          YuvPixelFormat.nv12,
          width,
          height,
@@ -63,7 +60,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
        );
 
   YuvImageImpl(
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat format,
     int width,
     int height, {
@@ -179,7 +175,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
       return;
     }
 
-    // ignore: deprecated_member_use_from_same_package
     if (_state.format == YuvPixelFormat.bgra8888) {
       final bgra = Uint8List(bytes.length);
       for (int i = 0; i < bytes.length; i += 4) {
@@ -265,7 +260,6 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   @override
   Uint8List toBgraBytes() {
-    // ignore: deprecated_member_use_from_same_package
     if (_state.format == YuvPixelFormat.bgra8888) {
       return Uint8List.fromList(yPlane.bytes);
     }

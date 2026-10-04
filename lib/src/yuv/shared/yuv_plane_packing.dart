@@ -17,13 +17,9 @@ abstract final class YuvPlanePacking {
   /// [YuvGeometry.nvChromaPixelStride] -- native code addresses that plane as
   /// a packed `(U, V)` pair, so packing it to `1` would split the pair rather
   /// than remove padding.
-  // ignore: deprecated_member_use_from_same_package
   static int packedSampleBytes(YuvPixelFormat format, int planeIndex) => switch (format) {
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.bgra8888 => 4,
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.i420 => 1,
-    // ignore: deprecated_member_use_from_same_package
     YuvPixelFormat.nv12 => planeIndex == 0 ? 1 : YuvGeometry.nvChromaPixelStride,
   };
 
@@ -39,7 +35,6 @@ abstract final class YuvPlanePacking {
   /// [width] x [height]: zero row padding (`rowStride == columns *
   /// sampleBytes`) and zero per-sample pixel gap (`pixelStride ==
   /// sampleBytes`).
-  // ignore: deprecated_member_use_from_same_package
   static bool isTightlyPacked(YuvPixelFormat format, int width, int height, List<YuvPlane> planes) {
     for (var i = 0; i < planes.length; i++) {
       final plane = planes[i];
@@ -52,7 +47,6 @@ abstract final class YuvPlanePacking {
 
   /// Builds a tightly packed replacement for every plane of [planes], for
   /// [format] at [width] x [height].
-  // ignore: deprecated_member_use_from_same_package
   static List<YuvPlane> packAll(YuvPixelFormat format, int width, int height, List<YuvPlane> planes) => [
     for (var i = 0; i < planes.length; i++)
       packPlane(planes[i], rows: planeRows(i, height), columns: planeColumns(i, width), sampleBytes: packedSampleBytes(format, i)),

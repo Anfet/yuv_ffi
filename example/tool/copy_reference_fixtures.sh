@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# YUV-12: copies the PNG-only subset of the native reference fixtures
+# Copies the PNG-only subset of the native reference fixtures
 # (test/reference/test_pattern_512/) into example/assets/, since Flutter
 # cannot bundle assets that live outside the package root and the example
 # app needs them to run reference_web_conversions_test.dart.
