@@ -71,7 +71,6 @@
 ### Documentation fixes
 
 - Clarified that ROI and crop coordinates are pixels.
-- Clarified that `copy(blank: true)` preserves plane strides.
 - Clarified that `YuvFfi.initialize()` is required on IO before `apply*`
   operations.
 
@@ -90,9 +89,9 @@
 
 ### Moving from a 0.4.0 lockfile
 
-- A consumer whose `pubspec.lock` pins `yuv_ffi 0.4.0` can retain that resolved
-  version. Run `flutter pub upgrade yuv_ffi` to select 0.4.2 and commit the
-  resulting lockfile for an application package.
+- Update the dependency constraint to `yuv_ffi: ^0.5.0`, then run
+  `flutter pub upgrade yuv_ffi` to resolve 0.5.0 and commit the resulting
+  lockfile for an application package.
 
 ## 0.4.0
 
