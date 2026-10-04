@@ -41,3 +41,5 @@
 - `git diff --check 5a0dcdab5557cf88bc6007658f52a1be5188867c..5d5757bf4e76909ad984c9b6e1bbae850dea62c5` — exit 0. Docs only; no CI/probe required.
 
 #### Review
+
+- **ACCEPT (04.10.2026),** implementation `5d5757b`. Верхняя запись оставлена `0.5.0-dev.1` до RELEASE 1; путь обновления идёт из опубликованной `0.4.0` сразу в `^0.5.0`, а утверждение о сохранении stride удалённым `copy(blank:)` убрано. Историческая запись `0.4.0` сохранена; сверены README, публичный API и `COMPLETION.md`. `git diff --check 5a0dcda..5d5757b` — exit 0; Probe: none.

@@ -1,6 +1,6 @@
 # FIX 1 — Атомарность `applyPatch()` для внешней реализации `YuvImage`
 
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** windows+pixel3
+**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** windows+pixel3
 
 **Base SHA:** `a2b679984e5ab4071820c873de82fffb5ec587b7`
 
@@ -48,3 +48,6 @@
 - Added an external `implements YuvImage` regression with a missing chroma plane. Plane lists and all visible byte bounds are validated before writes; shared source/destination byte storage is rejected. Pixel 3 arm64 probe remains Reviewer validation per card.
 
 #### Review
+
+- **REWORK (04.10.2026).** Windows: `pwsh -File tool/ci/windows.ps1` — exit 0, VM 134/134 и все native integration targets прошли. Pixel 3 arm64: `pwsh -File tool/probe/run_android.ps1 -Serial 8B1X11QLW` на чистом `fec5c9a` — exit 0, release PASS, 24/24 сценария PASS (9 выборок на сценарий; без сравнительного baseline). `git diff --check a2b6799..fec5c9a` — exit 0.
+- Тест `validates every external plane before writing and supports valid wrappers` использует `_ForeignImage` только как `fragment`. В карточке требуется проверить внешний **получатель**: отказ при отсутствующей или укороченной chroma-плоскости до изменения Y, геометрии и ревизии, а также успешный вызов с внешним получателем и рост ревизии ровно на один. Добавить эти регрессионные случаи; покрытие источника оставить. Затем повторить целевые тесты и Windows-проверку и сообщить новый SHA. Пробу Pixel 3 повторить, если меняется `lib/`.

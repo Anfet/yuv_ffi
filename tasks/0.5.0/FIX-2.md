@@ -43,3 +43,5 @@
 - `git diff --check 26028ae1ae0913dea8c90d3ea9373f26e7524ee0..fad8dda43ebacbc2c103d404e772c6d0f7651535` — exit 0. Docs only; no CI/probe required.
 
 #### Review
+
+- **ACCEPT (04.10.2026),** implementation `fad8dda`. Независимо сверены README, экспортируемый API и `doc/web-parity.md`: установка указывает `0.5.0`, Chrome JavaScript отмечен проверенным, Safari/Firefox — непроверенными, `--wasm` — неподдерживаемым при выполнении операций. Оставшееся `0.4.2` относится к истории формата хранения. `git diff --check 26028ae..fad8dda` — exit 0; Probe: none.
