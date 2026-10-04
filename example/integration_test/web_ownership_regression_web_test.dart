@@ -96,18 +96,18 @@ void main() {
     expect(target.toBytes(), orderedEquals(beforeBytes));
     expect(target.revision, beforeRevision);
 
-    final source = YuvImage.bgra(5, 3);
-    for (var i = 0; i < source.yPlane.bytes.length; i++) {
-      source.yPlane.bytes[i] = i;
+    final geometrySource = YuvImage.bgra(5, 3);
+    for (var i = 0; i < geometrySource.yPlane.bytes.length; i++) {
+      geometrySource.yPlane.bytes[i] = i;
     }
     final geometry = YuvFrameGeometry(
-      sourceSize: source.size,
+      sourceSize: geometrySource.size,
       viewSize: const ui.Size(1, 5),
       orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90, mirrored: true),
       fit: YuvFrameFit.cover,
     );
-    final actual = geometry.apply(source);
-    final expected = source.cropped(geometry.visibleSourceRect).rotated(YuvImageRotation.rotation90)..applyFlipHorizontal();
+    final actual = geometry.apply(geometrySource);
+    final expected = geometrySource.cropped(geometry.visibleSourceRect).rotated(YuvImageRotation.rotation90)..applyFlipHorizontal();
     expect(actual.width, expected.width);
     expect(actual.height, expected.height);
     expect(actual.toBytes(), orderedEquals(expected.toBytes()));
