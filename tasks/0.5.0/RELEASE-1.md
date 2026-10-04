@@ -1,5 +1,5 @@
 # RELEASE 1 — Финальный аудит и релизный гейт 0.5.0
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Executor · **Depends On:** FIX 1, FIX 2, FIX 3 (DONE) · **Probe:** windows+pixel3
+**Status:** ENGINEER_REQUIRED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Engineer · **Depends On:** FIX 1, FIX 2, FIX 3 (DONE) · **Probe:** windows+pixel3
 **Base SHA:** 4a485d8b8c1b5475bf0c02309b8d0dec56d0437c (Executor записывает SHA `dev` на старте)
 
 #### Goal
@@ -107,3 +107,11 @@
 **Engineer attention:** 9/9 CI is not met. Per release-cycle rule 4, no CI diagnosis or source change is made in this pass. Decide whether to authorize a separate pass for the two reported workflow failures or to accept an explicit release exception. The release tag and publication have not been created.
 
 #### Review
+
+**Вердикт: не принято; требуется решение Engineer.** На SHA РК `f2130c2c5ccc64f314417f520146a075f8a5749b` релизный критерий 9/9 CI не выполнен: Linux [37200004976](https://github.com/Anfet/yuv_ffi/actions/runs/37200004976) и macOS [37200004967](https://github.com/Anfet/yuv_ffi/actions/runs/37200004967) завершились ошибкой. Оба run указывают на SHA РК. Linux log показывает единственный diff `example/pubspec.lock`: `yuv_ffi 0.5.0-dev.1` → `0.5.0`; macOS сообщает тот же изменённый отслеживаемый файл. В SHA РК `pubspec.yaml` уже содержит `0.5.0`, а `example/pubspec.lock` — `0.5.0-dev.1`. Локальный `vm.ps1` воспроизвёл это изменение lockfile; его вердикт тестов при этом PASS. Поэтому чистый локальный прогон не заменяет два упавших workflow.
+
+**Независимая выборка аудита:** FIX 1 — внешние source/destination и отсутствие частичной записи проверены тестами `yuv_image_patch_test.dart` (15 PASS в `vm.ps1`); FIX 2 — README и `doc/web-parity.md` согласованы по Dart/Flutter, Chrome, Safari/Firefox и `--wasm`; FIX 3 — верхний CHANGELOG и README ведут с 0.4.0 к 0.5.0, API миграции совпадает с `YuvImage.copy()` без `blank`. Области без новых находок: экспортируемая поверхность и `public_surface_test.dart`, контракты ревизии/blur в `vm.ps1`, состав архива в повторном dry-run. Поиск следов в `lib/` и `src/` не выявил `TODO`/`FIXME` или печати; `skip:` в тестах соответствует условиям, перечисленным в аудите. Четыре версии D-14 совпадают; замороженные пути кандидата совпадают с `release/0.5.0`.
+
+**Повторные проверки:** `pwsh -File tool/ci/vm.ps1` — exit 0, 635/635, 0 skip; `flutter test --no-pub test/probe/probe_correctness_test.dart` с собранной native DLL — exit 0, `cases=1188/1188`; `flutter pub publish --dry-run` — exit 0, архив 675 КБ, 0 warnings, 1 hint. Первичный прямой запуск трёх contract-файлов без native DLL не был валидной проверкой; вместо него использован штатный `vm.ps1`. Созданное локальными командами изменение `example/pubspec.lock` откатил до исходного чистого дерева. Pixel 3 arm64/armv7 Reviewer повторно не запускал: гейт уже заблокирован, после нового SHA РК пробы нужно пройти на обоих ABI вместе с упавшими CI.
+
+**Решение Engineer:** рекомендую отдельную карточку `FIX N` для синхронизации `example/pubspec.lock` с `0.5.0`, затем новый SHA РК и повтор Linux/macOS CI и Pixel 3 по требованиям карточки. Альтернатива — явное исключение из релизного гейта; текущий DoD его не допускает без решения Engineer. Тег `v0.5.0` и публикация не выполнялись.
