@@ -33,8 +33,9 @@ On iOS and macOS the plugin builds with either Swift Package Manager (the
 default in Flutter 3.44 and later) or CocoaPods. Nothing needs to be configured
 in your app. The Apple sources live in `darwin/`; the C sources stay in `src/`.
 
-The Web loader currently relies on browser JavaScript APIs, so
-`flutter build web --wasm` is unsupported. Use `flutter build web`.
+The Web backend uses the JavaScript Flutter build. `flutter build web --wasm`
+builds, but Web operations fail at runtime because of a known interop issue.
+Use `flutter build web`.
 Safari and Firefox have not been tested. Safari 16.4 or later is a technical
 minimum for release WASM SIMD, not a tested compatibility claim for this plugin.
 
@@ -246,54 +247,13 @@ lifecycle apply.
 
 ## Migrating to 0.5.0
 
-The compatibility declarations from 0.2.4 and 0.4.0 were removed in 0.5.0.
-Use the current API shown below when upgrading from 0.2.4. Version 0.4.0 was
-published and later retracted; applications still resolving it use the same
-migration.
-
-| Removed API | Current API and behavior |
-| --- | --- |
-| `YuvFfi.ensureInitialized()` | `YuvFfi.initialize()` returning `YuvCapabilities` |
-| `image.fromRgba8888(bytes)` | `image.applyRgbaBytes(bytes)` |
-| `image.rotate(r)`, `.crop(rect)`, `.flipHorizontally()`, `.flipVertically()` | `image.applyRotation(r)`, `.applyCrop(rect)`, `.applyFlipHorizontal()`, `.applyFlipVertical()` |
-| `image.grayscale()`, `.blackwhite()`, `.negate()` | `image.applyGrayscale()`, `.applyBlackWhite()`, `.applyNegate()` |
-| `image.gaussianBlur(radius:, sigma:)`, `.boxBlur(radius:, rect:)`, `.meanBlur(radius:, rect:)` | `image.applyGaussianBlur(radius:, sigma:)`, `.applyBoxBlur(radius:, region:)`, `.applyMeanBlur(radius:, region:)` |
-| `image.toYuvI420()`, `.toYuvNv21()`, `.toYuvBgra8888()` | These 0.2.4 methods mutated `image`. Use `applyFormat(YuvPixelFormat.i420 / .nv12 / .bgra8888)` to mutate it, or `toI420()` / `.toNv12()` / `.toBgra()` to create an independent image. |
-| `image.swapNv()` | `image.applyChromaSwap()` for NV12 |
-| `image.getBytes()` | `image.toBytes()` |
-| `image.toBgra8888()` | `image.toBgraBytes()` |
-| `image.y` / `.u` / `.v` | `image.yPlane` / `.uPlane` / `.vPlane` |
-| `image.copy(blank: true)` | This created a blank image while retaining the source pixel strides. `YuvImage.allocate(format, width, height)` creates a tightly packed blank image. |
-| `image.save(sink)` | `image.encodeTo(sink)` |
-| `image.load(stream)` | This mutated the existing image. `YuvImage.decode(stream)` returns a new independent image; assign the result instead of calling it on the existing instance. |
-| `YuvImage.nv21(...)`, `YuvImage(YuvFileFormat.x, ...)` | `YuvImage.nv12(...)`, `YuvImage.i420(...)`, `.bgra(...)`, or `.allocate(...)` |
-| `image.format` returning `YuvFileFormat` | `image.format` returning `YuvPixelFormat` |
-| Factories with caller-supplied `planes:` retaining their supplied layout by default | Factories with caller-supplied `planes:` default to `YuvPlaneLayout.packed`; pass `layout: YuvPlaneLayout.preserve` to retain strides and padding |
-
-Factories with `planes:` now pack planes by default. To keep the original
-strides and padding, pass `layout: YuvPlaneLayout.preserve`.
-
-`applyChromaSwap()` applies only to NV12. For another format, convert first
-with `applyFormat(YuvPixelFormat.nv12)`. `YuvImage.allocate` always creates a
-tight layout; use named factories with zeroed `YuvPlane` values when a blank
-padded or pixel-gapped layout is required.
-
-The following behavior changes can affect applications even when their code
-still compiles:
-
-- Frames encoded by 0.2.4 cannot be decoded by 0.5.0. Migrate stored frames
-  through an application-owned representation containing format, dimensions,
-  plane strides, and plane bytes, then recreate the image and encode it with
-  `encodeTo`.
-- I420 images now default to `uvPixelStride: 1`.
-- Call `YuvFfi.initialize()` on native platforms before `apply*` operations.
-- Call `markDirty()` after writing directly to plane bytes.
-- Failures use typed exceptions; catch the documented exception type for each
-  operation.
-- Android `x86` is no longer supported. Minimum versions are Dart 3.12, Flutter
-  3.44, Android API 26, iOS 13, and macOS 10.15.
-- Factories receiving `planes:` now pack visible samples by default; pass
-  `layout: YuvPlaneLayout.preserve` to retain supplied strides and padding.
+The compatibility declarations from 0.2.4 and retracted 0.4.0 were removed.
+The detailed upgrade steps, API mapping, behavior changes, and verification
+commands are in [MIGRATION.md](MIGRATION.md). Key points: initialize every
+isolate, review mutating versus copy-returning calls, preserve plane layout
+explicitly when needed, and migrate serialized frames through an
+application-owned representation. The same guide applies to applications
+whose lockfile still resolves 0.4.0.
 
 ## Building from a repository checkout
 

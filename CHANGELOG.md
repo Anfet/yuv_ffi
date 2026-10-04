@@ -8,7 +8,7 @@ published and later retracted; its changes are included in this upgrade path.
 - Raised the minimum supported SDK to Dart `^3.12.0` / Flutter `>=3.44.0`.
 - Removed the deprecated 0.2.4/0.4.0 compatibility API, including
   `YuvFileFormat`, `YuvImage.nv21`, `YuvFfi.ensureInitialized()`, the legacy
-  forwarding methods, and `copy(blank:)`. Migrate with the README mapping:
+  forwarding methods, and `copy(blank:)`. Migrate with [MIGRATION.md](MIGRATION.md):
   use named format factories, `YuvPixelFormat`, `YuvFfi.initialize()`, and
   `apply*`/`to*` methods.
 
@@ -86,15 +86,17 @@ published and later retracted; its changes are included in this upgrade path.
 
 - Web uses a partial WASM backend and is not feature-complete with native
   backends. Use `YuvCapabilities` to query the operations available at runtime.
-- Flutter Web is supported through the JavaScript build; `flutter build web
-  --wasm` is unsupported. Release WASM builds require Safari 16.4 or later.
+- Flutter Web is supported through the JavaScript build. `flutter build web
+  --wasm` builds, but Web operations fail at runtime because of a known
+  interop return-value mismatch; use `flutter build web`. Safari and Firefox
+  are not verified.
 
 ### Updating from 0.2.4 or a 0.4.0 lockfile
 
 - Version 0.5.0 is the next available pub.dev release after 0.2.4; 0.4.0 was
   published and later retracted. Set the dependency constraint to
-  `yuv_ffi: ^0.5.0`, run `flutter pub upgrade yuv_ffi`, and follow the README's
-  "Migrating to 0.5.0" table and the 0.4.0 and 0.5.0 breaking changes below.
+  `yuv_ffi: ^0.5.0`, run `flutter pub upgrade yuv_ffi`, and follow
+  [MIGRATION.md](MIGRATION.md) and the 0.4.0 and 0.5.0 breaking changes below.
 - This also applies when an application's lockfile still resolves 0.4.0.
 
 ## 0.4.0 (retracted)
