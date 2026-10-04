@@ -76,6 +76,46 @@ void main() {
     expect(rotation.toBytes(), orderedEquals(rotationBefore));
   });
 
+  testWidgets('patch insertion and odd frame geometry work on WASM', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This regression must execute in a browser.');
+
+    for (final format in YuvPixelFormat.values) {
+      final target = YuvImage.allocate(format, 7, 5);
+      final fragment = YuvImage.allocate(format, 3, 3);
+      for (var planeIndex = 0; planeIndex < fragment.planes.length; planeIndex++) {
+        fragment.planes[planeIndex].bytes.fillRange(0, fragment.planes[planeIndex].bytes.length, 0x71 + planeIndex);
+      }
+      final revisionBefore = target.revision;
+      target.applyPatch(fragment, x: 4, y: 2);
+      expect(target.revision, revisionBefore + 1);
+      for (var planeIndex = 0; planeIndex < fragment.planes.length; planeIndex++) {
+        expect(target.planes[planeIndex].bytes.any((byte) => byte == 0x71 + planeIndex), isTrue);
+      }
+    }
+
+    final target = YuvImage.bgra(7, 5);
+    final beforeBytes = target.toBytes();
+    final beforeRevision = target.revision;
+    expect(() => target.applyPatch(YuvImage.bgra(3, 3), x: 5, y: 2), throwsArgumentError);
+    expect(target.toBytes(), orderedEquals(beforeBytes));
+    expect(target.revision, beforeRevision);
+
+    final source = YuvImage.bgra(5, 3);
+    for (var i = 0; i < source.yPlane.bytes.length; i++) {
+      source.yPlane.bytes[i] = i;
+    }
+    final geometry = YuvFrameGeometry(
+      sourceSize: source.size,
+      viewSize: const ui.Size(3, 5),
+      orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90, mirrored: true),
+    );
+    final actual = geometry.apply(source);
+    final expected = source.rotated(YuvImageRotation.rotation90)..applyFlipHorizontal();
+    expect(actual.width, 3);
+    expect(actual.height, 5);
+    expect(actual.toBytes(), orderedEquals(expected.toBytes()));
+  });
+
   testWidgets('byte copies, padding and semantic no-ops hold on WASM', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This regression must execute in a browser.');
 
