@@ -12,7 +12,8 @@
   задача — native-изменение с известным решением (D-17). Пробных и временных правок `src/` нет.
 - Платформенные реализации — в каталогах `impl/`, с суффиксом `_io` (native) или `_web` (Web). Общие интерфейсы и
   типы — вне `impl/`.
-- Web — частичный WASM backend (`lib/src/yuv/impl/web/yuv_web.dart`); не описывать его как паритет с native.
+- Web — WASM backend (`lib/src/yuv/impl/web/yuv_web.dart`). Паритет с native описывать только в пределах
+  проверенного (`doc/web-parity.md`): операции, сборка (JavaScript / `--wasm`) и браузеры называются явно.
 
 ## Версия и CHANGELOG
 

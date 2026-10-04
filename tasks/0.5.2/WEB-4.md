@@ -1,5 +1,5 @@
 # WEB 4 — Flutter Web `--wasm`: исправить interop-слой Web backend
-**Status:** BLOCKED · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** выпуск 0.5.0 · **Probe:** web
+**Status:** BLOCKED · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** выпуск 0.5.1 · **Probe:** web
 
 **Base SHA:** —
 

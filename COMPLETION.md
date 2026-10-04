@@ -58,6 +58,7 @@
 - **FIX 8 — Установка на устройство без удаления и release-тест:** принято Reviewer на `ba9b6df`, release-тест 15/15; повтор Pixel 3 — в RELEASE 1.
 - **FIX 9 — Проверен MIGRATION.md и сниппеты:** принято Reviewer на `c98ede8`; точный сниппет analyze/runtime PASS, source-layout сохранён, dry-run 0 warnings, MIGRATION.md в пакете.
 - **FIX 10 — Форматирование `lib/` под pana 160/160:** три файла `lib/` и два файла example приведены к `dart format`; байткод не меняется. SHA и проверки — в RELEASE 1.
+- **RELEASE 1 — Выпущена 0.5.0:** кандидат `3e4c645` принят Reviewer; локальные проверки Windows/Mac/Android, CTest 11/11, pana 160/160, dry-run 0 warnings, Pixel 3 arm64/armv7 1188/1188; `ci/all/0.5.0-v4` 9/9: [CI](https://github.com/Anfet/yuv_ffi/actions/runs/37229763307), [VM](https://github.com/Anfet/yuv_ffi/actions/runs/37229763318), [Windows](https://github.com/Anfet/yuv_ffi/actions/runs/37229763303), [Android](https://github.com/Anfet/yuv_ffi/actions/runs/37229763281), [Web](https://github.com/Anfet/yuv_ffi/actions/runs/37229763298), [Example](https://github.com/Anfet/yuv_ffi/actions/runs/37229763310), [macOS](https://github.com/Anfet/yuv_ffi/actions/runs/37229763305), [iOS](https://github.com/Anfet/yuv_ffi/actions/runs/37229763313), [smoke](https://github.com/Anfet/yuv_ffi/actions/runs/37229763294). Тег `0.5.0` на `3e4c645`, опубликована на pub.dev 05.10.2026. Аудит — `doc/release-0.5.0-audit.md`; раздел Web в README занижает поддержку — FIX 1 цикла 0.5.1.
 
 ## Проверенная точка 0.4.2 — закрыта без выпуска, 01.10.2026
 
