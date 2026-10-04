@@ -40,7 +40,7 @@
 
 #### Executor Report
 
-- Base SHA: `a2b679984e5ab4071820c873de82fffb5ec587b7`; review SHA: `a2b679984e5ab4071820c873de82fffb5ec587b7` (working changes not committed).
+- Base SHA: `a2b679984e5ab4071820c873de82fffb5ec587b7`; implementation commit: `584a7ebcaa606367b299825a8f35b928236cb3c2`.
 - `dart format --line-length 150 lib/src/yuv/shared/yuv_patch.dart test/yuv_image_patch_test.dart` — exit 0.
 - `dart analyze lib/src/yuv/shared/yuv_patch.dart test/yuv_image_patch_test.dart` — exit 0, no issues.
 - `pwsh -File tool/ci/windows.ps1` — exit 0; VM 134/134, Windows integration and probe targets passed, including `yuv_image_patch_test.dart`.
