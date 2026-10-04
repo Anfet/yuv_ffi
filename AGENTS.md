@@ -30,15 +30,26 @@
 
 ## Пробы
 
-- Каждая карточка объявляет `Probe: none`, `windows` или `windows+pixel3`:
-  - `windows+pixel3` — изменения `src/` или `lib/src/yuv/impl/**` и любое утверждение о скорости;
-  - `windows` — прочие изменения `lib/`;
-  - `none` — документы и CI.
-  При нескольких правилах — самое строгое. Изменения только в комментариях карточка может понизить явно.
-- Executor запускает Windows-пробу (в составе `tool/ci/windows.ps1`) и пишет её вердикты в отчёт: `FAIL` не
-  сдаётся, `SLOWER` объясняется или исправляется.
-- Для `windows+pixel3` Reviewer запускает пробу на Pixel 3 arm64, для `src/` — ещё armv7. Обновление baseline —
-  дело Reviewer, отдельным коммитом с причиной.
+- Проба проверяет backend, через который проходит изменённый код. Каждая карточка объявляет `Probe:` — `none` или
+  набор из `windows`, `pixel3`, `web` через `+` (например, `windows+pixel3+web`). Набор — объединение строк таблицы
+  для всех изменённых путей:
+
+  | Пути | Probe |
+  | --- | --- |
+  | `src/**`; native-путь Dart: `lib/src/yuv/impl/io/**`, `lib/src/functions/**`, `lib/src/loader/impl/*_io.dart` | `windows+pixel3` |
+  | ABI-контракт обоих backend: `lib/src/yuv/shared/yuv_abi_v1_*`, `lib/src/yuv/shared/yuv_native_status.dart` | `windows+pixel3+web` |
+  | Web-путь: `lib/src/yuv/impl/web/**`, `lib/src/web/**`, `lib/src/loader/impl/*_web.dart`, `assets/wasm/**`, `tool/wasm/**` | `web` |
+  | Прочий общий код операций: `lib/src/yuv/**` вне `impl/io` и `impl/web`, `lib/src/yuv_*.dart` | `windows+web` |
+  | Остальное в `lib/` (`widgets/`, `geometry/`), `example/`, `test/`, документы, CI, `tool/` | `none` |
+
+  Утверждение о скорости добавляет пробу каждого backend, о котором оно сделано (native — `windows+pixel3`, Web —
+  `web`). Изменение `src/`, после которого пересобираются WASM-артефакты, добавляет `web`. Изменения только в
+  комментариях карточка может понизить явно, с причиной. Обязательные проверки по `scope_guard.sh` от пробы не
+  зависят.
+- Executor запускает пробы `windows` (в составе `tool/ci/windows.ps1`) и `web` (в составе `tool/ci/web.ps1`) и пишет
+  их вердикты в отчёт: `FAIL` не сдаётся, `SLOWER` объясняется или исправляется.
+- Для `pixel3` Reviewer запускает пробу на Pixel 3 arm64, для `src/` — ещё armv7. Обновление baseline — дело
+  Reviewer, отдельным коммитом с причиной.
 
 ## Локальные проверки
 

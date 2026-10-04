@@ -1,5 +1,5 @@
 # FIX 7 — Уборка следов удалённого API и ID задач
-**Status:** REVIEW · **Tier:** T2, Reviewer T2 · **Owner:** — · **Depends On:** — · **Probe:** windows (понижено: в `lib/src/yuv/impl/**` меняются только комментарии)
+**Status:** ACCEPTED · **Tier:** T2, Reviewer T2 · **Owner:** — · **Depends On:** — · **Probe:** windows (понижено: в `lib/src/yuv/impl/**` меняются только комментарии)
 
 **Base SHA:** `78eca6c6071004175431f58c27fc8101664d501b`
 
@@ -92,3 +92,5 @@
   `probe_native_test`, `shader_probe_native_test` (все 5 targets; `tool/ci/drive.sh` подтвердил `All tests passed`).
 
 #### Review
+
+**ACCEPTED, 04.10.2026; принятый SHA `c155637b563a168b6004838d5975049c6025201e`.** В изменениях FIX 7 не найдено исполняемых правок `lib/`; устаревшие подавления и подписи задач убраны, машинные ключи сохранены. `flutter test test/public_surface_test.dart` прошёл в общем точечном прогоне (11/11 вместе с тестами презентера); платформенные проверки подтверждены Executor Report. Блокирующих замечаний нет.

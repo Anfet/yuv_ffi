@@ -1,5 +1,5 @@
 # FIX 6 — Документация 0.5.0 от опубликованной 0.2.4
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
 
 **Base SHA:** `78eca6c6071004175431f58c27fc8101664d501b`
 
@@ -91,3 +91,5 @@ CHANGELOG сейчас описывают переход «from 0.4.0», а READ
 - `git diff --check` — без ошибок. `example/README.md` и `pubspec.yaml` не менялись.
 
 #### Review
+
+**ACCEPTED, 04.10.2026; принятый SHA `c155637b563a168b6004838d5975049c6025201e`.** README и CHANGELOG описывают переход с опубликованной 0.2.4, помечают 0.4.0 как отозванную и объясняют семантические отличия `load(stream)` и `copy(blank: true)`. Устаревший WASM placeholder удалён; блокирующих замечаний нет. Проверки сниппетов, Web и dry-run подтверждены Executor Report.

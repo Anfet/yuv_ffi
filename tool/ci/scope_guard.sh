@@ -85,7 +85,7 @@ path_keys() {
     src/*|lib/src/yuv/impl/io/*|lib/src/functions/*|test/probe/*|example/integration_test/*|pubspec.yaml)
       printf 'all\n'
       ;;
-    lib/src/yuv/impl/web/*|assets/wasm/*|tool/wasm/*)
+    lib/src/yuv/impl/web/*|lib/src/web/*|lib/src/loader/impl/*_web.dart|assets/wasm/*|tool/wasm/*)
       printf 'web\n'
       ;;
     darwin/*)

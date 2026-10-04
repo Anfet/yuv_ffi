@@ -1,5 +1,5 @@
 # FIX 8 — Android release-проба обновляет приложение без удаления
-**Status:** REVIEW · **Tier:** T2, Reviewer T2 · **Owner:** — · **Depends On:** — · **Probe:** none (только `tool/`; проверка — реальный прогон на Pixel 3 в RELEASE 1)
+**Status:** ACCEPTED · **Tier:** T2, Reviewer T2 · **Owner:** — · **Depends On:** — · **Probe:** none (только `tool/`; проверка — реальный прогон на Pixel 3 в RELEASE 1)
 
 **Base SHA:** `78eca6c6071004175431f58c27fc8101664d501b`
 
@@ -71,5 +71,12 @@ debuggable. Решение ниже использует установленн�
 - `rg -n 'uninstall|pm clear|install -r -d' tool/probe/run_release_android.ps1` — совпадений нет.
 - Для каждого прогона использован чистый checkout того же SHA: Flutter build изменяет отслеживаемые Windows plugin
   registrants в validation-клоне; их восстановление между прогонами не затрагивало приложение или данные устройства.
+- REWORK: после `git add` тест сверяет exit code `git diff --cached --quiet`; commit выполняется только при staged diff,
+  отсутствие diff считается чистой нормализацией строк, прочие ошибки диагностики завершают подготовку теста.
+- PASS после исправления: `flutter test --tags release test/probe/run_release_android_test.dart` — 15 тестов.
 
 #### Review
+
+**ACCEPTED, 04.10.2026; SHA `ba9b6df586cdb250667fc7466f4e4289d5d676b2`.** Повторён `flutter test --tags release test/probe/run_release_android_test.dart` после коммита исправления фикстуры: 15/15. В `run_release_android.ps1` нет `uninstall`, `pm clear` или `install -r -d`; скрипт устанавливает через `adb install -r` после проверки собранного `versionCode`. Ранее зафиксированная серия Pixel 3 arm64 → armv7 → arm64 прошла на неизменённом скрипте `fdd1d3f`; повтор на устройстве входит в RELEASE 1.
+
+**REWORK, 04.10.2026; проверен SHA `c155637b563a168b6004838d5975049c6025201e`.** Обязательная команда `flutter test --tags release test/probe/run_release_android_test.dart` на текущем HEAD падает в `setUpAll` (exit 1): тест копирует LF-файл helper в Windows checkout с CRLF, считает его изменённым, но после `git add` индекс чист и `git commit` отвечает `nothing to commit`. Проверять наличие staged diff перед коммитом, повторить обязательный тест на чистом HEAD. Расчёт `versionCode` для arm64 → armv7 → arm64 повторён отдельно: `13004 → 13005 → 13006`. Результат пробы Pixel 3 из Executor Report не опровергнут, но не заменяет падающий тест.

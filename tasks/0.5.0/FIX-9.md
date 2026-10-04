@@ -1,5 +1,5 @@
 # FIX 9 — MIGRATION.md: переход с 0.2.4 на 0.5.0 для инженеров и агентов
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** FIX 6 · **Probe:** none
+**Status:** ACCEPTED · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** FIX 6 · **Probe:** none
 
 **Base SHA:** `8bab4a74e6fa0f41097832e8381100999210efc4`
 
@@ -160,3 +160,11 @@ README «Migrating to 0.5.0». Таблица короткая: в ней не �
 - Scratch: `C:\Users\Oleg-T\AppData\Local\Temp\fix9-rework-current`; логи `review3-analyze.log` и `review3-exact-snippet.log`.
 - Новый чистый export SHA `e0d23ee3f0538c1e451674a162ee458cf38d8fc0` проверен через `git archive`: `MIGRATION.md` присутствует в архиве и публикуемом списке. `flutter pub publish --dry-run` — exit 0, 0 warnings, 1 version hint о предыдущей версии 0.2.4; лог `C:\Users\Oleg-T\AppData\Local\Temp\fix9-publish-run-1004-r3\publish-dry-run.log`, архив `C:\Users\Oleg-T\AppData\Local\Temp\fix9-publish-run-1004-r3.zip`.
 - Probe none. Полная backend-матрица и агентная миграция не требуются/не выполнялись.
+
+#### Review — принятие 04.10.2026
+
+- **Вердикт: ACCEPTED.** Принят SHA `c98ede83c89476f21db691475275ffc751adf0a2`, диапазон `8bab4a74e6fa0f41097832e8381100999210efc4..c98ede83c89476f21db691475275ffc751adf0a2`. Финальная реализация документа — `e0d23ee3f0538c1e451674a162ee458cf38d8fc0`; последующий коммит меняет только отчёт карточки. Все замечания первого и повторного ревью закрыты; новых замечаний нет.
+- **Независимая проверка последней доработки:** fenced-сниппет автоматически извлечён из текущего MIGRATION.md и вставлен в вызываемую функцию reviewer scratch. `flutter analyze --no-pub fixed_snippet_test.dart` — exit 0, No issues found. `flutter test fixed_snippet_test.dart --reporter expanded` — exit 0, 2/2 PASS. Проверены I420 4×4 с padding `[8,4,4]`, I420 6×6 и I420 4×4 с rowStride `[12,6,6]` / pixelStride `[2,2,2]`; размеры, высоты плоскостей, strides и длины buffers сохранены. Источник предварительно заполнен byte 7: результат полностью zero-filled, источник сохранил byte 7. Packed-контроль удаляет padding/gaps как ожидается.
+- **Независимый dry-run:** текст MIGRATION.md в чистом export `e0d23ee` совпадает с текущим после нормализации CRLF; `flutter pub publish --dry-run` — exit 0, 0 warnings / 1 version hint; MIGRATION.md в публикуемом списке. `git diff --check 8bab4a7..HEAD` — PASS.
+- **Ранее принятые доказательства сохраняют силу:** анализ расширенной старой и новой API-фикстуры, негативный контроль Verify, defaults blur, swapNv и ссылки README/CHANGELOG независимо проверены в предыдущем раунде. После него вне карточки изменён только рецепт blank-image; неизменённые проверки повторно не запускались.
+- **Логи:** `C:/Users/Oleg-T/AppData/Local/Temp/fix9-review-73e5cfcec9ec4fce8607c14d84ba7680/fixed_snippet_test.dart`, `review3-independent-analyze.log`, `review3-independent-test.log`; publish — `C:/Users/Oleg-T/AppData/Local/Temp/fix9-publish-run-1004-r3/review3-independent-publish.log`. Процессы завершены. Probe none; делегирование не выполнялось согласно бюджету Engineer 0. Посторонние изменения дерева не проверялись и не менялись.
