@@ -26,17 +26,22 @@ void main() {
     }
     if (changedFiles.isNotEmpty) {
       await _run('git', ['-C', worktree.path, 'add', ...changedFiles]);
-      await _run('git', [
-        '-C',
-        worktree.path,
-        '-c',
-        'user.name=RA-25 test',
-        '-c',
-        'user.email=ra25-test@example.invalid',
-        'commit',
-        '-m',
-        'Validated RA-25 script fixture',
-      ]);
+      final stagedDiff = await Process.run('git', ['-C', worktree.path, 'diff', '--cached', '--quiet']);
+      if (stagedDiff.exitCode == 1) {
+        await _run('git', [
+          '-C',
+          worktree.path,
+          '-c',
+          'user.name=RA-25 test',
+          '-c',
+          'user.email=ra25-test@example.invalid',
+          'commit',
+          '-m',
+          'Validated RA-25 script fixture',
+        ]);
+      } else if (stagedDiff.exitCode != 0) {
+        throw StateError('Unable to inspect staged RA-25 fixture changes: ${stagedDiff.stderr}');
+      }
     }
     gitSha = (await _run('git', ['-C', worktree.path, 'rev-parse', 'HEAD'])).stdout.toString().trim();
   });
