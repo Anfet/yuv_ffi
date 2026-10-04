@@ -1,5 +1,5 @@
 # FIX 1 — README: точный статус Web и платформ, версия 0.5.1
-**Status:** REVIEW · **Tier:** T3, Reviewer T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3 (`src/CMakeLists.txt` — только номер версии; проба — общая для пула `WASM`)
+**Status:** ACCEPTED · **Tier:** T3, Reviewer T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3 (`src/CMakeLists.txt` — только номер версии; проба — общая для пула `WASM`)
 
 **Base SHA:** `6986feb295e4b1ebbdc2139313044282d5b0daa5` (`dev` на старте пула `WASM`)
 
@@ -66,3 +66,11 @@ feature-complete with native backends», строка Web в «Platform status»
 - Pixel 3 arm64/armv7 проверяет Reviewer на принятом SHA.
 
 #### Review
+
+**ACCEPTED** на `1866a2d155cc241b1e0b0af7f71e23398b2637e1` (диапазон `6986feb..1866a2d`), Reviewer, 05.10.2026.
+
+- Версия `0.5.1` одна в `pubspec.yaml`, `CHANGELOG.md`, `darwin/yuv_ffi.podspec`, `src/CMakeLists.txt` (оба места), README и `example/pubspec.lock`; верхняя запись CHANGELOG — `0.5.1`. `src/` — только номер версии.
+- README прочитан против `doc/web-parity.md`: Requirements, Platform status (Web, iOS release), Web backend и Safari/Firefox «not verified» согласованы. CI-строка «1188-case matrix on both builds» верна: `probe_web_test.dart` входит в `all_web_test.dart` (JavaScript) и в цели `--wasm`.
+- Правка Reviewer (`1866a2d`): вступление README говорило только о JavaScript-сборке и противоречило поддержке `--wasm` после WEB 4 — исправлено.
+- Pixel 3 (Android 12) на `1866a2d`: `tool/probe/run_release_android.ps1 -Abi arm64` и `-Abi armv7` — exit 0, smoke PASS, probe PASS, 1188/1188 в обоих ABI.
+- `pwsh -File tool/ci/web.ps1` на `1866a2d` (запуск из PowerShell) — exit 0, 9:20: JavaScript — 14 sources, 64 cases, reference 119, camera smoke; `--wasm` — `probe_web_test.dart`, `shader_probe_web_test.dart`, `all_web_test.dart` PASS (48 с). Первый запуск из Git Bash упал до тестов: дочерний `pwsh` не нашёл `git` — окружение, не код.

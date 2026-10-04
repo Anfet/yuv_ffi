@@ -1,5 +1,5 @@
 # WEB 4 — Flutter Web `--wasm`: исправить interop-слой Web backend
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** FIX 1 · **Probe:** web
+**Status:** ACCEPTED · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** FIX 1 · **Probe:** web
 
 **Base SHA:** — (база пула `WASM` — в FIX 1)
 
@@ -102,3 +102,12 @@ Web backend в сборке `--wasm` в Chrome дают те же результ
 - Linux scope check на `b7ce1f8` — PASS: Debug/Release CTest 11/11, native packaging smoke, Linux release build, app-runtime smoke и все четыре `_native_test.dart` targets.
 
 #### Review
+
+**ACCEPTED** на `1866a2d155cc241b1e0b0af7f71e23398b2637e1` (диапазон `6986feb..1866a2d`), Reviewer, 05.10.2026.
+
+- Код: A1 выполнен как в решении — `_fromJs` без `T.toString()`, примитивы для `Object`/`JSAny` через `dartify()`, несовпадение типа — `StateError`; `_asJsObject` через `isA<JSObject>()`; `ccall` — `callMethod<num>`; `HEAPU8` — `JSUint8Array.toDart` с перечитыванием на каждом доступе. Вызовы прослойки проверены все: `callMethod<Object>`/`promiseToFuture<Object>` (загрузчик), `<num>`, `<void>`, `<JSUint8Array>`, `getProperty` без типа (factory, `dynamic` — поведение не изменилось). `src/`, `assets/wasm/**`, публичный API не тронуты; `web.ps1` подтвердил, что пересборка WASM даёт те же артефакты.
+- `flutter analyze` изменённых Web-файлов и загрузчика — без замечаний; `dart format --line-length 150` — без изменений.
+- Правка Reviewer (`1866a2d`): `doc/web-parity.md` — раздел «Current Flutter-WASM verification» перенесён за пояснения к таблице инвентаря (разрывал таблицу и её текст); из документа убрано время прогона (шаг 6: время — только в отчёт).
+- Pixel 3 (Android 12) на `1866a2d`: `tool/probe/run_release_android.ps1 -Abi arm64` и `-Abi armv7` — exit 0, smoke PASS, probe PASS, 1188/1188 в обоих ABI.
+- `pwsh -File tool/ci/web.ps1` на `1866a2d` (запуск из PowerShell) — exit 0, 9:20: JavaScript — 14 sources, 64 cases, reference 119, camera smoke; `--wasm` — `probe_web_test.dart`, `shader_probe_web_test.dart`, `all_web_test.dart` PASS (48 с). Первый запуск из Git Bash упал до тестов: дочерний `pwsh` не нашёл `git` — окружение, не код.
+- Не блокирует: (1) отчёт без SHA/exit code отдельных прогонов шага 4 и без времени пробы 1188 в обеих сборках (шаг 6); (2) при не-числовом результате `ccall` ошибка больше не называет символ — только «Expected num…»; (3) `getProperty<JSUint8Array>` опирается на `is`-проверку JS-типа после `dartify()` (lint подавлен на файл) — работает в обоих компиляторах, подтверждено пробами, но хрупко при смене SDK.
