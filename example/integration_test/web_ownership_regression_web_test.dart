@@ -102,13 +102,14 @@ void main() {
     }
     final geometry = YuvFrameGeometry(
       sourceSize: source.size,
-      viewSize: const ui.Size(3, 5),
+      viewSize: const ui.Size(1, 5),
       orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90, mirrored: true),
+      fit: YuvFrameFit.cover,
     );
     final actual = geometry.apply(source);
-    final expected = source.rotated(YuvImageRotation.rotation90)..applyFlipHorizontal();
-    expect(actual.width, 3);
-    expect(actual.height, 5);
+    final expected = source.cropped(geometry.visibleSourceRect).rotated(YuvImageRotation.rotation90)..applyFlipHorizontal();
+    expect(actual.width, expected.width);
+    expect(actual.height, expected.height);
     expect(actual.toBytes(), orderedEquals(expected.toBytes()));
   });
 

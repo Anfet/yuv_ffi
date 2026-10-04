@@ -91,6 +91,24 @@ void main() {
     expect(source.toBgraBytes(), sourceBefore);
   });
 
+  test('odd source crops, rotates, and mirrors with cover geometry', () async {
+    await YuvFfi.initialize();
+    final source = YuvImage.bgra(5, 3)..applyRgbaBytes(_uniqueRgba(5, 3));
+    final geometry = YuvFrameGeometry(
+      sourceSize: source.size,
+      viewSize: const Size(1, 5),
+      orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90, mirrored: true),
+      fit: YuvFrameFit.cover,
+    );
+
+    final actual = geometry.apply(source);
+    final expected = source.cropped(geometry.visibleSourceRect).rotated(YuvImageRotation.rotation90)..applyFlipHorizontal();
+
+    expect(actual.toBgraBytes(), expected.toBgraBytes());
+    expect(source.width, 5);
+    expect(source.height, 3);
+  });
+
   test('apply equals the visible Canvas pixels for every orientation and supported source format', () async {
     await YuvFfi.initialize();
     for (final (format, size) in <(YuvPixelFormat, Size)>[(YuvPixelFormat.bgra8888, const Size(3, 5)), (YuvPixelFormat.i420, const Size(4, 6))]) {
