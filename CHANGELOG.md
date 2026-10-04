@@ -1,5 +1,8 @@
 ## 0.5.0
 
+This is the next available pub.dev release after 0.2.4. Version 0.4.0 was
+published and later retracted; its changes are included in this upgrade path.
+
 ### Breaking changes
 
 - Raised the minimum supported SDK to Dart `^3.12.0` / Flutter `>=3.44.0`.
@@ -13,7 +16,6 @@
 
 - Added a packed-plane API and frame-presentation widgets, rebuilt the Web
   JS/WASM assets, and updated the package and example documentation.
-- Aligned the example lockfile's local package version with 0.5.0.
 - `YuvFrameRenderer` renders I420 and NV12 through the shader on Web too:
   CanvasKit premultiplies sampled colors, so Web packs three plane bytes per
   texel and keeps alpha opaque.
@@ -60,7 +62,6 @@
   later source mutation cannot change the queued frame. A provider whose image
   changed after it was created throws `StateError` on the affected load; create
   a new provider for the changed image.
-- Rebuilt the Web JS/WASM assets.
 - The Web WASM loader now uses `package:web` instead of the deprecated
   `dart:html`; `web` is a new package dependency.
 - Added Swift Package Manager support for iOS and macOS. CocoaPods remains
@@ -88,16 +89,17 @@
 - Flutter Web is supported through the JavaScript build; `flutter build web
   --wasm` is unsupported. Release WASM builds require Safari 16.4 or later.
 
-### Moving from a 0.4.0 lockfile
+### Updating from 0.2.4 or a 0.4.0 lockfile
 
-- Update the dependency constraint to `yuv_ffi: ^0.5.0`, then run
-  `flutter pub upgrade yuv_ffi` to resolve 0.5.0 and commit the resulting
-  lockfile for an application package.
+- Version 0.5.0 is the next available pub.dev release after 0.2.4; 0.4.0 was
+  published and later retracted. Set the dependency constraint to
+  `yuv_ffi: ^0.5.0`, run `flutter pub upgrade yuv_ffi`, and follow the README's
+  "Migrating to 0.5.0" table and the 0.4.0 and 0.5.0 breaking changes below.
+- This also applies when an application's lockfile still resolves 0.4.0.
 
-## 0.4.0
+## 0.4.0 (retracted)
 
-First published release after `0.2.4`. Implemented against the 0.4.0 design.
-See the README's "Migrating from `0.2.4`" section for a full method-by-method mapping.
+This version was retracted on pub.dev and replaced by 0.5.0.
 
 ### Breaking changes
 
