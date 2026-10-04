@@ -1,5 +1,5 @@
 # WEB 2 — Web: оценка паритета WASM с native
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Codex · **Depends On:** — · **Probe:** windows
+**Status:** ACCEPTED · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** windows
 **Base SHA:** `8c3d88d1c6256a6f3e10f2e2db4e09d9f571c068`
 
 #### Goal
@@ -99,3 +99,7 @@ Web — частичный WASM-бэкенд (README): набор операци
 3. В отчёте не сказано, что `applyPatch` (`lib/src/yuv/shared/yuv_patch.dart`) и `YuvFrameGeometry.apply` — общий Dart-код поверх операций, уже покрытых golden-пробой на нечётных размерах (3×5, 33×17, 127×255) во всех форматах и раскладках. Это главное основание низкого риска расхождения по этим путям — записать его в `doc/web-parity.md`.
 4. Новые проверки вставки и геометрии влиты в существующий `testWidgets('conversions and results own independent WASM buffers')` (`59bab3b`), чтобы не менять базу 63 случая в `tool/ci/web.ps1`. Тесты не подгоняются под гейт: вынести в отдельный `testWidgets` и обновить базу (`web_ownership_regression_web_test.dart` = 4, итог 64, строка в итоговом выводе).
 5. Validation требует команды: для `--wasm` нет точной команды сборки и запуска (через `drive.sh`, не прямой `flutter drive`) и фрагмента лога. Добавить в отчёт.
+
+**ACCEPTED** на `0479e1e` (04.10.2026; реализация `bc79360`). Замечания 1–5 закрыты: geometry 5×3 с явным visible rect и фиксированными байтами I420/BGRA — один и тот же случай на native и Web; Web-вставка проверяется побайтово внутри и у края, плюс атомарный отказ I420 на нечётной координате; итоговая таблица знаменателей (42 / 7 / 4) и довод об общем Dart-коде — в `doc/web-parity.md`; отдельный `testWidgets`, база `web.ps1` 64; команда и лог `--wasm` записаны. Независимо: VM-срез `PROBE_OPS=r90,flipH,crop` — `cases=162/1188`, PASS; тот же срез `probe_web_test.dart` в Chrome через `drive.ps1` — PASS; `yuv_image_patch_test.dart` + `yuv_frame_geometry_test.dart` — 24/24; `web_ownership_regression_web_test.dart` в Chrome — PASS (4 `testWidgets`). Полные `windows.ps1`/`web.ps1` и `--wasm` не повторялись — по отчёту Executor.
+
+Не блокирует: байтовый geometry-случай берёт полный visible rect, поэтому crop через `YuvFrameGeometry` на Web побайтово не проверен; строка `doc/web-parity.md` «(crop, orientation, mirror) … Exact output bytes match» шире фактической проверки. Риск низкий: `visibleSourceRect` — общий Dart-код с нативными тестами, crop на нечётных размерах и смещениях в golden-пробе. Уточнить формулировку при следующей правке документа.

@@ -20,7 +20,7 @@
 
 ## Текущее состояние
 
-- **Сейчас:** задачи этапа 6 влиты в `dev` (`05799fe`). CI 1 принят (`ad8a214`). Этап 6 закрыт: `ci/all/STAGE6` зелёный; единственный отказ — Example на Flutter 3.41, исключённом D-24, — убран из матрицы (`1a64f8b`). WEB 5 принята (`438e394`): шейдер на Web включён. APPLE 1 принята Reviewer на `2765eaf` и закрыта; WEB 2 после REWORK принята к ревью на `bc79360`: сопоставимые byte-level проверки, знаменатели и `--wasm` runtime ограничение записаны; Windows и Web CI прошли.
+- **Сейчас:** задачи этапа 6 влиты в `dev` (`05799fe`). CI 1 принят (`ad8a214`). Этап 6 закрыт: `ci/all/STAGE6` зелёный; единственный отказ — Example на Flutter 3.41, исключённом D-24, — убран из матрицы (`1a64f8b`). WEB 5 принята (`438e394`): шейдер на Web включён. APPLE 1 принята Reviewer на `2765eaf` и закрыта; **WEB 2 принята Reviewer** на `0479e1e` (база `8c3d88d`); Orchestrator закрывает карточку и этап 7.
 - **Очередь пулов.** Worktree нет (D-22), поэтому одновременно идёт один пул, прямо в `dev` (D-25): этап 7 (WEB 2) → этап 8.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
@@ -42,7 +42,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [WEB 2](tasks/0.5.0/WEB-2.md) | REVIEW | T2 / T1 | Codex | — | **Web: оценка паритета WASM с native.** Переделка на `bc79360`: byte-level geometry/patch cases, таблица статусов со знаменателями, Web baseline 64; Windows и Web CI PASS. `--wasm` runtime падает с `StateError`; Safari/Firefox непроверены. |
+| [WEB 2](tasks/0.5.0/WEB-2.md) | ACCEPTED | T2 / T1 | — | — | **Web: оценка паритета WASM с native.** Принята Reviewer на `0479e1e`: расхождений в выборке нет, `--wasm` и Safari/Firefox — ограничения в [`doc/web-parity.md`](doc/web-parity.md); ожидает закрытия Orchestrator. |
 
 ## Открытые вопросы
 
