@@ -9,11 +9,11 @@ WASM backend.
 
 ```yaml
 dependencies:
-  yuv_ffi: 0.5.0-dev.1
+  yuv_ffi: 0.5.0
 ```
 
-The compatibility API was removed in 0.5.0-dev.1; see the migration table
-below when upgrading from 0.4.0 or 0.4.2.
+The compatibility API was removed in 0.5.0; see the migration table below
+when upgrading from 0.4.0.
 
 ## Requirements
 
@@ -26,7 +26,7 @@ below when upgrading from 0.4.0 or 0.4.2.
 | macOS | 10.15 or later |
 | Windows | Native FFI backend |
 | Linux | Native FFI backend |
-| Web | JavaScript Flutter build; Safari 16.4 or later for release WASM SIMD |
+| Web | JavaScript Flutter build; tested in Chrome |
 
 On iOS and macOS the plugin builds with either Swift Package Manager (the
 default in Flutter 3.44 and later) or CocoaPods. Nothing needs to be configured
@@ -34,6 +34,8 @@ in your app. The Apple sources live in `darwin/`; the C sources stay in `src/`.
 
 The Web loader currently relies on browser JavaScript APIs, so
 `flutter build web --wasm` is unsupported. Use `flutter build web`.
+Safari and Firefox have not been tested. Safari 16.4 or later is a technical
+minimum for release WASM SIMD, not a tested compatibility claim for this plugin.
 
 ## Quick start and initialization
 
@@ -244,7 +246,7 @@ lifecycle apply.
 ## Migrating to 0.5.0
 
 The compatibility declarations from 0.2.4 and 0.4.0 were removed in 0.5.0.
-Use the current API shown below when upgrading from 0.4.0 or 0.4.2.
+Use the current API shown below when upgrading from 0.4.0.
 
 | Removed API | Current API |
 | --- | --- |

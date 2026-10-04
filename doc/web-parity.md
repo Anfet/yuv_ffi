@@ -70,7 +70,7 @@ got ERR StateError
 flutter drive failed for integration_test/probe_web_test.dart on web-server with exit code 1
 ```
 
-README currently says to use the JavaScript build and describes `--wasm` as unsupported. The runtime failure confirms this limitation, so the README remains unchanged.
+README directs users to the JavaScript build and marks `--wasm` as unsupported at runtime, consistent with these results; FIX 2 also distinguishes the tested Chrome target from untested Safari and Firefox.
 
 ## Release recommendations
 
