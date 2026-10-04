@@ -1,4 +1,4 @@
-# Кадры веб-камеры в исходном формате (WEB 4)
+# Кадры веб-камеры в исходном формате (исследование цикла 0.5.0)
 
 Вопрос: стоит ли Web-источнику камеры example (`example/lib/camera/impl/yuv_camera_frame_source_web.dart`)
 брать кадр через `VideoFrame.copyTo()` **без** `format` — в исходном YUV — вместо нынешнего `format: 'BGRA'`

@@ -1,32 +1,36 @@
-# FIX 1 — README: точный статус Web и платформ (патч 0.5.1)
-**Status:** TODO · **Tier:** T3, Reviewer T2 · **Owner:** — · **Depends On:** — · **Probe:** none
+# FIX 1 — README: точный статус Web и платформ, версия 0.5.1
+**Status:** TODO · **Tier:** T3, Reviewer T2 · **Owner:** — · **Depends On:** — · **Probe:** windows+pixel3 (`src/CMakeLists.txt` — только номер версии; проба — общая для пула `WASM`)
 
-**Base SHA:** —
+**Base SHA:** — (Executor записывает SHA `dev` на старте пула `WASM`)
 
 #### Goal
 
 Опубликованный README 0.5.0 занижает поддержку Web: раздел «Web backend» пишет «work in progress» и «not
 feature-complete with native backends», строка Web в «Platform status» — «Partial WASM backend» без Chrome. По
 `doc/web-parity.md` на JavaScript-сборке все 42 пары операция/формат ведут себя как native (40 совпадают, 2 пары
-`chromaSwap` не поддерживаются и на native); не поддержан только `--wasm`. README на pub.dev меняется только новой
-версией — выпустить 0.5.1 с исправленной документацией. Код не меняется.
+`chromaSwap` не поддерживаются и на native). Привести README к фактам и поднять версию до 0.5.1. Статус `--wasm` здесь
+не меняется — его по факту обновляет WEB 4.
 
 #### Architect Decision
 
 1. **README.md:**
-   - вступление (`Web uses a partial WASM backend`) — Web использует WASM backend через JavaScript-сборку Flutter;
+   - вступление: вместо «Web uses a partial WASM backend» — Web использует WASM backend через JavaScript-сборку Flutter;
+   - «Installation»: `yuv_ffi: 0.5.1`; абзац про 0.2.4/0.4.0 сохранить;
    - «Platform status», строка Web: Support — `WASM backend (JavaScript build); operation parity with native`,
      Checked in CI — `Package checks, browser tests, and the 1188-case correctness matrix`, Checked manually — `Chrome`;
-   - раздел «Web backend» переписать по фактам `doc/web-parity.md`: операции совпадают с native на JavaScript-сборке
-     (проверено в Chrome); `flutter build web --wasm` собирается, но операции падают при выполнении — пока не
-     поддерживается; Safari и Firefox — not verified (D-27). Совет про `YuvCapabilities` сохранить;
-   - «Safari and Firefox have not been tested» → «not verified» (D-27);
+   - раздел «Web backend» переписать по `doc/web-parity.md`: на JavaScript-сборке операции совпадают с native
+     (проверено в Chrome; `chromaSwap` — только NV12, как на native); `flutter build web --wasm` собирается, но
+     операции падают при выполнении — пока не поддерживается; Safari и Firefox — not verified (D-27). Совет про
+     `YuvCapabilities` сохранить;
+   - «Safari and Firefox have not been tested» → «have not been verified» (D-27);
    - строка iOS в «Platform status»: ручная проверка на iPhone — release-сборка (APPLE 1), не debug.
 2. **Версия 0.5.1** в четырёх файлах D-14 (`pubspec.yaml`, `CHANGELOG.md`, `darwin/yuv_ffi.podspec`,
-   `src/CMakeLists.txt`) и в `example/pubspec.lock` (через `flutter pub get` в `example/`). В README — `yuv_ffi: 0.5.1`.
-3. **CHANGELOG.md:** новая верхняя запись `## 0.5.1` — `Documentation: clarified Web support (operation parity with
-   native on the JavaScript build, verified in Chrome; --wasm not supported yet) and the platform status table.`
-4. `doc/web-parity.md` не меняется: он уже точен.
+   `src/CMakeLists.txt` — `project(... VERSION 0.5.1 ...)` и `YUV_FFI_PACKAGE_VERSION`) и в `example/pubspec.lock`
+   (`flutter pub get` в `example/`; прочие изменения lockfile откатить).
+3. **CHANGELOG.md:** верхняя запись `## 0.5.1`, раздел `### Documentation`: `Clarified Web support: operations match
+   native on the JavaScript build (verified in Chrome); corrected the platform status table.` WEB 4 дописывает в ту же
+   запись.
+4. `doc/web-parity.md` не меняется.
 
 #### Scope
 
@@ -36,22 +40,20 @@ feature-complete with native backends», строка Web в «Platform status»
 #### Constraints
 
 - `lib/`, `src/` (кроме номера версии), `example/lib/`, `assets/` не меняются.
-- Не обещать больше, чем проверено: только Chrome, только JavaScript-сборка.
-- Тег и публикация — Engineer.
+- Не обещать больше проверенного: только Chrome, только JavaScript-сборка.
 
 #### Definition of Done
 
-- README и CHANGELOG описывают Web по `doc/web-parity.md`; противоречий между «Requirements», «Platform status» и
-  «Web backend» нет.
-- Версия `0.5.1` одинакова в четырёх файлах D-14, README и `example/pubspec.lock`.
-- На SHA кандидата: `flutter pub publish --dry-run` — 0 warnings; `pana --exit-code-threshold 0 .` на Mac — 160/160;
-  `ci/all/0.5.1` — 9/9. Дерево чистое.
+- «Requirements», «Platform status» и «Web backend» в README не противоречат друг другу и `doc/web-parity.md`.
+- Версия `0.5.1` одинакова в четырёх файлах D-14, README и `example/pubspec.lock`; верхняя запись CHANGELOG — `0.5.1`.
 
 #### Validation
 
-- Executor: `git diff <base>..<SHA> --stat` — только файлы Scope; dry-run, pana и CI на одном SHA; ссылки на run в
-  отчёте. Pixel 3 и локальные платформенные скрипты не нужны: код не меняется (решение Engineer 05.10.2026).
-- Reviewer: прочитать новый раздел Web против `doc/web-parity.md`, сверить версии, повторить dry-run.
+- Executor: `rg -n "0\.5\.[01]" pubspec.yaml CHANGELOG.md darwin/yuv_ffi.podspec src/CMakeLists.txt README.md` и
+  версия `yuv_ffi` в `example/pubspec.lock`; `git diff <base> --stat` — только файлы Scope. Проба `windows` —
+  `pwsh -File tool/ci/windows.ps1` один раз для пула после CI 1.
+- Reviewer: прочитать README против `doc/web-parity.md`; Pixel 3 arm64 и armv7 — `tool/probe/run_release_android.ps1`
+  один раз на принятом SHA пула.
 
 #### Executor Report
 
