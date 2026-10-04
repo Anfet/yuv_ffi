@@ -3,8 +3,8 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  camera_desktop
   file_selector_windows
-  flutter_webrtc
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

@@ -1,0 +1,36 @@
+# Keep package archives free of local tooling, generated output and internal
+# engineering notes. Pub uses this file as the package-specific ignore list.
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+*.iml
+*.ipr
+*.iws
+.idea/
+/pubspec.lock
+/AGENTS.md
+**/doc/api/
+.dart_tool/
+build/
+/.worktrees/
+yuv_ffi.dll
+.vscode/
+_tmp**
+/todo.md
+/.memory/
+/COMPLETION.md
+/dart_test.yaml
+/tasks/
+/test/
+/test_native/
+/tool/
+/doc/
+/CMakeLists.txt
+/ffigen.yaml

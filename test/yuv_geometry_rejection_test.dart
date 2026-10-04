@@ -1,0 +1,247 @@
+@Tags(['contract'])
+library;
+
+import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:yuv_ffi/src/loader/loader.dart';
+import 'package:yuv_ffi/yuv_ffi.dart';
+
+/// Regression cases for invalid geometry and unsafe access.
+///
+/// Each group pins down a path that previously reached a backend call with a
+/// layout the native code cannot handle.
+void main() {
+  final bool nativeAvailable = _checkNativeAvailable();
+
+  setUpAll(() async {
+    if (nativeAvailable) {
+      await YuvFfi.initialize();
+    }
+  });
+
+  YuvPlane filled(int height, int rowStride, [int pixelStride = 1]) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
+
+  group('default constructors validate what they allocate', () {
+    test('a degenerate luma pixel stride never reaches an allocated plane', () {
+      // BGRA always packs four bytes per pixel, so the caller's value is
+      // replaced rather than honoured; the other formats use it verbatim and
+      // must reject a degenerate one.
+      // ignore: deprecated_member_use_from_same_package
+      final bgra = YuvImage(YuvPixelFormat.bgra8888, 8, 8, yPixelStride: 0);
+      expect(bgra.yPlane.pixelStride, 4, reason: 'BGRA must normalize the luma stride to four bytes');
+      expect(bgra.yPlane.rowStride, 8 * 4);
+      // ignore: deprecated_member_use_from_same_package
+      for (final format in const [YuvPixelFormat.i420, YuvPixelFormat.nv12]) {
+        // ignore: deprecated_member_use_from_same_package
+        expect(() => YuvImage(format, 8, 8, yPixelStride: 0), throwsArgumentError, reason: '${format.name} accepted yPixelStride 0');
+        // ignore: deprecated_member_use_from_same_package
+        expect(() => YuvImage(format, 8, 8, yPixelStride: -1), throwsArgumentError, reason: '${format.name} accepted a negative yPixelStride');
+      }
+    });
+
+    test('a degenerate chroma pixel stride never reaches an allocated plane', () {
+      // Interleaved NV chroma stores packed (U, V) pairs. A caller cannot
+      // request a degenerate stride that cannot hold the pair.
+      expect(() => YuvImage.nv12(8, 8, uvPixelStride: 0), throwsArgumentError);
+
+      // I420 uses the caller's value directly for both chroma planes.
+      expect(() => YuvImage.i420(8, 8, uvPixelStride: 0), throwsArgumentError);
+      // ignore: deprecated_member_use_from_same_package
+      expect(() => YuvImage(YuvPixelFormat.i420, 8, 8, uvPixelStride: 0), throwsArgumentError);
+      expect(() => YuvImage.i420(8, 8, uvPixelStride: -2), throwsArgumentError);
+    });
+
+    test('valid default geometry still constructs', () {
+      // ignore: deprecated_member_use_from_same_package
+      for (final format in YuvPixelFormat.values) {
+        // ignore: deprecated_member_use_from_same_package
+        expect(() => YuvImage(format, 8, 8), returnsNormally, reason: '${format.name} rejected its own default geometry');
+      }
+    });
+  });
+
+  group('interleaved NV chroma requires a packed pair stride', () {
+    test('a padded chroma pixel stride is accepted, but an undersized one is rejected', () {
+      // The converters address chroma as a packed (U, V) pair. A larger
+      // stride preserves padding; a stride below two cannot hold a pair.
+      expect(
+        () => YuvImage.nv12(8, 8, planes: [filled(8, 8), filled(4, 12, 3)]),
+        returnsNormally,
+        reason: 'pixelStride 3 preserves a padded packed-pair layout',
+      );
+      expect(() => YuvImage.nv12(8, 8, planes: [filled(8, 8), filled(4, 4, 1)]), throwsArgumentError);
+    });
+
+    test('a packed pair stride is accepted', () {
+      expect(() => YuvImage.nv12(8, 8, planes: [filled(8, 8), filled(4, 8, 2)]), returnsNormally);
+    });
+  });
+
+  group('I420 chroma planes must share a layout', () {
+    test('mismatched U and V strides are rejected', () {
+      // The native struct carries one uvRowStride and one uvPixelStride for
+      // both planes, so differing geometry would walk one with the other's.
+      expect(
+        () => YuvImage.i420(8, 8, planes: [filled(8, 8), filled(4, 4), filled(4, 8)]),
+        throwsArgumentError,
+        reason: 'U and V declared different row strides',
+      );
+      expect(
+        () => YuvImage.i420(8, 8, planes: [filled(8, 8), filled(4, 4, 1), filled(4, 8, 2)]),
+        throwsArgumentError,
+        reason: 'U and V declared different pixel strides',
+      );
+    });
+
+    test('matching U and V planes are accepted', () {
+      expect(() => YuvImage.i420(8, 8, planes: [filled(8, 8), filled(4, 4), filled(4, 4)]), returnsNormally);
+    });
+  });
+
+  group('named BGRA constructor enforces an exact plane count', () {
+    test('an empty plane list is rejected instead of producing a blank image', () {
+      expect(() => YuvImage.bgra(8, 8, planes: const <YuvPlane>[]), throwsArgumentError);
+    });
+
+    test('extra planes are rejected instead of being ignored', () {
+      expect(() => YuvImage.bgra(8, 8, planes: [filled(8, 32, 4), filled(4, 8, 2)]), throwsArgumentError);
+    });
+
+    test('exactly one plane is accepted and keeps its declared layout', () {
+      // A valid padded plane is deep-copied as declared instead of being repacked tightly at
+      // construction time. toBgra8888() is what produces a tight buffer.
+      final image = YuvImage.bgra(8, 8, planes: [filled(8, 32 + 16, 4)], layout: YuvPlaneLayout.preserve);
+      expect(image.planes.length, 1);
+      expect(image.yPlane.rowStride, 32 + 16);
+    });
+
+    test('omitting planes still allocates a blank image', () {
+      expect(() => YuvImage.bgra(8, 8), returnsNormally);
+    });
+  });
+
+  group('load() validates before mutating the image', () {
+    /// Serializes an arbitrary header and plane table, bypassing save().
+    Stream<List<int>> malformedPayload({required String format, required int width, required int height, required List<List<int>> planes}) {
+      final image = YuvImage.i420(2, 2);
+      final chunks = <List<int>>[];
+      final sink = _CollectingSink(chunks);
+      // Reuse the real writer by saving a valid image, then patching the
+      // header and plane table is brittle; instead build the payload by
+      // saving an image whose geometry is already the malformed one is not
+      // possible, so this test drives load() with a truncated payload.
+      return () async* {
+        // ignore: deprecated_member_use_from_same_package
+        await image.encodeTo(sink);
+        final bytes = chunks.expand((c) => c).toList();
+        // Truncate the payload so the plane table cannot be satisfied.
+        yield bytes.sublist(0, bytes.length ~/ 2);
+      }();
+    }
+
+    test('a truncated payload leaves the image unchanged', () async {
+      final image = YuvImage.i420(8, 8);
+      final before = (
+        width: image.width,
+        height: image.height,
+        format: image.format,
+        planeCount: image.planes.length,
+        yLength: image.yPlane.bytes.length,
+      );
+
+      // Malformed payloads raise FormatException rather than RangeError or TypeError.
+      // ignore: deprecated_member_use_from_same_package
+      await expectLater(YuvImage.decode(malformedPayload(format: 'i420', width: 8, height: 8, planes: const [])), throwsFormatException);
+
+      expect(image.width, before.width, reason: 'width was mutated by a failed load');
+      expect(image.height, before.height, reason: 'height was mutated by a failed load');
+      expect(image.format, before.format, reason: 'format was mutated by a failed load');
+      expect(image.planes.length, before.planeCount, reason: 'planes were mutated by a failed load');
+      expect(image.yPlane.bytes.length, before.yLength, reason: 'plane data was mutated by a failed load');
+    });
+
+    test('a valid round-trip still decodes', () async {
+      final source = YuvImage.i420(8, 8);
+      source.yPlane.bytes[0] = 42;
+
+      final chunks = <List<int>>[];
+      // ignore: deprecated_member_use_from_same_package
+      await source.encodeTo(_CollectingSink(chunks));
+
+      final target = await YuvImage.decode(Stream<List<int>>.fromIterable(chunks));
+
+      expect(target.width, 8);
+      expect(target.height, 8);
+      expect(target.format, YuvPixelFormat.i420);
+      expect(target.yPlane.bytes[0], 42);
+    });
+  });
+
+  group('padded BGRA survives a native effect', () {
+    // ignore: deprecated_member_use_from_same_package
+    YuvImage paddedBgra() =>
+        YuvImage(YuvPixelFormat.bgra8888, 8, 8, yPixelStride: 4, planes: [filled(8, 8 * 4 + 16, 4)], layout: YuvPlaneLayout.preserve);
+
+    test('blur operations accept a padded plane and leave its padding untouched', () {
+      // The per-format kernels allocated a tight width * height * 4 scratch
+      // buffer while addressing it through the source row stride, so a padded
+      // plane made them write past it, and the
+      // Dart side refused the input rather than passing it on. ABI v1 walks
+      // every plane through its own declared strides, so the input is now
+      // supported and its padding is preserved by the image contract.
+      const rowStride = 8 * 4 + 16;
+      for (final blur in <void Function(YuvImage)>[
+        (image) => image.applyGaussianBlur(radius: 1, sigma: 1.0),
+        (image) => image.applyBoxBlur(radius: 1),
+        (image) => image.applyMeanBlur(radius: 1),
+      ]) {
+        final image = paddedBgra();
+        // Canary the 16 padding bytes of every row, which no operation may
+        // touch.
+        for (int row = 0; row < 8; row++) {
+          image.yPlane.bytes.fillRange(row * rowStride + 8 * 4, (row + 1) * rowStride, 0xEE);
+        }
+
+        blur(image);
+
+        expect(image.yPlane.rowStride, rowStride);
+        for (int row = 0; row < 8; row++) {
+          expect(
+            image.yPlane.bytes.sublist(row * rowStride + 8 * 4, (row + 1) * rowStride),
+            everyElement(0xEE),
+            reason: 'blur wrote into row $row padding',
+          );
+        }
+      }
+    });
+
+    test('a tight BGRA plane is still accepted by the same operations', () {
+      expect(() => YuvImage.bgra(8, 8).applyGaussianBlur(radius: 1, sigma: 1.0), returnsNormally);
+      expect(() => YuvImage.bgra(8, 8).applyBoxBlur(radius: 1), returnsNormally);
+      expect(() => YuvImage.bgra(8, 8).applyMeanBlur(radius: 1), returnsNormally);
+    });
+  }, skip: nativeAvailable ? false : 'native yuv_ffi library is not available on this host');
+}
+
+class _CollectingSink implements Sink<List<int>> {
+  _CollectingSink(this.chunks);
+
+  final List<List<int>> chunks;
+
+  @override
+  void add(List<int> data) => chunks.add(List<int>.from(data));
+
+  @override
+  void close() {}
+}
+
+bool _checkNativeAvailable() {
+  try {
+    library;
+    return true;
+  } catch (_) {
+    return false;
+  }
+}

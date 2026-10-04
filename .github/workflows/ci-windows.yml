@@ -1,0 +1,25 @@
+name: CI Windows
+
+concurrency:
+  group: ci-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    tags:
+      - "ci/all/**"
+      - "ci/windows/**"
+  workflow_dispatch:
+
+jobs:
+  windows-native-smoke:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Windows CI
+        shell: pwsh
+        run: ./tool/ci/windows.ps1

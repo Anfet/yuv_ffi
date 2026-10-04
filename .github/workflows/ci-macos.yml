@@ -1,0 +1,25 @@
+name: CI macOS
+
+concurrency:
+  group: ci-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    tags:
+      - "ci/all/**"
+      - "ci/macos/**"
+  workflow_dispatch:
+
+jobs:
+  macos-native-smoke:
+    runs-on: [self-hosted, macOS, X64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run macOS native checks
+        shell: bash
+        run: bash tool/ci/macos.sh

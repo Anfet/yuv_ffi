@@ -1,84 +1,181 @@
 name: CI
 
+concurrency:
+  group: ci-${{ github.ref }}-${{ inputs.jobs || 'full' }}
+  cancel-in-progress: true
+
 on:
   push:
-    branches: ["**"]
-  pull_request:
+    tags:
+      - "ci/all/**"
+      - "ci/linux/**"
   workflow_dispatch:
+    inputs:
+      jobs:
+        description: Job to run
+        required: true
+        type: choice
+        options:
+          - bindings
+          - linux
 
 jobs:
-  analyze-and-test-vm:
-    runs-on: ubuntu-latest
+  # YUV-26: proves ffigen.yaml's allowlist is host-independent. libclang's
+  # system headers differ between Windows and Linux, so a `functions.include`
+  # / `structs.include` pattern that is accidentally too broad (or too
+  # narrow) can generate identically on one host and diverge on the other
+  # without either host reporting an error. Regenerating from a clean
+  # checkout and diffing against the committed file is a stronger proof of
+  # host-independence than re-deriving the expected symbol set by hand.
+  bindings-regeneration:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'bindings' }}
+    runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.44.9'
 
-      - name: Flutter pub get
+      - name: Install libclang
+        shell: bash
+        run: |
+          xcode_developer="$(xcode-select -p)"
+          libclang="$xcode_developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib"
+          test -f "$libclang"
+          echo "FFIGEN_LIBCLANG_PATH=$libclang" >> "$GITHUB_ENV"
+
+      - name: Flutter pub get (root)
         run: flutter pub get
 
-      - name: Analyze
-        run: flutter analyze
+      - name: Regenerate bindings
+        run: flutter pub run ffigen --config ffigen.yaml
 
-      - name: Unit tests
-        run: flutter test
+      - name: Audit generated bindings against Dart usage
+        run: dart run tool/verify_bindings_audit.dart
 
-  wasm-web-smoke:
-    if: github.event_name == 'workflow_dispatch'
+      - name: Fail on any drift from the committed bindings
+        run: git diff --exit-code -- ffigen.yaml lib/src/functions/bindings/yuv_ffi_bingings.dart
+
+  # YUV-06: proves the package is loadable the way a real consumer loads it.
+  # Both jobs build from a clean checkout and then assert twice over: a VM
+  # smoke, which resolves the library by its installed name, and an app-runtime
+  # smoke through `flutter drive` against the built desktop application, which
+  # is the only place the loader's real per-platform branch runs. Neither suite
+  # skips when the library is missing — a skipped native run and a passing one
+  # used to look identical in the log, which is how broken Linux/macOS
+  # packaging stayed green.
+  linux-native-smoke:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.jobs == 'linux' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.44.9'
 
-      - name: Install Emscripten SDK
-        shell: bash
-        run: |
-          git clone https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
-          "$HOME/emsdk/emsdk" install latest
-          "$HOME/emsdk/emsdk" activate latest
-
-      - name: Build WASM artifacts
-        shell: bash
-        run: |
-          source "$HOME/emsdk/emsdk_env.sh"
-          emcc -v
-          sh ./tool/wasm/build_wasm.sh --profile release
-          test -f assets/wasm/yuv_ffi.js
-          test -f assets/wasm/yuv_ffi.wasm
-
-      - name: Flutter pub get
+      - name: Flutter pub get (root)
         run: flutter pub get
 
-      - name: Enable Flutter web
-        run: flutter config --enable-web
+      - name: Report sanitizer toolchain versions
+        run: |
+          clang --version
+          cmake --version
 
-      - name: Web parity gate (Chrome)
+      - name: Configure sanitizer tests (Debug)
+        run: |
+          cmake -S . -B "$RUNNER_TEMP/sanitizer-build" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=clang
+
+      - name: Build sanitizer tests (Debug)
+        run: cmake --build "$RUNNER_TEMP/sanitizer-build" --config Debug
+
+      - name: Run sanitizer tests (Debug)
+        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build" -C Debug --output-on-failure
+
+      - name: Configure sanitizer tests (Release)
+        run: |
+          cmake -S . -B "$RUNNER_TEMP/sanitizer-build-release" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=clang
+
+      - name: Build sanitizer tests (Release)
+        run: cmake --build "$RUNNER_TEMP/sanitizer-build-release" --config Release
+
+      - name: Run sanitizer tests (Release)
+        run: ctest --test-dir "$RUNNER_TEMP/sanitizer-build-release" -C Release --output-on-failure
+
+      - name: Report sanitizer case count
+        run: "$RUNNER_TEMP/sanitizer-build/test_native/abi_sanitizer_test"
+
+      # Installed name on the loader search path, never the CMake build tree:
+      # native/src/build/libyuv_ffi.so does not exist in a published package.
+      - name: Build and install native library
         shell: bash
         run: |
-          required=(
-            test/web/yuv_web_wasm_test.dart
-            test/web/wasm_parity_conversions_test.dart
-            test/web/wasm_parity_transforms_test.dart
-            test/web/wasm_parity_edge_cases_test.dart
-          )
+          cmake -S src -B "$RUNNER_TEMP/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native-build" --config Release
+          test -f "$RUNNER_TEMP/native-build/libyuv_ffi.so"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/native-build" >> "$GITHUB_ENV"
 
-          for f in "${required[@]}"; do
-            if [ ! -f "$f" ]; then
-              echo "Required web parity test is missing: $f"
-              exit 1
-            fi
+      - name: Packaging smoke
+        run: flutter test test/native_packaging_smoke_test.dart --reporter expanded
+
+      # The example app ships no linux/ runner directory, so the platform
+      # folder is scaffolded here rather than committed: `flutter config` only
+      # enables the toolchain, it does not create a missing platform.
+      #
+      # VIEW-01A: camera_desktop's linux/CMakeLists.txt does
+      # `pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-app-1.0
+      # gstreamer-video-1.0)`. libgstreamer1.0-dev provides the first .pc file;
+      # libgstreamer-plugins-base1.0-dev provides the app and video ones.
+      - name: Build example (linux desktop)
+        working-directory: example
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+          flutter config --enable-linux-desktop
+          # flutter create overwrites pubspec.lock with a template lock even
+          # with --no-pub; restore the committed one so Linux resolves the
+          # same versions as the other platforms.
+          flutter create --platforms=linux --no-pub .
+          git checkout -- pubspec.lock
+          flutter pub get
+          git diff --exit-code pubspec.lock
+          flutter build linux --release
+
+      # The VM smoke above resolves the library through LD_LIBRARY_PATH, which
+      # is not how an installed app finds it. This runs the same assertions
+      # inside the built application, where the plugin's own CMake install
+      # rules are what must place the .so next to the runner.
+      - name: App-runtime smoke (linux desktop)
+        shell: bash
+        run: |
+          xvfb-run -a bash tool/ci/drive.sh integration_test/native_app_runtime_smoke_test.dart linux
+
+      - name: Native correctness probes (linux desktop)
+        shell: bash
+        run: |
+          shopt -s nullglob
+          targets=(example/integration_test/*_native_test.dart)
+          if (( ${#targets[@]} == 0 )); then
+            echo 'No native integration-test targets were found.' >&2
+            exit 1
+          fi
+          for target_path in "${targets[@]}"; do
+            xvfb-run -a bash tool/ci/drive.sh "${target_path#example/}" linux
           done
 
-          for f in "${required[@]}"; do
-            echo "Running web test: $f"
-            xvfb-run -a flutter test -d chrome "$f"
-          done

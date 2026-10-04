@@ -30,7 +30,6 @@ sh ./tool/wasm/build_wasm.sh --emcc /opt/emsdk/upstream/emscripten/emcc
 Windows note:
 - Run via Git Bash or WSL.
 - `build_wasm.sh` auto-falls back to `emcc.bat`/`emcc.cmd` when needed.
-- Legacy PowerShell script (`build_wasm.ps1`) remains in repo, but shell script is the primary cross-platform path.
 
 ## Output Artifacts
 

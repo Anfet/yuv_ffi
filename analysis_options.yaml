@@ -6,7 +6,11 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - lib/src/functions/bindings/yuv_ffi_bingings.dart
+    - _tmp_*.dart
+
+linter:
+  rules:
+    - public_member_api_docs
 
 formatter:
   page_width: 150
-  line_length: 150

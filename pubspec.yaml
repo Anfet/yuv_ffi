@@ -1,13 +1,13 @@
 name: yuv_ffi
 description: "High-performance YUV/BGRA image processing for Flutter via native C/FFI."
-version: 0.2.3
+version: 0.5.0
 homepage: https://github.com/Anfet/yuv_ffi
 repository: https://github.com/Anfet/yuv_ffi
 issue_tracker: https://github.com/Anfet/yuv_ffi/issues
 
 environment:
-  sdk: ^3.5.0
-  flutter: '>=3.3.0'
+  sdk: ^3.12.0
+  flutter: '>=3.44.0'
 
 dependencies:
   flutter:
@@ -15,15 +15,17 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   plugin_platform_interface: ^2.1.8
-  ffi: ^2.1.3
-  js: ^0.7.1
+  ffi: ^2.2.0
+  web: ^1.1.1
 
 dev_dependencies:
-  ffigen: ^13.0.0
+  ffigen: ^21.0.0
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
-  build_runner: ^2.4.13
+  flutter_lints: ^6.0.0
+  build_runner: ^2.15.1
+  crypto: ^3.0.6
+  image: ^4.10.1
 
 flutter:
   plugin:
@@ -32,12 +34,14 @@ flutter:
         ffiPlugin: true
       ios:
         ffiPlugin: true
+        sharedDarwinSource: true
       windows:
         ffiPlugin: true
       linux:
         ffiPlugin: true
       macos:
         ffiPlugin: true
+        sharedDarwinSource: true
       web:
         pluginClass: YuvFfiWebPlugin
         fileName: yuv_ffi_web.dart
@@ -46,3 +50,5 @@ flutter:
   # directory by `tool/wasm/build_wasm.sh`.
   assets:
     - assets/wasm/
+  shaders:
+    - shaders/yuv_frame.frag

@@ -5,30 +5,70 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.5.0'
+  sdk: '>=3.11.0'
 
 
 dependencies:
   flutter:
     sdk: flutter
 
+  crypto: ^3.0.6
+
   yuv_ffi:
     path: ../
 
   cupertino_icons: ^1.0.8
-  material_design_icons_flutter: ^7.0.7296
   image_picker: ^1.1.2
   camera: ^0.11.0+2
-  flutter_webrtc: ^1.3.0
+  # Desktop camera for the preview: federated `camera_platform_interface`
+  # implementation for Linux/macOS/Windows with BGRA8888 image-stream frames.
+  camera_desktop: ^2.0.0
+  # The desktop preview and camera_desktop_smoke_main.dart subscribe to
+  # CameraPlatform.instance.onStreamedFrameAvailable directly, bypassing
+  # CameraController.startImageStream's Android/iOS-only assert on desktop.
+  camera_platform_interface: ^2.10.0
+  web: ^1.1.1
   google_mlkit_face_detection: ^0.13.1
-  leak_tracker: ^10.0.5
-  js: ^0.7.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Web parity runs here rather than under `flutter test --platform chrome`:
+  # that runner serves no asset bundle, so the WASM loader's asset path 404s.
+  # integration_test drives a real built app, where the bundle exists.
+  integration_test:
+    sdk: flutter
+
   flutter_lints: ^5.0.0
 
+  # The browser reference suite reuses the same pure-Dart oracle helper as
+  # the native suite (test/helpers/reference/
+  # test_pattern_reference.dart), which depends on these two packages.
+  image: ^4.5.4
+
+  # Camera frame benchmarks compare native copy strategies in isolation using
+  # dart:ffi and package:ffi. Declare ffi directly instead of relying on a
+  # transitive dependency of yuv_ffi.
+  ffi: ^2.2.0
+
 flutter:
+  config:
+    enable-swift-package-manager: true
   uses-material-design: true
+  assets:
+    # Reference fixtures. The example package cannot bundle assets
+    # from outside its own root (../test/...), so these are a build-time copy
+    # of test/reference/test_pattern_512/{manifest.json,artifacts/*.png} and
+    # test/assets/test_pattern_512.png. Only the PNG artifacts are copied:
+    # the Web reference matrix never opens the raw .bin/.yuv blobs listed in
+    # the manifest — expected raw
+    # bytes are always recomputed in pure Dart via parametersForRaw() — so
+    # copying them here would just be ~2.8 MB of dead weight.
+    #
+    # See example/tool/copy_reference_fixtures.sh to regenerate this copy
+    # after the fixtures change upstream.
+    - assets/reference/test_pattern_512.png
+    - assets/reference/test_pattern_512/manifest.json
+    - assets/reference/test_pattern_512/artifacts/
+    - assets/probe/golden.json

@@ -1,7 +1,53 @@
 # Run with `flutter pub run ffigen --config ffigen.yaml`.
+#
+# HOST MATTERS: the committed bindings must be the output of the LINUX host.
+# ffigen parses through libclang, and the same ffigen version produces
+# different output on different hosts -- Windows libclang omits the struct
+# helper constructors that apt's libclang-dev emits, and orders declarations
+# differently. The `bindings-regeneration` CI job diffs the regenerated file
+# against the committed one with `git diff --exit-code`, so a file generated
+# on Windows or macOS fails CI even though it is a legitimate ffigen output
+# and the exported ABI symbol set is identical. This has now bitten twice
+# (f116348, then d2f5c93 -- the YUV-52 reconciliation).
+#
+# Regenerating from a non-Linux host is fine for local inspection, but do NOT
+# commit that output. Take the authoritative file from the CI job instead:
+# apply the diff its failing step prints, then confirm the result with
+# `dart run tool/verify_bindings_audit.dart`. Never hand-edit the bindings.
 name: YuvFfiBindings
 description: FFI bindings for native YUV code
 output: lib/src/functions/bindings/yuv_ffi_bingings.dart
+
+# YUV-36c: src/yuv/abi/h/yuv_abi_v1.h asserts its section-9/10 layout with
+# `typedef char name[(condition) ? 1 : -1]` (see YUV-36a). That header
+# compiles cleanly under clang -fsyntax-only, MSVC /W4 /WX, GCC and wasm32
+# (verified in YUV-36a/b), but ffigen's own libclang-based parser -- a
+# separate code path from real compilation -- does not fold `offsetof()`
+# inside that array-bound expression to a constant, and reports every one of
+# those typedefs as a "variable length array" error ("folded to constant
+# array as an extension"). Left unaddressed, ffigen refuses to generate any
+# bindings at all ("Skipped generating bindings due to errors in source
+# files"), even though the header itself has no defect.
+#
+# `-Wno-gnu-folding-constant` suppresses exactly this warning and nothing
+# else, so a real error in a header -- this one or a future one -- still
+# stops generation. `ignore-source-errors` was tried first and rejected: it
+# silences ALL source diagnostics project-wide, which would also hide a
+# genuine header defect. Verified byte-for-byte identical generated bindings
+# between the two approaches.
+compiler-opts:
+  - '-Wno-gnu-folding-constant'
+
 headers:
   entry-points:
     - 'src/yuv_ffi.h'
+
+exclude-all-by-default: true
+
+functions:
+  include:
+    - 'yuv_.*_v1'
+
+structs:
+  include:
+    - 'Yuv.*V1'

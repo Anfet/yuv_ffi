@@ -1,219 +1,277 @@
 # yuv_ffi
 
-`yuv_ffi` is a Flutter/Dart package for high-performance image processing on YUV/BGRA frames using native C + FFI.
-
-## Features
-
-- YUV format conversions (`i420`, `nv21`, `bgra8888`)
-- Crop, rotate, flip
-- Grayscale, black/white, negate
-- Mean/box/Gaussian blur
-- Plane-based API with row/pixel stride support
-- In-memory save/load helpers for frame serialization
-
-## Important format note (`nv21`)
-
-In this project, the `nv21` API label is intentionally kept for compatibility, but camera input on target
-devices is often delivered in **UV** interleaving (closer to `NV12` than classic `NV21` VU).
-
-This is based on observed device output in real pipelines.  
-Do not blindly swap U/V: on these inputs, swapping chroma produces incorrect colors.
+`yuv_ffi` processes I420, NV12, and BGRA8888 images in Flutter. It provides
+conversion, crop, rotation, flips, effects, blur, serialization, and Flutter
+image presentation. Native platforms use C through FFI; Web uses a partial
+WASM backend.
 
 ## Installation
 
-From pub.dev:
-
 ```yaml
 dependencies:
-  yuv_ffi: ^0.1.2
+  yuv_ffi: 0.5.0
 ```
 
-Or from Git:
+Version 0.5.0 is the next available pub.dev release after 0.2.4. Version
+0.4.0 was published and later retracted; the migration guidance below also
+applies to applications whose lockfile still resolves 0.4.0.
 
-```yaml
-dependencies:
-  yuv_ffi:
-    git:
-      url: https://github.com/Anfet/yuv_ffi.git
-```
+## Requirements
 
-## Quick start
+| Platform | Requirement |
+| --- | --- |
+| Dart | 3.12 or later |
+| Flutter | 3.44 or later |
+| Android | API 26 or later; `armeabi-v7a`, `arm64-v8a`, or `x86_64` |
+| iOS | 13 or later |
+| macOS | 10.15 or later |
+| Windows | Native FFI backend |
+| Linux | Native FFI backend |
+| Web | JavaScript Flutter build; tested in Chrome |
+
+On iOS and macOS the plugin builds with either Swift Package Manager (the
+default in Flutter 3.44 and later) or CocoaPods. Nothing needs to be configured
+in your app. The Apple sources live in `darwin/`; the C sources stay in `src/`.
+
+The Web backend uses the JavaScript Flutter build. `flutter build web --wasm`
+builds, but Web operations fail at runtime because of a known interop issue.
+Use `flutter build web`.
+Safari and Firefox have not been tested. Safari 16.4 or later is a technical
+minimum for release WASM SIMD, not a tested compatibility claim for this plugin.
+
+## Quick start and initialization
+
+Initialize once in every isolate before calling a capability-gated processing
+method. A successful initialization is cached; a failed initialization can be
+retried. The returned capabilities describe the operations the loaded backend
+can dispatch.
 
 ```dart
-import 'package:yuv_ffi/yuv_ffi.dart';
+import 'dart:typed_data';
 
-await YuvFfi.ensureInitialized();
-
-final image = YuvImage.i420(1280, 720);
-image.fromRgba8888(rgbaBytes); // rgbaBytes.length must be width * height * 4
-
-final preview = image
-    .rotate(YuvImageRotation.rotation90)
-    .grayscale()
-    .toBgra8888();
-```
-
-## Public API (Dart)
-
-Exports from `package:yuv_ffi/yuv_ffi.dart`:
-
-- `YuvImage`
-- `YuvPlane`
-- `YuvFileFormat`
-- `YuvImageRotation`
-- `YuvImageWidget`
-- `YuvFfi` (`ensureInitialized()`)
-
-Main constructors:
-
-- `YuvImage.i420(width, height, ...)`
-- `YuvImage.nv21(width, height, ...)`
-- `YuvImage.bgra(width, height, ...)`
-
-## Platform support
-
-- Android: native FFI
-- iOS: native FFI
-- macOS: native FFI
-- Windows: native FFI
-- Linux: native FFI
-- Web: package builds and uses a **partial WASM backend** (work in progress, not feature-complete)
-
-## Example camera preview notes
-
-In `example/`, camera preview behavior differs by platform backend:
-
-- Mobile (Android/iOS): real-time frame stream is available, so preview can run per-frame `YuvImage` transforms.
-- Web: real-time frame extraction path is available in the example and supports transformed preview.
-- Desktop (Windows/macOS/Linux): the example uses fast native preview rendering and a throttled frame-capture
-  path for processing. Full per-frame transformed live preview is not currently provided by this desktop setup.
-
-Processing backend note:
-
-- YUV conversions/transforms are native on IO platforms (Android/iOS/macOS/Windows/Linux) via C + FFI.
-- Web uses the current partial WASM backend (work in progress, not parity-complete with native backends).
-
-## Initialization
-
-Call package bootstrap once at app start:
-
-```dart
 import 'package:flutter/widgets.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await YuvFfi.ensureInitialized();
-  runApp(const MyApp());
+
+  final capabilities = await YuvFfi.initialize();
+  final image = YuvImage.i420(1280, 720);
+  final rgbaBytes = Uint8List(image.width * image.height * 4);
+
+  if (capabilities.supports(
+    YuvOperation.convert,
+    sourceFormat: image.format,
+    destinationFormat: image.format,
+  )) {
+    image.applyRgbaBytes(rgbaBytes);
+  }
+
+  if (capabilities.supports(
+    YuvOperation.rotate,
+    sourceFormat: image.format,
+  )) {
+    image.applyRotation(YuvImageRotation.rotation90);
+  }
+
+  runApp(Directionality(
+    textDirection: TextDirection.ltr,
+    child: YuvImageWidget(image: image),
+  ));
 }
 ```
 
-## TODO
+On Web, initialization must complete before every `YuvImage` operation. On
+native platforms, it must complete before these capability-gated methods:
+`applyRgbaBytes`, `applyGrayscale`, `applyBlackWhite`, `applyNegate`,
+`applyGaussianBlur`, `applyMeanBlur`, `applyBoxBlur`, `applyCrop`,
+`applyFlipHorizontal`, `applyFlipVertical`, `applyRotation`, `applyFormat`,
+`applyChromaSwap`, `cropped`, `rotated`, `toI420`, `toNv12`, and `toBgra`.
+Constructors, plane access, `copy`, `applyPlanes`, byte conversion, encoding,
+and decoding retain native lazy behavior.
 
-- Complete and harden Web WASM parity with native backends.
-- Expand Web parity and edge-case coverage (odd sizes, stride/pixelStride combinations, rect boundaries).
+## Image mutation and revisions
 
-## Web WASM status (current stage)
+`apply*` methods mutate their receiver in place and return that same image.
+Successful mutations advance `image.revision` once; rejected calls and genuine
+no-ops leave it unchanged. `toI420`, `toNv12`, `toBgra`, `cropped`, `rotated`,
+`copy`, and `YuvImage.decode` return independent images and do not mutate the
+source.
 
-WASM work is split into phases.  
-Current phase includes:
+`planes`, `yPlane`, `uPlane`, and `vPlane` expose mutable backing storage.
+After directly changing plane bytes, call `markDirty()` so a widget creates a
+new cache key. `apply*` and `applyPlanes` already update the revision.
 
-- WASM build script (`tool/wasm/build_wasm.sh`)
-- package asset layout for generated artifacts (`assets/wasm/`)
-- Web module loader scaffold (`lib/src/loader/wasm_loader.dart`)
-- WASM-routed `YuvImage` operations on Web:
-  - conversions: `fromRgba8888`, `toYuvI420`, `toYuvNv21`, `toBgra8888`
-  - transforms: `crop`, `rotate`, `flipHorizontally`, `flipVertically`
-  - effects: `grayscale`, `blackwhite`, `negate`
-  - blur: `gaussianBlur`, `boxBlur`, `meanBlur`
-  - `swapNv`
+```dart
+image.yPlane.bytes[0] = 0xFF;
+image.markDirty();
+```
 
-Limitations:
+`applyPlanes(...)` validates and atomically replaces all planes. Any plane
+reference obtained before it succeeds is stale and must be read again.
 
-- Web backend is still in-progress and should be treated as non-final.
-- Web tests are maintained separately under `test/web/` and are intended for browser runner execution.
+## Displaying images
 
-### Known limitations (explicit)
+Use `YuvImageWidget` for a standalone image. It creates a `YuvImageProvider`,
+whose cache key combines the image identity with the captured revision.
 
-- Web backend parity is validated by tests, but is not yet declared feature-complete with native backends.
-- Browser runtime constraints apply on Web (WASM init lifecycle, browser memory/runtime limits).
-- Example desktop camera preview uses fast native preview plus throttled processing path,
-  not full per-frame transformed live feed.
+```dart
+YuvImageWidget(
+  image: image,
+  boxFit: BoxFit.contain,
+)
+```
 
-### Web parity matrix (v1)
+`YuvImageProvider(image)` is available when an `ImageProvider` is required.
+For a live stream, `YuvFramePresenter` keeps one current image for display.
+`present(frame)` returns `false` while decoding or until the decoded frame has
+been rendered, so intermediate frames are dropped. Render it with
+`YuvFrameView` and call `dispose()` when the stream ends.
 
-This matrix defines current parity targets and validation scope for Web WASM against native backends.
+```dart
+final presenter = YuvFramePresenter();
+presenter.present(image);
 
-- `Conversions`:
-  scope: `fromRgba8888`, `toYuvI420`, `toYuvNv21`, `toYuvBgra8888`, `toBgra8888`
-  validation: round-trip quality thresholds and dimension checks
-  (`test/web/wasm_parity_conversions_test.dart`)
-- `Geometry transforms`:
-  scope: `crop`, `rotate`, `flipHorizontally`, `flipVertically`
-  validation: exact/predictable BGRA checks
-  (`test/web/wasm_parity_transforms_test.dart`)
-- `Effects/blur`:
-  scope: `grayscale`, `blackwhite`, `negate`, `boxBlur`, `meanBlur`, `gaussianBlur`
-  validation: web runtime smoke coverage (`test/web/yuv_web_wasm_test.dart`)
-- `Edge cases`:
-  scope: odd sizes (`1x1`, `3x5`, `127x255`), custom rowStride/pixelStride,
-  out-of-bounds crop, transform chains
-  validation: dedicated edge-case coverage (`test/web/wasm_parity_edge_cases_test.dart`)
+final view = YuvFrameView(presenter: presenter);
+```
 
-Acceptance intent:
+Pass `useShader: true` to `YuvFramePresenter` for shader-backed live frames,
+and pass a `YuvFrameOrientation` to `present` to rotate or mirror at draw time.
+`YuvFrameView.fit` and `alignment` use `YuvFrameGeometry`; its
+`onGeometryChanged` callback exposes the exact overlay mapping.
 
-- Behavior parity: no crashes, deterministic geometry, expected dimensions/plane layouts.
-- Numeric parity: conversion quality remains within test thresholds (`MAE`) for Web round-trips.
-- Stride parity: custom row/pixel stride layouts produce stable BGRA output.
+### Frame geometry and ML Kit
 
-Build command (Shell; macOS + Windows via Git Bash/WSL):
+`YuvFrameGeometry` keeps source pixels, ML Kit's upright pixels, and widget
+pixels in separate coordinate spaces. Give ML Kit the raw frame with
+`orientation.rotation`, then map its bounding boxes through
+`MatrixUtils.transformRect(geometry.uprightToView, box)`. Mirroring is applied
+only after rotation, so the preview and overlay stay aligned.
+
+```dart
+final geometry = YuvFrameGeometry(
+  sourceSize: frame.size,
+  viewSize: widgetSize,
+  orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90, mirrored: true),
+  fit: YuvFrameFit.cover,
+);
+final displayedFrame = geometry.apply(frame);
+```
+
+`YuvFrameRenderer` uploads I420 and NV12 planes to the package shader when it
+is available, including Web (CanvasKit). Unsupported layouts and shader-load
+failures use the pixel-equivalent BGRA fallback instead.
+
+## Formats and plane layout
+
+`YuvPixelFormat.i420` stores separate Y, U, and V planes.
+`YuvPixelFormat.nv12` stores Y plus interleaved `(U, V)` chroma bytes.
+`bgra8888` is a single packed BGRA plane.
+
+Factories that receive `planes:` default to `YuvPlaneLayout.packed`: they
+copy visible samples into tight planes and discard row padding and per-sample
+gaps. Pass `layout: YuvPlaneLayout.preserve` to retain the supplied
+`rowStride`, `pixelStride`, and padding bytes. `copy`, `decode`, and
+`applyPlanes` preserve their plane layouts.
+
+```dart
+final padded = YuvImage.i420(
+  2,
+  2,
+  planes: <YuvPlane>[
+    YuvPlane(2, 4),
+    YuvPlane(1, 2),
+    YuvPlane(1, 2),
+  ],
+  layout: YuvPlaneLayout.preserve,
+);
+
+padded.pack();
+```
+
+`pack()` removes row padding and pixel gaps in place while preserving visible
+samples, format, UV order, size, and orientation. Padding discarded by
+`pack()` cannot be recovered; use `copy().pack()` to retain an independent
+original image.
+
+### Inserting a patch
+
+`applyPatch` copies an opaque, unscaled image into another image of the same
+format without touching destination padding or pixel-gap bytes:
+
+```dart
+final fragment = source.cropped(region).rotated(YuvImageRotation.rotation90);
+destination.applyPatch(fragment, x: 100, y: 40);
+```
+
+The fragment must fit completely. For I420 and NV12, `x` and `y` must be even;
+an odd fragment width or height is accepted only at the corresponding right or
+bottom edge. This keeps every chroma 2×2 sample wholly inside the patch.
+
+## Capabilities and errors
+
+Call `capabilities.supports(operation, sourceFormat: ..., destinationFormat:
+...)` before dispatch when the application needs to choose a path. A
+destination format is required only for `YuvOperation.convert`; malformed or
+unsupported capability queries return `false`.
+
+Public calls can throw:
+
+- `ArgumentError` for invalid dimensions, planes, byte lengths, geometry, or
+  native argument validation.
+- `UnsupportedError` when a backend or format pair cannot dispatch an
+  operation, including a capability-gated call before initialization.
+- `YuvNativeException` for native overflow, allocation, internal failures, or
+  an unrecognized native status.
+- `StateError` during initialization when Web configuration or runtime setup
+  fails, or when a native library lacks a required ABI export.
+
+## Platform status
+
+| Platform | Support | Checked in CI | Checked manually |
+| --- | --- | --- | --- |
+| Android | Native FFI: `armeabi-v7a`, `arm64-v8a`, `x86_64` | Build, app-runtime smoke, and the 1188-case correctness matrix | Release builds on a physical Pixel 3 for `arm64-v8a` and `armeabi-v7a` |
+| iOS | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | Debug build on a physical iPhone (iOS 18.7): camera, shader display, and the device check |
+| macOS | Native FFI | Example build, app-runtime smoke, and the 1188-case correctness matrix | Camera stream smoke with the built-in camera |
+| Windows | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | — |
+| Linux | Native FFI | Example build, packaging, app-runtime smoke, and the 1188-case correctness matrix | — |
+| Web | Partial WASM backend | Package checks, browser tests, and the reference correctness matrix | — |
+
+## Web backend
+
+Web support is a partial WASM backend and remains work in progress. It is not
+feature-complete with native backends. `YuvFfi.initialize()` loads the module;
+use `YuvCapabilities` to query the operations exported by that module instead
+of assuming native parity. Browser runtime limits and the WASM initialization
+lifecycle apply.
+
+## Migrating to 0.5.0
+
+The compatibility declarations from 0.2.4 and retracted 0.4.0 were removed.
+The detailed upgrade steps, API mapping, behavior changes, and verification
+commands are in [MIGRATION.md](MIGRATION.md). Key points: initialize every
+isolate, review mutating versus copy-returning calls, preserve plane layout
+explicitly when needed, and migrate serialized frames through an
+application-owned representation. The same guide applies to applications
+whose lockfile still resolves 0.4.0.
+
+## Building from a repository checkout
+
+Native sources live in `src/` and are built through the platform plugin build
+configuration. From a repository checkout, build the Web module from a
+macOS/Linux shell, Git Bash, or WSL:
 
 ```sh
 sh ./tool/wasm/build_wasm.sh
 ```
 
-Smoke checks:
+Do not edit `lib/src/functions/bindings/yuv_ffi_bingings.dart` manually.
+Regenerate bindings after a header or configuration change:
 
 ```sh
-flutter test
+dart run ffigen --config ffigen.yaml
 ```
-
-Web tests (browser runner):
-
-```sh
-flutter test -d chrome test/web/yuv_web_wasm_test.dart
-flutter test -d chrome test/web/wasm_parity_conversions_test.dart
-flutter test -d chrome test/web/wasm_parity_transforms_test.dart
-flutter test -d chrome test/web/wasm_parity_edge_cases_test.dart
-```
-
-On Windows Git Bash, the build script auto-falls back to `emcc.bat`/`emcc.cmd`
-when plain `emcc` is not resolvable by `command -v`.
-
-## Build notes
-
-Native code is in `src/` and is built as a shared library per platform:
-
-- Android/Linux: `libyuv_ffi.so`
-- Windows: `yuv_ffi.dll`
-- Apple platforms: platform-specific dynamic/static linkage via plugin build setup
-
-## Generated bindings
-
-Do not edit `lib/src/functions/bindings/yuv_ffi_bingings.dart` manually.  
-It is generated via `ffigen` from `src/yuv_ffi.h` using `ffigen.yaml`.
-
-Regenerate with:
-
-```bash
-flutter pub run ffigen --config ffigen.yaml
-```
-
-## Credits
-
-- Oleg Toplionkin (Author & Maintainer) - https://github.com/Anfet
-- OpenAI Codex (Engineering Assistant: tests and WASM bindings integration) - https://openai.com/
 
 ## License
 
-[MIT](./LICENSE)
+[MIT License](https://opensource.org/license/mit/)

@@ -1,0 +1,25 @@
+name: iOS CI
+
+concurrency:
+  group: ci-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    tags:
+      - "ci/all/**"
+      - "ci/ios/**"
+  workflow_dispatch:
+
+jobs:
+  ios-native-build:
+    runs-on: [self-hosted, macOS, X64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run iOS checks
+        shell: bash
+        run: bash tool/ci/ios.sh

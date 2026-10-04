@@ -1,0 +1,7 @@
+{"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"test/example_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"adds values","suiteID":0,"groupIDs":[],"metadata":{"skip":false},"line":1,"column":1,"url":null},"type":"testStart","time":1}
+{"testID":1,"message":"test diagnostic","type":"print","time":2}
+{"testID":1,"error":"Expected: <2>\n  Actual: <3>","stackTrace":"test/example_test.dart 4:2 main\nother.dart 1:1","isFailure":true,"type":"error","time":3}
+{"testID":1,"result":"failure","skipped":false,"hidden":false,"type":"testDone","time":4}
+{"success":false,"type":"done","time":5}

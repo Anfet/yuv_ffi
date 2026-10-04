@@ -1,0 +1,25 @@
+name: CI smoke
+
+concurrency:
+  group: ci-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    tags:
+      - "ci/all/**"
+      - "ci/smoke/**"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check CI helpers
+        shell: pwsh
+        run: ./tool/ci/smoke.ps1

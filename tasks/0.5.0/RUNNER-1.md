@@ -1,0 +1,33 @@
+# RUNNER 1 — Дополнительные self-hosted раннеры
+**Status:** DEFERRED · **Tier:** T2 · **Execution Mode:** STANDARD · **Review Tier:** T1 · **Owner:** Terra · **Depends On:** — · **Rejection Count:** 0
+**Было:** RA-80 (цикл 0.4.2).
+
+#### Решение Engineer — 01.10.2026
+Новые службы self-hosted раннеров добавляться не будут. Установка `dev.working-2` как службы и добавление следующих экземпляров не входят в планы, поэтому цель карточки сейчас неактуальна. Карточка отложена; вернуть её в работу можно только после нового решения Engineer добавить службы раннеров.
+
+#### Решение Engineer D-6 (29.09.2026)
+Для 0.4.2 второй раннер не нужен: полных прогонов будет несколько, а не десятки, одна платформа запускается префиксом ветки, Web-джоба ускоряется RA-56. Карточка — после релиза. Сейчас: удалить офлайн-регистрацию `dev.working-2` (runner id `24`) через `gh api -X DELETE repos/Anfet/yuv_ffi/actions/runners/24` и каталог `D:\actions-runner-yuv-2`; метки `android-emulator`, `web`, `pixel3` на `dev.working` оставить. Это делает RA-54 (уборка).
+
+#### Problem / Goal
+Два раннера (`dev.working` Windows, `yuv-self-hosted` Mac) выполняют джобы по одной: в run `36455663081` 10 self-hosted джоб шли последовательно. Машина Windows — i9-13980HX, 24 ядра / 32 потока, 64 ГБ RAM, свободно 52 ГБ на C: и 125 ГБ на D: — запас есть.
+
+#### Executor Report — Blocked
+
+- На `dev.working` (runner id `23`) добавлены labels `android-emulator`, `web`, `pixel3`; GitHub API подтвердил `online`.
+- `dev.working-2` (runner id `24`) зарегистрирован в `D:\actions-runner-yuv-2` с официальным `actions-runner-win-x64-2.337.0.zip`, но остаётся `offline`.
+- Установка службы через `config.cmd --runasservice` завершилась exit code 1: `Needs Administrator privileges for configuring runner as windows service.` Текущая учётная запись `OLEG-WORK\Oleg-T` не является администратором. Диагностика: `D:\actions-runner-yuv-2\_diag\Runner_20260929-080109-utc.log`, строки 159–166.
+- Третий runner не создавался. Параллельные jobs не запускались: пока доступен один рабочий Windows runner.
+- Продолжение: из повышенного Windows-сеанса установить и запустить службу `dev.working-2`, затем зарегистрировать `dev.working-3` и проверить три параллельные Windows jobs.
+
+#### Architect Decision
+- Windows: добавить ещё 2 экземпляра раннера (всего 3), каждый в своём каталоге на `D:` и своим сервисом.
+- Mac: добавить второй экземпляр, если на Mac есть ≥ 16 ГБ RAM и ≥ 50 ГБ свободного диска; иначе оставить один и отметить это в отчёте.
+- Ресурсы, которые нельзя делить, привязать метками к одному раннеру: `android-emulator` (AVD `Tablet`), `web` (ChromeDriver на порту 4444, emsdk), `pixel3` (физическое устройство, только для ручных/релизных прогонов). Остальные джобы — на любой свободный раннер.
+- Каждому экземпляру свой `PUB_CACHE` не нужен; общий Flutter SDK допустим, но первым шагом каждого скрипта — `flutter --version` для прогрева, чтобы не ловить блокировку запуска. Если блокировка всё равно мешает — отдельная копия SDK на раннер (решение в отчёте с логом).
+
+#### Constraints / Non-goals
+Не включать WSL/Hyper-V и не менять системные настройки питания (решение Engineer). Не переводить джобы на GitHub-hosted.
+
+#### Definition of Done
+- [ ] `gh api repos/Anfet/yuv_ffi/actions/runners` показывает новые раннеры online с метками
+- [ ] В одном прогоне как минимум три Windows-джобы идут одновременно; время прогона до/после — в отчёте

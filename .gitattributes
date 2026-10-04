@@ -1,0 +1,4 @@
+/test/probe/** text eol=lf
+/example/integration_test/helpers/probe/** text eol=lf
+/example/assets/probe/** text eol=lf
+/tool/oracle/check_reference.sh text eol=lf

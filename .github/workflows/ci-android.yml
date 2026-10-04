@@ -1,0 +1,25 @@
+name: CI Android
+
+concurrency:
+  group: ci-android-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    tags:
+      - "ci/all/**"
+      - "ci/android/**"
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: [self-hosted, Windows, X64, android-emulator]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Android checks
+        shell: pwsh
+        run: ./tool/ci/android.ps1

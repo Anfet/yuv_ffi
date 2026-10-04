@@ -1,0 +1,38 @@
+name: CI VM
+
+concurrency:
+  group: ci-vm-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    tags:
+      - "ci/all/**"
+      - "ci/vm/**"
+  workflow_dispatch:
+
+jobs:
+  vm:
+    runs-on: [self-hosted, Windows, X64]
+    strategy:
+      fail-fast: false
+      matrix:
+        flutter-version: ['3.44.9']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add Git Bash to PATH
+        shell: pwsh
+        run: Add-Content -LiteralPath $env:GITHUB_PATH -Value 'D:\.important\Git\bin'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.flutter-version }}
+
+      - name: Analyze and test VM
+        shell: pwsh
+        run: ./tool/ci/vm.ps1

@@ -89,24 +89,39 @@ fi
 
 mkdir -p "$OUT_DIR"
 
-# Build source list excluding build directories.
-# AGENTS policy requires build/ to be ignored for content retrieval/processing.
-SOURCE_COUNT="$(find src -type f -name '*.c' ! -path '*/build/*' | wc -l | tr -d ' ')"
+# Build the tracked source list in Git index order.  Emscripten preserves input
+# order in generated artifacts, so filesystem traversal made identical builds
+# differ between workstations and CI.  The pathspec excludes build/ directories
+# without retrieving their contents.
+SOURCE_PATHS="$(git ls-files -- 'src/*.c' 'src/**/*.c' ':!**/build/**')"
+SOURCE_COUNT="$(printf '%s\n' "$SOURCE_PATHS" | sed '/^$/d' | wc -l | tr -d ' ')"
 if [ "$SOURCE_COUNT" = "0" ]; then
-  echo "No C sources found under src/." >&2
+  echo "No tracked C sources found under src/." >&2
   exit 1
 fi
 
 if [ "$PROFILE" = "release" ]; then
   OPT_LEVEL="-O3"
+  # WebAssembly SIMD, so the conversion loops vectorize the same way they do on
+  # native targets. Safari added 128-bit WebAssembly SIMD in Safari 16.4;
+  # older Safari versions cannot instantiate a SIMD-enabled module.
+  SIMD_FLAG="-msimd128"
 else
   OPT_LEVEL="-O0"
+  SIMD_FLAG=""
 fi
 
-# IMPORTANT:
-# We intentionally export only runtime memory helpers at this stage.
-# Processing exports will be added when Dart -> WASM operation wiring starts.
-EXPORTED_FUNCTIONS="['_malloc','_free','_yuv420_blackwhite','_nv21_blackwhite','_bgra8888_blackwhite','_yuv420_flip_horizontally','_nv21_flip_horizontally','_bgra8888_flip_horizontally','_yuv420_flip_vertically','_nv21_flip_vertically','_bgra8888_flip_vertically','_yuv420_grayscale','_nv21_grayscale','_bgra8888_grayscale','_yuv420_negate','_nv21_negate','_bgra8888_negate','_yuv420_crop_rect','_nv21_crop_rect','_bgra8888_crop_rect','_yuv420_rotate','_nv21_rotate','_bgra8888_rotate','_nvXX_to_nvYY','_yuv420_gaussblur','_nv21_gaussian_blur','_bgra8888_gaussian_blur','_yuv420_box_blur','_nv21_box_blur','_bgra8888_box_blur','_yuv420_mean_blur','_nv21_mean_blur','_bgra8888_mean_blur','_yuv420_from_rgba8888','_nv21_from_rgba8888','_bgra8888_from_rgba8888','_nv21_to_i420','_bgra8888_to_i420','_yuv420_i420_to_nv21','_bgra8888_to_nv21','_nv21_to_bgra8888','_yuv420_to_bgra8888']"
+# The eleven `_yuv_*_v1` entries are the versioned status-returning symbols
+# from doc/api-abi-0.4-design.md section 11, and they are the module's entire
+# processing surface: YUV-52 removed the legacy per-format sources
+# (yuv420_*/nv21_*/bgra8888_*/nvXX_to_nvYY), so there is nothing else left to
+# export. The Web backend calls these directly (lib/src/yuv/impl/web/), so a
+# name dropped from this list goes missing at the Dart call site rather than
+# at link time -- test/abi_symbol_manifest_test.dart cross-checks this list
+# against the C header, the ffigen allowlist and the Dart symbol manifest.
+# `_malloc`/`_free` stay because the Dart side stages descriptors and planes
+# in WASM linear memory itself.
+EXPORTED_FUNCTIONS="['_malloc','_free','_yuv_convert_v1','_yuv_black_white_v1','_yuv_grayscale_v1','_yuv_negate_v1','_yuv_gaussian_blur_v1','_yuv_mean_blur_v1','_yuv_box_blur_v1','_yuv_crop_v1','_yuv_flip_v1','_yuv_rotate_v1','_yuv_chroma_swap_v1']"
 EXPORTED_RUNTIME_METHODS="['ccall','cwrap','HEAPU8','HEAP32']"
 
 OUTPUT_JS="$OUT_DIR/yuv_ffi.js"
@@ -117,11 +132,11 @@ echo "Profile: $PROFILE"
 echo "OutDir:  $OUT_DIR"
 echo "Sources: $SOURCE_COUNT"
 
-# xargs is used to safely pass all source files to emcc.
-# We use NUL separators to avoid issues with spaces in paths.
-find src -type f -name '*.c' ! -path '*/build/*' -print0 | \
+# xargs receives Git's NUL-separated index paths, preserving paths with spaces.
+git ls-files -z -- 'src/*.c' 'src/**/*.c' ':!**/build/**' | \
   xargs -0 "$EMCC" \
     "$OPT_LEVEL" \
+    $SIMD_FLAG \
     -Isrc \
     -sWASM=1 \
     -sMODULARIZE=1 \
@@ -131,6 +146,13 @@ find src -type f -name '*.c' ! -path '*/build/*' -print0 | \
     "-sEXPORTED_FUNCTIONS=$EXPORTED_FUNCTIONS" \
     "-sEXPORTED_RUNTIME_METHODS=$EXPORTED_RUNTIME_METHODS" \
     -o "$OUTPUT_JS"
+
+# Emscripten 3.1.74 leaves horizontal whitespace on generated JS lines. Strip
+# only that whitespace so the checked-in artifact passes Git's whitespace gate;
+# the WASM binary remains exactly as emitted by the compiler.
+NORMALIZED_JS="$OUTPUT_JS.normalized"
+sed 's/[[:blank:]]*$//' "$OUTPUT_JS" > "$NORMALIZED_JS"
+mv "$NORMALIZED_JS" "$OUTPUT_JS"
 
 echo "Build completed:"
 echo " - $OUTPUT_JS"

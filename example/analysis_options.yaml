@@ -29,4 +29,3 @@ linter:
 
 formatter:
   page_width: 150
-  line_length: 150

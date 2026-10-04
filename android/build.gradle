@@ -61,5 +61,14 @@ android {
 
     defaultConfig {
         minSdkVersion 26
+
+        // The plugin's supported Android ABI set is armeabi-v7a, arm64-v8a and
+        // x86_64; the legacy 32-bit x86 emulator ABI is intentionally excluded.
+        // This is not a 64-bit-pointer constraint: ABI v1 checks fixed offsets
+        // and sizes plus 8-byte alignment of uint64_t and double, and
+        // armeabi-v7a remains a supported 32-bit target.
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86_64"
+        }
     }
 }

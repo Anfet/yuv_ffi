@@ -1,0 +1,31 @@
+name: Example CI
+
+concurrency:
+  group: ci-example-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    tags:
+      - "ci/all/**"
+      - "ci/example/**"
+  workflow_dispatch:
+
+jobs:
+  example-analyze-and-build:
+    runs-on: [self-hosted, Windows, X64]
+    strategy:
+      fail-fast: false
+      matrix:
+        flutter-version: ['3.44.9']
+    env:
+      FLUTTER_VERSION: ${{ matrix.flutter-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze and build example
+        shell: pwsh
+        run: ./tool/ci/example.ps1

@@ -1,3 +1,6 @@
+@Tags(['contract'])
+library;
+
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -16,7 +19,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    await YuvFfi.ensureInitialized();
+    // ignore: deprecated_member_use_from_same_package
+    await YuvFfi.initialize();
   });
 
   test('crop on BGRA is exact', () {
@@ -25,9 +29,12 @@ void main() {
     final rgba = _buildRgbaPattern(w, h);
     final bgraBefore = _rgbaToBgra(rgba);
 
-    final image = YuvImage.bgra(w, h)..fromRgba8888(rgba);
-    image.crop(const ui.Rect.fromLTWH(2, 1, 3, 4));
-    final out = image.toBgra8888();
+    // ignore: deprecated_member_use_from_same_package
+    final image = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
+    // ignore: deprecated_member_use_from_same_package
+    image.applyCrop(const ui.Rect.fromLTWH(2, 1, 3, 4));
+    // ignore: deprecated_member_use_from_same_package
+    final out = image.toBgraBytes();
 
     final expected = _cropBgra(bgraBefore, w, 2, 1, 3, 4);
     expect(image.width, 3);
@@ -41,9 +48,12 @@ void main() {
     final rgba = _buildRgbaPattern(w, h);
     final bgraBefore = _rgbaToBgra(rgba);
 
-    final image = YuvImage.bgra(w, h)..fromRgba8888(rgba);
-    image.rotate(YuvImageRotation.rotation90);
-    final out = image.toBgra8888();
+    // ignore: deprecated_member_use_from_same_package
+    final image = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
+    // ignore: deprecated_member_use_from_same_package
+    image.applyRotation(YuvImageRotation.rotation90);
+    // ignore: deprecated_member_use_from_same_package
+    final out = image.toBgraBytes();
 
     final expected = _rotate90CwBgra(bgraBefore, w, h);
     expect(image.width, h);
@@ -57,25 +67,36 @@ void main() {
     final rgba = _buildRgbaPattern(w, h);
     final bgraBefore = _rgbaToBgra(rgba);
 
-    final imageH = YuvImage.bgra(w, h)..fromRgba8888(rgba);
-    imageH.flipHorizontally();
-    expect(imageH.toBgra8888(), orderedEquals(_flipHorizontalBgra(bgraBefore, w, h)));
+    // ignore: deprecated_member_use_from_same_package
+    final imageH = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
+    // ignore: deprecated_member_use_from_same_package
+    imageH.applyFlipHorizontal();
+    // ignore: deprecated_member_use_from_same_package
+    expect(imageH.toBgraBytes(), orderedEquals(_flipHorizontalBgra(bgraBefore, w, h)));
 
-    final imageV = YuvImage.bgra(w, h)..fromRgba8888(rgba);
-    imageV.flipVertically();
-    expect(imageV.toBgra8888(), orderedEquals(_flipVerticalBgra(bgraBefore, w, h)));
+    // ignore: deprecated_member_use_from_same_package
+    final imageV = YuvImage.bgra(w, h)..applyRgbaBytes(rgba);
+    // ignore: deprecated_member_use_from_same_package
+    imageV.applyFlipVertical();
+    // ignore: deprecated_member_use_from_same_package
+    expect(imageV.toBgraBytes(), orderedEquals(_flipVerticalBgra(bgraBefore, w, h)));
   });
 
   test('swapNv is reversible', () {
     const w = 16;
     const h = 10;
     final rgba = _buildRgbaPattern(w, h);
-    final image = YuvImage.nv21(w, h)..fromRgba8888(rgba);
+    // ignore: deprecated_member_use_from_same_package
+    final image = YuvImage.nv12(w, h)..applyRgbaBytes(rgba);
     final originalU = Uint8List.fromList(image.uPlane.bytes);
 
-    final swapped = image.swapNv();
-    final restored = swapped.swapNv();
+    // ignore: deprecated_member_use_from_same_package
+    final swapped = image.applyChromaSwap();
+    // ignore: deprecated_member_use_from_same_package
+    final restored = swapped.applyChromaSwap();
 
+    expect(identical(swapped, image), isTrue);
+    expect(identical(restored, swapped), isTrue);
     expect(restored.width, w);
     expect(restored.height, h);
     expect(restored.uPlane.bytes, orderedEquals(originalU));
@@ -107,14 +128,7 @@ Uint8List _rgbaToBgra(Uint8List rgba) {
   return out;
 }
 
-Uint8List _cropBgra(
-  Uint8List src,
-  int srcWidth,
-  int left,
-  int top,
-  int cropWidth,
-  int cropHeight,
-) {
+Uint8List _cropBgra(Uint8List src, int srcWidth, int left, int top, int cropWidth, int cropHeight) {
   final out = Uint8List(cropWidth * cropHeight * 4);
   for (int y = 0; y < cropHeight; y++) {
     for (int x = 0; x < cropWidth; x++) {
