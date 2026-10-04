@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_web_libraries_in_flutter, public_member_api_docs
 
+import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:yuv_ffi/src/web/impl/js_util_compat_web.dart' as js_util;
@@ -76,10 +77,7 @@ class WasmArena {
   /// write here therefore goes through a view taken after the last possible
   /// allocation.
   Uint8List heapU8() {
-    final heap = js_util.getProperty<Object>(module, 'HEAPU8');
-    final buffer = js_util.getProperty<ByteBuffer>(heap, 'buffer');
-    final length = js_util.getProperty<num>(heap, 'length').toInt();
-    return Uint8List.view(buffer, 0, length);
+    return js_util.getProperty<JSUint8Array>(module, 'HEAPU8').toDart;
   }
 
   /// Reads [length] bytes at [ptr] into a Dart-owned buffer.

@@ -40,9 +40,9 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [FIX 1](tasks/0.5.1/FIX-1.md) | TODO | T3 / T2 | — | — | **README: точный статус Web и платформ, версия 0.5.1.** Паритет операций на JavaScript-сборке (Chrome), строка iOS, «not verified»; `--wasm` пока «не поддерживается» — его меняет WEB 4. |
-| [WEB 4](tasks/0.5.1/WEB-4.md) | TODO | T2 / T1 | — | FIX 1 | **`--wasm`: исправить interop Web backend.** Числовые результаты `ccall` и доступ к `HEAPU8` под dart2wasm; проба 1188, эталоны и шейдер под `--wasm`; документация по факту. |
-| [CI 1](tasks/0.5.1/CI-1.md) | TODO | T3 / T2 | — | WEB 4 | **Шаг `--wasm` в `tool/ci/web.ps1`.** Обязательный; негативный контроль на базе пула. |
+| [FIX 1](tasks/0.5.1/FIX-1.md) | IN_PROGRESS | T3 / T2 | Executor | — | **README: точный статус Web и платформ, версия 0.5.1.** Паритет операций на JavaScript-сборке (Chrome), строка iOS, «not verified»; `--wasm` статус обновлён по WEB 4. |
+| [WEB 4](tasks/0.5.1/WEB-4.md) | IN_PROGRESS | T2 / T1 | Executor | FIX 1 | **`--wasm`: исправить interop Web backend.** Проба 1188, эталоны и шейдер прошли; JavaScript Web CI и общий пул ещё проверяются. |
+| [CI 1](tasks/0.5.1/CI-1.md) | IN_PROGRESS | T3 / T2 | Executor | WEB 4 | **Шаг `--wasm` в `tool/ci/web.ps1`.** Три обязательные цели добавлены; проверка скрипта и негативный контроль остаются. |
 
 ### Этап 2 — релизный гейт
 

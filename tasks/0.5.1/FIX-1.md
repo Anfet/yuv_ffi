@@ -1,7 +1,7 @@
 # FIX 1 — README: точный статус Web и платформ, версия 0.5.1
-**Status:** TODO · **Tier:** T3, Reviewer T2 · **Owner:** — · **Depends On:** — · **Probe:** windows+pixel3 (`src/CMakeLists.txt` — только номер версии; проба — общая для пула `WASM`)
+**Status:** IN_PROGRESS · **Tier:** T3, Reviewer T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3 (`src/CMakeLists.txt` — только номер версии; проба — общая для пула `WASM`)
 
-**Base SHA:** — (Executor записывает SHA `dev` на старте пула `WASM`)
+**Base SHA:** `6986feb295e4b1ebbdc2139313044282d5b0daa5` (`dev` на старте пула `WASM`)
 
 #### Goal
 
@@ -56,5 +56,10 @@ feature-complete with native backends», строка Web в «Platform status»
   один раз на принятом SHA пула.
 
 #### Executor Report
+
+- Обновлены README и верхняя запись CHANGELOG, версия приведена к `0.5.1` в четырёх файлах D-14 и `example/pubspec.lock`.
+- `flutter pub get` (cwd `example/`) — exit 0; изменился только path-зависимый `yuv_ffi` с `0.5.0` на `0.5.1`.
+- `bash tool/ci/scope_guard.sh 6986feb295e4b1ebbdc2139313044282d5b0daa5` — `scope: all`.
+- Windows probe по карточке выполняется один раз после CI 1 для пула; Pixel 3 arm64/armv7 проверяет Reviewer на принятом SHA. Пул продолжается карточками WEB 4 и CI 1.
 
 #### Review

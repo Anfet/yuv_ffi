@@ -1,6 +1,6 @@
 # Web/WASM parity assessment
 
-Assessment of the Web backend at `7446a72` (base `8c3d88d`), with the review-requested checks rerun after `13419f8`. The Web backend is a partial WASM implementation; results below describe the checked cases and public paths, not all possible inputs.
+Assessment of the Web backend at `7446a72` (base `8c3d88d`), with the review-requested checks rerun after `13419f8`. The Web backend is a partial WASM implementation; results below describe the checked cases and public paths, not all possible inputs. The historical `--wasm` failure recorded below was fixed and rechecked for 0.5.1; see [Current Flutter-WASM verification](#current-flutter-wasm-verification).
 
 ## Operation and format inventory
 
@@ -14,6 +14,16 @@ The capability surface contains 12 `YuvOperation` values. The table counts meani
 | `crop`, `flipHorizontal`, `flipVertical`, `rotate` | I420, NV12, BGRA8888 | Same | 12 | Same: 12 | 1188-case probe; Web odd-size transform coverage |
 | `chromaSwap` | NV12 only | NV12 only | 3 source-format checks; 1 supported | Same: 1; unsupported: 2 | Web NV chroma and edge-case tests |
 | **Total** |  |  | **42** | **Same: 40; differs: 0; unsupported: 2; untested: 0** | |
+
+## Current Flutter-WASM verification
+
+After the interop fix for 0.5.1, Chrome 154.0.8037.98 passed the operation
+probe, reference conversions, shader probe, and aggregate Web integration
+target in Flutter's `--wasm` build. The common probe covers 1,188 cases; the
+reference conversion matrix covers 119 cases. The shader probe requires the
+shader to load and every output to differ from CPU conversion by at most one
+channel value. The same operation results and shader behavior are expected on
+the JavaScript build; Safari and Firefox remain not verified.
 
 The two unsupported pairs are `chromaSwap` with I420 and BGRA8888. The other 40 meaningful pairs are supported when the loaded WASM module exports the required ABI symbol. The Web initializer derives capabilities from actual module exports; the browser tests exercise a complete export manifest and deliberately incomplete manifests. RGBA8888 is an input to `convert`/`applyRgbaBytes`, not a stored pixel format and therefore is outside the table's stored-format denominator.
 
@@ -37,13 +47,16 @@ The common probe is **22 operation scenarios × 3 stored formats × 6 dimensions
 
 ## Consolidated decision counts
 
+The following counts describe the original assessment; current browser/build
+status is recorded in the verification section above.
+
 Statuses distinguish matching evidence, confirmed differences, unsupported inputs/targets, and cases not run. A match describes the listed test evidence only, not every possible input.
 
 | Inventory / target | Total | Same / PASS | Differs / fails | Unsupported | Untested | Evidence |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | Operation/source-format pairs | 42 | 40 | 0 | 2 | 0 | Capability inventory and common probe; 1,188 cases plus 119 separate reference conversions |
 | Other public paths listed above | 7 | 7 | 0 | 0 | 0 | Native and Chrome contract tests; geometry byte-for-byte case and patch checks |
-| Browser/build targets | 4 | 1 | 0 | 1 | 2 | Chrome JavaScript PASS; `--wasm` unsupported at runtime; Safari and Firefox untested |
+| Browser/build targets | 4 | 2 | 0 | 0 | 2 | Chrome JavaScript and `--wasm` PASS; Safari and Firefox unverified |
 
 ## Browser and build smoke results
 
@@ -52,7 +65,7 @@ Statuses distinguish matching evidence, confirmed differences, unsupported input
 | Chrome JavaScript build and runtime | **PASS** | Chrome 154.0.8037.98; the aggregated `all_web_test.dart`, 119-case reference target, and camera smoke passed through `tool/ci/drive.ps1`. `web_ownership_regression_web_test.dart` is now 4 cases; total source baseline is 64. |
 | Safari | **NOT RUN** | Mac has Safari 18.6 on macOS 15.6.1. `safaridriver` reports that “Allow remote automation” is disabled. Enabling it with `/usr/bin/safaridriver --enable` failed because the non-interactive Mac account could not authenticate its sudo request. This is an access limitation, not a Web failure. |
 | Firefox | **NOT AVAILABLE** | Firefox and `geckodriver` are not installed on the available Mac; no Firefox result is inferred from Chrome. |
-| `--wasm` | **BUILD PASS; RUNTIME FAIL** | Flutter 3.44.9 built the app on Windows and macOS. Chrome 154.0.8037.98's wrapped probe drive reported `ERR StateError` for WASM operation calls; the earlier Mac run reported `yuv_convert_v1 returned JSValue instead of a YuvStatus number`. Both fail after app/module startup at the operation call. |
+| `--wasm` (original assessment) | **BUILD PASS; RUNTIME FAIL** | Historical result: Chrome 154.0.8037.98's wrapped probe drive reported `ERR StateError` for WASM operation calls; the earlier Mac run reported `yuv_convert_v1 returned JSValue instead of a YuvStatus number`. This was fixed for 0.5.1; see current verification above. |
 
 The rework Flutter-WASM smoke used these commands from the repository root:
 
@@ -70,7 +83,7 @@ got ERR StateError
 flutter drive failed for integration_test/probe_web_test.dart on web-server with exit code 1
 ```
 
-README directs users to the JavaScript build and marks `--wasm` as unsupported at runtime, consistent with these results; FIX 2 also distinguishes the tested Chrome target from untested Safari and Firefox.
+At the time of this assessment, README directed users to the JavaScript build and marked `--wasm` as unsupported at runtime. FIX 1/WEB 4 update that status for 0.5.1; Safari and Firefox remain not verified.
 
 ## Release recommendations
 
@@ -78,14 +91,23 @@ README directs users to the JavaScript build and marks `--wasm` as unsupported a
 | --- | --- | --- |
 | No mismatches in the checked 1,188 common-probe cases or 119 reference conversions | No confirmed data discrepancy in the tested operation/format/layout sample | Keep the existing golden; do not generalize the sample result to all image sizes or inputs. |
 | Web patch insertion and odd-frame rotation/mirror now have direct browser contract coverage, matching native expected bytes | Closes a test-coverage gap; no implementation difference observed in the checked scenarios | Keep these tests in 0.5.0. |
-| Safari and Firefox runtime behavior remains unknown; `--wasm` fails at the first ABI conversion call | Browser compatibility beyond tested Chrome is not evidenced; current Flutter-WASM FFI dispatch does not return the expected status value | Keep the README's `--wasm` limitation. Schedule Safari/Firefox smokes when automation/browser access is available; do not claim parity for those targets from Chrome. |
+| At assessment time, Safari and Firefox runtime behavior was unknown and `--wasm` failed at the first ABI conversion call | Browser compatibility beyond tested Chrome was not evidenced; Flutter-WASM FFI dispatch did not return the expected status value | The `--wasm` failure was fixed and verified for 0.5.1. Schedule Safari/Firefox smokes when automation/browser access is available; do not claim parity for those targets from Chrome. |
 
 The sampled results do not establish complete native/Web parity. No implementation change is recommended from this assessment alone; any newly reproduced difference should get its own implementation card and golden-backed regression.
 
-## Rework verification after `13419f8`
+## Historical rework verification after `13419f8`
 
 - Native: `flutter test test/yuv_frame_geometry_test.dart` passed 14/14; `flutter test test/yuv_image_patch_test.dart` passed 10/10; `pwsh -File tool/ci/windows.ps1` passed, including native probe/reference and Windows integration targets.
 - Chrome JavaScript on commit `bc7936026e7a3093dff3092395ac01d7d49deb23`: `pwsh -File tool/ci/web.ps1` passed on Chrome 154.0.8037.98 with 14 sources, 64 integration cases, the 119-case reference matrix, and camera smoke. The dedicated ownership regression and all mapped Web targets passed.
 - Flutter-WASM build: from `example/`, `flutter build web --wasm` passed on Flutter 3.44.9.
 - Flutter-WASM runtime: `pwsh -File tool/ci/drive.ps1 integration_test/probe_web_test.dart web-server --browser-name=chrome --headless --wasm` failed inside the probe with `got ERR StateError` for the WASM operation calls. The app and WASM module loaded; the operation-call stage failed. This is an unsupported runtime target, not a JavaScript-backend mismatch.
 - New geometry contract case uses a 5×3 input, explicitly asserts visible rect `(0,0,5,3)`, then compares fixed output byte arrays for I420 and BGRA against the same case in native and Web tests. Chroma values in this odd-sized I420 rotation are asserted as the ABI-produced bytes, not inferred from source-plane transposition.
+
+## 0.5.1 verification
+
+- Flutter 3.44.9, Chrome 154.0.8037.98, JavaScript build: `tool/ci/web.ps1` is
+  pending a clean commit because its `flutter pub publish --dry-run` check exits
+  65 when tracked files are modified.
+- Flutter 3.44.9, Chrome 154.0.8037.98, `--wasm`: `probe_web_test.dart`,
+  `reference_web_conversions_test.dart --profile`, `shader_probe_web_test.dart`,
+  and `all_web_test.dart` all passed through `tool/ci/drive.ps1`.

@@ -1,5 +1,5 @@
 # CI 1 — Web CI: обязательный прогон `--wasm`
-**Status:** TODO · **Tier:** T3, Reviewer T2 · **Owner:** — · **Depends On:** WEB 4 · **Probe:** none
+**Status:** IN_PROGRESS · **Tier:** T3, Reviewer T2 · **Owner:** Executor · **Depends On:** WEB 4 · **Probe:** none
 
 **Base SHA:** — (база пула `WASM` — в FIX 1)
 
@@ -40,5 +40,8 @@
 - Reviewer: прочитать изменение `web.ps1`; после принятия — тег `ci/web/WASM` на принятый SHA, Web CI зелёный.
 
 #### Executor Report
+
+- Добавлен обязательный шаг `--wasm` после JavaScript-целей: `probe_web_test.dart`, `shader_probe_web_test.dart`, `all_web_test.dart`; каждую цель пропускает через `Invoke-WebDrive`, который требует `All tests passed`.
+- Запуск `pwsh -File tool/ci/web.ps1` ждёт чистого коммита изменений; проверка package dry-run на грязном дереве завершилась exit 65 до запуска целей.
 
 #### Review

@@ -1,4 +1,4 @@
-// ignore_for_file: public_member_api_docs, invalid_runtime_check_with_js_interop_types
+// ignore_for_file: public_member_api_docs
 
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
@@ -39,8 +39,8 @@ T callConstructor<T>(Object constructor, List<Object?> arguments) {
 Object jsify(Object? value) => value.jsify() as Object;
 
 JSObject _asJsObject(Object object) {
-  if (object is JSObject) {
-    return object;
+  if (object.isA<JSObject>()) {
+    return object as JSObject;
   }
   return JSObject.fromInteropObject(object);
 }
@@ -49,29 +49,30 @@ JSAny? _toJs(Object? value) {
   if (value == null) {
     return null;
   }
-  if (value is JSAny) {
-    return value;
+  if (value.isA<JSAny>()) {
+    return value as JSAny;
   }
   return value.jsify();
 }
 
 T _fromJs<T>(JSAny? value) {
   if (value == null) {
-    return null as T;
+    if (null is T) {
+      return null as T;
+    }
+    throw StateError('Expected $T from JavaScript, got null.');
   }
-  final tName = T.toString();
-  if (T == Object || tName == 'Object?' || T == JSAny || tName == 'JSAny?') {
+
+  if (T == Object) {
+    if (value.isA<JSNumber>() || value.isA<JSBoolean>() || value.isA<JSString>()) {
+      return value.dartify() as T;
+    }
     return (value as dynamic) as T;
   }
+
   final dartValue = value.dartify();
   if (dartValue is T) {
     return dartValue;
   }
-  if (dartValue == null && null is T) {
-    return null as T;
-  }
-  if (value is T) {
-    return (value as dynamic) as T;
-  }
-  return (dartValue as dynamic) as T;
+  throw StateError('Expected $T from JavaScript, got ${dartValue.runtimeType}.');
 }

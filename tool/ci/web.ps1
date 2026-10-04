@@ -237,6 +237,20 @@ try {
     Invoke-WebDrive -Target 'integration_test/camera_source_web_smoke_test.dart' -Arguments @('--web-browser-flag=--use-fake-device-for-media-stream', '--web-browser-flag=--use-fake-ui-for-media-stream')
   }
 
+  $wasmTargets = @(
+    'integration_test/probe_web_test.dart',
+    'integration_test/shader_probe_web_test.dart',
+    'integration_test/all_web_test.dart'
+  )
+  $wasmStarted = [System.Diagnostics.Stopwatch]::StartNew()
+  Start-WebDriver -DriverPath $chromeDriver -Action {
+    foreach ($target in $wasmTargets) {
+      Invoke-WebDrive -Target $target -Arguments @('--wasm')
+    }
+  }
+  $wasmStarted.Stop()
+  Write-Output "Web WASM CI passed: targets=$($wasmTargets.Count); elapsed=$($wasmStarted.Elapsed.ToString('hh\:mm\:ss'))."
+
   & git add --refresh -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm example/windows/flutter/generated_plugin_registrant.cc example/windows/flutter/generated_plugin_registrant.h example/windows/flutter/generated_plugins.cmake
   if ($LASTEXITCODE -ne 0) {
     throw "Could not refresh generated-file index state: $LASTEXITCODE"

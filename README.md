@@ -2,14 +2,14 @@
 
 `yuv_ffi` processes I420, NV12, and BGRA8888 images in Flutter. It provides
 conversion, crop, rotation, flips, effects, blur, serialization, and Flutter
-image presentation. Native platforms use C through FFI; Web uses a partial
-WASM backend.
+image presentation. Native platforms use C through FFI; Web uses the WASM
+backend through Flutter's JavaScript build.
 
 ## Installation
 
 ```yaml
 dependencies:
-  yuv_ffi: 0.5.0
+  yuv_ffi: 0.5.1
 ```
 
 Version 0.5.0 is the next available pub.dev release after 0.2.4. Version
@@ -27,16 +27,17 @@ applies to applications whose lockfile still resolves 0.4.0.
 | macOS | 10.15 or later |
 | Windows | Native FFI backend |
 | Linux | Native FFI backend |
-| Web | JavaScript Flutter build; tested in Chrome |
+| Web | Flutter JavaScript and `--wasm` builds; tested in Chrome |
 
 On iOS and macOS the plugin builds with either Swift Package Manager (the
 default in Flutter 3.44 and later) or CocoaPods. Nothing needs to be configured
 in your app. The Apple sources live in `darwin/`; the C sources stay in `src/`.
 
-The Web backend uses the JavaScript Flutter build. `flutter build web --wasm`
-builds, but Web operations fail at runtime because of a known interop issue.
-Use `flutter build web`.
-Safari and Firefox have not been tested. Safari 16.4 or later is a technical
+Web operations match the native backend in the checked cases on both the
+JavaScript and `--wasm` Flutter builds. `chromaSwap` supports NV12 only, as on
+native. Both builds were verified in Chrome. Use `flutter build web` or
+`flutter build web --wasm`.
+Safari and Firefox have not been verified. Safari 16.4 or later is a technical
 minimum for release WASM SIMD, not a tested compatibility claim for this plugin.
 
 ## Quick start and initialization
@@ -231,19 +232,19 @@ Public calls can throw:
 | Platform | Support | Checked in CI | Checked manually |
 | --- | --- | --- | --- |
 | Android | Native FFI: `armeabi-v7a`, `arm64-v8a`, `x86_64` | Build, app-runtime smoke, and the 1188-case correctness matrix | Release builds on a physical Pixel 3 for `arm64-v8a` and `armeabi-v7a` |
-| iOS | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | Debug build on a physical iPhone (iOS 18.7): camera, shader display, and the device check |
+| iOS | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | Release build on a physical iPhone (iOS 18.7): camera, shader display, and the device check |
 | macOS | Native FFI | Example build, app-runtime smoke, and the 1188-case correctness matrix | Camera stream smoke with the built-in camera |
 | Windows | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | — |
 | Linux | Native FFI | Example build, packaging, app-runtime smoke, and the 1188-case correctness matrix | — |
-| Web | Partial WASM backend | Package checks, browser tests, and the reference correctness matrix | — |
+| Web | WASM backend (JavaScript and `--wasm` builds); operation parity with native in checked cases | Package checks, browser tests, and the 1188-case correctness matrix on both builds | Chrome |
 
 ## Web backend
 
-Web support is a partial WASM backend and remains work in progress. It is not
-feature-complete with native backends. `YuvFfi.initialize()` loads the module;
-use `YuvCapabilities` to query the operations exported by that module instead
-of assuming native parity. Browser runtime limits and the WASM initialization
-lifecycle apply.
+Web operations match the native backend in the checked cases on the JavaScript
+and `--wasm` Flutter builds (verified in Chrome). `chromaSwap` is supported for
+NV12 only, as on native. Safari and Firefox have not been verified.
+`YuvFfi.initialize()` loads the module; use `YuvCapabilities` to query the
+operations exported by that module.
 
 ## Migrating to 0.5.0
 

@@ -1,3 +1,14 @@
+## 0.5.1
+
+### Documentation
+
+- Clarified Web support: operations match native on the JavaScript build
+  (verified in Chrome); corrected the platform status table.
+
+### Fixed
+
+- Web operations now work in `flutter build web --wasm` builds (Chrome).
+
 ## 0.5.0
 
 This is the next available pub.dev release after 0.2.4. Version 0.4.0 was

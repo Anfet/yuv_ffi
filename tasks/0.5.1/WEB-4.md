@@ -1,5 +1,5 @@
 # WEB 4 — Flutter Web `--wasm`: исправить interop-слой Web backend
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** FIX 1 · **Probe:** web
+**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** FIX 1 · **Probe:** web
 
 **Base SHA:** — (база пула `WASM` — в FIX 1)
 
@@ -91,5 +91,13 @@ Web backend в сборке `--wasm` в Chrome дают те же результ
   `doc/web-parity.md`.
 
 #### Executor Report
+
+- База `6986feb295e4b1ebbdc2139313044282d5b0daa5`, Chrome 154.0.8037.98.
+- Негативный контроль: `pwsh -File tool/ci/drive.ps1 integration_test/probe_web_test.dart web-server --browser-name=chrome --headless --wasm` — exit 1; probe сообщил `got ERR StateError` на операциях.
+- A1: interop преобразует JS-примитивы через `dartify()` без выбора по `T.toString()`, `ccall` возвращает `num`, `HEAPU8` читается как `JSUint8Array.toDart`.
+- `dart analyze` трёх изменённых Web Dart-файлов — PASS.
+- WASM: `probe_web_test.dart` (1188), `reference_web_conversions_test.dart --profile` (119), `shader_probe_web_test.dart` (shader loaded, все различия ≤1), `all_web_test.dart` — все прошли через `tool/ci/drive.ps1`. Первый shader запуск упал на Flutter `SocketException` при закрытии WebDriver; повтор с foreground ChromeDriver прошёл.
+- JavaScript `tool/ci/web.ps1` ещё не дошёл до браузерных тестов: `flutter pub publish --dry-run` завершился exit 65 из-за незакоммиченных файлов; будет повторён на чистом SHA пула.
+- `doc/web-parity.md`, README и CHANGELOG обновлены по фактическому результату. Safari/Firefox не проверялись.
 
 #### Review

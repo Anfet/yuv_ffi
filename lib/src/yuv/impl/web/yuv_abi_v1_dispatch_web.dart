@@ -17,9 +17,7 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 /// guarantees is that the symbol a Web operation reaches for is the same one
 /// the header declares and the build exports -- and that a symbol missing from
 /// the module is reported by name before the call, instead of failing as an
-/// opaque JS error deep inside a `ccall`. Running on ABI v1 does not make Web a
-/// feature-complete peer of the native backend; it remains a partial WASM
-/// backend.
+/// opaque JS error deep inside a `ccall`.
 abstract final class YuvAbiV1WebDispatch {
   /// Emscripten prefixes an exported C function with an underscore.
   static const String exportPrefix = '_';
@@ -72,10 +70,6 @@ abstract final class YuvAbiV1WebDispatch {
     if (!moduleExports(rawModule, symbol)) {
       throw StateError('The loaded YUV WASM module does not export the ABI v1 symbol $symbol.');
     }
-    final result = js_util.callMethod<Object?>(rawModule, 'ccall', <Object?>[symbol, 'number', argTypes, args]);
-    if (result is num) {
-      return result.toInt();
-    }
-    throw StateError('ABI v1 symbol $symbol returned ${result.runtimeType} instead of a YuvStatus number.');
+    return js_util.callMethod<num>(rawModule, 'ccall', <Object?>[symbol, 'number', argTypes, args]).toInt();
   }
 }
