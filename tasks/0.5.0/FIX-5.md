@@ -85,4 +85,31 @@
 - `bash tool/ci/scope_guard.sh 78eca6c6071004175431f58c27fc8101664d501b` → `all`; отдельные перечисленные проверки выполнены выше.
 - Негативный контроль на исходном коде отдельно не запускался; регрессионный сценарий напрямую вызывает исходную точку отказа до последующего восстановления.
 
+- REWORK: shader renderer получает синхронный снимок `frame.size` от `present()` и использует его при создании текстуры после декодирования; также самостоятельно захватывает размеры для прямых вызовов `upload()`. Добавлен тест повторного использования кадра с изменением размеров во время декодирования.
+- Добавлен тест ошибки копирования при `useShader: true` во время BGRA fallback и проверки, что следующий кадр принимается и завершается.
+- PASS: `flutter test test/yuv_frame_presenter_test.dart test/yuv_frame_renderer_test.dart test/public_surface_test.dart` — 15 тестов.
+- PASS: `pwsh -File tool/ci/windows.ps1` — 20/20 проверок, 1 skipped, 0 failed.
+- PASS: негативный контроль — временно восстановлена исходная последовательность (занятость до `toBgraBytes()`); тест упал на `isBusy == false` (exit 1). Исправленная реализация восстановлена, точечный набор повторён и прошёл 15/15.
+- REWORK: восстановлена исходная публичная сигнатура `YuvFrameRenderer.upload(YuvImage frame)`; размеры теперь захватываются синхронно внутри renderer до копирования/упаковки. Shader fallback тест проверяет пиксель кадра через `RepaintBoundary.toImage()` без условного пропуска.
+- PASS: `dart format --line-length 150` для четырёх изменённых Dart-файлов; `dart analyze lib test example/integration_test/presenter_shader_native_test.dart` — No issues found.
+- PASS: `flutter test test/yuv_frame_presenter_test.dart test/yuv_frame_renderer_test.dart test/public_surface_test.dart` — 15/15; `pwsh -File tool/ci/vm.ps1` — 638/638, 0 skipped; `pwsh -File tool/ci/windows.ps1` — 134/134, 0 skipped, 0 failed; Windows build и 5 integration targets, включая `presenter_shader_native_test`, PASS.
+- PASS: `bash tool/ci/scope_guard.sh 78eca6c6071004175431f58c27fc8101664d501b` → `all`; все обязательные команды для доступной Windows-машины выполнены.
+- Примечание: негативный контроль BGRA-теста на исходной последовательности выполнен ранее и записан выше; текущий тест shader fallback отдельно доказывает показ принятого следующего кадра пикселем.
+
 #### Review
+
+**PASS по коду, 04.10.2026; проверено рабочее дерево поверх `ba9b6df`, включая доработки renderer и тестов.** Обе предыдущие находки закрыты: публичная сигнатура `upload(YuvImage frame)` сохранена, размеры захватываются синхронно до декодирования; shader BGRA fallback проверяет фактический пиксель следующего кадра без условного пропуска. Новых блокирующих замечаний к коду нет.
+
+Независимо воспроизведены: точечный набор presenter/renderer/public surface — 15/15; `vm.ps1` — 638/638; `windows.ps1` — 134/134, Windows release build и все пять integration targets PASS, включая настоящий shader-путь с ошибками размера и упаковки. `dart analyze lib test example/integration_test/presenter_shader_native_test.dart` — PASS; проверка форматирования пяти Dart-файлов без записи — 0 изменений.
+
+Негативный контроль выполнен с отдельной временной копией presenter из `78eca6c`, без замены рабочих файлов: новый BGRA-тест упал на `isBusy == false` (фактически `true`, exit 1). Дополнительная временная проверка чтения `frame.size` подтвердила, что тест shader BGRA fallback вызывает ветку загруженного renderer; она прошла. Временные файлы удалены.
+
+**Статус остаётся REVIEW до фиксации доработки в git и проверки чистого SHA**, как требует Validation и правило 4 в `todo.md`: `ba9b6df` не содержит проверенную доработку. `scope_guard.sh <base>` печатает `all` для общего диапазона FIX 5–8 и текущих изменений CI; полный межплатформенный гейт этим локальным ревью не подтверждён.
+
+**REWORK, 04.10.2026; проверены изменения рабочего дерева поверх `ba9b6df`.** `YuvFrameRenderer.upload()` получил второй публичный параметр `frameSize`, хотя Constraints запрещает менять публичные сигнатуры. Сохранить `upload(YuvImage frame)` и захватывать размер синхронно внутри renderer; `present()` может сохранить свой снимок размера для геометрии.
+
+Тест `shader BGRA fallback errors leave the presenter free for the next frame` не проверяет изображение: при `useShader: true` getter `presenter.image` всегда возвращает `null`, поэтому ветка `if (presenter.image != null)` недостижима. Проверять фактический показ следующего кадра через виджет/пиксель либо иной наблюдаемый результат без условного пропуска. Точечные тесты 15/15 и `dart analyze lib test` прошли; эти проверки не обнаруживают нарушения контракта и слабую проверку результата.
+
+**REWORK, 04.10.2026; проверен диапазон `78eca6c..c155637`.** В `YuvFrameRenderer.upload()` размеры `frame.width` и `frame.height` читаются в `.then` после возврата `present()`. Если вызывающий код сразу меняет или повторно использует кадр, текстура получает размеры уже изменённого кадра при прежних скопированных пикселях. Зафиксировать размеры синхронно до декодирования в shader и BGRA fallback; проверить повторное использование кадра тестом.
+
+Также выполнить требуемый негативный контроль нового BGRA-теста на базовом коде и добавить тест ошибки `toBgraBytes()` в fallback при `useShader: true`, с проверкой следующего кадра. Текущий точечный прогон `flutter test test/yuv_frame_presenter_test.dart test/public_surface_test.dart` прошёл: 11/11.

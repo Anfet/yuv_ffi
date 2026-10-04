@@ -28,6 +28,8 @@ final class YuvFrameRenderer {
 
   /// Copies [frame] before awaiting so it may be reused immediately.
   Future<YuvFrameTexture> upload(YuvImage frame) {
+    final capturedWidth = frame.width;
+    final capturedHeight = frame.height;
     // CanvasKit premultiplies sampled colors by alpha, so Web keeps samples out of the alpha byte.
     final packed = hasShader ? YuvPlanesTexture.pack(frame, bytesPerTexel: kIsWeb ? 3 : 4) : null;
     if (packed != null) {
@@ -36,15 +38,15 @@ final class YuvFrameRenderer {
         packed.width,
         packed.height,
         ui.PixelFormat.rgba8888,
-      ).then((image) => YuvFrameTexture._(frame.width, frame.height, image, packed));
+      ).then((image) => YuvFrameTexture._(capturedWidth, capturedHeight, image, packed));
     }
     final bytes = frame.toBgraBytes();
     return decodeYuvFrameImage(
       bytes,
-      frame.width,
-      frame.height,
+      capturedWidth,
+      capturedHeight,
       ui.PixelFormat.bgra8888,
-    ).then((image) => YuvFrameTexture._(frame.width, frame.height, image, null));
+    ).then((image) => YuvFrameTexture._(capturedWidth, capturedHeight, image, null));
   }
 
   /// Paints [texture] using [geometry].

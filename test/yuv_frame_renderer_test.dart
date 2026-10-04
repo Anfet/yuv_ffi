@@ -24,6 +24,20 @@ void main() {
     renderer.dispose();
   });
 
+  test('keeps the original dimensions when the source frame is reused during decoding', () async {
+    final frame = _ReusableImage(YuvImage.bgra(2, 1));
+    final renderer = await YuvFrameRenderer.load();
+    final upload = renderer.upload(frame);
+    frame.width = 1;
+    frame.height = 2;
+    final texture = await upload;
+
+    expect(texture.width, 2);
+    expect(texture.height, 1);
+    texture.dispose();
+    renderer.dispose();
+  });
+
   test('rejects a texture painted with another source size', () async {
     final renderer = await YuvFrameRenderer.load();
     final texture = await renderer.upload(YuvImage.bgra(1, 1));
@@ -36,4 +50,23 @@ void main() {
     texture.dispose();
     renderer.dispose();
   });
+}
+
+class _ReusableImage implements YuvImage {
+  final YuvImage delegate;
+  @override
+  int width;
+  @override
+  int height;
+
+  _ReusableImage(this.delegate) : width = delegate.width, height = delegate.height;
+
+  @override
+  Size get size => Size(width.toDouble(), height.toDouble());
+
+  @override
+  Uint8List toBgraBytes() => delegate.toBgraBytes();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

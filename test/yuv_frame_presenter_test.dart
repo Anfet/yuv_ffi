@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
@@ -56,9 +57,14 @@ void main() {
     PaintingBinding.instance.imageCache.clearLiveImages();
   });
 
-  Future<void> pumpView(WidgetTester tester) => tester.pumpWidget(
+  Future<void> pumpView(WidgetTester tester, {Key? viewKey}) => tester.pumpWidget(
     MaterialApp(
-      home: Center(child: YuvFrameView(presenter: presenter)),
+      home: Center(
+        child: RepaintBoundary(
+          key: viewKey,
+          child: YuvFrameView(presenter: presenter),
+        ),
+      ),
     ),
   );
 
@@ -71,6 +77,27 @@ void main() {
     await _waitUntil(tester, () => presenter.image != null, reason: 'the valid frame to decode');
     await tester.pump();
     expect(await _shadeOf(tester, require(_drawnImage(tester))), 2);
+  });
+
+  testWidgets('shader BGRA fallback errors leave the presenter free for the next frame', (tester) async {
+    final viewKey = GlobalKey();
+    presenter.dispose();
+    presented = 0;
+    presenter = YuvFramePresenter(onFramePresented: () => presented++, useShader: true);
+    await pumpView(tester, viewKey: viewKey);
+
+    expect(() => presenter.present(_ThrowingImage(_frame(1))), throwsA(isA<StateError>()));
+    expect(presenter.isBusy, isFalse);
+
+    await tester.runAsync(() async => expect(presenter.present(_frame(3)), isTrue));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await tester.pump();
+    expect(presenter.isBusy, isFalse);
+    expect(presented, 1);
+    final boundary = viewKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    final screenshot = await tester.runAsync(() => boundary.toImage());
+    expect(await _shadeOf(tester, require(screenshot)), 3);
+    screenshot!.dispose();
   });
 
   testWidgets('keeps one frame in flight, drops frames arriving meanwhile and then shows the latest finished one', (tester) async {
@@ -228,6 +255,9 @@ class _ThrowingImage implements YuvImage {
 
   @override
   int get height => _delegate.height;
+
+  @override
+  ui.Size get size => _delegate.size;
 
   @override
   Uint8List toBgraBytes() => throw StateError('copy failed');
