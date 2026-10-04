@@ -1,5 +1,5 @@
 # APPLE 1 — Проверка работы на macOS и iOS
-**Status:** TODO · **Tier:** T2 (T1 — если шейдерная проба на Metal разойдётся: отдельная карточка) · **Owner:** — · **Depends On:** — · **Probe:** none · **Base:** `6f71a45`
+**Status:** REVIEW · **Tier:** T2 (T1 — если шейдерная проба на Metal разойдётся: отдельная карточка) · **Owner:** — · **Depends On:** — · **Probe:** none · **Base:** `6f71a45`
 
 #### Goal
 Последний прогон на Apple — `macos.sh` и `ios.sh` на `bae5ff8` (код `d3bb2cc`, этап 3). Всё, что добавили этапы 4 и
@@ -85,6 +85,9 @@ Metal/Impeller и сходится ли с CPU, каким путём идёт �
   прошёл за ~40 с (41 МБ) — зависание `gen_snapshot` не воспроизвелось; `SMOKE COMPLETE (5/5 frames, clean stop)`,
   BGRA 640×480 с изображением. Release-приложение — другой бинарник, macOS запросила разрешение камеры заново,
   Engineer подтвердил.
+- Основное example на macOS в **release** (04.10.2026, `d7fc1f2`, `flutter build macos --release`, MacBook Pro,
+  встроенная камера; вручную — Engineer): экран камеры показывает превью, снимок открывается в редакторе, ориентация
+  и зеркальность такие же, как в превью. Закрывает замечание 2 ревью.
 - iPhone в **release** (04.10.2026, `flutter run --release`, Engineer): DEVICE 1 — все шаги и ответы «да»,
   `display_fps` 29,9–30,1 (частота камеры) на всех шагах, `shader: true`, `rotation: 0`, `mirrored: false`,
   `face_ratio` 1,0 в портрете и альбоме, `blur_ms_median` 230,9 (14 запусков за 15 с; в debug было 1074,9),
@@ -108,6 +111,12 @@ Metal/Impeller и сходится ли с CPU, каким путём идёт �
 - Редактор после снимка на iPhone отдельно не проверялся (шаг `capture` экрана проверки — да).
 - Документы: `README.md` (ручные проверки iOS и macOS в таблице платформ), `example/README.md` (ориентация на iOS),
   `CHANGELOG.md` (`Package.swift`).
+
+**Доработка по REWORK** (`d7fc1f2`): (1) результаты распознавания лица и blur привязаны к номеру замера
+(`_measurementId` в `device_check_screen.dart`): поздний результат предыдущего шага не восстанавливает рамку и не
+попадает в счётчики следующего; analyze чисто, `flutter test test/device_check` 5/5; юнит-теста на гонку нет — ML Kit
+в тестах недоступен; (2) ручная проверка основного example на macOS выполнена (выше). Повторять `macos.sh` и CI
+не требуется: правки только в `example/lib/device_check/`, не затрагивающие native и шейдер.
 
 #### Review
 **REWORK** на `115c603` (04.10.2026). Независимый прогон `bash tool/ci/macos.sh` на этом SHA: PASS, exit 0; `shader_probe_native_test.dart` и SPM/CocoaPods прошли.
