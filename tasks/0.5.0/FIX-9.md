@@ -1,5 +1,5 @@
 # FIX 9 — MIGRATION.md: переход с 0.2.4 на 0.5.0 для инженеров и агентов
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** FIX 6 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** FIX 6 · **Probe:** none
 
 **Base SHA:** `8bab4a74e6fa0f41097832e8381100999210efc4`
 
@@ -152,3 +152,11 @@ README «Migrating to 0.5.0». Таблица короткая: в ней не �
 - **Проверка исправления:** в scratch копировать точный окончательный fenced-сниппет MIGRATION.md в вызываемую функцию (не писать похожую реализацию отдельно). Запустить её для I420 4×4 с padding `[8,4,4]`, I420 6×6 и I420 4×4 с rowStride `[12,6,6]` / pixelStride `[2,2,2]`; во всех трёх случаях assert размеров, всех `height/rowStride/pixelStride/bytes.length` по source и нулевых bytes. Анализировать тот же сниппет. Сохранить контроль упаковывания без preserve. Остальные прошедшие проверки не расширять до backend-матрицы. Обновить dry-run на чистом SHA с исправленным документом и записать новый SHA/логи; старый результат относится к старому примеру.
 - **Независимо воспроизведено:** обе расширенные фикстуры `flutter analyze --no-pub` — PASS; исполнительские runtime-тесты — PASS, 2/2; точные Verify-команды на старой фикстуре — exit 0 каждая, на мигрированной — exit 1 каждая; `git diff --check 8bab4a7..HEAD` — PASS. `flutter pub publish --dry-run` на export реализации — exit 0, **0 warnings / 1 hint**, MIGRATION.md в публикуемом списке; текст документа export совпадает с текущим после нормализации CRLF.
 - **Логи:** старая фикстура `.../fix9-api-fixture-0eb5f9ef21b84887ac9a021909818854/old-app/review2-analyze.log`; новая — `.../fix9-rework-current/review2-analyze.log`, `review2-test.log`; publish — `.../fix9-publish-run-1004/review2-publish.log` (все каталоги под `C:/Users/Oleg-T/AppData/Local/Temp`). Независимое воспроизведение дефекта: `C:/Users/Oleg-T/AppData/Local/Temp/fix9-review-73e5cfcec9ec4fce8607c14d84ba7680/exact_snippet_test.dart`, `review2-exact-snippet.log`. Два негативных теста PASS подтверждают дефект рецепта, не его исправность. Процессы завершены; Probe none; делегирования не было.
+
+#### Executor Report — Rework 3
+
+- По замечанию P2 заменён фиксированный список плоскостей на `source.planes.map((plane) => YuvPlane(plane.height, plane.rowStride, plane.pixelStride))` для I420 source; пропущенный bytes-аргумент создаёт zero-filled planes. Пример сохраняет размеры source и передаёт `layout: YuvPlaneLayout.preserve`.
+- Проверен без переписывания точный fenced-сниппет из текущего `MIGRATION.md`: он извлечён автоматически и вызван на I420 4×4 с rowStride `[8,4,4]`, I420 6×6 и I420 4×4 с rowStride `[12,6,6]`/pixelStride `[2,2,2]`. `flutter analyze` — PASS; `flutter test test/review3-exact-snippet_test.dart` — PASS, 2 теста. Во всех сценариях сравнивались размеры и `height`, `rowStride`, `pixelStride`, длины buffers с source; выходные bytes нулевые. Packed-контроль без preserve — rowStride `[4,2,2]`, pixelStride `[1,1,1]`, lengths `[16,4,4]`.
+- Scratch: `C:\Users\Oleg-T\AppData\Local\Temp\fix9-rework-current`; логи `review3-analyze.log` и `review3-exact-snippet.log`.
+- Новый чистый export SHA `e0d23ee3f0538c1e451674a162ee458cf38d8fc0` проверен через `git archive`: `MIGRATION.md` присутствует в архиве и публикуемом списке. `flutter pub publish --dry-run` — exit 0, 0 warnings, 1 version hint о предыдущей версии 0.2.4; лог `C:\Users\Oleg-T\AppData\Local\Temp\fix9-publish-run-1004-r3\publish-dry-run.log`, архив `C:\Users\Oleg-T\AppData\Local\Temp\fix9-publish-run-1004-r3.zip`.
+- Probe none. Полная backend-матрица и агентная миграция не требуются/не выполнялись.
