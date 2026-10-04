@@ -1,5 +1,5 @@
 # RELEASE 1 — Финальный аудит и релизный гейт 0.5.0
-**Status:** TODO · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** FIX 1, FIX 2, FIX 3, FIX 4 (DONE) · **Probe:** windows+pixel3
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** FIX 1, FIX 2, FIX 3, FIX 4 (DONE) · **Probe:** windows+pixel3
 **Base SHA:** 4a485d8b8c1b5475bf0c02309b8d0dec56d0437c (Executor записывает SHA `dev` на старте)
 
 #### Goal
@@ -67,6 +67,14 @@
 #### Executor Report
 
 **STATUS: REVIEW**
+
+**Повторный кандидат:** `release/0.5.0`, SHA `98ce7713e19f562cd6847dc34d1cdc394c283981`; tag `ci/all/0.5.0-v2` указывает на этот SHA. Локальная ветка кандидата обновлена с принятого `dev`; замороженные исходники после FIX 4 не менялись.
+
+**Повторный CI:** все девять workflow прошли на SHA кандидата: Windows [37206274710](https://github.com/Anfet/yuv_ffi/actions/runs/37206274710), Smoke [37206274689](https://github.com/Anfet/yuv_ffi/actions/runs/37206274689), VM [37206274675](https://github.com/Anfet/yuv_ffi/actions/runs/37206274675), Android [37206274691](https://github.com/Anfet/yuv_ffi/actions/runs/37206274691), Linux и bindings [37206274713](https://github.com/Anfet/yuv_ffi/actions/runs/37206274713), macOS [37206274681](https://github.com/Anfet/yuv_ffi/actions/runs/37206274681), Web [37206274674](https://github.com/Anfet/yuv_ffi/actions/runs/37206274674), Example [37206274701](https://github.com/Anfet/yuv_ffi/actions/runs/37206274701), iOS [37206274709](https://github.com/Anfet/yuv_ffi/actions/runs/37206274709). Windows `tool/ci/windows.ps1` локально — exit 0, 20/20 групп, 1 skip.
+
+**Повторный publish dry-run:** `flutter pub publish --dry-run` — exit 0, 0 warnings, 1 hint о версии 0.2.4 на pub.dev. `pana --exit-code-threshold 0 .` на Windows не запускается из-за ошибки sandbox самого pana: Windows `C:\...` путь отклонён как недопустимый из-за `:`. Предыдущий успешный результат Mac — 160/160 на SHA `f2130c2`; разница кандидата — синхронизация `example/pubspec.lock` для FIX 4. Новый pana-прогон на Mac не выполнен: локальный sync helper недоступен (нет `rsync`).
+
+**Действие Reviewer:** повторить Pixel 3 arm64/armv7 и сверить кандидата и CI. Установку выполнять через `adb install -r`, сохранив данные приложения. Safari и Firefox остаются «не проверено» согласно решению Engineer.
 
 **Release candidate:** `release/0.5.0`, SHA `f2130c2c5ccc64f314417f520146a075f8a5749b` (`ci/all/0.5.0` points to this SHA). Version `0.5.0` is consistent in `pubspec.yaml`, `CHANGELOG.md`, `darwin/yuv_ffi.podspec`, and `src/CMakeLists.txt`. `git diff --stat f2130c2..release/0.5.0 -- lib src darwin android example/lib assets` is empty.
 
