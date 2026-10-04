@@ -1,5 +1,5 @@
 # CI 1 — Web CI: обязательный прогон `--wasm`
-**Status:** BLOCKED · **Tier:** T3, Reviewer T2 · **Owner:** Engineer · **Depends On:** WEB 4 · **Probe:** none
+**Status:** REVIEW · **Tier:** T3, Reviewer T2 · **Owner:** Engineer · **Depends On:** WEB 4 · **Probe:** none
 
 **Base SHA:** — (база пула `WASM` — в FIX 1)
 
@@ -49,7 +49,7 @@
 - Native CTest via CMake 3.22.1 — PASS, 11/11 (`cmake -S . -B <temp> -DBUILD_TESTING=ON`, build Release, `ctest --test-dir <temp> -C Release --output-on-failure`).
 - `macos.sh` и `ios.sh` на Mac — exit 0. macOS native tests, release build, CocoaPods fallback прошли; финальная git-status проверка напечатала `fatal: not a git repository`, так как синхронизированная копия сделана через `git archive` без `.git`. iOS Simulator/device builds и пять simulator integration targets прошли.
 - Негативный контроль на временной `git archive` копии базы `6986feb295e4b1ebbdc2139313044282d5b0daa5`: `drive.ps1 ... probe_web_test.dart ... --wasm` — ожидаемый exit 1, probe показал `got ERR StateError`.
-- **BLOCKED:** scope guard печатает `all`; Linux VM доступна в перечне обязательных проверок, но два SSH вызова к `192.168.1.29:22` завершились `Connection timed out` (синхронизация и повтор `flutter --version`). Для снятия блокировки Engineer должен поднять Linux VM/SSH. Повторить на ней по `AGENTS.md`: в `example/` выполнить `flutter create --platforms=linux .`, затем `xvfb-run -a bash tool/ci/drive.sh integration_test/<target> linux`.
+- Linux scope check на `b7ce1f8` — PASS: Flutter 3.44.9; sanitizer CTest Debug и Release — 11/11 в каждом; sanitizer case count; native packaging smoke; `flutter build linux --release`; app-runtime smoke и все четыре найденных `_native_test.dart` targets через `drive.sh` — PASS. `example/pubspec.lock` совпал с файлом из commit archive после `flutter pub get`.
 - Baseline archive для негативного контроля создан в `C:\Users\Oleg-T\AppData\Local\Temp\yuv-ffi-baseline-6986feb`. Автоматическая проверка отклонила удаление временной папки (`Remove-Item -Recurse`), поэтому она оставлена на диске.
 
 #### Review

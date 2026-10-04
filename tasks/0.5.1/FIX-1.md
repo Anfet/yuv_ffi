@@ -1,5 +1,5 @@
 # FIX 1 — README: точный статус Web и платформ, версия 0.5.1
-**Status:** IN_PROGRESS · **Tier:** T3, Reviewer T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3 (`src/CMakeLists.txt` — только номер версии; проба — общая для пула `WASM`)
+**Status:** REVIEW · **Tier:** T3, Reviewer T2 · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3 (`src/CMakeLists.txt` — только номер версии; проба — общая для пула `WASM`)
 
 **Base SHA:** `6986feb295e4b1ebbdc2139313044282d5b0daa5` (`dev` на старте пула `WASM`)
 
@@ -62,6 +62,7 @@ feature-complete with native backends», строка Web в «Platform status»
 - `bash tool/ci/scope_guard.sh 6986feb295e4b1ebbdc2139313044282d5b0daa5` — `scope: all`.
 - `pwsh -File tool/ci/windows.ps1` — PASS, 134/134 VM-tag tests, Windows release build и все пять native integration targets.
 - `pwsh -File tool/ci/web.ps1` — PASS на SHA `8ebc4088fab73bdf25741e30c071a1c8d11abcd8`; Android/Apple/Linux результаты общего пула записаны в CI 1.
+- Linux scope check пула на `b7ce1f8`: Debug/Release CTest 11/11, native packaging smoke, Linux release build; app-runtime smoke и все четыре `_native_test.dart` targets — PASS. `example/pubspec.lock` после `flutter pub get` совпал с lockfile из commit archive.
 - Pixel 3 arm64/armv7 проверяет Reviewer на принятом SHA.
 
 #### Review

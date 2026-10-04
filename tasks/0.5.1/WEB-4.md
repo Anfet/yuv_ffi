@@ -1,5 +1,5 @@
 # WEB 4 — Flutter Web `--wasm`: исправить interop-слой Web backend
-**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** FIX 1 · **Probe:** web
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** FIX 1 · **Probe:** web
 
 **Base SHA:** — (база пула `WASM` — в FIX 1)
 
@@ -99,5 +99,6 @@ Web backend в сборке `--wasm` в Chrome дают те же результ
 - WASM: `probe_web_test.dart` (1188), `reference_web_conversions_test.dart --profile` (119), `shader_probe_web_test.dart` (shader loaded, все различия ≤1), `all_web_test.dart` — все прошли через `tool/ci/drive.ps1`. Первый shader запуск упал на Flutter `SocketException` при закрытии WebDriver; повтор с foreground ChromeDriver прошёл.
 - Полный `pwsh -File tool/ci/web.ps1` на SHA `8ebc4088fab73bdf25741e30c071a1c8d11abcd8` — exit 0; JS 14 sources/64 cases, reference 119, camera smoke и три обязательных WASM цели прошли.
 - `doc/web-parity.md`, README и CHANGELOG обновлены по фактическому результату. Safari/Firefox не проверялись.
+- Linux scope check на `b7ce1f8` — PASS: Debug/Release CTest 11/11, native packaging smoke, Linux release build, app-runtime smoke и все четыре `_native_test.dart` targets.
 
 #### Review
