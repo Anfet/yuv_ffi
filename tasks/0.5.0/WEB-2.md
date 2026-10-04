@@ -1,5 +1,5 @@
 # WEB 2 — Web: оценка паритета WASM с native
-**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 · **Owner:** Codex · **Depends On:** — · **Probe:** windows
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Codex · **Depends On:** — · **Probe:** windows
 **Base SHA:** `8c3d88d1c6256a6f3e10f2e2db4e09d9f571c068`
 
 #### Goal
@@ -89,7 +89,7 @@ Web — частичный WASM-бэкенд (README): набор операци
 - Инвентаризация сведена в таблицу знаменателей в `doc/web-parity.md`: operation pairs 40 same / 0 differs / 2 unsupported / 0 untested из 42; публичные high-level paths 7/7 checked; browser/build targets 1 PASS / 1 unsupported / 2 untested из 4. Записано, что patch и geometry — общий Dart-код, а их базовые ABI-операции входят в golden-пробу.
 - Web ownership regression выделен в отдельный `testWidgets`; baseline `tool/ci/web.ps1` обновлён с 63 до 64 случаев.
 - `flutter build web --wasm` на Flutter 3.44.9 прошёл. Browser smoke запускался через `pwsh -File tool/ci/drive.ps1 integration_test/probe_web_test.dart web-server --browser-name=chrome --headless --wasm`; приложение и модуль загрузились, probe получил `ERR StateError` на вызовах WASM-операций. Фрагмент и результаты — в `doc/web-parity.md`.
-- Проверки: focused native geometry 14/14, patch 10/10; `windows.ps1` — PASS; Chrome 154.0.8037.98 — dedicated ownership, aggregate, все пять отдельных Web targets, reference (119) и camera smoke — PASS. `web.ps1` остановился до браузерных тестов на `pub publish --dry-run` (exit 65), потому что изменённый tracked test не закоммичен; браузерные targets были запущены через тот же CI drive helper. Safari/Firefox недоступны и остаются непроверенными.
+- Проверки на implementation SHA `bc7936026e7a3093dff3092395ac01d7d49deb23`: focused native geometry 14/14, patch 10/10; `windows.ps1` — PASS; полный `web.ps1` — PASS, Chrome 154.0.8037.98, 14 sources/64 cases, reference 119/119 и camera smoke. Safari/Firefox недоступны и остаются непроверенными.
 
 #### Review
 **REWORK** на `13419f8` (04.10.2026). Независимо воспроизведено: VM-срез общей пробы `PROBE_OPS=r90,cropped,meanRoi,swap` — `cases=216/1188`, PASS; тот же срез `probe_web_test.dart` через `drive.ps1` в Chrome — PASS; `yuv_image_patch_test.dart` и `yuv_frame_geometry_test.dart` — 23/23; `web_ownership_regression_web_test.dart` в Chrome — PASS. Инвентарь операций сверен с API: 12 `YuvOperation`, 42 пары, 2 неподдерживаемые; в `assets/wasm/yuv_ffi.js` есть все 11 символов ABI v1 (`flip` обслуживает оба отражения). Числа 1188/119 и вывод об отсутствии расхождений в выборке подтверждаются.
