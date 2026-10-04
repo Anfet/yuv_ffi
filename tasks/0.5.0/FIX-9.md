@@ -1,5 +1,5 @@
 # FIX 9 — MIGRATION.md: переход с 0.2.4 на 0.5.0 для инженеров и агентов
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** FIX 6 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** FIX 6 · **Probe:** none
 
 **Base SHA:** `8bab4a74e6fa0f41097832e8381100999210efc4`
 
@@ -134,4 +134,5 @@ README «Migrating to 0.5.0». Таблица короткая: в ней не �
 - Расширенная старая API-фикстура: `flutter analyze` — PASS, No issues found (`C:\Users\Oleg-T\AppData\Local\Temp\fix9-api-fixture-0eb5f9ef21b84887ac9a021909818854\old-app`, `analyze-rework.log`); добавлены формы blur с defaults/частичными аргументами, `swapNv()` на NV21 и I420 и blank-copy для pixelStride 2.
 - Новые миграционные примеры и runtime scratch: `flutter analyze` — PASS; `flutter test` — PASS, 2 теста. Padding-preserve вернул rowStride `[8,4,4]`, pixelStride `[1,1,1]`, нулевые bytes; factory без `preserve` вернула rowStride `[4,2,2]`. Pixel gaps: preserve сохранил `(rowStride,pixelStride,length)` `[(12,2,48),(6,2,12),(6,2,12)]`; packed дал `[(4,1,16),(2,1,4),(2,1,4)]`. Scratch: `C:\Users\Oleg-T\AppData\Local\Temp\fix9-rework-current` (`analyze.log`, `test.log`).
 - Три Verify-команды из MIGRATION.md проверены без изменения шаблонов: старая фикстура вернула совпадения (`rg` exit 0) для каждой; текущая мигрированная сниппет-фикстура — совпадений нет (`rg` exit 1) для каждой. Ошибок `rg` exit 2 не было. Миграция полной старой фикстуры отдельным агентом не выполнялась согласно ограничению Engineer; проверены примеры MIGRATION.md и формы, добавленные для rework.
-- `git diff --check` — PASS для отслеживаемых файлов. `flutter pub publish --dry-run` пока не запускался: сначала требуется чистый коммит с итогом FIX 9; повторное ревью и `REVIEW` не выставляются до dry-run и подтверждения включения MIGRATION.md в архив.
+- Чистый архив коммита `46e814d7dda87db469ed992730f95022a717ddc4` создан через `git archive`; `MIGRATION.md` присутствует. На архиве `flutter pub publish --dry-run` — exit 0, 0 warnings, 1 version hint (предыдущая опубликованная версия 0.2.4); лог: `C:\Users\Oleg-T\AppData\Local\Temp\fix9-publish-run-1004\publish-dry-run.log`. Архив: `C:\Users\Oleg-T\AppData\Local\Temp\fix9-publish-run-1004.zip`.
+- `git diff --cached --check` — PASS перед коммитом; коммит реализации: `46e814d7dda87db469ed992730f95022a717ddc4` (`Clarified migration behavior and examples`). Изолированная агентная миграция не выполнялась согласно бюджету Engineer 0. Пробы не требуются (`Probe: none`).
