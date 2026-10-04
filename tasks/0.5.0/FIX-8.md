@@ -65,6 +65,11 @@ debuggable. Решение ниже использует установленн�
 - Добавлен helper `release_android_versioning.ps1`; контрактные тесты проверяют отсутствие package, ошибку чтения,
   некорректные/предельные значения и быстрый переход arm64 → armv7 → arm64.
 - PASS: `flutter test --tags release test/probe/run_release_android_test.dart` — 15 тестов.
-- Pixel 3 arm64 → armv7 → arm64 и стабильность `firstInstallTime` ещё не проверены.
+- Pixel 3 `8B1X11QLW`, Android 12, точный SHA `fdd1d3f4a00c25e34c04a110f333b8c42eaffdc0`: arm64 PASS
+  `13003 → 13004`, armv7 PASS `13004 → 13005`, arm64 PASS `13005 → 13006` (все 1188 cases). Каждый прогон
+  использовал `adb install -r`; `firstInstallTime=2026-10-04 13:15:18` до и после серии не изменился.
+- `rg -n 'uninstall|pm clear|install -r -d' tool/probe/run_release_android.ps1` — совпадений нет.
+- Для каждого прогона использован чистый checkout того же SHA: Flutter build изменяет отслеживаемые Windows plugin
+  registrants в validation-клоне; их восстановление между прогонами не затрагивало приложение или данные устройства.
 
 #### Review

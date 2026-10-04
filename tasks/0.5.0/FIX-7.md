@@ -87,6 +87,7 @@
   CocoaPods build/smoke). Web-проверка — `web.ps1` (64 integration, 119 reference, 1 camera), выполнена в FIX 6.
 - Windows `windows.ps1`: один запуск завершился на очистке `SemanticsHandle` в неизменённом
   `shader_probe_native_test.dart`; повтор целевого drive прошёл, полный `windows.ps1` ранее прошёл в FIX 5.
-- Linux-проба ожидает повторного запуска на доступной VM.
+- Linux PASS на VM: `native_app_runtime_smoke_test`, `camera_capture_native_test`, `presenter_shader_native_test`,
+  `probe_native_test`, `shader_probe_native_test` (все 5 targets; `tool/ci/drive.sh` подтвердил `All tests passed`).
 
 #### Review
