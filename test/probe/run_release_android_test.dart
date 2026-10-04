@@ -15,11 +15,17 @@ void main() {
     worktree = Directory('${Directory.systemTemp.path}\\yuv-ffi-ra25-script-${DateTime.now().microsecondsSinceEpoch}');
     await _run('git', ['worktree', 'add', '--detach', worktree.path, 'HEAD']);
 
-    final sourceScript = File('tool/probe/run_release_android.ps1');
-    final worktreeScript = File('${worktree.path}\\tool\\probe\\run_release_android.ps1');
-    if (await sourceScript.readAsString() != await worktreeScript.readAsString()) {
-      await sourceScript.copy(worktreeScript.path);
-      await _run('git', ['-C', worktree.path, 'add', 'tool/probe/run_release_android.ps1']);
+    final changedFiles = <String>[];
+    for (final relativePath in ['tool/probe/run_release_android.ps1', 'tool/probe/release_android_versioning.ps1']) {
+      final sourceFile = File(relativePath);
+      final worktreeFile = File('${worktree.path}\\${relativePath.replaceAll('/', '\\')}');
+      if (!await worktreeFile.exists() || await sourceFile.readAsString() != await worktreeFile.readAsString()) {
+        await sourceFile.copy(worktreeFile.path);
+        changedFiles.add(relativePath);
+      }
+    }
+    if (changedFiles.isNotEmpty) {
+      await _run('git', ['-C', worktree.path, 'add', ...changedFiles]);
       await _run('git', [
         '-C',
         worktree.path,
@@ -37,6 +43,43 @@ void main() {
 
   tearDownAll(() async {
     await _run('git', ['worktree', 'remove', '--force', worktree.path]);
+  });
+
+  test('versionCode plan upgrades through arm64 to armv7 and back without a time-based number', () async {
+    final result = await _runVersioning('''
+      \$installed = Get-Ra25InstalledVersionCode 'Unable to find package: com.example.test' 0
+      \$arm64First = Get-Ra25VersionCodePlan \$installed 'arm64'
+      \$armv7 = Get-Ra25VersionCodePlan \$arm64First.builtVersionCode 'armv7'
+      \$arm64Again = Get-Ra25VersionCodePlan \$armv7.builtVersionCode 'arm64'
+      @(\$arm64First, \$armv7, \$arm64Again) | ConvertTo-Json -Compress
+    ''');
+    final plans = (jsonDecode(result) as List<dynamic>).cast<Map<String, dynamic>>();
+
+    expect(plans.map((plan) => plan['installedVersionCode']), [0, 2001, 2002]);
+    expect(plans.map((plan) => plan['builtVersionCode']), [2001, 2002, 2003]);
+    expect(plans.map((plan) => plan['abi']), ['arm64', 'armv7', 'arm64']);
+    expect(plans.map((plan) => plan['buildNumber']), [1, 1002, 3]);
+  });
+
+  test('versionCode readers reject unavailable, ambiguous and out-of-range values', () async {
+    final valid = await _runVersioning('''
+      \$installed = Get-Ra25InstalledVersionCode "versionCode=2147483646 minSdk=26 targetSdk=35" 0
+      \$apk = Get-Ra25ApkVersionCode "package: name='com.example.test' versionCode='2147483647' versionName='1.0'"
+      [pscustomobject]@{ installed = \$installed; apk = \$apk } | ConvertTo-Json -Compress
+    ''');
+    expect(jsonDecode(valid), {'installed': 2147483646, 'apk': 2147483647});
+
+    final missing = await _runVersioning("Get-Ra25InstalledVersionCode 'Unable to find package: com.example.test' 0");
+    expect(missing, '0');
+
+    final unreadable = await _runVersioning("Get-Ra25InstalledVersionCode '' 1", expectFailure: true);
+    expect(unreadable, contains('Unable to read installed package information'));
+
+    final malformed = await _runVersioning("Get-Ra25InstalledVersionCode 'package has no version metadata' 0", expectFailure: true);
+    expect(malformed, contains('Unable to determine one installed versionCode'));
+
+    final overflow = await _runVersioning("Get-Ra25VersionCodePlan 2147483647 'arm64'", expectFailure: true);
+    expect(overflow, contains("Android's supported range"));
   });
 
   test('accepts one complete RA25_RESULT marker from a clean matching checkout', () async {
@@ -197,6 +240,18 @@ Future<ProcessResult> _validate(String worktreePath, String gitSha, String runId
   '-ValidateLogcatPath',
   logcat.path,
 ], workingDirectory: worktreePath);
+
+Future<String> _runVersioning(String expression, {bool expectFailure = false}) async {
+  final helper = File('tool/probe/release_android_versioning.ps1').absolute.path.replaceAll("'", "''");
+  final result = await Process.run('pwsh', ['-NoProfile', '-Command', ". '$helper'; $expression"]);
+  final output = '${result.stdout}\n${result.stderr}'.trim();
+  if (expectFailure) {
+    expect(result.exitCode, isNot(0), reason: output);
+    return output;
+  }
+  expect(result.exitCode, 0, reason: output);
+  return result.stdout.toString().trim();
+}
 
 Future<ProcessResult> _validateWithFakeAdb(String worktreePath, String gitSha, String runId, File fakeAdb, {int timeoutSeconds = 300}) =>
     Process.run('pwsh', [

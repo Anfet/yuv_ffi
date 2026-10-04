@@ -14,6 +14,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'release_android_versioning.ps1')
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $actualGitSha = (& git -C $repoRoot rev-parse HEAD).Trim().ToLowerInvariant()
 if ($LASTEXITCODE -ne 0 -or $actualGitSha -notmatch '^[0-9a-f]{40}$') {
@@ -141,6 +142,13 @@ if ([string]::Equals($resolvedEvidenceDirectory, $resolvedRepoRoot, [StringCompa
 New-Item -ItemType Directory -Force -Path $resolvedEvidenceDirectory | Out-Null
 
 if (-not (Test-Path $adb)) { throw "adb is missing: $adb" }
+$aapt = @(
+  Get-ChildItem -LiteralPath (Join-Path $androidSdk 'build-tools') -Directory |
+    Sort-Object { [version]$_.Name } -Descending |
+    ForEach-Object { Join-Path $_.FullName 'aapt.exe' } |
+    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
+)[0]
+if (-not $aapt) { throw "aapt.exe is missing from Android SDK build-tools: $androidSdk" }
 if (-not $Serial) {
   $devices = @(& $adb devices | Select-String '\tdevice$' | ForEach-Object { ($_ -split '\t')[0] })
   if ($devices.Count -ne 1) { throw 'Pass -Serial when exactly one Android device is not connected.' }
@@ -170,10 +178,16 @@ $supportedAbis = DeviceShell 'getprop ro.product.cpu.abilist'
 if ($supportedAbis -notmatch [regex]::Escape($expectedAbi)) {
   throw "Device does not support ${expectedAbi}: $supportedAbis"
 }
+$installedPackageLines = @(& $adb -s $Serial shell dumpsys package $packageName 2>&1)
+$installedPackageExitCode = $LASTEXITCODE
+$installedPackageInfo = $installedPackageLines -join [Environment]::NewLine
+$installedVersionCode = Get-Ra25InstalledVersionCode $installedPackageInfo $installedPackageExitCode
+$versionCodePlan = Get-Ra25VersionCodePlan $installedVersionCode $Abi
 
 Push-Location (Join-Path $repoRoot 'example')
 try {
   flutter build apk --release --target=probe/release_probe.dart --target-platform=$targetPlatform --split-per-abi `
+    --build-number=$($versionCodePlan.buildNumber) `
     --dart-define=RA25_GIT_SHA=$GitSha --dart-define=RA25_RUN_ID=$runId --dart-define=RA25_EXPECTED_ABI=$expectedAbi
   if ($LASTEXITCODE -ne 0) { throw 'Release APK build failed.' }
 
@@ -198,8 +212,14 @@ try {
     $archive.Dispose()
   }
 
-  & $adb -s $Serial uninstall $packageName | Out-Null
-  & $adb -s $Serial install $apkPath
+  $badgingLines = @(& $aapt dump badging $apkPath 2>&1)
+  if ($LASTEXITCODE -ne 0) { throw "Unable to read APK metadata with $aapt." }
+  $builtVersionCode = Get-Ra25ApkVersionCode ($badgingLines -join [Environment]::NewLine)
+  if ($builtVersionCode -ne $versionCodePlan.builtVersionCode -or $builtVersionCode -le $installedVersionCode) {
+    throw "Built APK versionCode $builtVersionCode does not match the planned value $($versionCodePlan.builtVersionCode) above installed versionCode $installedVersionCode."
+  }
+
+  & $adb -s $Serial install -r $apkPath
   if ($LASTEXITCODE -ne 0) { throw 'Release APK installation failed.' }
 
   $packageInfo = DeviceShell "dumpsys package $packageName"
@@ -233,6 +253,9 @@ try {
     apk = [ordered]@{
       path = $apkPath
       sha256 = $apkHash
+      installedVersionCode = $installedVersionCode
+      builtVersionCode = $builtVersionCode
+      buildNumber = $versionCodePlan.buildNumber
       zipEntries = $entries
       nativeAbis = $abis
       requiredEntry = "lib/$expectedAbi/libyuv_ffi.so"
