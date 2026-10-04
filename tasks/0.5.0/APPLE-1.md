@@ -85,6 +85,10 @@ Metal/Impeller и сходится ли с CPU, каким путём идёт �
   прошёл за ~40 с (41 МБ) — зависание `gen_snapshot` не воспроизвелось; `SMOKE COMPLETE (5/5 frames, clean stop)`,
   BGRA 640×480 с изображением. Release-приложение — другой бинарник, macOS запросила разрешение камеры заново,
   Engineer подтвердил.
+- iPhone в **release** (04.10.2026, `flutter run --release`, Engineer): DEVICE 1 — все шаги и ответы «да»,
+  `display_fps` 29,9–30,1 (частота камеры) на всех шагах, `shader: true`, `rotation: 0`, `mirrored: false`,
+  `face_ratio` 1,0 в портрете и альбоме, `blur_ms_median` 230,9 (14 запусков за 15 с; в debug было 1074,9),
+  снимок 396×640. Рамка лица исчезает.
 - iPhone (iOS 18.7.8, debug, `flutter run` запускал Engineer — подпись по SSH падает на `errSecInternalComponent`):
   DEVICE 1 — все шаги и ответы «да», 30 к/с на всех шагах (частота камеры), `face_ratio` 1,0 в портрете и альбоме,
   `shader: true`. Engineer: «картинка прекрасная — плавная».
@@ -99,8 +103,8 @@ Metal/Impeller и сходится ли с CPU, каким путём идёт �
 **Не дефекты / ограничения:**
 - `PlatformException: No active stream to cancel` от `camera_avfoundation` 0.9.19 при старте — шум плагина при
   отмене ещё не начатого потока, кадры идут; в пакете не исправляется.
-- `blur_ms_median 1074,9` и жёлтая плашка «Run this check in release mode» — debug-сборка, так задумано; скорость в
-  критерий не входит. Release на iPhone не запускался (подпись по SSH недоступна — запускает Engineer).
+- `blur_ms_median 1074,9` и жёлтая плашка «Run this check in release mode» — debug-сборка, так задумано; в release
+  то же — 230,9 мс, плашки нет.
 - Редактор после снимка на iPhone отдельно не проверялся (шаг `capture` экрана проверки — да).
 - Документы: `README.md` (ручные проверки iOS и macOS в таблице платформ), `example/README.md` (ориентация на iOS),
   `CHANGELOG.md` (`Package.swift`).
