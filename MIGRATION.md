@@ -62,22 +62,18 @@ Each row names one old public symbol or call form. Patterns are intended for `rg
 - **NV21 naming and UV order:** the 0.2.4 `nv21` factory used interleaved **UV** bytes, not VU. This is confirmed by the 0.2.4 implementation, so map it to `nv12`; do not swap the bytes just because of the legacy name. The legacy `YuvFileFormat.nv21` likewise represented this UV order.
 - **Format type:** replace `YuvFileFormat` with `YuvPixelFormat`; values are `i420`, `nv12`, and `bgra8888`. Review switches, serialization, and any persisted enum index rather than mechanically substituting enum values.
 - **Constructors:** after choosing a named factory, confirm its defaults. I420 now defaults to `uvPixelStride: 1`, and factories with supplied planes pack them by default; these changes also apply when replacing the former generic constructor.
-- **Copy/allocation:** `copy()` always copies the current contents. In 0.2.4, `copy(blank: true)` retained dimensions, format, and pixel strides, but reconstructed planes and recalculated row strides; arbitrary source row padding was not retained. `YuvImage.allocate(format, width, height)` makes a zero-filled tightly packed image and is the choice for a tightly packed blank image. To preserve an explicitly desired padded layout, construct zeroed planes with the source heights, row strides, and pixel strides, then pass `layout: YuvPlaneLayout.preserve` to the matching named factory. For example:
+- **Copy/allocation:** `copy()` always copies the current contents. In 0.2.4, `copy(blank: true)` retained dimensions, format, and pixel strides, but reconstructed planes and recalculated row strides; arbitrary source row padding was not retained. `YuvImage.allocate(format, width, height)` makes a zero-filled tightly packed image and is the choice for a tightly packed blank image. To preserve an explicitly desired padded layout from an I420 `source`, recreate each zeroed plane from its own geometry and pass `layout: YuvPlaneLayout.preserve`:
 
   ```dart
   final blank = YuvImage.i420(
     source.width,
     source.height,
-    planes: [
-      YuvPlane(4, 8, 1, Uint8List(4 * 8)),
-      YuvPlane(2, 4, 1, Uint8List(2 * 4)),
-      YuvPlane(2, 4, 1, Uint8List(2 * 4)),
-    ],
+    planes: source.planes.map((plane) => YuvPlane(plane.height, plane.rowStride, plane.pixelStride)),
     layout: YuvPlaneLayout.preserve,
   );
   ```
 
-  Import `dart:typed_data` for `Uint8List`. This explicit layout recipe is not equivalent to old `copy(blank: true)` when its recalculated strides differed from the source.
+  `YuvPlane` creates zeroed bytes when `bytes` is omitted. This explicit layout recipe is not equivalent to old `copy(blank: true)` when its recalculated strides differed from the source.
 - **Mutating methods:** `load(stream)` mutated its receiver; `YuvImage.decode(stream)` returns a new image, so assign the returned image. The old `toYuvI420`, `toYuvNv21`, and `toYuvBgra8888` methods mutated the receiver: choose `applyFormat(...)` for that behavior, or `toI420()`, `toNv12()`, and `toBgra()` for an independent result. The new `apply*` transformations mutate; `cropped` and `rotated` return new images.
 - **Serialization:** `save(sink)` becomes `encodeTo(sink)`, but the serialized formats are incompatible. Do not treat this call rename as a way to convert saved v1 frames; use the Stored frames procedure.
 - **Crop and blur arguments:** rename `rect:` to `region:` for `applyBoxBlur` and `applyMeanBlur`. Coordinates remain image pixels; review nullable regions and call sites that relied on old rounding or clamping behavior.
