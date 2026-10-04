@@ -18,7 +18,7 @@
 
 ## Текущее состояние
 
-- **Сейчас:** этапы 1–7 закрыты; FIX 1–9 приняты. FIX 9 принята на `c98ede8`. Следующий шаг — гейт RELEASE 1 на новом SHA кандидата. Кандидат `98ce771` не выпускается.
+- **Сейчас:** этапы 1–7 закрыты; FIX 1–9 приняты. FIX 10 (форматирование) — перед гейтом RELEASE 1 на новом SHA кандидата. Кандидат `98ce771` не выпускается.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Пулы задач
@@ -27,7 +27,6 @@ Orchestrator записывает для пула порядок карточе�
 
 | Пул | Порядок карточек | Tier Executor / Reviewer | База | Внешняя зависимость | CI после слияния |
 | --- | --- | --- | --- | --- | --- |
-| FIX 5–9 | FIX 5 → FIX 6 → FIX 7 → FIX 8 → FIX 9 | T2 / T1 (FIX 5–6, FIX 9), T2 / T2 (FIX 7–8) | SHA `dev` на старте — в карточках | Pixel 3 для FIX 8 | не нужен: полный CI — в RELEASE 1 |
 
 ## Дашборд
 
@@ -37,12 +36,8 @@ ID ведёт к карточке в `tasks/0.5.0/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [FIX 5](tasks/0.5.0/FIX-5.md) | ACCEPTED | T2 / T1 | — | — | Принята на `b919c7f`: 15/15, VM 638/638, Windows 134/134 и 5 integration targets; негативный контроль подтверждён. |
-| [FIX 6](tasks/0.5.0/FIX-6.md) | ACCEPTED | T2 / T1 | — | — | Документация перехода с 0.2.4 принята на `c155637`. |
-| [FIX 7](tasks/0.5.0/FIX-7.md) | ACCEPTED | T2 / T2 | — | — | Уборка устаревших комментариев и ID принята на `c155637`. |
-| [FIX 8](tasks/0.5.0/FIX-8.md) | ACCEPTED | T2 / T2 | — | — | Установка без удаления и release-тест 15/15 приняты на `ba9b6df`; повтор Pixel 3 — в RELEASE 1. |
-| [FIX 9](tasks/0.5.0/FIX-9.md) | ACCEPTED | T2 / T1 | — | FIX 6 | Принята на `c98ede8`: все замечания закрыты; exact snippet analyze/runtime PASS, source-layout сохранён; dry-run 0 warnings, MIGRATION.md в пакете. |
-| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | TODO | T2 / T1 + Engineer | — | FIX 5–9 | **Финальный аудит и релизный гейт 0.5.0, новый круг.** Все проверки на одном SHA кандидата, `ci/all/0.5.0-v3`, Pixel 3, pana и dry-run; отчёт и команды Engineer. |
+| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | BLOCKED | T2 / T1 + Engineer | — | FIX 10 | **Финальный аудит и релизный гейт 0.5.0, новый круг.** Все проверки на одном SHA кандидата, `ci/all/0.5.0-v3`, Pixel 3, pana и dry-run; отчёт и команды Engineer. |
+| [FIX 10](tasks/0.5.0/FIX-10.md) | TODO | T2 / T2 | — | — | `pana` 150/160 на `df14dc8` из-за формата трёх файлов `lib/`; форматирование, затем новый SHA РК. |
 
 Отложено: [RUNNER 1](tasks/0.5.0/RUNNER-1.md) — `DEFERRED` (новые службы раннеров не планируются).
 
