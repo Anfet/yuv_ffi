@@ -81,6 +81,10 @@ Metal/Impeller и сходится ли с CPU, каким путём идёт �
 - Камера macOS (MacBook Pro, macOS 15.6.1, debug, по SSH через `open`): `camera_desktop_smoke_main.dart` — `SMOKE
   COMPLETE (5/5 frames, clean stop)`, встроенная FaceTime HD 640×480 BGRA, кадры с изображением; разрешение дал
   Engineer.
+- Камера macOS в **release** (04.10.2026): `flutter build macos --release -t lib/camera_desktop_smoke_main.dart` по SSH
+  прошёл за ~40 с (41 МБ) — зависание `gen_snapshot` не воспроизвелось; `SMOKE COMPLETE (5/5 frames, clean stop)`,
+  BGRA 640×480 с изображением. Release-приложение — другой бинарник, macOS запросила разрешение камеры заново,
+  Engineer подтвердил.
 - iPhone (iOS 18.7.8, debug, `flutter run` запускал Engineer — подпись по SSH падает на `errSecInternalComponent`):
   DEVICE 1 — все шаги и ответы «да», 30 к/с на всех шагах (частота камеры), `face_ratio` 1,0 в портрете и альбоме,
   `shader: true`. Engineer: «картинка прекрасная — плавная».
@@ -96,7 +100,7 @@ Metal/Impeller и сходится ли с CPU, каким путём идёт �
 - `PlatformException: No active stream to cancel` от `camera_avfoundation` 0.9.19 при старте — шум плагина при
   отмене ещё не начатого потока, кадры идут; в пакете не исправляется.
 - `blur_ms_median 1074,9` и жёлтая плашка «Run this check in release mode» — debug-сборка, так задумано; скорость в
-  критерий не входит. Release на iPhone не запускался.
+  критерий не входит. Release на iPhone не запускался (подпись по SSH недоступна — запускает Engineer).
 - Редактор после снимка на iPhone отдельно не проверялся (шаг `capture` экрана проверки — да).
 - Документы: `README.md` (ручные проверки iOS и macOS в таблице платформ), `example/README.md` (ориентация на iOS),
   `CHANGELOG.md` (`Package.swift`).

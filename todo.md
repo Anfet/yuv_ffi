@@ -128,7 +128,7 @@ ID ведёт к карточке в `tasks/0.5.0/`. Карточки текущ
 - Flutter — `~/storage/flutter_3.44/flutter` (рядом есть 3.38.7 и 3.41.9); Android SDK — `~/storage/android/sdk`; cmake — `~/storage/android/sdk/cmake/<версия>/bin/cmake` (отдельно не установлен); CocoaPods — gem в `~/.gem/bin`, не Homebrew.
 - Копирование рабочего дерева: `rsync` на Windows нет, `mac-sync-run.sh` не работает. Собрать tar (`git archive --format=tar HEAD`, при необходимости дописать изменённые файлы) и распаковать на Mac через `ssh … 'tar -xf - -C ~/claude-work/<проект>'`.
 - CI-скрипты macOS/iOS — Bash (`tool/ci/macos.sh`, `tool/ci/ios.sh`, D-8).
-- **Release-сборки с Flutter 3.44 на этом Mac виснут:** `gen_snapshot` стоит в `_dyld_start` с нулевым CPU (Gatekeeper, лечится только root). Для проверок поведения собирать debug; на CI не влияет.
+- **Release-сборки с Flutter 3.44 на этом Mac раньше виснули (04.10 по SSH прошла за ~40 с, не воспроизвелось):** `gen_snapshot` стоит в `_dyld_start` с нулевым CPU (Gatekeeper, лечится только root). Для проверок поведения собирать debug; на CI не влияет.
 - Браузерные прогоны: `export CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'`, драйвер `~/bin/chromedriver` (`export PATH="$HOME/bin:$PATH"`, `pkill -f chromedriver`, затем `chromedriver --port=4444` в фоне). Драйвер под mac-arm64 из Chrome for Testing, после установки снять карантин `xattr -d com.apple.quarantine ~/bin/chromedriver`.
 
 ## Решения Engineer
