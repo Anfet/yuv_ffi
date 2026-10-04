@@ -97,7 +97,7 @@ Web backend в сборке `--wasm` в Chrome дают те же результ
 - A1: interop преобразует JS-примитивы через `dartify()` без выбора по `T.toString()`, `ccall` возвращает `num`, `HEAPU8` читается как `JSUint8Array.toDart`.
 - `dart analyze` трёх изменённых Web Dart-файлов — PASS.
 - WASM: `probe_web_test.dart` (1188), `reference_web_conversions_test.dart --profile` (119), `shader_probe_web_test.dart` (shader loaded, все различия ≤1), `all_web_test.dart` — все прошли через `tool/ci/drive.ps1`. Первый shader запуск упал на Flutter `SocketException` при закрытии WebDriver; повтор с foreground ChromeDriver прошёл.
-- JavaScript `tool/ci/web.ps1` ещё не дошёл до браузерных тестов: `flutter pub publish --dry-run` завершился exit 65 из-за незакоммиченных файлов; будет повторён на чистом SHA пула.
+- Полный `pwsh -File tool/ci/web.ps1` на SHA `8ebc4088fab73bdf25741e30c071a1c8d11abcd8` — exit 0; JS 14 sources/64 cases, reference 119, camera smoke и три обязательных WASM цели прошли.
 - `doc/web-parity.md`, README и CHANGELOG обновлены по фактическому результату. Safari/Firefox не проверялись.
 
 #### Review

@@ -40,9 +40,9 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [FIX 1](tasks/0.5.1/FIX-1.md) | IN_PROGRESS | T3 / T2 | Executor | — | **README: точный статус Web и платформ, версия 0.5.1.** Паритет операций на JavaScript-сборке (Chrome), строка iOS, «not verified»; `--wasm` статус обновлён по WEB 4. |
-| [WEB 4](tasks/0.5.1/WEB-4.md) | IN_PROGRESS | T2 / T1 | Executor | FIX 1 | **`--wasm`: исправить interop Web backend.** Проба 1188, эталоны и шейдер прошли; JavaScript Web CI и общий пул ещё проверяются. |
-| [CI 1](tasks/0.5.1/CI-1.md) | IN_PROGRESS | T3 / T2 | Executor | WEB 4 | **Шаг `--wasm` в `tool/ci/web.ps1`.** Три обязательные цели добавлены; проверка скрипта и негативный контроль остаются. |
+| [FIX 1](tasks/0.5.1/FIX-1.md) | IN_PROGRESS | T3 / T2 | Executor | — | **README: точный статус Web и платформ, версия 0.5.1.** Версии согласованы в шести файлах; Windows и Web CI прошли, пул ждёт Linux scope check. |
+| [WEB 4](tasks/0.5.1/WEB-4.md) | IN_PROGRESS | T2 / T1 | Executor | FIX 1 | **`--wasm`: исправить interop Web backend.** 1188/119-case probes, shader и весь Web CI прошли; пул ждёт Linux scope check. |
+| [CI 1](tasks/0.5.1/CI-1.md) | BLOCKED | T3 / T2 | Engineer | WEB 4 | **Шаг `--wasm` в `tool/ci/web.ps1` добавлен и проверен.** Обязательная проверка scope `all` ждёт восстановления Linux VM: SSH к `192.168.1.29:22` timeout. |
 
 ### Этап 2 — релизный гейт
 

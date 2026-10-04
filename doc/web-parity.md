@@ -22,8 +22,9 @@ probe, reference conversions, shader probe, and aggregate Web integration
 target in Flutter's `--wasm` build. The common probe covers 1,188 cases; the
 reference conversion matrix covers 119 cases. The shader probe requires the
 shader to load and every output to differ from CPU conversion by at most one
-channel value. The same operation results and shader behavior are expected on
-the JavaScript build; Safari and Firefox remain not verified.
+channel value. The JavaScript build's Web CI also passed the 14-source,
+64-case integration set, reference conversions, and camera smoke on the same
+Chrome version; Safari and Firefox remain not verified.
 
 The two unsupported pairs are `chromaSwap` with I420 and BGRA8888. The other 40 meaningful pairs are supported when the loaded WASM module exports the required ABI symbol. The Web initializer derives capabilities from actual module exports; the browser tests exercise a complete export manifest and deliberately incomplete manifests. RGBA8888 is an input to `convert`/`applyRgbaBytes`, not a stored pixel format and therefore is outside the table's stored-format denominator.
 
@@ -105,9 +106,11 @@ The sampled results do not establish complete native/Web parity. No implementati
 
 ## 0.5.1 verification
 
-- Flutter 3.44.9, Chrome 154.0.8037.98, JavaScript build: `tool/ci/web.ps1` is
-  pending a clean commit because its `flutter pub publish --dry-run` check exits
-  65 when tracked files are modified.
+- Flutter 3.44.9, Chrome 154.0.8037.98, JavaScript build: `pwsh -File
+  tool/ci/web.ps1` passed on commit `8ebc4088fab73bdf25741e30c071a1c8d11abcd8`:
+  14 sources, 64 integration cases, 119 reference conversions, and camera
+  smoke.
 - Flutter 3.44.9, Chrome 154.0.8037.98, `--wasm`: `probe_web_test.dart`,
   `reference_web_conversions_test.dart --profile`, `shader_probe_web_test.dart`,
-  and `all_web_test.dart` all passed through `tool/ci/drive.ps1`.
+  and `all_web_test.dart` all passed. The mandatory CI `--wasm` targets also
+  passed in `tool/ci/web.ps1`; elapsed time was 1:38.

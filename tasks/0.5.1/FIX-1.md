@@ -60,6 +60,8 @@ feature-complete with native backends», строка Web в «Platform status»
 - Обновлены README и верхняя запись CHANGELOG, версия приведена к `0.5.1` в четырёх файлах D-14 и `example/pubspec.lock`.
 - `flutter pub get` (cwd `example/`) — exit 0; изменился только path-зависимый `yuv_ffi` с `0.5.0` на `0.5.1`.
 - `bash tool/ci/scope_guard.sh 6986feb295e4b1ebbdc2139313044282d5b0daa5` — `scope: all`.
-- Windows probe по карточке выполняется один раз после CI 1 для пула; Pixel 3 arm64/armv7 проверяет Reviewer на принятом SHA. Пул продолжается карточками WEB 4 и CI 1.
+- `pwsh -File tool/ci/windows.ps1` — PASS, 134/134 VM-tag tests, Windows release build и все пять native integration targets.
+- `pwsh -File tool/ci/web.ps1` — PASS на SHA `8ebc4088fab73bdf25741e30c071a1c8d11abcd8`; Android/Apple/Linux результаты общего пула записаны в CI 1.
+- Pixel 3 arm64/armv7 проверяет Reviewer на принятом SHA.
 
 #### Review
