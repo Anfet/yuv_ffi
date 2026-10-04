@@ -18,7 +18,7 @@
 
 ## Текущее состояние
 
-- **Сейчас:** этапы 1–7 закрыты; FIX 1–3 приняты. RELEASE 1 разблокирована: следующий шаг — финальный аудит и релизный гейт 0.5.0. Версия в `dev` — `0.5.0-dev.1`.
+- **Сейчас:** этапы 1–7 закрыты; FIX 1–3 приняты. RELEASE 1 на ревью: кандидат `release/0.5.0` — `f2130c2c5ccc64f314417f520146a075f8a5749b`; локальные проверки и Pixel 3 прошли, `pana` — 160/160, dry-run без предупреждений. `ci/all/0.5.0` завершился 7/9: Linux и macOS CI упали на `example/pubspec.lock`; нужен следующий шаг Engineer. Версия в `dev` — `0.5.0`.
 - **Открытые решения Engineer:** см. «Открытые вопросы».
 
 ## Пулы задач
@@ -37,7 +37,7 @@ ID ведёт к карточке в `tasks/0.5.0/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | IN_PROGRESS | T2 / T1 + Engineer | Executor | FIX 1–3 (DONE) | **Финальный аудит и релизный гейт 0.5.0.** Дополнить аудит, поднять версию, создать `release/0.5.0` и проверить один SHA: локальные команды, 9 workflow, Pixel 3, `pana`, dry-run. |
+| [RELEASE 1](tasks/0.5.0/RELEASE-1.md) | REVIEW | T2 / T1 + Engineer | Executor | FIX 1–3 (DONE) | **Финальный аудит и релизный гейт 0.5.0.** Кандидат `f2130c2`; CI 7/9. Engineer решает следующий шаг по упавшим Linux/macOS workflow. |
 | [FOLLOWUP 1](tasks/0.5.0/FOLLOWUP-1.md) | BLOCKED | T2 / T2 | — | RELEASE 1 | **Тест публичной поверхности.** После релизного гейта убрать устаревшее описание deprecated API; выпуск не задерживает. |
 
 Отложено: [RUNNER 1](tasks/0.5.0/RUNNER-1.md) — `DEFERRED` (новые службы раннеров не планируются).

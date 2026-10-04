@@ -1,5 +1,5 @@
 # RELEASE 1 — Финальный аудит и релизный гейт 0.5.0
-**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Executor · **Depends On:** FIX 1, FIX 2, FIX 3 (DONE) · **Probe:** windows+pixel3
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Executor · **Depends On:** FIX 1, FIX 2, FIX 3 (DONE) · **Probe:** windows+pixel3
 **Base SHA:** 4a485d8b8c1b5475bf0c02309b8d0dec56d0437c (Executor записывает SHA `dev` на старте)
 
 #### Goal
@@ -65,5 +65,45 @@
   пробу; пройти Pixel 3 arm64 и armv7; сверить ссылки run с SHA РК.
 
 #### Executor Report
+
+**STATUS: REVIEW**
+
+**Release candidate:** `release/0.5.0`, SHA `f2130c2c5ccc64f314417f520146a075f8a5749b` (`ci/all/0.5.0` points to this SHA). Version `0.5.0` is consistent in `pubspec.yaml`, `CHANGELOG.md`, `darwin/yuv_ffi.podspec`, and `src/CMakeLists.txt`. `git diff --stat f2130c2..release/0.5.0 -- lib src darwin android example/lib assets` is empty.
+
+**Audit:** `doc/release-0.5.0-audit.md` updated for base `4a485d8`. No new blocking source or documentation findings. Public-surface test passed; stale test-only commentary/optional `blank` implementation remains FOLLOWUP 1.
+
+**Local validation on Windows:**
+
+- `pwsh -File tool/ci/windows.ps1` — exit 0; 134/134 tests, native app/camera/presenter/probe/shader integration targets passed.
+- `pwsh -File tool/ci/vm.ps1` — exit 0; 635/635, no skips.
+- `pwsh -File tool/ci/android.ps1` — exit 0; Android ABI builds and five integration targets passed on emulator.
+- `pwsh -File tool/ci/web.ps1` — exit 0; Chrome 154, 14 sources, 64 integration cases, 119 reference cases, camera smoke; committed WASM assets unchanged.
+- `$env:FLUTTER_VERSION='3.44.9'; pwsh -File tool/ci/example.ps1` — exit 0; analyze and release Web build passed.
+- `pwsh -File tool/ci/smoke.ps1` — exit 0.
+- Native CMake Release build and CTest — exit 0; 11/11 passed.
+- `flutter test --tags probe` — exit 0; 1,188/1,188 correctness cases. The performance-only test reported its configured skip.
+- `flutter test --tags reference` — exit 0; 130 tests passed.
+
+**Apple validation:** Mac runner `bash tool/ci/macos.sh` — exit 0; native build, packaging smoke, macOS Release/Debug, native integrations, and SPM/CocoaPods paths passed. Mac runner `bash tool/ci/ios.sh` — exit 0; CocoaPods install, simulator build and smoke passed. These were run from an archive snapshot derived from the candidate SHA. Linux VM was unavailable: SSH to `192.168.1.29:22` timed out. Safari and Firefox were not run, per the existing Engineer decision; README and `doc/web-parity.md` retain those limitations.
+
+**Pixel 3:** arm64 and armv7 release probes passed on device `8B1X11QLW`. Both result markers name candidate SHA `f2130c2c5ccc64f314417f520146a075f8a5749b`, `smoke=PASS`, `probe=PASS`, `caseCount=1188`; arm64 run ID `7230ae06608c4fffb0c35eba6fa98683`, armv7 run ID `e4b01b1ec1cc4f5191814aa7dc920f2e`. APKs were installed with `adb install -r`; app data was retained. The armv7 probe used build number `10001` so its split APK could update the arm64 install without a downgrade.
+
+**Package checks:** `pana --exit-code-threshold 0 .` — exit 0, 160/160 on Mac. `flutter pub publish --dry-run` — exit 0; archive 675 KB, package and example only, 0 warnings and one hint that the latest published version is 0.2.4.
+
+**CI (`ci/all/0.5.0`):** all nine runs completed on candidate SHA `f2130c2c5ccc64f314417f520146a075f8a5749b`.
+
+| Workflow | Result | Run |
+| --- | --- | --- |
+| Windows | PASS | [37200004950](https://github.com/Anfet/yuv_ffi/actions/runs/37200004950) |
+| Smoke | PASS | [37200004954](https://github.com/Anfet/yuv_ffi/actions/runs/37200004954) |
+| VM | PASS | [37200004964](https://github.com/Anfet/yuv_ffi/actions/runs/37200004964) |
+| Android | PASS | [37200004960](https://github.com/Anfet/yuv_ffi/actions/runs/37200004960) |
+| CI / Linux | FAIL — job `linux-native-smoke`, step `Build example (linux desktop)`; log: `git diff --exit-code pubspec.lock` returned 1 after `yuv_ffi 0.5.0 from path .. (was 0.5.0-dev.1 from path ..)`. | [37200004976](https://github.com/Anfet/yuv_ffi/actions/runs/37200004976) |
+| macOS | FAIL — job `macos-native-smoke`, step `Run macOS native checks`; log: `The run changed tracked files: M example/pubspec.lock`. | [37200004967](https://github.com/Anfet/yuv_ffi/actions/runs/37200004967) |
+| Web | PASS | [37200005009](https://github.com/Anfet/yuv_ffi/actions/runs/37200005009) |
+| Example | PASS | [37200004952](https://github.com/Anfet/yuv_ffi/actions/runs/37200004952) |
+| iOS | PASS | [37200005014](https://github.com/Anfet/yuv_ffi/actions/runs/37200005014) |
+
+**Engineer attention:** 9/9 CI is not met. Per release-cycle rule 4, no CI diagnosis or source change is made in this pass. Decide whether to authorize a separate pass for the two reported workflow failures or to accept an explicit release exception. The release tag and publication have not been created.
 
 #### Review
