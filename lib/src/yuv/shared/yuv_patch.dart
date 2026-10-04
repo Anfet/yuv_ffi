@@ -16,11 +16,42 @@ extension YuvImagePatch on YuvImage {
     _validatePatch(this, fragment, x, y);
 
     final specs = _planeSpecs(format, fragment.width, fragment.height, x, y);
+    final targets = List<YuvPlane>.of(planes);
+    final sources = List<YuvPlane>.of(fragment.planes);
+    if (targets.length != specs.length || sources.length != specs.length) {
+      throw ArgumentError('Image plane count does not match its pixel format');
+    }
     for (int i = 0; i < specs.length; i++) {
-      _copyPlane(planes[i], fragment.planes[i], specs[i]);
+      _validatePlane(targets[i], specs[i], target: true);
+      _validatePlane(sources[i], specs[i], target: false);
+    }
+    for (final target in targets) {
+      for (final source in sources) {
+        if (identical(target.bytes.buffer, source.bytes.buffer) &&
+            target.bytes.offsetInBytes < source.bytes.offsetInBytes + source.bytes.lengthInBytes &&
+            source.bytes.offsetInBytes < target.bytes.offsetInBytes + target.bytes.lengthInBytes) {
+          throw ArgumentError('Patch source and destination must not share byte storage');
+        }
+      }
+    }
+    for (int i = 0; i < specs.length; i++) {
+      _copyPlane(targets[i], sources[i], specs[i]);
     }
     YuvRevision.bump(this);
     return this;
+  }
+}
+
+void _validatePlane(YuvPlane plane, _PlanePatch patch, {required bool target}) {
+  final x = target ? patch.x : 0;
+  final y = target ? patch.y : 0;
+  if (plane.height < y + patch.height || plane.pixelStride < patch.sampleBytes) {
+    throw ArgumentError('Image plane geometry is too small for the patch');
+  }
+  final lastByteInRow = (x + patch.width - 1) * plane.pixelStride + patch.sampleBytes;
+  final lastRowEnd = (y + patch.height - 1) * plane.rowStride + lastByteInRow;
+  if (plane.rowStride < lastByteInRow || plane.bytes.lengthInBytes < lastRowEnd) {
+    throw ArgumentError('Image plane bytes are too short for the patch');
   }
 }
 

@@ -57,6 +57,39 @@ void main() {
       }
     }
   });
+
+  test('validates every external plane before writing and supports valid wrappers', () {
+    final target = _image(YuvPixelFormat.i420, 4, 4, seed: 9);
+    final before = target.planes.map((plane) => Uint8List.fromList(plane.bytes)).toList();
+    final revision = target.revision;
+    final malformedSource = _ForeignImage(_image(YuvPixelFormat.i420, 2, 2, seed: 91), (planes) => planes.take(2).toList());
+    expect(() => target.applyPatch(malformedSource, x: 0, y: 0), throwsArgumentError);
+    expect(target.planes.map((plane) => plane.bytes), before);
+    expect(target.revision, revision);
+
+    final source = _ForeignImage(_image(YuvPixelFormat.i420, 2, 2, seed: 91), (planes) => planes);
+    expect(target.applyPatch(source, x: 0, y: 0), same(target));
+    expect(target.revision, revision + 1);
+  });
+}
+
+class _ForeignImage implements YuvImage {
+  _ForeignImage(this.backing, this.selectPlanes);
+
+  final YuvImage backing;
+  final List<YuvPlane> Function(List<YuvPlane>) selectPlanes;
+
+  @override
+  YuvPixelFormat get format => backing.format;
+  @override
+  int get width => backing.width;
+  @override
+  int get height => backing.height;
+  @override
+  List<YuvPlane> get planes => selectPlanes(backing.planes);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => Function.apply(backing.noSuchMethod, [invocation]);
 }
 
 void _expectPatch(YuvImage target, YuvImage fragment, int x, int y) {
