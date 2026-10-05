@@ -10,5 +10,6 @@
 
 ## Цикл 0.5.1
 
-- **FIX 1** — README приведён к фактическому статусу Web и платформ, версия `0.5.1` в файлах D-14 и `example/pubspec.lock`. Принято на `1866a2d`; Pixel 3 arm64/armv7 1188/1188; CI: `ci/web/WASM` run 37243974376 — сбой раннера, `pending`. Карточка: `git show 2651ebd:tasks/0.5.1/FIX-1.md`.
-- **WEB 4** — interop Web backend исправлен для `flutter build web --wasm`: probe 1188, reference 119, шейдер и `all_web_test.dart` проходят в Chrome. Принято на `1866a2d`; CI: `ci/web/WASM` run 37243974376 — сбой раннера, `pending`. Карточка: `git show 2651ebd:tasks/0.5.1/WEB-4.md`.
+- **FIX 1** — README приведён к фактическому статусу Web и платформ, версия `0.5.1` в файлах D-14 и `example/pubspec.lock`. Принято на `1866a2d`; Pixel 3 arm64/armv7 1188/1188; CI: `ci/web/WASM` run 37243974376 — success. Карточка: `git show 2651ebd:tasks/0.5.1/FIX-1.md`.
+- **WEB 4** — interop Web backend исправлен для `flutter build web --wasm`: probe 1188, reference 119, шейдер и `all_web_test.dart` проходят в Chrome. Принято на `1866a2d`; CI: `ci/web/WASM` run 37243974376 — success. Карточка: `git show 2651ebd:tasks/0.5.1/WEB-4.md`.
+- **CI 1** — Web CI требует обязательный прогон probe, shader probe и all Web tests с `--wasm`. Принято на `1866a2d`; run 37243974376 — success.

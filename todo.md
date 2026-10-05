@@ -21,7 +21,7 @@
 ## Текущее состояние
 
 - **Выпущено:** 0.5.0 — 05.10.2026, тег `0.5.0` на `3e4c645`; `main` — PR #5 (`c8af6cd`), влит в `dev`.
-- **Сейчас:** пул `WASM`: FIX 1 и WEB 4 — `DONE` на `1866a2d`; CI 1 — `BLOCKED`, код принят, ждёт зелёного Web CI (раннер `dev.working` offline).
+- **Сейчас:** пул `WASM`: FIX 1, WEB 4 и CI 1 — `DONE` на `1866a2d`; Web CI run 37243974376 зелёный на принятом SHA. Начат релизный гейт RELEASE 1.
 - **Открытые решения Engineer:** нет.
 
 ## Пулы задач
@@ -40,13 +40,12 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 1](tasks/0.5.1/CI-1.md) | BLOCKED | T3 / T2 | Engineer | — | **Шаг `--wasm` в `tool/ci/web.ps1`.** Код и локальный Web CI на `1866a2d` приняты; run 37243974376 по `ci/web/WASM` упал — раннер `dev.working` потерял связь (offline). Ждёт Engineer: вернуть раннер, перезапустить; при зелёном — `DONE`. |
 
 ### Этап 2 — релизный гейт
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | BLOCKED | T2 / T1 + Engineer | — | CI 1 | **Релизный гейт 0.5.1.** Аудит разницы с 0.5.0, `release/0.5.1`, проверки на одном SHA, отчёт и команды Engineer. Разблокирует принятие пула `WASM`. |
+| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | IN_PROGRESS | T2 / T1 + Engineer | Executor | — | **Релизный гейт 0.5.1.** Аудит разницы с 0.5.0, `release/0.5.1`, проверки на одном SHA, отчёт и команды Engineer. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
