@@ -53,3 +53,11 @@
 - Baseline archive для негативного контроля создан в `C:\Users\Oleg-T\AppData\Local\Temp\yuv-ffi-baseline-6986feb`. Автоматическая проверка отклонила удаление временной папки (`Remove-Item -Recurse`), поэтому она оставлена на диске.
 
 #### Review
+
+**Код принят, карточка ждёт зелёного Web CI** (Reviewer, 05.10.2026; SHA `1866a2d155cc241b1e0b0af7f71e23398b2637e1`).
+
+- Изменение `tool/ci/web.ps1` соответствует решению: обязательный шаг `--wasm` после JavaScript-целей, три цели через `Invoke-WebDrive` (критерий `drive.ps1` — exit 0 и `All tests passed`), без переключателя; JavaScript-часть, ChromeDriver (порт 4444) и `ci-web.yml` не менялись.
+- Локально на `1866a2d`: `pwsh -File tool/ci/web.ps1` — exit 0; три цели `--wasm` PASS, шаг 48 с.
+- Негативный контроль повторён на чистом `git archive 6986feb` (scratchpad): `drive.ps1 integration_test/probe_web_test.dart web-server --browser-name=chrome --headless --wasm` — exit 1, `got ERR StateError`.
+- CI: тег `ci/web/WASM` на `1866a2d` → run 37243974376 (https://github.com/Anfet/yuv_ffi/actions/runs/37243974376) — **failure**: шаг «Run Web checks» без заключения через 42 мин, аннотация «The self-hosted runner lost communication with the server». Раннер `dev.working` после этого `offline` в GitHub, хотя служба `actions.runner.Anfet-yuv_ffi.dev.working` локально `Running`. Лог задания недоступен (BlobNotFound). Диагноз не ставится.
+- Следующий шаг: Engineer возвращает раннер `dev.working` в `online`; затем перезапуск run (или новый тег `ci/web/WASM-2` на `1866a2d`); при зелёном — `ACCEPTED`.

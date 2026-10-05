@@ -42,7 +42,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 | --- | --- | --- | --- | --- | --- |
 | [FIX 1](tasks/0.5.1/FIX-1.md) | ACCEPTED | T3 / T2 | Executor | — | **README: точный статус Web и платформ, версия 0.5.1.** Принято на `1866a2d`: Pixel 3 arm64/armv7 1188/1188, Web CI (JavaScript и `--wasm`) PASS. |
 | [WEB 4](tasks/0.5.1/WEB-4.md) | ACCEPTED | T2 / T1 | Executor | FIX 1 | **`--wasm`: исправить interop Web backend.** Принято на `1866a2d`: probe и шейдер `--wasm` повторены Reviewer, Web CI PASS. |
-| [CI 1](tasks/0.5.1/CI-1.md) | REVIEW | T3 / T2 | Engineer | WEB 4 | **Шаг `--wasm` в `tool/ci/web.ps1` добавлен и проверен.** Web CI и Linux scope check прошли; ждёт ревью. |
+| [CI 1](tasks/0.5.1/CI-1.md) | REVIEW | T3 / T2 | Engineer | WEB 4 | **Шаг `--wasm` в `tool/ci/web.ps1`.** Код и локальный Web CI на `1866a2d` приняты; run 37243974376 по `ci/web/WASM` упал — раннер `dev.working` потерял связь (offline). Ждёт Engineer: вернуть раннер, перезапустить. |
 
 ### Этап 2 — релизный гейт
 
