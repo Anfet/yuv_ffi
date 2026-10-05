@@ -1,5 +1,5 @@
 # CI 3 — Camera smoke в Web CI на Mac
-**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 · **Owner:** Codex · **Depends On:** — · **Probe:** none
+**Status:** ENGINEER_REQUIRED · **Tier:** T2, Reviewer T1 · **Owner:** Engineer · **Depends On:** — · **Probe:** none
 
 **Base SHA:** ea5eeda69a5c45fd664cacc15756e838131a228a (SHA `dev` на старте карточки)
 
@@ -80,7 +80,8 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
 - Службы и метки раннера не трогать. На Mac работать во временном клоне; клон удалить после работы.
 - `release/0.5.1` не менять.
 - Engineer 05.10.2026 явно разрешил временную инструментализацию camera smoke/driver и целевой вывод диагностики
-  через `drive.sh`, а также diagnostic GitHub Actions runs. Assertions и таймаут 15 секунд сохранять.
+  через `drive.sh`, а также diagnostic GitHub Actions runs. Assertions сохранять; исходный таймаут оставить до замера
+  задержки `initialize()`, затем менять только по результатам измерения.
 
 #### Definition of Done
 
@@ -115,19 +116,18 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
 
 #### Engineer Decision
 
-05.10.2026: Engineer разрешил повторить GitHub Actions `ci-web.yml` после сообщения о закрытой крышке Mac. Run `37315543986` завершился тем же camera smoke failure. Engineer подтвердил, что крышка была открыта во время запуска; гипотеза о закрытой крышке не объясняет сбой. Использовать GitHub Actions, не локальный `tool/ci/web.sh` по SSH.\n\nEngineer разрешил временно добавить диагностику camera permission и фаз/длительности `initialize()` в smoke test, передавать `reportData` из integration driver при успехе и провале и печатать её через `tool/ci/drive.sh`; выполнить диагностические GitHub Actions runs. После R3 (`37330897047`) разрешил A1: поднять таймаут до 60 секунд на основании того, что runner оставался в `controller-initialize-pending` через 24 386 ms общего времени теста. Assertions не менять.
+05.10.2026: Engineer подтвердил, что крышка Mac была открыта во время R2 (`37315543986`); сбой повторился, значит крышка не объясняет проблему. Разрешил временную диагностику permission и фаз/длительности `initialize()` в smoke test с передачей результата через integration driver и `tool/ci/drive.sh`, а также diagnostic GitHub Actions runs. После R3 (`37330897047`) разрешил A1: таймаут 60 секунд, assertions сохранить. Диагностический код после измерений удалён.
 #### Executor Report
 
-Validated at: ea5eeda69a5c45fd664cacc15756e838131a228a
-1. R1 до исправления — `bash tool/ci/drive.sh integration_test/camera_source_web_smoke_test.dart web-server --browser-name=chrome --headless --web-browser-flag=--use-fake-device-for-media-stream --web-browser-flag=--use-fake-ui-for-media-stream` (Mac, временный клон базового SHA) — 10/10 `All tests passed`; дополнительный замер тем же способом: `initialize()` 79–86 ms (10/10).
-2. Диагноз — R1: 10/10 успешны, H1 на SSH не воспроизведён; run [37306746524](https://github.com/Anfet/yuv_ffi/actions/runs/37306746524), head SHA `754bbdddeb625ba17b094e7ba3b9a7ce9bb2d6552`, упал на camera smoke тем же `A CameraController was used after being disposed` из `camera_controller.dart:361`. Ошибка подтверждает H1-механизм: инициализация завершилась после `dispose()`. R2 не показывает её фактическую длительность; локальный замер 79–86 ms не объясняет runner-сбой. H2 исключён порядком теста: собственный `getUserMedia` источника вызывается только после `controller.initialize()`. A1 нельзя выбирать без длительности из runner; A2 не соответствует месту сбоя. Дальше требуется решение Engineer по A3/контексту GitHub Mac runner вне Scope.
-3. Постфиксные 10 прогонов — не запускались: исправление не выбрано до решения Engineer.
-4. `bash tool/ci/web.sh` (Mac, временный клон базового SHA) — exit 0, `Web CI passed`; `pwsh -File tool/ci/web.ps1` (Windows) — exit 0, `Web CI passed`; оба прогона включили camera smoke. `scope_guard.sh ea5eeda...` сообщил `scope: none` для путей карточки.
-5. `ci-web.yml` — `gh run watch 37306746524 --exit-status` — exit 1; Mac workflow упал на camera smoke. Повтор после сообщения о крышке: `gh run watch 37315543986 --exit-status` — exit 1, тот же use-after-dispose, длительность 19m58s; оба run на head SHA `754bbdddeb625ba17b094e7ba3b9a7ce9bb2d6552`, не на SHA карточки.
-6. `ci/all/CI-3` — не запускался: нужен зелёный DoD 5 на SHA карточки.
-7. Не ослаблены проверки — код не менялся; итоговую проверку diff выполняет Reviewer после решения Engineer.
-Deviations: DoD 3, 5 (зелёный результат), 6 остановлены на A3; изменения кода не сделаны.
-A1 выбран по диагностике R3: permission=`granted`, Chrome перечислил `fake_device_0`, `availableCameras()` занял 2704 ms, тест оставался на фазе `controller-initialize-pending` при `elapsedMs=24386`; локальный Mac SSH initialize=82 ms. Таймаут повышен до 60 секунд (>2× наблюдаемого ожидания). Проверить десять прогонов и повторный GitHub CI.
+Validated at: bdc0160
+1. R1 до изменения — `bash tool/ci/drive.sh integration_test/camera_source_web_smoke_test.dart web-server --browser-name=chrome --headless --web-browser-flag=--use-fake-device-for-media-stream --web-browser-flag=--use-fake-ui-for-media-stream` (Mac, SSH) — 10/10 `All tests passed`; `initialize()` 79–86 ms (10/10).
+2. GitHub Actions diagnostic run [37330897047](https://github.com/Anfet/yuv_ffi/actions/runs/37330897047), SHA `c3a9b34`: permission=`granted`; найден `fake_device_0`; `availableCameras()` занял 2704 ms; через 24 386 ms тест всё ещё ждал `controller.initialize()`, после teardown возник use-after-dispose. Диагностика подтверждает задержку fake-camera initialization на runner, а не отсутствие камеры или permission.
+3. После A1 — smoke test на Mac 10/10 прошёл; финальный повтор на `bdc0160`: `MAC_FINAL_SMOKE failures=0/10`.
+4. `bash tool/ci/web.sh` на Mac и `pwsh -File tool/ci/web.ps1` на Windows, итоговый код — оба exit 0 и `Web CI passed`; camera smoke включён, integration cases=64, reference matrix=119. `bash tool/ci/scope_guard.sh ea5eeda69a5c45fd664cacc15756e838131a228a` — `scope: all` (ключ для `example/integration_test/*`).
+5. Повторный GitHub Actions run [37336100554](https://github.com/Anfet/yuv_ffi/actions/runs/37336100554), SHA `8fb5223`: camera smoke прошёл; permission=`granted`, `fake_device_0`, initialize=3795 ms, `testPassed=true`. Полный workflow завершился exit 1 позднее в `integration_test/all_web_test.dart`: Skwasm `The native object of Picture was disposed` (`native_memory.dart:112`, `!isDisposed`), длительность 22m12s. Это отдельное падение, которое в CI-3 не исследовалось.
+6. `ci/all/CI-3` не запускался: DoD 5 не зелёный из-за отдельного Web integration failure.
+7. Проверка diff: в camera smoke изменён только timeout с 15 до 60 секунд; проверки кадра и отсутствия кадров после `dispose` сохранены, `skip` и retry отсутствуют. Временная диагностика удалена.
+Deviations: DoD 5 не пройден полностью, поэтому DoD 6 (`ci/all`) не запускался. Нужна отдельная карточка/решение Engineer по падению `all_web_test.dart`; причина в CI-3 не диагностировалась.
 
 #### Review
 

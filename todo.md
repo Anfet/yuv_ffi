@@ -50,13 +50,13 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 3](tasks/0.5.2/CI-3.md) | IN_PROGRESS | T2 / T1 | Codex | — | **Camera smoke в Web CI на Mac.** CI видит fake camera, permission granted, но `initialize()` остаётся pending >24s; проверяю A1 с таймаутом 60s, assertions сохранены. |
+| [CI 3](tasks/0.5.2/CI-3.md) | ENGINEER_REQUIRED | T2 / T1 | Engineer | — | **Camera smoke в Web CI на Mac.** Диагностика подтвердила задержку `initialize()`; A1 (таймаут 60s) прошёл smoke в Actions и локальные Mac/Windows Web CI. Полный Actions run упал позднее в отдельном `all_web_test.dart` (`Picture was disposed`); требуется решение по отдельной карточке. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
 ## Открытые вопросы
 
-Нет.
+CI 3: разрешить создание отдельной карточки для `all_web_test.dart` failure (`The native object of Picture was disposed` в Skwasm), либо вернуть CI 3 с дальнейшими указаниями. Рекомендация: отдельная карточка; camera smoke после A1 проходит.
 
 ## Правила работы
 
