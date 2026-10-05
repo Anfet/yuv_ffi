@@ -1,5 +1,5 @@
 # CI 4 — Skwasm «Picture was disposed» в Web CI на Mac
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
+**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
 
 **Base SHA:** 36be42f559af5ff9275efc6c2ef0a1c6e7f5df37 (SHA `dev` после перевода CI 3 в `REVIEW`)
 
@@ -137,6 +137,7 @@ CI 2 по D-32). Карточка идёт до выпуска 0.5.1; `release/
 
 #### Executor Report
 
+Prior investigation (before Architect's p. 8 boundary):
 Validated at: eb549fd48708540c28ceaa2a8b8147eea66f93e3
 1. R1 — `bash tool/ci/drive.sh integration_test/all_web_test.dart web-server --browser-name=chrome --headless --wasm` (Mac, чистый временный клон базы) — 10/10 `PASS`.
 2. R2 — workflow [37359566518](https://github.com/Anfet/yuv_ffi/actions/runs/37359566518), SHA `eb549fd`, завершился за 21m39s: camera smoke и `all_web_test.dart --wasm` показали `PASS`, затем повторился assert `The native object of Picture was disposed` в `SkwasmPicture.cullRect` после завершения теста. Точный текст искался в `flutter/flutter` issues — не найден.
