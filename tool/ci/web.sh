@@ -245,6 +245,12 @@ git diff --exit-code -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
 
 (cd example && run_quiet flutter pub get)
 
+# TEMP CI-4 diagnostic: isolate the combined Skwasm failure in one runner job.
+start_driver
+drive_web integration_test/all_web_test.dart --wasm
+stop_driver
+exit 0
+
 targets_output="$(assert_web_source_matrix)"
 targets=()
 while IFS= read -r target; do targets+=("$target"); done <<< "$targets_output"
