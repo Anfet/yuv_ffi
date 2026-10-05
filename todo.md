@@ -21,7 +21,7 @@
 ## Текущее состояние
 
 - **Выпущено:** 0.5.0 — 05.10.2026, тег `0.5.0` на `3e4c645`; `main` — PR #5 (`c8af6cd`), влит в `dev`.
-- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен (D-31). CI 2 закрыт (D-32); CI 3 в `REVIEW`; CI 4 остановлена в `ENGINEER_REQUIRED` по границе влияния на `lib/`.
+- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен (D-31). CI 2 закрыт (D-32); CI 3 в `REVIEW`; CI 4 — локализация в контексте раннера (п. 8 карточки).
 - **Открытые решения Engineer:** CI 4 — продолжить test-only локализацию/исправление взаимодействия тестов A1 или вынести возможное влияние `YuvImageWidget`/`lib/` в отдельное решение/карточку.
 
 ## Пулы задач
@@ -51,7 +51,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [CI 3](tasks/0.5.2/CI-3.md) | REVIEW | T2 / T1 | Executor | — | **Camera smoke в Web CI на Mac.** Причина — медленный `initialize()` на раннере; A1 (таймаут 60 с) прошёл в run 37336100554. DoD 5 сужен до camera smoke, DoD 6 перенесён в CI 4. |
-| [CI 4](tasks/0.5.2/CI-4.md) | ENGINEER_REQUIRED | T2 / T1 | Executor | CI 3 | **Skwasm `Picture was disposed` в `all_web_test.dart --wasm` на Mac.** R1 10/10 pass, workflow R2 воспроизвёл ошибку, все девять отдельных источников R3 pass; `image_cache_key_web_test` вызывает `YuvImageWidget` из `lib/`. Нужна граница продолжения: test-only локализация A1 или отдельное решение по возможному дефекту пакета. |
+| [CI 4](tasks/0.5.2/CI-4.md) | TODO | T2 / T1 | Executor | CI 3 | **Skwasm `Picture was disposed` в `all_web_test.dart --wasm` на Mac.** R1 по SSH 10/10, R2 в workflow воспроизвёл, R3 9/9. Решение Architect (п. 8): test-only локализация в контексте раннера — L1 без `image_cache_key`, L2 с контрольным `Image.memory`; `lib/` не меняется; если L2 укажет на пакет — `ENGINEER_REQUIRED` с карточкой `FIX`. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 

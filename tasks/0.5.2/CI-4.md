@@ -1,5 +1,5 @@
 # CI 4 — Skwasm «Picture was disposed» в Web CI на Mac
-**Status:** ENGINEER_REQUIRED · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
+**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
 
 **Base SHA:** 36be42f559af5ff9275efc6c2ef0a1c6e7f5df37 (SHA `dev` после перевода CI 3 в `REVIEW`)
 
@@ -23,9 +23,11 @@ CI 2 по D-32). Карточка идёт до выпуска 0.5.1; `release/
   `UniqueRef.nativeObject` → `CountedRef.nativeObject` → `SkwasmPicture.handle` → `SkwasmPicture.cullRect`
   (`_skwasm_impl/picture.dart:68`).
 - Skwasm — рендерер сборки `--wasm`; сборка JavaScript (CanvasKit) того же `all_web_test.dart` в этом run прошла.
-- Ни один из 9 источников `all_web_test.dart` не рисует (`pumpWidget`, `PictureRecorder`, `toImage` — нет): тесты
-  работают с данными. `Picture` — кадр самого фреймворка; ассерт сработал после завершения теста, то есть на
-  границе тестов или при teardown.
+- **Исправлено 05.10.2026 по отчёту R3:** рисует один источник агрегата — `image_cache_key_web_test.dart`
+  (`pumpWidget(MaterialApp(home: YuvImageWidget(...)))`, 4 вызова в группе «the image cache follows the real
+  revision»). Остальные 8 работают с данными. `YuvImageWidget` (`lib/src/widgets/yuv_image_widget.dart`) — обычный
+  `Image` с `YuvImageProvider`, кадр — `ui.decodeImageFromPixels`; `Picture` в `lib/` не создаётся и не
+  освобождается (`PictureRecorder`, `toImage`, `Picture` в `lib/` — нет). Ассерт сработал после завершения теста.
 - Где та же цель проходила: Windows — Web CI CI 1 (run 37243974376) и `ci/all/0.5.1` (run 37286266838); Mac по SSH —
   `bash tool/ci/web.sh` в CI 2 (DoD 3) и CI 3 (DoD 4). Падение известно только в workflow на Mac, один раз из одного
   запуска, дошедшего до `--wasm` (run 37301435314 до `--wasm` не дошёл).
@@ -65,14 +67,43 @@ CI 2 по D-32). Карточка идёт до выпуска 0.5.1; `release/
 7. **Время `ci/all`** (из CI 2, п. 7, через CI 3). Таблица «workflow → run → длительность», сравнение Web с run
    37286266838; если неприемлемо дольше — `ENGINEER_REQUIRED` с цифрами.
 
+8. **Граница продолжения (решение Architect по `ENGINEER_REQUIRED` от 05.10.2026).** Факты отчёта: R1 по SSH 10/10
+   PASS, R2 в workflow воспроизвёл ассерт (второй раз из двух запусков на раннере, 37336100554 и 37359566518), R3 —
+   9/9 одиночных источников PASS, но только по SSH, где агрегат тоже проходит. Участие `YuvImageWidget` в вызове —
+   не доказательство дефекта пакета: пакет не владеет ни одним `Picture`. Поэтому:
+   - Продолжается test-only локализация по A1 **в контексте раннера** (по SSH сбой не воспроизводится, и R3 по SSH
+     ничего не различает). `lib/` не меняется.
+   - Диагностические прогоны — временными коммитами в `dev`, как в CI 3: разрешено менять состав
+     `example/integration_test/all_web_test.dart` и сузить `tool/ci/web.sh` до цели `all_web_test.dart --wasm`, чтобы
+     прогон занимал минуты, а не ~20 мин. Каждый временный коммит отменяется отдельным коммитом до Validation;
+     DoD 4–6 идут на неизменённых `web.sh` и агрегате. Не больше 6 диагностических run; итог каждого — строка отчёта
+     «SHA → run → состав → результат».
+   - Порядок экспериментов:
+     - L1 — агрегат без `image_cache_key_web_test.dart`. Падает → `YuvImageWidget` не нужен для сбоя: пакет не
+       затронут, переход к A1/A2 ниже.
+     - L2 — только если L1 прошёл: агрегат, где `image_cache_key_web_test.dart` заменён временным контрольным
+       тестом с тем же сценарием (`pumpWidget`, `pumpAndSettle`, смена `boxFit`) на стандартном
+       `Image.memory`/`RawImage` с теми же байтами BGRA вместо `YuvImageWidget`. Падает → сбой вызывает любой
+       виджет-рендер в агрегате, пакет не затронут. Проходит при падении исходного агрегата → **граница**: дефект
+       пакета не исключён — `ENGINEER_REQUIRED` с предложением отдельной карточки `FIX` (влияет на заявленный
+       `--wasm` в 0.5.1), без правки `lib/`.
+     - Каждый результат, который может быть случайным, подтвердить повтором того же run (входит в лимит 6).
+   - Исправление при «пакет не затронут»: сначала A1 — в виджет-тестах `image_cache_key_web_test.dart` в конце
+     каждого теста явно снять дерево (`await tester.pumpWidget(const SizedBox.shrink())`) и дождаться кадра
+     (`await tester.pumpAndSettle()`), не меняя проверок; критерий — DoD 3 и DoD 5. Не помогло → A2
+     (`ENGINEER_REQUIRED`, варианты из п. 4) с данными L1/L2.
+   - Лимит исчерпан без ответа — `ENGINEER_REQUIRED` с собранными run.
+
 #### Scope
 
-Тесты из `example/integration_test/`, найденные R3 (вариант A1). Отчёт и статус — карточка и `todo.md`.
+Тесты из `example/integration_test/`, найденные R3 или L1/L2 (вариант A1); временные диагностические коммиты по
+п. 8 (агрегат, `tool/ci/web.sh`), отменённые до Validation. Отчёт и статус — карточка и `todo.md`.
 
 #### Constraints
 
 - `lib/**`, `src/**`, `assets/wasm/**`, `tool/wasm/**` не менять.
-- `tool/ci/**` и `.github/**` не менять без решения Engineer по A2/A3.
+- `tool/ci/**` и `.github/**` не менять без решения Engineer по A2/A3; исключение — временное сужение `web.sh` по
+  п. 8, отменённое до Validation.
 - Не отключать, не пропускать и не повторять тесты ради зелёного прогона; проверки тестов не менять.
 - Службы и метки раннера не трогать. На Mac работать во временном клоне; клон удалить после работы.
 - `release/0.5.1` не менять.
