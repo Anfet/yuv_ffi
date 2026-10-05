@@ -1,7 +1,7 @@
 # CI 3 — Camera smoke в Web CI на Mac
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
+**Status:** ENGINEER_REQUIRED · **Tier:** T2, Reviewer T1 · **Owner:** Engineer · **Depends On:** — · **Probe:** none
 
-**Base SHA:** — (SHA `dev` на старте карточки)
+**Base SHA:** ea5eeda69a5c45fd664cacc15756e838131a228a (SHA `dev` на старте карточки)
 
 #### Goal
 
@@ -111,7 +111,16 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
 
 #### Executor Report
 
-—
+Validated at: ea5eeda69a5c45fd664cacc15756e838131a228a
+1. R1 до исправления — `bash tool/ci/drive.sh integration_test/camera_source_web_smoke_test.dart web-server --browser-name=chrome --headless --web-browser-flag=--use-fake-device-for-media-stream --web-browser-flag=--use-fake-ui-for-media-stream` (Mac, временный клон базового SHA) — 10/10 `All tests passed`; дополнительный замер тем же способом: `initialize()` 79–86 ms (10/10).
+2. Диагноз — R1: 10/10 успешны, H1 на SSH не воспроизведён; run [37306746524](https://github.com/Anfet/yuv_ffi/actions/runs/37306746524), head SHA `754bbdddeb625ba17b094e7ba3b9a7ce9bb2d6552`, упал на camera smoke тем же `A CameraController was used after being disposed` из `camera_controller.dart:361`. Ошибка подтверждает H1-механизм: инициализация завершилась после `dispose()`. R2 не показывает её фактическую длительность; локальный замер 79–86 ms не объясняет runner-сбой. H2 исключён порядком теста: собственный `getUserMedia` источника вызывается только после `controller.initialize()`. A1 нельзя выбирать без длительности из runner; A2 не соответствует месту сбоя. Дальше требуется решение Engineer по A3/контексту GitHub Mac runner вне Scope.
+3. Постфиксные 10 прогонов — не запускались: исправление не выбрано до решения Engineer.
+4. Локальные проверки `all` на Mac/Windows и `web.ps1` — не запускались: остановка по A3; `scope_guard.sh ea5eeda...` сообщил `scope: none`.
+5. `ci-web.yml` — `gh run watch 37306746524 --exit-status` — exit 1; Mac workflow упал на camera smoke, run head SHA не совпадает с SHA карточки.
+6. `ci/all/CI-3` — не запускался: нужен зелёный DoD 5 на SHA карточки.
+7. Не ослаблены проверки — код не менялся; итоговую проверку diff выполняет Reviewer после решения Engineer.
+Deviations: остановлено на A3 согласно Architect Decision.
+Engineer attention: требуется решить, разрешить ли отдельную работу над контекстом Chrome/camera на Mac runner (права, профиль или запуск службы) либо отложить CI 3 до устранения этого ограничения; рекомендация — не менять таймаут по SSH-замеру 79–86 ms; сначала решить, кто и в какой задаче исследует контекст Mac runner.
 
 #### Review
 

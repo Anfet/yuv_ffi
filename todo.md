@@ -50,7 +50,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 3](tasks/0.5.2/CI-3.md) | TODO | T2 / T1 | — | — | **Camera smoke в Web CI на Mac.** Воспроизвести падение run 37301435314 (Mac 10×, затем workflow), исправить без ослабления теста, зелёный `ci-web.yml` на Mac и `ci/all/CI-3` 9/9 с замером времени (из CI 2 по D-32). |
+| [CI 3](tasks/0.5.2/CI-3.md) | ENGINEER_REQUIRED | T2 / T1 | Engineer | — | **Camera smoke в Web CI на Mac.** R1 SSH: 10/10, initialize 79–86 ms; R2 workflow повторил use-after-dispose на runner. Требуется решение по контексту Chrome/camera на Mac runner (A3), вне Scope CI 3. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
