@@ -1,5 +1,5 @@
 # CI 4 — Skwasm «Picture was disposed» в Web CI на Mac
-**Status:** BLOCKED · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
 
 **Base SHA:** 36be42f559af5ff9275efc6c2ef0a1c6e7f5df37 (SHA `dev` после перевода CI 3 в `REVIEW`)
 
@@ -142,16 +142,16 @@ Validated at: a65270a2657ce987a01a4037a76fa474def1d585
 2. L1/L2 — временные runner workflows: [L1 #1](https://github.com/Anfet/yuv_ffi/actions/runs/37363432244) и [L1 #2](https://github.com/Anfet/yuv_ffi/actions/runs/37363613775), агрегат без `image_cache_key` — оба PASS; [L2 #1](https://github.com/Anfet/yuv_ffi/actions/runs/37363949585) и [L2 #2](https://github.com/Anfet/yuv_ffi/actions/runs/37364148597), контроль на стандартном `RawImage` — оба воспроизвели тот же Skwasm assert после завершения теста. Это подтверждает ветку п. 8: сбой не требует кода пакета. Четыре временных коммита отменены отдельными revert-коммитами до финальных проверок. Точный текст ошибки искался в issues `flutter/flutter` — не найдено.
 3. Выбран A1 — в обоих тестах `image_cache_key_web_test.dart`, которые строят `YuvImageWidget`, добавлены `pumpWidget(const SizedBox.shrink())` и `pumpAndSettle()` после неизменённых assertions.
 4. После A1 — Mac `bash tool/ci/drive.sh integration_test/all_web_test.dart web-server --browser-name=chrome --headless --wasm`, 10/10 PASS, exit 0. Полный Mac workflow [37366114659](https://github.com/Anfet/yuv_ffi/actions/runs/37366114659) — success, 22m20s, `headSha=a65270a`, `runner_name=yuv-self-hosted`.
-5. `bash tool/ci/scope_guard.sh 441229a` — `scope: all`. Доступные локальные проверки: `vm.ps1` 638/638; `windows.ps1` 134/134, Windows Release build и 5 integration targets; `android.ps1` debug build и 5 integration targets; `example.ps1` pub get/analyze/web build; `smoke.ps1`; Mac `web.sh` (integration=64, reference=119, WASM targets=3); Windows `web.ps1` (то же); `macos.sh` (Release/debug builds, native smoke и 5 integration targets); `ios.sh` (simulator smoke) — все exit 0. Linux VM локально недоступна: перед запуском тестов SSH к `192.168.1.29:22` завершился timeout.
+5. `bash tool/ci/scope_guard.sh 441229a` — `scope: all`. Доступные локальные проверки: `vm.ps1` 638/638; `windows.ps1` 134/134, Windows Release build и 5 integration targets; `android.ps1` debug build и 5 integration targets; `example.ps1` pub get/analyze/web build; `smoke.ps1`; Mac `web.sh` (integration=64, reference=119, WASM targets=3); Windows `web.ps1` (то же); `macos.sh` (Release/debug builds, native smoke и 5 integration targets); `ios.sh` (simulator smoke) — все exit 0. После восстановления доступа к Linux VM локально повторён полный native smoke: Debug/Release sanitizer CTest, packaging smoke, Linux Release build, app-runtime smoke и 5 native integration targets — exit 0.
 6. Полный Mac workflow [37366114659](https://github.com/Anfet/yuv_ffi/actions/runs/37366114659) — exit 0; `headSha` совпадает с `Validated at`, runner `yuv-self-hosted`.
-7. Тег `ci/all/CI-4` на `a65270a`: 8/9 workflow success; таблица результатов:
+7. Тег `ci/all/CI-4` на `a65270a`: после повторного запуска CI workflow — 9/9 success; таблица результатов:
 
 | Workflow | Run | Результат | Длительность |
 | --- | --- | --- | --- |
 | CI VM | 37370821726 | success | 6m36s |
 | CI Android | 37370821704 | success | 5m14s |
 | Example CI | 37370821733 | success | 8m13s |
-| CI | 37370821735 | failure: `linux-native-smoke` cancelled; `bindings-regeneration` success | 15m03s |
+| CI | 37370821735 | success, attempt 3; оба job success | 4m08s |
 | CI smoke | 37370821856 | success | 6m54s |
 | CI Web | 37370821880 | success | 26m36s |
 | CI macOS | 37370821912 | success | 4m34s |
@@ -161,15 +161,15 @@ Validated at: a65270a2657ce987a01a4037a76fa474def1d585
    Web comparison: `ci/all/0.5.1` run 37286266838 — about 21m19s; CI-4 — 26m36s (about 5m17s longer). No performance conclusion is inferred.
 8. Diff against base — only two test teardowns were added; all original tests and assertions remain. The L1/L2 aggregator and temporary `web.sh` diagnostic exit path were reverted before these checks.
 
-#### CI Fact — non-Web workflow (per `ci.md`, without diagnosis)
+#### CI rerun — Linux result (per `ci.md`, without diagnosis)
 
 - SHA: `a65270a2657ce987a01a4037a76fa474def1d585`.
 - Workflow: `CI`, run [37370821735](https://github.com/Anfet/yuv_ffi/actions/runs/37370821735), trigger tag `ci/all/CI-4`.
-- Job `bindings-regeneration`: success. Job `linux-native-smoke`: cancelled; started 20:36:48Z, completed 20:51:50Z. Cancelled job has no step list; `gh run view --log-failed` returned no failed-step excerpt.
-- Local Linux command did not start because SSH to `192.168.1.29:22` timed out during clone transfer.
+- Initial attempt: job `bindings-regeneration` succeeded; `linux-native-smoke` was cancelled. The cancellation had no failed-step excerpt; no diagnosis was performed.
+- Rerun attempt 3: both jobs succeeded at the same SHA. `linux-native-smoke` completed all sanitizer, packaging, Linux build, app-runtime smoke and native correctness probe steps in 4m02s. Full workflow concluded success in 4m08s.
+- Linux VM local smoke at the same SHA also passed: CTest Debug/Release, packaging smoke, Linux Release build, app-runtime smoke and four native integration targets (`camera_capture`, `presenter_shader`, `probe`, `shader_probe`), exit 0.
 
-Deviations: Linux local check unavailable; CI all is 8/9, so DoD 4 and 6 are not fully complete.
-Engineer attention: CI all needs a terminal Linux result. Engineer to authorize/arrange the required rerun or next action for `linux-native-smoke` in run 37370821735. No diagnosis was performed.
+DoD 1–6 are complete. DoD 7 remains for Reviewer. The cancelled initial Linux attempt is resolved by the successful rerun; no diagnosis was performed.
 
 #### Review
 
