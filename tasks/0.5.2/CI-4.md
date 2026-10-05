@@ -1,5 +1,5 @@
 # CI 4 — Skwasm «Picture was disposed» в Web CI на Mac
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
+**Status:** DONE · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** CI 3 · **Probe:** none
 
 **Base SHA:** 36be42f559af5ff9275efc6c2ef0a1c6e7f5df37 (SHA `dev` после перевода CI 3 в `REVIEW`)
 
@@ -173,4 +173,32 @@ DoD 1–6 are complete. DoD 7 remains for Reviewer. The cancelled initial Linux 
 
 #### Review
 
-—
+Verdict: принято, 06.10.2026. Accepted SHA: `a65270a` (после него менялись только карточка и `todo.md`). Мержа не
+требуется — работа в `dev` (D-22); `REVIEW → DONE`.
+
+- Диапазон `36be42f..a65270a`: в коде только `image_cache_key_web_test.dart` — `pumpWidget(const SizedBox.shrink())` и
+  `pumpAndSettle()` в конце двух тестов, которые строят `YuvImageWidget`. Временные `e65045b` (агрегат, `web.sh`) и
+  `7c9f487` (контроль на `RawImage`) отменены `8c680ef` и `03a49fc` до Validation; `tool/ci/**`, `.github/**`,
+  `lib/**`, `src/**` в итоговом диапазоне не изменены.
+- DoD 1–2: R1 0/10 по SSH, R2 37359566518 воспроизвёл; L1 ×2 PASS, L2 ×2 (стандартный `RawImage`) воспроизвёл тот же
+  ассерт — код пакета для сбоя не нужен, `lib/` не затронут (вывод отчёта, п. 2). Issue Flutter — не найдено. 4
+  диагностических run по п. 8 — в лимите 6.
+- DoD 3–6: 10/10 `all_web_test.dart --wasm` на Mac; локальные ключи `scope: all` exit 0, включая Linux VM; workflow
+  37366114659 success на `a65270a`, `yuv-self-hosted`; `ci/all/CI-4` 9/9 success на `a65270a`, таблица времени есть,
+  Web 26m36s против ~21m19s.
+- DoD 7 (Reviewer): источники агрегата не убраны и не пропущены, retry нет, assertions не изменены — добавлен только
+  teardown после них. Выполнено.
+- Неточности отчёта, не блокирующие: «четыре временных коммита» — фактически два временных и два revert;
+  `scope_guard.sh` запущен от `441229a`, а не от базы `36be42f` (код в обоих диапазонах тот же, результат `all`);
+  строка «код `lib/` затронут: нет» дана по смыслу, а не дословно.
+
+Blocking findings: нет.
+
+Recommendations:
+- `release/0.5.1` (`61da2ee`) не содержит исправлений тестов CI 3 и CI 4: Web CI на Mac для релизной ветки может
+  упасть так же. Решить, переносить ли эти два тестовых изменения в `release/0.5.1` до выпуска.
+- Web CI на Mac длиннее на ~5 мин (26m36s против ~21m19s на Windows); вывода о скорости не делалось — следить при
+  следующих `ci/all`.
+- Удалить теги `ci/*` пачкой в конце цикла (`todo.md`, правило 4).
+
+Checks run by Reviewer: none.

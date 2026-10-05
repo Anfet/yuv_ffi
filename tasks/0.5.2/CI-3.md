@@ -1,5 +1,5 @@
 # CI 3 — Camera smoke в Web CI на Mac
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** — · **Probe:** none
+**Status:** DONE · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
 
 **Base SHA:** ea5eeda69a5c45fd664cacc15756e838131a228a (SHA `dev` на старте карточки)
 
@@ -134,4 +134,23 @@ Deviations: DoD 6 перенесён решением Architect в CI 4; ост
 
 #### Review
 
-—
+Verdict: принято, 06.10.2026. Accepted SHA: `bdc0160` (код карточки не менялся после; camera smoke также прошёл в
+`ci/all/CI-4` на `a65270a`, run 37370821880). Мержа не требуется — работа в `dev` (D-22); `REVIEW → DONE`.
+
+- Диапазон `ea5eeda..bdc0160`: в коде только `camera_source_web_smoke_test.dart`, таймаут 15 → 60 с. Временная
+  диагностика (`c3a9b34`, driver, `drive.sh`) удалена в `bdc0160`; `tool/ci/**`, `.github/**`, `lib/**`, `src/**` не
+  изменены.
+- DoD 1–2: R1 по SSH 10/10, R2/R3 в workflow — use-after-dispose при `initialize()` > 24 с на раннере; причина H1,
+  связана с run 37330897047. Таймаут 60 с — по замеру и разрешению Engineer (A1, 05.10.2026).
+- DoD 3–5: 10/10 после A1, `web.sh`/`web.ps1` exit 0, camera smoke PASS в run 37336100554. DoD 6 перенесён в CI 4
+  (п. 6 Architect Decision) и выполнен там.
+- DoD 7 (Reviewer): проверки кадра (непустой, ненулевые байты) и отсутствия кадров после `source.dispose()` на месте;
+  `skip`/retry нет; изменён только таймаут, по замеру. Выполнено.
+
+Blocking findings: нет.
+
+Recommendations:
+- Запас 60 с при наблюдаемых 3,8–24+ с — небольшой; при повторе таймаута на раннере смотреть на окружение fake-камеры
+  (A3), а не поднимать таймаут дальше.
+
+Checks run by Reviewer: none.

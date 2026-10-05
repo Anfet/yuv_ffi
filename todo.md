@@ -50,8 +50,8 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 3](tasks/0.5.2/CI-3.md) | REVIEW | T2 / T1 | Executor | — | **Camera smoke в Web CI на Mac.** Причина — медленный `initialize()` на раннере; A1 (таймаут 60 с) прошёл в run 37336100554. DoD 5 сужен до camera smoke, DoD 6 перенесён в CI 4. |
-| [CI 4](tasks/0.5.2/CI-4.md) | REVIEW | T2 / T1 | Executor | CI 3 | **A1 прошёл:** исправленный aggregate — 10/10 Mac, `ci-web.yml` зелёный на Mac. Локальные проверки `scope: all` прошли; Linux VM native smoke exit 0. `ci/all/CI-4` — 9/9 success после rerun attempt 3 (run 37370821735). Готово к DoD 7 Reviewer. |
+| [CI 3](tasks/0.5.2/CI-3.md) | DONE | T2 / T1 | — | — | **Camera smoke в Web CI на Mac.** Принято на `bdc0160`: таймаут 60 с по замеру `initialize()` на раннере, проверки не ослаблены. |
+| [CI 4](tasks/0.5.2/CI-4.md) | DONE | T2 / T1 | — | CI 3 | **Skwasm в Web CI на Mac.** Принято на `a65270a`: teardown виджет-тестов, `lib/` не затронут; workflow на Mac и `ci/all/CI-4` 9/9 success. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
