@@ -1,7 +1,9 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** CI 1 (пул `WASM` принят) · **Probe:** windows+pixel3+web
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Reviewer · **Depends On:** — · **Probe:** windows+pixel3+web
 
-**Base SHA:** — (принятый SHA пула `WASM`)
+**Base SHA:** `1866a2d155cc241b1e0b0af7f71e23398b2637e1` (принятый SHA пула `WASM`)
+
+**Release candidate:** `release/0.5.1` at `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`
 
 #### Goal
 
@@ -72,5 +74,68 @@
 - Reviewer: выборочно перепроверить аудит, повторить dry-run и одну Web-пробу `--wasm`, сверить `head_sha` всех run.
 
 #### Executor Report
+
+Validated at: `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`
+
+1. Аудит диапазона `0.5.0..61da2ee` — без блокирующих находок:
+
+   | Область | Что проверено | Результат |
+   | --- | --- | --- |
+   | CHANGELOG | `## 0.5.1` против изменений диапазона | Описаны уточнение статуса Web/платформ и поддержка операций `--wasm`; внутренних изменений нет. |
+   | README | Requirements, Platform status, Web backend против `doc/web-parity.md` | Согласованы; Safari/Firefox — “not verified”; iOS ручная проверка указана как release build. |
+   | Версия | `pubspec.yaml`, CHANGELOG, podspec, `src/CMakeLists.txt`, README, `example/pubspec.lock` | Везде `0.5.1`; в `src/` изменён только номер версии. |
+   | API | `lib/yuv_ffi.dart`, `test/public_surface_test.dart` | Оба файла не менялись. |
+   | Следы разработки | Изменённые Dart-файлы в `lib/`: `TODO`/`FIXME`, ID задач, `print`/`debugPrint`, новые `ignore` | Не найдены. |
+   | Пакет и артефакты | `flutter pub publish --dry-run`; `git status --short --ignored`; состав `tasks/0.5.1/` | Dry-run — 0 warnings, архив 678 KB; после проверок нет новых tracked/untracked артефактов; на кандидате в папке задач только RELEASE 1. |
+
+2. Релиз-кандидат — ветка `release/0.5.1`, SHA `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`; проверенные файлы и версии на SHA не менялись после прогона.
+
+3. Проверки на одном SHA:
+
+   | Проверка | Машина / команда | Результат |
+   | --- | --- | --- |
+   | Scope | Windows: `bash tool/ci/scope_guard.sh 0.5.0` | exit 0, `scope: all`. |
+   | VM | Windows: `pwsh -File tool/ci/vm.ps1` | exit 0, 638/638. |
+   | Windows | Windows: `pwsh -File tool/ci/windows.ps1` | exit 0, 134/134; Release build и пять integration targets. |
+   | Android | Windows: `pwsh -File tool/ci/android.ps1` | exit 0; ABI split builds и пять integration targets. Первый запуск встретил занятый Kotlin cache; повтор после окончания параллельной Gradle-сборки прошёл. |
+   | Web | Windows: `pwsh -File tool/ci/web.ps1` | exit 0; JavaScript 14 sources/64 cases, reference 119, camera smoke 1; три `--wasm` цели прошли. |
+   | Example | Windows, `FLUTTER_VERSION=3.44.9`: `pwsh -File tool/ci/example.ps1` | exit 0; analyze и Web build. |
+   | Smoke | Windows: `pwsh -File tool/ci/smoke.ps1` | exit 0. |
+   | Native C | Windows: CMake Release build и CTest | exit 0; 11/11. |
+   | pana | Mac: `pana --exit-code-threshold 0 .` | exit 0; 160/160. |
+   | Publish dry-run | Windows: `flutter pub publish --dry-run` | exit 0; 0 warnings. |
+   | Pixel 3 | Reviewer: `tool/probe/run_release_android.ps1` для arm64 и armv7 | Ожидает выполнения на этом кандидате. |
+
+   `ci/all/0.5.1` — все девять workflow завершились `success`, `head_sha` у каждого равен SHA кандидата:
+
+   | Workflow | Run |
+   | --- | --- |
+   | CI Android | [37286266754](https://github.com/Anfet/yuv_ffi/actions/runs/37286266754) |
+   | CI | [37286266772](https://github.com/Anfet/yuv_ffi/actions/runs/37286266772) |
+   | Example CI | [37286266787](https://github.com/Anfet/yuv_ffi/actions/runs/37286266787) |
+   | CI smoke | [37286266823](https://github.com/Anfet/yuv_ffi/actions/runs/37286266823) |
+   | CI VM | [37286266805](https://github.com/Anfet/yuv_ffi/actions/runs/37286266805) |
+   | iOS CI | [37286266918](https://github.com/Anfet/yuv_ffi/actions/runs/37286266918) |
+   | CI macOS | [37286266963](https://github.com/Anfet/yuv_ffi/actions/runs/37286266963) |
+   | CI Web | [37286266838](https://github.com/Anfet/yuv_ffi/actions/runs/37286266838) |
+   | CI Windows | [37286266885](https://github.com/Anfet/yuv_ffi/actions/runs/37286266885) |
+
+4. Engineer report: кандидат — `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`; результаты аудита и таблицы workflow/проверок приведены выше. Safari/Firefox не проверялись; Web `--wasm` проверен в Chrome. CI trigger tag `ci/all/0.5.1` указывает на этот SHA. После Reviewer PASS команды Engineer:
+
+   ```sh
+   git switch release/0.5.1 && git rev-parse HEAD   # = 61da2ee3457ee81e1ab7de99bbf54d3170f1fde1
+   git push origin release/0.5.1
+   git tag -a 0.5.1 -m "Released yuv_ffi 0.5.1" 61da2ee3457ee81e1ab7de99bbf54d3170f1fde1
+   git push origin 0.5.1
+   flutter pub publish
+   git push origin 61da2ee3457ee81e1ab7de99bbf54d3170f1fde1:main
+   git switch dev
+   ```
+
+   Тег выпуска, публикация и изменение `main` не выполнялись.
+
+Deviations: локальный Android script сначала остановился при удалении Kotlin cache, пока параллельная Gradle-сборка другого проекта использовала Flutter SDK; после завершения той сборки повторный запуск прошёл. Все проверки Executor на кандидате успешны. После завершения проверок в общей копии `dev` появились посторонние staged `tool/ci/web.sh` и untracked `tasks/0.5.2/`; они не входят в кандидат и не затронуты.
+
+Engineer attention: Reviewer должен выполнить Pixel 3 arm64/armv7 и верификации из Validation на SHA кандидата; после этого Engineer подписывает гейт и выпускает пакет.
 
 #### Review

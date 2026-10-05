@@ -21,7 +21,7 @@
 ## Текущее состояние
 
 - **Выпущено:** 0.5.0 — 05.10.2026, тег `0.5.0` на `3e4c645`; `main` — PR #5 (`c8af6cd`), влит в `dev`.
-- **Сейчас:** пул `WASM`: FIX 1, WEB 4 и CI 1 — `DONE` на `1866a2d`; Web CI run 37243974376 зелёный на принятом SHA. Начат релизный гейт RELEASE 1.
+- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — кандидат `release/0.5.1` на `61da2ee`, отчёт передан на ревью; затем нужно решение Engineer о выпуске.
 - **Открытые решения Engineer:** нет.
 
 ## Пулы задач
@@ -30,7 +30,6 @@ Engineer (или Architect по его команде) записывает дл
 
 | Пул | Порядок карточек | Tier Executor / Reviewer | База | Внешняя зависимость | CI после принятия |
 | --- | --- | --- | --- | --- | --- |
-| `WASM` | FIX 1 → WEB 4 → CI 1 | T2 / T1 | SHA `dev` на старте — в карточке FIX 1 | Chrome и ChromeDriver одной major-версии; Pixel 3 (Reviewer) | `ci/web/WASM` на принятом SHA |
 
 ## Дашборд
 
@@ -45,7 +44,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | IN_PROGRESS | T2 / T1 + Engineer | Executor | — | **Релизный гейт 0.5.1.** Аудит разницы с 0.5.0, `release/0.5.1`, проверки на одном SHA, отчёт и команды Engineer. |
+| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | REVIEW | T2 / T1 + Engineer | Reviewer | — | Кандидат `release/0.5.1` (`61da2ee`); аудит, `ci/all/0.5.1` 9/9 и пакетные проверки PASS. Reviewer: Pixel 3 arm64/armv7 и выборочные проверки карточки. |
 
 ### Следующий цикл — 0.5.2 (после выпуска 0.5.1)
 
