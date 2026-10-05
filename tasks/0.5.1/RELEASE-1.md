@@ -1,5 +1,5 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Reviewer · **Depends On:** — · **Probe:** windows+pixel3+web
+**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Engineer · **Depends On:** — · **Probe:** windows+pixel3+web
 
 **Base SHA:** `1866a2d155cc241b1e0b0af7f71e23398b2637e1` (принятый SHA пула `WASM`)
 
@@ -139,3 +139,40 @@ Deviations: локальный Android script сначала остановил�
 Engineer attention: Reviewer должен выполнить Pixel 3 arm64/armv7 и верификации из Validation на SHA кандидата; после этого Engineer подписывает гейт и выпускает пакет.
 
 #### Review
+
+Ревью диапазона `1866a2d..61da2ee` и отчёта против карточки, 05.10.2026.
+
+**Вердикт:** гейт пройден, принятый SHA РК — `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`. Статус `BLOCKED`: ждёт
+подписи и выпуска Engineer (п. 4); закрытие карточки — п. 5 после публикации.
+
+Проверено чтением:
+
+- Аудит (выборочно): CHANGELOG `## 0.5.1` покрывает README/статус платформ и `--wasm`; README согласован с
+  `doc/web-parity.md`, Safari/Firefox — «not verified»; `0.5.1` в `pubspec.yaml`, CHANGELOG, podspec,
+  `src/CMakeLists.txt` (только номер), README, `example/pubspec.lock`; `lib/yuv_ffi.dart` и
+  `test/public_surface_test.dart` не менялись с `0.5.0`; в добавленных строках `lib/` нет `TODO`/`FIXME`, ID задач,
+  `print`, `ignore`; в `tasks/0.5.1/` на РК — только RELEASE 1.
+- `ci/all/0.5.1` → `61da2ee`; все 9 run из отчёта — `completed/success`, `headSha` = `61da2ee…`.
+- `1866a2d..61da2ee` меняет только `COMPLETION.md`, `todo.md`, `tasks/` — все в `.pubignore`; код и архив пакета
+  совпадают с принятым SHA пула.
+
+Прогоны Reviewer (причина 1 — Validation карточки), в локальном клоне `release/0.5.1` на `61da2ee`, дерево чистое:
+
+| Проверка | Команда | Результат |
+| --- | --- | --- |
+| Pixel 3 arm64 | `tool/probe/run_release_android.ps1 -GitSha 61da2ee… -Abi arm64` | exit 0; `RA25_HOST_RESULT` arm64-v8a, smoke PASS, probe PASS, 1188 |
+| Pixel 3 armv7 | то же, `-Abi armv7` | exit 0; armeabi-v7a, smoke PASS, probe PASS, 1188 |
+| Publish dry-run | `flutter pub publish --dry-run` | exit 0; `Package has 0 warnings`, 678 KB, `yuv_ffi.js`/`yuv_ffi.wasm` в архиве |
+| Web `--wasm` | `tool/ci/drive.ps1 integration_test/probe_web_test.dart web-server --browser-name=chrome --headless --wasm` | exit 0; `PASS` (`All tests passed`) |
+
+Блокирующих замечаний нет.
+
+Замечание без возврата: п. 2 требует РК «без коммитов статуса», а `release/0.5.1` содержит коммиты статуса после
+`1866a2d`. На пакет не влияет (только `.pubignore`-пути); пересоздание РК потребовало бы повтора всех проверок без
+изменения кода.
+
+Recommendations:
+
+- После `git push origin 61da2ee:main` в `main` попадут внутренние `todo.md` и `tasks/0.5.1/RELEASE-1.md` в состоянии
+  `IN_PROGRESS`/«не заморожен». Для будущих гейтов — ответвлять РК от принятого SHA кода, как пишет п. 2, или
+  явно разрешить коммиты статуса в РК.

@@ -21,7 +21,7 @@
 ## Текущее состояние
 
 - **Выпущено:** 0.5.0 — 05.10.2026, тег `0.5.0` на `3e4c645`; `main` — PR #5 (`c8af6cd`), влит в `dev`.
-- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — кандидат `release/0.5.1` на `61da2ee`, отчёт передан на ревью; затем нужно решение Engineer о выпуске.
+- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), ждёт подписи и выпуска Engineer.
 - **Открытые решения Engineer:** нет.
 
 ## Пулы задач
@@ -44,7 +44,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | REVIEW | T2 / T1 + Engineer | Reviewer | — | Кандидат `release/0.5.1` (`61da2ee`); аудит, `ci/all/0.5.1` 9/9 и пакетные проверки PASS. Reviewer: Pixel 3 arm64/armv7 и выборочные проверки карточки. |
+| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | BLOCKED | T2 / T1 + Engineer | Engineer | — | Reviewer PASS на `61da2ee`: аудит, `ci/all/0.5.1` 9/9, Pixel 3 arm64/armv7 1188, dry-run 0 warnings, `--wasm` проба. Ждёт подписи и выпуска Engineer (команды — п. 4 отчёта); после публикации — п. 5. |
 
 ### Следующий цикл — 0.5.2 (после выпуска 0.5.1)
 
