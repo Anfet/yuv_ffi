@@ -1,5 +1,5 @@
 # CI 3 — Camera smoke в Web CI на Mac
-**Status:** ENGINEER_REQUIRED · **Tier:** T2, Reviewer T1 · **Owner:** Engineer · **Depends On:** — · **Probe:** none
+**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** — · **Probe:** none
 
 **Base SHA:** ea5eeda69a5c45fd664cacc15756e838131a228a (SHA `dev` на старте карточки)
 
@@ -65,6 +65,11 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
 5. **Время `ci/all`** (из CI 2, п. 7). Записать таблицу «workflow → run → длительность» и сравнить Web с run
    37286266838. Если `ci/all` стал неприемлемо длиннее — `ENGINEER_REQUIRED` с цифрами, а не откат по своему решению.
 
+6. **Решение Architect по `ENGINEER_REQUIRED` (05.10.2026).** Падение `all_web_test.dart --wasm` (Skwasm `Picture
+   was disposed`, run 37336100554) — другая причина (п. 4): отдельная карточка CI 4. Camera smoke в workflow на Mac
+   прошёл в том же run, поэтому DoD 5 сужен до camera smoke; зелёный workflow целиком и `ci/all` (DoD 6, п. 5)
+   перенесены в CI 4. Executor: отчёт уже покрывает DoD 1–5 и 7 — перевести карточку в `REVIEW`.
+
 #### Scope
 
 `example/integration_test/camera_source_web_smoke_test.dart`; по варианту A2 —
@@ -99,12 +104,10 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
    `all`) и команды из `AGENTS.md` для каждого ключа, доступного на машинах; в том числе Mac `bash tool/ci/web.sh` →
    exit 0 и строка `Web CI passed: ...` и Windows `pwsh -File tool/ci/web.ps1` → exit 0 и строка `Web CI passed: ...`;
    по каждому ключу — exit code — by: Executor
-5. Workflow на Mac зелёный — check: `gh workflow run ci-web.yml --ref dev`, затем
-   `gh run watch <run-id> --exit-status` → exit 0; `gh run view <run-id> --json headSha,jobs --jq '.headSha, .jobs[].runnerName'`
-   → SHA карточки и `yuv-self-hosted` — by: Executor
-6. `ci/all` на SHA карточки 9/9 и время записано — check: тег `ci/all/CI-3` на SHA карточки; все 9 run `success`,
-   `headSha` = SHA карточки; в отчёте таблица «workflow → run → длительность» и сравнение Web с run 37286266838 —
-   by: Executor
+5. Camera smoke проходит в workflow на Mac — check: run `ci-web.yml` на SHA с исправлением, раннер `yuv-self-hosted`;
+   цель `camera_source_web_smoke_test.dart` — `PASS` в логе run (провал другой цели не относится к этой карточке, п. 6)
+   — by: Executor
+6. Перенесён в CI 4 (зелёный workflow целиком и `ci/all` с замером времени, п. 6 Architect Decision).
 7. Проверки не ослаблены — check: чтение diff теста против п. 3 Architect Decision (непустой кадр, отсутствие кадров
    после `dispose`, нет `skip`/retry, таймаут изменён только с замером) — by: Reviewer
 

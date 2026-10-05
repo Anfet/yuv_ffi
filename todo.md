@@ -3,7 +3,7 @@
 ## Цель релиза
 
 - **Цель:** патч 0.5.1 — операции Web backend работают в сборке `flutter build web --wasm` (WEB 4), это проверяет Web CI (CI 1), документация точно описывает статус Web и платформ (FIX 1).
-- **Порядок:** код и документация (FIX 1 → WEB 4 → CI 1) → релизный гейт (RELEASE 1) → CI 2 (Web CI на Mac, D-31) → CI 3 (camera smoke в Web CI на Mac, D-32) → выпуск Engineer.
+- **Порядок:** код и документация (FIX 1 → WEB 4 → CI 1) → релизный гейт (RELEASE 1) → CI 2 (Web CI на Mac, D-31) → CI 3 (camera smoke в Web CI на Mac, D-32) → CI 4 (Skwasm `Picture was disposed` в Web CI на Mac) → выпуск Engineer.
 - **Рабочая ветка:** `dev`. `release/0.5.1` ответвляется от `dev` в RELEASE 1 на принятом SHA кода (D-10).
 - **База сравнения:** опубликованная 0.5.0 — тег `0.5.0` (`3e4c645`).
 - **Релиз-кандидат:** не заморожен.
@@ -21,7 +21,7 @@
 ## Текущее состояние
 
 - **Выпущено:** 0.5.0 — 05.10.2026, тег `0.5.0` на `3e4c645`; `main` — PR #5 (`c8af6cd`), влит в `dev`.
-- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен (D-31). CI 2 закрыт (D-32); дальше — CI 3.
+- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен (D-31). CI 2 закрыт (D-32); дальше — CI 3 (в `REVIEW` после сужения DoD), затем CI 4.
 - **Открытые решения Engineer:** нет.
 
 ## Пулы задач
@@ -46,17 +46,18 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 | --- | --- | --- | --- | --- | --- |
 | [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | BLOCKED | T2 / T1 + Engineer | Engineer | — | Reviewer PASS на `61da2ee`: аудит, `ci/all/0.5.1` 9/9, Pixel 3 arm64/armv7 1188, dry-run 0 warnings, `--wasm` проба. Выпуск — после CI 2 (D-31), команды — п. 4 отчёта; после публикации — п. 5. |
 
-### До выпуска 0.5.1 — CI 3 (карточка в `tasks/0.5.2/`, D-32)
+### До выпуска 0.5.1 — CI 3, CI 4 (карточки в `tasks/0.5.2/`, D-32)
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 3](tasks/0.5.2/CI-3.md) | ENGINEER_REQUIRED | T2 / T1 | Engineer | — | **Camera smoke в Web CI на Mac.** Диагностика подтвердила задержку `initialize()`; A1 (таймаут 60s) прошёл smoke в Actions и локальные Mac/Windows Web CI. Полный Actions run упал позднее в отдельном `all_web_test.dart` (`Picture was disposed`); требуется решение по отдельной карточке. |
+| [CI 3](tasks/0.5.2/CI-3.md) | TODO | T2 / T1 | Executor | — | **Camera smoke в Web CI на Mac.** Причина — медленный `initialize()` на раннере; A1 (таймаут 60 с) прошёл в run 37336100554. DoD 5 сужен до camera smoke, DoD 6 перенесён в CI 4 (решение Architect в карточке). Executor: перевести в `REVIEW`. |
+| [CI 4](tasks/0.5.2/CI-4.md) | TODO | T2 / T1 | — | CI 3 | **Skwasm `Picture was disposed` в `all_web_test.dart --wasm` на Mac.** Воспроизвести (Mac 10×, затем workflow), локализовать источник, проверить влияние на `lib/`, исправить без ослабления; зелёный `ci-web.yml` на Mac и `ci/all/CI-4` 9/9 с замером времени. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
 ## Открытые вопросы
 
-CI 3: разрешить создание отдельной карточки для `all_web_test.dart` failure (`The native object of Picture was disposed` в Skwasm), либо вернуть CI 3 с дальнейшими указаниями. Рекомендация: отдельная карточка; camera smoke после A1 проходит.
+Нет.
 
 ## Правила работы
 
