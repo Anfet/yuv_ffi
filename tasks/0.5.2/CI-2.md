@@ -1,0 +1,108 @@
+# CI 2 — Web CI на Mac
+**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** выпуск 0.5.1 (тег `0.5.1`, `main` влит в `dev`) · **Probe:** none
+
+**Base SHA:** — (SHA `dev` на старте карточки)
+
+#### Goal
+
+Web CI (`ci-web.yml`) идёт на self-hosted Mac `yuv-self-hosted`, а не на Windows-машине `dev.working`. После карточки:
+`tool/ci/web.sh` выполняет те же проверки, что `tool/ci/web.ps1`; workflow `CI Web` запускает его на Mac; запуск на
+принятом SHA зелёный. Windows-машина освобождается от самой долгой браузерной задачи `ci/all`.
+
+Карточка идёт после выпуска 0.5.1, потому что релизный гейт (RELEASE 1) требует `ci/all/0.5.1` 9/9 на неизменённой
+инфраструктуре, и менять раннер Web под гейтом нельзя, хотя `tool/` и `.github/` в список заморозки не входят.
+
+#### Diagnosis
+
+Проверено 05.10.2026 вручную на Mac (`~/projects/yuv_ffi`, ветка `release/0.5.1`, тот же код, что в `dev`). Эти факты
+нужны только на старте.
+
+- Mac arm64: Chrome 154.0.8037.95, ChromeDriver 154.0.8037.57 (`~/bin/chromedriver`), одна major-версия. Python
+  системный 3.9.6; `emsdk` из `master` его отвергает («requires python 3.10»), тег `3.1.74` работает.
+- emsdk 3.1.74 поставлен в `~/storage/emsdk-3.1.74` (`git checkout 3.1.74`, затем `install` / `activate`).
+- **Сборка WASM воспроизводима между Windows и Mac.** `assets/wasm/yuv_ffi.js` и `.wasm` совпали побайтово с
+  закоммиченными (`cmp -l` — 0 расхождений, одинаковый `shasum`). Единственное расхождение для Git — режим файла:
+  `emcc` на macOS создаёт `.wasm` с `0755`, в коммите `0644`; лечится `chmod 644` после сборки.
+- Черновик `tool/ci/web.sh` (коммит с этой карточкой) прогнан на Mac целиком: exit 0, `Web CI passed: Chrome
+  154.0.8037.95; sources=14; integration cases=64; reference matrix=119; camera smoke=1.`, `--wasm` — 3 цели за 57 с.
+  Черновик не ревьюился и не подключён к workflow.
+- `probe_web_test.dart` — проверка точных значений по golden, замера скорости и baseline в нём нет, поэтому перенос
+  раннера baseline не меняет.
+- Раннер `yuv-self-hosted`: ОС macOS, метки `self-hosted`, `macOS`, `X64` (метки `web` нет; на Windows-раннере она
+  есть). Тот же раннер обслуживает `ci-macos.yml`, `ci-ios.yml` и задание в `ci.yml`: один раннер — одно задание.
+- В клоне Mac после проб остались неотслеживаемый `tool/ci/web.sh` и `M assets/wasm/yuv_ffi.wasm` (только режим файла).
+  Перед работой привести клон к SHA `dev`: удалить неотслеживаемый файл, `git checkout -- assets/wasm`.
+
+#### Architect Decision
+
+1. **Раннер.** `ci-web.yml` переводится на Mac целиком: один workflow — одна платформа (`AGENTS.md`), второй
+   Windows-workflow не заводится. `tool/ci/web.ps1` остаётся: это локальная проверка Executor на Windows (проба `web`
+   в `AGENTS.md`) и запасной путь отката.
+2. **Скрипт.** Основа — `tool/ci/web.sh` из черновика, шаги те же, что в `web.ps1`. Матрица источников (14 файлов, 64
+   случая, 119 reference, 1 camera smoke) дублируется в двух скриптах; расхождение ловит DoD 6. Общий файл
+   матрицы не выделяется (вне задачи).
+3. **Метки `runs-on`.** A1 (первая попытка): `[self-hosted, macOS, X64]`, как у `ci-macos.yml`; метки раннера не
+   менять. A2: если задание не берётся раннером или берётся не тем, Engineer добавляет раннеру метку `web` —
+   `ENGINEER_REQUIRED` с этим вопросом и рекомендацией A2 (`[self-hosted, macOS, web]`). Не угадывать метку.
+4. **Окружение Mac.** Скрипт сам берёт Chrome из `/Applications/Google Chrome.app`, драйвер из `~/bin/chromedriver`,
+   emsdk из `~/storage/emsdk-3.1.74` (переопределяется `CHROME_EXECUTABLE`, `CHROMEDRIVER_EXE`, `EMSDK_ROOT`).
+   Совпадение major-версий Chrome и драйвера проверяется и роняет прогон. Обновление Chrome без драйвера — отказ
+   CI, а не диагноз Executor (`ci.md` §4).
+5. **Режим `.wasm`.** `chmod 644 assets/wasm/yuv_ffi.wasm` до `pub publish --dry-run` и после сборки; без этого
+   dry-run даёт предупреждение «checked-in file is modified», а `git diff --exit-code` — ложное расхождение.
+6. **Документы.** `AGENTS.md` проекта («Локальные проверки», «CI») получает строку про `web.sh` на Mac; `MACHINES.md`
+   (`D:\.projects`, вне репозитория) и `todo.md` («Окружение») — по решению Engineer, Executor предлагает текст в отчёте.
+7. **Очередь.** `ci/all` теперь ставит `web` в одну очередь с `macos`, `ios` и заданием `ci.yml`. Время `ci/all`
+   записывается в отчёт; если оно выросло неприемлемо — `ENGINEER_REQUIRED` с цифрами, а не откат по своему решению.
+
+#### Scope
+
+`tool/ci/web.sh`, `.github/workflows/ci-web.yml`, строки про Web CI в `AGENTS.md` проекта. Остальное не менять.
+
+#### Constraints
+
+- `tool/ci/web.ps1`, `tool/ci/drive.*`, `tool/wasm/**`, `assets/wasm/**`, `src/**`, `lib/**`, `example/**` не менять.
+- Закоммиченные WASM-артефакты не пересобирать и не коммитить: расхождение `git diff --exit-code` — отказ, не повод
+  обновить файлы.
+- Не менять тесты, golden и baseline ради зелёного прогона.
+- Не менять и не перезапускать службы раннера; метки — только Engineer (A2).
+- Бит `0755` у `.wasm` не попадает в индекс.
+
+#### Definition of Done
+
+1. `tool/ci/web.sh` — в индексе с режимом `100755`, синтаксис верен — check: `git ls-files -s tool/ci/web.sh` → первая
+   колонка `100755`; `bash -n tool/ci/web.sh` → exit 0 — by: Executor
+2. В репозитории нет второго определения Web-матрицы, расходящегося с `web.ps1` — check: `rg -c "sources=14; integration
+   cases=64; reference matrix=119; camera smoke=1" tool/ci/web.ps1 tool/ci/web.sh` → по `1` в каждом файле; список
+   `$aggregate` / `aggregate=(` и `$separate` / `separate=(` — те же 9 и 5 имён (чтение двух файлов рядом) — by: Executor
+3. Локальный прогон на Mac на SHA карточки, из чистого клона — check: на Mac `git status --short` пуст, затем
+   `bash tool/ci/web.sh` → exit 0 и последняя строка `Web CI passed: Chrome <версия>; sources=14; integration
+   cases=64; reference matrix=119; camera smoke=1.`; после прогона `git status --short` пуст — by: Executor
+4. Негативный контроль — check: во временной копии на Mac (`/tmp`, не в репозитории) сломать один тест из
+   `example/integration_test/all_web_test.dart` (например, перевернуть ожидание), `bash tool/ci/web.sh` → exit ≠ 0
+   и в выводе нет `Web CI passed`; копию удалить — by: Executor
+5. Скрипт роняет прогон при расхождении WASM — check: во временной копии на Mac дописать байт в
+   `assets/wasm/yuv_ffi.js`, `bash tool/ci/web.sh` → exit ≠ 0 на шаге `git diff --exit-code`; копию удалить — by: Executor
+6. `ci-web.yml` — `runs-on: [self-hosted, macOS, X64]` (A1) или метки по решению Engineer (A2), шаг запускает
+   `bash ./tool/ci/web.sh` — check: чтение diff против этого пункта — by: Reviewer
+7. Запуск workflow на SHA карточки зелёный на Mac — check: `gh workflow run ci-web.yml --ref dev`, затем
+   `gh run watch <run-id> --exit-status` → exit 0; `gh run view <run-id> --json headSha,jobs --jq '.headSha, .jobs[].runnerName'`
+   → SHA карточки и `yuv-self-hosted` — by: Executor
+8. Время `ci/all` с Web на Mac записано — check: `ci/all/CI-2` на SHA карточки, в отчёте таблица «workflow → run →
+   длительность»; сравнение с последним `ci/all` на 0.5.1 (`gh run list --workflow ci-web.yml`) — by: Executor
+9. Документация — check: `rg -n "web.sh" AGENTS.md` → есть строка в «Локальных проверках» или «CI», Windows-путь
+   `web.ps1` не удалён — by: Executor
+
+#### Validation
+
+Минимум: DoD 1–5 на Mac локально, 7 — запуск workflow. DoD 8 (`ci/all`) — один раз, после принятия остального.
+Теги `ci/*` — триггеры; удаляются пачкой в конце цикла (`todo.md`, правило 4). Пробы по `AGENTS.md`: пути карточки —
+`tool/` и CI — `none`; `web.ps1` как проба Executor не меняется.
+
+#### Executor Report
+
+—
+
+#### Review
+
+—
