@@ -50,7 +50,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 3](tasks/0.5.2/CI-3.md) | ENGINEER_REQUIRED | T2 / T1 | Engineer | — | **Camera smoke в Web CI на Mac.** R1 SSH: 10/10, initialize 79–86 ms; R2 workflow повторил use-after-dispose на runner. Требуется решение по контексту Chrome/camera на Mac runner (A3), вне Scope CI 3. |
+| [CI 3](tasks/0.5.2/CI-3.md) | ENGINEER_REQUIRED | T2 / T1 | Engineer | — | **Camera smoke в Web CI на Mac.** Run 37315543986 повторил use-after-dispose за 19m58s. Нужно подтвердить состояние крышки при запуске; если она была закрыта — повторить с открытой крышкой. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 

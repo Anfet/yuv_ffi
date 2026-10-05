@@ -109,6 +109,9 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
 `AGENTS.md`: пути карточки — `example/` → `none`. Теги `ci/*` — триггеры; удаляются пачкой в конце цикла (`todo.md`,
 правило 4). Если `ci/all` упал вне Web — факт-карточка по `ci.md`, без диагноза.
 
+#### Engineer Decision
+
+05.10.2026: Engineer разрешил повторить GitHub Actions `ci-web.yml` после сообщения о закрытой крышке Mac. Run `37315543986` завершился тем же camera smoke failure. Была ли крышка открыта во время запуска — требуется подтвердить. Использовать GitHub Actions, не локальный `tool/ci/web.sh` по SSH.
 #### Executor Report
 
 Validated at: ea5eeda69a5c45fd664cacc15756e838131a228a
@@ -116,11 +119,11 @@ Validated at: ea5eeda69a5c45fd664cacc15756e838131a228a
 2. Диагноз — R1: 10/10 успешны, H1 на SSH не воспроизведён; run [37306746524](https://github.com/Anfet/yuv_ffi/actions/runs/37306746524), head SHA `754bbdddeb625ba17b094e7ba3b9a7ce9bb2d6552`, упал на camera smoke тем же `A CameraController was used after being disposed` из `camera_controller.dart:361`. Ошибка подтверждает H1-механизм: инициализация завершилась после `dispose()`. R2 не показывает её фактическую длительность; локальный замер 79–86 ms не объясняет runner-сбой. H2 исключён порядком теста: собственный `getUserMedia` источника вызывается только после `controller.initialize()`. A1 нельзя выбирать без длительности из runner; A2 не соответствует месту сбоя. Дальше требуется решение Engineer по A3/контексту GitHub Mac runner вне Scope.
 3. Постфиксные 10 прогонов — не запускались: исправление не выбрано до решения Engineer.
 4. Локальные проверки `all` на Mac/Windows и `web.ps1` — не запускались: остановка по A3; `scope_guard.sh ea5eeda...` сообщил `scope: none`.
-5. `ci-web.yml` — `gh run watch 37306746524 --exit-status` — exit 1; Mac workflow упал на camera smoke, run head SHA не совпадает с SHA карточки.
+5. `ci-web.yml` — `gh run watch 37306746524 --exit-status` — exit 1; Mac workflow упал на camera smoke. Повтор после сообщения о крышке: `gh run watch 37315543986 --exit-status` — exit 1, тот же use-after-dispose, длительность 19m58s; оба run на head SHA `754bbdddeb625ba17b094e7ba3b9a7ce9bb2d6552`, не на SHA карточки.
 6. `ci/all/CI-3` — не запускался: нужен зелёный DoD 5 на SHA карточки.
 7. Не ослаблены проверки — код не менялся; итоговую проверку diff выполняет Reviewer после решения Engineer.
-Deviations: остановлено на A3 согласно Architect Decision.
-Engineer attention: требуется решить, разрешить ли отдельную работу над контекстом Chrome/camera на Mac runner (права, профиль или запуск службы) либо отложить CI 3 до устранения этого ограничения; рекомендация — не менять таймаут по SSH-замеру 79–86 ms; сначала решить, кто и в какой задаче исследует контекст Mac runner.
+Deviations: ждём подтверждения состояния крышки во время повторного workflow; исходный A3 пока не подтверждён.
+Engineer attention: подтвердить, была ли крышка Mac открыта во время run `37315543986`. Если нет — повторить проверку с открытой крышкой; если да — считать гипотезу о закрытой крышке неподтверждённой и выбрать следующий шаг диагностики контекста runner. Таймаут не менять по SSH-замеру 79–86 ms.
 
 #### Review
 
