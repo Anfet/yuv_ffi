@@ -1,5 +1,5 @@
 # CI 4 — Skwasm «Picture was disposed» в Web CI на Mac
-**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
+**Status:** ENGINEER_REQUIRED · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
 
 **Base SHA:** 36be42f559af5ff9275efc6c2ef0a1c6e7f5df37 (SHA `dev` после перевода CI 3 в `REVIEW`)
 
@@ -106,7 +106,21 @@ CI 2 по D-32). Карточка идёт до выпуска 0.5.1; `release/
 
 #### Executor Report
 
-—
+Validated at: eb549fd48708540c28ceaa2a8b8147eea66f93e3
+1. R1 — `bash tool/ci/drive.sh integration_test/all_web_test.dart web-server --browser-name=chrome --headless --wasm` (Mac, чистый временный клон базы) — 10/10 `PASS`.
+2. R2 — workflow [37359566518](https://github.com/Anfet/yuv_ffi/actions/runs/37359566518), SHA `eb549fd`, завершился за 21m39s: camera smoke и `all_web_test.dart --wasm` показали `PASS`, затем повторился assert `The native object of Picture was disposed` в `SkwasmPicture.cullRect` после завершения теста. Точный текст искался в `flutter/flutter` issues — не найден.
+3. R3 — каждый из девяти импортированных `all_web_test.dart` источников запускался отдельно той же командой с `--wasm`; все 9/9 `PASS`, сбой не локализован в одиночном источнике. `image_cache_key_web_test.dart` рендерит `YuvImageWidget` из `package:yuv_ffi/yuv_ffi.dart` через `pumpWidget` и использует настоящий WASM-backed `YuvImage`; код `lib/` участвует в вызове, но его причинная связь не доказана. Код `lib/` затронут: да — тест вызывает package widget; причина остаётся неподтверждённой.
+4. Отклонённые варианты — исправление теста (нет локализованного источника) и изменение `lib/` (Architect требует решения Engineer до любого изменения при возможном влиянии на пакет).
+Deviations: DoD 3–7 не завершены; по Architect Decision, п. 3, остановка до исправления и полного CI.
+Engineer attention: `ENGINEER_REQUIRED`
+Task: CI 4
+Question: Разрешить дальнейшую test-only локализацию и возможное исправление взаимодействия тестов в `example/integration_test/` по A1, пока `lib/` остаётся без изменений, или считать участие `YuvImageWidget` достаточным основанием для отдельного решения/карточки по возможному дефекту пакета?
+Known facts:
+- `all_web_test.dart --wasm` прошёл 10/10 по SSH, но workflow воспроизвёл тот же assert после PASS агрегата.
+- Все 9 одиночных источников прошли; у `image_cache_key_web_test.dart` есть рендеринг package widget, однако сбой одиночно не воспроизводится.
+- Стек ошибки относится к Skwasm/Flutter engine; поиск точного сообщения в issues `flutter/flutter` результатов не дал.
+Decision needed: выбрать границу дальнейшей диагностики и исправления.
+Recommendation: разрешить ещё локализацию test interaction в пределах A1 без изменения `lib/`; если новые данные покажут дефект `lib/`, вернуться к Engineer до правки.
 
 #### Review
 
