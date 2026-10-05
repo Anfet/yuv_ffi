@@ -50,7 +50,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 3](tasks/0.5.2/CI-3.md) | ENGINEER_REQUIRED | T2 / T1 | Engineer | — | **Camera smoke в Web CI на Mac.** Run 37315543986 повторил use-after-dispose за 19m58s. Нужно подтвердить состояние крышки при запуске; если она была закрыта — повторить с открытой крышкой. |
+| [CI 3](tasks/0.5.2/CI-3.md) | ENGINEER_REQUIRED | T2 / T1 | Engineer | — | **Camera smoke в Web CI на Mac.** Локальный Mac `web.sh` и Windows `web.ps1` проходят; GitHub Mac workflow падает даже с открытой крышкой. Нужна отдельная задача/разрешение по контексту runner. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
