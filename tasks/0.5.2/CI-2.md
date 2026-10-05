@@ -1,5 +1,5 @@
 # CI 2 — Web CI на Mac
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** выпуск 0.5.1 (тег `0.5.1`, `main` влит в `dev`) · **Probe:** none
+**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
 
 **Base SHA:** — (SHA `dev` на старте карточки)
 
@@ -9,8 +9,8 @@ Web CI (`ci-web.yml`) идёт на self-hosted Mac `yuv-self-hosted`, а не �
 `tool/ci/web.sh` выполняет те же проверки, что `tool/ci/web.ps1`; workflow `CI Web` запускает его на Mac; запуск на
 принятом SHA зелёный. Windows-машина освобождается от самой долгой браузерной задачи `ci/all`.
 
-Карточка идёт после выпуска 0.5.1, потому что релизный гейт (RELEASE 1) требует `ci/all/0.5.1` 9/9 на неизменённой
-инфраструктуре, и менять раннер Web под гейтом нельзя, хотя `tool/` и `.github/` в список заморозки не входят.
+Карточка идёт до выпуска 0.5.1 (D-31): гейт RELEASE 1 уже пройден на `61da2ee` (`ci/all/0.5.1` 9/9), а CI 2
+меняет только `tool/` и `.github/`, которые в список заморозки не входят и в пакет не попадают.
 
 #### Diagnosis
 
