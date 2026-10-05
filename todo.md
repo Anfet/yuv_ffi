@@ -51,7 +51,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [CI 3](tasks/0.5.2/CI-3.md) | REVIEW | T2 / T1 | Executor | — | **Camera smoke в Web CI на Mac.** Причина — медленный `initialize()` на раннере; A1 (таймаут 60 с) прошёл в run 37336100554. DoD 5 сужен до camera smoke, DoD 6 перенесён в CI 4. |
-| [CI 4](tasks/0.5.2/CI-4.md) | TODO | T2 / T1 | — | CI 3 | **Skwasm `Picture was disposed` в `all_web_test.dart --wasm` на Mac.** Воспроизвести (Mac 10×, затем workflow), локализовать источник, проверить влияние на `lib/`, исправить без ослабления; зелёный `ci-web.yml` на Mac и `ci/all/CI-4` 9/9 с замером времени. |
+| [CI 4](tasks/0.5.2/CI-4.md) | IN_PROGRESS | T2 / T1 | Executor | CI 3 | **Skwasm `Picture was disposed` в `all_web_test.dart --wasm` на Mac.** Воспроизвести (Mac 10×, затем workflow), локализовать источник, проверить влияние на `lib/`, исправить без ослабления; зелёный `ci-web.yml` на Mac и `ci/all/CI-4` 9/9 с замером времени. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 

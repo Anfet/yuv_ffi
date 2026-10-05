@@ -1,7 +1,7 @@
 # CI 4 — Skwasm «Picture was disposed» в Web CI на Mac
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** CI 3 · **Probe:** none
+**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
 
-**Base SHA:** — (SHA `dev` на старте карточки)
+**Base SHA:** 36be42f559af5ff9275efc6c2ef0a1c6e7f5df37 (SHA `dev` после перевода CI 3 в `REVIEW`)
 
 #### Goal
 
