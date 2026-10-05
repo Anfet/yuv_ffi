@@ -62,7 +62,7 @@
 | `vm` | `pwsh -File tool/ci/vm.ps1` | Windows |
 | `windows` | `pwsh -File tool/ci/windows.ps1` | Windows |
 | `android` | `pwsh -File tool/ci/android.ps1` | Windows, Android SDK и AVD |
-| `web` | `pwsh -File tool/ci/web.ps1` | Windows, Chrome и Emscripten |
+| `web` | Windows: `pwsh -File tool/ci/web.ps1`; Mac: `bash tool/ci/web.sh` | Windows/Mac, Chrome и Emscripten |
 | `example` | `pwsh -File tool/ci/example.ps1` | Windows |
 | `smoke` | `pwsh -File tool/ci/smoke.ps1` | Windows (проверка CI-хелперов) |
 | `macos` | `bash tool/ci/macos.sh` | Mac |
@@ -95,5 +95,7 @@ ctest --test-dir <temp> -C Release --output-on-failure
 - Один workflow — одна платформа: `.github/workflows/ci-<name>.yml` (Linux и регенерация bindings — `ci.yml`) делает
   checkout, выбирает runner и запускает `tool/ci/<name>.ps1` (Windows) или `.sh` (Linux, macOS); тот же скрипт
   запускается локально.
+- Web CI (`ci-web.yml`) выполняет `bash tool/ci/web.sh` на self-hosted Mac; Windows-прогон выполняется локально через
+  `pwsh -File tool/ci/web.ps1`.
 - `flutter drive` возвращает 0 и при провале: `tool/ci/drive.ps1` и `drive.sh` принимают результат только при exit 0 и
   строке `All tests passed`. Не вызывать `flutter drive` напрямую.

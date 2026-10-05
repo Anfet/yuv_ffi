@@ -107,6 +107,22 @@ assert_web_source_matrix() {
     shader_probe_web_test.dart
   )
   local baseline_total=64 baseline_sources=14
+  local -A baseline_cases=(
+    [getbytes_contract_web_test.dart]=4
+    [image_cache_key_web_test.dart]=1
+    [nv_chroma_order_web_test.dart]=2
+    [padded_bgra_constructor_web_test.dart]=1
+    [probe_web_test.dart]=1
+    [serialization_contract_web_test.dart]=1
+    [shader_probe_web_test.dart]=1
+    [wasm_abi_v1_descriptor_staging_web_test.dart]=29
+    [wasm_bootstrap_web_test.dart]=1
+    [wasm_loader_lifecycle_web_test.dart]=9
+    [wasm_parity_edge_cases_web_test.dart]=2
+    [wasm_swap_nv_atomicity_web_test.dart]=3
+    [web_ownership_regression_web_test.dart]=4
+    [yuv_web_capabilities_web_test.dart]=5
+  )
   local integration_directory="$repository_root/example/integration_test"
 
   local discovered mapped unmapped missing
@@ -118,7 +134,19 @@ assert_web_source_matrix() {
     echo "Web source mapping mismatch: unmapped=[$(echo $unmapped)]; missing=[$(echo $missing)]" >&2
     return 1
   fi
-  if [[ "$(printf '%s\n' "$discovered" | wc -l | tr -d ' ')" != "$baseline_sources" ]]; then
+  if [[ "$(printf '%s\n' "$discovered" | wc -l | tr -d ' ')" != "$baseline_sources" || "${#baseline_cases[@]}" != "$baseline_sources" ]]; then
+    echo "Web source case baseline must cover all $baseline_sources sources and total $baseline_total cases." >&2
+    return 1
+  fi
+  local total_cases=0
+  while IFS= read -r source; do
+    if [[ -z "${baseline_cases[$source]+present}" ]]; then
+      echo "Web source case baseline is missing: $source" >&2
+      return 1
+    fi
+    total_cases=$((total_cases + baseline_cases[$source]))
+  done <<< "$discovered"
+  if [[ "$total_cases" != "$baseline_total" ]]; then
     echo "Web source case baseline must cover all $baseline_sources sources and total $baseline_total cases." >&2
     return 1
   fi

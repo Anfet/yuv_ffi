@@ -13,7 +13,7 @@ on:
 
 jobs:
   web:
-    runs-on: [self-hosted, Windows, X64, web]
+    runs-on: [self-hosted, macOS, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,5 +21,5 @@ jobs:
           fetch-depth: 0
 
       - name: Run Web checks
-        shell: pwsh
-        run: ./tool/ci/web.ps1
+        shell: bash
+        run: bash ./tool/ci/web.sh
