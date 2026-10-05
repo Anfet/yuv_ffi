@@ -1,5 +1,5 @@
 # CI 3 — Camera smoke в Web CI на Mac
-**Status:** ENGINEER_REQUIRED · **Tier:** T2, Reviewer T1 · **Owner:** Engineer · **Depends On:** — · **Probe:** none
+**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 · **Owner:** Codex · **Depends On:** — · **Probe:** none
 
 **Base SHA:** ea5eeda69a5c45fd664cacc15756e838131a228a (SHA `dev` на старте карточки)
 
@@ -68,7 +68,9 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
 #### Scope
 
 `example/integration_test/camera_source_web_smoke_test.dart`; по варианту A2 —
-`example/lib/camera/impl/yuv_camera_frame_source_web.dart`. Отчёт и статус — карточка и `todo.md`.
+`example/lib/camera/impl/yuv_camera_frame_source_web.dart`. Для разрешённой Engineer диагностики временно также
+`example/test_driver/integration_test.dart` и `tool/ci/drive.sh`, чтобы передавать permission state и ход
+`initialize()` в логи Actions при успехе и провале. Отчёт и статус — карточка и `todo.md`.
 
 #### Constraints
 
@@ -77,6 +79,8 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
 - Не отключать, не пропускать и не повторять camera smoke ради зелёного прогона; не менять остальные тесты.
 - Службы и метки раннера не трогать. На Mac работать во временном клоне; клон удалить после работы.
 - `release/0.5.1` не менять.
+- Engineer 05.10.2026 явно разрешил временную инструментализацию camera smoke/driver и целевой вывод диагностики
+  через `drive.sh`, а также diagnostic GitHub Actions runs. Assertions и таймаут 15 секунд сохранять.
 
 #### Definition of Done
 
@@ -111,7 +115,7 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
 
 #### Engineer Decision
 
-05.10.2026: Engineer разрешил повторить GitHub Actions `ci-web.yml` после сообщения о закрытой крышке Mac. Run `37315543986` завершился тем же camera smoke failure. Engineer подтвердил, что крышка была открыта во время запуска; гипотеза о закрытой крышке не объясняет сбой. Использовать GitHub Actions, не локальный `tool/ci/web.sh` по SSH.
+05.10.2026: Engineer разрешил повторить GitHub Actions `ci-web.yml` после сообщения о закрытой крышке Mac. Run `37315543986` завершился тем же camera smoke failure. Engineer подтвердил, что крышка была открыта во время запуска; гипотеза о закрытой крышке не объясняет сбой. Использовать GitHub Actions, не локальный `tool/ci/web.sh` по SSH.\n\nEngineer разрешил временно добавить диагностику camera permission и фаз/длительности `initialize()` в smoke test, передавать `reportData` из integration driver при успехе и провале и печатать её через `tool/ci/drive.sh`; выполнить диагностические GitHub Actions runs. Assertions и таймаут 15 секунд остаются без изменений.
 #### Executor Report
 
 Validated at: ea5eeda69a5c45fd664cacc15756e838131a228a
@@ -123,7 +127,7 @@ Validated at: ea5eeda69a5c45fd664cacc15756e838131a228a
 6. `ci/all/CI-3` — не запускался: нужен зелёный DoD 5 на SHA карточки.
 7. Не ослаблены проверки — код не менялся; итоговую проверку diff выполняет Reviewer после решения Engineer.
 Deviations: DoD 3, 5 (зелёный результат), 6 остановлены на A3; изменения кода не сделаны.
-Engineer attention: разрешить отдельную задачу на диагностику и изменение контекста GitHub Mac runner (служба/запуск Chrome). Локальный Mac `web.sh` и Windows `web.ps1` проходят, а GitHub workflow падает даже при открытой крышке. Рекомендация — отдельная задача на runner; тест и таймаут оставить без изменений до замера `initialize()` именно в runner.
+Engineer authorization recorded above: temporary camera permission/initialization diagnostics and diagnostic GitHub Actions runs are in scope.
 
 #### Review
 

@@ -45,4 +45,8 @@ if ! grep -Fq 'All tests passed' "$output_file"; then
   exit 1
 fi
 
+if [[ "$target" == "integration_test/camera_source_web_smoke_test.dart" ]]; then
+  grep -F 'CI3_DIAGNOSTICS ' "$output_file" || true
+fi
+
 echo "PASS $target on $device"
