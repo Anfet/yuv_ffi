@@ -21,8 +21,8 @@
 ## Текущее состояние
 
 - **Выпущено:** 0.5.0 — 05.10.2026, тег `0.5.0` на `3e4c645`; `main` — PR #5 (`c8af6cd`), влит в `dev`.
-- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен (D-31). CI 2 закрыт (D-32); CI 3 в `REVIEW`; CI 4 — локализация в контексте раннера (п. 8 карточки).
-- **Открытые решения Engineer:** нет.
+- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен (D-31). CI 2 закрыт (D-32); CI 3 в `REVIEW`; CI 4 — `BLOCKED`: в `ci/all/CI-4` run 37370821735 job `linux-native-smoke` отменён.
+- **Открытые решения Engineer:** CI 4 — получить terminal result для `linux-native-smoke` после run 37370821735; прочие 8/9 workflow успешны.
 
 ## Пулы задач
 
@@ -51,7 +51,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [CI 3](tasks/0.5.2/CI-3.md) | REVIEW | T2 / T1 | Executor | — | **Camera smoke в Web CI на Mac.** Причина — медленный `initialize()` на раннере; A1 (таймаут 60 с) прошёл в run 37336100554. DoD 5 сужен до camera smoke, DoD 6 перенесён в CI 4. |
-| [CI 4](tasks/0.5.2/CI-4.md) | IN_PROGRESS | T2 / T1 | Executor | CI 3 | **Skwasm `Picture was disposed` в `all_web_test.dart --wasm` на Mac.** R1 по SSH 10/10, R2 в workflow воспроизвёл, R3 9/9. Решение Architect (п. 8): test-only локализация в контексте раннера — L1 без `image_cache_key`, L2 с контрольным `Image.memory`; `lib/` не меняется; если L2 укажет на пакет — `ENGINEER_REQUIRED` с карточкой `FIX`. |
+| [CI 4](tasks/0.5.2/CI-4.md) | BLOCKED | T2 / T1 | Executor | CI 3 | **A1 прошёл:** исправленный aggregate — 10/10 Mac, `ci-web.yml` зелёный на Mac. CI локальные проверки `scope: all` пройдены на Windows/Mac, Linux VM SSH недоступен. `ci/all/CI-4` — 8/9 success; `linux-native-smoke` cancelled в run 37370821735. Нужен terminal result для Linux, без диагностики. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 

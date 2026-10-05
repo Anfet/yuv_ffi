@@ -1,5 +1,5 @@
 # CI 4 — Skwasm «Picture was disposed» в Web CI на Mac
-**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
+**Status:** BLOCKED · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** CI 3 · **Probe:** none
 
 **Base SHA:** 36be42f559af5ff9275efc6c2ef0a1c6e7f5df37 (SHA `dev` после перевода CI 3 в `REVIEW`)
 
@@ -137,22 +137,39 @@ CI 2 по D-32). Карточка идёт до выпуска 0.5.1; `release/
 
 #### Executor Report
 
-Prior investigation (before Architect's p. 8 boundary):
-Validated at: eb549fd48708540c28ceaa2a8b8147eea66f93e3
-1. R1 — `bash tool/ci/drive.sh integration_test/all_web_test.dart web-server --browser-name=chrome --headless --wasm` (Mac, чистый временный клон базы) — 10/10 `PASS`.
-2. R2 — workflow [37359566518](https://github.com/Anfet/yuv_ffi/actions/runs/37359566518), SHA `eb549fd`, завершился за 21m39s: camera smoke и `all_web_test.dart --wasm` показали `PASS`, затем повторился assert `The native object of Picture was disposed` в `SkwasmPicture.cullRect` после завершения теста. Точный текст искался в `flutter/flutter` issues — не найден.
-3. R3 — каждый из девяти импортированных `all_web_test.dart` источников запускался отдельно той же командой с `--wasm`; все 9/9 `PASS`, сбой не локализован в одиночном источнике. `image_cache_key_web_test.dart` рендерит `YuvImageWidget` из `package:yuv_ffi/yuv_ffi.dart` через `pumpWidget` и использует настоящий WASM-backed `YuvImage`; код `lib/` участвует в вызове, но его причинная связь не доказана. Код `lib/` затронут: да — тест вызывает package widget; причина остаётся неподтверждённой.
-4. Отклонённые варианты — исправление теста (нет локализованного источника) и изменение `lib/` (Architect требует решения Engineer до любого изменения при возможном влиянии на пакет).
-Deviations: DoD 3–7 не завершены; по Architect Decision, п. 3, остановка до исправления и полного CI.
-Engineer attention: `ENGINEER_REQUIRED`
-Task: CI 4
-Question: Разрешить дальнейшую test-only локализацию и возможное исправление взаимодействия тестов в `example/integration_test/` по A1, пока `lib/` остаётся без изменений, или считать участие `YuvImageWidget` достаточным основанием для отдельного решения/карточки по возможному дефекту пакета?
-Known facts:
-- `all_web_test.dart --wasm` прошёл 10/10 по SSH, но workflow воспроизвёл тот же assert после PASS агрегата.
-- Все 9 одиночных источников прошли; у `image_cache_key_web_test.dart` есть рендеринг package widget, однако сбой одиночно не воспроизводится.
-- Стек ошибки относится к Skwasm/Flutter engine; поиск точного сообщения в issues `flutter/flutter` результатов не дал.
-Decision needed: выбрать границу дальнейшей диагностики и исправления.
-Recommendation: разрешить ещё локализацию test interaction в пределах A1 без изменения `lib/`; если новые данные покажут дефект `lib/`, вернуться к Engineer до правки.
+Validated at: a65270a2657ce987a01a4037a76fa474def1d585
+1. Предшествующая диагностика: R1 по SSH — 10/10 проходов, R2 [37359566518](https://github.com/Anfet/yuv_ffi/actions/runs/37359566518) воспроизвёл сбой, R3 9/9 одиночных тестов прошли по SSH; как уточнено в п. 8, SSH не воспроизводит контекст ошибки.
+2. L1/L2 — временные runner workflows: [L1 #1](https://github.com/Anfet/yuv_ffi/actions/runs/37363432244) и [L1 #2](https://github.com/Anfet/yuv_ffi/actions/runs/37363613775), агрегат без `image_cache_key` — оба PASS; [L2 #1](https://github.com/Anfet/yuv_ffi/actions/runs/37363949585) и [L2 #2](https://github.com/Anfet/yuv_ffi/actions/runs/37364148597), контроль на стандартном `RawImage` — оба воспроизвели тот же Skwasm assert после завершения теста. Это подтверждает ветку п. 8: сбой не требует кода пакета. Четыре временных коммита отменены отдельными revert-коммитами до финальных проверок. Точный текст ошибки искался в issues `flutter/flutter` — не найдено.
+3. Выбран A1 — в обоих тестах `image_cache_key_web_test.dart`, которые строят `YuvImageWidget`, добавлены `pumpWidget(const SizedBox.shrink())` и `pumpAndSettle()` после неизменённых assertions.
+4. После A1 — Mac `bash tool/ci/drive.sh integration_test/all_web_test.dart web-server --browser-name=chrome --headless --wasm`, 10/10 PASS, exit 0. Полный Mac workflow [37366114659](https://github.com/Anfet/yuv_ffi/actions/runs/37366114659) — success, 22m20s, `headSha=a65270a`, `runner_name=yuv-self-hosted`.
+5. `bash tool/ci/scope_guard.sh 441229a` — `scope: all`. Доступные локальные проверки: `vm.ps1` 638/638; `windows.ps1` 134/134, Windows Release build и 5 integration targets; `android.ps1` debug build и 5 integration targets; `example.ps1` pub get/analyze/web build; `smoke.ps1`; Mac `web.sh` (integration=64, reference=119, WASM targets=3); Windows `web.ps1` (то же); `macos.sh` (Release/debug builds, native smoke и 5 integration targets); `ios.sh` (simulator smoke) — все exit 0. Linux VM локально недоступна: перед запуском тестов SSH к `192.168.1.29:22` завершился timeout.
+6. Полный Mac workflow [37366114659](https://github.com/Anfet/yuv_ffi/actions/runs/37366114659) — exit 0; `headSha` совпадает с `Validated at`, runner `yuv-self-hosted`.
+7. Тег `ci/all/CI-4` на `a65270a`: 8/9 workflow success; таблица результатов:
+
+| Workflow | Run | Результат | Длительность |
+| --- | --- | --- | --- |
+| CI VM | 37370821726 | success | 6m36s |
+| CI Android | 37370821704 | success | 5m14s |
+| Example CI | 37370821733 | success | 8m13s |
+| CI | 37370821735 | failure: `linux-native-smoke` cancelled; `bindings-regeneration` success | 15m03s |
+| CI smoke | 37370821856 | success | 6m54s |
+| CI Web | 37370821880 | success | 26m36s |
+| CI macOS | 37370821912 | success | 4m34s |
+| CI Windows | 37370821954 | success | 13m51s |
+| iOS CI | 37370821779 | success | 32m06s |
+
+   Web comparison: `ci/all/0.5.1` run 37286266838 — about 21m19s; CI-4 — 26m36s (about 5m17s longer). No performance conclusion is inferred.
+8. Diff against base — only two test teardowns were added; all original tests and assertions remain. The L1/L2 aggregator and temporary `web.sh` diagnostic exit path were reverted before these checks.
+
+#### CI Fact — non-Web workflow (per `ci.md`, without diagnosis)
+
+- SHA: `a65270a2657ce987a01a4037a76fa474def1d585`.
+- Workflow: `CI`, run [37370821735](https://github.com/Anfet/yuv_ffi/actions/runs/37370821735), trigger tag `ci/all/CI-4`.
+- Job `bindings-regeneration`: success. Job `linux-native-smoke`: cancelled; started 20:36:48Z, completed 20:51:50Z. Cancelled job has no step list; `gh run view --log-failed` returned no failed-step excerpt.
+- Local Linux command did not start because SSH to `192.168.1.29:22` timed out during clone transfer.
+
+Deviations: Linux local check unavailable; CI all is 8/9, so DoD 4 and 6 are not fully complete.
+Engineer attention: CI all needs a terminal Linux result. Engineer to authorize/arrange the required rerun or next action for `linux-native-smoke` in run 37370821735. No diagnosis was performed.
 
 #### Review
 
