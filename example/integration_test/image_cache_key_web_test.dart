@@ -268,6 +268,9 @@ void main() {
         isTrue,
         reason: 'rebuilding around an unchanged frame must keep hitting the same entry',
       );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
     });
 
     testWidgets('a real in-place mutation invalidates the cached frame', (tester) async {
@@ -306,6 +309,9 @@ void main() {
         isTrue,
         reason: 'the rebuild must have cached the new frame under the new key',
       );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
     });
 
     testWidgets('a direct plane write needs markDirty to invalidate the key', (tester) async {
