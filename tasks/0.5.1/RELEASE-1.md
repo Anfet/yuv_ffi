@@ -45,7 +45,7 @@
    git push origin <SHA РК>:main                    # fast-forward: main — предок release/0.5.1
    git switch dev
    ```
-5. **После публикации (Orchestrator, с разрешения Engineer).** Удалить теги `ci/*` локально и на origin, записать
+5. **После публикации (Engineer или роль по его команде).** Удалить теги `ci/*` локально и на origin, записать
    выпуск в `COMPLETION.md`, удалить карточку, перевести `todo.md` на следующий цикл.
 
 #### Scope

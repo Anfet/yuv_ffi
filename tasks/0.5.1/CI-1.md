@@ -1,7 +1,7 @@
 # CI 1 — Web CI: обязательный прогон `--wasm`
-**Status:** REVIEW · **Tier:** T3, Reviewer T2 · **Owner:** Engineer · **Depends On:** WEB 4 · **Probe:** none
+**Status:** BLOCKED · **Tier:** T3, Reviewer T2 · **Owner:** Engineer · **Depends On:** WEB 4 · **Probe:** none
 
-**Base SHA:** — (база пула `WASM` — в FIX 1)
+**Base SHA:** `6986feb295e4b1ebbdc2139313044282d5b0daa5` (`dev` на старте пула `WASM`)
 
 #### Goal
 
