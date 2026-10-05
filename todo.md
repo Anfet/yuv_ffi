@@ -47,6 +47,12 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 | --- | --- | --- | --- | --- | --- |
 | [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | IN_PROGRESS | T2 / T1 + Engineer | Executor | — | **Релизный гейт 0.5.1.** Аудит разницы с 0.5.0, `release/0.5.1`, проверки на одном SHA, отчёт и команды Engineer. |
 
+### Следующий цикл — 0.5.2 (после выпуска 0.5.1)
+
+| ID | Status | Tier | Owner | Depends on | Summary / next step |
+| --- | --- | --- | --- | --- | --- |
+| [CI 2](tasks/0.5.2/CI-2.md) | TODO | T2 / T1 | — | выпуск 0.5.1 | **Web CI на Mac.** `tool/ci/web.sh` (черновик прогнан на Mac, exit 0), `ci-web.yml` на `yuv-self-hosted`, время `ci/all`. Старт — по разрешению Engineer после выпуска 0.5.1. |
+
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
 ## Открытые вопросы
