@@ -1,7 +1,7 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** CI 1 (пул `WASM` принят) · **Probe:** windows+pixel3+web
+**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3+web
 
-**Base SHA:** — (принятый SHA пула `WASM`)
+**Base SHA:** `1866a2d155cc241b1e0b0af7f71e23398b2637e1` (принятый SHA пула `WASM`)
 
 #### Goal
 
