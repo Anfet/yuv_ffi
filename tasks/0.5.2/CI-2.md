@@ -1,5 +1,5 @@
 # CI 2 — Web CI на Mac
-**Status:** BLOCKED · **Tier:** T2, Reviewer T1 · **Owner:** Engineer · **Depends On:** — · **Probe:** none
+**Status:** DONE · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
 
 **Base SHA:** `aa0b0af38ee4d6a7258e63a9bfd7a19e4f387c93`
 
@@ -116,4 +116,36 @@ Engineer attention: CI 2 is blocked by the failed camera smoke test outside Scop
 
 #### Review
 
-—
+Ревью диапазона `aa0b0af..754bbdd` и отчёта против карточки с учётом D-32, 05.10.2026.
+
+**Вердикт:** принято, SHA `754bbdd` (код — `51eb041`, `Validated at`). `DONE`.
+
+- DoD 1, 2, 3, 4, 5, 9 — по отчёту; режим `100755` у `tool/ci/web.sh` в индексе виден в `git ls-files -s`.
+- DoD 6 (Reviewer) — `ci-web.yml`: `runs-on: [self-hosted, macOS, X64]` (A1), шаг `bash ./tool/ci/web.sh`, `shell: bash`. Выполнен.
+- DoD 7 — засчитан по D-32: run 37301435314 на `51eb041`, раннер `yuv-self-hosted`; упал camera smoke, цели `--wasm`
+  после него в workflow не запускались (на Mac локально прошли, DoD 3).
+- DoD 8 — перенесён по D-32 в отдельную карточку.
+- Architect Decision: шаги `web.sh` совпадают с `web.ps1` (dry-run и проверка WASM-ассетов, сборка emsdk 3.1.74 и
+  `git diff --exit-code`, матрица 9 + 5 источников и 64 случая, reference `--profile`, camera smoke с fake media, три
+  цели `--wasm`); проверка major-версий Chrome/драйвера роняет прогон (п. 4); `chmod 644` до dry-run и после сборки
+  (п. 5); `drive_web` идёт через `drive.sh` с критерием `All tests passed`. Ошибка матрицы теперь роняет скрипт:
+  `targets_output="$(assert_web_source_matrix)"` под `set -e`, а не process substitution.
+- Scope и Constraints: изменены только `tool/ci/web.sh`, `ci-web.yml`, `AGENTS.md`, карточка и `todo.md`; `web.ps1`,
+  `drive.*`, `tool/wasm/**`, `assets/wasm/**`, `src/**`, `lib/**`, `example/**` не тронуты.
+
+Пробел отчёта, закрыт Reviewer текстом (п. 6 Architect Decision требовал от Executor предложить текст для `MACHINES.md`
+и «Окружения» в `todo.md`) — предложение ниже, решение за Engineer:
+
+> Mac (`yuv-self-hosted`) выполняет Web CI (`ci-web.yml`, `bash tool/ci/web.sh`): Chrome из `/Applications/Google
+> Chrome.app`, драйвер `~/bin/chromedriver` той же major-версии, emsdk 3.1.74 в `~/storage/emsdk-3.1.74` (тег `3.1.74`;
+> `master` требует Python 3.10, на Mac 3.9.6). Обновление Chrome без драйвера роняет Web CI. Windows-прогон `web.ps1` —
+> локальная проба Executor.
+
+Блокирующих замечаний нет.
+
+Recommendations:
+
+- Новая карточка по D-32: camera smoke на Mac. По стеку `camera_controller.dart:361` (`set value`) срабатывает после
+  `controller.dispose()` из teardown; вероятная гонка теста на более медленном Mac (на Windows тест зелёный). Пока она
+  не закрыта, `CI Web` и `ci/all` красные.
+- Текст для `MACHINES.md` / «Окружения» — выше.

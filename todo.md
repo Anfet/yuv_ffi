@@ -50,7 +50,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 2](tasks/0.5.2/CI-2.md) | BLOCKED | T2 / T1 | Engineer | — | **Web CI на Mac.** Локальные проверки зелёные; workflow 37301435314 на `51eb041` упал в `camera_source_web_smoke_test.dart` (`CameraController was used after being disposed`). По `.protocol/ci.md` требуется решение Engineer о повторе или расширении Scope; DoD 8 `ci/all` ждёт зелёного workflow. |
+| [CI 2](tasks/0.5.2/CI-2.md) | DONE | T2 / T1 | — | — | **Web CI на Mac.** Локальные проверки зелёные; workflow 37301435314 на `51eb041` упал в `camera_source_web_smoke_test.dart` (`CameraController was used after being disposed`). По `.protocol/ci.md` требуется решение Engineer о повторе или расширении Scope; DoD 8 `ci/all` ждёт зелёного workflow. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
@@ -157,6 +157,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 | D-27 | 04.10.2026 | Safari и Firefox в 0.5.0 не проверяются: README, `doc/web-parity.md` и отчёт RELEASE 1 пишут «not verified». Web заявлен как частичный, проверен Chrome. |
 | D-30 | 05.10.2026 | 0.5.1 — FIX 1 (документация Web и платформ) и WEB 4 (`--wasm`). Решение D-29 (патч только документации, WEB 4 — в 0.5.2) отменено. Проверка `--wasm` в Web CI (CI 1) и релизный гейт (RELEASE 1) — декомпозиция Architect. Версия сразу `0.5.1` (без `-dev.N`), её ставит FIX 1. Safari и Firefox — по D-27. |
 | D-31 | 05.10.2026 | Выпуск 0.5.1 откладывается до CI 2 (Web CI на Mac): сначала исправления, потом выпуск. CI 2 меняет только `tool/` и `.github/`; кандидат `release/0.5.1` (`61da2ee`) и пройденный на нём гейт RELEASE 1 не меняются. |
+| D-32 | 05.10.2026 | CI 2 закрывается без зелёного workflow: DoD 7 засчитан по run 37301435314 на Mac (сборка, браузерная матрица и reference прошли; упал `camera_source_web_smoke_test.dart`, `CameraController was used after being disposed`; цели `--wasm` после него не запускались), DoD 8 (время `ci/all`) переносится. Разбор падения camera smoke на Mac и других непонятных падений, зелёный Web CI на Mac и замер `ci/all` — отдельная карточка, декомпозирует Architect. |
 
 Действуют и решения цикла 0.4.2:
 
