@@ -21,8 +21,8 @@
 ## Текущее состояние
 
 - **Выпущено:** 0.5.0 — 05.10.2026, тег `0.5.0` на `3e4c645`; `main` — PR #5 (`c8af6cd`), влит в `dev`.
-- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен (D-31). CI 2 закрыт (D-32); CI 3 в `REVIEW`; CI 4 — `REVIEW`: все 9 workflow `ci/all/CI-4` завершились успешно (run 37370821735, attempt 3); Linux VM native smoke также локально прошёл.
-- **Открытые решения Engineer:** нет по CI 4; требуется Reviewer для DoD 7.
+- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен (D-31). CI 2, CI 3, CI 4 закрыты: Web CI на Mac зелёный, `ci/all/CI-4` 9/9 на `a65270a`. Дальше — решение Engineer о выпуске 0.5.1.
+- **Открытые решения Engineer:** выпуск 0.5.1; переносить ли тестовые исправления CI 3 и CI 4 в `release/0.5.1` (рекомендация ревью).
 
 ## Пулы задач
 
@@ -45,13 +45,6 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
 | [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | BLOCKED | T2 / T1 + Engineer | Engineer | — | Reviewer PASS на `61da2ee`: аудит, `ci/all/0.5.1` 9/9, Pixel 3 arm64/armv7 1188, dry-run 0 warnings, `--wasm` проба. Выпуск — после CI 2 (D-31), команды — п. 4 отчёта; после публикации — п. 5. |
-
-### До выпуска 0.5.1 — CI 3, CI 4 (карточки в `tasks/0.5.2/`, D-32)
-
-| ID | Status | Tier | Owner | Depends on | Summary / next step |
-| --- | --- | --- | --- | --- | --- |
-| [CI 3](tasks/0.5.2/CI-3.md) | DONE | T2 / T1 | — | — | **Camera smoke в Web CI на Mac.** Принято на `bdc0160`: таймаут 60 с по замеру `initialize()` на раннере, проверки не ослаблены. |
-| [CI 4](tasks/0.5.2/CI-4.md) | DONE | T2 / T1 | — | CI 3 | **Skwasm в Web CI на Mac.** Принято на `a65270a`: teardown виджет-тестов, `lib/` не затронут; workflow на Mac и `ci/all/CI-4` 9/9 success. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
