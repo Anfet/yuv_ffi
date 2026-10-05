@@ -36,6 +36,21 @@ for tool_directory in /opt/homebrew/bin /usr/local/bin; do
 done
 export PATH
 
+if [[ -z "${FLUTTER_ROOT:-}" ]]; then
+  flutter_command="$(command -v flutter || true)"
+  if [[ -n "$flutter_command" ]]; then
+    FLUTTER_ROOT="$(cd -- "$(dirname -- "$flutter_command")/.." && pwd)"
+  elif [[ -x "$HOME/storage/flutter_3.44/flutter/bin/flutter" ]]; then
+    FLUTTER_ROOT="$HOME/storage/flutter_3.44/flutter"
+  else
+    echo 'Flutter was not found on PATH or at ~/storage/flutter_3.44/flutter.' >&2
+    exit 1
+  fi
+fi
+export FLUTTER_ROOT
+PATH="$FLUTTER_ROOT/bin:$PATH"
+export PATH
+
 chrome="${CHROME_EXECUTABLE:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 chrome_driver="${CHROMEDRIVER_EXE:-$HOME/bin/chromedriver}"
 emsdk_root="${EMSDK_ROOT:-$HOME/storage/emsdk-3.1.74}"
