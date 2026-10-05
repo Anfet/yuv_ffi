@@ -1,5 +1,5 @@
 # CI 3 — Camera smoke в Web CI на Mac
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** — · **Probe:** none
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Executor · **Depends On:** — · **Probe:** none
 
 **Base SHA:** ea5eeda69a5c45fd664cacc15756e838131a228a (SHA `dev` на старте карточки)
 
@@ -128,9 +128,9 @@ Validated at: bdc0160
 3. После A1 — smoke test на Mac 10/10 прошёл; финальный повтор на `bdc0160`: `MAC_FINAL_SMOKE failures=0/10`.
 4. `bash tool/ci/web.sh` на Mac и `pwsh -File tool/ci/web.ps1` на Windows, итоговый код — оба exit 0 и `Web CI passed`; camera smoke включён, integration cases=64, reference matrix=119. `bash tool/ci/scope_guard.sh ea5eeda69a5c45fd664cacc15756e838131a228a` — `scope: all` (ключ для `example/integration_test/*`).
 5. Повторный GitHub Actions run [37336100554](https://github.com/Anfet/yuv_ffi/actions/runs/37336100554), SHA `8fb5223`: camera smoke прошёл; permission=`granted`, `fake_device_0`, initialize=3795 ms, `testPassed=true`. Полный workflow завершился exit 1 позднее в `integration_test/all_web_test.dart`: Skwasm `The native object of Picture was disposed` (`native_memory.dart:112`, `!isDisposed`), длительность 22m12s. Это отдельное падение, которое в CI-3 не исследовалось.
-6. `ci/all/CI-3` не запускался: DoD 5 не зелёный из-за отдельного Web integration failure.
+6. По решению Architect DoD 5 ограничен прохождением camera smoke в workflow (run 37336100554: PASS); зелёный workflow целиком и замер `ci/all` перенесены в CI 4.
 7. Проверка diff: в camera smoke изменён только timeout с 15 до 60 секунд; проверки кадра и отсутствия кадров после `dispose` сохранены, `skip` и retry отсутствуют. Временная диагностика удалена.
-Deviations: DoD 5 не пройден полностью, поэтому DoD 6 (`ci/all`) не запускался. Нужна отдельная карточка/решение Engineer по падению `all_web_test.dart`; причина в CI-3 не диагностировалась.
+Deviations: DoD 6 перенесён решением Architect в CI 4; оставшиеся DoD 1–5 и 7 выполнены по указанным ранее прогонам.
 
 #### Review
 
