@@ -50,7 +50,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 3](tasks/0.5.2/CI-3.md) | IN_PROGRESS | T2 / T1 | Codex | — | **Camera smoke в Web CI на Mac.** Добавить временную диагностику permission и `initialize()` в runner; assertions/таймаут не менять. |
+| [CI 3](tasks/0.5.2/CI-3.md) | IN_PROGRESS | T2 / T1 | Codex | — | **Camera smoke в Web CI на Mac.** CI видит fake camera, permission granted, но `initialize()` остаётся pending >24s; проверяю A1 с таймаутом 60s, assertions сохранены. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 

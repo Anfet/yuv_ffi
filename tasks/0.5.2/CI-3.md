@@ -115,7 +115,7 @@ Web CI на Mac (`ci-web.yml`, раннер `yuv-self-hosted`) зелёный. �
 
 #### Engineer Decision
 
-05.10.2026: Engineer разрешил повторить GitHub Actions `ci-web.yml` после сообщения о закрытой крышке Mac. Run `37315543986` завершился тем же camera smoke failure. Engineer подтвердил, что крышка была открыта во время запуска; гипотеза о закрытой крышке не объясняет сбой. Использовать GitHub Actions, не локальный `tool/ci/web.sh` по SSH.\n\nEngineer разрешил временно добавить диагностику camera permission и фаз/длительности `initialize()` в smoke test, передавать `reportData` из integration driver при успехе и провале и печатать её через `tool/ci/drive.sh`; выполнить диагностические GitHub Actions runs. Assertions и таймаут 15 секунд остаются без изменений.
+05.10.2026: Engineer разрешил повторить GitHub Actions `ci-web.yml` после сообщения о закрытой крышке Mac. Run `37315543986` завершился тем же camera smoke failure. Engineer подтвердил, что крышка была открыта во время запуска; гипотеза о закрытой крышке не объясняет сбой. Использовать GitHub Actions, не локальный `tool/ci/web.sh` по SSH.\n\nEngineer разрешил временно добавить диагностику camera permission и фаз/длительности `initialize()` в smoke test, передавать `reportData` из integration driver при успехе и провале и печатать её через `tool/ci/drive.sh`; выполнить диагностические GitHub Actions runs. После R3 (`37330897047`) разрешил A1: поднять таймаут до 60 секунд на основании того, что runner оставался в `controller-initialize-pending` через 24 386 ms общего времени теста. Assertions не менять.
 #### Executor Report
 
 Validated at: ea5eeda69a5c45fd664cacc15756e838131a228a
@@ -127,7 +127,7 @@ Validated at: ea5eeda69a5c45fd664cacc15756e838131a228a
 6. `ci/all/CI-3` — не запускался: нужен зелёный DoD 5 на SHA карточки.
 7. Не ослаблены проверки — код не менялся; итоговую проверку diff выполняет Reviewer после решения Engineer.
 Deviations: DoD 3, 5 (зелёный результат), 6 остановлены на A3; изменения кода не сделаны.
-Engineer authorization recorded above: temporary camera permission/initialization diagnostics and diagnostic GitHub Actions runs are in scope.
+A1 выбран по диагностике R3: permission=`granted`, Chrome перечислил `fake_device_0`, `availableCameras()` занял 2704 ms, тест оставался на фазе `controller-initialize-pending` при `elapsedMs=24386`; локальный Mac SSH initialize=82 ms. Таймаут повышен до 60 секунд (>2× наблюдаемого ожидания). Проверить десять прогонов и повторный GitHub CI.
 
 #### Review
 

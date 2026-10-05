@@ -47,12 +47,16 @@ void main() {
     await recordCameraPermission('before-controller-initialize');
     diagnostics['phase'] = 'controller-initialize-pending';
     final initializeClock = Stopwatch()..start();
+    var initializeCompleted = false;
     try {
       await controller.initialize();
+      initializeCompleted = true;
       diagnostics['initializeElapsedMs'] = initializeClock.elapsedMilliseconds;
       diagnostics['controllerInitialized'] = controller.value.isInitialized;
     } finally {
       initializeClock.stop();
+      diagnostics['initializeElapsedMs'] = initializeClock.elapsedMilliseconds;
+      diagnostics['initializeCompleted'] = initializeCompleted;
     }
     await recordCameraPermission('after-controller-initialize');
 
@@ -60,7 +64,9 @@ void main() {
     final source = YuvCameraFrameSource(controller, onFrame: frames.add, onError: (error) => throw StateError('$error'));
     addTearDown(source.dispose);
     diagnostics['phase'] = 'starting-frame-source';
+    final sourceStartClock = Stopwatch()..start();
     await source.start();
+    diagnostics['sourceStartElapsedMs'] = sourceStartClock.elapsedMilliseconds;
     diagnostics['phase'] = 'waiting-for-frame';
     await _waitFor(tester, () => frames.isNotEmpty);
     final frame = frames.last;
@@ -73,7 +79,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
     expect(frames, hasLength(count));
     diagnostics['testPassed'] = true;
-  }, timeout: const Timeout(Duration(seconds: 15)));
+  }, timeout: const Timeout(Duration(seconds: 60)));
 }
 
 Future<void> _waitFor(WidgetTester tester, bool Function() condition) async {
