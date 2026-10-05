@@ -50,7 +50,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [CI 2](tasks/0.5.2/CI-2.md) | TODO | T2 / T1 | — | — | **Web CI на Mac.** `tool/ci/web.sh` (черновик прогнан на Mac, exit 0), `ci-web.yml` на `yuv-self-hosted`, время `ci/all`. Разрешена Engineer до выпуска 0.5.1 (D-31). |
+| [CI 2](tasks/0.5.2/CI-2.md) | BLOCKED | T2 / T1 | Engineer | — | **Web CI на Mac.** Локальные проверки зелёные; workflow 37301435314 на `51eb041` упал в `camera_source_web_smoke_test.dart` (`CameraController was used after being disposed`). По `.protocol/ci.md` требуется решение Engineer о повторе или расширении Scope; DoD 8 `ci/all` ждёт зелёного workflow. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 

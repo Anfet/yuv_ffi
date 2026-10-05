@@ -1,7 +1,7 @@
 # CI 2 — Web CI на Mac
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
+**Status:** BLOCKED · **Tier:** T2, Reviewer T1 · **Owner:** Engineer · **Depends On:** — · **Probe:** none
 
-**Base SHA:** — (SHA `dev` на старте карточки)
+**Base SHA:** `aa0b0af38ee4d6a7258e63a9bfd7a19e4f387c93`
 
 #### Goal
 
@@ -101,7 +101,18 @@ Web CI (`ci-web.yml`) идёт на self-hosted Mac `yuv-self-hosted`, а не �
 
 #### Executor Report
 
-—
+Validated at: `51eb04189a084f6ada5f0cfb0e3553bf3adfeafa`
+1. `tool/ci/web.sh` — `git ls-files -s tool/ci/web.sh`; `bash -n tool/ci/web.sh` — `100755`; exit 0.
+2. Web matrix — `rg -c "sources=14; integration cases=64; reference matrix=119; camera smoke=1" tool/ci/web.ps1 tool/ci/web.sh`; read `$aggregate`/`aggregate` and `$separate`/`separate` arrays — one summary per script; same 9 aggregate and 5 separate sources.
+3. Clean Mac clone — `bash tool/ci/web.sh` — exit 0; `Web CI passed: Chrome 154.0.8037.95; sources=14; integration cases=64; reference matrix=119; camera smoke=1.`; clone clean after run.
+4. Temporary Mac clone with a committed inverted `getBytes` length expectation — `bash tool/ci/web.sh` — exit 1 in `all_web_test.dart`, expected length 5 / actual 4; no `Web CI passed`.
+5. Temporary Mac clone with a committed extra byte in `assets/wasm/yuv_ffi.js` — `bash tool/ci/web.sh` — exit 1 at `git diff --exit-code`; no `Web CI passed`.
+6. Workflow and runner — read `.github/workflows/ci-web.yml` diff — `runs-on: [self-hosted, macOS, X64]`; invokes `bash ./tool/ci/web.sh`.
+7. GitHub workflow — run 37301435314, `gh run watch 37301435314 --exit-status` — exit 1 on SHA `51eb04189a084f6ada5f0cfb0e3553bf3adfeafa`, runner `yuv-self-hosted`; browser matrix and reference test passed, then camera smoke failed with `A CameraController was used after being disposed.`
+8. `ci/all` — not run; waiting for DoD 7 to pass.
+9. Documentation — `rg -n "web.sh" AGENTS.md` — Mac `web.sh` and local Windows `web.ps1` documented.
+Deviations: First workflow attempt exposed that Flutter was absent from the runner's non-login `PATH`; `web.sh` now resolves `FLUTTER_ROOT` from PATH or `~/storage/flutter_3.44/flutter`. The next run reached the camera smoke test and failed as recorded in item 7.
+Engineer attention: CI 2 is blocked by the failed camera smoke test outside Scope. Per `D:\.projects\.protocol\ci.md` §4, Engineer to decide whether to retry CI or authorize work outside this card's Scope. DoD 7 green and DoD 8 remain outstanding.
 
 #### Review
 
