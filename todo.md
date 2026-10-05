@@ -3,7 +3,7 @@
 ## Цель релиза
 
 - **Цель:** патч 0.5.1 — операции Web backend работают в сборке `flutter build web --wasm` (WEB 4), это проверяет Web CI (CI 1), документация точно описывает статус Web и платформ (FIX 1).
-- **Порядок:** код и документация (FIX 1 → WEB 4 → CI 1) → релизный гейт (RELEASE 1) → CI 2 (Web CI на Mac, D-31) → выпуск Engineer.
+- **Порядок:** код и документация (FIX 1 → WEB 4 → CI 1) → релизный гейт (RELEASE 1) → CI 2 (Web CI на Mac, D-31) → camera smoke на Mac (D-32) → выпуск Engineer.
 - **Рабочая ветка:** `dev`. `release/0.5.1` ответвляется от `dev` в RELEASE 1 на принятом SHA кода (D-10).
 - **База сравнения:** опубликованная 0.5.0 — тег `0.5.0` (`3e4c645`).
 - **Релиз-кандидат:** не заморожен.
@@ -21,7 +21,7 @@
 ## Текущее состояние
 
 - **Выпущено:** 0.5.0 — 05.10.2026, тег `0.5.0` на `3e4c645`; `main` — PR #5 (`c8af6cd`), влит в `dev`.
-- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен до CI 2 (D-31). Сейчас — CI 2.
+- **Сейчас:** пул `WASM` закрыт на `1866a2d`; Web CI run 37243974376 зелёный. RELEASE 1 — гейт пройден на `release/0.5.1` (`61da2ee`), выпуск отложен (D-31). CI 2 закрыт (D-32); дальше — карточка на camera smoke Web CI на Mac (Architect).
 - **Открытые решения Engineer:** нет.
 
 ## Пулы задач
@@ -46,17 +46,11 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 | --- | --- | --- | --- | --- | --- |
 | [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | BLOCKED | T2 / T1 + Engineer | Engineer | — | Reviewer PASS на `61da2ee`: аудит, `ci/all/0.5.1` 9/9, Pixel 3 arm64/armv7 1188, dry-run 0 warnings, `--wasm` проба. Выпуск — после CI 2 (D-31), команды — п. 4 отчёта; после публикации — п. 5. |
 
-### До выпуска 0.5.1 — CI 2 (карточка в `tasks/0.5.2/`, D-31)
-
-| ID | Status | Tier | Owner | Depends on | Summary / next step |
-| --- | --- | --- | --- | --- | --- |
-| [CI 2](tasks/0.5.2/CI-2.md) | DONE | T2 / T1 | — | — | **Web CI на Mac.** Локальные проверки зелёные; workflow 37301435314 на `51eb041` упал в `camera_source_web_smoke_test.dart` (`CameraController was used after being disposed`). По `.protocol/ci.md` требуется решение Engineer о повторе или расширении Scope; DoD 8 `ci/all` ждёт зелёного workflow. |
-
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
 ## Открытые вопросы
 
-Нет.
+- Карточка по D-32: падение `camera_source_web_smoke_test.dart` на Mac (run 37301435314) и другие непонятные падения, зелёный Web CI на Mac, время `ci/all` (DoD 8 из CI 2). Декомпозирует Architect.
 
 ## Правила работы
 
