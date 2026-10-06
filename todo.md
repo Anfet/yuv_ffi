@@ -6,7 +6,7 @@
 - **Порядок:** код и документация (FIX 1 → WEB 4 → CI 1) → релизный гейт (RELEASE 1) → CI 2 (Web CI на Mac, D-31) → CI 3 (camera smoke в Web CI на Mac, D-32) → CI 4 (Skwasm `Picture was disposed` в Web CI на Mac) → выпуск Engineer.
 - **Рабочая ветка:** `dev`. `release/0.5.1` ответвляется от `dev` в RELEASE 1 на принятом SHA кода (D-10).
 - **База сравнения:** опубликованная 0.5.0 — тег `0.5.0` (`3e4c645`).
-- **Релиз-кандидат:** не заморожен.
+- **Релиз-кандидат:** `release/0.5.1` (`61da2ee`), заморожен; финальный аудит 06.10.2026 — PASS.
 - **Заморозка:** с создания `release/0.5.1`; дальше `lib/`, `src/`, `darwin/`, `android/`, `example/lib/`, `assets/`, `README.md`, `CHANGELOG.md` меняются только карточками `FIX N`.
 - **Тег, публикация, `main`:** Engineer (правило 11).
 
@@ -44,7 +44,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | BLOCKED | T2 / T1 + Engineer | Engineer | — | Reviewer PASS на `61da2ee`: аудит, `ci/all/0.5.1` 9/9, Pixel 3 arm64/armv7 1188, dry-run 0 warnings, `--wasm` проба. Выпуск — после CI 2 (D-31), команды — п. 4 отчёта; после публикации — п. 5. |
+| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | BLOCKED | T2 / T1 + Engineer | Engineer | — | Финальный аудит 06.10.2026 — PASS на РК `61da2ee`; гейт этого SHA остаётся действительным. CI 2/CI 3/CI 4 закрыты, `ci/all/CI-4` 9/9 на `a65270a` в `dev`. Далее — решение Engineer о переносе тестовых исправлений и выпуске; команды — п. 4 отчёта, закрытие — п. 5. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
