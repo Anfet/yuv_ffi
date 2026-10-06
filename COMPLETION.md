@@ -10,7 +10,7 @@
 
 ## Цикл 0.5.1
 
-- **FIX 1** — README приведён к фактическому статусу Web и платформ, версия `0.5.1` в файлах D-14 и `example/pubspec.lock`. Принято на `1866a2d`; Pixel 3 arm64/armv7 1188/1188; CI: `ci/web/WASM` run 37243974376 — success. Карточка: `git show 2651ebd:tasks/0.5.1/FIX-1.md`.
+- **FIX 1** — README приведён к фактическому статусу Web и платформ, версия `0.5.1` в файлах D-14 и `example/pubspec.lock`; первоначально принято на `1866a2d`, Pixel 3 arm64/armv7 1188/1188, CI: `ci/web/WASM` run 37243974376 — success (карточка: `git show 2651ebd:tasks/0.5.1/FIX-1.md`). Повторно принято 07.10.2026 на `302c75f`: четыре документа согласованы по Web JavaScript/`--wasm` в Chrome и миграции 0.5.x; переносимый коммит `de5a5df`, Probe: none, CI: не требуется; гейт нового кандидата — RELEASE 1. Ревью: `git show a336929:tasks/0.5.1/FIX-1.md`.
 - **WEB 4** — interop Web backend исправлен для `flutter build web --wasm`: probe 1188, reference 119, шейдер и `all_web_test.dart` проходят в Chrome. Принято на `1866a2d`; CI: `ci/web/WASM` run 37243974376 — success. Карточка: `git show 2651ebd:tasks/0.5.1/WEB-4.md`.
 - **CI 1** — Web CI требует обязательный прогон probe, shader probe и all Web tests с `--wasm`. Принято на `1866a2d`; run 37243974376 — success.
 - **CI 2** — Web CI (`ci-web.yml`) перенесён на Mac `yuv-self-hosted` через `tool/ci/web.sh`; `web.ps1` остался локальной проверкой Windows. Принято на `754bbdd` по D-32 (DoD 7 засчитан, DoD 8 перенесён); CI: run 37301435314 — failure в camera smoke. Карточка: `git show 6572c18:tasks/0.5.2/CI-2.md`.

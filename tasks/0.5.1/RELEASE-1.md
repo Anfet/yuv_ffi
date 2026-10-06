@@ -1,11 +1,12 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Engineer · **Depends On:** FIX 1 · **Probe:** windows+pixel3+web
+**Status:** TODO · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** — · **Probe:** windows+pixel3+web
 
 **Base SHA:** `1866a2d155cc241b1e0b0af7f71e23398b2637e1` (база первоначального гейта, принятый SHA пула `WASM`)
 
 **Release candidate:** прежний — `release/0.5.1` at `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`; новый после FIX 1 ещё не сформирован.
 
-**Следующий шаг:** приёмка FIX 1 → новый кандидат с исправленной документацией → гейт нового SHA → решение о выпуске.
+**Следующий шаг:** FIX 1 принята; Executor формирует новый кандидат по A1 (коммит документов `de5a5df`)
+либо A2 после решения Engineer → гейт нового SHA → решение о выпуске.
 Отчёты и PASS 05–06.10.2026 ниже относятся только к прежнему кандидату и не закрывают этот повторный гейт.
 
 #### Goal
