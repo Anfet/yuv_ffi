@@ -3,7 +3,10 @@
 ### Documentation
 
 - Clarified Web support: operations match native on the JavaScript build
-  (verified in Chrome); corrected the platform status table.
+  and `--wasm` builds in checked cases (verified in Chrome); corrected the
+  platform status table. Safari and Firefox have not been verified.
+- Aligned the migration guide and example README with 0.5.1 Web support and
+  clarified that 0.5.0 to 0.5.1 needs no API replacements.
 
 ### Fixed
 

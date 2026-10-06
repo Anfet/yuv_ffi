@@ -12,9 +12,10 @@ dependencies:
   yuv_ffi: 0.5.1
 ```
 
-Version 0.5.0 is the next available pub.dev release after 0.2.4. Version
+Version 0.5.1 is the next available pub.dev release after 0.2.4. Version
 0.4.0 was published and later retracted; the migration guidance below also
-applies to applications whose lockfile still resolves 0.4.0.
+applies to applications whose lockfile still resolves 0.4.0. Updating from
+0.5.0 to 0.5.1 does not require API replacements.
 
 ## Requirements
 
@@ -246,7 +247,7 @@ NV12 only, as on native. Safari and Firefox have not been verified.
 `YuvFfi.initialize()` loads the module; use `YuvCapabilities` to query the
 operations exported by that module.
 
-## Migrating to 0.5.0
+## Migrating to 0.5.x
 
 The compatibility declarations from 0.2.4 and retracted 0.4.0 were removed.
 The detailed upgrade steps, API mapping, behavior changes, and verification

@@ -12,8 +12,10 @@ flutter devices
 flutter run -d <device-id>
 ```
 
-For Web, run `flutter run -d chrome`. Web uses the partial WASM backend; it does
-not yet provide feature parity with the native backends. Android, iOS, macOS,
+For Web, run `flutter run -d chrome`. Checked Web operation cases match native
+on Flutter's JavaScript and `--wasm` builds in Chrome; `chromaSwap` supports
+NV12 only. Safari and Firefox have not been verified. This operation coverage
+does not establish camera support in those browsers. Android, iOS, macOS,
 Windows, and Web runners are checked in here. A Linux runner is not included.
 
 On the iOS Simulator, run the example with an iOS 18.x runtime or on a device:
