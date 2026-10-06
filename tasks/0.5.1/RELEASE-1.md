@@ -1,12 +1,12 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Reviewer · **Depends On:** — · **Probe:** windows+pixel3+web
+**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Engineer · **Depends On:** — · **Probe:** windows+pixel3+web
 
 **Base SHA:** `862cd4f2742fe1d2ef4278ad74bc9aee2f7bf61e` (dev на старте нового гейта)
 
 **Release candidate:** `release/0.5.1` at `2287a8efa636141914d25b844b279d4dd77d4b3d` (A2: FIX 1 и исправления CI 2/CI 3/CI 4).
 
-**Следующий шаг:** Reviewer проверяет отчёт и записывает Pixel-пробы; после принятия Engineer решает выпуск. Тег 0.5.1,
-публикация и изменение `main` ещё не выполнялись.
+**Следующий шаг:** технический гейт принят на `2287a8e`; требуются подпись и публикация Engineer по актуальным
+командам отчёта A2. Закрытие — после публикации по п. 5. Тег 0.5.1, публикация и изменение `main` ещё не выполнялись.
 
 #### Goal
 
@@ -296,7 +296,50 @@ Engineer attention: Reviewer должен выполнить Pixel 3 arm64/armv7
 
 #### Review
 
-##### Новый гейт — 07.10.2026
+##### Гейт с включёнными исправлениями CI и тестов — 07.10.2026
+
+**Вердикт: PASS, блокирующих замечаний нет.** Принятый SHA кандидата:
+`2287a8efa636141914d25b844b279d4dd77d4b3d`. Проверен отчёт Executor из `d65e6b8` и изменения после прежнего
+принятого кандидата `7486938` против решения Engineer о включении CI 2/CI 3/CI 4 и DoD 1–5.
+Исполнитель — делегированный по просьбе Engineer `gpt-6-luna`, effort `medium`; Reviewer — root.
+
+- В кандидат включены перенос Web CI на Mac, таймаут camera smoke 60 секунд и очистка виджетов в двух тестах
+  image cache. Проверки не ослаблены и не пропущены. Код библиотеки, native-исходники, assets, манифесты
+  и четыре принятых документа FIX 1 против прежнего кандидата не изменились.
+- Согласование истории сохранило содержимое `dev`, после чего `release/0.5.1` продвинута fast-forward
+  до кандидата. После `Validated at` изменён только учёт работы; результаты проверок остаются применимыми.
+- Новый отчёт содержит аудит всех требуемых областей, команды, exit codes и счётчики локального гейта:
+  VM 638/638, Windows 134/134 и integration PASS, Android пять targets PASS, Web 14 sources/64 cases,
+  reference 119, camera smoke и три `--wasm` цели PASS; CTest 11/11, pana 160/160, dry-run 0 warnings.
+  Проверки Executor повторно не запускались (§2 Reviewer).
+- По назначению Validation сверены все девять run командой
+  `gh run list --repo Anfet/yuv_ffi --commit 2287a8efa636141914d25b844b279d4dd77d4b3d --limit 20
+  --json databaseId,name,headSha,conclusion,status` — exit 0. Run IDs совпадают с таблицей нового отчёта;
+  каждый `completed/success`, `headSha` = полный SHA кандидата. Свежий `ci/all/0.5.1-2` — 9/9,
+  включая Web на Mac; прежнее исключение для CI кандидата A1 здесь не используется.
+
+Прогоны Reviewer — причина 1, прямо назначены Validation. Чистый checkout `release/0.5.1` на полном SHA
+кандидата; Pixel 3 (`8B1X11QLW`), Android 12, release, установка через `adb install -r`:
+
+| Проверка | Команда | Результат |
+| --- | --- | --- |
+| Pixel 3 arm64 | `pwsh -File tool/probe/run_release_android.ps1 -GitSha 2287a8efa636141914d25b844b279d4dd77d4b3d -Serial 8B1X11QLW -Abi arm64` | exit 0; arm64-v8a; smoke PASS, probe PASS, 1188; runId `fcba26befe394bfc8073520bdf59a736` |
+| Pixel 3 armv7 | та же команда, `-Abi armv7` | exit 0; armeabi-v7a; smoke PASS, probe PASS, 1188; runId `064c0e2d3d9d49e3b6250f15cd7ef3ef` |
+
+Оба `RA25_HOST_RESULT` содержат `gitSha` и `revision`, равные полному SHA кандидата. Логи:
+`%TEMP%/yuv-ffi-release-2287a8e-arm64-review.log` и `…-armv7-review.log`; host/device JSON —
+`%TEMP%/yuv_ffi-ra25-release/` с указанными runId. Сырые результаты не коммитятся.
+Пробы выполнены во время ожидания CI после завершения Windows/Android workflow; Executor освободил checkout.
+После проб приложение остановлено, Reviewer вернулся в `dev`, дерево чистое. Кандидат не изменён.
+
+Recommendations: none. Прежняя рекомендация о включении CI 2/CI 3/CI 4 выполнена по решению Engineer;
+новый Mac Web workflow проверен на точном SHA кандидата. Safari/Firefox остаются not verified.
+
+Статус `BLOCKED`: требуются подпись и публикация Engineer. Актуальные команды выпуска — в новом Executor
+Report A2 с полным SHA `2287a8e…`; команды прежних кандидатов ниже являются историей. После публикации —
+очистка CI-тегов и закрытие карточки по п. 5. Релизный тег, публикация и изменение `main` Reviewer не выполнял.
+
+##### История гейта A1 — 07.10.2026
 
 **Вердикт: PASS, блокирующих замечаний нет.** Принятый SHA кандидата:
 `7486938b86b65322dde30c89ad23c75ea2602e99`. Статус `BLOCKED`: требуются подпись и публикация Engineer;
