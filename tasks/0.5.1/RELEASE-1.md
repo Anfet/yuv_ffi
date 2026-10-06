@@ -1,14 +1,18 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Engineer · **Depends On:** — · **Probe:** windows+pixel3+web
+**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Engineer · **Depends On:** FIX 1 · **Probe:** windows+pixel3+web
 
-**Base SHA:** `1866a2d155cc241b1e0b0af7f71e23398b2637e1` (принятый SHA пула `WASM`)
+**Base SHA:** `1866a2d155cc241b1e0b0af7f71e23398b2637e1` (база первоначального гейта, принятый SHA пула `WASM`)
 
-**Release candidate:** `release/0.5.1` at `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`
+**Release candidate:** прежний — `release/0.5.1` at `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`; новый после FIX 1 ещё не сформирован.
+
+**Следующий шаг:** приёмка FIX 1 → новый кандидат с исправленной документацией → гейт нового SHA → решение о выпуске.
+Отчёты и PASS 05–06.10.2026 ниже относятся только к прежнему кандидату и не закрывают этот повторный гейт.
 
 #### Goal
 
-Выпустить 0.5.1: изменения относительно опубликованной 0.5.0 точно описаны в CHANGELOG и README, все проверки — на
-одном SHA кандидата, в репозитории нет рабочих артефактов. Итог — отчёт Engineer, по которому он ставит тег,
+Подготовить выпуск 0.5.1: изменения относительно опубликованной 0.5.0 точно описаны в CHANGELOG, README,
+MIGRATION и README примера, все проверки — на одном SHA кандидата, в репозитории нет рабочих артефактов.
+Итог — отчёт Engineer, по которому он ставит тег,
 публикует и переводит `main`. Тег, публикация и `main` в задачу не входят.
 
 #### Architect Decision
@@ -18,26 +22,42 @@
    - CHANGELOG `## 0.5.1` против изменений диапазона: каждое пользовательское изменение есть, внутренних пунктов нет;
    - README: «Requirements», «Platform status», «Web backend» согласованы с `doc/web-parity.md`; Safari и Firefox —
      «not verified» (D-27);
+    - MIGRATION и `example/README.md` согласованы с README; interop-сбой `--wasm` обозначен как исторический для
+      0.5.0, исправленный в 0.5.1; переход 0.5.0 → 0.5.1 не требует замен API/повторной миграции кадров;
    - версия `0.5.1` в четырёх файлах D-14, README и `example/pubspec.lock`;
    - публичное API не изменилось: `lib/yuv_ffi.dart` и `test/public_surface_test.dart` — без изменений или проходят;
    - следы работы в изменённых файлах `lib/`: `TODO`/`FIXME`, ID задач, `print`/`debugPrint`, новые `ignore`;
    - состав: архив dry-run — только пакет, example, `MIGRATION.md`, `assets/`; `git status --short --ignored` — без
      новых артефактов; в `tasks/0.5.1/` — только активные карточки.
    Блокирующая находка — черновик `FIX N` и `ENGINEER_REQUIRED`.
-2. **Релиз-кандидат.** `release/0.5.1` от принятого SHA пула (код, без коммитов статуса); SHA — в `todo.md`. Дальше
-   заморозка: правка — только `FIX N`, затем новый SHA и повтор пункта 3.
+2. **Релиз-кандидат после приёмки FIX 1.** Рабочая документация меняется в `dev`; отдельный коммит четырёх документов
+   берётся из `Validated at` принятой FIX 1. Новый SHA кандидата записать в `todo.md` и отчёт до проверок.
+   - **A1 — действует D-31:** на `release/0.5.1` поверх прежнего кандидата перенести только этот коммит документов
+     (`git cherry-pick <Validated at FIX 1>`). Пустой diff по коду, тестам, assets и CI против прежнего кандидата
+     обязателен; публикационные документы должны совпасть с принятыми в FIX 1. При конфликте сверить четыре
+     документа с принятым diff; если требуется иная правка содержания — вернуть FIX 1, не исправлять её в гейте.
+   - **A2 — только по решению Engineer о переносе CI 2/CI 3/CI 4:** продвинуть `release/0.5.1` fast-forward до
+     принятого SHA `dev` с FIX 1. Указать включённые исправления тестов/CI; гейт запускать скриптами этого кандидата.
+   - Перенос коммита не делает проверки старого SHA проверками нового. После формирования кандидат заморожен;
+     дальнейшие правки — только `FIX N`, новый SHA и повтор п. 3. Операции с веткой здесь — часть RELEASE 1 (D-10),
+     без worktree/веток пула; по окончании вернуться в `dev`. Старые внутренние снимки карточек в кандидате не
+     являются источником текущих статусов: они ведутся в `dev` и исключены из пакета через `.pubignore`.
 3. **Проверки на одном SHA РК.** Результаты пула на том же SHA засчитываются; на другом SHA — повтор.
-   - Windows: ключи `bash tool/ci/scope_guard.sh 0.5.0` (ожидаются `vm`, `windows`, `web` с `--wasm`, `example` с
-     `FLUTTER_VERSION=3.44.9`, `smoke`; `src/CMakeLists.txt` изменён только номером версии — native CMake Release +
-     CTest).
+   - Windows: `bash tool/ci/scope_guard.sh 0.5.0` — ожидается `scope: all`. Локально выполнить
+     `pwsh -File tool/ci/vm.ps1`, `pwsh -File tool/ci/windows.ps1`, `pwsh -File tool/ci/android.ps1`,
+     `pwsh -File tool/ci/web.ps1` (включая `--wasm`), `pwsh -File tool/ci/example.ps1`
+     (с `$env:FLUTTER_VERSION='3.44.9'`), `pwsh -File tool/ci/smoke.ps1`: exit 0, критерии самих скриптов выполнены.
+     Для `src/CMakeLists.txt` (номер версии) — также native CMake Release build и CTest по `AGENTS.md`.
    - Pixel 3 arm64 и armv7: `tool/probe/run_release_android.ps1` (Reviewer; засчитывается прогон пула на том же SHA).
    - Mac: покрывается CI `macos` и `ios`; pana — локально на Mac.
-   - CI: тег `ci/all/0.5.1` на SHA РК, 9/9 зелёные, `head_sha` у всех = SHA РК.
+   - CI: новый уникальный тег `ci/all/0.5.1-<N>` (например, `ci/all/0.5.1-2`) на SHA РК; старый тег не передвигать.
+     9/9 зелёные, `head_sha` у всех = новый SHA РК. Результаты `ci/all/0.5.1` и `ci/all/CI-4` — история своих SHA.
    - Пакет: `pana --exit-code-threshold 0 .` на Mac — 160/160; `flutter pub publish --dry-run` на чистом checkout
      SHA РК — 0 warnings.
    - После прогонов `git status` чистый; изменённое скриптами (`generated_plugin*`, lockfile) откатить.
 4. **Отчёт Engineer.** SHA РК, таблица «проверка → машина → команда → exit → результат», таблица workflow → run,
-   Pixel 3, итог аудита, известные ограничения (Safari/Firefox not verified; `--wasm` — по итогу WEB 4) и команды:
+   Pixel 3, итог аудита четырёх документов, состав кандидата A1/A2, известные ограничения
+   (Safari/Firefox not verified; JavaScript и `--wasm` — проверенные случаи Chrome) и команды:
    ```sh
    git switch release/0.5.1 && git rev-parse HEAD   # = SHA РК
    git push origin release/0.5.1
@@ -48,7 +68,10 @@
    git switch dev
    ```
 5. **После публикации (Engineer или роль по его команде).** Удалить теги `ci/*` локально и на origin, записать
-   выпуск в `COMPLETION.md`, удалить карточку, перевести `todo.md` на следующий цикл.
+   выпуск в `COMPLETION.md`, удалить карточку, перевести `todo.md` на следующий цикл. После перевода `main` на
+   SHA выпуска Engineer синхронизирует его с `dev` по правилу 11: `git switch dev`, `git fetch origin`,
+   `git merge origin/main`. Особенно для A1: перенесённый коммит имеет другой SHA, чем коммит документов в `dev`.
+   Если `origin/main` уже предок `dev`, merge не нужен; факт подтвердить `git merge-base --is-ancestor origin/main dev`.
 
 #### Scope
 
@@ -63,17 +86,33 @@
 
 #### Definition of Done
 
-- Аудит разницы без блокеров или все блокеры закрыты `FIX N`.
-- На одном SHA РК: проверки пункта 3, `ci/all/0.5.1` 9/9, Pixel 3 arm64 и armv7, pana 160/160, dry-run без warnings;
-  дерево чистое.
-- Отчёт Engineer по пункту 4 — в Executor Report.
+1. FIX 1 принята; новый кандидат содержит её четыре документа, состав A1/A2 записан — check: принятое ревью FIX 1,
+   сравнение документов и diff кандидата — by: Executor.
+2. Аудит всех областей п. 1 без блокеров или они закрыты `FIX N` — check: таблица аудита, включая MIGRATION и
+   README примера — by: Executor.
+3. На одном новом SHA РК: локальные проверки п. 3, новый `ci/all/0.5.1-<N>` 9/9, pana 160/160, dry-run без warnings,
+   чистое дерево — check: команды с exit code, счётчиками и `head_sha` каждого run — by: Executor.
+4. Pixel 3 arm64 и armv7 прошли на том же новом SHA — check: `tool/probe/run_release_android.ps1 -GitSha <SHA РК>
+   -Abi arm64` и отдельно `-Abi armv7`, exit 0, smoke/probe PASS, 1188 в каждом — by: Reviewer.
+5. Отчёт Engineer по п. 4 готов, текущие результаты/ожидаемые действия отделены от истории `61da2ee` — check:
+   Executor Report и Review с новым SHA и актуальными командами выпуска — by: Executor, Reviewer.
 
 #### Validation
 
-- Executor: команды пунктов 1–3 с SHA и exit code; у каждого результата один и тот же SHA РК.
-- Reviewer: выборочно перепроверить аудит, повторить dry-run и одну Web-пробу `--wasm`, сверить `head_sha` всех run.
+- Executor: команды пунктов 1–3 с новым SHA и exit code; проверки dry-run и Web `--wasm` входят в его гейт.
+  После формирования кандидата `git diff --check 0.5.0..<SHA РК>` — exit 0; чтением сравнить четыре документа с
+  принятым коммитом FIX 1. Для A1 `git diff --exit-code 61da2ee..<SHA РК> -- lib src assets shaders darwin android
+  example/lib example/integration_test tool .github pubspec.yaml example/pubspec.lock` — exit 0.
+- Reviewer: прочитать diff и отчёт против DoD, сверить `head_sha` всех новых run; выполнить назначенные ему
+  Pixel 3 arm64/armv7 и записать результаты. Успешные проверки Executor повторно не назначаются Reviewer.
 
 #### Executor Report
+
+##### История прежнего кандидата — 05.10.2026
+
+Сохранённый отчёт ниже относится к `61da2ee`. Строки «ожидает выполнения» и Engineer attention описывают момент
+сдачи Executor; соответствующие проверки выполнены в историческом Review. Для нового кандидата Executor
+добавляет отдельный подраздел с новым `Validated at`, таблицами аудита/проверок и текущим следующим шагом.
 
 Validated at: `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`
 
@@ -139,6 +178,8 @@ Deviations: локальный Android script сначала остановил�
 Engineer attention: Reviewer должен выполнить Pixel 3 arm64/armv7 и верификации из Validation на SHA кандидата; после этого Engineer подписывает гейт и выпускает пакет.
 
 #### Review
+
+##### История прежнего гейта — 05–06.10.2026
 
 Ревью диапазона `1866a2d..61da2ee` и отчёта против карточки, 05.10.2026.
 
@@ -207,3 +248,11 @@ Recommendations:
   рекомендации CI 4); если РК изменяется, записать новый SHA и повторить гейт по п. 3 Architect Decision.
 - При сохранении РК `61da2ee` выпуск опирается на уже пройденный гейт этого SHA. Ограничение Safari/Firefox
   остаётся в документации; после публикации выполнить закрытие карточки и очистку CI-тегов по п. 5.
+
+##### Требования после аудита — 07.10.2026
+
+Engineer поставил повторную FIX 1 перед RELEASE 1. Аудит выявил устаревшее ограничение `--wasm` в MIGRATION и
+несогласованный статус Web в README примера; они не были охвачены прежней таблицей аудита документации.
+Поэтому прежний технический PASS остаётся фактом для `61da2ee`, а выпуск ждёт приёмки FIX 1 и гейта нового
+кандидата по обновлённым требованиям. Рекомендация сохранить старый РК без изменений выше больше не является
+текущим следующим шагом. Новое ревью заполняет Reviewer после отчёта нового кандидата.
