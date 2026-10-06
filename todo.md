@@ -44,7 +44,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | TODO | T2 / T1 + Engineer | — | — | FIX 1 принята; Executor формирует новый кандидат по A1 (коммит документов `de5a5df`) либо A2 после решения Engineer и выполняет гейт нового SHA. Старые отчёты сохранены как история; выпуск — Engineer после нового Review. |
+| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | IN_PROGRESS | T2 / T1 + Engineer | Executor | — | Формирую кандидат по A1 из `de5a5df` и запускаю его релизный гейт; публикация остаётся решением Engineer. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 

@@ -1,7 +1,7 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** TODO · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** — · **Depends On:** — · **Probe:** windows+pixel3+web
+**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3+web
 
-**Base SHA:** `1866a2d155cc241b1e0b0af7f71e23398b2637e1` (база первоначального гейта, принятый SHA пула `WASM`)
+**Base SHA:** `09f18920635105c6817d895008f7f2599e82017f` (dev на старте повторного гейта)
 
 **Release candidate:** прежний — `release/0.5.1` at `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`; новый после FIX 1 ещё не сформирован.
 
