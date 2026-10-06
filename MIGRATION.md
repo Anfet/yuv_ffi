@@ -1,23 +1,30 @@
-# Migrating from 0.2.4 to 0.5.0
+# Migrating to 0.5.x
 
 ## Scope
 
-This guide covers applications moving from the last available release, `yuv_ffi: ^0.2.4`, to `yuv_ffi: ^0.5.0`. Version 0.4.0 was published and later retracted. Applications whose lockfile still resolves 0.4.0 follow the same migration. The minimums are Dart 3.12, Flutter 3.44, Android API 26, iOS 13, and macOS 10.15. Android `x86` is no longer supported; supported Android ABIs are `armeabi-v7a`, `arm64-v8a`, and `x86_64`.
+This guide covers applications moving from the last available release, `yuv_ffi: ^0.2.4`, to the 0.5.x line. Version 0.4.0 was published and later retracted. Applications whose lockfile still resolves 0.4.0 follow the same migration. The minimums are Dart 3.12, Flutter 3.44, Android API 26, iOS 13, and macOS 10.15. Android `x86` is no longer supported; supported Android ABIs are `armeabi-v7a`, `arm64-v8a`, and `x86_64`.
 
 ## Steps
 
-1. Change the dependency to `yuv_ffi: ^0.5.0` and run `flutter pub upgrade yuv_ffi`.
+1. Change the dependency to `yuv_ffi: ^0.5.1` and run `flutter pub upgrade yuv_ffi`.
 2. Await `YuvFfi.initialize()` in every isolate: before capability-gated operations on native platforms and before any image operation on Web.
 3. Apply only the `rename` rows in the table mechanically. Search with each listed pattern first.
 4. Resolve every `review` row using the decision rules below; do not apply a blind replacement.
 5. Migrate persisted frames through your application's own representation as described under Stored frames.
 6. Run the Verify commands, `flutter analyze`, and your application's tests on its supported targets.
 
+## Updating from 0.5.0 to 0.5.1
+
+This update does not require API replacements or re-migration of serialized frames. Change the dependency to
+`yuv_ffi: ^0.5.1`, run `flutter pub upgrade yuv_ffi`, and check the application on its supported targets. The Web
+`--wasm` operation-call failure present in 0.5.0 is fixed in 0.5.1; checked cases passed in Chrome on both the
+JavaScript and `--wasm` builds. Safari and Firefox have not been verified.
+
 ## Mechanical replacements
 
 Each row names one old public symbol or call form. Patterns are intended for `rg` in application Dart sources; adapt file globs to the repository and confirm the receiver is a `YuvImage` where relevant. `rename` preserves the relevant behavior and bytes. `review` requires the decision below.
 
-| 0.2.4 call / symbol | 0.5.0 call / symbol | `rg` pattern | Kind |
+| 0.2.4 call / symbol | 0.5.x call / symbol | `rg` pattern | Kind |
 | --- | --- | --- | --- |
 | `YuvFfi.ensureInitialized()` | `YuvFfi.initialize()` | `YuvFfi\.ensureInitialized\s*\(` | review |
 | `YuvImage.nv21(...)` | `YuvImage.nv12(...)` | `YuvImage\.nv21\s*\(` | review |
@@ -91,16 +98,16 @@ Each row names one old public symbol or call form. Patterns are intended for `rg
 - Supplied `planes:` are packed by default; use `layout: YuvPlaneLayout.preserve` to retain strides and padding.
 - Native capability-gated processing requires `YuvFfi.initialize()` first, once per isolate.
 - Direct plane-buffer writes require `markDirty()` for widget cache invalidation.
-- Encoded 0.2.4 frames are not readable by the 0.5.0 codec; see Stored frames.
+- Encoded 0.2.4 frames are not readable by the 0.5.x codec; see Stored frames.
 - Android `x86` is unsupported. Minimum platform versions are listed in Scope.
 
 ## Stored frames
 
-There is no automatic migration for serialized frames. Decode or otherwise read each old frame with the 0.2.4 application, export an application-owned representation containing format, dimensions, plane row and pixel strides, and plane bytes, then recreate the image with the matching 0.5.0 factory and encode it with `encodeTo`. Do not re-save a v1 payload with the 0.5.0 codec and expect it to migrate; the formats are incompatible.
+There is no automatic migration for serialized frames from 0.2.4. Decode or otherwise read each old frame with the 0.2.4 application, export an application-owned representation containing format, dimensions, plane row and pixel strides, and plane bytes, then recreate the image with the matching 0.5.x factory and encode it with `encodeTo`. Do not re-save a v1 payload with the 0.5.x codec and expect it to migrate; the formats are incompatible. Frames already encoded by 0.5.0 need no re-migration for 0.5.1.
 
 ## Native and Web consumers
 
-Code calling removed native exports such as `yuv420_*`, `nv21_*`, or `bgra8888_*` must move to the ABI v1 interface and its frame/options structures. Do not call those removed symbols directly. Web uses the JavaScript Flutter build. `flutter build web --wasm` can build, but WASM operation calls fail at runtime due to the current interop return-value mismatch; use `flutter build web`. Safari and Firefox are not verified.
+Code calling removed native exports such as `yuv420_*`, `nv21_*`, or `bgra8888_*` must move to the ABI v1 interface and its frame/options structures. Do not call those removed symbols directly. Web uses Flutter's JavaScript or `--wasm` build. The interop return-value failure in 0.5.0 is fixed in 0.5.1: checked operation cases passed in Chrome on both builds. This evidence does not cover every input or browser; Safari and Firefox have not been verified. Use `YuvCapabilities` to check the operations exported by the loaded module.
 
 ## Verify
 
