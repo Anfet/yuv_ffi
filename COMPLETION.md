@@ -10,6 +10,7 @@
 
 ## Цикл 0.5.1
 
+- **RELEASE 1** — 0.5.1 выпущена 07.10.2026 по команде Engineer: pub.dev подтвердил публикацию, аннотированный тег `0.5.1`, `main` и `release/0.5.1` на принятом SHA `2287a8efa636141914d25b844b279d4dd77d4b3d`; `main` — предок `dev`, CI-теги очищены. Свежий CI `ci/all/0.5.1-2` 9/9 success (Web run 37544596027), Pixel 3 arm64/armv7 по 1188 PASS, pana 160/160, публикация exit 0. Ревью: `git show 6594930:tasks/0.5.1/RELEASE-1.md`.
 - **FIX 1** — README приведён к фактическому статусу Web и платформ, версия `0.5.1` в файлах D-14 и `example/pubspec.lock`; первоначально принято на `1866a2d`, Pixel 3 arm64/armv7 1188/1188, CI: `ci/web/WASM` run 37243974376 — success (карточка: `git show 2651ebd:tasks/0.5.1/FIX-1.md`). Повторно принято 07.10.2026 на `302c75f`: четыре документа согласованы по Web JavaScript/`--wasm` в Chrome и миграции 0.5.x; переносимый коммит `de5a5df`, Probe: none, CI: не требуется; гейт нового кандидата — RELEASE 1. Ревью: `git show a336929:tasks/0.5.1/FIX-1.md`.
 - **WEB 4** — interop Web backend исправлен для `flutter build web --wasm`: probe 1188, reference 119, шейдер и `all_web_test.dart` проходят в Chrome. Принято на `1866a2d`; CI: `ci/web/WASM` run 37243974376 — success. Карточка: `git show 2651ebd:tasks/0.5.1/WEB-4.md`.
 - **CI 1** — Web CI требует обязательный прогон probe, shader probe и all Web tests с `--wasm`. Принято на `1866a2d`; run 37243974376 — success.
