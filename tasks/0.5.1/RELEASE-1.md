@@ -1,12 +1,12 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3+web
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Reviewer · **Depends On:** — · **Probe:** windows+pixel3+web
 
 **Base SHA:** `862cd4f2742fe1d2ef4278ad74bc9aee2f7bf61e` (dev на старте нового гейта)
 
-**Release candidate:** формируется по A2; SHA будет записан до проверок. Engineer разрешил включить исправления CI 2/CI 3/CI 4.
+**Release candidate:** `release/0.5.1` at `2287a8efa636141914d25b844b279d4dd77d4b3d` (A2: FIX 1 и исправления CI 2/CI 3/CI 4).
 
-**Следующий шаг:** сформировать A2 fast-forward кандидата после включения истории `release/0.5.1` в `dev`, затем выполнить
-полный локальный и CI-гейт на одном новом SHA. Отчёты ниже относятся к прежним кандидатам и остаются историей.
+**Следующий шаг:** Reviewer проверяет отчёт и записывает Pixel-пробы; после принятия Engineer решает выпуск. Тег 0.5.1,
+публикация и изменение `main` ещё не выполнялись.
 
 #### Goal
 
@@ -32,7 +32,7 @@ MIGRATION и README примера, все проверки — на одном 
    Блокирующая находка — черновик `FIX N` и `ENGINEER_REQUIRED`.
 2. **Релиз-кандидат после приёмки FIX 1.** Рабочая документация меняется в `dev`; отдельный коммит четырёх документов
    берётся из `Validated at` принятой FIX 1. Новый SHA кандидата записать в `todo.md` и отчёт до проверок.
-   - **A1 — действует D-31:** на `release/0.5.1` поверх прежнего кандидата перенести только этот коммит документов
+   - **A1 — исторический вариант по D-31:** на `release/0.5.1` поверх прежнего кандидата перенести только этот коммит документов
      (`git cherry-pick <Validated at FIX 1>`). Пустой diff по коду, тестам, assets и CI против прежнего кандидата
      обязателен; публикационные документы должны совпасть с принятыми в FIX 1. При конфликте сверить четыре
      документа с принятым diff; если требуется иная правка содержания — вернуть FIX 1, не исправлять её в гейте.
@@ -109,7 +109,80 @@ MIGRATION и README примера, все проверки — на одном 
 
 #### Executor Report
 
-##### Новый кандидат — 07.10.2026
+##### Кандидат A2 — 07.10.2026
+
+Validated at: `2287a8efa636141914d25b844b279d4dd77d4b3d`
+
+1. FIX 1 принята; Engineer выбрал A2. История `release/0.5.1` включена в `dev` merge-коммитом `99736ec` с сохранением
+   актуальных status docs; затем `release/0.5.1` fast-forward до `2287a8e`. Четыре релизных документа совпадают с
+   принятым FIX 1 (`git diff --exit-code de5a5df 2287a8efa636141914d25b844b279d4dd77d4b3d -- CHANGELOG.md README.md MIGRATION.md example/README.md` — exit 0).
+   В кандидат вошли исправления CI 2/CI 3/CI 4: `ci-web.yml`, `tool/ci/web.sh`, timeout camera smoke и teardown
+   `image_cache_key_web_test`; diff A1→A2 по этим исполняемым файлам — 4 файла, 294 additions, 4 deletions.
+2. Аудит `0.5.0..2287a8e` — блокирующих находок нет:
+
+   | Область | Что сверено | Результат |
+   | --- | --- | --- |
+   | CHANGELOG | `## 0.5.1` против пользовательских изменений | Web `--wasm` и статус платформ/Web описаны; внутренних пунктов нет. |
+   | README | Requirements, Platform status, Web backend против `doc/web-parity.md` | Согласованы; Safari/Firefox — not verified; границы Web соответствуют проверенному Chrome. |
+   | MIGRATION и README примера | Принятый diff FIX 1, README и фактическая миграция | Исторический interop-сбой `--wasm` обозначен исправленным в 0.5.1; переход не требует API replacement или повторной миграции кадров. |
+   | Версия | `pubspec.yaml`, CHANGELOG, `darwin/yuv_ffi.podspec`, `src/CMakeLists.txt`, README, `example/pubspec.lock` | Везде 0.5.1. В `src/` только номер версии. |
+   | API и следы разработки | `lib/yuv_ffi.dart`, `test/public_surface_test.dart`, изменённые строки `lib/` | Публичная поверхность не менялась; новые TODO/FIXME, task ID, `print`/`debugPrint`, `ignore` не добавлены. A2 не меняет `lib/`. |
+   | Native, Web и CI | Diff `src/`, assets, Web implementation и A1→A2 | Исправление Web interop остаётся в кандидате; assets не изменены. A2 содержит Mac Web CI, три обязательных `--wasm` цели и изменения тестов CI 3/CI 4. |
+   | Пакет и дерево | `.pubignore`, `flutter pub publish --dry-run`, `tasks/0.5.1/`, `git status --short` | Карточки исключены из архива; одна активная карточка; dry-run без warnings; дерево после проверок чистое. |
+
+3. Проверки на одном SHA `2287a8efa636141914d25b844b279d4dd77d4b3d`:
+
+   | Проверка | Машина / команда | Результат |
+   | --- | --- | --- |
+   | Scope и diff | Windows: `bash tool/ci/scope_guard.sh 0.5.0`; `git diff --check 0.5.0 2287a8efa636141914d25b844b279d4dd77d4b3d` | exit 0; `scope: all`; diff-check exit 0. Четыре документа FIX 1 совпадают с `de5a5df`. |
+   | VM | Windows: `pwsh -File tool/ci/vm.ps1` | exit 0; 638/638. |
+   | Windows | Windows: `pwsh -File tool/ci/windows.ps1` | exit 0; 134/134, release build и пять integration targets PASS. |
+   | Android | Windows: `pwsh -File tool/ci/android.ps1` | exit 0; ABI-split APK и пять integration targets PASS на emulator-5554; emulator остановлен. |
+   | Web | Windows: `pwsh -File tool/ci/web.ps1` | exit 0; Chrome 154, 14 sources/64 cases, reference 119, camera smoke 1; все три `--wasm` цели PASS за 1:10. |
+   | Example | Windows, `FLUTTER_VERSION=3.44.9`: `pwsh -File tool/ci/example.ps1` | exit 0; pub get, analyze и Web build PASS. |
+   | Smoke | Windows: `pwsh -File tool/ci/smoke.ps1` | exit 0; CI helper smoke passed. |
+   | Native C | Windows: `cmake.exe -S . -B <temp> -DBUILD_TESTING=ON`; `cmake.exe --build <temp> --config Release`; `ctest --test-dir <temp> -C Release --output-on-failure` | configure/build/ctest exit 0; 11/11. |
+   | pana | Mac: `pana --exit-code-threshold 0 .` на archive SHA | exit 0; 160/160. |
+   | Publish dry-run | Windows: `flutter pub publish --dry-run` на чистом archive checkout SHA | exit 0; 0 warnings, 676 KB. Публикации не было. |
+   | Pixel 3 arm64 | Reviewer: `tool/probe/run_release_android.ps1 -GitSha <SHA> -Abi arm64` | exit 0; smoke/probe PASS, 1188; run `fcba26befe394bfc8073520bdf59a736`. |
+   | Pixel 3 armv7 | Reviewer: `tool/probe/run_release_android.ps1 -GitSha <SHA> -Abi armv7` | exit 0; smoke/probe PASS, 1188; run `064c0e2d3d9d49e3b6250f15cd7ef3ef`. |
+   | CI | `ci/all/0.5.1-2` — 9/9 success; полный `head_sha` каждого run = SHA кандидата | Таблица workflow → run ниже. |
+
+   CI run IDs и ссылки:
+
+   | Workflow | Run |
+   | --- | --- |
+   | CI VM | [37544595950](https://github.com/Anfet/yuv_ffi/actions/runs/37544595950) |
+   | CI macOS | [37544595972](https://github.com/Anfet/yuv_ffi/actions/runs/37544595972) |
+   | CI Windows | [37544596122](https://github.com/Anfet/yuv_ffi/actions/runs/37544596122) |
+   | Example CI | [37544595948](https://github.com/Anfet/yuv_ffi/actions/runs/37544595948) |
+   | CI Android | [37544595978](https://github.com/Anfet/yuv_ffi/actions/runs/37544595978) |
+   | iOS CI | [37544596066](https://github.com/Anfet/yuv_ffi/actions/runs/37544596066) |
+   | CI (Linux) | [37544596149](https://github.com/Anfet/yuv_ffi/actions/runs/37544596149) |
+   | CI Web | [37544596027](https://github.com/Anfet/yuv_ffi/actions/runs/37544596027) |
+   | CI smoke | [37544595961](https://github.com/Anfet/yuv_ffi/actions/runs/37544595961) |
+
+4. Итог Engineer: A2-кандидат — `release/0.5.1` на `2287a8efa636141914d25b844b279d4dd77d4b3d`; входят принятые
+   документы FIX 1 и исправления CI 2/CI 3/CI 4. Safari/Firefox не проверялись; JavaScript и `--wasm` проверены в
+   Chrome. Публикация, релизный тег `0.5.1` и изменение `main` не выполнялись. Свежий CI-тег — `ci/all/0.5.1-2`.
+
+   Команды Engineer после приёмки:
+
+   ```sh
+   git switch release/0.5.1 && git rev-parse HEAD   # = 2287a8efa636141914d25b844b279d4dd77d4b3d
+   git push origin release/0.5.1
+   git tag -a 0.5.1 -m "Released yuv_ffi 0.5.1" 2287a8efa636141914d25b844b279d4dd77d4b3d
+   git push origin 0.5.1
+   flutter pub publish
+   git push origin 2287a8efa636141914d25b844b279d4dd77d4b3d:main
+   git switch dev
+   ```
+
+Deviations: none.
+
+Engineer attention: после REVIEW Engineer решает выпуск; Safari/Firefox остаются not verified.
+
+##### История кандидата A1 — 07.10.2026
 
 Validated at: `7486938b86b65322dde30c89ad23c75ea2602e99`
 
