@@ -1,5 +1,7 @@
 # FIX 1 — Согласовать документацию перед релизом 0.5.1
-**Status:** TODO · **Tier:** T2, Reviewer T1 · **Owner:** — · **Depends On:** — · **Probe:** none
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 · **Owner:** Reviewer · **Depends On:** — · **Probe:** none
+
+**Base SHA:** `0ae4149448f41dfcb28c73ef35f76397eb5c6ae8`
 
 Повторно открыта по команде Engineer 07.10.2026 после релизного аудита. Первоначальная приёмка FIX 1 отражена в
 `COMPLETION.md` и git; это продолжение той же задачи. При следующем закрытии Reviewer обновляет существующую
@@ -93,8 +95,38 @@ Reviewer читает этот diff и отчёт, runtime-проверки не
 
 #### Executor Report
 
-Заполняет Executor: `Validated at`, таблица DoD → проверка → exit/критерий → результат, таблица документов,
-отклонения и следующий шаг RELEASE 1.
+Validated at: `de5a5df` (документный коммит; база: `0ae4149448f41dfcb28c73ef35f76397eb5c6ae8`)
+
+| DoD | Проверка | Результат |
+| --- | --- | --- |
+| 1. Документы согласованы с проверенным Web-статусом | Прочитаны четыре документа и сопоставлены с `doc/web-parity.md` | Chrome JavaScript и `--wasm`; операции совпадают только в проверенных случаях; `chromaSwap` — NV12 only; Safari/Firefox not verified. Новых обещаний нет. |
+| 2. Переход 0.5.0 → 0.5.1 не требует API-миграции | Diff `MIGRATION.md` и `README.md` против базы; `git diff --exit-code 0.5.0 -- lib/yuv_ffi.dart lib/src/yuv/shared test/public_surface_test.dart` | Пустой diff публичного контракта; обновление API replacements и повторную миграцию сериализованных кадров не требует. Старые правила 0.2.4/0.4.0 сохранены по смыслу. |
+| 3. Только Scope, версия 0.5.1, история CHANGELOG сохранена | `git diff --name-only <base>` и просмотр diff; `git diff --exit-code <base> -- lib src assets shaders darwin android pubspec.yaml example/pubspec.lock`; проверены версии в `pubspec.yaml`, CHANGELOG, podspec и CMake | Пакетный коммит содержит только четыре разрешённых Markdown-файла; запрещённый diff пустой; версии везде 0.5.1, старые записи CHANGELOG не менялись. `bash tool/ci/scope_guard.sh <base>` — exit 0, `scope: none`. |
+| 4. Коммит и отчёт готовы к переносу/ревью | `git show --stat de5a5df`; `git diff --check <base>` | exit 0; документный коммит содержит ровно README.md, MIGRATION.md, example/README.md и CHANGELOG.md. База и результаты проверок записаны здесь. |
+
+#### Таблица согласования документов
+
+| Документ | Раздел | Итог против `doc/web-parity.md` |
+| --- | --- | --- |
+| `MIGRATION.md` | Updating from 0.5.0; Native and Web consumers | Исправление `--wasm` в 0.5.1, Chrome JavaScript/`--wasm` checked cases, Safari/Firefox not verified. |
+| `README.md` | Requirements, Platform status, Web backend, Migrating to 0.5.x | Сборки и ограничения уже согласованы; уточнено 0.5.1 и отсутствие API replacements при обновлении с 0.5.0. |
+| `example/README.md` | Web запуск | Проверенные операции в Chrome на JavaScript/`--wasm`, `chromaSwap` только NV12, Safari/Firefox not verified; паритет операций не обещает поддержку камеры. |
+| `CHANGELOG.md` | Documentation в `## 0.5.1` | Добавлены обе Web-сборки, браузерные границы и отсутствие API replacements для перехода 0.5.0 → 0.5.1; история не менялась. |
+
+#### Validation
+
+На Windows из корня пакета; все команды завершились с exit 0:
+
+- `git diff --check 0ae4149448f41dfcb28c73ef35f76397eb5c6ae8` — exit 0.
+- `bash tool/ci/scope_guard.sh 0ae4149448f41dfcb28c73ef35f76397eb5c6ae8` — exit 0, `scope: none`.
+- `git diff --name-only <base>` — пакетные изменения только в Scope; дополнительно присутствуют ожидаемые `tasks/0.5.1/FIX-1.md` и `todo.md`.
+- `git diff --exit-code <base> -- lib src assets shaders darwin android pubspec.yaml example/pubspec.lock` — exit 0, diff пуст.
+- `git diff --exit-code 0.5.0 -- lib/yuv_ffi.dart lib/src/yuv/shared test/public_surface_test.dart` — exit 0, diff пуст.
+- `git show --stat --oneline de5a5df` — exit 0, ровно четыре внешних Markdown-файла.
+
+Deviations: none.
+
+Engineer attention: none. Следующий шаг — Reviewer принимает FIX 1; RELEASE 1 остаётся BLOCKED до этой приёмки, после неё Executor формирует новый кандидат и запускает релизный гейт.
 
 #### Review
 
