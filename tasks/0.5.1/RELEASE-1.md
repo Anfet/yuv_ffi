@@ -1,13 +1,15 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Reviewer · **Depends On:** — · **Probe:** windows+pixel3+web
+**Status:** BLOCKED · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Engineer · **Depends On:** — · **Probe:** windows+pixel3+web
 
 **Base SHA:** `09f18920635105c6817d895008f7f2599e82017f` (dev на старте повторного гейта)
 
-**Release candidate:** прежний — `release/0.5.1` at `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`; новый после FIX 1 ещё не сформирован.
+**Release candidate:** `release/0.5.1` at `7486938b86b65322dde30c89ad23c75ea2602e99` (A1, четыре документа FIX 1
+поверх прежнего `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`).
 
-**Следующий шаг:** FIX 1 принята; Executor формирует новый кандидат по A1 (коммит документов `de5a5df`)
-либо A2 после решения Engineer → гейт нового SHA → решение о выпуске.
-Отчёты и PASS 05–06.10.2026 ниже относятся только к прежнему кандидату и не закрывают этот повторный гейт.
+**Следующий шаг:** технический гейт нового кандидата принят; ожидаются подпись и публикация Engineer по командам
+в новом Review. После публикации — закрытие по п. 5. Reviewer вернулся в `dev`; кандидат не менялся.
+Отчёты и PASS 05–06.10.2026 ниже относятся к прежнему кандидату. Исключение Engineer для прежнего CI 9/9
+записано в новом Executor Report и Review; остальные текущие результаты относятся к `7486938`.
 
 #### Goal
 
@@ -222,6 +224,65 @@ Deviations: локальный Android script сначала остановил�
 Engineer attention: Reviewer должен выполнить Pixel 3 arm64/armv7 и верификации из Validation на SHA кандидата; после этого Engineer подписывает гейт и выпускает пакет.
 
 #### Review
+
+##### Новый гейт — 07.10.2026
+
+**Вердикт: PASS, блокирующих замечаний нет.** Принятый SHA кандидата:
+`7486938b86b65322dde30c89ad23c75ea2602e99`. Статус `BLOCKED`: требуются подпись и публикация Engineer;
+закрытие карточки — после публикации по п. 5. Тег, публикация и изменение `main` Reviewer не выполнял.
+
+Проверены diff повторного гейта, состав A1 `61da2ee..7486938` и новый Executor Report против DoD 1–5:
+
+- Только четыре внешних документа FIX 1; их diff против `de5a5df` пуст. Ранее принятое ревью FIX 1 применимо.
+  Код, тесты, assets, CI и манифесты прежнего кандидата не менялись; публичный контракт сохранён.
+- Аудит охватывает четыре документа, версии, API, следы работы и состав пакета. Локальные проверки,
+  CMake/CTest 11/11, pana 160/160 и dry-run 0 warnings подтверждены новым отчётом с exit 0 на `7486938`.
+  Успешные проверки Executor не повторялись (§2 Reviewer).
+- По назначению Validation сверены все девять run через
+  `gh run list --repo Anfet/yuv_ffi --commit 61da2ee3457ee81e1ab7de99bbf54d3170f1fde1 --limit 30
+  --json databaseId,name,headSha,conclusion,status,event` — exit 0: совпадают с исторической таблицей,
+  каждый `completed/success`, `headSha` = `61da2ee3457ee81e1ab7de99bbf54d3170f1fde1`.
+  Свежего CI на `7486938` нет; прежние 9/9 засчитаны по исключению Engineer, записанному Executor.
+- `main` — предок `7486938` (`git merge-base --is-ancestor main 7486938`, exit 0); fast-forward возможен.
+
+Прогоны Reviewer — причина 1, прямо назначены Validation. Чистый checkout `release/0.5.1` на полном SHA
+кандидата; Pixel 3 (`8B1X11QLW`), Android 12, release, установка через `adb install -r`:
+
+| Проверка | Команда | Результат |
+| --- | --- | --- |
+| Pixel 3 arm64 | `pwsh -File tool/probe/run_release_android.ps1 -GitSha 7486938b86b65322dde30c89ad23c75ea2602e99 -Serial 8B1X11QLW -Abi arm64` | exit 0; arm64-v8a; smoke PASS, probe PASS, 1188; runId `8b1137660823474388b1b03502a2904a` |
+| Pixel 3 armv7 | та же команда, `-Abi armv7` | exit 0; armeabi-v7a; smoke PASS, probe PASS, 1188; runId `db6d2f9184e7488c99357633a97cea6b` |
+
+В обоих `RA25_HOST_RESULT` значения `gitSha` и `revision` равны полному SHA кандидата. Логи:
+`%TEMP%/yuv-ffi-release-7486938-arm64-review.log` и `…-armv7-review.log`; host/device JSON —
+`%TEMP%/yuv_ffi-ra25-release/` с указанными runId. Сырые данные не коммитятся.
+После проб приложение остановлено; tracked/untracked дерево чистое, Reviewer вернулся в `dev`.
+
+Исправлены только устаревшие учётные формулировки в заголовке карточки и `todo.md`; содержание кандидата
+и Executor Report не изменено. JavaScript и `--wasm` проверены в пределах случаев Chrome;
+Safari/Firefox остаются not verified.
+
+Recommendations:
+
+- A1 не содержит переноса Web CI на Mac и исправлений тестов CI 3/CI 4. Засчитанный исторический CI
+  не подтверждает новый прогон на Mac; решение об их переносе остаётся за Engineer (D-31).
+  При изменении кандидата нужен новый SHA и повтор гейта.
+
+Актуальные команды Engineer после подписи гейта (исторические команды с `61da2ee` ниже не использовать):
+
+```sh
+git switch release/0.5.1 && git rev-parse HEAD   # = 7486938b86b65322dde30c89ad23c75ea2602e99
+git push origin release/0.5.1
+git tag -a 0.5.1 -m "Released yuv_ffi 0.5.1" 7486938b86b65322dde30c89ad23c75ea2602e99
+git push origin 0.5.1
+flutter pub publish
+git push origin 7486938b86b65322dde30c89ad23c75ea2602e99:main
+git switch dev
+git fetch origin
+git merge origin/main
+```
+
+После публикации Engineer или роль по его команде выполняет очистку CI-тегов и закрытие по п. 5.
 
 ##### История прежнего гейта — 05–06.10.2026
 
