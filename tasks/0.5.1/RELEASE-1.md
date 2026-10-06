@@ -1,5 +1,5 @@
 # RELEASE 1 — Релизный гейт 0.5.1
-**Status:** IN_PROGRESS · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Executor · **Depends On:** — · **Probe:** windows+pixel3+web
+**Status:** REVIEW · **Tier:** T2, Reviewer T1 + Engineer · **Owner:** Reviewer · **Depends On:** — · **Probe:** windows+pixel3+web
 
 **Base SHA:** `09f18920635105c6817d895008f7f2599e82017f` (dev на старте повторного гейта)
 
@@ -108,6 +108,49 @@ MIGRATION и README примера, все проверки — на одном 
   Pixel 3 arm64/armv7 и записать результаты. Успешные проверки Executor повторно не назначаются Reviewer.
 
 #### Executor Report
+
+##### Новый кандидат — 07.10.2026
+
+Validated at: `7486938b86b65322dde30c89ad23c75ea2602e99`
+
+1. FIX 1 принята; состав A1 — сравнение `de5a5df` с принятым ревью FIX 1 и diff `61da2ee..7486938` — перенесены только `CHANGELOG.md`, `README.md`, `MIGRATION.md`, `example/README.md`; документы совпадают с принятым коммитом. Ветка `release/0.5.1` оставлена на новом SHA, затем Executor вернулся на `dev`.
+2. Аудит `0.5.0..7486938` — блокирующих находок нет:
+
+   | Область | Что проверено | Результат |
+   | --- | --- | --- |
+   | CHANGELOG | `## 0.5.1` против пользовательских изменений `0.5.0..7486938` | Отражены исправление Web interop для `--wasm` и уточнения статуса платформ/Web; внутренних пунктов нет. |
+   | README | Requirements, Platform status, Web backend против `doc/web-parity.md` | Согласовано; Safari и Firefox обозначены как not verified; ограничения Web соответствуют проверенному Chrome. |
+   | MIGRATION и README примера | Сверка с README и изменениями FIX 1 | Ошибка interop `--wasm` обозначена исторической для 0.5.0 и исправленной в 0.5.1; переход не требует замены API или повторной миграции кадров. |
+   | Версия | `pubspec.yaml`, CHANGELOG, `darwin/yuv_ffi.podspec`, `src/CMakeLists.txt`, README, `example/pubspec.lock` | Везде 0.5.1. |
+   | API и следы работы | `lib/yuv_ffi.dart`, `test/public_surface_test.dart`; добавленные строки Dart в `lib/` | Публичная поверхность не менялась; новых TODO/FIXME, ID задач, `print`/`debugPrint` и `ignore` нет. |
+   | Состав и артефакты | `flutter pub publish --dry-run`, `.pubignore`, `git status --short --ignored`, `tasks/0.5.1/` | Архив 679 KB, 0 warnings; карточки исключены из пакета; в `tasks/0.5.1/` одна активная карточка. Tracked/untracked дерево чистое; локальные ignored cache/build пути не входят в архив. |
+
+3. Проверки нового кандидата:
+
+   | Проверка | Машина / команда | Результат |
+   | --- | --- | --- |
+   | Scope и diff | Windows: `bash tool/ci/scope_guard.sh 0.5.0`; `git diff --check 0.5.0..7486938`; `git diff --exit-code 61da2ee..7486938 -- lib src assets shaders darwin android example/lib example/integration_test tool .github pubspec.yaml example/pubspec.lock` | exit 0; `scope: all`; whitespace ошибок нет; код, тесты, assets, CI и манифесты не менялись. |
+   | VM | Windows: `pwsh -File tool/ci/vm.ps1` | exit 0; 638/638. |
+   | Windows | Windows: `pwsh -File tool/ci/windows.ps1` | exit 0; 134/134 и пять integration targets PASS. |
+   | Android | Windows: `pwsh -File tool/ci/android.ps1` | exit 0; ABI split build и пять integration targets PASS на эмуляторе. |
+   | Web | Windows: `pwsh -File tool/ci/web.ps1` | exit 0; JavaScript 14 sources/64 cases, reference 119, camera smoke 1; все три `--wasm` цели PASS. |
+   | Example | Windows, `FLUTTER_VERSION=3.44.9`: `pwsh -File tool/ci/example.ps1` | exit 0; analyze и Web build PASS. |
+   | Smoke | Windows: `pwsh -File tool/ci/smoke.ps1` | exit 0; CI helper smoke passed. |
+   | Native C | Windows: CMake Release configure/build и CTest (`RUN_TESTS`) | exit 0; 11/11. |
+   | pana | Mac: `pana --exit-code-threshold 0 .` на `git archive` нового SHA | exit 0; 160/160. Временная копия после прогона удалена. |
+   | Publish dry-run | Windows: `flutter pub publish --dry-run` на чистом tracked checkout нового SHA | exit 0; 0 warnings, 679 KB. Публикации не было. |
+   | CI | `ci/all/0.5.1` на прежнем кандидате `61da2ee` | 9/9 success; run и `head_sha` сохранены в историческом разделе ниже. По указанию Engineer эти PASS засчитаны повторно: новый A1-кандидат меняет только четыре документа FIX 1, код и тесты не изменились. Эти run не утверждаются как запущенные на `7486938`. |
+   | Pixel 3 | Reviewer: `tool/probe/run_release_android.ps1 -GitSha 7486938... -Abi arm64` и отдельно `-Abi armv7` | Ожидает Reviewer; оба результата должны быть smoke/probe PASS, 1188. |
+
+   В `src/CMakeLists.txt` изменение только номера версии, но CMake Release build и CTest выполнены на новом SHA.
+
+4. Отчёт Engineer: кандидат A1 — `release/0.5.1` на `7486938b86b65322dde30c89ad23c75ea2602e99`; четыре документа FIX 1. Safari/Firefox — not verified; JavaScript и `--wasm` проверены в Chrome. CI 9/9 засчитан из исторического прогона на `61da2ee` по прямому указанию Engineer, поскольку код и тесты не менялись. Команды выпуска остаются в историческом подразделе как справка; публикация, тег `0.5.1` и изменение `main` не выполнялись.
+
+5. Reviewer: выполнить Pixel 3 arm64/armv7 на `7486938b86b65322dde30c89ad23c75ea2602e99`, сверить этот отчёт и принять гейт. Engineer решает выпуск после ревью.
+
+Deviations: свежий `ci/all/0.5.1-<N>` не запускался; вместо него по прямому указанию Engineer приняты PASS прежнего полного `ci/all/0.5.1` 9/9 на `61da2ee`, так как новый кандидат меняет только документы и не меняет код/тесты. Его `head_sha` остаётся историческим `61da2ee`.
+
+Engineer attention: Pixel 3 arm64 и armv7 — Reviewer; после принятия Engineer отдельно решает выпуск. Публикация не выполнялась.
 
 ##### История прежнего кандидата — 05.10.2026
 

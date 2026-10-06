@@ -44,7 +44,7 @@ ID ведёт к карточке в `tasks/0.5.1/`.
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | IN_PROGRESS | T2 / T1 + Engineer | Executor | — | Формирую кандидат по A1 из `de5a5df` и запускаю его релизный гейт; публикация остаётся решением Engineer. |
+| [RELEASE 1](tasks/0.5.1/RELEASE-1.md) | REVIEW | T2 / T1 + Engineer | Reviewer | — | Кандидат A1 `7486938`; локальный гейт и pana PASS. Старый `ci/all` принят по указанию Engineer из-за отсутствия изменений кода/тестов; ожидаются Pixel 3 arm64/armv7 и ревью. Публикация — решение Engineer. |
 
 Отложено: RUNNER 1 — `DEFERRED` (новые службы раннеров не планируются); карточка в git: `git show b160704:tasks/0.5.0/RUNNER-1.md`.
 
