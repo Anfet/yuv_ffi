@@ -33,7 +33,7 @@
 
 | ID | Status | Tier | Owner | Depends on | Summary / next step |
 | --- | --- | --- | --- | --- | --- |
-| [PREP 1](tasks/0.5.2/PREP-1.md) | IN_PROGRESS | T2 | — | — | **Карта выделения камеры.** Карта — `doc/camera-extraction.md`; ждёт ревью, затем Architect расписывает карточки этапа 1. |
+| [PREP 1](tasks/0.5.2/PREP-1.md) | REVIEW | T2 | — | — | **Карта выделения камеры.** Карта — `doc/camera-extraction.md`; ждёт ревью, затем Architect расписывает карточки этапа 1. |
 
 ## Открытые вопросы
 

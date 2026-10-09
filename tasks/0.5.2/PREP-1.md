@@ -1,6 +1,6 @@
 # PREP 1 — карта выделения yuv_camera 0.0.1
 
-**Status:** TODO
+**Status:** REVIEW
 **Tier:** T2
 **Owner:** —
 **Depends on:** —
@@ -50,7 +50,19 @@
 
 #### Executor Report
 
-Не заполнен.
+Base (пул): `b81bf2c` (`dev`)
+Validated at: `ff8618d`
+Карта: [doc/camera-extraction.md](../../doc/camera-extraction.md). Код, зависимости, CI, assets и версии не менялись; тесты и сборки не запускались (`Probe: none`, только Markdown).
+
+1. DoD 1 (карта охватывает исходники, UI, зависимости, платформенные настройки) — `rg --files`/`git ls-files example/lib example/test example/integration_test` сопоставлены с документом скриптом: каждый из 21 файла `example/lib` и 13 файлов `example/test` назван в таблицах 2.1–2.2 (`MISSING` — пусто); пять камерных и смешанных целей `integration_test` — 2.3; остальные цели проверены `rg` на `camera|mlkit|face|editor|device_check|fake_camera` — камеры нет; `example/pubspec.yaml` — раздел 1; android/ios/macos/windows/web — 2.5. Результат: выполнено.
+2. DoD 2 (тесты, helpers, бенчмарки; смешанные сценарии) — `rg -n` по `example/test`, `example/integration_test`, `example/probe`, `test/`, `tool/probe`: 35 тестов `example/test` (34 уезжают, 1 остаётся), 5 камерных integration-целей, `helpers/` (33 файла) и `probe/` камеры не содержат; сохраняемые утверждения смешанных сценариев — раздел 3 (C1–C5, D1–D5, DC-таблица). Рассмотренные пути — раздел 8 документа. Результат: выполнено.
+3. DoD 3 (скрипты/workflows и targets) — `rg -n 'camera|mlkit|device_check|editor' tool/ci .github/workflows example/tool` и чтение `windows.ps1`, `android.ps1`, `example.ps1`, `vm.ps1`, `smoke.ps1`, `ios.sh`, `macos.sh`, `web.ps1`, `web.sh`, `drive.*`, `scope_guard.sh`, всех workflows: вызовы камерных целей — только `web.*` (camera smoke) и glob `*_native_test.dart` (`camera_capture_native_test`); ручные цели без вызывающих скриптов; для каждой — текущая и будущая команда, окружение, PASS: раздел 4. Результат: выполнено.
+4. DoD 4 (граница, порядок, место, desktop, пара, решения) — документ прочитан против Architect Decision 1–7 и `todo.md`: AD 1 — таблицы 2.1–2.6; AD 2 — раздел 1; AD 3 — разделы 2, 8; AD 4 — раздел 3; AD 5 — раздел 4; AD 6 — разделы 5–6; AD 7 — раздел 6 (A1 подтверждён фактами `camera_desktop 2.0.0`, A2 не нужен). Остаточные решения Engineer — Q1–Q4 (раздел 7, `todo.md`, «Открытые вопросы»). Результат: выполнено.
+5. DoD 5 (изменены только документы) — `git diff --name-only b81bf2c -- . ':!.github'` → `doc/camera-extraction.md`, `tasks/0.5.2/PREP-1.md`, `todo.md`; `git diff --check b81bf2c -- <эти три пути>` — exit 0. Пять изменённых `.github/workflows/ci-*.yml` в дереве не мои (были до старта), в коммиты не включены. Результат: выполнено.
+6. DoD 6 — by Reviewer.
+
+Deviations: нет. В `doc/camera-extraction.md` (раздел 3.7) расхождение с формулировкой Architect Decision 5: iOS-ориентацию считать «непроверенной» нельзя без оговорки — APPLE 1 (04.10.2026) подтвердил её на одном iPhone; dartdoc `YuvCameraFrame` устарел. Вынесено в Q3, текст карты следует APPLE 1.
+Engineer attention: Q1–Q4 (`todo.md`). Наблюдения вне объёма (не исправлялись): `example/test` не запускается ни одним скриптом CI (35 тестов); устаревшая ссылка в `test/pack_planes_native_equivalence_test.dart`; `ffi` в `example/pubspec.yaml` без потребителя; записи `.memory/MEMORY.md` с путями камерных файлов устареют после переноса. Memory: без изменений.
 
 #### Review
 
