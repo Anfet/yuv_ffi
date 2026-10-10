@@ -4,8 +4,9 @@
 you already own, and decide whether to keep or remove row padding.
 
 **Conditions:** `YuvFfi.initialize()` has completed (see
-[Getting started](https://github.com/Anfet/yuv_ffi/wiki/Getting-started)). Creating an empty image and reading its
-planes works without it; converting RGBA bytes needs it.
+[Getting started](https://github.com/Anfet/yuv_ffi/wiki/Getting-started)). On native platforms, creating an empty
+image and reading its planes works without it, which is why the two short programs below do not call it; converting
+RGBA bytes always needs it. On Web every `YuvImage` operation needs it, so await `YuvFfi.initialize()` first there.
 
 ## Formats
 

@@ -118,7 +118,8 @@ All nine format pairs (I420, NV12 and BGRA, each to each) are supported on nativ
 ### Paste a patch
 
 `applyPatch(fragment, x:, y:)` copies an opaque image of the same format into this one without scaling. It never touches
-the destination's padding bytes. It works without `initialize()` because it is plain Dart.
+the destination's padding bytes. On native platforms it works without `initialize()` because it is plain Dart, so
+the program below does not call it; on Web await `YuvFfi.initialize()` first, as for every `YuvImage` operation.
 
 ```dart
 import 'package:flutter/foundation.dart';
