@@ -23,6 +23,14 @@
 - Web parity notes no longer count the camera Web smoke as `yuv_ffi`
   evidence; it is tracked by `yuv_camera`.
 
+### Development
+
+- Removed the GitHub Actions workflows. Every check they ran is kept as a
+  script in `tool/ci/` and runs directly on the maintainer's machines: the
+  Linux sanitizer, packaging, app-runtime and native integration checks moved
+  to `tool/ci/linux.sh`, and the FFI bindings regeneration and audit moved to
+  `tool/ci/bindings.sh`. The platform status table no longer claims CI.
+
 ## 0.5.1
 
 ### Documentation

@@ -17,43 +17,17 @@ path_keys() {
       printf '\n'
       ;;
     lib/src/functions/bindings/*|ffigen.yaml|src/include/*)
-      printf 'all\n'
-      ;;
-    .github/workflows/ci.yml)
-      printf 'all\n'
-      ;;
-    .github/workflows/ci-smoke.yml)
-      printf 'all\n'
-      ;;
-    .github/workflows/ci-vm.yml)
-      printf 'vm\n'
-      ;;
-    .github/workflows/ci-windows.yml)
-      printf 'windows\n'
-      ;;
-    .github/workflows/ci-macos.yml)
-      printf 'macos\n'
-      ;;
-    .github/workflows/ci-ios.yml)
-      printf 'ios\n'
-      ;;
-    .github/workflows/ci-android.yml)
-      printf 'android\n'
-      ;;
-    .github/workflows/ci-linux.yml)
-      printf 'linux\n'
-      ;;
-    .github/workflows/ci-web.yml)
-      printf 'web\n'
-      ;;
-    .github/workflows/ci-example.yml)
-      printf 'example\n'
+      printf 'all bindings\n'
       ;;
     .github/workflows/*)
+      # The package has no workflows; a returning one is reported as `all`.
       printf 'all\n'
       ;;
     tool/ci/_common.ps1|tool/ci/drive.ps1|tool/ci/drive.sh|tool/ci/smoke.ps1|tool/ci/scope_guard.sh)
       printf 'all\n'
+      ;;
+    tool/ci/bindings.*)
+      printf 'bindings\n'
       ;;
     tool/ci/vm.*)
       printf 'vm\n'

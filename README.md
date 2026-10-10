@@ -236,7 +236,11 @@ Public calls can throw:
 
 ## Platform status
 
-| Platform | Support | Checked in CI | Checked manually |
+The automated checks below run directly on the maintainer's Windows, Linux and
+macOS machines through the scripts in `tool/ci/`; each release records their
+results against its exact commit. The repository has no hosted CI.
+
+| Platform | Support | Checked by package scripts | Checked manually |
 | --- | --- | --- | --- |
 | Android | Native FFI: `armeabi-v7a`, `arm64-v8a`, `x86_64` | Build, app-runtime smoke, and the 1188-case correctness matrix | Release builds on a physical Pixel 3 for `arm64-v8a` and `armeabi-v7a` |
 | iOS | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | Release build on a physical iPhone (iOS 18.7): shader display; camera and device checks are in `yuv_camera` |

@@ -44,7 +44,7 @@ Memory: D:\.projects\yuv\.memory\MEMORY.md
   | ABI-контракт обоих backend: `lib/src/yuv/shared/yuv_abi_v1_*`, `lib/src/yuv/shared/yuv_native_status.dart` | `windows+pixel3+web` |
   | Web-путь: `lib/src/yuv/impl/web/**`, `lib/src/web/**`, `lib/src/loader/impl/*_web.dart`, `assets/wasm/**`, `tool/wasm/**` | `web` |
   | Прочий общий код операций: `lib/src/yuv/**` вне `impl/io` и `impl/web`, `lib/src/yuv_*.dart` | `windows+web` |
-  | Остальное в `lib/` (`widgets/`, `geometry/`), `example/`, `test/`, документы, CI, `tool/` | `none` |
+  | Остальное в `lib/` (`widgets/`, `geometry/`), `example/`, `test/`, документы, `tool/` | `none` |
 
   Утверждение о скорости добавляет пробу каждого backend, о котором оно сделано (native — `windows+pixel3`, Web —
   `web`). Изменение `src/`, после которого пересобираются WASM-артефакты, добавляет `web`. Изменения только в
@@ -58,7 +58,8 @@ Memory: D:\.projects\yuv\.memory\MEMORY.md
 ## Локальные проверки
 
 Ключи для изменённых путей печатает `bash tool/ci/scope_guard.sh <base>` (источник правды — `path_keys()` в
-скрипте); `all` — все доступные команды. Документы (`*.md`, `doc/`, `tasks/`) проверок не требуют.
+скрипте); `all` — все команды таблицы, включая `bindings`. Документы (`*.md`, `doc/`, `tasks/`) проверок не требуют.
+Каталог `tool/ci/` — имя каталога scripts; что каждый script заменяет из удалённых workflows — `doc/validation.md`.
 
 | Ключ | Команда | Где |
 | --- | --- | --- |
@@ -66,11 +67,12 @@ Memory: D:\.projects\yuv\.memory\MEMORY.md
 | `windows` | `pwsh -File tool/ci/windows.ps1` | Windows |
 | `android` | `pwsh -File tool/ci/android.ps1` | Windows, Android SDK и AVD |
 | `web` | Windows: `pwsh -File tool/ci/web.ps1`; Mac: `bash tool/ci/web.sh` | Windows/Mac, Chrome и Emscripten |
-| `example` | `pwsh -File tool/ci/example.ps1` | Windows |
-| `smoke` | `pwsh -File tool/ci/smoke.ps1` | Windows (проверка CI-хелперов) |
+| `example` | `FLUTTER_VERSION=3.44.9`, затем `pwsh -File tool/ci/example.ps1` | Windows |
+| `smoke` | `pwsh -File tool/ci/smoke.ps1` | Windows (проверка helpers в `tool/ci/`) |
 | `macos` | `bash tool/ci/macos.sh` | Mac |
 | `ios` | `bash tool/ci/ios.sh` | Mac, Xcode и симулятор |
-| `linux` | в `example/`: `flutter create --platforms=linux .`, затем `xvfb-run -a bash tool/ci/drive.sh integration_test/<target> linux` | Linux VM (`todo.md`, «Окружение») |
+| `linux` | `bash tool/ci/linux.sh` | Ubuntu VM: clang, cmake, ninja, GTK 3, xvfb (MACHINES) |
+| `bindings` | `bash tool/ci/bindings.sh` в чистой копии точного коммита (`git archive` или clone) | Mac, Xcode |
 
 Для `src/**` дополнительно: `flutter test --tags probe`, `flutter test --tags reference` и native CTest:
 
@@ -90,15 +92,16 @@ ctest --test-dir <temp> -C Release --output-on-failure
   `pwsh -File tool/ci/drive.ps1 integration_test/probe_web_test.dart web-server --browser-name=chrome --headless --dart-define=PROBE_OPS=gray --dart-define=PROBE_FORMATS=i420`
   (target — относительно `example/`).
 
-## CI
+## Приёмка и выпуск без CI (D-38)
 
-- Автозапуска нет (D-23): CI запускается тегом `ci/<набор>/<метка>` на точный SHA или вручную (`workflow_dispatch`).
-  Набор — `all` или одна платформа: `vm`, `windows`, `macos`, `ios`, `android`, `web`, `example`, `smoke`, `linux`.
-  Основная проверка — локальные скрипты выше.
-- Один workflow — одна платформа: `.github/workflows/ci-<name>.yml` (Linux и регенерация bindings — `ci.yml`) делает
-  checkout, выбирает runner и запускает `tool/ci/<name>.ps1` (Windows) или `.sh` (Linux, macOS); тот же скрипт
-  запускается локально.
-- Web CI (`ci-web.yml`) выполняет `bash tool/ci/web.sh` на self-hosted Mac; Windows-прогон выполняется локально через
-  `pwsh -File tool/ci/web.ps1`.
+- GitHub Actions workflows у пакета нет, CI не запускается и CI-теги не ставятся. Все проверки — команды таблицы выше
+  на собственных машинах (Windows, Ubuntu VM, Mac) и устройствах; доступ к машинам — `D:\.projects\MACHINES.md`.
+- Приёмка карточки: ключи `scope_guard.sh` от базы карточки и её `Probe:`. Ключ `bindings` (`ffigen.yaml`,
+  сгенерированные bindings, заголовки; входит в `all`) обязателен при таком scope.
+- Перед каждым выпуском каждой версии — полный обязательный набор на чистом закоммиченном кандидате, независимо от
+  scope последней карточки: все ключи таблицы, включая `linux` и `bindings`, полный `flutter test` корня и example,
+  устройства по релизному гейту group `todo.md`. Прежний PASS или перенос проверки в script не заменяет прогон.
+- Отчёт: `Validated at` (полный SHA), машина и версии SDK, команда, exit code и критерий PASS script. Результат на
+  другом SHA допустим только при пустом `git diff <Validated at>..<SHA> --stat -- <покрываемые пути>`.
 - `flutter drive` возвращает 0 и при провале: `tool/ci/drive.ps1` и `drive.sh` принимают результат только при exit 0 и
   строке `All tests passed`. Не вызывать `flutter drive` напрямую.
