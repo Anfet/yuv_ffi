@@ -11,6 +11,7 @@
 ## Цикл 0.5.2
 
 - **YUV 1** — DONE: после принятого G1 CAM 3 удалены перенесённые камера/ML Kit, зависимости и камерные настройки из примера YUV; редактор сохранил C5 (crop/Negate/Reset), YUV targets и Web-матрицы сохранены; регистрант macOS пересоздан, iOS Podfile сохранён. Base `a4fb1ff725d5cba35e2d789362867123d1100e27`; accepted SHA `7e0f6c03e6a4820304341bf2bcecb1fb55573433`. Windows-local vm/windows/android/web/example/smoke PASS по Executor Report; Mac/iOS/Linux/device gate — этап 2. CI не требуется по D-38; удаление workflows — CI 1; merge/push не требуются. Карточка и Review 2: group `git show 6d23636:tasks/0.5.2/YUV-1.md`.
+- **YUV 2** — DONE: версия 0.5.2 в pubspec, верхней записи CHANGELOG, podspec и src/CMakeLists.txt (только metadata); README/CHANGELOG описывают вынос камеры в `yuv_camera`, web-parity больше не считает camera Web smoke YUV-доказательством. Base `edc596c02f7fcee348201f015f071eda4001ae0b`; accepted SHA `fa48e3b303763c6ae03db050445dbb965b0f2fba`. Windows-local vm/windows/android/web/example/smoke, probe/reference, CTest PASS по Executor Report; Pixel 3 RA-25 arm64 и armv7 smoke/probe PASS (Reviewer); Mac/iOS/Linux — этап 2. CI не требуется по D-38; merge/push не требуются. Карточка и Review 1: group `git show 58080e1:tasks/0.5.2/YUV-2.md`.
 
 ## Цикл 0.5.1
 
