@@ -22,7 +22,7 @@
 | --- | --- | --- | --- | --- |
 | `ci-vm.yml` / `vm` | Git Bash в PATH, Flutter 3.44.9, `tool/ci/vm.ps1` | `pwsh -File tool/ci/vm.ps1` | Windows | exit 0; analyze без ошибок; `smoke \|\| contract` — 0 failed, тестов > 0 (`test_report.dart`) |
 | `ci-windows.yml` / `windows-native-smoke` | `tool/ci/windows.ps1` | `pwsh -File tool/ci/windows.ps1` | Windows, VS/CMake | exit 0; `probe` и `reference` — 0 failed; Release-сборка примера; `PASS` app-runtime smoke и каждой цели `*_native_test.dart` на `windows` |
-| `ci-android.yml` / `android` | `tool/ci/android.ps1` | `pwsh -File tool/ci/android.ps1` | Windows, AVD `Tablet` (x86_64, API 35); не одновременно с Linux VM | exit 0; три APK по одной ABI; `PASS` app-runtime smoke и каждой `*_native_test.dart` на `emulator-5554` |
+| `ci-android.yml` / `android` | `tool/ci/android.ps1` | `pwsh -File tool/ci/android.ps1` | Windows + Pixel 3 (`ANDROID_SERIAL`) | exit 0; два APK по одной ABI (`arm64-v8a`, `armeabi-v7a`); `PASS` app-runtime smoke и каждой `*_native_test.dart` на serial устройства; установка только `adb install -r`, `firstInstallTime` не меняется; x86_64 не проверяется (D-42) |
 | `ci-web.yml` / `web` (self-hosted Mac) | `tool/ci/web.sh` | Windows: `pwsh -File tool/ci/web.ps1`; Mac: `bash tool/ci/web.sh` | Windows (Chrome, ChromeDriver, emsdk 3.1.74); Mac — при проблеме браузерного окружения | exit 0; `pub publish --dry-run` со списком WASM assets; пересборка WASM без diff `assets/wasm`; строки `Web WASM CI passed: targets=3` и `Web CI passed: ... sources=14; integration cases=64; reference matrix=119` |
 | `ci-example.yml` / `example-analyze-and-build` | `FLUTTER_VERSION=3.44.9`, `tool/ci/example.ps1` | `FLUTTER_VERSION=3.44.9`, затем `pwsh -File tool/ci/example.ps1` | Windows | exit 0; `Using Flutter 3.44.9`; analyze и `flutter build web` примера |
 | `ci-smoke.yml` / `smoke` | `tool/ci/smoke.ps1` | `pwsh -File tool/ci/smoke.ps1` | Windows | exit 0; `CI helper smoke passed.` |
@@ -48,3 +48,5 @@ Web-цели и их число проверяет `Assert-WebSourceMatrix` в `
 
 Сборка, эмулятор, симулятор и fake-устройства не подтверждают физические устройства: Pixel 3 и iPhone проверяются
 отдельными задачами релизного гейта. Безголовый Chrome на Windows не подтверждает Safari и Firefox (D-27).
+
+Debug-прогон `android.ps1` на Pixel 3 не заменяет release-пробу DEVICE 1: runtime `armeabi-v7a` и скорость подтверждаются только там.

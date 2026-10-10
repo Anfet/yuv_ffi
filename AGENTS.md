@@ -65,7 +65,7 @@ Memory: D:\.projects\yuv\.memory\MEMORY.md
 | --- | --- | --- |
 | `vm` | `pwsh -File tool/ci/vm.ps1` | Windows |
 | `windows` | `pwsh -File tool/ci/windows.ps1` | Windows |
-| `android` | `pwsh -File tool/ci/android.ps1` | Windows, Android SDK и AVD |
+| `android` | `pwsh -File tool/ci/android.ps1` | Windows + Pixel 3 по USB (`ANDROID_SERIAL=8B1X11QLW`), экран включён и разблокирован; эмуляторы не используются |
 | `web` | Windows: `pwsh -File tool/ci/web.ps1`; Mac: `bash tool/ci/web.sh` | Windows/Mac, Chrome и Emscripten |
 | `example` | `FLUTTER_VERSION=3.44.9`, затем `pwsh -File tool/ci/example.ps1` | Windows |
 | `smoke` | `pwsh -File tool/ci/smoke.ps1` | Windows (проверка helpers в `tool/ci/`) |
