@@ -8,6 +8,10 @@
   `git show b160704:COMPLETION.md`, `git show b160704:doc/release-0.5.0-audit.md`.
 - **0.4.2** — закрыта без выпуска 01.10.2026: `git show 6ab8948:<путь>`.
 
+## Цикл 0.5.2
+
+- **YUV 1** — DONE: после принятого G1 CAM 3 удалены перенесённые камера/ML Kit, зависимости и камерные настройки из примера YUV; редактор сохранил C5 (crop/Negate/Reset), YUV targets и Web-матрицы сохранены; регистрант macOS пересоздан, iOS Podfile сохранён. Base `a4fb1ff725d5cba35e2d789362867123d1100e27`; accepted SHA `7e0f6c03e6a4820304341bf2bcecb1fb55573433`. Windows-local vm/windows/android/web/example/smoke PASS по Executor Report; Mac/iOS/Linux/device gate — этап 2. CI не требуется по D-38; удаление workflows — CI 1; merge/push не требуются. Карточка и Review 2: group `git show 6d23636:tasks/0.5.2/YUV-1.md`.
+
 ## Цикл 0.5.1
 
 - **RELEASE 1** — 0.5.1 выпущена 07.10.2026 по команде Engineer: pub.dev подтвердил публикацию, аннотированный тег `0.5.1`, `main` и `release/0.5.1` на принятом SHA `2287a8efa636141914d25b844b279d4dd77d4b3d`; `main` — предок `dev`, CI-теги очищены. Свежий CI `ci/all/0.5.1-2` 9/9 success (Web run 37544596027), Pixel 3 arm64/armv7 по 1188 PASS, pana 160/160, публикация exit 0. Ревью: `git show 6594930:tasks/0.5.1/RELEASE-1.md`.
