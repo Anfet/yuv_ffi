@@ -1,7 +1,9 @@
 # AGENTS — yuv_ffi
 
+Memory: D:\.projects\yuv\.memory\MEMORY.md
+
 Правила этого проекта поверх общих `D:\.projects\AGENTS.md`, `CODESTYLE.md` и `ENGINEERING_PROTOCOL.md`. План, этапы,
-статусы и решения Engineer (D-N) — в `todo.md`.
+статусы и решения Engineer (D-N) — в `D:\.projects\yuv\todo.md`.
 
 ## Границы
 
@@ -22,10 +24,11 @@
 
 ## Ветки и задачи
 
-- Работа — прямо в `dev` в основной копии `D:\.projects\yuv_ffi`, без worktree и веток пула (D-22, D-25). На старте
-  пула Executor записывает в карточку базовый SHA `dev`; ревью — диапазон `<base>..<SHA>`.
+- Работа — прямо в `dev` в checkout `D:\.projects\yuv\yuv_ffi`, без worktree и веток пула (D-22, D-25). На старте
+  пула Executor записывает в центральную карточку базовый SHA этого репозитория; ревью — диапазон `<base>..<SHA>`.
 - ID задачи — слово области и номер: в тексте через неразрывный пробел (TEST 1), в имени карточки через дефис
-  (`tasks/<версия>/TEST-1.md`). Карточки, дашборд и статусы — по `todo.md` и `ENGINEERING_PROTOCOL.md`.
+  (`tasks/<версия>/TEST-1.md` в group checkout `D:\.projects\yuv`). Карточки, дашборд и статусы — по
+  `D:\.projects\yuv\todo.md` и `ENGINEERING_PROTOCOL.md`.
 - История — в git. После `DONE` карточка удаляется, в `COMPLETION.md` остаётся одна строка. Сырые замеры не
   коммитятся: вывод, который остаётся в силе, — строкой в `doc/perf-findings.md`.
 
