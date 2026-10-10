@@ -233,10 +233,6 @@ try {
   Start-WebDriver -DriverPath $chromeDriver -Action {
     Invoke-WebDrive -Target 'integration_test/reference_web_conversions_test.dart' -Arguments @('--profile')
   }
-  Start-WebDriver -DriverPath $chromeDriver -Action {
-    Invoke-WebDrive -Target 'integration_test/camera_source_web_smoke_test.dart' -Arguments @('--web-browser-flag=--use-fake-device-for-media-stream', '--web-browser-flag=--use-fake-ui-for-media-stream')
-  }
-
   $wasmTargets = @(
     'integration_test/probe_web_test.dart',
     'integration_test/shader_probe_web_test.dart',
@@ -256,7 +252,7 @@ try {
     throw "Could not refresh generated-file index state: $LASTEXITCODE"
   }
 
-  Write-Output "Web CI passed: Chrome $chromeVersion; sources=14; integration cases=64; reference matrix=119; camera smoke=1."
+  Write-Output "Web CI passed: Chrome $chromeVersion; sources=14; integration cases=64; reference matrix=119."
 } finally {
   Pop-Location
 }

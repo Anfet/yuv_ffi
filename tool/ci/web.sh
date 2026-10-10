@@ -259,12 +259,6 @@ start_driver
 drive_web integration_test/reference_web_conversions_test.dart --profile
 stop_driver
 
-start_driver
-drive_web integration_test/camera_source_web_smoke_test.dart \
-  --web-browser-flag=--use-fake-device-for-media-stream \
-  --web-browser-flag=--use-fake-ui-for-media-stream
-stop_driver
-
 wasm_targets=(
   integration_test/probe_web_test.dart
   integration_test/shader_probe_web_test.dart
@@ -281,4 +275,4 @@ printf 'Web WASM CI passed: targets=%s; elapsed=%ss.\n' "${#wasm_targets[@]}" "$
 
 git add --refresh -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
 
-echo "Web CI passed: Chrome $chrome_version; sources=14; integration cases=64; reference matrix=119; camera smoke=1."
+echo "Web CI passed: Chrome $chrome_version; sources=14; integration cases=64; reference matrix=119."

@@ -1,15 +1,10 @@
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
-import 'package:yuv_ffi_example/camera_screen.dart';
-import 'package:yuv_ffi_example/device_check/device_check_screen.dart';
-import 'package:yuv_ffi_example/ext.dart';
-import 'package:yuv_ffi_example/widgets/face_rect_paint.dart';
 
 class EditorScreen extends StatefulWidget {
   const EditorScreen({super.key, this.initialImage});
@@ -25,7 +20,6 @@ class EditorScreenState extends State<EditorScreen> {
   YuvImage? _original;
   YuvImage? image;
   YuvFrameGeometry? _geometry;
-  Rect? faceBox;
   int? _lastOperationMillis;
   bool _isLoading = false;
   bool _needsPresentation = false;
@@ -54,12 +48,6 @@ class EditorScreenState extends State<EditorScreen> {
         forceMaterialTransparency: true,
         title: const Text('YUV FFI'),
         actions: [
-          IconButton(
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DeviceCheckScreen())),
-            icon: const Icon(Icons.fact_check),
-            tooltip: 'Device check',
-          ),
-          IconButton(onPressed: _takePhoto, icon: const Icon(Icons.camera), tooltip: 'Take photo'),
           IconButton(onPressed: _original == null ? null : _reset, icon: const Icon(Icons.undo), tooltip: 'Reset'),
           IconButton(onPressed: _loadImage, icon: const Icon(Icons.drive_folder_upload), tooltip: 'Load image'),
         ],
@@ -72,7 +60,7 @@ class EditorScreenState extends State<EditorScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                child: _EditorFrame(presenter: _presenter, geometry: _geometry, faceBox: faceBox, onGeometryChanged: _onGeometryChanged),
+                child: _EditorFrame(presenter: _presenter, geometry: _geometry, onGeometryChanged: _onGeometryChanged),
               ),
               EditorOperations(onAction: _runNamedOperation),
             ],
@@ -85,23 +73,11 @@ class EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Future<void> _takePhoto() async {
-    final result = await Navigator.of(context).push<YuvImage>(
-      MaterialPageRoute(
-        builder: (_) => const CameraScreen(),
-        settings: const RouteSettings(name: 'camera'),
-      ),
-    );
-    if (!mounted || result == null) return;
-    _setImage(result);
-  }
-
   void _reset() {
     final original = _original;
     if (original == null) return;
     setState(() {
       image = original.copy();
-      faceBox = null;
       _lastOperationMillis = null;
     });
     _presentCurrent();
@@ -134,30 +110,9 @@ class EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  Future<void> detectFace() async {
-    final current = image;
-    if (current == null) return;
-    final detector = FaceDetector(
-      options: FaceDetectorOptions(enableClassification: true, performanceMode: FaceDetectorMode.accurate, enableTracking: true),
-    );
-    try {
-      final input = (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? current.toBgra().toInputImage() : current.toNv12().toInputImage();
-      final faces = await detector.processImage(input);
-      if (!mounted) return;
-      faces.sort((a, b) => _area(b.boundingBox).compareTo(_area(a.boundingBox)));
-      setState(() => faceBox = faces.firstOrNull?.boundingBox);
-    } finally {
-      detector.close().ignore();
-    }
-  }
-
   void _runNamedOperation(EditorOperation operation) {
     final current = image;
     if (current == null) return;
-    if (operation == EditorOperation.faceDetection) {
-      detectFace();
-      return;
-    }
     final watch = Stopwatch()..start();
     switch (operation) {
       case EditorOperation.rotateClockwise:
@@ -188,8 +143,6 @@ class EditorScreenState extends State<EditorScreen> {
         image = current.toNv12();
       case EditorOperation.toBgra:
         image = current.toBgra();
-      case EditorOperation.faceDetection:
-        throw StateError('Handled before timing the operation.');
     }
     watch.stop();
     setState(() => _lastOperationMillis = watch.elapsedMilliseconds);
@@ -200,7 +153,6 @@ class EditorScreenState extends State<EditorScreen> {
     setState(() {
       image = value;
       _original = value.copy();
-      faceBox = null;
       _lastOperationMillis = null;
     });
     _presentCurrent();
@@ -224,24 +176,16 @@ class EditorScreenState extends State<EditorScreen> {
 }
 
 class _EditorFrame extends StatelessWidget {
-  const _EditorFrame({required this.presenter, required this.geometry, required this.faceBox, required this.onGeometryChanged});
+  const _EditorFrame({required this.presenter, required this.geometry, required this.onGeometryChanged});
 
   final YuvFramePresenter presenter;
   final YuvFrameGeometry? geometry;
-  final Rect? faceBox;
   final ValueChanged<YuvFrameGeometry> onGeometryChanged;
 
   @override
   Widget build(BuildContext context) => Stack(
     fit: StackFit.expand,
-    children: [
-      YuvFrameView(presenter: presenter, fit: YuvFrameFit.contain, onGeometryChanged: onGeometryChanged),
-      if (faceBox case final box?)
-        if (geometry case final currentGeometry?)
-          CustomPaint(
-            painter: FaceRectPainter(rect: box, geometry: currentGeometry, strokeWidth: 10),
-          ),
-    ],
+    children: [YuvFrameView(presenter: presenter, fit: YuvFrameFit.contain, onGeometryChanged: onGeometryChanged)],
   );
 }
 
@@ -257,7 +201,6 @@ enum EditorOperation {
   gaussianBlur,
   meanBlur,
   boxBlur,
-  faceDetection,
   toI420,
   toNv12,
   toBgra,
@@ -286,7 +229,6 @@ class EditorOperations extends StatelessWidget {
         _action(EditorOperation.gaussianBlur, const Icon(Icons.blur_on, size: 32), 'Gaussian blur'),
         _action(EditorOperation.meanBlur, const Icon(Icons.blur_linear, size: 32), 'Mean blur'),
         _action(EditorOperation.boxBlur, const Icon(Icons.crop_square, size: 32), 'Box blur'),
-        _action(EditorOperation.faceDetection, const Icon(Icons.face_outlined, size: 32), 'Face detection'),
         _action(EditorOperation.toI420, const Text('To I420', style: TextStyle(fontSize: 12)), 'To I420'),
         _action(EditorOperation.toNv12, const Text('To NV12', style: TextStyle(fontSize: 12)), 'To NV12'),
         _action(EditorOperation.toBgra, const Text('To BGRA', style: TextStyle(fontSize: 12)), 'To BGRA8888'),
@@ -297,5 +239,3 @@ class EditorOperations extends StatelessWidget {
   Widget _action(EditorOperation operation, Widget icon, String tooltip) =>
       IconButton(onPressed: () => onAction(operation), icon: icon, tooltip: tooltip);
 }
-
-double _area(Rect rect) => rect.width * rect.height;

@@ -27,8 +27,9 @@ target in Flutter's `--wasm` build. The common probe covers 1,188 cases; the
 reference conversion matrix covers 119 cases. The shader probe requires the
 shader to load and every output to differ from CPU conversion by at most one
 channel value. The JavaScript build's Web CI also passed the 14-source,
-64-case integration set, reference conversions, and camera smoke on the same
-Chrome version; Safari and Firefox remain not verified.
+64-case integration set and reference conversions on the same Chrome version.
+Camera Web smoke is tracked by `yuv_camera`; Safari and Firefox remain not
+verified.
 
 ## Other public paths
 
@@ -63,7 +64,7 @@ Statuses distinguish matching evidence, confirmed differences, unsupported input
 
 | Target | Result | Evidence / limit |
 | --- | --- | --- |
-| Chrome JavaScript build and runtime | **PASS** | Chrome 154.0.8037.98; the aggregated `all_web_test.dart`, 119-case reference target, and camera smoke passed through `tool/ci/drive.ps1`. `web_ownership_regression_web_test.dart` is now 4 cases; total source baseline is 64. |
+| Chrome JavaScript build and runtime | **PASS** | Chrome 154.0.8037.98; the aggregated `all_web_test.dart` and 119-case reference target passed through `tool/ci/drive.ps1`. `web_ownership_regression_web_test.dart` is now 4 cases; total source baseline is 64. Camera Web smoke is tracked by `yuv_camera`. |
 | Safari | **NOT RUN** | Mac has Safari 18.6 on macOS 15.6.1. `safaridriver` reports that “Allow remote automation” is disabled. Enabling it with `/usr/bin/safaridriver --enable` failed because the non-interactive Mac account could not authenticate its sudo request. This is an access limitation, not a Web failure. |
 | Firefox | **NOT AVAILABLE** | Firefox and `geckodriver` are not installed on the available Mac; no Firefox result is inferred from Chrome. |
 | `--wasm` (original assessment) | **BUILD PASS; RUNTIME FAIL** | Historical result: Chrome 154.0.8037.98's wrapped probe drive reported `ERR StateError` for WASM operation calls; the earlier Mac run reported `yuv_convert_v1 returned JSValue instead of a YuvStatus number`. This was fixed for 0.5.1; see current verification above. |
@@ -99,7 +100,7 @@ The sampled results do not establish complete native/Web parity. No implementati
 ## Historical rework verification after `13419f8`
 
 - Native: `flutter test test/yuv_frame_geometry_test.dart` passed 14/14; `flutter test test/yuv_image_patch_test.dart` passed 10/10; `pwsh -File tool/ci/windows.ps1` passed, including native probe/reference and Windows integration targets.
-- Chrome JavaScript on commit `bc7936026e7a3093dff3092395ac01d7d49deb23`: `pwsh -File tool/ci/web.ps1` passed on Chrome 154.0.8037.98 with 14 sources, 64 integration cases, the 119-case reference matrix, and camera smoke. The dedicated ownership regression and all mapped Web targets passed.
+- Chrome JavaScript on commit `bc7936026e7a3093dff3092395ac01d7d49deb23`: `pwsh -File tool/ci/web.ps1` passed on Chrome 154.0.8037.98 with 14 sources, 64 integration cases, the 119-case reference matrix, and the then-present camera smoke. The dedicated ownership regression and all mapped Web targets passed.
 - Flutter-WASM build: from `example/`, `flutter build web --wasm` passed on Flutter 3.44.9.
 - Flutter-WASM runtime: `pwsh -File tool/ci/drive.ps1 integration_test/probe_web_test.dart web-server --browser-name=chrome --headless --wasm` failed inside the probe with `got ERR StateError` for the WASM operation calls. The app and WASM module loaded; the operation-call stage failed. This is an unsupported runtime target, not a JavaScript-backend mismatch.
 - New geometry contract case uses a 5×3 input, explicitly asserts visible rect `(0,0,5,3)`, then compares fixed output byte arrays for I420 and BGRA against the same case in native and Web tests. Chroma values in this odd-sized I420 rotation are asserted as the ABI-produced bytes, not inferred from source-plane transposition.
@@ -108,8 +109,8 @@ The sampled results do not establish complete native/Web parity. No implementati
 
 - Flutter 3.44.9, Chrome 154.0.8037.98, JavaScript build: `pwsh -File
   tool/ci/web.ps1` passed on commit `8ebc4088fab73bdf25741e30c071a1c8d11abcd8`:
-  14 sources, 64 integration cases, 119 reference conversions, and camera
-  smoke.
+  14 sources, 64 integration cases, and 119 reference conversions. At that
+  revision, Web CI also ran a separate camera smoke, now tracked by `yuv_camera`.
 - Flutter 3.44.9, Chrome 154.0.8037.98, `--wasm`: `probe_web_test.dart`,
   `reference_web_conversions_test.dart --profile`, `shader_probe_web_test.dart`,
   and `all_web_test.dart` all passed. The mandatory CI `--wasm` targets also

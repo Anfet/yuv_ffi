@@ -1,7 +1,7 @@
 # yuv_ffi example
 
 This runnable Flutter app demonstrates the current `yuv_ffi` API, including
-camera previews, image transforms, effects, and face detection.
+image loading, transforms, and effects.
 
 From this directory, install dependencies and start the app on a configured
 device or desktop runner:
@@ -14,47 +14,10 @@ flutter run -d <device-id>
 
 For Web, run `flutter run -d chrome`. Checked Web operation cases match native
 on Flutter's JavaScript and `--wasm` builds in Chrome; `chromaSwap` supports
-NV12 only. Safari and Firefox have not been verified. This operation coverage
-does not establish camera support in those browsers. Android, iOS, macOS,
+NV12 only. Safari and Firefox have not been verified. Android, iOS, macOS,
 Windows, and Web runners are checked in here. A Linux runner is not included.
-
-On the iOS Simulator, run the example with an iOS 18.x runtime or on a device:
-`google_mlkit_face_detection` does not support arm64 on the iOS 26+ Simulator.
-
-The camera preview needs a camera and permission to use it. Android and iOS ask
-for camera access at runtime. On macOS and Windows, allow camera access in the
-system privacy settings. In a browser, grant camera access to the site; Web
-camera access requires HTTPS or localhost. Image transforms can be explored
-without a camera by loading an image from the app bar.
-
-The camera layer in `lib/camera/` exposes `YuvCameraFrameSource` and immutable
-`YuvCameraFrame` deliveries. Import to `YuvImage` is lazy and shared by display,
-processing, and capture. Android orientation follows the sensor/device formula
-used by the ML Kit camera example and mirrors front-camera output. Desktop and
-Web frames are upright and unmirrored. On iOS the camera plugin already delivers
-upright frames and mirrors the front camera, so they are drawn as delivered;
-checked on a physical iPhone in portrait and landscape.
-
-`YuvCameraView` renders through the shader presenter, exposes current geometry,
-throttles independent `onFrame` processing, and captures the next frame that is
-actually drawn. `YuvTransformView` is the synchronous transform variant. The
-camera screen sends raw frames plus their rotation to ML Kit and maps upright
-face boxes through the display geometry. Its speed button runs the blur stand
-once per second. The current fallback runs that native operation on the UI
-isolate (the image/native handle is not transferable); on Web `compute` would
-also use the main thread, so a temporary preview pause is expected.
+Camera capture and device checks are demonstrated by the separate `yuv_camera`
+example. Image transforms can be explored by loading an image from the app bar.
 
 For package setup, API migration, and platform/backend limitations, see the
 [package README](../README.md).
-
-## Device check
-
-Run the guided release-device check directly on Android or iOS:
-
-```sh
-flutter run --release -d <device-id> -t lib/device_check_main.dart --dart-define=GIT_SHA=$(git rev-parse --short HEAD)
-```
-
-Keep the screen on and unlock the phone. Charging is optional. Complete every
-step and copy the final JSON, including the build mode, camera metadata, and
-all step results, for the release review.
