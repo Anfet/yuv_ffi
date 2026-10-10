@@ -7,9 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/loader/loader.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// The packed-vs-padded plane comparison in `example/test/
-/// camera_image_pack_planes_test.dart` only proves the two imports copy the
-/// same visible sample bytes -- it cannot call native operations in that
+/// The packed-vs-padded plane comparison that used to live in
+/// `example/test/camera_image_pack_planes_test.dart` (removed in 40a877b) only
+/// proves the two imports copy the same visible sample bytes -- it cannot call native operations in that
 /// project's own `flutter test` run because `yuv_ffi`'s dynamic library is
 /// not next to that test binary. This file completes the comparison: it
 /// builds the same padded-vs-tight [YuvPlane] pairs directly (no `camera`

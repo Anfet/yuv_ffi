@@ -1,3 +1,28 @@
+## 0.5.2
+
+### Changed
+
+- Camera capture, camera frame import, camera device checks, and the ML Kit
+  face-detection demo moved from the example to the separate `yuv_camera`
+  package, which depends on `yuv_ffi`. `yuv_ffi` no longer depends on
+  `camera`, `camera_desktop`, `camera_platform_interface`, or ML Kit in its
+  example. The public `yuv_ffi` API is unchanged.
+- The example keeps image loading, transforms, effects, and frame display
+  without a camera dependency.
+
+### Migration
+
+- Updating from 0.5.1 needs no API replacements. Applications that used the
+  example's camera code should depend on `yuv_camera` (which requires
+  `yuv_ffi: ^0.5.2`) and register `camera_desktop` on desktop.
+
+### Documentation
+
+- README and example README describe the package split and link to
+  `yuv_camera`.
+- Web parity notes no longer count the camera Web smoke as `yuv_ffi`
+  evidence; it is tracked by `yuv_camera`.
+
 ## 0.5.1
 
 ### Documentation

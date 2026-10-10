@@ -5,17 +5,22 @@ conversion, crop, rotation, flips, effects, blur, serialization, and Flutter
 image presentation. Native platforms use C through FFI; Web uses a WASM
 backend on Flutter's JavaScript and `--wasm` builds.
 
+Camera capture and camera frame import are not part of `yuv_ffi`. They live in
+the separate [`yuv_camera`](https://github.com/Anfet/yuv_camera) package, which
+depends on `yuv_ffi`; use it when your app captures frames from a camera.
+
 ## Installation
 
 ```yaml
 dependencies:
-  yuv_ffi: 0.5.1
+  yuv_ffi: 0.5.2
 ```
 
-Version 0.5.1 is the next available pub.dev release after 0.2.4. Version
-0.4.0 was published and later retracted; the migration guidance below also
-applies to applications whose lockfile still resolves 0.4.0. Updating from
-0.5.0 to 0.5.1 does not require API replacements.
+Version 0.5.2 moves the camera code out of the example into `yuv_camera`.
+Updating from 0.5.1 does not require API replacements; see
+[CHANGELOG.md](CHANGELOG.md). Version 0.4.0 was published and later retracted;
+the migration guidance below also applies to applications whose lockfile still
+resolves 0.4.0.
 
 ## Requirements
 
@@ -145,7 +150,8 @@ and pass a `YuvFrameOrientation` to `present` to rotate or mirror at draw time.
 ### Frame geometry and ML Kit
 
 `YuvFrameGeometry` keeps source pixels, ML Kit's upright pixels, and widget
-pixels in separate coordinate spaces. Give ML Kit the raw frame with
+pixels in separate coordinate spaces. `yuv_ffi` does not depend on ML Kit; the
+ML Kit integration is application code, shown in the `yuv_camera` example. Give ML Kit the raw frame with
 `orientation.rotation`, then map its bounding boxes through
 `MatrixUtils.transformRect(geometry.uprightToView, box)`. Mirroring is applied
 only after rotation, so the preview and overlay stay aligned.

@@ -28,8 +28,8 @@ reference conversion matrix covers 119 cases. The shader probe requires the
 shader to load and every output to differ from CPU conversion by at most one
 channel value. The JavaScript build's Web CI also passed the 14-source,
 64-case integration set and reference conversions on the same Chrome version.
-Camera Web smoke is tracked by `yuv_camera`; Safari and Firefox remain not
-verified.
+Camera Web smoke is not part of this YUV evidence; it is tracked by
+`yuv_camera`. Safari and Firefox remain not verified.
 
 ## Other public paths
 
@@ -64,7 +64,7 @@ Statuses distinguish matching evidence, confirmed differences, unsupported input
 
 | Target | Result | Evidence / limit |
 | --- | --- | --- |
-| Chrome JavaScript build and runtime | **PASS** | Chrome 154.0.8037.98; the aggregated `all_web_test.dart` and 119-case reference target passed through `tool/ci/drive.ps1`. `web_ownership_regression_web_test.dart` is now 4 cases; total source baseline is 64. Camera Web smoke is tracked by `yuv_camera`. |
+| Chrome JavaScript build and runtime | **PASS** | Chrome 154.0.8037.98; the aggregated `all_web_test.dart` and 119-case reference target passed through `tool/ci/drive.ps1`. `web_ownership_regression_web_test.dart` is now 4 cases; total source baseline is 64. Camera Web smoke is not part of this YUV evidence (`yuv_camera`). |
 | Safari | **NOT RUN** | Mac has Safari 18.6 on macOS 15.6.1. `safaridriver` reports that “Allow remote automation” is disabled. Enabling it with `/usr/bin/safaridriver --enable` failed because the non-interactive Mac account could not authenticate its sudo request. This is an access limitation, not a Web failure. |
 | Firefox | **NOT AVAILABLE** | Firefox and `geckodriver` are not installed on the available Mac; no Firefox result is inferred from Chrome. |
 | `--wasm` (original assessment) | **BUILD PASS; RUNTIME FAIL** | Historical result: Chrome 154.0.8037.98's wrapped probe drive reported `ERR StateError` for WASM operation calls; the earlier Mac run reported `yuv_convert_v1 returned JSValue instead of a YuvStatus number`. This was fixed for 0.5.1; see current verification above. |
