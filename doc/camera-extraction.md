@@ -292,7 +292,7 @@ null`, как у iOS-плагина) → `importCameraImage` сохраняет 
 `*_native_test` — решение при нарезке (тогда она добавится в проверки всех native-платформ, это расширение). Название
 привязано к iOS, но кода iOS-специфичного нет: по чтению тест исполним на любой native-платформе.
 
-iOS-ориентация (расхождение источников, требует подтверждения Engineer, раздел 7, Q3). Dartdoc `YuvCameraFrame` говорит:
+iOS-ориентация (расхождение источников; Engineer подтвердил APPLE 1 10.10.2026, раздел 7, Q3). Dartdoc исходного `YuvCameraFrame` говорит:
 «iOS frames are currently treated as upright and unmirrored; that rule has not been device-verified». Но отчёт APPLE 1
 (`git show 02a0796:tasks/0.5.0/APPLE-1.md`, 04.10.2026) фиксирует проверку на физическом iPhone (iOS 18.7): плагин сам
 поворачивает кадр (480×640 портрет, 640×480 альбом), фронтальная камера зеркалится, ответы `landscape`/`mirror` — да,
@@ -340,22 +340,23 @@ CI); `flutter drive` напрямую не вызывать. Тот же кри�
 
 ## 5. Порядок переноса
 
-1. **Каркас `yuv_camera` без правок YUV.** Локальный checkout (раздел 6), `pubspec.yaml`, `analysis_options`, `AGENTS.md`,
-   `todo.md`, `.memory/`, `.gitignore` (с `pubspec_overrides.yaml`), `lib/yuv_camera.dart` с пятью экспортами.
-2. **Копирование, не перенос.** Камерные файлы в `lib/src/`, пример со своими раннерами (`flutter create`, затем
+1. **CAM 1: каркас `yuv_camera` без правок YUV.** Существующий checkout (раздел 6), `pubspec.yaml`, `analysis_options`,
+   `AGENTS.md`, `todo.md`, `.memory/`, `.gitignore` (с `pubspec_overrides.yaml`), минимальный example и пока пустой
+   `lib/yuv_camera.dart`. Пять экспортов появляются вместе с реализациями в CAM 2, не раньше.
+2. **CAM 2–3: копирование, не перенос.** Камерные файлы в `lib/src/`, пример со своими раннерами (`flutter create`, затем
    настройки раздела 2.5), экран результата, тесты и integration-цели путём в путь; правка импортов. Исходники в
    `yuv_ffi` пока не трогаются. Локальная подмена: `example/pubspec_overrides.yaml` и корневой
    `pubspec_overrides.yaml` с `path` на `D:\.projects\yuv_ffi` (прецедент: `tool/probe/run_*.ps1` создают
    `example/pubspec_overrides.yaml` на время прогона).
-3. **Скрипты и CI `yuv_camera`.** Копии `_common.ps1`, `drive.ps1`/`drive.sh`, `scope_guard.sh`, `web.*`, платформенных
+3. **Скрипты CAM 2–3, workflows CAM 4.** Копии `_common.ps1`, `drive.ps1`/`drive.sh`, `scope_guard.sh`, `web.*`, платформенных
    скриптов — только для целей камеры; native-сборка YUV (`New-CiNativeBuild`, CMake в `PATH`) не нужна: библиотека
    собирается вместе с приложением как плагин.
-4. **Гейт G1: подтверждение в новом окружении.** В `yuv_camera`: `flutter analyze`; `flutter test` — **34/34** (26
+4. **CAM 3, гейт G1: подтверждение в новом окружении.** В корне/example: `flutter analyze`; из example `flutter test` — **34/34** (26
    камерных + 5 device-check + 3 `toInputImage`); `camera_capture_native_test` на Windows (release) и Android-эмуляторе;
    `camera_source_web_smoke_test` в Chrome (локально `web.ps1`-аналог); сборка примера для Windows/macOS/iOS/Linux по
    доступности; ручные цели 3, 5, 6, 7 — по правилам Reviewer/Engineer перед релизным гейтом, не перед удалением из YUV.
    Минимум для удаления: analyze + 34/34 + цели 1 и 2 зелёные, сравнение чисел с разделом 2.2 записано в карточке.
-5. **Удаление из `yuv_ffi`, только после G1.** Одна карточка (или две): удалить перенесённые файлы раздела 2.1–2.3;
+5. **YUV 1–2: удаление из `yuv_ffi`, только после принятого G1.** Удалить перенесённые файлы раздела 2.1–2.3;
    изменить `editor_screen.dart` и добавить кейс `crop` (3.2, C5); убрать зависимости и платформенные настройки (2.5);
    пересоздать `pubspec.lock`, tracked registrants, `Podfile.lock` инструментами; поправить `web.*`, `ci.yml`,
    документы (2.6); версия 0.5.2 в четырёх местах (D-14) и верхняя запись `CHANGELOG.md`.
@@ -363,7 +364,8 @@ CI); `flutter drive` напрямую не вызывать. Тот же кри�
    `.github/workflows/ci.yml`, `tool/ci/*`): все доступные локальные проверки по AGENTS.md. Дополнительно:
    `rg -n -i 'camera|mlkit|google_mlkit' example/{lib,test,integration_test,pubspec.yaml}` — пусто (кроме комментариев
    про «синтетический поток»), сборка примера под Android/iOS/macOS/Windows/Web проходит без камерных плагинов.
-7. **Пара и кандидаты — этап 2** (раздел 6).
+7. **CAM 4: локальная пара и готовые workflows.** Снова проверить camera capture/Web source с уже разделённым
+   YUV 0.5.2. Заморозка кандидатов, внешний CI и физические устройства — этап 2 (раздел 6).
 
 Вложенность гейтов важна: удаление из YUV до G1 запрещено (Constraints PREP 1: покрытие не заменяется уменьшением матрицы).
 
@@ -371,14 +373,17 @@ CI); `flutter drive` напрямую не вызывать. Тот же кри�
 
 ### Расположение и правила
 
-Предлагается отдельный checkout `D:\.projects\yuv_camera` (каталога нет, подтверждено). Правила: свои `AGENTS.md`
+Engineer указал существующий checkout `D:\.projects\yuv_ffi_camera`, пакет и remote называются `yuv_camera`.
+На 10.10.2026 checkout на `dev`, исходный каркас — README и MIT LICENSE. Architect разместил здесь собственный
+todo и карточки; перенос кода ещё не выполнен. Правила: свои `AGENTS.md`
 (коротко: границы, `Probe` для путей, локальные проверки, CI по тегам по D-23), `todo.md`, `.memory/` (по
-`D:\.projects\AGENTS.md` ближайшая память вверх от папки проекта; у `yuv_camera` её нет — создаётся своя; записи из
+`D:\.projects\AGENTS.md` ближайшая память вверх от папки проекта; своя память заведена при декомпозиции; записи из
 `.memory/MEMORY.md` `yuv_ffi`, относящиеся к камере, переносятся туда на этапе 1, пути в них обновляются), `dev`/`main`
 как в YUV. Протокол ролей общий (`D:\.projects\ENGINEERING_PROTOCOL.md`). Пробы (`windows`, `pixel3`, `web`) определяются
 в `AGENTS.md` `yuv_camera` по таблице путей: камерный Dart-код — `windows+web`, устройства — device-check вручную.
-Remote, имя репозитория, лицензия, `repository`/`homepage`/`issue_tracker`, `publish_to` — Engineer (раздел 7). Соседний
-проект в этой задаче не создан.
+Remote — `https://github.com/Anfet/yuv_camera.git`, MIT; публикационные URL и description согласованы в разделе 7.
+Создаётся Flutter-пакет над существующими плагинами, без собственного native plugin/platform channel; имя локального
+каталога не переносится в package imports. Сам PREP 1 соседний проект не создавал: его предоставил Engineer.
 
 ### Связь версий
 
@@ -388,8 +393,9 @@ Remote, имя репозитория, лицензия, `repository`/`homepage`
 `yuv_camera`, чтобы не попасть ни в коммиты, ни в публикацию). В публикуемом `pubspec.yaml` `path`-зависимости нет.
 
 Следствие для CI. Workflows `yuv_camera` до публикации YUV 0.5.2 могут запускаться только если раннер получает
-кандидата YUV (второй checkout по SHA + генерация override). Это настройка этапа 2 и зависит от remote (раздел 7, Q1);
-на этапе 1 работают локальные проверки.
+кандидата YUV (второй checkout по точному SHA + генерация override). Scripts и workflows готовятся на этапе 1
+(CAM 2–4), внешние CI-прогоны — на кандидатах этапа 2. Engineer сообщил о доступе; реальные runners/права проверяются
+при настройке, а не выводятся из наличия origin или файлов workflows.
 
 ### Потребитель пары
 
@@ -420,27 +426,33 @@ Remote, имя репозитория, лицензия, `repository`/`homepage`
 entitlement `device.camera`; на Linux — GStreamer (`libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`); Android/iOS —
 разрешения плагинов `camera`.
 
-## 7. Остаточные решения Engineer и наблюдения
+## 7. Решения Engineer и декомпозиция Architect
 
-| № | Вопрос | Рекомендация | Что блокирует |
-| --- | --- | --- | --- |
-| Q1 | Remote и публикационные данные `yuv_camera` (имя репозитория, лицензия, URL в `pubspec`), доступ CI `yuv_camera` к кандидату `yuv_ffi` до публикации | создать после этапа 1; до тех пор только локальные проверки | первый CI-запуск `yuv_camera`; этап 2 |
-| Q2 | Нужна ли отдельная YUV-проба физического показа шейдера в release (device-check уходит из YUV, 3.1) | не вводить: подтверждать в релизном гейте через device-check пары | гейт этапа 2 |
-| Q3 | Подтвердить, что действующий источник по iOS-ориентации — APPLE 1 (проверено на одном iPhone), а формулировка «не проверено» в dartdoc устарела (3.7) | да; текст `yuv_camera` — по границе APPLE 1 | тексты README/dartdoc `yuv_camera` |
-| Q4 | Подтвердить расположение `D:\.projects\yuv_camera` и собственную память | да | этап 1, первая карточка |
+Ответы Q1–Q4 подтверждены Engineer в разговоре 10.10.2026; самостоятельного решения по ним больше не требуется.
 
-Решения Architect при нарезке (не Engineer): раскладка тестов «путь в путь» (3.4); сделать ли `ios_bgra_camera_frame_test`
-и C5 `*_native_test` (расширение CI); судьба пина iOS 18.x и платформы 15.5 в YUV (2.5); имя ручной цели
-`camera_flow_test`.
+| № | Решение Engineer | Где выполняется |
+| --- | --- | --- |
+| Q1 | Использовать существующий Anfet/yuv_camera, MIT, имя `yuv_camera`, выпуск на pub.dev. Repository/homepage — `https://github.com/Anfet/yuv_camera`, issues — `/issues`. Description — `Flutter camera package built on yuv_ffi for capturing and displaying YUV camera frames.` До публикации YUV CI получает его точный SHA вторым checkout и генерирует ignored overrides. | Metadata CAM 1; scripts CAM 2–3; workflows CAM 4; внешний CI этапа 2. Реальные права/runners проверяются при настройке; отсутствие workflow не является решением о доступе. |
+| Q2 | Отдельную YUV-пробу физического шейдера не вводить; device-check пары обеспечивает проверку. | Гейт этапа 2. |
+| Q3 | APPLE 1 актуален: один iPhone/iOS 18.7/front/portrait+landscape; исправить устаревшую фразу в dartdoc, не расширяя границы и не меняя код ориентации. | CAM 2, README CAM 4. |
+| Q4 | Checkout `D:\.projects\yuv_ffi_camera`, dev, собственные AGENTS/todo/.memory; имя пакета остаётся `yuv_camera`. | План/карточки/память созданы Architect; локальные правила каркаса — CAM 1. |
 
-Предлагаемая нарезка этапа 1 (имена условные; порядок = зависимости):
+Решения Architect: тесты остаются в новом example «путь в путь»; `ios_bgra_camera_frame_test` — ручная цель этапа 2,
+не расширять glob; C5 — editor_screen_test YUV; ручная камерная цель — `camera_flow_test`; пин iOS 18.x и deployment
+15.5 сохранить. Каркас сначала, реализация/exports затем; существующие native-плагины используются как зависимости.
 
-1. Каркас и API `yuv_camera` (раздел 5, шаги 1–2, `lib/`).
-2. Пример камеры: раннеры, экраны, device-check, ML Kit, экран результата (2.1, 2.5).
-3. Тесты и скрипты `yuv_camera`, гейт G1 (2.2, 2.3, 4, 5.3–5.4).
-4. Упрощение `yuv_ffi/example` + редактор + `crop`-кейс (5.5, зависит от 3).
-5. CI, README, `doc/`, версия 0.5.2 `yuv_ffi` (2.6; зависит от 4).
-6. Локальная проверка пары (раздел 6; зависит от 3 и 5).
+Карточки этапа 1 подготовлены в своих репозиториях (порядок = зависимости):
+
+1. `yuv_camera`: [CAM 1](../../yuv_ffi_camera/tasks/0.0.1/CAM-1.md) — каркас/metadata; ждёт приёмки PREP 1.
+2. `yuv_camera`: [CAM 2](../../yuv_ffi_camera/tasks/0.0.1/CAM-2.md) — API, 26 тестов и две проверки источников.
+3. `yuv_camera`: [CAM 3](../../yuv_ffi_camera/tasks/0.0.1/CAM-3.md) — полный пример, оставшиеся 8 тестов, G1.
+4. `yuv_ffi`: [YUV 1](../tasks/0.5.2/YUV-1.md) — удалить перенесённое, сохранить редактор/C5, переключить scripts.
+5. `yuv_ffi`: [YUV 2](../tasks/0.5.2/YUV-2.md) — metadata 0.5.2, документы и обязательные проверки.
+6. `yuv_camera`: [CAM 4](../../yuv_ffi_camera/tasks/0.0.1/CAM-4.md) — workflows/docs и локальная пара после разделения YUV.
+
+Независимый Reviewer ещё должен принять PREP 1; Architect его статус не меняет. Ни создание карточек, ни ответы
+Engineer не означают выполнения G1. У каждого checkout свои Base/Validated at и dashboard; выполнение начинается
+после приёмки карты по команде Engineer, без делегирования и worktree.
 
 Наблюдения вне объёма переноса (не исправлялись):
 
