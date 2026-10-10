@@ -18,8 +18,8 @@
 
 ### Documentation
 
-- README and example README describe the package split and link to
-  `yuv_camera`.
+- README and example README describe the package split, help choosing
+  between `yuv_ffi` and `yuv_camera`, and give a complete Quick start.
 - Web parity notes no longer count the camera Web smoke as `yuv_ffi`
   evidence; it is tracked by `yuv_camera`.
 

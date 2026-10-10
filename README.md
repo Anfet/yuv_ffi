@@ -1,19 +1,37 @@
 # yuv_ffi
 
-`yuv_ffi` processes I420, NV12, and BGRA8888 images in Flutter. It provides
-conversion, crop, rotation, flips, effects, blur, serialization, and Flutter
-image presentation. Native platforms use C through FFI; Web uses a WASM
-backend on Flutter's JavaScript and `--wasm` builds.
+`yuv_ffi` processes and displays raw YUV and BGRA images in Flutter. Use it
+when your app works with decoded pixels rather than encoded files: convert
+between I420, NV12, and BGRA8888, crop, rotate, flip, blur, or adjust colors,
+and show the result as a widget or as a live stream of frames. Native platforms
+run C code through FFI; Web runs a WASM backend on Flutter's JavaScript and
+`--wasm` builds.
 
-Camera capture and camera frame import are not part of `yuv_ffi`. They live in
-the separate [`yuv_camera`](https://github.com/Anfet/yuv_camera) package, which
-depends on `yuv_ffi`; use it when your app captures frames from a camera.
+## Which package do you need
+
+| You want to | Use |
+| --- | --- |
+| Create, convert, transform, and display YUV or BGRA images | `yuv_ffi` (this package) |
+| Show a live camera preview, process camera frames, or capture a frame | [`yuv_camera`](https://github.com/Anfet/yuv_camera), which builds on `yuv_ffi` |
+
+Camera capture and camera frame import are not part of `yuv_ffi`. Add
+`yuv_camera` only when your app uses a camera; it brings `yuv_ffi` with it, and
+`yuv_ffi` never depends on it.
 
 ## Installation
 
 ```yaml
 dependencies:
-  yuv_ffi: 0.5.2
+  yuv_ffi: ^0.5.2
+```
+
+Until 0.5.2 is published on pub.dev, resolve it from a local checkout with an
+ignored `pubspec_overrides.yaml` next to your `pubspec.yaml`; do not commit it:
+
+```yaml
+dependency_overrides:
+  yuv_ffi:
+    path: ../yuv_ffi
 ```
 
 Version 0.5.2 moves the camera code out of the example into `yuv_camera`.
@@ -46,12 +64,10 @@ native. Both builds were verified in Chrome. Use `flutter build web` or
 Safari and Firefox have not been verified. Safari 16.4 or later is a technical
 minimum for release WASM SIMD, not a tested compatibility claim for this plugin.
 
-## Quick start and initialization
+## Quick start
 
-Initialize once in every isolate before calling a capability-gated processing
-method. A successful initialization is cached; a failed initialization can be
-retried. The returned capabilities describe the operations the loaded backend
-can dispatch.
+This complete `lib/main.dart` creates an I420 image, fills it from RGBA bytes,
+rotates it, and shows it.
 
 ```dart
 import 'dart:typed_data';
@@ -61,32 +77,50 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await YuvFfi.initialize();
 
-  final capabilities = await YuvFfi.initialize();
-  final image = YuvImage.i420(1280, 720);
-  final rgbaBytes = Uint8List(image.width * image.height * 4);
-
-  if (capabilities.supports(
-    YuvOperation.convert,
-    sourceFormat: image.format,
-    destinationFormat: image.format,
-  )) {
-    image.applyRgbaBytes(rgbaBytes);
+  const width = 320;
+  const height = 180;
+  final rgba = Uint8List(width * height * 4);
+  for (var y = 0; y < height; y++) {
+    for (var x = 0; x < width; x++) {
+      final i = (y * width + x) * 4;
+      rgba[i] = x * 255 ~/ (width - 1); // red
+      rgba[i + 1] = y * 255 ~/ (height - 1); // green
+      rgba[i + 2] = 128; // blue
+      rgba[i + 3] = 255; // alpha
+    }
   }
 
-  if (capabilities.supports(
-    YuvOperation.rotate,
-    sourceFormat: image.format,
-  )) {
-    image.applyRotation(YuvImageRotation.rotation90);
-  }
+  final image = YuvImage.i420(width, height)
+    ..applyRgbaBytes(rgba)
+    ..applyRotation(YuvImageRotation.rotation90);
 
-  runApp(Directionality(
-    textDirection: TextDirection.ltr,
-    child: YuvImageWidget(image: image),
-  ));
+  runApp(
+    Directionality(
+      textDirection: TextDirection.ltr,
+      child: YuvImageWidget(image: image),
+    ),
+  );
 }
 ```
+
+What the example does:
+
+- `YuvFfi.initialize()` loads the native library or the Web module. Call it once
+  in every isolate before processing. A successful initialization is cached; a
+  failed one can be retried. It returns the capabilities of the loaded backend.
+- `YuvImage.i420(width, height)` allocates an empty image in the I420 format
+  (separate Y, U, and V planes; see Formats and plane layout).
+- `applyRgbaBytes` takes input as RGBA bytes and converts it to the image's own
+  format. BGRA images store the same pixels in B, G, R, A order, so RGBA input is
+  never written to a BGRA plane unchanged.
+- `apply*` methods change the image in place and return it; methods such as
+  `cropped`, `rotated`, `copy`, and `toBgra` return a new image. See Image
+  mutation and revisions.
+- `YuvImageWidget` draws the image.
+
+## Initialization
 
 On Web, initialization must complete before every `YuvImage` operation. On
 native platforms, it must complete before these capability-gated methods:
@@ -96,6 +130,15 @@ native platforms, it must complete before these capability-gated methods:
 `applyChromaSwap`, `cropped`, `rotated`, `toI420`, `toNv12`, and `toBgra`.
 Constructors, plane access, `copy`, `applyPlanes`, byte conversion, encoding,
 and decoding retain native lazy behavior.
+
+To choose a path at run time, query the returned capabilities:
+
+```dart
+final capabilities = await YuvFfi.initialize();
+if (capabilities.supports(YuvOperation.rotate, sourceFormat: image.format)) {
+  image.applyRotation(YuvImageRotation.rotation90);
+}
+```
 
 ## Image mutation and revisions
 
@@ -283,6 +326,19 @@ Regenerate bindings after a header or configuration change:
 ```sh
 dart run ffigen --config ffigen.yaml
 ```
+
+## Learn more
+
+- [Example app](https://github.com/Anfet/yuv_ffi/tree/main/example): image
+  loading, transforms, effects, and frame display. Run it with `flutter run`
+  from the `example/` directory.
+- [API reference](https://pub.dev/documentation/yuv_ffi/latest/) for every
+  public class and parameter.
+- [Migration guide](MIGRATION.md) and [CHANGELOG.md](CHANGELOG.md).
+- [Web parity evidence](https://github.com/Anfet/yuv_ffi/blob/main/doc/web-parity.md)
+  for the exact checked Web cases.
+- [`yuv_camera`](https://github.com/Anfet/yuv_camera) for camera preview,
+  processing, and capture.
 
 ## License
 
