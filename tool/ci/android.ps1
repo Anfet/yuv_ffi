@@ -111,12 +111,12 @@ try {
   Assert-ApkAbi -ApkPath 'build/app/outputs/flutter-apk/app-arm64-v8a-debug.apk' -ExpectedAbi 'arm64-v8a'
   Assert-ApkAbi -ApkPath 'build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk' -ExpectedAbi 'armeabi-v7a'
 
-  $apk = 'build/app/outputs/flutter-apk/app-debug.apk'
+  $apk = 'build/app/outputs/flutter-apk/app-arm64-v8a-debug.apk'
   foreach ($target in $targets) {
     $packageInfo = (& $adb -s $serial shell dumpsys package $packageName 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
     $installed = Get-Ra25InstalledVersionCode $packageInfo $LASTEXITCODE
     $buildNumber = $installed + 1
-    Invoke-CiNativeCommand flutter 'build', 'apk', '--debug', "--target=$target", '--target-platform', 'android-arm64', "--build-number=$buildNumber"
+    Invoke-CiNativeCommand flutter 'build', 'apk', '--debug', "--target=$target", '--target-platform', 'android-arm64', '--split-per-abi', "--build-number=$buildNumber"
     Assert-ApkAbi -ApkPath $apk -ExpectedAbi 'arm64-v8a'
 
     $installOutput = @(& $adb -s $serial install -r (Resolve-Path -LiteralPath $apk).Path 2>&1 | ForEach-Object { $_.ToString() })
