@@ -25,15 +25,6 @@ dependencies:
   yuv_ffi: ^0.5.2
 ```
 
-Until 0.5.2 is published on pub.dev, resolve it from a local checkout with an
-ignored `pubspec_overrides.yaml` next to your `pubspec.yaml`; do not commit it:
-
-```yaml
-dependency_overrides:
-  yuv_ffi:
-    path: ../yuv_ffi
-```
-
 Version 0.5.2 moves the camera code out of the example into `yuv_camera`.
 Updating from 0.5.1 does not require API replacements; see
 [CHANGELOG.md](CHANGELOG.md). Version 0.4.0 was published and later retracted;
@@ -329,6 +320,8 @@ dart run ffigen --config ffigen.yaml
 
 ## Learn more
 
+- [Wiki](https://github.com/Anfet/yuv_ffi/wiki): step-by-step guides for
+  images, processing, display, geometry, and platform troubleshooting.
 - [Example app](https://github.com/Anfet/yuv_ffi/tree/main/example): image
   loading, transforms, effects, and frame display. Run it with `flutter run`
   from the `example/` directory.

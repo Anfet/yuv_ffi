@@ -21,3 +21,5 @@ example. Image transforms can be explored by loading an image from the app bar.
 
 For package setup, API migration, and platform/backend limitations, see the
 [package README](../README.md).
+
+Step-by-step guides are in the [yuv_ffi wiki](https://github.com/Anfet/yuv_ffi/wiki).

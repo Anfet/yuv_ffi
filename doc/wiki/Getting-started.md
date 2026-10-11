@@ -16,15 +16,6 @@ dependencies:
   yuv_ffi: ^0.5.2
 ```
 
-Until 0.5.2 is published on pub.dev, resolve it from a local checkout with an ignored `pubspec_overrides.yaml` next to
-your `pubspec.yaml` (do not commit it):
-
-```yaml
-dependency_overrides:
-  yuv_ffi:
-    path: ../yuv_ffi
-```
-
 Android needs `minSdk` 26 or higher. Nothing else has to be configured in your app.
 
 ## Step 2: write the app

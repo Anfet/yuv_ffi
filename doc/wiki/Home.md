@@ -7,10 +7,7 @@ step-by-step recipes, explain the behavior behind them and list the errors you a
 [API reference](https://pub.dev/documentation/yuv_ffi/latest/) lists every parameter, and the
 [CHANGELOG](https://github.com/Anfet/yuv_ffi/blob/main/CHANGELOG.md) records what changed in each version.
 
-**Documented version: 0.5.2.** This wiki describes the 0.5.2 source in the repository. Version 0.5.2 is a release
-candidate that is not published on pub.dev yet: the latest published version is 0.5.1, and until 0.5.2 is released the
-dependency has to be resolved from a local checkout as described in the README. Every recipe here was built against the
-0.5.2 source, not against 0.5.1.
+**Documented version: 0.5.2.** This wiki describes `yuv_ffi` 0.5.2; every recipe here was built against that version.
 
 Camera capture is not part of this package. For a live camera preview, frame processing and capture, use
 [`yuv_camera`](https://github.com/Anfet/yuv_camera), which builds on `yuv_ffi`; its guides are in the

@@ -22,6 +22,8 @@
   between `yuv_ffi` and `yuv_camera`, and give a complete Quick start.
 - Web parity notes no longer count the camera Web smoke as `yuv_ffi`
   evidence; it is tracked by `yuv_camera`.
+- Added step-by-step guides in the
+  [GitHub Wiki](https://github.com/Anfet/yuv_ffi/wiki).
 
 ### Development
 
