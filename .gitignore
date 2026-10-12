@@ -30,6 +30,7 @@ build/
 /.worktrees/
 .zshrc
 yuv_ffi.dll
+.memory/
 .vscode/
 _tmp**
 

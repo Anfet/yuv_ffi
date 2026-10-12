@@ -277,8 +277,8 @@ results against its exact commit. The repository has no hosted CI.
 | Platform | Support | Checked by package scripts | Checked manually |
 | --- | --- | --- | --- |
 | Android | Native FFI: `armeabi-v7a`, `arm64-v8a`, `x86_64` | APK builds for `armeabi-v7a` and `arm64-v8a`; app-runtime smoke and the 1188-case correctness matrix on a physical Pixel 3 (`arm64-v8a`); `x86_64` is built but not checked | Release builds on a physical Pixel 3 for `arm64-v8a` and `armeabi-v7a` |
-| iOS | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | Release build on a physical iPhone (iOS 18.7): shader display; camera and device checks are in `yuv_camera` |
-| macOS | Native FFI | Example build, app-runtime smoke, and the 1188-case correctness matrix | Camera stream smoke is in `yuv_camera` |
+| iOS | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | Release build on a physical iPhone (iOS 18.7): shader display |
+| macOS | Native FFI | Example build, app-runtime smoke, and the 1188-case correctness matrix | — |
 | Windows | Native FFI | Build, app-runtime smoke, and the 1188-case correctness matrix | — |
 | Linux | Native FFI | Example build, packaging, app-runtime smoke, and the 1188-case correctness matrix | — |
 | Web | WASM backend (JavaScript and `--wasm` builds); operation parity with native in checked cases | Package checks, browser tests, and the 1188-case correctness matrix on both builds | Chrome |
