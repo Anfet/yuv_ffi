@@ -21,6 +21,7 @@
 - **DEVICE 1** — DONE: yuv_ffi-часть device-check на Pixel 3 release: пробы smoke/probe arm64 и armv7 PASS, по 1188 cases (Reviewer); пара с yuv_camera `bfde4a1`. Accepted SHA `f2775eea5d8ebdeddba2c15fe261d45ddafe92d5`. CI: не требуется; merge/push не требуются. Карточка/Review: история group `tasks/0.5.2/DEVICE-1.md`.
 - **DEVICE 2** — DONE: yuv_ffi без изменений на физическом iPhone 11 / iOS 18.7.8 в паре с yuv_camera `665c82f`: повторный release device-check и обе integration-цели PASS (принято R6). Accepted SHA `f2775eea5d8ebdeddba2c15fe261d45ddafe92d5`. CI: не требуется; merge/push не требуются. Карточка/Review: история group `tasks/0.5.2/DEVICE-2.md`.
 - **GATE 1** — DONE: гейт этапа 2 принят (R7 после закрытия R1/R2) на паре yuv_ffi `f2775eea5d8ebdeddba2c15fe261d45ddafe92d5` / yuv_camera `665c82fcf3cc86bb9691f78b2d8344d0c7845a00`; Linux/macOS/iOS simulator и физический Mac smoke повторены на кандидате. Публикации, push, теги и releases не выполнялись. Accepted SHA `f2775eea5d8ebdeddba2c15fe261d45ddafe92d5`. CI: не требуется; merge/push не требуются. Карточка/Review: история group `tasks/0.5.2/GATE-1.md`.
+- **DOC 2** — DONE (R8, Review 1, закрыто 12.10.2026): финальная редакция документов перед выкладками; Accepted SHA `fd22e0cf89ad1357c0a1d47b724f6be989b7203f`, пара yuv_camera `d46545c35d3289964ffbb7c12490949082b427ad`. По D-46 SHA не окончательные; окончательные — GATE 2. CI: не требуется (D-38); merge/push не требуются. Карточка/Review: история group `tasks/0.5.2/DOC-2.md`.
 
 ## Цикл 0.5.1
 
