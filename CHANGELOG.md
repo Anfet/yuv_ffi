@@ -14,7 +14,8 @@
 
 - Updating from 0.5.1 needs no API replacements. Applications that used the
   example's camera code should depend on `yuv_camera` (which requires
-  `yuv_ffi: ^0.5.2`) and register `camera_desktop` on desktop.
+  `yuv_ffi: ^0.5.2`) and add `camera_desktop` beside `camera` on desktop;
+  Flutter registers the federated plugin. See [MIGRATION.md](MIGRATION.md).
 
 ### Documentation
 

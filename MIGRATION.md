@@ -2,16 +2,28 @@
 
 ## Scope
 
-This guide covers applications moving from the last available release, `yuv_ffi: ^0.2.4`, to the 0.5.x line. Version 0.4.0 was published and later retracted. Applications whose lockfile still resolves 0.4.0 follow the same migration. The minimums are Dart 3.12, Flutter 3.44, Android API 26, iOS 13, and macOS 10.15. Android `x86` is no longer supported; supported Android ABIs are `armeabi-v7a`, `arm64-v8a`, and `x86_64`.
+This guide covers applications moving from `yuv_ffi: ^0.2.4` to 0.5.2 and updates within the 0.5.x line. Version 0.4.0 was published and later retracted. Applications whose lockfile still resolves 0.4.0 follow the same API migration. The minimums are Dart 3.12, Flutter 3.44, Android API 26, iOS 13, and macOS 10.15. Android `x86` is no longer supported; supported Android ABIs are `armeabi-v7a`, `arm64-v8a`, and `x86_64`.
 
 ## Steps
 
-1. Change the dependency to `yuv_ffi: ^0.5.1` and run `flutter pub upgrade yuv_ffi`.
+1. Change the dependency to `yuv_ffi: ^0.5.2` and run `flutter pub upgrade yuv_ffi`.
 2. Await `YuvFfi.initialize()` in every isolate: before capability-gated operations on native platforms and before any image operation on Web.
 3. Apply only the `rename` rows in the table mechanically. Search with each listed pattern first.
 4. Resolve every `review` row using the decision rules below; do not apply a blind replacement.
 5. Migrate persisted frames through your application's own representation as described under Stored frames.
 6. Run the Verify commands, `flutter analyze`, and your application's tests on its supported targets.
+
+## Updating from 0.5.1 to 0.5.2
+
+The public image API, native kernels, Web assets, and serialized frame format are unchanged. Change the dependency to
+`yuv_ffi: ^0.5.2`, run `flutter pub upgrade yuv_ffi`, and check your supported targets. No API replacements or stored-frame
+conversion are required.
+
+Camera code has moved out of the `yuv_ffi` example into `yuv_camera 0.0.1`. Image-only applications do not need the new
+package. Applications that copied the example's camera code should follow
+the [camera migration guide](https://github.com/Anfet/yuv_camera/blob/main/MIGRATION.md): add `yuv_camera`, use its public
+imports, and keep ML Kit integration in the application. On desktop, add `camera_desktop` beside `camera`; Flutter
+registers the federated plugin when the application is rebuilt.
 
 ## Updating from 0.5.0 to 0.5.1
 
@@ -103,7 +115,7 @@ Each row names one old public symbol or call form. Patterns are intended for `rg
 
 ## Stored frames
 
-There is no automatic migration for serialized frames from 0.2.4. Decode or otherwise read each old frame with the 0.2.4 application, export an application-owned representation containing format, dimensions, plane row and pixel strides, and plane bytes, then recreate the image with the matching 0.5.x factory and encode it with `encodeTo`. Do not re-save a v1 payload with the 0.5.x codec and expect it to migrate; the formats are incompatible. Frames already encoded by 0.5.0 need no re-migration for 0.5.1.
+There is no automatic migration for serialized frames from 0.2.4. Decode or otherwise read each old frame with the 0.2.4 application, export an application-owned representation containing format, dimensions, plane row and pixel strides, and plane bytes, then recreate the image with the matching 0.5.x factory and encode it with `encodeTo`. Do not re-save a v1 payload with the 0.5.x codec and expect it to migrate; the formats are incompatible. Frames already encoded in v2 by 0.4.0, 0.5.0, or 0.5.1 need no re-migration for 0.5.2.
 
 ## Native and Web consumers
 

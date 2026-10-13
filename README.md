@@ -27,7 +27,7 @@ dependencies:
 
 Version 0.5.2 moves the camera code out of the example into `yuv_camera`.
 Updating from 0.5.1 does not require API replacements; see
-[CHANGELOG.md](CHANGELOG.md). Version 0.4.0 was published and later retracted;
+[MIGRATION.md](MIGRATION.md) and [CHANGELOG.md](CHANGELOG.md). Version 0.4.0 was published and later retracted;
 the migration guidance below also applies to applications whose lockfile still
 resolves 0.4.0.
 
