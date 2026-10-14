@@ -28,4 +28,11 @@ void main() {
     expect(runner, contains(r'$hostSummary | ConvertTo-Json -Compress'));
     expect(runner, contains(r'medianMicros = $_.medianMicros'));
   });
+
+  test('arm64 build accepts an installed armv7 package while preserving install guards', () {
+    expect(runner, contains(r'Get-Ra25VersionCodePlan $beforePackage.versionCode $Abi'));
+    expect(runner, isNot(contains(r'beforePackage.primaryCpuAbi -ne $expectedAbi')));
+    expect(runner, contains(r'afterPackage.primaryCpuAbi -ne $expectedAbi'));
+    expect(runner, contains(r'afterPackage.firstInstallTime -cne $beforePackage.firstInstallTime'));
+  });
 }

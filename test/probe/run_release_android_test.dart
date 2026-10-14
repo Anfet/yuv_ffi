@@ -66,6 +66,16 @@ void main() {
     expect(plans.map((plan) => plan['buildNumber']), [1, 1002, 3]);
   });
 
+  test('arm64 upgrade plan accepts installed armv7 versionCode 85062', () async {
+    final result = await _runVersioning("Get-Ra25VersionCodePlan 85062 'arm64' | ConvertTo-Json -Compress");
+    final plan = jsonDecode(result) as Map<String, dynamic>;
+
+    expect(plan['installedVersionCode'], 85062);
+    expect(plan['abi'], 'arm64');
+    expect(plan['buildNumber'], 83063);
+    expect(plan['builtVersionCode'], 85063);
+  });
+
   test('versionCode readers reject unavailable, ambiguous and out-of-range values', () async {
     final valid = await _runVersioning('''
       \$installed = Get-Ra25InstalledVersionCode "versionCode=2147483646 minSdk=26 targetSdk=35" 0

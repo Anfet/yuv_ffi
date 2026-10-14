@@ -20,8 +20,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'release_android_versioning.ps1')
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $exampleRoot = Join-Path $repoRoot 'example'
+$packageName = 'com.example.yuv_ffi_example'
 $gitSha = (& git -C $repoRoot rev-parse HEAD).Trim().ToLowerInvariant()
 $initialDirty = @(& git -C $repoRoot status --porcelain)
 if ($initialDirty.Count -gt 0) {
@@ -50,12 +52,48 @@ if ($BaselinePath -and -not (Test-Path -LiteralPath $BaselinePath -PathType Leaf
 $androidSdk = if ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } elseif ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { 'D:\.important\android-sdk' }
 $adb = Join-Path $androidSdk 'platform-tools\adb.exe'
 if (-not (Test-Path -LiteralPath $adb)) { throw "adb is missing: $adb" }
+$aapt = @(
+  Get-ChildItem -LiteralPath (Join-Path $androidSdk 'build-tools') -Directory -ErrorAction Stop |
+    Sort-Object { [version]$_.Name } -Descending |
+    ForEach-Object { Join-Path $_.FullName 'aapt.exe' } |
+    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
+)[0]
+if (-not $aapt) { throw "aapt.exe is missing from Android SDK build-tools: $androidSdk" }
 if (-not $Serial) {
   $devices = @(& $adb devices | Select-String '\tdevice$' | ForEach-Object { ($_ -split '\t')[0] })
   if ($devices.Count -ne 1) { throw 'Pass -Serial when exactly one Android device is not connected.' }
   $Serial = $devices[0]
 }
 function DeviceShell([string]$Command) { (& $adb -s $Serial shell $Command 2>&1 | Out-String).Trim() }
+function Read-Ra26PackageSnapshot([string]$Moment) {
+  $lines = @(& $adb -s $Serial shell dumpsys package $packageName 2>&1)
+  $exitCode = $LASTEXITCODE
+  $raw = $lines -join [Environment]::NewLine
+  $rawPath = Join-Path $resolvedResultDirectory "package-$Moment.txt"
+  [IO.File]::WriteAllText($rawPath, $raw)
+  $versionCode = Get-Ra25InstalledVersionCode $raw $exitCode
+  if ($raw -match '(?im)^\s*Unable to find package:') {
+    throw "The existing benchmark package is not installed; firstInstallTime cannot be preserved. Snapshot: $rawPath"
+  }
+  $firstInstallMatches = [regex]::Matches($raw, '(?m)^\s*firstInstallTime=(.+?)\s*$')
+  if ($firstInstallMatches.Count -ne 1) {
+    throw "Unable to determine one installed firstInstallTime; found $($firstInstallMatches.Count). Snapshot: $rawPath"
+  }
+  $abiMatches = [regex]::Matches($raw, '(?m)^\s*primaryCpuAbi=([^\s]+)\s*$')
+  if ($abiMatches.Count -ne 1) {
+    throw "Unable to determine one installed primaryCpuAbi; found $($abiMatches.Count). Snapshot: $rawPath"
+  }
+  $snapshot = [ordered]@{
+    packageName = $packageName
+    versionCode = $versionCode
+    firstInstallTime = $firstInstallMatches[0].Groups[1].Value
+    primaryCpuAbi = $abiMatches[0].Groups[1].Value
+    rawSnapshotPath = $rawPath
+  }
+  $snapshotPath = Join-Path $resolvedResultDirectory "package-$Moment.json"
+  [IO.File]::WriteAllText($snapshotPath, ($snapshot | ConvertTo-Json -Depth 4))
+  return [pscustomobject]$snapshot
+}
 
 $environmentFailures = [System.Collections.Generic.List[string]]::new()
 $power = DeviceShell 'dumpsys power'
@@ -111,7 +149,43 @@ function Write-JsonAtomically([string]$Path, [object]$Document) {
   [IO.File]::WriteAllText($temporaryPath, ($Document | ConvertTo-Json -Depth 16))
   [IO.File]::Move($temporaryPath, $Path)
 }
+function Assert-Ra26ApkForInstall(
+  [string]$Badging,
+  [string[]]$ApkEntries,
+  [string]$ExpectedPackageName,
+  [string]$ExpectedAbi,
+  [long]$ExpectedVersionCode,
+  [long]$InstalledVersionCode
+) {
+  $packageMatches = [regex]::Matches($Badging, "(?m)^package:\s+name='([^']+)'")
+  if ($packageMatches.Count -ne 1 -or [string]::IsNullOrWhiteSpace($packageMatches[0].Groups[1].Value)) {
+    throw "Unable to determine one APK package name; found $($packageMatches.Count) package entries."
+  }
+  $packageName = $packageMatches[0].Groups[1].Value
+  if ($packageName -cne $ExpectedPackageName) {
+    throw "APK package metadata is $packageName, expected $ExpectedPackageName."
+  }
+  $versionCode = Get-Ra25ApkVersionCode $Badging
+  if ($versionCode -ne $ExpectedVersionCode -or $versionCode -le $InstalledVersionCode) {
+    throw "APK versionCode $versionCode does not match planned $ExpectedVersionCode above installed $InstalledVersionCode."
+  }
+  $abis = @($ApkEntries | ForEach-Object {
+    if ($_ -match '^lib/([^/]+)/') { $Matches[1] }
+  } | Sort-Object -Unique)
+  if ($abis.Count -ne 1 -or $abis[0] -cne $ExpectedAbi) {
+    throw "APK native ABI metadata is unexpected: $($abis -join ', '); expected only $ExpectedAbi."
+  }
+  if ($ApkEntries -notcontains "lib/$ExpectedAbi/libyuv_ffi.so") {
+    throw "APK does not contain lib/$ExpectedAbi/libyuv_ffi.so."
+  }
+  return [pscustomobject]@{
+    packageName = $packageName
+    versionCode = $versionCode
+    abis = $abis
+  }
+}
 
+Start-Transcript -LiteralPath (Join-Path $resolvedResultDirectory "ra26-android-release-$runId.log") -Force | Out-Null
 Push-Location $exampleRoot
 try {
   if ($usesPackageOverride) {
@@ -145,8 +219,12 @@ try {
     throw "RA-26 resolved package revision is $resolvedPackageRevision, expected $expectedPackageRevision."
   }
 
+  $beforePackage = Read-Ra26PackageSnapshot 'before'
+  $versionCodePlan = Get-Ra25VersionCodePlan $beforePackage.versionCode $Abi
+
   $buildArguments = @(
     'build', 'apk', '--release', '--target=probe/android_release_benchmark.dart', '--target-platform=android-arm64', '--split-per-abi',
+    "--build-number=$($versionCodePlan.buildNumber)",
     "--dart-define=RA26_GIT_SHA=$gitSha",
     "--dart-define=RA26_RUN_ID=$runId",
     "--dart-define=RA26_HOST_ID=$hostId",
@@ -177,12 +255,56 @@ try {
   $apkPath = Join-Path (Get-Location) 'build\app\outputs\flutter-apk\app-arm64-v8a-release.apk'
   if (-not (Test-Path -LiteralPath $apkPath -PathType Leaf)) { throw "Release APK is missing: $apkPath" }
   $apkSha256 = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  $badgingLines = @(& $aapt dump badging $apkPath 2>&1)
+  if ($LASTEXITCODE -ne 0) { throw "Unable to read APK metadata with $aapt; installation was not attempted." }
+  $badging = $badgingLines -join [Environment]::NewLine
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $apkPath))
+  try {
+    $apkEntries = @($archive.Entries | ForEach-Object FullName)
+  } finally {
+    $archive.Dispose()
+  }
+  try {
+    $validatedApk = Assert-Ra26ApkForInstall $badging $apkEntries $packageName $expectedAbi `
+      $versionCodePlan.builtVersionCode $beforePackage.versionCode
+  } catch {
+    throw "APK pre-install validation failed; installation was not attempted. $($_.Exception.Message)"
+  }
+  $apkPackageName = $validatedApk.packageName
+  $apkVersionCode = $validatedApk.versionCode
+  $apkAbis = $validatedApk.abis
+  [IO.File]::WriteAllText((Join-Path $resolvedResultDirectory 'apk-metadata.txt'), $badging)
+  $preInstallEvidence = [ordered]@{
+    runId = $runId
+    runnerSha = $gitSha
+    packageRevision = $resolvedPackageRevision
+    packagePath = $resolvedPackageRoot
+    device = $Serial
+    apkPath = $apkPath
+    apkSha256 = $apkSha256
+    apkPackageName = $apkPackageName
+    apkAbis = $apkAbis
+    installedVersionCode = $beforePackage.versionCode
+    plannedBuildNumber = $versionCodePlan.buildNumber
+    plannedVersionCode = $versionCodePlan.builtVersionCode
+    firstInstallTime = $beforePackage.firstInstallTime
+    installCommand = 'adb install -r'
+    installAttempted = $false
+  }
+  $preInstallEvidencePath = Join-Path $resolvedResultDirectory 'pre-install.json'
+  [IO.File]::WriteAllText($preInstallEvidencePath, ($preInstallEvidence | ConvertTo-Json -Depth 6))
+
+  $preInstallEvidence.installAttempted = $true
+  [IO.File]::WriteAllText($preInstallEvidencePath, ($preInstallEvidence | ConvertTo-Json -Depth 6))
   & $adb -s $Serial install -r $apkPath | Out-Null
   if ($LASTEXITCODE -ne 0) { throw 'Release APK installation failed.' }
-  $packageName = 'com.example.yuv_ffi_example'
-  $packageInfo = DeviceShell "dumpsys package $packageName"
-  if ($packageInfo -notmatch "primaryCpuAbi=$([regex]::Escape($expectedAbi))") {
-    throw "Installed package primaryCpuAbi is not $expectedAbi."
+  $afterPackage = Read-Ra26PackageSnapshot 'after'
+  if ($afterPackage.primaryCpuAbi -ne $expectedAbi -or $afterPackage.versionCode -ne $apkVersionCode) {
+    throw "Installed package does not match the APK: ABI=$($afterPackage.primaryCpuAbi), versionCode=$($afterPackage.versionCode)."
+  }
+  if ($afterPackage.firstInstallTime -cne $beforePackage.firstInstallTime) {
+    throw "firstInstallTime changed from '$($beforePackage.firstInstallTime)' to '$($afterPackage.firstInstallTime)' after adb install -r."
   }
 
   & $adb -s $Serial logcat -c
@@ -229,6 +351,15 @@ try {
     environment = 'awake; screen on; keyguard unlocked; no severe thermal state'
     apkPath = $apkPath
     apkSha256 = $apkSha256
+    installedVersionCodeBefore = $beforePackage.versionCode
+    installedVersionCodeAfter = $afterPackage.versionCode
+    firstInstallTimeBefore = $beforePackage.firstInstallTime
+    firstInstallTimeAfter = $afterPackage.firstInstallTime
+    packageSnapshotBefore = $beforePackage
+    packageSnapshotAfter = $afterPackage
+    apkMetadataPath = Join-Path $resolvedResultDirectory 'apk-metadata.txt'
+    preInstallEvidencePath = $preInstallEvidencePath
+    logPath = Join-Path $resolvedResultDirectory "ra26-android-release-$runId.log"
     summary = $summary
     runs = $runs
   }
@@ -238,6 +369,7 @@ try {
   Write-Output "RA26_ANDROID_RESULT_PATH $resultPath"
 } finally {
   Pop-Location
+  Stop-Transcript | Out-Null
   if ($temporaryOverrideCreated) {
     Remove-Item -LiteralPath $overridePath -Force -ErrorAction SilentlyContinue
   }
