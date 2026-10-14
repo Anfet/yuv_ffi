@@ -5,7 +5,7 @@
 - `YuvImage.applyPatch` rejects source and destination planes that overlap the
   same external storage. Reading an empty `YuvPlane` now throws
   `ArgumentError` instead of reaching an invalid native access.
-- Native builds retain CMake 3.10 compatibility, align allocations for 16 KiB
+- Native builds retain CMake 3.10 compatibility, align Android ELF load segments for 16 KiB
   pages, and reuse the native build cache only when its checkout and
   configuration match. The example's image picker entitlement, SDK settings,
   and iOS build macro were cleaned up. macOS/iOS runtime checks and CocoaPods
