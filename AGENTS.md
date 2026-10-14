@@ -2,7 +2,7 @@
 
 Memory: D:\.projects\yuv\.memory\MEMORY.md
 
-Правила этого проекта поверх общих `D:\.projects\AGENTS.md`, `CODESTYLE.md` и `ENGINEERING_PROTOCOL.md`. План, этапы,
+Правила этого проекта поверх общих `D:\.projects\AGENTS.md`, `D:\.projects\.tools\skills\project-codestyle\SKILL.md` и `D:\.projects\.tools\skills\engineering-protocol\SKILL.md`. План, этапы,
 статусы и решения Engineer (D-N) — в `D:\.projects\yuv\todo.md`.
 
 ## Границы
@@ -28,7 +28,7 @@ Memory: D:\.projects\yuv\.memory\MEMORY.md
   пула Executor записывает в центральную карточку базовый SHA этого репозитория; ревью — диапазон `<base>..<SHA>`.
 - ID задачи — слово области и номер: в тексте через неразрывный пробел (TEST 1), в имени карточки через дефис
   (`tasks/<версия>/TEST-1.md` в group checkout `D:\.projects\yuv`). Карточки, дашборд и статусы — по
-  `D:\.projects\yuv\todo.md` и `ENGINEERING_PROTOCOL.md`.
+  `D:\.projects\yuv\todo.md` и `D:\.projects\.tools\skills\engineering-protocol\SKILL.md`.
 - История — в git. После `DONE` карточка удаляется, в `COMPLETION.md` остаётся одна строка. Сырые замеры не
   коммитятся: вывод, который остаётся в силе, — строкой в `doc/perf-findings.md`.
 
@@ -71,7 +71,7 @@ Memory: D:\.projects\yuv\.memory\MEMORY.md
 | `smoke` | `pwsh -File tool/ci/smoke.ps1` | Windows (проверка helpers в `tool/ci/`) |
 | `macos` | `bash tool/ci/macos.sh` | Mac |
 | `ios` | `bash tool/ci/ios.sh` | Mac, Xcode и симулятор |
-| `linux` | `bash tool/ci/linux.sh` | Ubuntu VM: clang, cmake, ninja, GTK 3, xvfb (MACHINES) |
+| `linux` | `bash tool/ci/linux.sh` | Ubuntu VM: clang, cmake, ninja, GTK 3, xvfb (machine-use) |
 | `bindings` | `bash tool/ci/bindings.sh` в чистой копии точного коммита (`git archive` или clone) | Mac, Xcode |
 
 Для `src/**` дополнительно: `flutter test --tags probe`, `flutter test --tags reference` и native CTest:
@@ -95,7 +95,7 @@ ctest --test-dir <temp> -C Release --output-on-failure
 ## Приёмка и выпуск без CI (D-38)
 
 - GitHub Actions workflows у пакета нет, CI не запускается и CI-теги не ставятся. Все проверки — команды таблицы выше
-  на собственных машинах (Windows, Ubuntu VM, Mac) и устройствах; доступ к машинам — `D:\.projects\MACHINES.md`.
+  на собственных машинах (Windows, Ubuntu VM, Mac) и устройствах; доступ к машинам — `D:\.projects\.tools\private-skills\machine-use\SKILL.md`.
 - Приёмка карточки: ключи `scope_guard.sh` от базы карточки и её `Probe:`. Ключ `bindings` (`ffigen.yaml`,
   сгенерированные bindings, заголовки; входит в `all`) обязателен при таком scope.
 - Перед каждым выпуском каждой версии — полный обязательный набор на чистом закоммиченном кандидате, независимо от

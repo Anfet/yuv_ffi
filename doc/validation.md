@@ -2,7 +2,7 @@
 
 Решение Engineer D-38 (10.10.2026, group `todo.md`): GitHub Actions workflows удалены (CI 1), все проверки
 запускаются напрямую на собственных машинах. Команды выполняются из корня пакета; машины и доступ —
-`D:\.projects\MACHINES.md`. Каталог `tool/ci/` сохраняет прежнее имя как каталог scripts.
+`D:\.projects\.tools\private-skills\machine-use\SKILL.md`. Каталог `tool/ci/` сохраняет прежнее имя как каталог scripts.
 
 ## Когда запускать
 
