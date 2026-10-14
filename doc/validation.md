@@ -18,8 +18,9 @@
 `New-CiNativeBuild` хранит build directory под `RUNNER_TEMP` с именем, которое включает имя helper, конфигурацию и
 первые 16 hexadecimal символов SHA-256 от нормализованного абсолютного корня checkout. Поэтому два checkout могут
 использовать один `RUNNER_TEMP` без CMake source-directory mismatch. Caller всегда добавляет в `PATH` последний
-возвращённый helper путь, а не конструирует путь cache самостоятельно. `smoke.ps1` собирает библиотеку и сверяет
-возвращённый путь с этим key.
+возвращённый helper путь, а не конструирует путь cache самостоятельно. Android helper сохраняет совместимость с
+CMake 3.10: linker page-size option передаётся через `LINK_FLAGS`, а native cache по-прежнему разделён по root и
+configuration. `smoke.ps1` собирает библиотеку и сверяет возвращённый путь с этим key.
 
 ## Бывший workflow / job → script → машина → PASS
 
@@ -36,7 +37,7 @@
 | `ci-smoke.yml` / `smoke` | `tool/ci/smoke.ps1` | `pwsh -File tool/ci/smoke.ps1` | Windows | exit 0; `CI helper smoke passed.` |
 | `ci-macos.yml` / `macos-native-smoke` | `tool/ci/macos.sh` | `bash tool/ci/macos.sh` | Mac | exit 0; packaging smoke; Release-сборка через SwiftPM; `PASS` app-runtime smoke и каждой `*_native_test.dart` на `macos`; CocoaPods-копия; tracked-файлы не изменены |
 | `ci-ios.yml` / `ios-native-build` | `tool/ci/ios.sh` | `bash tool/ci/ios.sh` | Mac, Xcode и симулятор iOS 18.x | exit 0; `PASS` app-runtime smoke и каждой `*_native_test.dart` на симуляторе; app-runtime smoke CocoaPods-копии |
-| `ci.yml` / `bindings-regeneration` (self-hosted Mac) | libclang из Xcode; `pub get`; ffigen; `verify_bindings_audit.dart`; `git diff --exit-code -- ffigen.yaml <bindings>` | `bash tool/ci/bindings.sh` в чистой копии точного коммита | Mac, Xcode | exit 0; `AUDIT` без ошибок (`SUCCESS`); оба `git diff --no-index` против исходных `ffigen.yaml` и `yuv_ffi_bingings.dart` — exit 0; строка `Bindings check passed` |
+| bindings audit/regeneration | libclang из Xcode; `pub get`; ffigen; `verify_bindings_audit.dart`; сравнение с исходными файлами | `bash tool/ci/bindings.sh` в чистой копии точного коммита | Mac, Xcode | exit 0; `AUDIT` без ошибок (`SUCCESS`); оба `git diff --no-index` против исходных `ffigen.yaml` и `yuv_ffi_bingings.dart` — exit 0; строка `Bindings check passed` |
 | `ci.yml` / `linux-native-smoke` (`ubuntu-latest`) | `pub get`; версии clang/cmake; CTest Debug и Release с `BUILD_TESTING=ON`, clang; число sanitizer cases; сборка `libyuv_ffi.so`; packaging smoke через `LD_LIBRARY_PATH`; `flutter create --platforms=linux`, восстановление и проверка `pubspec.lock`, `flutter build linux --release`; app-runtime smoke; все `*_native_test.dart` через `xvfb-run` | `bash tool/ci/linux.sh` | Ubuntu VM 24.04: clang, cmake, ninja, GTK 3, xvfb (пакеты ставит Engineer, script ничего не устанавливает) | exit 0; оба CTest без провалов; `abi_sanitizer_test`: `failures: 0`, cases > 0 и без `SKIPPED` (malloc `--wrap` выполнен); packaging smoke 0 failed; lock без drift; `PASS` app-runtime smoke и каждой native-цели; пустой набор целей — FAIL; итоговая строка `Linux checks passed` |
 
 Отличия от прежних job: `linux.sh` собирает и запускает пример в копии кандидата во временном каталоге (checkout не
@@ -50,7 +51,7 @@ packaging smoke, поэтому app-runtime и native-цели находят б
 Набор native-целей определяется glob `example/integration_test/*_native_test.dart` во всех платформенных scripts
 (`windows.ps1`, `android.ps1`, `macos.sh`, `ios.sh`, `linux.sh`); на базе CI 1 это `presenter_shader_native_test.dart`,
 `probe_native_test.dart`, `shader_probe_native_test.dart`, плюс отдельный `native_app_runtime_smoke_test.dart`.
-Web-цели и их число проверяет `Assert-WebSourceMatrix` в `web.ps1` (и аналог в `web.sh`): 14 источников, 64 случая.
+Web-цели и их число проверяет `Assert-WebSourceMatrix` в `web.ps1` (и аналог в `web.sh`): актуальная матрица после FIX 11 — 14 источников и 65 integration cases. Указанные выше числа из CI 1 относятся к исторической базе и не являются текущим результатом проверки.
 
 ## Что script не доказывает
 

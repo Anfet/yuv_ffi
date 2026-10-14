@@ -19,6 +19,10 @@ Windows, and Web runners are checked in here. A Linux runner is not included.
 Camera capture and device checks are demonstrated by the separate `yuv_camera`
 example. Image transforms can be explored by loading an image from the app bar.
 
+The example requires Dart `^3.12.0` and Flutter `>=3.44.0`, matching the package SDK floor. On macOS the app uses
+`image_picker` to load an image; the Runner's Debug/Profile and Release entitlements include
+`com.apple.security.files.user-selected.read-only` so the selected file is available in the sandbox.
+
 For package setup, API migration, and platform/backend limitations, see the
 [package README](../README.md).
 

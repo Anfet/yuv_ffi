@@ -2,6 +2,14 @@
 
 ### Changed
 
+- `YuvImage.applyPatch` rejects source and destination planes that overlap the
+  same external storage. Reading an empty `YuvPlane` now throws
+  `ArgumentError` instead of reaching an invalid native access.
+- Native builds retain CMake 3.10 compatibility, align allocations for 16 KiB
+  pages, and reuse the native build cache only when its checkout and
+  configuration match. The example's image picker entitlement, SDK settings,
+  and iOS build macro were cleaned up. macOS/iOS runtime checks and CocoaPods
+  regeneration remain pending under D-55.
 - Camera capture, camera frame import, camera device checks, and the ML Kit
   face-detection demo moved from the example to the separate `yuv_camera`
   package, which depends on `yuv_ffi`. `yuv_ffi` no longer depends on
