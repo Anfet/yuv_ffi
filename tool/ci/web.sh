@@ -121,7 +121,7 @@ assert_web_source_matrix() {
     fake_loader_web_tests.dart
     shader_probe_web_test.dart
   )
-  local baseline_total=64 baseline_sources=14
+  local baseline_total=65 baseline_sources=14
   local baseline_case_files=(
     getbytes_contract_web_test.dart
     image_cache_key_web_test.dart
@@ -139,7 +139,7 @@ assert_web_source_matrix() {
     yuv_web_capabilities_web_test.dart
   )
   local baseline_case_counts=(
-    4 1 2 1 1 1 1 29 1 9 2 3 4 5
+    4 1 2 1 1 1 1 29 1 9 2 3 5 5
   )
   local integration_directory="$repository_root/example/integration_test"
 
@@ -275,4 +275,4 @@ printf 'Web WASM CI passed: targets=%s; elapsed=%ss.\n' "${#wasm_targets[@]}" "$
 
 git add --refresh -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
 
-echo "Web CI passed: Chrome $chrome_version; sources=14; integration cases=64; reference matrix=119."
+echo "Web CI passed: Chrome $chrome_version; sources=14; integration cases=65; reference matrix=119."

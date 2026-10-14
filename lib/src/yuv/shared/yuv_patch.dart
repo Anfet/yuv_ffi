@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
@@ -27,7 +29,7 @@ extension YuvImagePatch on YuvImage {
     }
     for (final target in targets) {
       for (final source in sources) {
-        if (identical(target.bytes.buffer, source.bytes.buffer) &&
+        if (_sharesByteStorage(target.bytes, source.bytes) &&
             target.bytes.offsetInBytes < source.bytes.offsetInBytes + source.bytes.lengthInBytes &&
             source.bytes.offsetInBytes < target.bytes.offsetInBytes + target.bytes.lengthInBytes) {
           throw ArgumentError('Patch source and destination must not share byte storage');
@@ -41,6 +43,8 @@ extension YuvImagePatch on YuvImage {
     return this;
   }
 }
+
+bool _sharesByteStorage(Uint8List target, Uint8List source) => identical(target, source) || target.buffer == source.buffer;
 
 void _validatePlane(YuvPlane plane, _PlanePatch patch, {required bool target}) {
   final x = target ? patch.x : 0;

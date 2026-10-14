@@ -13,6 +13,16 @@ import 'helpers/yuv_frame_render_reference.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets('empty YuvPlane rows reject pixel access in release', (tester) async {
+    for (final pixelStride in [1, 4]) {
+      final plane = YuvPlane(1, 0, pixelStride);
+      expect(plane.bytes, isEmpty);
+      expect(() => plane.getPixel(0, 0), throwsArgumentError, reason: 'pixelStride=$pixelStride');
+      expect(() => plane.setPixel(0, 0, 1), throwsArgumentError, reason: 'pixelStride=$pixelStride');
+      expect(plane.bytes, isEmpty, reason: 'pixelStride=$pixelStride');
+    }
+  });
+
   testWidgets('YuvFrameView shader path matches the frame-display contract', (tester) async {
     await YuvFfi.initialize();
     for (final orientation in const [YuvFrameOrientation.upright, YuvFrameOrientation(rotation: YuvImageRotation.rotation270, mirrored: true)]) {

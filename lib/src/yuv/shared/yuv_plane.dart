@@ -104,6 +104,9 @@ class YuvPlane {
     if (pixelStride == 0) {
       throw ArgumentError.value(pixelStride, 'pixelStride', 'Pixel stride must not be zero');
     }
+    if (rowStride == 0) {
+      throw ArgumentError.value(rowStride, 'rowStride', 'A pixel cannot be read from an empty row');
+    }
     final int maxX = (rowStride - 1) ~/ pixelStride;
     if (x > maxX) {
       throw ArgumentError.value(x, 'x', 'Must not exceed $maxX for rowStride $rowStride and pixelStride $pixelStride');

@@ -235,6 +235,16 @@ void main() {
       expect(() => plane.setPixel(0, 0, 1), throwsArgumentError);
     });
 
+    test('empty rows reject get/set for each supported pixel stride', () {
+      for (final pixelStride in [1, 4]) {
+        final plane = YuvPlane(1, 0, pixelStride);
+        expect(plane.bytes, isEmpty);
+        expect(() => plane.getPixel(0, 0), throwsArgumentError, reason: 'pixelStride=$pixelStride');
+        expect(() => plane.setPixel(0, 0, 1), throwsArgumentError, reason: 'pixelStride=$pixelStride');
+        expect(plane.bytes, isEmpty, reason: 'pixelStride=$pixelStride');
+      }
+    });
+
     test('debug and release semantics are identical (no assert-only guard)', () {
       // This test runs the same in both modes because the guards are plain
       // `if`/`throw` statements, not `assert`, which Flutter strips in

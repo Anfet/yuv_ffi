@@ -98,13 +98,62 @@ void main() {
 
     _expectPatch(target, fragment, 0, 0);
   });
+
+  test('rejects aliased external planes before changing either image', () {
+    final shared = Uint8List.fromList(List<int>.generate(8, (index) => index + 1));
+    final overlappingBacking = Uint8List.fromList(List<int>.generate(12, (index) => index + 11));
+    final multiPlaneBacking = Uint8List.fromList(List<int>.generate(10, (index) => index + 21));
+    final separateBacking = Uint8List.fromList(List<int>.generate(16, (index) => index + 31));
+    final layouts = <({String name, YuvImage target, YuvImage source, bool rejected})>[
+      (name: 'one Uint8List', target: _foreignBgra(shared), source: _foreignBgra(shared), rejected: true),
+      (
+        name: 'overlapping Uint8List views',
+        target: _foreignBgra(Uint8List.view(overlappingBacking.buffer, 4, 8)),
+        source: _foreignBgra(Uint8List.view(overlappingBacking.buffer, 0, 8)),
+        rejected: true,
+      ),
+      (
+        name: 'overlap through different planes',
+        target: _foreignI420(multiPlaneBacking, yOffset: 0, uOffset: 4, vOffset: 5),
+        source: _foreignI420(multiPlaneBacking, yOffset: 6, uOffset: 2, vOffset: 7),
+        rejected: true,
+      ),
+      (
+        name: 'non-overlapping slices',
+        target: _foreignBgra(Uint8List.view(separateBacking.buffer, 8, 8)),
+        source: _foreignBgra(Uint8List.view(separateBacking.buffer, 0, 8)),
+        rejected: false,
+      ),
+    ];
+
+    for (final layout in layouts) {
+      final targetBefore = _planeBytes(layout.target);
+      final sourceBefore = _planeBytes(layout.source);
+      final targetRevision = layout.target.revision;
+      final sourceRevision = layout.source.revision;
+
+      if (layout.rejected) {
+        expect(() => layout.target.applyPatch(layout.source, x: 0, y: 0), throwsArgumentError, reason: layout.name);
+        expect(layout.target.revision, targetRevision, reason: layout.name);
+      } else {
+        expect(layout.target.applyPatch(layout.source, x: 0, y: 0), same(layout.target), reason: layout.name);
+        expect(layout.target.revision, targetRevision + 1, reason: layout.name);
+      }
+      expect(_planeBytes(layout.target), layout.rejected ? targetBefore : sourceBefore, reason: layout.name);
+      expect(_planeBytes(layout.source), sourceBefore, reason: layout.name);
+      expect(layout.source.revision, sourceRevision, reason: layout.name);
+    }
+  });
 }
 
 class _ForeignImage implements YuvImage {
-  _ForeignImage(this.backing, this.selectPlanes);
+  _ForeignImage(this.backing, this.selectPlanes) : _planes = null;
+
+  _ForeignImage.planes(this.backing, this._planes) : selectPlanes = null;
 
   final YuvImage backing;
-  final List<YuvPlane> Function(List<YuvPlane>) selectPlanes;
+  final List<YuvPlane> Function(List<YuvPlane>)? selectPlanes;
+  final List<YuvPlane>? _planes;
 
   @override
   YuvPixelFormat get format => backing.format;
@@ -113,11 +162,31 @@ class _ForeignImage implements YuvImage {
   @override
   int get height => backing.height;
   @override
-  List<YuvPlane> get planes => selectPlanes(backing.planes);
+  List<YuvPlane> get planes => _planes ?? selectPlanes!(backing.planes);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => Function.apply(backing.noSuchMethod, [invocation]);
 }
+
+YuvImage _foreignBgra(Uint8List bytes) => _ForeignImage.planes(YuvImage.bgra(2, 1), <YuvPlane>[_ForeignPlane(1, 8, 4, bytes)]);
+
+YuvImage _foreignI420(Uint8List backing, {required int yOffset, required int uOffset, required int vOffset}) =>
+    _ForeignImage.planes(YuvImage(YuvPixelFormat.i420, 2, 2), <YuvPlane>[
+      _ForeignPlane(2, 2, 1, Uint8List.view(backing.buffer, yOffset, 4)),
+      _ForeignPlane(1, 1, 1, Uint8List.view(backing.buffer, uOffset, 1)),
+      _ForeignPlane(1, 1, 1, Uint8List.view(backing.buffer, vOffset, 1)),
+    ]);
+
+class _ForeignPlane extends YuvPlane {
+  _ForeignPlane(super.height, super.rowStride, super.pixelStride, this._backing);
+
+  final Uint8List _backing;
+
+  @override
+  Uint8List get bytes => _backing;
+}
+
+List<Uint8List> _planeBytes(YuvImage image) => image.planes.map((plane) => Uint8List.fromList(plane.bytes)).toList();
 
 void _expectPatch(YuvImage target, YuvImage fragment, int x, int y) {
   final before = target.planes.map((plane) => Uint8List.fromList(plane.bytes)).toList();
