@@ -13,6 +13,14 @@
   прогон; evidence переносится на другой SHA только при пустом diff покрываемых путей (протокол, §5).
 - **Отчёт:** полный `Validated at`, машина и SDK, команда, exit code и критерий PASS ниже.
 
+## Native helper cache
+
+`New-CiNativeBuild` хранит build directory под `RUNNER_TEMP` с именем, которое включает имя helper, конфигурацию и
+первые 16 hexadecimal символов SHA-256 от нормализованного абсолютного корня checkout. Поэтому два checkout могут
+использовать один `RUNNER_TEMP` без CMake source-directory mismatch. Caller всегда добавляет в `PATH` последний
+возвращённый helper путь, а не конструирует путь cache самостоятельно. `smoke.ps1` собирает библиотеку и сверяет
+возвращённый путь с этим key.
+
 ## Бывший workflow / job → script → машина → PASS
 
 Исходные YAML — `.github/workflows/*` на `566e603` (база CI 1). Каждый Windows/Mac workflow только делал checkout,

@@ -61,6 +61,31 @@ function Invoke-CiFlutterTest {
   }
 }
 
+function Get-CiNativeBuildDirectory {
+  param(
+    [Parameter(Mandatory)]
+    [string] $Name,
+
+    [Parameter(Mandatory)]
+    [string] $Configuration
+  )
+
+  $repositoryRoot = Get-CiRepositoryRoot
+  $normalizedRepositoryRoot = [System.IO.Path]::GetFullPath($repositoryRoot).
+    TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar).
+    ToUpperInvariant()
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($normalizedRepositoryRoot)
+  $sha256 = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $fingerprint = ([System.BitConverter]::ToString($sha256.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant().Substring(0, 16)
+  } finally {
+    $sha256.Dispose()
+  }
+
+  $directoryName = '{0}-{1}-{2}' -f $Name, $Configuration.ToLowerInvariant(), $fingerprint
+  return (Join-Path (Get-CiTemporaryDirectory) $directoryName)
+}
+
 function New-CiNativeBuild {
   param(
     [Parameter(Mandatory)]
@@ -73,15 +98,16 @@ function New-CiNativeBuild {
   )
 
   $repositoryRoot = Get-CiRepositoryRoot
-  $buildDirectory = Join-Path (Get-CiTemporaryDirectory) $Name
-  $configureArguments = @('-S', (Join-Path $repositoryRoot 'src'), '-B', $buildDirectory, '-DCMAKE_BUILD_TYPE=Release')
+  $configuration = 'Release'
+  $buildDirectory = Get-CiNativeBuildDirectory -Name $Name -Configuration $configuration
+  $configureArguments = @('-S', (Join-Path $repositoryRoot 'src'), '-B', $buildDirectory, "-DCMAKE_BUILD_TYPE=$configuration")
   if ($IsWindows) {
     $configureArguments += @('-A', 'x64')
   }
   $configureArguments += $CmakeArguments
 
   Invoke-CiNativeCommand cmake @configureArguments
-  Invoke-CiNativeCommand cmake '--build', $buildDirectory, '--config', 'Release', '--parallel'
+  Invoke-CiNativeCommand cmake '--build', $buildDirectory, '--config', $configuration, '--parallel'
 
   $libraryPath = if ($IsWindows) {
     Join-Path $buildDirectory (Join-Path 'Release' $LibraryName)

@@ -86,7 +86,10 @@ endif ()
 # Android builds do not use liblog.
 if (ANDROID)
     # Android 15: 16k page size support
-    target_link_options(yuv_ffi PRIVATE "-Wl,-z,max-page-size=16384")
+    # LINK_FLAGS is available in CMake 3.10. target_link_options() would
+    # require CMake 3.13 and make unpinned Android toolchains reject this
+    # project before they can apply the required 16 KiB page-size option.
+    set_property(TARGET yuv_ffi APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-z,max-page-size=16384")
 
     # Windows: link with basic system libraries (optional)
 elseif (WIN32)

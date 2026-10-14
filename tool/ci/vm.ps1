@@ -11,10 +11,11 @@ try {
   Invoke-CiNativeCommand flutter pub get --no-example
   Invoke-CiNativeCommand flutter analyze --no-fatal-infos lib test
 
-  New-CiNativeBuild `
+  $nativeBuildOutput = @(New-CiNativeBuild `
     -Name 'yuv-ffi-vm-native' `
-    -LibraryName 'yuv_ffi.dll' | Out-Host
-  $nativeDllDirectory = Join-Path (Get-CiTemporaryDirectory) 'yuv-ffi-vm-native\Release'
+    -LibraryName 'yuv_ffi.dll')
+  $nativeDllDirectory = [string]$nativeBuildOutput[-1]
+  $nativeBuildOutput | Write-Output
   Add-CiPath $nativeDllDirectory
 
   Invoke-CiFlutterTest --tags "smoke || contract"
