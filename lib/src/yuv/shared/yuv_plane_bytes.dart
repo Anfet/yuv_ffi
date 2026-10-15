@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 
 /// Shared plane-buffer concatenation for every backend.
@@ -23,7 +24,7 @@ abstract final class YuvPlaneBytes {
 
     int totalLength = 0;
     for (final source in sources) {
-      totalLength += source.length;
+      totalLength = YuvGeometry.checkedSafeSum(totalLength, source.length, 'planes.length');
     }
 
     final result = Uint8List(totalLength);

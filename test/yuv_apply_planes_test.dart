@@ -64,6 +64,17 @@ void main() {
   });
 
   group('applyPlanes', () {
+    test('rejects invalid BGRA pixel strides without changing bytes or revision', () {
+      final image = YuvImage.bgra(1, 1);
+      image.yPlane.bytes.setAll(0, [1, 2, 3, 4]);
+      final before = image.revision;
+      for (final pixelStride in [1, 2, 3]) {
+        expect(() => image.applyPlanes([YuvPlane(1, 4, pixelStride, Uint8List(4))]), throwsArgumentError, reason: 'pixelStride=$pixelStride');
+        expect(image.yPlane.bytes, [1, 2, 3, 4]);
+        expect(image.revision, before);
+      }
+    });
+
     test('returns this for chaining', () {
       final image = YuvImage.i420(4, 4);
       final result = image.applyPlanes(image.planes.map((p) => p.copy()));

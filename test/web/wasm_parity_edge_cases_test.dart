@@ -3,6 +3,7 @@ library;
 
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_test/flutter_test.dart';
@@ -53,7 +54,7 @@ void main() {
     }
   });
 
-  test('fromRgba8888 validates input length consistently', () {
+  test('geometry, BGRA pixel stride and RGBA input length reject consistently', () async {
     const w = 8;
     const h = 4;
     final bad = Uint8List(w * h * 4 - 1);
@@ -64,6 +65,22 @@ void main() {
       // ignore: deprecated_member_use_from_same_package
       expect(() => image.applyRgbaBytes(bad), throwsArgumentError);
     }
+
+    expect(() => YuvImage.bgra(0x80000000, 1), throwsArgumentError);
+    for (final pixelStride in [1, 2, 3]) {
+      expect(
+        () => YuvImage.bgra(1, 1, planes: [YuvPlane(1, 4, pixelStride, Uint8List(4))], layout: YuvPlaneLayout.preserve),
+        throwsArgumentError,
+        reason: 'pixelStride=$pixelStride',
+      );
+    }
+    expect(() => YuvImage.fromRgbaBytes(Uint8List(0), width: 0x7fffffff, height: 1, format: YuvPixelFormat.bgra8888), throwsArgumentError);
+
+    final header = utf8.encode(jsonEncode(<String, Object>{'version': 2, 'formatId': 3, 'width': 0x80000000, 'height': 1}));
+    final headerOnly = Uint8List(4 + header.length);
+    ByteData.view(headerOnly.buffer).setUint32(0, header.length, Endian.little);
+    headerOnly.setRange(4, headerOnly.length, header);
+    await expectLater(YuvImage.decode(Stream<List<int>>.value(headerOnly)), throwsFormatException);
   });
 
   test('I420 custom rowStride/pixelStride produces same BGRA output as baseline', () {

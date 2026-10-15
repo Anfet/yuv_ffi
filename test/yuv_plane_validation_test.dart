@@ -31,6 +31,12 @@ void main() {
       expect(() => YuvPlane(4, 8, -1), throwsArgumentError);
     });
 
+    test('rejects strides that cannot be represented by the uint32 codec fields', () {
+      expect(() => YuvPlane(0, 0x100000000), throwsArgumentError);
+      expect(() => YuvPlane(0, 0, 0x100000000), throwsArgumentError);
+      expect(() => YuvPlane(2, 0x80000000), throwsArgumentError);
+    });
+
     test('assignFrom requires an exact-length buffer', () {
       final p = plane(4, 8);
       expect(() => p.assignFrom(Uint8List(8)), throwsArgumentError, reason: 'short input would leave a stale tail');

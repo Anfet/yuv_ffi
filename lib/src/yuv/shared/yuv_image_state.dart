@@ -100,21 +100,37 @@ class YuvImageState {
     int yPixelStride = 1,
     int uvPixelStride = 1,
   }) {
+    YuvGeometry.validateDimensions(width, height);
     // BGRA stores four bytes per pixel, so its packed plane never uses the
     // generic single-byte luma default.
     final lumaPixelStride = format == YuvPixelFormat.bgra8888 ? 4 : yPixelStride;
-    final yPlane = YuvPlane(height, width * lumaPixelStride, lumaPixelStride);
     final uvWidth = YuvGeometry.chromaWidth(width);
     final uvHeight = YuvGeometry.chromaHeight(height);
+
+    final int uvPixel = switch (format) {
+      YuvPixelFormat.nv12 => uvPixelStride < YuvGeometry.nvChromaPixelStride ? YuvGeometry.nvChromaPixelStride : uvPixelStride,
+      YuvPixelFormat.i420 => uvPixelStride,
+      YuvPixelFormat.bgra8888 => 1,
+    };
+    if (lumaPixelStride <= 0 || uvPixel <= 0) {
+      throw ArgumentError.value('$lumaPixelStride/$uvPixel', 'pixelStride', 'Allocated pixel strides must be positive');
+    }
+    final yRowStride = YuvGeometry.checkedPlaneProduct(width, lumaPixelStride, 'yPlane.rowStride');
+    YuvGeometry.checkedPlaneProduct(height, yRowStride, 'yPlane.bytes.length');
+    if (format != YuvPixelFormat.bgra8888) {
+      final uvRowStride = YuvGeometry.checkedPlaneProduct(uvWidth, uvPixel, 'uvPlane.rowStride');
+      YuvGeometry.checkedPlaneProduct(uvHeight, uvRowStride, 'uvPlane.bytes.length');
+    }
+
+    final yPlane = YuvPlane(height, yRowStride, lumaPixelStride);
 
     switch (format) {
       case YuvPixelFormat.nv12:
         // Interleaved chroma always stores a (U, V) pair per sample, so a
         // pixelStride below 2 cannot hold what native code writes.
-        final nvPixelStride = uvPixelStride < YuvGeometry.nvChromaPixelStride ? YuvGeometry.nvChromaPixelStride : uvPixelStride;
-        return [yPlane, YuvPlane(uvHeight, uvWidth * nvPixelStride, nvPixelStride)];
+        return [yPlane, YuvPlane(uvHeight, uvWidth * uvPixel, uvPixel)];
       case YuvPixelFormat.i420:
-        return [yPlane, YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride), YuvPlane(uvHeight, uvWidth * uvPixelStride, uvPixelStride)];
+        return [yPlane, YuvPlane(uvHeight, uvWidth * uvPixel, uvPixel), YuvPlane(uvHeight, uvWidth * uvPixel, uvPixel)];
       case YuvPixelFormat.bgra8888:
         return [yPlane];
     }
@@ -220,8 +236,15 @@ class YuvImageState {
   /// Throws [ArgumentError] when [planes] does not match [format] at
   /// [width] x [height].
   void applyPlanes(Iterable<YuvPlane> planes) {
-    final copied = List<YuvPlane>.of(planes.map((plane) => plane.copy()));
-    YuvGeometry.validateImage(format: _format, width: _width, height: _height, planes: copied, allowLargerNvChromaStride: _allowLargerNvChromaStride);
+    final supplied = List<YuvPlane>.of(planes);
+    YuvGeometry.validateImage(
+      format: _format,
+      width: _width,
+      height: _height,
+      planes: supplied,
+      allowLargerNvChromaStride: _allowLargerNvChromaStride,
+    );
+    final copied = List<YuvPlane>.of(supplied.map((plane) => plane.copy()));
     _planes = copied;
     _revision++;
   }
@@ -358,10 +381,7 @@ class YuvImageState {
   /// Rejects an RGBA8888 buffer that does not hold exactly one frame of this
   /// geometry.
   void validateRgba8888Length(int length) {
-    final expectedLength = _width * _height * 4;
-    if (length != expectedLength) {
-      throw ArgumentError.value(length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${_width}x$_height');
-    }
+    YuvGeometry.validateRgba8888Length(width: _width, height: _height, length: length);
   }
 
   @override

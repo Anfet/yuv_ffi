@@ -2,6 +2,10 @@
 
 ### Changed
 
+- Image dimensions now match the native `INT32_MAX` ABI limit, plane fields and
+  byte lengths are checked against their uint32 codec representation before
+  allocation or decoding, and preserved BGRA planes require a pixel stride of
+  at least four while retaining larger pixel gaps.
 - `YuvImage.applyPatch` rejects source and destination planes that overlap the
   same external storage. Reading an empty `YuvPlane` now throws
   `ArgumentError` instead of reaching an invalid native access.

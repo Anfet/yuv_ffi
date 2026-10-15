@@ -70,12 +70,6 @@ abstract final class YuvCodec {
   /// or hostile length word rather than a real payload.
   static const int maxHeaderBytes = 64 * 1024;
 
-  /// Largest plane byte length accepted from a payload.
-  ///
-  /// Checked against the declared geometry before a single byte is buffered, so
-  /// a corrupt length word cannot drive an allocation.
-  static const int maxPlaneBytes = 1 << 30;
-
   /// Reverse lookup from the stable wire identity to the enum value, built
   /// once from [YuvPixelFormat.wireId] rather than hand-duplicated so an
   /// added format value is picked up automatically.
@@ -83,11 +77,12 @@ abstract final class YuvCodec {
 
   /// Encodes [format], [width], [height] and [planes] into one byte buffer.
   static Uint8List encode({required YuvPixelFormat format, required int width, required int height, required List<YuvPlane> planes}) {
+    YuvGeometry.validateImage(format: format, width: width, height: height, planes: planes, allowLargerNvChromaStride: true);
     final header = utf8.encode(jsonEncode(<String, Object>{'version': version, 'formatId': format.wireId, 'width': width, 'height': height}));
 
     int total = 4 + header.length + 1;
     for (final plane in planes) {
-      total += 4 * 4 + plane.bytes.length;
+      total = YuvGeometry.checkedSafeSum(total, 4 * 4 + plane.bytes.length, 'payload.length');
     }
 
     final out = Uint8List(total);
@@ -190,8 +185,8 @@ abstract final class YuvCodec {
     if (width is! int || height is! int) {
       throw const FormatException('Malformed yuv_ffi payload: width and height must be integers');
     }
-    if (width <= 0 || height <= 0) {
-      throw FormatException('Malformed yuv_ffi payload: dimensions must be positive, got ${width}x$height');
+    if (width <= 0 || height <= 0 || width > YuvGeometry.maxDimension || height > YuvGeometry.maxDimension) {
+      throw FormatException('Malformed yuv_ffi payload: dimensions must be between 1 and ${YuvGeometry.maxDimension}, got ${width}x$height');
     }
 
     final planeCount = await reader.readUint8('plane count');
@@ -216,13 +211,14 @@ abstract final class YuvCodec {
 
       // Everything that can be judged from metadata alone is judged here, before
       // a single byte of this plane is buffered.
-      if (byteLength > maxPlaneBytes) {
-        throw FormatException('Malformed yuv_ffi payload: plane $i declares an implausible length of $byteLength bytes');
+      if (rowStride == 0 || planeHeight > YuvGeometry.maxPlaneField ~/ rowStride) {
+        throw FormatException('Malformed yuv_ffi payload: plane $i byte length exceeds the uint32 limit');
       }
-      if (planeHeight * rowStride != byteLength) {
+      final expectedLength = planeHeight * rowStride;
+      if (expectedLength != byteLength) {
         throw FormatException(
           'Malformed yuv_ffi payload: plane $i declares $byteLength bytes, '
-          'which does not match height $planeHeight * rowStride $rowStride',
+          'which does not match height $planeHeight * rowStride $rowStride ($expectedLength)',
         );
       }
       if (pixelStride <= 0 || rowStride <= 0) {
@@ -232,7 +228,7 @@ abstract final class YuvCodec {
       // The header already fixes the format and the image dimensions, so the
       // geometry this plane must have is known now. Checking it here rejects an
       // impossible plane on its metadata instead of first buffering up to
-      // maxPlaneBytes and building a YuvPlane only to discard it.
+      // buffering the declared body and building a YuvPlane only to discard it.
       final expected = YuvGeometry.expectedPlaneMetadata(format: format, width: width, height: height, planeIndex: i, pixelStride: pixelStride);
       if (expected == null) {
         throw FormatException('Malformed yuv_ffi payload: plane $i is not a plane of format ${format.name}');

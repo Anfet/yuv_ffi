@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -27,6 +29,23 @@ void main() {
 
   testWidgets('toBgraBytes repacks a padded BGRA plane into exactly width*height*4 tight bytes', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
+
+    expect(() => YuvImage.bgra(0x80000000, 1), throwsArgumentError);
+    for (final pixelStride in [1, 2, 3]) {
+      expect(
+        () => YuvImage.bgra(1, 1, planes: [YuvPlane(1, 4, pixelStride, Uint8List(4))], layout: YuvPlaneLayout.preserve),
+        throwsArgumentError,
+        reason: 'pixelStride=$pixelStride',
+      );
+    }
+    final validGap = YuvImage.bgra(1, 1, planes: [YuvPlane(1, 5, 5, Uint8List(5))], layout: YuvPlaneLayout.preserve);
+    expect(validGap.yPlane.pixelStride, 5);
+
+    final header = utf8.encode(jsonEncode(<String, Object>{'version': 2, 'formatId': 3, 'width': 0x80000000, 'height': 1}));
+    final headerOnly = Uint8List(4 + header.length);
+    ByteData.view(headerOnly.buffer).setUint32(0, header.length, Endian.little);
+    headerOnly.setRange(4, headerOnly.length, header);
+    await expectLater(YuvImage.decode(Stream<List<int>>.value(headerOnly)), throwsFormatException);
 
     const width = 5;
     const height = 3;

@@ -145,6 +145,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   /// Creates a new [format] image at [width] x [height], filled by converting
   /// [bytes] from RGBA8888.
   factory YuvImageImpl.fromRgbaBytes(Uint8List bytes, {required int width, required int height, required YuvPixelFormat format}) {
+    YuvGeometry.validateRgba8888Length(width: width, height: height, length: bytes.length);
     final image = YuvImageImpl.allocate(format, width, height);
     image._setRgbaBytes(bytes);
     return image;

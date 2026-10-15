@@ -219,9 +219,28 @@ void main() {
       expect(target.yPlane.rowStride, 16);
       expect(target.yPlane.bytes.length, 32);
     });
+
+    test('preserves BGRA per-pixel gaps larger than four bytes', () async {
+      final source = YuvImage.bgra(
+        2,
+        1,
+        planes: <YuvPlane>[
+          YuvPlane(1, 10, 5, Uint8List.fromList([1, 2, 3, 4, 0xEE, 5, 6, 7, 8, 0xEE])),
+        ],
+        layout: YuvPlaneLayout.preserve,
+      );
+      final target = await YuvImage.decode(asStream(await save(source)));
+
+      expect(target.yPlane.pixelStride, 5);
+      expect(target.yPlane.bytes, source.yPlane.bytes);
+    });
   });
 
   group('malformed payloads throw FormatException', () {
+    test('encoder rejects a BGRA pixel stride below four', () {
+      expect(() => YuvCodec.encode(format: YuvPixelFormat.bgra8888, width: 1, height: 1, planes: [YuvPlane(1, 4, 3)]), throwsArgumentError);
+    });
+
     test('an empty payload', () async {
       // ignore: deprecated_member_use_from_same_package
       await expectLater(YuvImage.decode(asStream(const <int>[])), throwsFormatException);
@@ -536,15 +555,59 @@ void main() {
       await expectLater(YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)), throwsFormatException);
     });
 
-    test('an oversized plane length is refused before allocation', () async {
+    test('a plane byte length inconsistent with uint32 geometry is refused before allocation', () async {
       final payload = await validPayload();
       final headerLength = ByteData.view(payload.buffer).getUint32(0, Endian.little);
       final firstPlaneLength = 4 + headerLength + 1 + 12;
       final patched = Uint8List.fromList(payload);
-      // Above maxPlaneBytes, so it must be refused on the metadata check.
+      // The metadata byte length no longer matches the declared plane geometry.
       ByteData.view(patched.buffer).setUint32(firstPlaneLength, 0x7FFFFFFF, Endian.little);
 
       await expectLater(YuvCodec.decode(patched), throwsFormatException);
+    });
+
+    test('invalid dimensions in a never-ending stream are rejected from the header', () async {
+      for (final width in [0, -1, 0x80000000, (1 << 62) + 1]) {
+        final header = utf8.encode(jsonEncode(<String, Object>{'version': 2, 'formatId': 3, 'width': width, 'height': 1}));
+        final metadata = Uint8List(4 + header.length);
+        ByteData.view(metadata.buffer).setUint32(0, header.length, Endian.little);
+        metadata.setRange(4, metadata.length, header);
+        final controller = StreamController<List<int>>();
+        addTearDown(controller.close);
+        controller.add(metadata);
+
+        await expectLater(
+          YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
+          throwsFormatException,
+          reason: 'width=$width',
+        );
+      }
+    });
+
+    test('BGRA pixel strides below four are rejected before reading plane body', () async {
+      for (final pixelStride in [1, 2, 3]) {
+        final header = utf8.encode(jsonEncode(<String, Object>{'version': 2, 'formatId': 3, 'width': 1, 'height': 1}));
+        final metadata = Uint8List(4 + header.length + 1 + 16);
+        final view = ByteData.view(metadata.buffer);
+        view.setUint32(0, header.length, Endian.little);
+        metadata.setRange(4, 4 + header.length, header);
+        int offset = 4 + header.length;
+        view.setUint8(offset, 1);
+        offset++;
+        view.setUint32(offset, 1, Endian.little);
+        view.setUint32(offset + 4, 4, Endian.little);
+        view.setUint32(offset + 8, pixelStride, Endian.little);
+        view.setUint32(offset + 12, 4, Endian.little);
+        final controller = StreamController<List<int>>();
+        addTearDown(controller.close);
+        controller.add(metadata);
+
+        await expectLater(
+          YuvCodec.decodeStream(controller.stream).timeout(const Duration(seconds: 5)),
+          throwsFormatException,
+          reason: 'pixelStride=$pixelStride',
+        );
+      }
     });
 
     test('an oversized header length is refused before the JSON is parsed', () async {

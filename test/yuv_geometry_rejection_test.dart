@@ -23,6 +23,39 @@ void main() {
 
   YuvPlane filled(int height, int rowStride, [int pixelStride = 1]) => YuvPlane(height, rowStride, pixelStride, Uint8List(height * rowStride));
 
+  group('ABI geometry limits', () {
+    test('constructors reject dimensions outside the signed 32-bit range before allocation', () {
+      for (final width in [0, -1, 0x80000000, (1 << 62) + 1]) {
+        expect(() => YuvImage.bgra(width, 1), throwsArgumentError, reason: 'width=$width');
+      }
+      for (final height in [0, -1, 0x80000000]) {
+        expect(() => YuvImage.bgra(1, height), throwsArgumentError, reason: 'height=$height');
+      }
+      expect(
+        () => YuvImage.fromRgbaBytes(Uint8List(0), width: 0x7fffffff, height: 1, format: YuvPixelFormat.bgra8888),
+        throwsArgumentError,
+        reason: 'a short RGBA source must be rejected before allocating destination planes',
+      );
+    });
+
+    test('BGRA preserve layout requires four bytes per pixel and keeps larger gaps', () {
+      for (final pixelStride in [1, 2, 3]) {
+        expect(
+          () => YuvImage.bgra(1, 1, planes: [filled(1, 4, pixelStride)], layout: YuvPlaneLayout.preserve),
+          throwsArgumentError,
+          reason: 'pixelStride=$pixelStride',
+        );
+      }
+      for (final pixelStride in [4, 5]) {
+        expect(
+          () => YuvImage.bgra(1, 1, planes: [filled(1, pixelStride, pixelStride)], layout: YuvPlaneLayout.preserve),
+          returnsNormally,
+          reason: 'pixelStride=$pixelStride',
+        );
+      }
+    });
+  });
+
   group('default constructors validate what they allocate', () {
     test('a degenerate luma pixel stride never reaches an allocated plane', () {
       // BGRA always packs four bytes per pixel, so the caller's value is

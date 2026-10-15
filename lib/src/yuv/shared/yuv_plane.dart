@@ -40,21 +40,26 @@ class YuvPlane {
   ///
   /// If [bytes] is omitted, the plane is initialized with zeros.
   ///
-  /// Throws an [ArgumentError] when [height], [rowStride] or [pixelStride] is
-  /// negative, or when [bytes] does not hold exactly `height * rowStride`
+  /// Throws an [ArgumentError] when a value does not fit its uint32 ABI field,
+  /// when `height * rowStride` exceeds the uint32 codec byte-length field, or
+  /// when [bytes] does not hold exactly `height * rowStride`
   /// elements. A short buffer is rejected rather than silently zero-padded,
   /// because native code walks the plane by its declared geometry.
   YuvPlane(this._height, this.rowStride, [this.pixelStride = 1, Uint8List? bytes]) {
-    if (_height < 0) {
-      throw ArgumentError.value(_height, 'height', 'Plane height must not be negative');
+    const maxField = 0xffffffff;
+    if (_height < 0 || _height > maxField) {
+      throw ArgumentError.value(_height, 'height', 'Plane height must be between 0 and $maxField');
     }
-    if (rowStride < 0) {
-      throw ArgumentError.value(rowStride, 'rowStride', 'Row stride must not be negative');
+    if (rowStride < 0 || rowStride > maxField) {
+      throw ArgumentError.value(rowStride, 'rowStride', 'Row stride must be between 0 and $maxField');
     }
-    if (pixelStride < 0) {
-      throw ArgumentError.value(pixelStride, 'pixelStride', 'Pixel stride must not be negative');
+    if (pixelStride < 0 || pixelStride > maxField) {
+      throw ArgumentError.value(pixelStride, 'pixelStride', 'Pixel stride must be between 0 and $maxField');
     }
 
+    if (rowStride != 0 && _height > maxField ~/ rowStride) {
+      throw ArgumentError.value('$_height * $rowStride', 'bytes.length', 'Plane byte length exceeds the uint32 limit');
+    }
     final expectedLength = _height * rowStride;
     if (bytes != null && bytes.length != expectedLength) {
       throw ArgumentError.value(bytes.length, 'bytes.length', 'Expected exactly $expectedLength bytes (height $_height * rowStride $rowStride)');

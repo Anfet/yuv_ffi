@@ -11,6 +11,15 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 ///
 /// Every failure throws [ArgumentError] before any native allocation happens.
 abstract final class YuvGeometry {
+  /// Largest image dimension accepted by the native validated-view ABI.
+  static const int maxDimension = 0x7fffffff;
+
+  /// Largest value carried by a plane's uint32 ABI and codec fields.
+  static const int maxPlaneField = 0xffffffff;
+
+  /// Largest integer represented exactly by JavaScript numbers.
+  static const int maxSafeInteger = 0x1fffffffffffff;
+
   /// Number of planes required by [format].
   static int planeCountFor(YuvPixelFormat format) => switch (format) {
     YuvPixelFormat.bgra8888 => 1,
@@ -32,13 +41,42 @@ abstract final class YuvGeometry {
 
   /// Validates image dimensions.
   ///
-  /// Throws [ArgumentError] when [width] or [height] is not positive.
+  /// Throws [ArgumentError] when a dimension is outside `1..INT32_MAX`.
   static void validateDimensions(int width, int height) {
-    if (width <= 0) {
-      throw ArgumentError.value(width, 'width', 'Image width must be greater than zero');
+    if (width <= 0 || width > maxDimension) {
+      throw ArgumentError.value(width, 'width', 'Image width must be between 1 and $maxDimension');
     }
-    if (height <= 0) {
-      throw ArgumentError.value(height, 'height', 'Image height must be greater than zero');
+    if (height <= 0 || height > maxDimension) {
+      throw ArgumentError.value(height, 'height', 'Image height must be between 1 and $maxDimension');
+    }
+  }
+
+  /// Returns a product only when it fits a uint32 ABI/codec byte-length field.
+  static int checkedPlaneProduct(int left, int right, String name) {
+    if (left < 0 || right < 0 || left > maxPlaneField || right > maxPlaneField || (right != 0 && left > maxPlaneField ~/ right)) {
+      throw ArgumentError.value('$left * $right', name, 'Plane geometry exceeds the uint32 byte-length limit');
+    }
+    return left * right;
+  }
+
+  /// Returns a sum only when Web's integer representation remains exact.
+  static int checkedSafeSum(int left, int right, String name) {
+    if (left < 0 || right < 0 || left > maxSafeInteger - right) {
+      throw ArgumentError.value('$left + $right', name, 'Length exceeds JavaScript safe integer range');
+    }
+    return left + right;
+  }
+
+  /// Validates an RGBA source length without overflowing Web integer precision.
+  static void validateRgba8888Length({required int width, required int height, required int length}) {
+    validateDimensions(width, height);
+    final rowStride = width * 4;
+    if (height > maxSafeInteger ~/ rowStride) {
+      throw ArgumentError.value('$width x $height', 'geometry', 'RGBA byte length exceeds JavaScript safe integer range');
+    }
+    final expectedLength = height * rowStride;
+    if (length != expectedLength) {
+      throw ArgumentError.value(length, 'bytes.length', 'Expected $expectedLength bytes for RGBA8888 frame ${width}x$height');
     }
   }
 
@@ -73,6 +111,9 @@ abstract final class YuvGeometry {
       throw ArgumentError.value(planes.length, 'planes.length', 'Format ${format.name} requires exactly $expectedPlanes plane(s)');
     }
 
+    if (format == YuvPixelFormat.bgra8888 && planes[0].pixelStride < 4) {
+      throw ArgumentError.value(planes[0].pixelStride, 'yPlane.pixelStride', 'BGRA8888 requires a pixel stride of at least 4');
+    }
     validatePlane(plane: planes[0], label: 'yPlane', expectedHeight: height, expectedWidth: width, sampleBytes: _lumaSampleBytes(format));
 
     if (format == YuvPixelFormat.bgra8888) {
@@ -135,14 +176,26 @@ abstract final class YuvGeometry {
     required int planeIndex,
     required int pixelStride,
   }) {
-    if (planeIndex < 0 || planeIndex >= planeCountFor(format) || pixelStride <= 0) {
+    if (width <= 0 ||
+        width > maxDimension ||
+        height <= 0 ||
+        height > maxDimension ||
+        planeIndex < 0 ||
+        planeIndex >= planeCountFor(format) ||
+        pixelStride <= 0 ||
+        pixelStride > maxPlaneField) {
       return null;
     }
+    if (format == YuvPixelFormat.bgra8888 && pixelStride < 4) return null;
+    final planeWidth = planeIndex == 0 ? width : chromaWidth(width);
+    final sampleBytes = planeIndex == 0 ? _lumaSampleBytes(format) : (format == YuvPixelFormat.nv12 ? nvChromaPixelStride : 1);
+    if (planeWidth - 1 > (maxPlaneField - sampleBytes) ~/ pixelStride) return null;
+    final minRowStride = (planeWidth - 1) * pixelStride + sampleBytes;
+    if (minRowStride > maxPlaneField) return null;
     if (planeIndex == 0) {
-      return (height: height, minRowStride: (width - 1) * pixelStride + _lumaSampleBytes(format));
+      return (height: height, minRowStride: minRowStride);
     }
-    final sampleBytes = format == YuvPixelFormat.nv12 ? nvChromaPixelStride : 1;
-    return (height: chromaHeight(height), minRowStride: (chromaWidth(width) - 1) * pixelStride + sampleBytes);
+    return (height: chromaHeight(height), minRowStride: minRowStride);
   }
 
   /// Whether a BGRA plane is tightly packed for [width].
@@ -166,11 +219,11 @@ abstract final class YuvGeometry {
     required int expectedWidth,
     required int sampleBytes,
   }) {
-    if (plane.pixelStride <= 0) {
-      throw ArgumentError.value(plane.pixelStride, '$label.pixelStride', 'Pixel stride must be greater than zero');
+    if (plane.pixelStride <= 0 || plane.pixelStride > maxPlaneField) {
+      throw ArgumentError.value(plane.pixelStride, '$label.pixelStride', 'Pixel stride must be between 1 and $maxPlaneField');
     }
-    if (plane.rowStride <= 0) {
-      throw ArgumentError.value(plane.rowStride, '$label.rowStride', 'Row stride must be greater than zero');
+    if (plane.rowStride <= 0 || plane.rowStride > maxPlaneField) {
+      throw ArgumentError.value(plane.rowStride, '$label.rowStride', 'Row stride must be between 1 and $maxPlaneField');
     }
     if (plane.height != expectedHeight) {
       throw ArgumentError.value(plane.height, '$label.height', 'Expected $expectedHeight rows for this image geometry');
@@ -178,6 +231,9 @@ abstract final class YuvGeometry {
 
     // Last sample starts at (expectedWidth - 1) * pixelStride and occupies
     // sampleBytes bytes, so the row must be at least that long.
+    if (expectedWidth - 1 > (maxPlaneField - sampleBytes) ~/ plane.pixelStride) {
+      throw ArgumentError.value(plane.rowStride, '$label.rowStride', 'Required row geometry exceeds the uint32 stride limit');
+    }
     final minRowStride = (expectedWidth - 1) * plane.pixelStride + sampleBytes;
     if (plane.rowStride < minRowStride) {
       throw ArgumentError.value(
@@ -188,7 +244,7 @@ abstract final class YuvGeometry {
       );
     }
 
-    final expectedLength = plane.height * plane.rowStride;
+    final expectedLength = checkedPlaneProduct(plane.height, plane.rowStride, '$label.bytes.length');
     if (plane.bytes.length != expectedLength) {
       throw ArgumentError.value(
         plane.bytes.length,
