@@ -16,8 +16,7 @@
 - Native builds retain CMake 3.10 compatibility, align Android ELF load segments for 16 KiB
   pages, and reuse the native build cache only when its checkout and
   configuration match. The example's image picker entitlement, SDK settings,
-  and iOS build macro were cleaned up. macOS/iOS runtime checks and CocoaPods
-  regeneration remain pending under D-55.
+  and iOS build macro were cleaned up.
 - Camera capture, camera frame import, camera device checks, and the ML Kit
   face-detection demo moved from the example to the separate `yuv_camera`
   package, which depends on `yuv_ffi`. `yuv_ffi` no longer depends on
@@ -39,6 +38,10 @@
   between `yuv_ffi` and `yuv_camera`, and give a complete Quick start.
 - Web parity notes no longer count the camera Web smoke as `yuv_ffi`
   evidence; it is tracked by `yuv_camera`.
+- Documented the color conversion semantics: I420 and NV12 convert to and from
+  RGB-based data with the BT.601 matrix in limited (video) range, and the
+  shader path uses the same formula. The package does not detect full-range or
+  another color matrix from the source and has no option to select one.
 - Added step-by-step guides in the
   [GitHub Wiki](https://github.com/Anfet/yuv_ffi/wiki).
 

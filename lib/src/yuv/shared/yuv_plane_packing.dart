@@ -3,11 +3,11 @@ import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_plane.dart';
 
 /// Shared tight-packing geometry and copy loop for every backend and for the
-/// public [YuvImagePack.pack] extension.
+/// public `YuvImagePack.pack` extension.
 ///
-/// Kept independent of any live [YuvImage] instance -- unlike
+/// Kept independent of any live `YuvImage` instance -- unlike
 /// `YuvImagePack`, which reads an existing image's `format`/`width`/`height`
-/// -- so [YuvImageState]'s constructor can pack caller-supplied `planes`
+/// -- so `YuvImageState`'s constructor can pack caller-supplied `planes`
 /// before an image object exists at all.
 abstract final class YuvPlanePacking {
   /// Bytes per sample the plane at [planeIndex] of [format] is packed to.

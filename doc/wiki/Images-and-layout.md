@@ -18,6 +18,10 @@ RGBA bytes always needs it. On Web every `YuvImage` operation needs it, so await
 | `YuvPixelFormat.nv12` | 2: Y, UV | Y as above. One chroma plane holds interleaved `(U, V)` byte pairs, so its `pixelStride` is 2. |
 | `YuvPixelFormat.bgra8888` | 1 | Four bytes per pixel in B, G, R, A order. The only format with an alpha channel. |
 
+Converting between I420 or NV12 and BGRA or RGBA bytes uses the BT.601 matrix in limited (video) range. The package does
+not detect full-range data or another color matrix from the source and has no option to select one, so planes that use a
+different range or matrix are converted as if they were BT.601 limited. BGRA and RGBA carry no YUV range.
+
 In I420 and NV12 the chroma planes have one sample for every 2 by 2 block of pixels. Their size is rounded up: a 5 by 3
 image has a 3 by 2 chroma grid. This is called 4:2:0 subsampling, and it is why cropping or patching such images
 works on even coordinates (see [Processing and mutations](https://github.com/Anfet/yuv_ffi/wiki/Processing-and-mutations)).

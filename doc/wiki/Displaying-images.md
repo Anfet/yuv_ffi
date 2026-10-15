@@ -219,7 +219,8 @@ Even with a loaded shader a frame uses the BGRA path when its layout cannot be u
 other than 1, I420 chroma planes whose U and V strides differ or are neither 1 nor 2, NV12 chroma with a `pixelStride`
 other than 2,
 a packed texture larger than 4096 texels in either dimension, or a BGRA frame (which needs no conversion). The result
-on screen is pixel-equivalent; only the work moves. On Web the shader packs three bytes per texel (alpha stays opaque)
+on screen is pixel-equivalent; only the work moves. The shader uses the same BT.601 limited-range formula as the
+format conversions and does not detect another range or color matrix. On Web the shader packs three bytes per texel (alpha stays opaque)
 because CanvasKit premultiplies sampled colors; this is why the Web results are checked separately in the
 [Web parity evidence](https://github.com/Anfet/yuv_ffi/blob/main/doc/web-parity.md).
 

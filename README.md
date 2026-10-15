@@ -210,6 +210,13 @@ failures use the pixel-equivalent BGRA fallback instead.
 `YuvPixelFormat.nv12` stores Y plus interleaved `(U, V)` chroma bytes.
 `bgra8888` is a single packed BGRA plane.
 
+Converting between I420 or NV12 and BGRA or RGBA bytes uses the BT.601 matrix in
+limited (video) range, and the shader path uses the same formula. The package
+does not detect full-range data or another color matrix such as BT.709 from the
+source, and it has no option to choose one: planes that use a different range
+or matrix are converted as if they were BT.601 limited. BGRA and RGBA carry no
+YUV range.
+
 Factories that receive `planes:` default to `YuvPlaneLayout.packed`: they
 copy visible samples into tight planes and discard row padding and per-sample
 gaps. Pass `layout: YuvPlaneLayout.preserve` to retain the supplied

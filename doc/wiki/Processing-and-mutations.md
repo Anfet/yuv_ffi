@@ -110,6 +110,9 @@ of the three formats.
 | --- | --- |
 | `applyFormat(format)` | Converts this image to `format` in place. Converting to the current format is a no-op. |
 | `toI420()`, `toNv12()`, `toBgra()` | A new image in that format. If the image already has it, you get an independent copy. |
+
+Conversions between YUV and BGRA use the BT.601 matrix in limited (video) range; the package does not detect full-range
+data or another color matrix and has no option to select one.
 | `applyChromaSwap()` | Swaps the U and V sample values of an NV12 image and keeps it labeled NV12. Throws `UnsupportedError` for I420 and BGRA, without changing the image. |
 
 All nine format pairs (I420, NV12 and BGRA, each to each) are supported on native and Web in the cases the

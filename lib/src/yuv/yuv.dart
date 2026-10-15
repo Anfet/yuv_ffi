@@ -15,6 +15,11 @@ import 'impl/yuv_stub.dart' if (dart.library.ffi) 'impl/io/yuv_image.dart' if (d
 /// Use factory constructors to create an instance for a specific format:
 /// [YuvImage.i420], [YuvImage.nv12], or [YuvImage.bgra].
 ///
+/// Conversions between YUV (I420, NV12) and BGRA or RGBA bytes use the BT.601
+/// matrix in limited (video) range. The package does not detect full-range
+/// data or another color matrix from the source and has no option to select
+/// one.
+///
 /// Both backends provide the same mutation model:
 /// - In-place (returns `this`): [applyGrayscale], [applyBlackWhite],
 ///   [applyNegate], [applyGaussianBlur], [applyMeanBlur], [applyBoxBlur],
