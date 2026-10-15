@@ -159,7 +159,7 @@ class YuvFramePresenter extends ChangeNotifier {
       FlutterError.reportError(
         FlutterErrorDetails(exception: error, stack: stack, library: 'yuv_ffi', context: ErrorDescription('decoding a preview frame')),
       );
-      if (generation == _generation) _isBusy = false;
+      _isBusy = false;
       return;
     }
 
@@ -197,7 +197,7 @@ class YuvFramePresenter extends ChangeNotifier {
       FlutterError.reportError(
         FlutterErrorDetails(exception: error, stack: stack, library: 'yuv_ffi', context: ErrorDescription('uploading a preview frame')),
       );
-      if (generation == _generation) _isBusy = false;
+      _isBusy = false;
       return;
     }
 

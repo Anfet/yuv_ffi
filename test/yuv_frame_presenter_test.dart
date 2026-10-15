@@ -233,6 +233,43 @@ void main() {
     expect(await _shadeOf(tester, require(_drawnImage(tester))), 80);
   });
 
+  testWidgets('reset releases busy after deferred decode and upload failures', (tester) async {
+    final previousErrorHandler = FlutterError.onError;
+    final errors = <FlutterErrorDetails>[];
+    FlutterError.onError = errors.add;
+
+    try {
+      for (final useShader in [false, true]) {
+        presenter.dispose();
+        presented = 0;
+        presenter = YuvFramePresenter(onFramePresented: () => presented++, useShader: useShader);
+        await pumpView(tester);
+        if (useShader) {
+          await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+        }
+
+        await tester.runAsync(() async {
+          expect(presenter.present(_MalformedImage(_frame(1))), isTrue);
+          presenter.reset();
+        });
+        await _waitUntil(tester, () => errors.isNotEmpty, reason: 'the deferred ${useShader ? 'upload' : 'decode'} failure');
+        expect(presenter.isBusy, isFalse);
+        expect(presenter.present(_frame(2)), isTrue, reason: 'a valid frame can follow the stale failure');
+        if (useShader) {
+          await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+        } else {
+          await _waitUntil(tester, () => presenter.image != null, reason: 'the valid frame to decode');
+        }
+        await tester.pump();
+        expect(presented, 1);
+        expect(presenter.isBusy, isFalse);
+        errors.clear();
+      }
+    } finally {
+      FlutterError.onError = previousErrorHandler;
+    }
+  });
+
   testWidgets('the frame counter follows frames drawn, not frames received', (tester) async {
     await pumpView(tester);
 
@@ -300,6 +337,27 @@ class _ThrowingImage implements YuvImage {
 
   @override
   Uint8List toBgraBytes() => throw StateError('copy failed');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _MalformedImage implements YuvImage {
+  final YuvImage _delegate;
+
+  _MalformedImage(this._delegate);
+
+  @override
+  int get width => _delegate.width;
+
+  @override
+  int get height => _delegate.height;
+
+  @override
+  ui.Size get size => _delegate.size;
+
+  @override
+  Uint8List toBgraBytes() => Uint8List(0);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
