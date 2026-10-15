@@ -38,6 +38,69 @@ void main() {
     }
   });
 
+  testWidgets('Gaussian blur preserves constant I420 and NV12 planes through loaded WASM', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This regression must execute through the loaded WASM backend.');
+    const width = 4;
+    const height = 4;
+    final cases = <({String name, YuvImage Function() create, List<List<int>> expected})>[
+      (
+        name: 'I420',
+        create: () => YuvImage.i420(
+          width,
+          height,
+          planes: <YuvPlane>[
+            YuvPlane(height, width, 1, Uint8List.fromList(List<int>.filled(width * height, 96))),
+            YuvPlane(height ~/ 2, width ~/ 2, 1, Uint8List.fromList(List<int>.filled(width * height ~/ 4, 90))),
+            YuvPlane(height ~/ 2, width ~/ 2, 1, Uint8List.fromList(List<int>.filled(width * height ~/ 4, 170))),
+          ],
+        ),
+        expected: <List<int>>[
+          List<int>.filled(width * height, 96),
+          List<int>.filled(width * height ~/ 4, 90),
+          List<int>.filled(width * height ~/ 4, 170),
+        ],
+      ),
+      (
+        name: 'NV12',
+        create: () => YuvImage.nv12(
+          width,
+          height,
+          planes: <YuvPlane>[
+            YuvPlane(height, width, 1, Uint8List.fromList(List<int>.filled(width * height, 96))),
+            YuvPlane(
+              height ~/ 2,
+              width,
+              2,
+              Uint8List.fromList(<int>[
+                for (var i = 0; i < width * height ~/ 4; i++) ...<int>[90, 170],
+              ]),
+            ),
+          ],
+        ),
+        expected: <List<int>>[
+          List<int>.filled(width * height, 96),
+          <int>[
+            for (var i = 0; i < width * height ~/ 4; i++) ...<int>[90, 170],
+          ],
+        ],
+      ),
+    ];
+
+    for (final imageCase in cases) {
+      for (final sigma in <double>[1e-200, double.minPositive, 1.5, double.maxFinite]) {
+        final image = imageCase.create()..applyGaussianBlur(radius: 1, sigma: sigma);
+
+        for (var planeIndex = 0; planeIndex < imageCase.expected.length; planeIndex++) {
+          expect(
+            image.planes[planeIndex].bytes,
+            orderedEquals(imageCase.expected[planeIndex]),
+            reason: '${imageCase.name} plane $planeIndex, sigma=$sigma',
+          );
+        }
+      }
+    }
+  });
+
   testWidgets('toBgraBytes repacks a padded BGRA plane into exactly width*height*4 tight bytes', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
