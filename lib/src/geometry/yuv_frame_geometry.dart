@@ -107,8 +107,17 @@ final class YuvFrameGeometry {
     this.fit = YuvFrameFit.contain,
     this.alignment = Alignment.center,
   }) {
-    if (sourceSize.width <= 0 || sourceSize.height <= 0 || viewSize.width <= 0 || viewSize.height <= 0) {
-      throw ArgumentError('sourceSize and viewSize must be positive.');
+    if (!sourceSize.width.isFinite ||
+        !sourceSize.height.isFinite ||
+        !viewSize.width.isFinite ||
+        !viewSize.height.isFinite ||
+        sourceSize.width <= 0 ||
+        sourceSize.height <= 0 ||
+        viewSize.width <= 0 ||
+        viewSize.height <= 0 ||
+        !alignment.x.isFinite ||
+        !alignment.y.isFinite) {
+      throw ArgumentError('sourceSize and viewSize must be finite and positive, and alignment must be finite.');
     }
   }
 

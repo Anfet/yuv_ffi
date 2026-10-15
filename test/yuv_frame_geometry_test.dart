@@ -66,6 +66,12 @@ void main() {
   test('requires positive sizes and a matching source image', () {
     expect(() => YuvFrameGeometry(sourceSize: Size.zero, viewSize: const Size(1, 1)), throwsArgumentError);
     expect(() => YuvFrameGeometry(sourceSize: const Size(1, 1), viewSize: Size.zero), throwsArgumentError);
+    expect(() => YuvFrameGeometry(sourceSize: const Size(double.nan, 1), viewSize: const Size(1, 1)), throwsArgumentError);
+    expect(() => YuvFrameGeometry(sourceSize: const Size(1, 1), viewSize: const Size(double.infinity, 1)), throwsArgumentError);
+    expect(
+      () => YuvFrameGeometry(sourceSize: const Size(1, 1), viewSize: const Size(1, 1), alignment: Alignment(double.nan, 0)),
+      throwsArgumentError,
+    );
 
     final geometry = YuvFrameGeometry(sourceSize: const Size(2, 2), viewSize: const Size(2, 2));
     expect(() => geometry.apply(YuvImage.bgra(1, 1)), throwsArgumentError);

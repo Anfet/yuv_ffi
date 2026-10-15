@@ -79,6 +79,45 @@ void main() {
     expect(await _shadeOf(tester, require(_drawnImage(tester))), 2);
   });
 
+  testWidgets('offstage and zero-sized views do not acknowledge; restoring a view paints one frame once', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Offstage(offstage: true, child: YuvFrameView(presenter: presenter)),
+      ),
+    );
+    await tester.runAsync(() async => presenter.present(_frame(7)));
+    await _waitUntil(tester, () => presenter.image != null);
+    await tester.pump();
+    expect(presented, 0);
+    expect(presenter.isBusy, isTrue);
+
+    await pumpView(tester);
+    await tester.pump();
+    expect(presented, 1);
+    await tester.pump();
+    expect(presented, 1, reason: 'repaint of the same generation does not acknowledge twice');
+  });
+
+  testWidgets('a zero-sized view does not acknowledge a decoded frame', (tester) async {
+    var zeroPresented = 0;
+    final zeroPresenter = YuvFramePresenter(onFramePresented: () => zeroPresented++);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints.tightFor(width: 0, height: 0),
+            child: YuvFrameView(presenter: zeroPresenter),
+          ),
+        ),
+      ),
+    );
+    await tester.runAsync(() async => zeroPresenter.present(_frame(8)));
+    await _waitUntil(tester, () => zeroPresenter.image != null);
+    await tester.pump();
+    expect(zeroPresented, 0);
+    zeroPresenter.dispose();
+  });
+
   testWidgets('shader BGRA fallback errors leave the presenter free for the next frame', (tester) async {
     final viewKey = GlobalKey();
     presenter.dispose();

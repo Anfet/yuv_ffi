@@ -2,6 +2,8 @@
 
 ### Changed
 
+- Frame views skip zero-sized or non-finite viewport geometry, and `onFramePresented` now acknowledges a frame only
+  after its image or shader texture is painted. Finite geometry validation rejects non-finite sizes and alignment.
 - Gaussian blur normalizes weights from scaled offsets, preserving valid finite positive sigma values down to
   subnormal magnitudes in native and WebAssembly backends.
 - Image dimensions now match the native `INT32_MAX` ABI limit, plane fields and

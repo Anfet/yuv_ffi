@@ -51,6 +51,9 @@ class YuvFramePresenter extends ChangeNotifier {
   YuvFrameOrientation _orientation = YuvFrameOrientation.upright;
   Size? _frameSize;
   bool _isBusy = false;
+  bool _frameReady = false;
+  bool _missedPaint = false;
+  int _paintedGeneration = -1;
   bool _isDisposed = false;
 
   // Bumped by reset and dispose; a decode that finishes under an older value
@@ -96,9 +99,17 @@ class YuvFramePresenter extends ChangeNotifier {
   /// leave the presenter free. Errors while decoding the copied pixels are
   /// reported through [FlutterError.onError].
   bool present(YuvImage frame, {YuvFrameOrientation orientation = YuvFrameOrientation.upright}) {
-    if (_isDisposed || _isBusy) {
+    if (_isDisposed || (_isBusy && !(_frameReady && _missedPaint))) {
       return false;
     }
+
+    if (_isBusy) {
+      _generation++;
+      _isBusy = false;
+      _frameReady = false;
+      _missedPaint = false;
+    }
+    _generation++;
 
     final renderer = _renderer;
     final generation = _generation;
@@ -127,11 +138,14 @@ class YuvFramePresenter extends ChangeNotifier {
       return;
     }
     _generation++;
+    if (_frameReady) _isBusy = false;
     final previous = _image;
     final previousTexture = _texture;
     _image = null;
     _texture = null;
     _frameSize = null;
+    _frameReady = false;
+    _missedPaint = false;
     previous?.dispose();
     previousTexture?.dispose();
     notifyListeners();
@@ -145,7 +159,7 @@ class YuvFramePresenter extends ChangeNotifier {
       FlutterError.reportError(
         FlutterErrorDetails(exception: error, stack: stack, library: 'yuv_ffi', context: ErrorDescription('decoding a preview frame')),
       );
-      _isBusy = false;
+      if (generation == _generation) _isBusy = false;
       return;
     }
 
@@ -161,11 +175,18 @@ class YuvFramePresenter extends ChangeNotifier {
     _texture = null;
     _frameSize = Size(width.toDouble(), height.toDouble());
     _orientation = orientation;
+    _frameReady = true;
+    _missedPaint = false;
     previous?.dispose();
     previousTexture?.dispose();
     notifyListeners();
 
-    _finishPresentation(generation);
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!_isDisposed && generation == _generation && _paintedGeneration != generation) {
+        _missedPaint = true;
+      }
+    });
+    SchedulerBinding.instance.ensureVisualUpdate();
   }
 
   Future<void> _upload(Future<YuvFrameTexture> upload, Size frameSize, YuvFrameOrientation orientation, int generation) async {
@@ -176,7 +197,7 @@ class YuvFramePresenter extends ChangeNotifier {
       FlutterError.reportError(
         FlutterErrorDetails(exception: error, stack: stack, library: 'yuv_ffi', context: ErrorDescription('uploading a preview frame')),
       );
-      _isBusy = false;
+      if (generation == _generation) _isBusy = false;
       return;
     }
 
@@ -192,21 +213,29 @@ class YuvFramePresenter extends ChangeNotifier {
     _texture = texture;
     _frameSize = frameSize;
     _orientation = orientation;
+    _frameReady = true;
+    _missedPaint = false;
     previous?.dispose();
     previousTexture?.dispose();
     notifyListeners();
 
-    _finishPresentation(generation);
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!_isDisposed && generation == _generation && _paintedGeneration != generation) {
+        _missedPaint = true;
+      }
+    });
+    SchedulerBinding.instance.ensureVisualUpdate();
   }
 
-  void _finishPresentation(int generation) {
-    // Busy until the frame is on screen: two decodes finishing within one
-    // vsync would otherwise both count as presented while only one is drawn.
+  void _didPaint(int generation) {
+    if (_isDisposed || generation != _generation || _paintedGeneration == generation) return;
+    _paintedGeneration = generation;
+    _missedPaint = false;
     SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (_isDisposed || generation != _generation) return;
       _isBusy = false;
-      if (!_isDisposed && generation == _generation) {
-        onFramePresented?.call();
-      }
+      _frameReady = false;
+      onFramePresented?.call();
     });
     SchedulerBinding.instance.ensureVisualUpdate();
   }
@@ -257,15 +286,22 @@ class _YuvFrameViewState extends State<YuvFrameView> {
         if (frameSize == null || (image == null && presenter._texture == null)) {
           return const SizedBox.shrink();
         }
-        if (widget.fit == null && presenter._orientation == YuvFrameOrientation.upright && !presenter.useShader) {
-          if (image == null) {
-            return const SizedBox.shrink();
-          }
-          // RawImage clones the handle for its render object, so the presenter
-          // may dispose its own handle as soon as the next frame replaces it.
+        if (widget.fit == null && presenter._orientation == YuvFrameOrientation.upright && !presenter.useShader && image != null) {
           return AspectRatio(
             aspectRatio: image.width / image.height,
-            child: RawImage(image: image, width: image.width.toDouble(), height: image.height.toDouble(), fit: BoxFit.none),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final size = constraints.biggest;
+                if (!size.width.isFinite || !size.height.isFinite || size.width <= 0 || size.height <= 0) {
+                  _reportedGeometry = null;
+                  return const SizedBox.shrink();
+                }
+                return CustomPaint(
+                  foregroundPainter: _YuvFramePaintAck(presenter, presenter._generation),
+                  child: RawImage(image: image, width: image.width.toDouble(), height: image.height.toDouble(), fit: BoxFit.none),
+                );
+              },
+            ),
           );
         }
         final uprightSize = presenter._orientation.rotation.swapSize ? frameSize.flipped : frameSize;
@@ -286,9 +322,14 @@ class _YuvFrameViewState extends State<YuvFrameView> {
     if (frameSize == null) {
       return const SizedBox.shrink();
     }
+    final viewSize = constraints.biggest;
+    if (!viewSize.width.isFinite || !viewSize.height.isFinite || viewSize.width <= 0 || viewSize.height <= 0) {
+      _reportedGeometry = null;
+      return const SizedBox.shrink();
+    }
     final geometry = YuvFrameGeometry(
       sourceSize: frameSize,
-      viewSize: constraints.biggest,
+      viewSize: viewSize,
       orientation: presenter._orientation,
       fit: widget.fit ?? YuvFrameFit.contain,
       alignment: widget.alignment,
@@ -301,7 +342,7 @@ class _YuvFrameViewState extends State<YuvFrameView> {
         }
       });
     }
-    return CustomPaint(painter: _YuvFramePainter(presenter, geometry));
+    return CustomPaint(painter: _YuvFramePainter(presenter, geometry, presenter._generation));
   }
 }
 
@@ -310,18 +351,24 @@ class _YuvFramePainter extends CustomPainter {
   final YuvFrameRenderer? renderer;
   final YuvFrameTexture? texture;
   final YuvFrameGeometry geometry;
+  final int generation;
 
-  _YuvFramePainter(YuvFramePresenter presenter, this.geometry)
-    : image = presenter._image,
+  _YuvFramePainter(YuvFramePresenter presenter, this.geometry, this.generation)
+    : _owner = presenter,
+      image = presenter._image,
       renderer = presenter._renderer,
       texture = presenter._texture;
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (!size.width.isFinite || !size.height.isFinite || size.width <= 0 || size.height <= 0) return;
     final renderer = this.renderer;
     final texture = this.texture;
     if (renderer != null && texture != null) {
       renderer.paint(canvas, texture, geometry);
+      // A successful renderer paint is the shared presentation definition.
+      // Schedule acknowledgement only after the framework completes this frame.
+      _acknowledge();
       return;
     }
     final image = this.image;
@@ -334,9 +381,29 @@ class _YuvFramePainter extends CustomPainter {
       ..transform(geometry.sourceToView.storage)
       ..drawImage(image, Offset.zero, Paint()..filterQuality = FilterQuality.none)
       ..restore();
+    _acknowledge();
   }
+
+  void _acknowledge() => _owner._didPaint(generation);
+
+  final YuvFramePresenter _owner;
 
   @override
   bool shouldRepaint(_YuvFramePainter oldDelegate) =>
       oldDelegate.image != image || oldDelegate.texture != texture || oldDelegate.renderer != renderer || oldDelegate.geometry != geometry;
+}
+
+class _YuvFramePaintAck extends CustomPainter {
+  final YuvFramePresenter presenter;
+  final int generation;
+
+  _YuvFramePaintAck(this.presenter, this.generation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width > 0 && size.height > 0) presenter._didPaint(generation);
+  }
+
+  @override
+  bool shouldRepaint(_YuvFramePaintAck oldDelegate) => oldDelegate.generation != generation || oldDelegate.presenter != presenter;
 }
