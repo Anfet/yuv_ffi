@@ -56,7 +56,7 @@ The README keeps the authoritative requirement and platform status tables
 | Platform | What to know |
 | --- | --- |
 | Android | API 26 or later; ABIs `armeabi-v7a`, `arm64-v8a` and `x86_64`. Android `x86` is not supported. |
-| iOS, macOS | Built into the app (Swift Package Manager or CocoaPods); nothing to configure. The native symbols are linked into the process. |
+| iOS, macOS | Built into the app with Swift Package Manager or CocoaPods using the Flutter template's `use_frameworks!` (dynamic frameworks); nothing to add in those setups. The native symbols are linked into the process. Static CocoaPods linkage (for example `use_frameworks! :linkage => :static`, or no `use_frameworks!`) has not been verified and is not claimed. |
 | Windows, Linux | Native FFI backend, built from `src/` with the app; the loader opens `yuv_ffi.dll` or `libyuv_ffi.so` by name. |
 | Web | WASM backend on Flutter's JavaScript and `--wasm` builds, checked in Chrome. See below. |
 
@@ -69,6 +69,9 @@ the README lists what each platform was checked with. Anything not listed there 
   been verified. Safari 16.4 is only a technical minimum for release WASM SIMD, not a tested compatibility claim.
 - Await `YuvFfi.initialize()` before anything else. The module is requested from the app's own assets at
   `assets/packages/yuv_ffi/assets/wasm/yuv_ffi.js` and `.../yuv_ffi.wasm`.
+  The paths are relative, so the browser resolves them against the page's base URL, as in the output of a plain
+  `flutter build web`. `initialize()` takes no path argument. A custom `assetBase`, a CDN or a different origin, and a
+  strict Content-Security-Policy have not been verified and are not claimed.
 - The loaded module defines the capabilities. Use `capabilities.supports(...)` to choose a path; `chromaSwap` is
   supported for NV12 only, as on native.
 - The checked cases and the evidence are in the

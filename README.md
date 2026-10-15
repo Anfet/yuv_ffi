@@ -45,8 +45,13 @@ resolves 0.4.0.
 | Web | Flutter JavaScript and `--wasm` builds; tested in Chrome |
 
 On iOS and macOS the plugin builds with either Swift Package Manager (the
-default in Flutter 3.44 and later) or CocoaPods. Nothing needs to be configured
-in your app. The Apple sources live in `darwin/`; the C sources stay in `src/`.
+default in Flutter 3.44 and later) or CocoaPods, as Flutter's template sets it up:
+a Podfile with `use_frameworks!`, which links dynamic frameworks. Nothing needs to
+be added to your app in those setups. Static CocoaPods linkage (for example
+`use_frameworks! :linkage => :static`, or a Podfile without `use_frameworks!`) has
+not been verified and is not claimed; the plugin's symbols are looked up in the
+running process, so a static link would need to keep them. The Apple sources live
+in `darwin/`; the C sources stay in `src/`.
 
 Web operations match the native backend in the checked cases on both the
 JavaScript and `--wasm` Flutter builds. `chromaSwap` supports NV12 only, as on
@@ -54,6 +59,9 @@ native. Both builds were verified in Chrome. Use `flutter build web` or
 `flutter build web --wasm`.
 Safari and Firefox have not been verified. Safari 16.4 or later is a technical
 minimum for release WASM SIMD, not a tested compatibility claim for this plugin.
+The module is requested from Flutter's default asset location, relative to the
+page, as in a plain `flutter build web` output. A custom `assetBase`, a CDN or a
+different origin, and a strict Content-Security-Policy have not been verified.
 
 ## Quick start
 
