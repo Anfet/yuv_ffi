@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,6 +26,18 @@ void main() {
 
   setUpAll(() async {
     await YuvFfi.initialize();
+  });
+
+  testWidgets('Gaussian blur preserves constant BGRA for finite positive sigma extremes', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This regression must execute through the loaded WASM backend.');
+    for (final sigma in <double>[1e-200, double.minPositive, 1.5, double.maxFinite]) {
+      final plane = YuvPlane(1, 4, 4, Uint8List.fromList(<int>[120, 90, 60, 255]));
+      final image = YuvImage.bgra(1, 1, planes: <YuvPlane>[plane]);
+
+      image.applyGaussianBlur(radius: 1, sigma: sigma);
+
+      expect(image.toBgraBytes(), orderedEquals(<int>[120, 90, 60, 255]), reason: 'sigma=$sigma');
+    }
   });
 
   testWidgets('toBgraBytes repacks a padded BGRA plane into exactly width*height*4 tight bytes', (tester) async {

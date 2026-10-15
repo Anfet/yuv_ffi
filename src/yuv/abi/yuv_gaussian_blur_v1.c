@@ -337,14 +337,17 @@ FFI_PLUGIN_EXPORT YuvStatus yuv_gaussian_blur_v1(const YuvConstFrameV1 *source, 
         return YUV_STATUS_ALLOCATION_FAILED;
     }
 
-    double denominator = 2.0 * options->sigma * options->sigma;
     double total = 0.0;
     for (int32_t offsetY = -(int32_t)options->radius; offsetY <= (int32_t)options->radius; offsetY++) {
         for (int32_t offsetX = -(int32_t)options->radius; offsetX <= (int32_t)options->radius; offsetX++) {
-            double squared = (double)(offsetX * offsetX + offsetY * offsetY);
             size_t index = (size_t)(offsetY + (int32_t)options->radius) * side +
                 (size_t)(offsetX + (int32_t)options->radius);
-            double weight = exp(-squared / denominator);
+            /* Scale offsets before squaring: sigma^2 may underflow for tiny
+             * positive inputs or overflow for very large finite inputs.
+             * The center is exactly one, so the finite sum is always > 0. */
+            double scaledX = (double)offsetX / options->sigma;
+            double scaledY = (double)offsetY / options->sigma;
+            double weight = exp(-0.5 * (scaledX * scaledX + scaledY * scaledY));
             weights[index] = weight;
             total += weight;
         }

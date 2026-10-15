@@ -2,6 +2,8 @@
  * alpha and bytes outside the region, and use edge replication at borders. */
 
 #include <stdint.h>
+#include <float.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -500,6 +502,30 @@ static void test_radius_zero(void) {
 
 static void test_gaussian(void) {
     printf("Gaussian\n");
+
+    /* Every finite positive sigma keeps a finite kernel with a nonzero
+     * normalization sum. The one-pixel constant fixture exposes NaN weights. */
+    {
+        const double sigmas[] = {1e-200, nextafter(0.0, 1.0), 1.5, DBL_MAX};
+        for (size_t i = 0; i < sizeof(sigmas) / sizeof(sigmas[0]); i++) {
+            Frame source;
+            Frame destination;
+            frame_init(&source, YUV_FORMAT_BGRA8888, 1, 1);
+            frame_init(&destination, YUV_FORMAT_BGRA8888, 1, 1);
+            uint8_t *pixel = frame_sample(&source, 0, 0, 0);
+            pixel[0] = 120;
+            pixel[1] = 90;
+            pixel[2] = 60;
+            pixel[3] = 255;
+            YuvConstFrameV1 sourceFrame = as_source(&source);
+            YuvMutableFrameV1 destinationFrame = as_destination(&destination);
+            YuvBlurOptionsV1 options = blur_options(1, sigmas[i]);
+            expect_status("gaussian finite positive sigma", yuv_gaussian_blur_v1(&sourceFrame, &destinationFrame, &options), YUV_STATUS_OK);
+            uint8_t *result = frame_sample(&destination, 0, 0, 0);
+            expect_true("      constant BGRA survives extreme sigma",
+                result[0] == 120 && result[1] == 90 && result[2] == 60 && result[3] == 255);
+        }
+    }
 
     /* A flat image is preserved by any correctly normalized weighted mean,
      * whatever the weights are, so this checks normalization and the border

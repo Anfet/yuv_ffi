@@ -2,6 +2,8 @@
 
 ### Changed
 
+- Gaussian blur normalizes weights from scaled offsets, preserving valid finite positive sigma values down to
+  subnormal magnitudes in native and WebAssembly backends.
 - Image dimensions now match the native `INT32_MAX` ABI limit, plane fields and
   byte lengths are checked against their uint32 codec representation before
   allocation or decoding, and preserved BGRA planes require a pixel stride of
