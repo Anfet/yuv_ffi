@@ -1,5 +1,7 @@
 # yuv_ffi — принятые задачи
 
+- **GATE 3** — DONE (ACCEPTED, Review 3, R29, 15.10.2026). Reviewed group `06496126c33badbc1b37b49efab05e5bcc3ab0b2`; final FFI `da5bbe27a8c0d7520b2c35d8d724e0bc737a61f2`, camera `d1c86c9ba37f9812a2d6aecefdd2f8a550cfc03d`. Full required release matrix, support claims and payload provenance accepted via reports and raw content-equal carry-over; FFI 1188-case claim mapped to accepted scripts/targets, FFI payload unchanged (312 files, SHA256 `2dfcccbb8c8aa819139fad29fafe178814d38d93ba672e30a897dc2c9b198890`). R29-1 closed after DOC 5 correction and camera PACK refresh; original FAILs retained as history. Reviewer checks: none; Recommendations: none. Full Review/Report: group `doc/release-0.5.2-validation.md`; card in group Git history. Completion-only acceptance does not alter runtime or published payload; wiki/pub.dev/GitHub refs remain separate Engineer actions.
+
 Одна запись на принятую задачу: что сделано, SHA слияния, run CI. Карточка после приёмки удаляется, история — в git.
 
 История прошлых циклов удалена из рабочего дерева и доступна в git:
