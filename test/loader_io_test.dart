@@ -159,21 +159,64 @@ void main() {
       );
     });
 
-    test('a failed manifest gate is not cached: a later call with a complete library retries and succeeds', () async {
-      final fake = ffi.DynamicLibrary.executable();
+    test('a failed manifest gate clears its caches and retries with a different library', () async {
+      final rejected = ffi.DynamicLibrary.executable();
+      final accepted = ffi.DynamicLibrary.executable();
+      Object? rejectedBindings;
       loader_io.debugResetLoader();
-      loader_io.debugSetLibraryOpener(() => fake);
-      loader_io.debugSetSymbolChecker((_, symbol) => symbol != 'yuv_grayscale_v1');
+      var opens = 0;
+      loader_io.debugSetLibraryOpener(() => ++opens == 1 ? rejected : accepted);
+      loader_io.debugSetSymbolChecker((library, _) {
+        if (identical(library, rejected)) {
+          rejectedBindings ??= loader_io.ffiBingings;
+          return false;
+        }
+        return identical(library, accepted);
+      });
 
       await expectLater(loader_io.ensureInitialized(), throwsStateError);
+      expect(loader_io.capabilitiesIfInitialized, isNull);
 
-      // Nothing partial survives the failed attempt: the next explicit call
-      // sees a complete manifest and genuinely succeeds instead of replaying
-      // the earlier rejection.
-      loader_io.debugSetSymbolChecker((_, _) => true);
       final capabilities = await loader_io.ensureInitialized();
 
       expect(capabilities.supports(YuvOperation.grayscale, sourceFormat: YuvPixelFormat.nv12), isTrue);
+      expect(opens, 2);
+      expect(loader_io.debugOpenCount, 2);
+      expect(identical(loader_io.ffiBingings, rejectedBindings), isFalse, reason: 'bindings from the rejected handle must be discarded');
+    });
+
+    test('a symbol checker exception clears caches and preserves the original error', () async {
+      final rejected = ffi.DynamicLibrary.executable();
+      final accepted = ffi.DynamicLibrary.executable();
+      final error = ArgumentError('simulated symbol checker failure');
+      Object? rejectedBindings;
+      loader_io.debugResetLoader();
+      var opens = 0;
+      loader_io.debugSetLibraryOpener(() => ++opens == 1 ? rejected : accepted);
+      loader_io.debugSetSymbolChecker((library, _) {
+        if (identical(library, rejected)) {
+          rejectedBindings = loader_io.ffiBingings;
+          throw error;
+        }
+        return true;
+      });
+
+      Object? caught;
+      StackTrace? trace;
+      try {
+        await loader_io.ensureInitialized();
+      } catch (caughtError, caughtStack) {
+        caught = caughtError;
+        trace = caughtStack;
+      }
+
+      expect(identical(caught, error), isTrue);
+      expect(trace, isNotNull);
+      expect(loader_io.capabilitiesIfInitialized, isNull);
+      final capabilities = await loader_io.ensureInitialized();
+      expect(capabilities.supports(YuvOperation.grayscale, sourceFormat: YuvPixelFormat.nv12), isTrue);
+      expect(opens, 2);
+      expect(identical(loader_io.ffiBingings, rejectedBindings), isFalse);
     });
   });
 

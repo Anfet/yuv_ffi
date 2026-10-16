@@ -71,7 +71,9 @@ void debugResetLoader() {
 /// A successful open is cached, so repeated and concurrent calls reuse the same
 /// library. A failed attempt caches nothing: the next explicit call really
 /// retries and may succeed, which is what makes a transient failure (a library
-/// that was not deployed yet) recoverable without restarting the process.
+/// that was not deployed yet) recoverable without restarting the process. The
+/// retry does not guarantee that the operating-system loader unloads or reloads
+/// a library file that was already loaded.
 ///
 /// Rethrows the original error. An unsupported platform throws
 /// [UnsupportedError]; a library that cannot be opened throws the platform's
@@ -83,19 +85,30 @@ void debugResetLoader() {
 /// unsupported.
 Future<YuvCapabilities> ensureInitialized() async {
   final library = _openIfNeeded();
-  final missing = <String>[
-    for (final symbol in yuvAbiV1Symbols)
-      if (!_symbolChecker(library, symbol)) symbol,
-  ];
-  if (missing.isNotEmpty) {
-    throw StateError(
-      'The loaded yuv_ffi native library does not export ${missing.length} of the '
-      '${yuvAbiV1Symbols.length} required ABI v1 symbols: ${missing.join(', ')}.',
-    );
+  try {
+    final missing = <String>[
+      for (final symbol in yuvAbiV1Symbols)
+        if (!_symbolChecker(library, symbol)) symbol,
+    ];
+    if (missing.isNotEmpty) {
+      throw StateError(
+        'The loaded yuv_ffi native library does not export ${missing.length} of the '
+        '${yuvAbiV1Symbols.length} required ABI v1 symbols: ${missing.join(', ')}.',
+      );
+    }
+  } catch (_) {
+    _clearInitializationCaches();
+    rethrow;
   }
   final snapshot = YuvCapabilitiesSnapshot(YuvOperation.values);
   _capabilities = snapshot;
   return snapshot;
+}
+
+void _clearInitializationCaches() {
+  _library = null;
+  _ffiBingings = null;
+  _capabilities = null;
 }
 
 /// The most recently computed [YuvCapabilities], or `null` when

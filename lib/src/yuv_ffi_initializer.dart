@@ -47,7 +47,9 @@ final class YuvFfi {
   ///
   /// A failed attempt is not cached on either platform: the next explicit call
   /// really retries and may succeed. Nothing partially initialized is left
-  /// behind by a failure.
+  /// behind by a failure. On IO/native, this retries opening and validating the
+  /// handle; it does not guarantee that the operating-system loader unloads or
+  /// reloads a library file that it already loaded.
   ///
   /// ## Isolates
   ///
