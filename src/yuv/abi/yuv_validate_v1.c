@@ -112,13 +112,13 @@ static YuvStatus yuv_validate_v1_frame_prefix(
     uint32_t colorMatrix,
     uint32_t colorRange,
     const uint64_t *reserved) {
-    if (abiVersion != YUV_ABI_VERSION_1) {
-        return YUV_STATUS_INVALID_ARGUMENT;
-    }
     /* Smaller than the full v1 type means the caller cannot actually own the
      * fields this build is about to read. A LARGER size is accepted and its
      * unknown tail ignored: that is the forward-compatible extension rule. */
     if (structSize < fullSize) {
+        return YUV_STATUS_INVALID_ARGUMENT;
+    }
+    if (abiVersion != YUV_ABI_VERSION_1) {
         return YUV_STATUS_INVALID_ARGUMENT;
     }
 
@@ -150,7 +150,12 @@ YuvStatus yuv_validate_v1_const_frame(const YuvConstFrameV1 *frame, YuvValidated
         return YUV_STATUS_INVALID_ARGUMENT;
     }
 
-    YuvStatus prefixStatus = yuv_validate_v1_frame_prefix(frame->structSize, (uint32_t)sizeof(YuvConstFrameV1),
+    const uint32_t structSize = frame->structSize;
+    if (structSize < (uint32_t)sizeof(YuvConstFrameV1)) {
+        return YUV_STATUS_INVALID_ARGUMENT;
+    }
+
+    YuvStatus prefixStatus = yuv_validate_v1_frame_prefix(structSize, (uint32_t)sizeof(YuvConstFrameV1),
         frame->abiVersion, frame->format, frame->planeCount, frame->colorMatrix, frame->colorRange,
         frame->reserved);
     if (prefixStatus != YUV_STATUS_OK) {
@@ -176,7 +181,12 @@ YuvStatus yuv_validate_v1_mutable_frame(YuvMutableFrameV1 *frame, YuvValidatedMu
         return YUV_STATUS_INVALID_ARGUMENT;
     }
 
-    YuvStatus prefixStatus = yuv_validate_v1_frame_prefix(frame->structSize, (uint32_t)sizeof(YuvMutableFrameV1),
+    const uint32_t structSize = frame->structSize;
+    if (structSize < (uint32_t)sizeof(YuvMutableFrameV1)) {
+        return YUV_STATUS_INVALID_ARGUMENT;
+    }
+
+    YuvStatus prefixStatus = yuv_validate_v1_frame_prefix(structSize, (uint32_t)sizeof(YuvMutableFrameV1),
         frame->abiVersion, frame->format, frame->planeCount, frame->colorMatrix, frame->colorRange,
         frame->reserved);
     if (prefixStatus != YUV_STATUS_OK) {
@@ -206,11 +216,13 @@ YuvStatus yuv_validate_v1_options_header(const void *options, uint32_t fullSize)
      * (asserted in yuv_abi_v1.h), so the header can be read through any of
      * them. YuvConvertOptionsV1 is used as the representative type because it
      * is the minimal one: it carries the common prefix and nothing else. */
-    const YuvConvertOptionsV1 *header = (const YuvConvertOptionsV1 *)options;
-    if (header->abiVersion != YUV_ABI_VERSION_1) {
+    const uint32_t structSize = *(const uint32_t *)options;
+    if (structSize < fullSize) {
         return YUV_STATUS_INVALID_ARGUMENT;
     }
-    if (header->structSize < fullSize) {
+
+    const YuvConvertOptionsV1 *header = (const YuvConvertOptionsV1 *)options;
+    if (header->abiVersion != YUV_ABI_VERSION_1) {
         return YUV_STATUS_INVALID_ARGUMENT;
     }
     return YUV_STATUS_OK;

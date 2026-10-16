@@ -164,6 +164,23 @@ add_test(
     COMMAND abi_status_test
 )
 
+# Uses Windows/POSIX guard pages to prove short ABI descriptors are rejected
+# before validators read any field beyond structSize.
+add_executable(abi_short_descriptor_test
+    abi_short_descriptor_test.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_validate_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_kernel_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/abi/yuv_grayscale_v1.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/validated_view.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/yuv/utils/checked_arithmetic.c
+)
+target_include_directories(abi_short_descriptor_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+add_test(
+    NAME abi_short_descriptor_tests
+    COMMAND abi_short_descriptor_test
+)
+
 # Verifies crop, flip, and rotate against an independent visible-pixel oracle
 # across I420, NV12, and BGRA8888 at even, odd, and
 # degenerate (1x1, 1xN, Nx1) geometry. Every fixture carries padded row

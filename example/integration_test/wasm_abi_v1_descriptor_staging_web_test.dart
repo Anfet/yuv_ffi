@@ -63,6 +63,7 @@ globalThis.__yuvMakeFakeModule = function (heapBytes) {
     __live: 0,
     __calls: [],
     __status: 0,
+    __shortSourceDescriptor: false,
     __onCall: null,
     _malloc: function (size) {
       // 8-byte aligned, like Emscripten's allocator: the ABI structs carry
@@ -82,6 +83,11 @@ globalThis.__yuvMakeFakeModule = function (heapBytes) {
     ccall: function (name, returnType, argTypes, args) {
       this.__calls.push({ name: name, args: args.slice() });
       if (this.__onCall) this.__onCall(this, name, args);
+      if (this.__shortSourceDescriptor) {
+        // Model the C validator seeing only structSize in a short logical V1.
+        this.HEAP32[args[0] >> 2] = 4;
+        this.__status = 1;
+      }
       return this.__status;
     },
   };
@@ -120,6 +126,8 @@ extension on JSObject {
   int get liveAllocations => getProperty<JSNumber>('__live'.toJS).toDartInt;
 
   set status(int value) => setProperty('__status'.toJS, value.toJS);
+
+  set shortSourceDescriptor(bool value) => setProperty('__shortSourceDescriptor'.toJS, value.toJS);
 
   List<_RecordedCall> get calls {
     final raw = getProperty<JSArray>('__calls'.toJS).toDart;
@@ -625,6 +633,15 @@ void main() {
         );
         expect(module.liveAllocations, 0, reason: 'status ${entry.key} must still release every allocation');
       }
+    });
+
+    testWidgets('a short logical V1 descriptor is rejected and releases staged memory', (_) async {
+      final module = _newFakeModule()..shortSourceDescriptor = true;
+
+      expect(() => YuvAbiV1WebRunner.grayscale(module: module, source: _i420Source()), throwsA(isA<ArgumentError>()));
+      expect(module.calls, hasLength(1));
+      expect(module.heap.getUint32(module.calls.single.sourceFrame, Endian.little), 4);
+      expect(module.liveAllocations, 0, reason: 'rejected short descriptors must release staged memory');
     });
 
     testWidgets('the thrown exception names the symbol that failed', (_) async {

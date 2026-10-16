@@ -88,7 +88,7 @@ function Assert-WebSourceMatrix {
     'probe_web_test.dart' = 1
     'serialization_contract_web_test.dart' = 1
     'shader_probe_web_test.dart' = 1
-    'wasm_abi_v1_descriptor_staging_web_test.dart' = 29
+    'wasm_abi_v1_descriptor_staging_web_test.dart' = 30
     'wasm_bootstrap_web_test.dart' = 1
     'wasm_loader_lifecycle_web_test.dart' = 9
     'wasm_parity_edge_cases_web_test.dart' = 2
@@ -108,8 +108,8 @@ function Assert-WebSourceMatrix {
   if ($unmapped.Count -gt 0 -or $missingSources.Count -gt 0 -or $mapped.Count -ne ($aggregate.Count + $separate.Count)) {
     throw "Web source mapping mismatch: unmapped=[$($unmapped -join ', ')]; missing=[$($missingSources -join ', ')]"
   }
-  if ($baselineCases.Count -ne $discovered.Count -or @($baselineCases.Keys | Where-Object { $_ -notin $discovered }).Count -gt 0 -or ($baselineCases.Values | Measure-Object -Sum).Sum -ne 65) {
-    throw 'Web source case baseline must cover all 14 sources and total 65 cases.'
+  if ($baselineCases.Count -ne $discovered.Count -or @($baselineCases.Keys | Where-Object { $_ -notin $discovered }).Count -gt 0 -or ($baselineCases.Values | Measure-Object -Sum).Sum -ne 66) {
+    throw 'Web source case baseline must cover all 14 sources and total 66 cases.'
   }
 
   $aggregatorPath = Join-Path $integrationDirectory $combined
@@ -252,7 +252,7 @@ try {
     throw "Could not refresh generated-file index state: $LASTEXITCODE"
   }
 
-  Write-Output "Web CI passed: Chrome $chromeVersion; sources=14; integration cases=65; reference matrix=119."
+  Write-Output "Web CI passed: Chrome $chromeVersion; sources=14; integration cases=66; reference matrix=119."
 } finally {
   Pop-Location
 }
