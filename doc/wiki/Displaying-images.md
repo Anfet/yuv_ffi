@@ -84,6 +84,10 @@ class _RotatingImagePageState extends State<RotatingImagePage> {
 Expected result: the gradient is shown wide, scaled to fit a 300 by 300 box. Each tap rotates it a quarter turn clockwise;
 it becomes tall (120 by 240 pixels), then wide again.
 
+For decoded images, `YuvImageWidget.boxFit` defaults to `BoxFit.none`; pass `BoxFit.contain` when the image should fit
+inside its box. `YuvFrameView.fit` defaults to `YuvFrameFit.contain`, so use the explicit decoded-image setting when
+you want both display paths to show the full frame.
+
 Things to know:
 
 - `YuvImageProvider` takes its own copy of the image when decoding starts, so you may change or reuse the image right
@@ -104,8 +108,9 @@ A `YuvFramePresenter` shows one frame at a time:
 - The frame is copied before `present` returns, so you may overwrite and reuse the same `YuvImage` for the next frame.
 - `onFramePresented` fires once per frame that was actually drawn, so a rate computed from it is the display rate, not
   the arrival rate.
-- `YuvFrameView(presenter: ...)` draws the current frame, and nothing before the first one. It keeps the frame's aspect
-  ratio unless you give it a `fit` (`YuvFrameFit.contain` or `cover`) and an `alignment`.
+- `YuvFrameView(presenter: ...)` draws the current frame, and nothing before the first one. Its default fit is
+  `YuvFrameFit.contain`; select `cover` explicitly to crop. `onGeometryChanged` runs after a frame has a non-zero, finite
+  viewport layout and is not called before the first frame or for a zero/non-finite viewport.
 
 This app produces a new 160 by 90 frame about every 33 ms into one reused image, presents it, and counts the frames the
 presenter dropped.

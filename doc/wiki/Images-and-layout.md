@@ -45,6 +45,25 @@ Every `YuvPlane` describes how its bytes are laid out:
 | Plane buffers from a decoder or a camera | Pass them as `planes:` to a factory and choose a `layout:`; see [Packed or preserved layout](#packed-or-preserved-layout). |
 | Bytes written by `encodeTo` | `YuvImage.decode(stream)`. This reads only the package's own container, not PNG or JPEG. |
 
+`decode` reads exactly one payload and waits for the stream to end. It throws `FormatException` for truncated data,
+trailing bytes or a second payload. Give it a finite stream containing one payload; on a persistent connection, parse the
+connection's framing first and pass only one complete payload.
+
+`encodeTo` writes one payload but leaves the sink open. The caller closes the sink when it owns a finite output or
+decides that a persistent connection is finished. This example writes and then reads one finite payload:
+
+```dart
+import 'dart:async';
+import 'dart:typed_data';
+
+final output = StreamController<List<int>>();
+final bytesFuture = output.stream.expand((chunk) => chunk).toList();
+await image.encodeTo(output.sink);
+await output.close(); // encodeTo does not close the sink.
+final bytes = await bytesFuture;
+final decoded = await YuvImage.decode(Stream<List<int>>.value(bytes));
+```
+
 Dimensions must be positive. Constructors throw `ArgumentError` for a zero or negative width or height.
 
 ### Look at the planes

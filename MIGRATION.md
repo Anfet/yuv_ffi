@@ -15,9 +15,11 @@ This guide covers applications moving from `yuv_ffi: ^0.2.4` to 0.5.2 and update
 
 ## Updating from 0.5.1 to 0.5.2
 
-The public image API, native kernels, Web assets, and serialized frame format are unchanged. Change the dependency to
-`yuv_ffi: ^0.5.2`, run `flutter pub upgrade yuv_ffi`, and check your supported targets. No API replacements or stored-frame
-conversion are required.
+The public image API and serialized frame format remain source-compatible with 0.5.1, so no call-site replacement or
+stored-frame conversion is required. The release does change the Gaussian blur implementation and validation in the
+native and WebAssembly paths. Invalid dimensions, plane layouts, byte lengths, blur parameters, and geometry that were
+previously accepted or reached a backend can now throw `ArgumentError`; handle that error at input boundaries. Change
+the dependency to `yuv_ffi: ^0.5.2`, run `flutter pub upgrade yuv_ffi`, and check your supported targets.
 
 Camera code has moved out of the `yuv_ffi` example into `yuv_camera 0.0.1`. Image-only applications do not need the new
 package. Applications that copied the example's camera code should follow

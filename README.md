@@ -172,7 +172,10 @@ YuvImageWidget(
 ```
 
 `YuvImageProvider(image)` is available when an `ImageProvider` is required.
-For a live stream, `YuvFramePresenter` keeps one current image for display.
+`YuvImageWidget` defaults to `BoxFit.none`; pass `boxFit: BoxFit.contain` to
+show the full decoded image. `YuvFrameView` defaults to `YuvFrameFit.contain`,
+so decoded and live views can use the same fit. For a live stream,
+`YuvFramePresenter` keeps one current image for display.
 `present(frame)` returns `false` while decoding or until the decoded frame has
 been rendered, so intermediate frames are dropped. Render it with
 `YuvFrameView` and call `dispose()` when the stream ends.
@@ -186,8 +189,13 @@ final view = YuvFrameView(presenter: presenter);
 
 Pass `useShader: true` to `YuvFramePresenter` for shader-backed live frames,
 and pass a `YuvFrameOrientation` to `present` to rotate or mirror at draw time.
-`YuvFrameView.fit` and `alignment` use `YuvFrameGeometry`; its
-`onGeometryChanged` callback exposes the exact overlay mapping.
+`YuvFrameView.fit` and `alignment` use `YuvFrameGeometry`; `fit` defaults to
+`YuvFrameFit.contain`. Its `onGeometryChanged` callback reports computed geometry
+after layout and paint scheduling; it is not called before a frame or when the
+viewport has zero or non-finite dimensions. Use the callback's value for the
+overlay mapping. `YuvImageWidget` forwards asynchronous decode failures to
+`errorBuilder`; if you call `image.toImage()` directly, await its future and
+handle a decode error there.
 
 ### Frame geometry and ML Kit
 
@@ -276,6 +284,8 @@ Public calls can throw:
 
 - `ArgumentError` for invalid dimensions, planes, byte lengths, geometry, or
   native argument validation.
+- `StateError` from `YuvFrameGeometry.apply` when its geometry has no visible
+  source area; an empty image cannot be represented.
 - `UnsupportedError` when a backend or format pair cannot dispatch an
   operation, including a capability-gated call before initialization.
 - `YuvNativeException` for native overflow, allocation, internal failures, or

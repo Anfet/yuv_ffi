@@ -2,12 +2,15 @@
 
 This folder contains tooling to compile `src/*.c` into WebAssembly artifacts for Web runtime loading.
 
-Current scope of this setup:
-- Build pipeline and artifact layout.
-- Loader bootstrap contract (`createYuvFfiModule`).
-
-Out of scope (next step):
-- Mapping/exporting YUV processing functions and wiring Dart calls to them.
+The build emits the WebAssembly module used by the Web backend. Its ABI v1
+processing surface is the eleven versioned functions listed in
+`lib/src/yuv/shared/yuv_abi_v1_symbols.dart`: conversion, black and white,
+grayscale, negate, Gaussian/mean/box blur, crop, flip, rotate, and chroma swap.
+The module also exports `_malloc` and `_free` for staging frame descriptors and
+planes. `test/abi_symbol_manifest_test.dart` checks that the WASM exports agree
+with the C header, ffigen allowlist, and Dart symbol list. The Web backend is
+still partial; only operations documented as supported by the Web parity guide
+are available there.
 
 ## Prerequisites
 
@@ -43,12 +46,9 @@ These paths are consumed by `lib/src/loader/impl/wasm_loader_web.dart` via packa
 
 ## Export Policy (Current Stage)
 
-The build script currently exports only:
-- `_malloc`
-- `_free`
-
-This is intentional for bootstrap phase.  
-Add operation exports only when wiring concrete Dart -> WASM function calls.
+The build script also exposes `ccall`, `cwrap`, `HEAPU8`, and `HEAP32` to the
+loader. The export list and artifact paths in `build_wasm.sh` are the build
+contract; this README does not define a separate export manifest.
 
 ## Smoke Check
 

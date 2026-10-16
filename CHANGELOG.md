@@ -2,10 +2,16 @@
 
 ### Changed
 
-- Frame views skip zero-sized or non-finite viewport geometry, and `onFramePresented` now acknowledges a frame only
-  after its image or shader texture is painted. Finite geometry validation rejects non-finite sizes and alignment.
+- Frame views skip zero-sized, non-finite or fully offscreen geometry instead of acknowledging an empty capture, and
+  `onFramePresented` now acknowledges a frame only after its image or shader texture is painted. The default non-shader
+  view reports the same display geometry callback as the shader path. Finite geometry validation rejects non-finite
+  sizes and alignment.
 - Gaussian blur normalizes weights from scaled offsets, preserving valid finite positive sigma values down to
   subnormal magnitudes in native and WebAssembly backends.
+- Invalid ABI frame descriptors are rejected before native access or output writes; image dimensions, plane fields,
+  byte lengths, and empty or non-finite view geometry are validated before use. Asynchronous Flutter pixel-decode
+  failures complete `toImage()` with an error and reach `errorBuilder`; rejected native-library initialization can be
+  retried explicitly.
 - Image dimensions now match the native `INT32_MAX` ABI limit, plane fields and
   byte lengths are checked against their uint32 codec representation before
   allocation or decoding, and preserved BGRA planes require a pixel stride of

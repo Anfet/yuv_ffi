@@ -145,7 +145,10 @@ abstract interface class YuvImage {
 
   /// Serializes this image into [sink].
   ///
-  /// Does not mutate this image. Throws when [sink] rejects writes.
+  /// Writes one complete payload and does not mutate this image or close
+  /// [sink]. The caller owns the sink lifecycle and any framing needed when
+  /// writing multiple payloads to a persistent connection. Throws when [sink]
+  /// rejects writes.
   Future<void> encodeTo(Sink<List<int>> sink) => throw UnimplementedError();
 
   /// Decodes [stream] into a new, independent image.
@@ -153,8 +156,10 @@ abstract interface class YuvImage {
   /// Never mutates an existing instance -- there is no receiver, only a fresh
   /// image built from the decoded payload.
   ///
-  /// Throws [FormatException] when [stream] holds a malformed or unsupported
-  /// payload.
+  /// [stream] must contain exactly one complete payload and then reach EOF.
+  /// Trailing bytes, a second payload, or a malformed or unsupported payload
+  /// throw [FormatException]. A persistent connection must frame and extract
+  /// one payload into a finite stream before calling this method.
   static Future<YuvImage> decode(Stream<List<int>> stream) async {
     final draft = await YuvCodec.decodeStream(stream);
     return YuvImageImpl(
@@ -169,7 +174,8 @@ abstract interface class YuvImage {
 
   /// Converts to Flutter [ui.Image].
   ///
-  /// Throws if pixel decode fails in the underlying engine.
+  /// Throws if pixel decoding fails in the underlying Flutter engine. Await the
+  /// future and handle that error like any other asynchronous decode failure.
   Future<ui.Image> toImage() => throw UnimplementedError();
 
   /// The `apply*` methods validate backend capability before changing this
