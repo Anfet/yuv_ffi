@@ -1,6 +1,9 @@
 @Tags(['contract'])
 library;
 
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_decoder.dart';
@@ -28,6 +31,14 @@ void main() {
     await tester.runAsync(() async {
       await expectLater(image.toImage(), throwsA(same(failure)));
     });
+
+    resetYuvImageDecodeOverride();
+    final decoded = await tester.runAsync(image.toImage);
+    expect(decoded, isNotNull);
+    final result = decoded!;
+    expect(result.width, 1);
+    expect(result.height, 1);
+    result.dispose();
   });
 
   testWidgets('ImageProvider forwards decode failure to errorBuilder and a new frame decodes', (tester) async {
@@ -52,9 +63,39 @@ void main() {
     expect(PaintingBinding.instance.imageCache.containsKey(failedProvider), isFalse);
 
     resetYuvImageDecodeOverride();
-    await tester.pumpWidget(Image(image: YuvImageProvider(YuvImage.bgra(1, 1))));
+    final nextProvider = YuvImageProvider(YuvImage.bgra(2, 3));
+    await tester.pumpWidget(Image(image: nextProvider));
     await tester.pumpAndSettle();
 
-    expect(find.byType(RawImage), findsOneWidget);
+    final decoded = await tester.runAsync(() => _decodeProvider(nextProvider));
+    await tester.pump();
+    expect(decoded, isNotNull);
+    final result = decoded!;
+    expect(result.width, 2);
+    expect(result.height, 3);
+    final rawImage = tester.widget<RawImage>(find.byType(RawImage));
+    expect(rawImage.image, isNotNull);
+    expect(rawImage.image!.width, 2);
+    expect(rawImage.image!.height, 3);
   });
+}
+
+Future<ui.Image> _decodeProvider(YuvImageProvider provider) async {
+  final stream = provider.resolve(ImageConfiguration.empty);
+  final completer = Completer<ui.Image>();
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (info, _) {
+      if (!completer.isCompleted) completer.complete(info.image);
+    },
+    onError: (error, stackTrace) {
+      if (!completer.isCompleted) completer.completeError(error, stackTrace);
+    },
+  );
+  stream.addListener(listener);
+  try {
+    return await completer.future.timeout(const Duration(seconds: 5));
+  } finally {
+    stream.removeListener(listener);
+  }
 }
