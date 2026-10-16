@@ -109,7 +109,9 @@ A `YuvFramePresenter` shows one frame at a time:
 - `onFramePresented` fires once per frame that was actually drawn, so a rate computed from it is the display rate, not
   the arrival rate.
 - `YuvFrameView(presenter: ...)` draws the current frame, and nothing before the first one. Its default fit is
-  `YuvFrameFit.contain`; select `cover` explicitly to crop. `onGeometryChanged` runs after a frame has a non-zero, finite
+  `YuvFrameFit.contain` for drawing. With no explicit `fit`, an `AspectRatio` also preserves the upright frame's aspect
+  ratio; with an explicit `fit`, the view uses the available viewport constraints. Select `cover` explicitly to crop.
+  `onGeometryChanged` runs after a frame has a non-zero, finite
   viewport layout and is not called before the first frame or for a zero/non-finite viewport.
 
 This app produces a new 160 by 90 frame about every 33 ms into one reused image, presents it, and counts the frames the

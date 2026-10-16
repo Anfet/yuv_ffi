@@ -190,7 +190,9 @@ final view = YuvFrameView(presenter: presenter);
 Pass `useShader: true` to `YuvFramePresenter` for shader-backed live frames,
 and pass a `YuvFrameOrientation` to `present` to rotate or mirror at draw time.
 `YuvFrameView.fit` and `alignment` use `YuvFrameGeometry`; `fit` defaults to
-`YuvFrameFit.contain`. Its `onGeometryChanged` callback reports computed geometry
+`YuvFrameFit.contain` for drawing. When `fit` is omitted, the view also keeps the
+upright frame's aspect ratio with `AspectRatio`; an explicit `fit` uses the
+available viewport constraints. Its `onGeometryChanged` callback reports computed geometry
 after layout and paint scheduling; it is not called before a frame or when the
 viewport has zero or non-finite dimensions. Use the callback's value for the
 overlay mapping. `YuvImageWidget` forwards asynchronous decode failures to
