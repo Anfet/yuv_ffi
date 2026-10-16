@@ -12,6 +12,12 @@ flutter devices
 flutter run -d <device-id>
 ```
 
+To run with the Flutter Driver Extension enabled for Dart MCP widget diagnostics, use the dedicated debug entrypoint:
+
+```sh
+flutter run -d <device-id> --target=test_driver/app.dart
+```
+
 For Web, run `flutter run -d chrome`. Checked Web operation cases match native
 on Flutter's JavaScript and `--wasm` builds in Chrome; `chromaSwap` supports
 NV12 only. Safari and Firefox have not been verified. Android, iOS, macOS,
