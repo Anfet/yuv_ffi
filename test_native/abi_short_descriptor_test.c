@@ -14,16 +14,16 @@
 #include <unistd.h>
 #endif
 
-typedef struct GuardedWord {
+typedef struct GuardedRegion {
     void *mapping;
     size_t mappingSize;
-    uint32_t *word;
-} GuardedWord;
+    uint8_t *data;
+} GuardedRegion;
 
 static int failures = 0;
 
-static GuardedWord make_guarded_word(uint32_t value) {
-    GuardedWord result = {0};
+static GuardedRegion make_guarded_region(uint32_t value, size_t readableBytes) {
+    GuardedRegion result = {0};
 #ifdef _WIN32
     SYSTEM_INFO info;
     GetSystemInfo(&info);
@@ -57,12 +57,22 @@ static GuardedWord make_guarded_word(uint32_t value) {
         return result;
     }
 #endif
-    result.word = (uint32_t *)((uint8_t *)result.mapping + result.mappingSize / 2 - sizeof(uint32_t));
-    *result.word = value;
+    const size_t readablePageSize = result.mappingSize / 2;
+    if (readableBytes > readablePageSize) {
+#ifdef _WIN32
+        VirtualFree(result.mapping, 0, MEM_RELEASE);
+#else
+        munmap(result.mapping, result.mappingSize);
+#endif
+        result.mapping = NULL;
+        return result;
+    }
+    result.data = (uint8_t *)result.mapping + readablePageSize - readableBytes;
+    memcpy(result.data, &value, sizeof(value));
     return result;
 }
 
-static void release_guarded_word(GuardedWord guarded) {
+static void release_guarded_region(GuardedRegion guarded) {
     if (guarded.mapping == NULL) {
         return;
     }
@@ -135,41 +145,47 @@ int main(void) {
     options.structSize = (uint32_t)sizeof(options);
     options.abiVersion = YUV_ABI_VERSION_1;
 
-    GuardedWord shortConst = make_guarded_word((uint32_t)sizeof(uint32_t));
-    GuardedWord shortMutable = make_guarded_word((uint32_t)sizeof(uint32_t));
-    GuardedWord shortOptions = make_guarded_word((uint32_t)sizeof(uint32_t));
-    expect_true("guard-page allocations succeeded", shortConst.word != NULL && shortMutable.word != NULL &&
-        shortOptions.word != NULL);
-    if (shortConst.word == NULL || shortMutable.word == NULL || shortOptions.word == NULL) {
-        release_guarded_word(shortConst);
-        release_guarded_word(shortMutable);
-        release_guarded_word(shortOptions);
+    GuardedRegion shortConst = make_guarded_region((uint32_t)sizeof(uint32_t), 2 * sizeof(uint32_t));
+    GuardedRegion shortMutable = make_guarded_region((uint32_t)sizeof(uint32_t), 2 * sizeof(uint32_t));
+    GuardedRegion shortOptionsHeader = make_guarded_region((uint32_t)sizeof(uint32_t), sizeof(uint32_t));
+    GuardedRegion shortOptionsOperation = make_guarded_region((uint32_t)sizeof(uint32_t), 2 * sizeof(uint32_t));
+    expect_true("guard-page allocations succeeded", shortConst.data != NULL && shortMutable.data != NULL &&
+        shortOptionsHeader.data != NULL && shortOptionsOperation.data != NULL);
+    if (shortConst.data == NULL || shortMutable.data == NULL || shortOptionsHeader.data == NULL ||
+        shortOptionsOperation.data == NULL) {
+        release_guarded_region(shortConst);
+        release_guarded_region(shortMutable);
+        release_guarded_region(shortOptionsHeader);
+        release_guarded_region(shortOptionsOperation);
         return 1;
     }
+    expect_true("typed short descriptors are 8-byte aligned",
+        ((uintptr_t)shortConst.data % 8) == 0 && ((uintptr_t)shortMutable.data % 8) == 0 &&
+        ((uintptr_t)shortOptionsOperation.data % 8) == 0);
 
     YuvValidatedConstFrameView constView;
-    expect_status("short const frame", yuv_validate_v1_const_frame((const YuvConstFrameV1 *)shortConst.word,
+    expect_status("short const frame", yuv_validate_v1_const_frame((const YuvConstFrameV1 *)shortConst.data,
         &constView), YUV_STATUS_INVALID_ARGUMENT);
     YuvValidatedMutableFrameView mutableView;
-    expect_status("short mutable frame", yuv_validate_v1_mutable_frame((YuvMutableFrameV1 *)shortMutable.word,
+    expect_status("short mutable frame", yuv_validate_v1_mutable_frame((YuvMutableFrameV1 *)shortMutable.data,
         &mutableView), YUV_STATUS_INVALID_ARGUMENT);
-    expect_status("short options header", yuv_validate_v1_options_header(shortOptions.word,
+    expect_status("short options header", yuv_validate_v1_options_header(shortOptionsHeader.data,
         (uint32_t)sizeof(YuvEffectOptionsV1)), YUV_STATUS_INVALID_ARGUMENT);
 
     destination = make_destination(destinationPixels);
-    expect_status("operation rejects short source", yuv_grayscale_v1((const YuvConstFrameV1 *)shortConst.word,
+    expect_status("operation rejects short source", yuv_grayscale_v1((const YuvConstFrameV1 *)shortConst.data,
         &destination, &options), YUV_STATUS_INVALID_ARGUMENT);
     expect_true("short source leaves destination intact", destinationPixels[0] == 0xA5 && destinationPixels[1] == 0xA5 &&
         destinationPixels[2] == 0xA5 && destinationPixels[3] == 0xA5);
 
     destination = make_destination(destinationPixels);
     expect_status("operation rejects short destination", yuv_grayscale_v1(&source,
-        (YuvMutableFrameV1 *)shortMutable.word, &options), YUV_STATUS_INVALID_ARGUMENT);
+        (YuvMutableFrameV1 *)shortMutable.data, &options), YUV_STATUS_INVALID_ARGUMENT);
     expect_true("short destination leaves destination intact", destinationPixels[0] == 0xA5 &&
         destinationPixels[1] == 0xA5 && destinationPixels[2] == 0xA5 && destinationPixels[3] == 0xA5);
 
     expect_status("operation rejects short options", yuv_grayscale_v1(&source, &destination,
-        (const YuvEffectOptionsV1 *)shortOptions.word), YUV_STATUS_INVALID_ARGUMENT);
+        (const YuvEffectOptionsV1 *)shortOptionsOperation.data), YUV_STATUS_INVALID_ARGUMENT);
     expect_true("short options leaves destination intact", destinationPixels[0] == 0xA5 && destinationPixels[1] == 0xA5 &&
         destinationPixels[2] == 0xA5 && destinationPixels[3] == 0xA5);
 
@@ -189,9 +205,10 @@ int main(void) {
     expect_status("null options header", yuv_validate_v1_options_header(NULL,
         (uint32_t)sizeof(YuvEffectOptionsV1)), YUV_STATUS_INVALID_ARGUMENT);
 
-    release_guarded_word(shortConst);
-    release_guarded_word(shortMutable);
-    release_guarded_word(shortOptions);
+    release_guarded_region(shortConst);
+    release_guarded_region(shortMutable);
+    release_guarded_region(shortOptionsHeader);
+    release_guarded_region(shortOptionsOperation);
     if (failures != 0) {
         fprintf(stderr, "%d ABI short descriptor checks failed\n", failures);
         return 1;
