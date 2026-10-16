@@ -187,6 +187,64 @@ void main() {
     expect(MatrixUtils.transformPoint(geometries.last.viewToSource, geometries.last.destinationRect.bottomRight), const Offset(8, 6));
   });
 
+  testWidgets('geometry callbacks from a reset generation are suppressed and recovery reports the same geometry', (tester) async {
+    final geometries = <YuvFrameGeometry>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 16,
+            child: YuvFrameView(presenter: presenter, onGeometryChanged: geometries.add),
+          ),
+        ),
+      ),
+    );
+    await tester.runAsync(() async => presenter.present(_frame(13)));
+    await _waitUntil(tester, () => presenter.image != null);
+
+    tester.binding.addPostFrameCallback((_) => presenter.reset());
+    await tester.pump();
+    expect(geometries, isEmpty, reason: 'the earlier reset invalidates this queued generation callback');
+    await tester.pump();
+
+    await tester.runAsync(() async => presenter.present(_frame(14)));
+    await _waitUntil(tester, () => presenter.image != null);
+    await tester.pump();
+    await tester.pump();
+    expect(geometries, hasLength(1));
+    expect(geometries.single.viewSize, const ui.Size(16, 12));
+  });
+
+  testWidgets('replacing the presenter before a queued geometry callback suppresses the old callback', (tester) async {
+    final oldGeometries = <YuvFrameGeometry>[];
+    final newGeometries = <YuvFrameGeometry>[];
+    final oldPresenter = YuvFramePresenter();
+    final newPresenter = YuvFramePresenter();
+    await tester.runAsync(() async {
+      oldPresenter.present(_frame(15));
+      newPresenter.present(_frame(16));
+    });
+    await _waitUntil(tester, () => oldPresenter.image != null && newPresenter.image != null);
+
+    Widget view(YuvFramePresenter current, ValueChanged<YuvFrameGeometry> onGeometryChanged) => MaterialApp(
+      home: Center(
+        child: SizedBox(
+          width: 16,
+          child: YuvFrameView(presenter: current, onGeometryChanged: onGeometryChanged),
+        ),
+      ),
+    );
+
+    tester.binding.addPostFrameCallback((_) => oldPresenter.dispose());
+    await tester.pumpWidget(view(oldPresenter, oldGeometries.add));
+    expect(oldGeometries, isEmpty, reason: 'disposing the current presenter invalidates its queued callback');
+    await tester.pumpWidget(view(newPresenter, newGeometries.add));
+    expect(oldGeometries, isEmpty);
+    expect(newGeometries, hasLength(1));
+
+    newPresenter.dispose();
+  });
+
   testWidgets('shader BGRA fallback errors leave the presenter free for the next frame', (tester) async {
     final viewKey = GlobalKey();
     presenter.dispose();

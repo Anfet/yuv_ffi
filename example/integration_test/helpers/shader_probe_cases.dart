@@ -43,11 +43,12 @@ Future<Map<String, int>> runShaderProbeCases(YuvFrameRenderer renderer) async {
   maximumByCase['contain'] = await _renderDifference(renderer, contained, YuvFrameGeometry(sourceSize: contained.size, viewSize: const Size(66, 50)));
 
   final clipped = _frame(_ShaderLayout.i420, 33, 17);
-  maximumByCase['partial_clip'] = await _renderDifference(
-    renderer,
-    clipped,
-    YuvFrameGeometry(sourceSize: clipped.size, viewSize: const Size(66, 50), alignment: const Alignment(0, 1)),
-  );
+  final partialGeometry = YuvFrameGeometry(sourceSize: clipped.size, viewSize: const Size(66, 50), alignment: const Alignment(0, 2));
+  final visible = partialGeometry.destinationRect.intersect(Offset.zero & partialGeometry.viewSize);
+  if (visible.isEmpty || visible == partialGeometry.destinationRect || partialGeometry.visibleSourceRect.height >= clipped.height) {
+    throw StateError('partial_clip must expose only part of the source image');
+  }
+  maximumByCase['partial_clip'] = await _renderDifference(renderer, clipped, partialGeometry, verifyTransparentOutsideVisibleArea: true);
   maximumByCase['empty_clip'] = await _renderDifference(
     renderer,
     clipped,
@@ -62,12 +63,27 @@ Size _viewSize((int, int) size, YuvFrameOrientation orientation) =>
 
 enum _ShaderLayout { i420, i420PixelStride2, nv12 }
 
-Future<int> _renderDifference(YuvFrameRenderer renderer, YuvImage frame, YuvFrameGeometry geometry) async {
+Future<int> _renderDifference(
+  YuvFrameRenderer renderer,
+  YuvImage frame,
+  YuvFrameGeometry geometry, {
+  bool verifyTransparentOutsideVisibleArea = false,
+}) async {
   final texture = await renderer.upload(frame);
   final recorder = PictureRecorder();
   renderer.paint(Canvas(recorder), texture, geometry);
   final drawn = await recorder.endRecording().toImage(geometry.viewSize.width.toInt(), geometry.viewSize.height.toInt());
   final bytes = (await drawn.toByteData(format: ImageByteFormat.rawRgba))!.buffer.asUint8List();
+  if (verifyTransparentOutsideVisibleArea) {
+    final visible = geometry.destinationRect.intersect(Offset.zero & geometry.viewSize);
+    for (var y = 0; y < geometry.viewSize.height.toInt(); y++) {
+      for (var x = 0; x < geometry.viewSize.width.toInt(); x++) {
+        if (!visible.contains(Offset(x + 0.5, y + 0.5)) && bytes[(y * geometry.viewSize.width.toInt() + x) * 4 + 3] != 0) {
+          throw StateError('partial_clip rendered pixels outside the visible intersection');
+        }
+      }
+    }
+  }
   final expected = renderYuvFrameReference(frame, geometry);
   var maxDiff = 0;
   for (var i = 0; i < bytes.length; i++) {

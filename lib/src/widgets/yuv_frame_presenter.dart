@@ -274,6 +274,8 @@ class YuvFrameView extends StatefulWidget {
 
 class _YuvFrameViewState extends State<YuvFrameView> {
   YuvFrameGeometry? _reportedGeometry;
+  YuvFramePresenter? _reportedPresenter;
+  int? _reportedGeneration;
 
   @override
   Widget build(BuildContext context) {
@@ -284,6 +286,7 @@ class _YuvFrameViewState extends State<YuvFrameView> {
         final image = presenter._image;
         final frameSize = presenter._frameSize;
         if (frameSize == null || (image == null && presenter._texture == null)) {
+          _clearReportedGeometry();
           return const SizedBox.shrink();
         }
         final uprightSize = presenter._orientation.rotation.swapSize ? frameSize.flipped : frameSize;
@@ -306,9 +309,10 @@ class _YuvFrameViewState extends State<YuvFrameView> {
     }
     final viewSize = constraints.biggest;
     if (!viewSize.width.isFinite || !viewSize.height.isFinite || viewSize.width <= 0 || viewSize.height <= 0) {
-      _reportedGeometry = null;
+      _clearReportedGeometry();
       return const SizedBox.shrink();
     }
+    final generation = presenter._generation;
     final geometry = YuvFrameGeometry(
       sourceSize: frameSize,
       viewSize: viewSize,
@@ -316,15 +320,30 @@ class _YuvFrameViewState extends State<YuvFrameView> {
       fit: widget.fit ?? YuvFrameFit.contain,
       alignment: widget.alignment,
     );
-    if (geometry != _reportedGeometry) {
+    if (geometry != _reportedGeometry || presenter != _reportedPresenter || generation != _reportedGeneration) {
       _reportedGeometry = geometry;
+      _reportedPresenter = presenter;
+      _reportedGeneration = generation;
+      final onGeometryChanged = widget.onGeometryChanged;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _reportedGeometry == geometry) {
-          widget.onGeometryChanged?.call(geometry);
+        if (mounted &&
+            !presenter._isDisposed &&
+            widget.presenter == presenter &&
+            presenter._generation == generation &&
+            _reportedGeometry == geometry &&
+            _reportedPresenter == presenter &&
+            _reportedGeneration == generation) {
+          onGeometryChanged?.call(geometry);
         }
       });
     }
-    return CustomPaint(painter: _YuvFramePainter(presenter, geometry, presenter._generation));
+    return CustomPaint(painter: _YuvFramePainter(presenter, geometry, generation));
+  }
+
+  void _clearReportedGeometry() {
+    _reportedGeometry = null;
+    _reportedPresenter = null;
+    _reportedGeneration = null;
   }
 }
 
