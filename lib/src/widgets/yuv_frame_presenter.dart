@@ -273,10 +273,6 @@ class YuvFrameView extends StatefulWidget {
 }
 
 class _YuvFrameViewState extends State<YuvFrameView> {
-  YuvFrameGeometry? _reportedGeometry;
-  YuvFramePresenter? _reportedPresenter;
-  int? _reportedGeneration;
-
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -345,6 +341,10 @@ class _YuvFrameViewState extends State<YuvFrameView> {
     _reportedPresenter = null;
     _reportedGeneration = null;
   }
+
+  YuvFrameGeometry? _reportedGeometry;
+  YuvFramePresenter? _reportedPresenter;
+  int? _reportedGeneration;
 }
 
 class _YuvFramePainter extends CustomPainter {

@@ -402,13 +402,14 @@ void main() {
     final decoded = await tester.runAsync(() => _decodeProvider(nextProvider));
     await tester.pump();
     expect(decoded, isNotNull);
-    final result = decoded!;
+    final result = decoded ?? (throw StateError('Provider decode did not complete'));
     expect(result.width, 2);
     expect(result.height, 2);
     final rawImage = tester.widget<RawImage>(find.byType(RawImage));
     expect(rawImage.image, isNotNull);
-    expect(rawImage.image!.width, 2);
-    expect(rawImage.image!.height, 2);
+    final displayed = rawImage.image ?? (throw StateError('RawImage has no decoded image'));
+    expect(displayed.width, 2);
+    expect(displayed.height, 2);
   });
 }
 
