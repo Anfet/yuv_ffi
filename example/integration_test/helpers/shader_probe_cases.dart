@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:flutter/widgets.dart' show Alignment;
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 import 'probe/probe_seed.dart';
@@ -40,6 +41,18 @@ Future<Map<String, int>> runShaderProbeCases(YuvFrameRenderer renderer) async {
 
   final contained = _frame(_ShaderLayout.i420PixelStride2, 33, 17);
   maximumByCase['contain'] = await _renderDifference(renderer, contained, YuvFrameGeometry(sourceSize: contained.size, viewSize: const Size(66, 50)));
+
+  final clipped = _frame(_ShaderLayout.i420, 33, 17);
+  maximumByCase['partial_clip'] = await _renderDifference(
+    renderer,
+    clipped,
+    YuvFrameGeometry(sourceSize: clipped.size, viewSize: const Size(66, 50), alignment: const Alignment(0, 1)),
+  );
+  maximumByCase['empty_clip'] = await _renderDifference(
+    renderer,
+    clipped,
+    YuvFrameGeometry(sourceSize: clipped.size, viewSize: const Size(66, 50), alignment: const Alignment(0, 10)),
+  );
 
   return maximumByCase;
 }

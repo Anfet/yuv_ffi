@@ -59,6 +59,7 @@ final class YuvFrameRenderer {
       throw ArgumentError('texture size must match geometry.sourceSize.');
     }
     final clip = geometry.destinationRect.intersect(Offset.zero & geometry.viewSize);
+    if (clip.isEmpty) return;
     canvas.save();
     canvas.clipRect(clip);
     final packed = texture._packed;

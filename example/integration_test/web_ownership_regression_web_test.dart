@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
@@ -32,6 +33,44 @@ void main() {
     expect(image.revision, revisionBefore + 1);
     expect(image.uPlane.pixelStride, 3);
     expect(image.uPlane.bytes[0], 1, reason: 'applyPlanes must copy rather than adopt caller storage.');
+  });
+
+  testWidgets('decoded presenter waits for a visible default geometry paint on WASM', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This regression must execute in a browser.');
+    final geometries = <YuvFrameGeometry>[];
+    var alignment = const Alignment(0, 10);
+    var presented = 0;
+    final presenter = YuvFramePresenter(onFramePresented: () => presented++);
+    Future<void> pumpView() => tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 100,
+            height: 100,
+            child: YuvFrameView(presenter: presenter, fit: YuvFrameFit.contain, alignment: alignment, onGeometryChanged: geometries.add),
+          ),
+        ),
+      ),
+    );
+
+    await pumpView();
+    await tester.runAsync(() async => presenter.present(YuvImage.bgra(8, 6)));
+    await tester.runAsync(() async {
+      for (var i = 0; i < 200 && presenter.image == null; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+    });
+    await tester.pump();
+    expect(geometries.single.visibleSourceRect.isEmpty, isTrue);
+    expect(presented, 0);
+    expect(presenter.isBusy, isTrue);
+
+    alignment = Alignment.center;
+    await pumpView();
+    await tester.pump();
+    expect(presented, 1);
+    expect(presenter.isBusy, isFalse);
+    presenter.dispose();
   });
 
   testWidgets('conversions and results own independent WASM buffers', (tester) async {

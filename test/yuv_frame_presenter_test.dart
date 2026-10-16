@@ -41,9 +41,13 @@ Future<int> _shadeOf(WidgetTester tester, ui.Image image) async {
   return data!.getUint8(0);
 }
 
-ui.Image? _drawnImage(WidgetTester tester) {
-  final raw = find.byType(RawImage);
-  return raw.evaluate().isEmpty ? null : tester.widget<RawImage>(raw).image;
+Future<int?> _displayedShade(WidgetTester tester) async {
+  final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(const ValueKey('presenter_view_boundary')));
+  final image = await tester.runAsync(() => boundary.toImage());
+  if (image == null) return null;
+  final shade = await _shadeOf(tester, image);
+  image.dispose();
+  return shade;
 }
 
 void main() {
@@ -61,7 +65,7 @@ void main() {
     MaterialApp(
       home: Center(
         child: RepaintBoundary(
-          key: viewKey,
+          key: viewKey ?? const ValueKey('presenter_view_boundary'),
           child: YuvFrameView(presenter: presenter),
         ),
       ),
@@ -76,7 +80,7 @@ void main() {
     await tester.runAsync(() async => expect(presenter.present(_frame(2)), isTrue));
     await _waitUntil(tester, () => presenter.image != null, reason: 'the valid frame to decode');
     await tester.pump();
-    expect(await _shadeOf(tester, require(_drawnImage(tester))), 2);
+    expect(await _displayedShade(tester), 2);
   });
 
   testWidgets('offstage and zero-sized views do not acknowledge; restoring a view paints one frame once', (tester) async {
@@ -116,6 +120,71 @@ void main() {
     await tester.pump();
     expect(zeroPresented, 0);
     zeroPresenter.dispose();
+  });
+
+  testWidgets('fully clipped frames wait for a visible paint and acknowledge once', (tester) async {
+    var alignment = const Alignment(0, 10);
+    final geometries = <YuvFrameGeometry>[];
+    Future<void> pumpClippedView() => tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 100,
+            height: 100,
+            child: YuvFrameView(presenter: presenter, fit: YuvFrameFit.contain, alignment: alignment, onGeometryChanged: geometries.add),
+          ),
+        ),
+      ),
+    );
+    await pumpClippedView();
+    await tester.runAsync(() async => presenter.present(_frame(9)));
+    await _waitUntil(tester, () => presenter.image != null);
+    await tester.pump();
+
+    expect(geometries.single.visibleSourceRect.isEmpty, isTrue);
+    expect(presented, 0);
+    expect(presenter.isBusy, isTrue);
+
+    alignment = Alignment.center;
+    await pumpClippedView();
+    await tester.pump();
+    expect(presented, 1);
+    expect(presenter.isBusy, isFalse);
+    await tester.pump();
+    expect(presented, 1);
+  });
+
+  testWidgets('default decoded geometry is reported and maps source pixels at larger and smaller sizes', (tester) async {
+    final geometries = <YuvFrameGeometry>[];
+    var width = 16.0;
+    Future<void> pumpSizedView() => tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: width,
+            child: YuvFrameView(presenter: presenter, onGeometryChanged: geometries.add),
+          ),
+        ),
+      ),
+    );
+
+    await pumpSizedView();
+    await tester.runAsync(() async => presenter.present(_frame(12)));
+    await _waitUntil(tester, () => presenter.image != null);
+    await tester.pump();
+    await tester.pump();
+    expect(geometries, hasLength(1));
+    expect(geometries.last.viewSize, const ui.Size(16, 12));
+    expect(MatrixUtils.transformPoint(geometries.last.viewToSource, geometries.last.destinationRect.topLeft), Offset.zero);
+    expect(MatrixUtils.transformPoint(geometries.last.viewToSource, geometries.last.destinationRect.bottomRight), const Offset(8, 6));
+
+    width = 4;
+    await pumpSizedView();
+    await tester.pump();
+    expect(geometries, hasLength(2));
+    expect(geometries.last.viewSize, const ui.Size(4, 3));
+    expect(MatrixUtils.transformPoint(geometries.last.viewToSource, geometries.last.destinationRect.topLeft), Offset.zero);
+    expect(MatrixUtils.transformPoint(geometries.last.viewToSource, geometries.last.destinationRect.bottomRight), const Offset(8, 6));
   });
 
   testWidgets('shader BGRA fallback errors leave the presenter free for the next frame', (tester) async {
@@ -160,13 +229,14 @@ void main() {
     await tester.pump();
     expect(presenter.isBusy, isFalse);
     expect(presented, 1);
-    expect(await _shadeOf(tester, require(_drawnImage(tester))), 1);
+    expect(await _displayedShade(tester), 1);
 
+    final firstImage = presenter.image;
     await tester.runAsync(() async => expect(presenter.present(_frame(40)), isTrue));
-    await _waitUntil(tester, () => presented == 1 && presenter.image != null && !presenter.image!.isCloneOf(require(_drawnImage(tester))));
+    await _waitUntil(tester, () => presented == 1 && presenter.image != null && !identical(presenter.image, firstImage));
     await tester.pump();
     expect(presented, 2);
-    expect(await _shadeOf(tester, require(_drawnImage(tester))), 40, reason: 'the screen shows the latest finished frame');
+    expect(await _displayedShade(tester), 40, reason: 'the screen shows the latest finished frame');
 
     final cache = PaintingBinding.instance.imageCache;
     expect(cache.pendingImageCount + cache.currentSize + cache.liveImageCount, 0, reason: 'preview frames must not pile up in ImageCache');
@@ -187,7 +257,8 @@ void main() {
 
     expect(first.debugDisposed, isTrue, reason: 'the presenter releases its handle to a replaced frame at once');
     expect(second.debugDisposed, isFalse);
-    expect(require(_drawnImage(tester)).isCloneOf(second), isTrue);
+    expect(identical(presenter.image, second), isTrue);
+    expect(await _displayedShade(tester), 20);
 
     await tester.pumpWidget(const SizedBox());
     presenter.dispose();
@@ -223,14 +294,13 @@ void main() {
     await _waitUntil(tester, () => !presenter.isBusy, reason: 'the discarded decode to finish');
     await tester.pump();
     expect(presenter.image, isNull, reason: 'a frame of the stopped stream must not be shown');
-    expect(_drawnImage(tester), isNull);
     expect(presented, 1);
 
     await tester.runAsync(() async => expect(presenter.present(_frame(80)), isTrue));
     await _waitUntil(tester, () => presenter.image != null);
     await tester.pump();
     expect(presented, 2);
-    expect(await _shadeOf(tester, require(_drawnImage(tester))), 80);
+    expect(await _displayedShade(tester), 80);
   });
 
   testWidgets('reset releases busy after deferred decode and upload failures', (tester) async {
@@ -275,7 +345,7 @@ void main() {
 
     int received = 0;
     int drawn = 0;
-    ui.Image? lastDrawn;
+    int? lastShade;
     // A camera delivering four frames per display frame.
     for (int vsync = 0; vsync < 40; vsync++) {
       await tester.runAsync(() async {
@@ -286,11 +356,11 @@ void main() {
         }
       });
       await tester.pump();
-      final image = _drawnImage(tester);
-      if (image != null && (lastDrawn == null || !image.isCloneOf(lastDrawn))) {
+      final shade = await _displayedShade(tester);
+      if (presenter.image != null && shade != null && shade != lastShade) {
         drawn++;
       }
-      lastDrawn = image;
+      lastShade = shade;
     }
 
     expect(drawn, greaterThan(0));

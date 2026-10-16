@@ -77,6 +77,16 @@ void main() {
     expect(() => geometry.apply(YuvImage.bgra(1, 1)), throwsArgumentError);
   });
 
+  test('apply rejects a frame with no visible source area', () {
+    final geometry = YuvFrameGeometry(sourceSize: const Size(8, 6), viewSize: const Size(100, 100), alignment: const Alignment(0, 10));
+
+    expect(geometry.visibleSourceRect.isEmpty, isTrue);
+    expect(
+      () => geometry.apply(YuvImage.bgra(8, 6)),
+      throwsA(isA<StateError>().having((error) => error.message, 'message', 'no visible source area')),
+    );
+  });
+
   test('apply crops the visible source before rotating and mirroring', () async {
     await YuvFfi.initialize();
     final source = YuvImage.bgra(4, 2)..applyRgbaBytes(_uniqueRgba(4, 2));

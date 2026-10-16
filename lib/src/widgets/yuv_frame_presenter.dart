@@ -286,24 +286,6 @@ class _YuvFrameViewState extends State<YuvFrameView> {
         if (frameSize == null || (image == null && presenter._texture == null)) {
           return const SizedBox.shrink();
         }
-        if (widget.fit == null && presenter._orientation == YuvFrameOrientation.upright && !presenter.useShader && image != null) {
-          return AspectRatio(
-            aspectRatio: image.width / image.height,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final size = constraints.biggest;
-                if (!size.width.isFinite || !size.height.isFinite || size.width <= 0 || size.height <= 0) {
-                  _reportedGeometry = null;
-                  return const SizedBox.shrink();
-                }
-                return CustomPaint(
-                  foregroundPainter: _YuvFramePaintAck(presenter, presenter._generation),
-                  child: RawImage(image: image, width: image.width.toDouble(), height: image.height.toDouble(), fit: BoxFit.none),
-                );
-              },
-            ),
-          );
-        }
         final uprightSize = presenter._orientation.rotation.swapSize ? frameSize.flipped : frameSize;
         if (widget.fit == null) {
           return AspectRatio(
@@ -362,6 +344,7 @@ class _YuvFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (!size.width.isFinite || !size.height.isFinite || size.width <= 0 || size.height <= 0) return;
+    if (geometry.visibleSourceRect.isEmpty) return;
     final renderer = this.renderer;
     final texture = this.texture;
     if (renderer != null && texture != null) {
@@ -391,19 +374,4 @@ class _YuvFramePainter extends CustomPainter {
   @override
   bool shouldRepaint(_YuvFramePainter oldDelegate) =>
       oldDelegate.image != image || oldDelegate.texture != texture || oldDelegate.renderer != renderer || oldDelegate.geometry != geometry;
-}
-
-class _YuvFramePaintAck extends CustomPainter {
-  final YuvFramePresenter presenter;
-  final int generation;
-
-  _YuvFramePaintAck(this.presenter, this.generation);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.width > 0 && size.height > 0) presenter._didPaint(generation);
-  }
-
-  @override
-  bool shouldRepaint(_YuvFramePaintAck oldDelegate) => oldDelegate.generation != generation || oldDelegate.presenter != presenter;
 }

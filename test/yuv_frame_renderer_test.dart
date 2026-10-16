@@ -4,6 +4,7 @@ library;
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:flutter/widgets.dart' show Alignment;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
@@ -47,6 +48,23 @@ void main() {
       () => renderer.paint(Canvas(recorder), texture, YuvFrameGeometry(sourceSize: const Size(2, 2), viewSize: const Size(2, 2))),
       throwsArgumentError,
     );
+    texture.dispose();
+    renderer.dispose();
+  });
+
+  test('an empty clip leaves the recorded view transparent', () async {
+    final renderer = await YuvFrameRenderer.load();
+    final texture = await renderer.upload(YuvImage.bgra(8, 6));
+    final recorder = PictureRecorder();
+    final geometry = YuvFrameGeometry(sourceSize: const Size(8, 6), viewSize: const Size(100, 100), alignment: const Alignment(0, 10));
+
+    renderer.paint(Canvas(recorder), texture, geometry);
+    final image = await recorder.endRecording().toImage(100, 100);
+    final data = await image.toByteData(format: ImageByteFormat.rawRgba) ?? (throw StateError('The rendered view has no RGBA bytes'));
+    final bytes = data.buffer.asUint8List();
+
+    expect(bytes.every((channel) => channel == 0), isTrue);
+    image.dispose();
     texture.dispose();
     renderer.dispose();
   });

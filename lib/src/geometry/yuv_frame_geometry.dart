@@ -89,7 +89,7 @@ final class YuvFrameGeometry {
   );
 
   /// Part of the source frame that is visible in the view.
-  late final Rect visibleSourceRect = MatrixUtils.transformRect(viewToSource, destinationRect.intersect(Offset.zero & viewSize));
+  late final Rect visibleSourceRect = _visibleSourceRect();
 
   late final Size _uprightSize = orientation.rotation.swapSize ? Size(sourceSize.height, sourceSize.width) : sourceSize;
   late final double _scale = switch (fit) {
@@ -126,10 +126,15 @@ final class YuvFrameGeometry {
   ///
   /// This is a data operation rather than a screenshot: for 4:2:0 frames an
   /// odd crop size or origin recomputes chroma from 2×2 pixel blocks, so its
-  /// colors can differ from pixels shown on screen.
+  /// colors can differ from pixels shown on screen. Throws [StateError] when
+  /// the geometry has no visible source area; [YuvImage] cannot represent an
+  /// empty image.
   YuvImage apply(YuvImage source) {
     if (source.size != sourceSize) {
       throw ArgumentError.value(source.size, 'source', 'must match sourceSize.');
+    }
+    if (visibleSourceRect.isEmpty) {
+      throw StateError('no visible source area');
     }
     return orientation.applyTo(source.cropped(visibleSourceRect));
   }
@@ -172,6 +177,11 @@ final class YuvFrameGeometry {
       tx: _translationX + horizontalScale * transform.tx + (orientation.mirrored ? _scale * _uprightSize.width : 0),
       ty: _translationY + _scale * transform.ty,
     );
+  }
+
+  Rect _visibleSourceRect() {
+    final visibleDestination = destinationRect.intersect(Offset.zero & viewSize);
+    return visibleDestination.isEmpty ? Rect.zero : MatrixUtils.transformRect(viewToSource, visibleDestination);
   }
 }
 

@@ -178,7 +178,9 @@ Other mappings use the same object. Use `geometry.sourceToView` for a point you 
 ## Cut out what the user sees
 
 `geometry.apply(frame)` returns a new image that contains only the visible part of the frame, with the rotation and the
-mirror applied. This program computes it for a 640 by 480 frame in a 300 by 300 view with `cover`.
+mirror applied. If the frame has no visible area, `apply` throws `StateError` (`no visible source area`) because a
+`YuvImage` cannot represent an empty image. This program computes a visible crop for a 640 by 480 frame in a 300 by 300
+view with `cover`.
 
 ```dart
 import 'dart:ui';
