@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_image_decoder.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
@@ -154,9 +155,7 @@ class YuvImageProvider extends ImageProvider<YuvImageProvider> {
           'for ${frame.width}x${frame.height}',
         );
       }
-      final imageCompleter = Completer<ui.Image>();
-      ui.decodeImageFromPixels(bytes, frame.width, frame.height, ui.PixelFormat.bgra8888, imageCompleter.complete);
-      final decoded = await imageCompleter.future;
+      final decoded = await decodeYuvFrameImage(bytes, frame.width, frame.height, ui.PixelFormat.bgra8888);
       return ImageInfo(image: decoded, scale: 1.0);
     } catch (ex, stack) {
       PaintingBinding.instance.imageCache.evict(key);

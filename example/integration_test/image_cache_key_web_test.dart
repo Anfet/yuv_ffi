@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_image_decoder.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_revision.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
@@ -27,9 +28,12 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
+    resetYuvImageDecodeOverride();
     PaintingBinding.instance.imageCache.clear();
     PaintingBinding.instance.imageCache.clearLiveImages();
   });
+
+  tearDown(resetYuvImageDecodeOverride);
 
   Uint8List rgba(int width, int height) {
     final bytes = Uint8List(width * height * 4);
@@ -371,6 +375,29 @@ void main() {
         reason: 'a foreign image that cannot prove its frame is unchanged must always miss',
       );
     });
+  });
+
+  testWidgets('a Web decode error reaches Image.errorBuilder and a new frame decodes', (tester) async {
+    expect(kIsWeb, isTrue, reason: 'This required regression must run in a browser.');
+    await YuvFfi.initialize();
+
+    final failure = StateError('controlled Web decode failure');
+    debugYuvImageDecodeOverride = (_, _, _, _) async => throw failure;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Image(
+          image: YuvImageProvider(realImage(YuvPixelFormat.bgra8888, 2, 2)),
+          errorBuilder: (context, error, stackTrace) => const Text('decode failed', key: ValueKey('decode-error')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('decode-error')), findsOneWidget);
+
+    resetYuvImageDecodeOverride();
+    await tester.pumpWidget(MaterialApp(home: Image(image: YuvImageProvider(realImage(YuvPixelFormat.bgra8888, 2, 2)))));
+    await tester.pumpAndSettle();
+    expect(find.byType(RawImage), findsOneWidget);
   });
 }
 

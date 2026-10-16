@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:yuv_ffi/src/geometry/yuv_frame_geometry.dart';
-import 'package:yuv_ffi/src/widgets/yuv_frame_image_decoder.dart';
 import 'package:yuv_ffi/src/widgets/yuv_frame_renderer.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_image_decoder.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 /// Shows a live stream of [YuvImage] frames one at a time, keeping at most one

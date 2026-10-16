@@ -10,6 +10,7 @@ import 'package:yuv_ffi/src/yuv/impl/web/abi/yuv_abi_v1_web_runner.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_constants.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_frame.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_image_transport.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_image_decoder.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
@@ -268,11 +269,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   YuvImage _applyMeanBlur({required int radius, ui.Rect? rect}) => _blur(YuvAbiV1BlurKind.mean, radius: radius, rect: rect);
 
   @override
-  Future<ui.Image> toImage() {
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(toBgraBytes(), width, height, ui.PixelFormat.bgra8888, completer.complete);
-    return completer.future;
-  }
+  Future<ui.Image> toImage() => decodeYuvFrameImage(toBgraBytes(), width, height, ui.PixelFormat.bgra8888);
 
   /// The ABI v1 symbols the currently loaded WASM module does not export.
   ///

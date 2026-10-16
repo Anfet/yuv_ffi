@@ -3,8 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:yuv_ffi/src/geometry/yuv_frame_geometry.dart';
-import 'package:yuv_ffi/src/widgets/yuv_frame_image_decoder.dart';
 import 'package:yuv_ffi/src/widgets/yuv_planes_texture.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_image_decoder.dart';
 import 'package:yuv_ffi/src/yuv/yuv.dart';
 
 /// Uploads YUV frames for shader rendering and falls back to BGRA when needed.

@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:yuv_ffi/src/yuv/shared/yuv_geometry.dart';
+import 'package:yuv_ffi/src/yuv/shared/yuv_image_decoder.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_rotation.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_image_state.dart';
 import 'package:yuv_ffi/src/yuv/shared/yuv_pixel_format.dart';
@@ -188,11 +189,7 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
   }
 
   @override
-  Future<ui.Image> toImage() {
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(toBgraBytes(), width, height, ui.PixelFormat.bgra8888, completer.complete);
-    return completer.future;
-  }
+  Future<ui.Image> toImage() => decodeYuvFrameImage(toBgraBytes(), width, height, ui.PixelFormat.bgra8888);
 
   // This stub has no backend at all -- neither `dart:ffi` nor
   // `dart:js_interop` -- so it has no capability snapshot to check and every
