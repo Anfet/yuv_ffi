@@ -1,3 +1,5 @@
+param([switch] $Release)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -184,38 +186,41 @@ try {
     }
   }
   Invoke-CiNativeCommand git restore --worktree -- example/windows/flutter/generated_plugin_registrant.cc example/windows/flutter/generated_plugin_registrant.h example/windows/flutter/generated_plugins.cmake
-  & git add --refresh -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
-  if ($LASTEXITCODE -ne 0) {
-    throw "Could not refresh WASM asset index state: $LASTEXITCODE"
-  }
-  $publishOutput = & flutter pub publish --dry-run 2>&1
-  if ($LASTEXITCODE -ne 0) {
-    $publishOutput | Write-Output
-    throw "pub publish dry-run exited $LASTEXITCODE"
-  }
-  $dryRunOutput = [string]::Join([Environment]::NewLine, $publishOutput)
-  if ($dryRunOutput -notmatch 'yuv_ffi\.js \(' -or $dryRunOutput -notmatch 'yuv_ffi\.wasm \(') {
-    throw 'pub dry-run did not list both committed WASM assets'
-  }
+  # Packaging dry-run and WASM rebuild are release checks: they need a committed tree and emsdk, and the Dart code of a card does not touch them.
+  if ($Release) {
+    & git add --refresh -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
+    if ($LASTEXITCODE -ne 0) {
+      throw "Could not refresh WASM asset index state: $LASTEXITCODE"
+    }
+    $publishOutput = & flutter pub publish --dry-run 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      $publishOutput | Write-Output
+      throw "pub publish dry-run exited $LASTEXITCODE"
+    }
+    $dryRunOutput = [string]::Join([Environment]::NewLine, $publishOutput)
+    if ($dryRunOutput -notmatch 'yuv_ffi\.js \(' -or $dryRunOutput -notmatch 'yuv_ffi\.wasm \(') {
+      throw 'pub dry-run did not list both committed WASM assets'
+    }
 
-  if (-not (Test-Path -LiteralPath (Join-Path $emsdkRoot 'emsdk.bat') -PathType Leaf)) {
-    Invoke-CiNativeCommand git clone https://github.com/emscripten-core/emsdk.git $emsdkRoot
+    if (-not (Test-Path -LiteralPath (Join-Path $emsdkRoot 'emsdk.bat') -PathType Leaf)) {
+      Invoke-CiNativeCommand git clone https://github.com/emscripten-core/emsdk.git $emsdkRoot
+    }
+    Invoke-CiNativeCommand (Join-Path $emsdkRoot 'emsdk.bat') install 3.1.74
+    Invoke-CiNativeCommand (Join-Path $emsdkRoot 'emsdk.bat') activate 3.1.74
+    . (Join-Path $emsdkRoot 'emsdk_env.ps1')
+    if ($LASTEXITCODE -ne 0) {
+      throw "emsdk environment setup failed with $LASTEXITCODE"
+    }
+    & (Join-Path $emsdkRoot 'upstream\emscripten\emcc.bat') -v
+    if ($LASTEXITCODE -ne 0) {
+      throw "emcc version check failed with exit code $LASTEXITCODE"
+    }
+    & $gitBash --noprofile --norc -c 'sh ./tool/wasm/build_wasm.sh --profile release'
+    if ($LASTEXITCODE -ne 0) {
+      throw "WASM build failed with $LASTEXITCODE"
+    }
+    Invoke-CiNativeCommand git diff --exit-code -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
   }
-  Invoke-CiNativeCommand (Join-Path $emsdkRoot 'emsdk.bat') install 3.1.74
-  Invoke-CiNativeCommand (Join-Path $emsdkRoot 'emsdk.bat') activate 3.1.74
-  . (Join-Path $emsdkRoot 'emsdk_env.ps1')
-  if ($LASTEXITCODE -ne 0) {
-    throw "emsdk environment setup failed with $LASTEXITCODE"
-  }
-  & (Join-Path $emsdkRoot 'upstream\emscripten\emcc.bat') -v
-  if ($LASTEXITCODE -ne 0) {
-    throw "emcc version check failed with exit code $LASTEXITCODE"
-  }
-  & $gitBash --noprofile --norc -c 'sh ./tool/wasm/build_wasm.sh --profile release'
-  if ($LASTEXITCODE -ne 0) {
-    throw "WASM build failed with $LASTEXITCODE"
-  }
-  Invoke-CiNativeCommand git diff --exit-code -- assets/wasm/yuv_ffi.js assets/wasm/yuv_ffi.wasm
 
   Push-Location (Join-Path $repositoryRoot 'example')
   try {

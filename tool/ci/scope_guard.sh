@@ -56,6 +56,9 @@ path_keys() {
     tool/ci/*)
       printf 'all\n'
       ;;
+    example/integration_test/*_web_test.dart|example/integration_test/*_web_tests.dart)
+      printf 'example web\n'
+      ;;
     src/*|lib/src/yuv/impl/io/*|lib/src/functions/*|test/probe/*|example/integration_test/*|pubspec.yaml)
       printf 'all\n'
       ;;
