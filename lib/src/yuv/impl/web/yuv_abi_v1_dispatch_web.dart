@@ -1,5 +1,8 @@
 // ignore_for_file: avoid_web_libraries_in_flutter, public_member_api_docs
 
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
+
 import 'package:yuv_ffi/src/web/impl/js_util_compat_web.dart' as js_util;
 import 'package:yuv_ffi/src/yuv/shared/yuv_abi_v1_symbols.dart';
 
@@ -43,9 +46,8 @@ abstract final class YuvAbiV1WebDispatch {
 
   /// Throws [StateError] naming every ABI v1 symbol [rawModule] is missing.
   ///
-  /// Called before an ABI v1 Web operation so a partially exported module is
-  /// rejected up front, with the symbol names in the message, rather than
-  /// surfacing later as a failure inside the WASM call itself.
+  /// Diagnostic full-manifest audit. Operations use [requireOperation] so
+  /// unrelated missing exports do not prevent a supported operation.
   static void requireComplete(Object rawModule) {
     final missing = missingFrom(rawModule);
     if (missing.isEmpty) {
@@ -57,6 +59,29 @@ abstract final class YuvAbiV1WebDispatch {
       'Rebuild it with tool/wasm/build_wasm.sh, whose EXPORTED_FUNCTIONS list '
       'must name every symbol in src/yuv/abi/h/yuv_ops_v1.h.',
     );
+  }
+
+  /// Checks [symbol] and the runtime primitives needed for staging and calling
+  /// it before allocating. Missing operations are normally rejected earlier
+  /// by the public capability gate; a malformed runtime throws [StateError]
+  /// naming the primitive instead of failing inside JS or leaking staging.
+  static void requireOperation(Object rawModule, String symbol) {
+    if (!moduleExports(rawModule, symbol)) {
+      throw StateError('The loaded YUV WASM module does not export the ABI v1 symbol $symbol.');
+    }
+    // Keep JS values for type checks: dartify converts HEAPU8 to a Dart list
+    // under dart2wasm, which is no longer a JSUint8Array for isA.
+    final module = rawModule as JSObject;
+    for (final primitive in ['ccall', '_malloc', '_free']) {
+      final value = module.getProperty<JSAny?>(primitive.toJS);
+      if (value == null || !value.isA<JSFunction>()) {
+        throw StateError('The loaded YUV WASM module requires the runtime function $primitive for $symbol.');
+      }
+    }
+    final heap = module.getProperty<JSAny?>('HEAPU8'.toJS);
+    if (heap == null || !heap.isA<JSUint8Array>()) {
+      throw StateError('The loaded YUV WASM module requires the runtime Uint8Array HEAPU8 for $symbol.');
+    }
   }
 
   /// Invokes [symbol] on [rawModule] through Emscripten's `ccall`.

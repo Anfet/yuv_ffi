@@ -257,9 +257,8 @@ abstract final class YuvAbiV1WebRunner {
       throw ArgumentError.value(source.planes.length, 'source.planes.length', 'format ${source.format} requires $expectedPlaneCount plane(s)');
     }
 
-    // A module missing a v1 symbol is reported by name here rather than as an
-    // opaque failure inside `ccall`.
-    YuvAbiV1WebDispatch.requireComplete(module);
+    // Partial modules can execute any exported operation with a usable runtime.
+    YuvAbiV1WebDispatch.requireOperation(module, nativeSymbol);
 
     final arena = WasmArena(module);
     try {

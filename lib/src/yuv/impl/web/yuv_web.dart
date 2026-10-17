@@ -273,9 +273,9 @@ class YuvImageImpl implements YuvImage, YuvRevisionAware {
 
   /// The ABI v1 symbols the currently loaded WASM module does not export.
   ///
-  /// Empty when the module carries the whole ABI v1 surface. The runner asks
-  /// the same question before every operation, so a partially exported build is
-  /// a named, diagnosable failure instead of an opaque error inside a WASM call.
+  /// Empty when the module carries the whole ABI v1 surface. This diagnostic
+  /// audit is independent of execution: the runner requires only the requested
+  /// operation and its runtime primitives, allowing partially exported builds.
   /// The names come from the shared manifest in
   /// `shared/yuv_abi_v1_symbols.dart`, so they cannot drift from the ones the
   /// native runner dispatches.
