@@ -102,6 +102,9 @@ typedef struct {
     uint32_t height;
     uint32_t colorMatrix;
     uint32_t colorRange;
+    /* Active bytes of distinct output planes must be disjoint. Shared padding
+     * and interleaved disjoint samples are allowed. A collision returns
+     * INVALID_ARGUMENT before any output (including padding) is changed. */
     YuvMutablePlaneV1 planes[3];
     uint64_t reserved[4];
 } YuvMutableFrameV1;

@@ -176,6 +176,120 @@ YuvStatus yuv_validate_v1_const_frame(const YuvConstFrameV1 *frame, YuvValidated
     return yuv_validate_v1_status_from_view(viewStatus);
 }
 
+/* Intersection of two finite byte progressions. After ordering their starts,
+ * solve p*i - q*j = delta. Extended Euclid gives i modulo q/gcd(p,q).
+ * The first i >= ceil(delta/p) has the smallest nonnegative j; if it is
+ * outside either finite progression, no later solution can be inside.
+ * Strides are uint32: Euclid coefficients fit int64, and the product of
+ * two residues fits uint64. No signed address subtraction is needed. */
+static int yuv_validate_v1_byte_progressions(
+    uintptr_t a, uint32_t p, uint32_t na, uintptr_t b, uint32_t q, uint32_t nb) {
+    if (a > b) {
+        return yuv_validate_v1_byte_progressions(b, q, nb, a, p, na);
+    }
+    uint64_t delta = b - a;
+    uint64_t r = p, nextR = q;
+    int64_t coefficient = 1, nextCoefficient = 0;
+    while (nextR != 0) {
+        uint64_t quotient = r / nextR;
+        uint64_t remainder = r % nextR;
+        int64_t next = coefficient - (int64_t)quotient * nextCoefficient;
+        r = nextR;
+        nextR = remainder;
+        coefficient = nextCoefficient;
+        nextCoefficient = next;
+    }
+    if (delta % r != 0) {
+        return 0;
+    }
+    uint64_t period = q / r;
+    int64_t inverse = coefficient % (int64_t)period;
+    if (inverse < 0) {
+        inverse += (int64_t)period;
+    }
+    uint64_t i = ((delta / r) % period * (uint64_t)inverse) % period;
+    uint64_t minimum = delta / p + (delta % p != 0);
+    if (i < minimum) {
+        uint64_t gap = minimum - i;
+        i += (gap / period + (gap % period != 0)) * period;
+    }
+    /* Only multiply after bounding i: width <= INT32_MAX, p <= UINT32_MAX. */
+    return i < na && (i * p - delta) / q < nb;
+}
+
+/* Descriptors are already geometrically valid: each row span is nonempty
+ * and rowStride >= row span, so rows within a plane cannot intersect.
+ * Store inclusive integer bounds to allow a last byte at UINTPTR_MAX and
+ * reject address wrap before constructing any pointer or row address. */
+typedef struct {
+    uintptr_t start;
+    uintptr_t last;
+    size_t rowSpan;
+    uint32_t width;
+    uint32_t height;
+} YuvDestinationBoundsV1;
+
+static YuvStatus yuv_validate_v1_destination_samples(const YuvValidatedMutableFrameView *frame) {
+    YuvDestinationBoundsV1 bounds[3];
+    for (uint32_t i = 0; i < frame->planeCount; i++) {
+        const YuvValidatedMutablePlaneIn *plane = &frame->planes[i];
+        YuvDestinationBoundsV1 *bound = &bounds[i];
+        YuvViewStatus geometry = yuv_validated_view_plane_geometry(
+            frame->format, i, frame->width, frame->height, &bound->width, &bound->height);
+        if (geometry != YUV_VIEW_OK) {
+            return yuv_validate_v1_status_from_view(geometry);
+        }
+        YuvSizeResult span = yuv_checked_plane_span(bound->width, plane->pixelStride, plane->sampleBytes);
+        if (!span.success) {
+            return YUV_STATUS_OVERFLOW;
+        }
+        YuvSizeResult size = yuv_checked_plane_size(bound->height, (size_t)plane->rowStride, span.value);
+        bound->start = (uintptr_t)plane->data;
+        if (!size.success || size.value - 1 > UINTPTR_MAX - bound->start) {
+            return YUV_STATUS_OVERFLOW;
+        }
+        bound->rowSpan = span.value;
+        bound->last = bound->start + (size.value - 1);
+    }
+    for (uint32_t a = 0; a < frame->planeCount; a++) {
+        for (uint32_t b = a + 1; b < frame->planeCount; b++) {
+            const YuvDestinationBoundsV1 *ba = &bounds[a], *bb = &bounds[b];
+            const YuvValidatedMutablePlaneIn *pa = &frame->planes[a], *pb = &frame->planes[b];
+            if (ba->last < bb->start || bb->last < ba->start) {
+                continue;
+            }
+            uint32_t ya = 0, yb = 0;
+            while (ya < ba->height && yb < bb->height) {
+                uintptr_t sa = ba->start + (size_t)ya * (size_t)pa->rowStride;
+                uintptr_t sb = bb->start + (size_t)yb * (size_t)pb->rowStride;
+                uintptr_t ea = sa + (ba->rowSpan - 1), eb = sb + (bb->rowSpan - 1);
+                if (sa <= eb && sb <= ea) {
+                    /* Each sample is the union of sampleBytes progressions.
+                     * v1 has at most four bytes/sample, independent of width. */
+                    for (uint32_t ca = 0; ca < pa->sampleBytes; ca++) {
+                        for (uint32_t cb = 0; cb < pb->sampleBytes; cb++) {
+                            if (yuv_validate_v1_byte_progressions(sa + ca, pa->pixelStride, ba->width,
+                                    sb + cb, pb->pixelStride, bb->width)) {
+                                return YUV_STATUS_INVALID_ARGUMENT;
+                            }
+                        }
+                    }
+                }
+                /* Disjoint ordered rows: discard the one ending first.
+                 * At most ha+hb-1 row pairs, no pixel or all-row-pair scan.
+                 * Time O((ha+hb)*sampleBytesA*sampleBytesB*log(max stride)),
+                 * constant space; disjoint whole-plane spans take O(1). */
+                if (ea <= eb) {
+                    ya++;
+                } else {
+                    yb++;
+                }
+            }
+        }
+    }
+    return YUV_STATUS_OK;
+}
+
 YuvStatus yuv_validate_v1_mutable_frame(YuvMutableFrameV1 *frame, YuvValidatedMutableFrameView *outView) {
     if (frame == NULL || outView == NULL) {
         return YUV_STATUS_INVALID_ARGUMENT;
@@ -204,7 +318,10 @@ YuvStatus yuv_validate_v1_mutable_frame(YuvMutableFrameV1 *frame, YuvValidatedMu
 
     YuvViewStatus viewStatus = yuv_validated_view_build_mutable_frame(
         frame->format, frame->width, frame->height, planes, 3, outView);
-    return yuv_validate_v1_status_from_view(viewStatus);
+    if (viewStatus != YUV_VIEW_OK) {
+        return yuv_validate_v1_status_from_view(viewStatus);
+    }
+    return yuv_validate_v1_destination_samples(outView);
 }
 
 YuvStatus yuv_validate_v1_options_header(const void *options, uint32_t fullSize) {

@@ -45,6 +45,9 @@ YuvStatus yuv_validate_v1_status_from_view(YuvViewStatus status);
  * forward-compatible extension rule, not a laxity.
  *
  * Returns YUV_STATUS_OK and fills `*outView` on success.
+ * Mutable frames also reject shared active bytes between destination planes
+ * with INVALID_ARGUMENT, and address wrap with OVERFLOW, before any write.
+ * Sharing only padding or interleaving disjoint samples remains valid.
  */
 YuvStatus yuv_validate_v1_const_frame(const YuvConstFrameV1 *frame, YuvValidatedConstFrameView *outView);
 YuvStatus yuv_validate_v1_mutable_frame(YuvMutableFrameV1 *frame, YuvValidatedMutableFrameView *outView);

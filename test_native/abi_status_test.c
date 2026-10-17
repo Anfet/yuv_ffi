@@ -808,6 +808,113 @@ static void test_valid_descriptor_reaches_kernel(void) {
     }
 }
 
+/* One direct-ABI table: positives compare the entire allocation (padding
+ * included); negatives must leave the entire allocation untouched through
+ * both conversion and a transform. */
+static void test_destination_sample_collisions(void) {
+    static const struct {
+        const char *name;
+        uint32_t format, yPixel, uOffset, uPixel, uRow, vOffset, vPixel, vRow;
+        YuvStatus status;
+    } cases[] = {
+        {"U equals V", 1, 1, 64, 1, 3, 64, 1, 3, YUV_STATUS_INVALID_ARGUMENT},
+        {"partial chroma collision", 1, 1, 64, 1, 3, 66, 1, 3, YUV_STATUS_INVALID_ARGUMENT},
+        {"Y and U collision", 1, 1, 20, 1, 3, 80, 1, 3, YUV_STATUS_INVALID_ARGUMENT},
+        {"adjacent planes", 1, 1, 25, 1, 3, 34, 1, 3, YUV_STATUS_OK},
+        {"interleaved chroma", 1, 1, 64, 2, 6, 65, 2, 6, YUV_STATUS_OK},
+        {"shared row padding", 1, 1, 64, 1, 12, 67, 1, 12, YUV_STATUS_OK},
+        {"different row strides disjoint", 1, 1, 64, 1, 12, 67, 1, 13, YUV_STATUS_OK},
+        {"different rows collide", 1, 1, 64, 1, 12, 69, 1, 8, YUV_STATUS_INVALID_ARGUMENT},
+        {"coprime strides disjoint", 1, 1, 64, 5, 32, 65, 7, 32, YUV_STATUS_OK},
+        {"coprime strides collide", 1, 1, 64, 5, 32, 67, 7, 32, YUV_STATUS_INVALID_ARGUMENT},
+        {"NV12 gaps disjoint", 2, 3, 1, 3, 15, 0, 0, 0, YUV_STATUS_OK},
+        {"NV12 second sample byte collides", 2, 3, 2, 3, 15, 0, 0, 0, YUV_STATUS_INVALID_ARGUMENT},
+    };
+    for (size_t c = 0; c < sizeof(cases) / sizeof(cases[0]); c++) {
+        uint8_t input[3][32], output[256], expected[256];
+        YuvConstFrameV1 source = {0};
+        YuvMutableFrameV1 destination = {0};
+        source.structSize = (uint32_t)sizeof(source);
+        destination.structSize = (uint32_t)sizeof(destination);
+        source.abiVersion = destination.abiVersion = YUV_ABI_VERSION_1;
+        source.format = destination.format = cases[c].format;
+        source.planeCount = destination.planeCount = cases[c].format == YUV_FORMAT_I420 ? 3 : 2;
+        source.width = destination.width = 5;
+        source.height = destination.height = 5;
+        source.colorMatrix = destination.colorMatrix = YUV_COLOR_MATRIX_BT601;
+        source.colorRange = destination.colorRange = YUV_COLOR_RANGE_LIMITED;
+        for (uint32_t p = 0; p < source.planeCount; p++) {
+            uint32_t w = p == 0 ? 5 : 3;
+            uint32_t bytes = p == 1 && cases[c].format == YUV_FORMAT_NV12 ? 2 : 1;
+            uint32_t offset = p == 0 ? 0 : p == 1 ? cases[c].uOffset : cases[c].vOffset;
+            memset(input[p], (int)(30 + 40 * p), sizeof(input[p]));
+            source.planes[p].data = input[p];
+            source.planes[p].length = sizeof(input[p]);
+            source.planes[p].rowStride = w * bytes;
+            source.planes[p].pixelStride = source.planes[p].sampleBytes = bytes;
+            destination.planes[p].data = output + offset;
+            destination.planes[p].length = sizeof(output) - offset;
+            destination.planes[p].sampleBytes = bytes;
+            destination.planes[p].pixelStride = p == 0 ? cases[c].yPixel : p == 1 ? cases[c].uPixel : cases[c].vPixel;
+            destination.planes[p].rowStride = p == 0 ? 5 * cases[c].yPixel : p == 1 ? cases[c].uRow : cases[c].vRow;
+        }
+        for (int operation = 0; operation < (cases[c].status == YUV_STATUS_OK ? 1 : 2); operation++) {
+            memset(output, CANARY, sizeof(output));
+            memset(expected, CANARY, sizeof(expected));
+            YuvConvertOptionsV1 convert = make_convert_options();
+            YuvFlipOptionsV1 flip = make_flip_options(YUV_FLIP_HORIZONTAL);
+            YuvStatus actual = operation == 0 ? yuv_convert_v1(&source, &destination, &convert)
+                                            : yuv_flip_v1(&source, &destination, &flip);
+            if (actual == YUV_STATUS_OK && cases[c].status == YUV_STATUS_OK) {
+                for (uint32_t p = 0; p < source.planeCount; p++) {
+                    const YuvMutablePlaneV1 *plane = &destination.planes[p];
+                    size_t offset = (size_t)(plane->data - output);
+                    for (uint32_t y = 0; y < (p == 0 ? 5u : 3u); y++) {
+                        for (uint32_t x = 0; x < (p == 0 ? 5u : 3u); x++) {
+                            memset(expected + offset + y * (size_t)plane->rowStride + x * plane->pixelStride,
+                                (int)(30 + 40 * p), plane->sampleBytes);
+                        }
+                    }
+                }
+            }
+            checks++;
+            if (actual != cases[c].status || memcmp(output, expected, sizeof(output)) != 0) {
+                failures++;
+                printf("FAIL destination %s (%s): status %d expected %d, output/padding %s\n",
+                    cases[c].name, operation == 0 ? "convert" : "flip", (int)actual, (int)cases[c].status,
+                    memcmp(output, expected, sizeof(output)) == 0 ? "equal" : "differ");
+            }
+        }
+    }
+    /* No dereference: malformed addresses and huge valid strides reach only
+     * the mutable descriptor validator, exercising native32/native64 bounds. */
+    YuvMutableFrameV1 destination = make_bgra_destination();
+    YuvValidatedMutableFrameView view;
+    destination.planes[0].data = (uint8_t *)(uintptr_t)(UINTPTR_MAX - 1);
+    expect_status("destination address wraps", yuv_validate_v1_mutable_frame(&destination, &view), YUV_STATUS_OVERFLOW);
+    destination.width = 1;
+    destination.height = 1;
+    destination.planes[0].data = (uint8_t *)(uintptr_t)(UINTPTR_MAX - 3);
+    expect_status("destination last byte at address limit", yuv_validate_v1_mutable_frame(&destination, &view), YUV_STATUS_OK);
+    destination.format = YUV_FORMAT_I420;
+    destination.colorMatrix = YUV_COLOR_MATRIX_BT601;
+    destination.colorRange = YUV_COLOR_RANGE_LIMITED;
+    destination.planeCount = 3;
+    destination.width = 3;
+    for (uint32_t p = 0; p < 3; p++) {
+        destination.planes[p].data = (uint8_t *)(uintptr_t)(p == 0 ? 16 : p == 1 ? 4096 : 4097);
+        destination.planes[p].length = SIZE_MAX;
+        destination.planes[p].pixelStride = p == 0 ? 1 : UINT32_MAX - (p - 1);
+        destination.planes[p].sampleBytes = 1;
+        destination.planes[p].rowStride = p == 0 ? 3 : (uint64_t)UINT32_MAX + 1;
+    }
+    expect_status("large coprime strides collide", yuv_validate_v1_mutable_frame(&destination, &view),
+        SIZE_MAX > UINT32_MAX ? YUV_STATUS_INVALID_ARGUMENT : YUV_STATUS_OVERFLOW);
+    destination.planes[2].data = (uint8_t *)(uintptr_t)4098;
+    expect_status("large coprime strides disjoint", yuv_validate_v1_mutable_frame(&destination, &view),
+        SIZE_MAX > UINT32_MAX ? YUV_STATUS_OK : YUV_STATUS_OVERFLOW);
+}
+
 int main(void) {
     printf("=============================================================\n");
     printf("ABI v1 status and atomicity tests\n");
@@ -828,6 +935,7 @@ int main(void) {
     test_transform_options();
     printf("\n");
     test_valid_descriptor_reaches_kernel();
+    test_destination_sample_collisions();
     printf("\n");
 
     printf("=============================================================\n");

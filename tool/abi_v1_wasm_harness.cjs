@@ -272,6 +272,48 @@ async function main() {
   console.log('ABI v1 kernel harness on the real WASM runtime');
   console.log('=============================================================');
 
+  /* Direct wire descriptors: rejected aliases are atomic, but alternating
+   * U/V bytes in the same allocation remain a valid output layout. */
+  {
+    const source = makeFrame(module, FORMAT.I420, 5, 5);
+    const destination = makeFrame(module, FORMAT.I420, 5, 5);
+    fillPattern(module, source);
+    const u = destination.planes[1];
+    const vBase = destination.framePtr + FRAME_HEADER_BYTES + 2 * PLANE_BYTES;
+    const view = new DataView(module.HEAPU8.buffer);
+    view.setUint32(vBase + PLANE_DATA_OFFSET, u.ptr, true);
+    const snapshots = destination.planes.map(p => module.HEAPU8.slice(p.ptr, p.ptr + p.length));
+    const convert = makeConvertOptions(module);
+    const flip = makeFlipOptions(module, 1);
+    for (const [name, call, options] of [
+      ['convert', module._yuv_convert_v1, convert], ['flip', module._yuv_flip_v1, flip],
+    ]) {
+      const status = call(source.framePtr, destination.framePtr, options);
+      const intact = destination.planes.every((p, i) =>
+        snapshots[i].every((byte, j) => module.HEAPU8[p.ptr + j] === byte));
+      expect(`DESTINATION-ALIAS ${name} atomic rejection`, status === 1 && intact, `status=${status}, intact=${intact}`);
+    }
+    view.setUint32(destination.framePtr + FRAME_HEADER_BYTES + PLANE_BYTES + 16, 2, true);
+    view.setUint32(vBase + 16, 2, true);
+    view.setUint32(vBase + PLANE_DATA_OFFSET, u.ptr + 1, true);
+    view.setBigUint64(vBase, BigInt(u.length - 1), true);
+    const status = module._yuv_convert_v1(source.framePtr, destination.framePtr, convert);
+    const expected = snapshots.map(bytes => bytes.slice());
+    for (let p = 0; p < 3; p += 1) {
+      const plane = source.planes[p];
+      for (let y = 0; y < plane.ph; y += 1) {
+        for (let x = 0; x < plane.pw; x += 1) {
+          const target = p === 0 ? 0 : 1;
+          const offset = y * destination.planes[target].rowStride + x * (p === 0 ? 1 : 2) + (p === 2 ? 1 : 0);
+          expected[target][offset] = readSample(module, source, p, x, y);
+        }
+      }
+    }
+    const correct = destination.planes.every((p, i) =>
+      expected[i].every((byte, j) => module.HEAPU8[p.ptr + j] === byte));
+    expect('DESTINATION-INTERLEAVED samples and padding', status === STATUS_OK && correct, `status=${status}, correct=${correct}`);
+  }
+
   /* ---- TRANSFORM-FLIP-H-I420-4x4 ---- */
   {
     const source = makeFrame(module, FORMAT.I420, 4, 4);

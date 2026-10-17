@@ -2,6 +2,7 @@
 
 ### Changed
 
+- ABI v1 rejects collisions between active destination plane bytes before writing, while accepting shared padding and disjoint interleaved samples.
 - Stream decoding snapshots incoming chunks so producers can reuse a scratch buffer when the next event is requested.
 
 - Frame views skip zero-sized, non-finite or fully offscreen geometry instead of acknowledging an empty capture, and
