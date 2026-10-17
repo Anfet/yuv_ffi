@@ -204,6 +204,49 @@ void main() {
       });
     }
 
+    for (final chunkSize in <int>[3, 17]) {
+      test('preserves reusable scratch chunks of $chunkSize bytes', () async {
+        final source = YuvImage.i420(8, 8);
+        for (int i = 0; i < source.planes.length; i++) {
+          final bytes = source.planes[i].bytes;
+          for (int j = 0; j < bytes.length; j++) {
+            bytes[j] = ((i + 1) * 31 + j) & 0xFF;
+          }
+        }
+        final payload = await save(source);
+        Stream<List<int>> reusedChunks() async* {
+          final scratch = Uint8List(chunkSize);
+          // The larger chunks isolate reuse while reading the first plane body.
+          final start = chunkSize == 17 ? 4 + ByteData.sublistView(payload).getUint32(0, Endian.little) + 1 + 16 : 0;
+          if (start > 0) {
+            yield Uint8List.sublistView(payload, 0, start);
+          }
+          for (int offset = start; offset < payload.length; offset += chunkSize) {
+            yield Uint8List(0);
+            final length = (payload.length - offset).clamp(0, chunkSize);
+            scratch.setRange(0, length, payload, offset);
+            yield Uint8List.sublistView(scratch, 0, length);
+          }
+          // Reuse the last view too when the reader requests EOF.
+          scratch.fillRange(0, scratch.length, 0xEE);
+          yield Uint8List(0);
+        }
+
+        final target = await YuvImage.decode(reusedChunks());
+
+        expect(target.format, source.format);
+        expect(target.width, source.width);
+        expect(target.height, source.height);
+        expect(target.planes.length, source.planes.length);
+        for (int i = 0; i < source.planes.length; i++) {
+          expect(target.planes[i].height, source.planes[i].height, reason: 'plane $i height');
+          expect(target.planes[i].rowStride, source.planes[i].rowStride, reason: 'plane $i rowStride');
+          expect(target.planes[i].pixelStride, source.planes[i].pixelStride, reason: 'plane $i pixelStride');
+          expect(target.planes[i].bytes, orderedEquals(source.planes[i].bytes), reason: 'plane $i bytes');
+        }
+      });
+    }
+
     test('survives a fragmented stream', () async {
       final payload = await validPayload();
       final target = await YuvImage.decode(asFragmentedStream(payload));

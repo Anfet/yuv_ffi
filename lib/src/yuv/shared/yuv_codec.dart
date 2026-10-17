@@ -340,7 +340,8 @@ class _StreamReader {
     if (chunk.isEmpty) {
       return _pull();
     }
-    final bytes = chunk is Uint8List ? chunk : Uint8List.fromList(chunk);
+    // The producer may reuse its buffer on the next moveNext().
+    final bytes = Uint8List.fromList(chunk);
     _pending.add(bytes);
     _available += bytes.length;
     return true;

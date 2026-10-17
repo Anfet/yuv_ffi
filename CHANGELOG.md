@@ -2,6 +2,8 @@
 
 ### Changed
 
+- Stream decoding snapshots incoming chunks so producers can reuse a scratch buffer when the next event is requested.
+
 - Frame views skip zero-sized, non-finite or fully offscreen geometry instead of acknowledging an empty capture, and
   `onFramePresented` now acknowledges a frame only after its image or shader texture is painted. The default non-shader
   view reports the same display geometry callback as the shader path. Finite geometry validation rejects non-finite
