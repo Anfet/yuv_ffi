@@ -2,6 +2,9 @@
 
 ### Changed
 
+- Documented the visible implicit frame-fit change from natural-size decoded pixels to contain geometry, and clarified
+  that shader availability does not identify the current frame's paint path.
+
 - Web operations on partial WASM modules require only their own export and staging runtime; unrelated missing exports no longer block available operations.
 - ABI v1 rejects collisions between active destination plane bytes before writing, while accepting shared padding and disjoint interleaved samples.
 - Stream decoding snapshots incoming chunks so producers can reuse a scratch buffer when the next event is requested.

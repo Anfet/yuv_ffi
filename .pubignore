@@ -34,3 +34,5 @@ _tmp**
 /doc/
 /CMakeLists.txt
 /ffigen.yaml
+/example/probe/
+/example/integration_test/probe_performance_test.dart

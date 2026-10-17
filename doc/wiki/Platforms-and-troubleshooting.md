@@ -155,3 +155,10 @@ package's `tool/ci/vm.ps1` shows how on Windows). Tests that only create images 
 - [Displaying images](https://github.com/Anfet/yuv_ffi/wiki/Displaying-images): presenter errors and the shader path.
 - [Migration guide](https://github.com/Anfet/yuv_ffi/blob/main/MIGRATION.md): moving from 0.2.4 or the retracted 0.4.0.
 - [yuv_camera wiki](https://github.com/Anfet/yuv_camera/wiki): camera-specific platform notes.
+
+## Verification boundaries
+
+The declared Flutter floor is 3.44.0; recorded release validation used Flutter 3.44.9, so it does not independently
+verify the minimum SDK. Safari, Firefox and mobile Web are unverified. Custom asset placement, CDN hosting and strict
+CSP for the WASM module, and static CocoaPods linkage, remain unverified.
+Image-operation `--wasm` evidence in Chrome does not establish camera `--wasm` support in `yuv_camera`.

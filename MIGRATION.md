@@ -27,6 +27,27 @@ the [camera migration guide](https://github.com/Anfet/yuv_camera/blob/main/MIGRA
 imports, and keep ML Kit integration in the application. On desktop, add `camera_desktop` beside `camera`; Flutter
 registers the federated plugin when the application is rebuilt.
 
+### Visible change: implicit frame fit
+
+For `YuvFrameView(presenter: presenter)` (`fit: null`), 0.5.1 displayed upright non-shader frames inside an
+`AspectRatio` using `RawImage` with `BoxFit.none`: pixels kept their natural size and could be clipped. In 0.5.2,
+the view uses `AspectRatio` and contain geometry for both decoded and shader frames, scaling the whole frame to
+fit the available bounds. This is a visible default change, not a source-breaking API change.
+
+Choose fit and placement explicitly when the layout matters:
+
+```dart
+YuvFrameView(
+  presenter: presenter,
+  fit: YuvFrameFit.contain,
+  alignment: Alignment.center,
+)
+```
+
+Use `YuvFrameFit.cover` to fill the bounds with cropping. For natural-pixel-size placement, size the view to the upright frame dimensions
+and align it explicitly within a clipped parent; `YuvFrameFit` has no `none` value. A standalone decoded image
+can instead use `YuvImageWidget(image: image, boxFit: BoxFit.none)`.
+
 ## Updating from 0.5.0 to 0.5.1
 
 This update does not require API replacements or re-migration of serialized frames. Change the dependency to

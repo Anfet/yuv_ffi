@@ -69,6 +69,9 @@ class YuvFramePresenter extends ChangeNotifier {
   bool get isBusy => _isBusy;
 
   /// Whether the optional renderer has loaded its shader.
+  ///
+  /// This reports availability, not the paint path of the current frame. BGRA
+  /// and unsupported/gapped layouts can use fallback even when this is `true`.
   bool get hasShader => _renderer?.hasShader ?? false;
 
   /// Creates a presenter that reports drawn frames to [onFramePresented].
@@ -256,7 +259,7 @@ class YuvFrameView extends StatefulWidget {
   /// Source of the frames to display.
   final YuvFramePresenter presenter;
 
-  /// Optional fit; when omitted the view keeps the frame's aspect ratio.
+  /// Optional fit; when omitted the view uses an aspect-ratio box with contain geometry.
   final YuvFrameFit? fit;
 
   /// Placement used by the geometry rendering path.

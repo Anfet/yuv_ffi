@@ -220,7 +220,7 @@ final presenter = YuvFramePresenter(useShader: true);
 ```
 
 The shader loads asynchronously. Until it has loaded, or when the platform cannot provide it, frames use the BGRA path;
-`presenter.hasShader` tells you which one is active. With the shader enabled, `presenter.image` is always `null`.
+`presenter.hasShader` reports that the shader is loaded and available, not which path painted the current frame. With the shader enabled, `presenter.image` is always `null`.
 
 Even with a loaded shader a frame uses the BGRA path when its layout cannot be uploaded: a Y plane with `pixelStride`
 other than 1, I420 chroma planes whose U and V strides differ or are neither 1 nor 2, NV12 chroma with a `pixelStride`
@@ -256,3 +256,6 @@ Frames can also be rotated or mirrored at draw time, without producing a new ima
 - [Geometry and overlays](https://github.com/Anfet/yuv_ffi/wiki/Geometry-and-overlays): placement, rotation and overlays.
 - [Platforms and troubleshooting](https://github.com/Anfet/yuv_ffi/wiki/Platforms-and-troubleshooting): initialization and Web.
 - [yuv_camera wiki](https://github.com/Anfet/yuv_camera/wiki): a ready-made live camera preview built on the presenter.
+
+Camera `onFramePresented(bool)` callbacks and Device check JSON `shader` use this same availability meaning.
+They do not prove shader paint, even for a frame confirmed as drawn.
