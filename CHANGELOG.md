@@ -2,6 +2,9 @@
 
 ### Changed
 
+- Added the `YuvFramePresenterLazyFrames.presentLazy` extension to load accepted frames synchronously while skipping
+  loaders for rejected frames, preserving missed-paint recovery and the existing presenter interface.
+
 - Documented the visible implicit frame-fit change from natural-size decoded pixels to contain geometry, and clarified
   that shader availability does not identify the current frame's paint path.
 

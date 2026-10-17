@@ -83,6 +83,105 @@ void main() {
     expect(await _displayedShade(tester), 2);
   });
 
+  testWidgets('lazy frames load once on acceptance and never during decode or after disposal', (tester) async {
+    await pumpView(tester);
+    var loads = 0;
+    final source = _frame(21);
+    YuvImage load() {
+      loads++;
+      return source;
+    }
+
+    await tester.runAsync(() async {
+      expect(presenter.presentLazy(load, orientation: const YuvFrameOrientation(rotation: YuvImageRotation.rotation90)), isTrue);
+      expect(presenter.presentLazy(load), isFalse);
+      expect(loads, 1);
+      source.yPlane.assignFrom(_frame(99).yPlane.bytes);
+      source.markDirty();
+    });
+    await _waitUntil(tester, () => presenter.image != null);
+    expect(await _shadeOf(tester, require(presenter.image)), 21, reason: 'accepted frames are copied before returning');
+    await tester.pump();
+    expect(tester.getSize(find.byType(AspectRatio)).aspectRatio, closeTo(_height / _width, 0.001));
+    expect(presented, 1);
+    await tester.pumpWidget(const SizedBox());
+    presenter.dispose();
+    expect(presenter.presentLazy(load), isFalse);
+    expect(loads, 1);
+  });
+
+  testWidgets('lazy replacement recovers a frame that missed offstage or zero-sized paint', (tester) async {
+    for (final offstage in [true, false]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: offstage
+              ? Offstage(child: YuvFrameView(presenter: presenter))
+              : Center(
+                  child: SizedBox(width: 0, height: 0, child: YuvFrameView(presenter: presenter)),
+                ),
+        ),
+      );
+      final before = presented;
+      await tester.runAsync(() async => expect(presenter.present(_frame(22)), isTrue));
+      await _waitUntil(tester, () => presenter.image != null);
+      await tester.pump();
+      expect(presenter.isBusy, isTrue);
+      expect(presented, before);
+      var loads = 0;
+      final previous = presenter.image;
+      await tester.runAsync(() async {
+        expect(
+          presenter.presentLazy(() {
+            loads++;
+            return _frame(23);
+          }),
+          isTrue,
+        );
+      });
+      expect(loads, 1);
+      await _waitUntil(tester, () => presenter.image != previous);
+      await pumpView(tester);
+      await tester.pump();
+      expect(await _displayedShade(tester), 23);
+      expect(presented, before + 1);
+      presenter.reset();
+    }
+  });
+
+  testWidgets('lazy load and copy failures release missed-paint replacements without acknowledging them', (tester) async {
+    for (final copyFailure in [false, true]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Offstage(child: YuvFrameView(presenter: presenter)),
+        ),
+      );
+      await tester.runAsync(() async => presenter.present(_frame(24)));
+      await _waitUntil(tester, () => presenter.image != null);
+      await tester.pump();
+      var loads = 0;
+      expect(
+        () => presenter.presentLazy(() {
+          loads++;
+          if (copyFailure) return _ThrowingImage(_frame(25));
+          throw StateError('load failed');
+        }),
+        throwsStateError,
+      );
+      expect(loads, 1);
+      expect(presenter.isBusy, isFalse);
+      await pumpView(tester);
+      await tester.pump();
+      expect(presented, copyFailure ? 1 : 0, reason: 'failed replacement must not acknowledge the stale image');
+      final previous = presenter.image;
+      await tester.runAsync(() async => expect(presenter.presentLazy(() => _frame(26)), isTrue));
+      await _waitUntil(tester, () => presenter.image != previous);
+      await tester.pump();
+      expect(await _displayedShade(tester), 26);
+      expect(presented, copyFailure ? 2 : 1);
+      presenter.reset();
+    }
+  });
+
   testWidgets('offstage and zero-sized views do not acknowledge; restoring a view paints one frame once', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

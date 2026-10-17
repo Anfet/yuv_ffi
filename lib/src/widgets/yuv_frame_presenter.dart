@@ -101,7 +101,9 @@ class YuvFramePresenter extends ChangeNotifier {
   /// metadata or copying/converting its pixels are thrown from this method and
   /// leave the presenter free. Errors while decoding the copied pixels are
   /// reported through [FlutterError.onError].
-  bool present(YuvImage frame, {YuvFrameOrientation orientation = YuvFrameOrientation.upright}) {
+  bool present(YuvImage frame, {YuvFrameOrientation orientation = YuvFrameOrientation.upright}) => _present(() => frame, orientation);
+
+  bool _present(YuvImage Function() load, YuvFrameOrientation orientation) {
     if (_isDisposed || (_isBusy && !(_frameReady && _missedPaint))) {
       return false;
     }
@@ -114,6 +116,7 @@ class YuvFramePresenter extends ChangeNotifier {
     }
     _generation++;
 
+    final frame = load();
     final renderer = _renderer;
     final generation = _generation;
     if (useShader && renderer != null) {
@@ -231,7 +234,7 @@ class YuvFramePresenter extends ChangeNotifier {
   }
 
   void _didPaint(int generation) {
-    if (_isDisposed || generation != _generation || _paintedGeneration == generation) return;
+    if (_isDisposed || !_frameReady || generation != _generation || _paintedGeneration == generation) return;
     _paintedGeneration = generation;
     _missedPaint = false;
     SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -396,4 +399,18 @@ class _YuvFramePainter extends CustomPainter {
   @override
   bool shouldRepaint(_YuvFramePainter oldDelegate) =>
       oldDelegate.image != image || oldDelegate.texture != texture || oldDelegate.renderer != renderer || oldDelegate.geometry != geometry;
+}
+
+/// Loads frames only when the presenter can accept them.
+extension YuvFramePresenterLazyFrames on YuvFramePresenter {
+  /// Starts showing the frame returned by [load], or returns `false` without
+  /// calling [load] while decoding, waiting for paint, or after disposal.
+  /// A ready frame that missed paint may be replaced to recover presentation.
+  ///
+  /// On acceptance, calls [load] exactly once synchronously, then copies its
+  /// pixels before returning `true`. The caller retains ownership of the frame.
+  /// [orientation] controls how the frame is displayed. Loading and copying
+  /// errors propagate synchronously and leave the presenter free for another
+  /// frame; asynchronous decode or upload errors use [FlutterError.onError].
+  bool presentLazy(YuvImage Function() load, {YuvFrameOrientation orientation = YuvFrameOrientation.upright}) => _present(load, orientation);
 }

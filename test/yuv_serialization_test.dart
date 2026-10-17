@@ -204,9 +204,10 @@ void main() {
       });
     }
 
-    for (final chunkSize in <int>[3, 17]) {
+    for (final chunkSize in <int>[1, 3, 17]) {
       test('preserves reusable scratch chunks of $chunkSize bytes', () async {
-        final source = YuvImage.i420(8, 8);
+        final size = chunkSize == 1 ? 128 : 8;
+        final source = YuvImage.i420(size, size);
         for (int i = 0; i < source.planes.length; i++) {
           final bytes = source.planes[i].bytes;
           for (int j = 0; j < bytes.length; j++) {

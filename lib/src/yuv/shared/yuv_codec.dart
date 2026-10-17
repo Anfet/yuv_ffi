@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -314,7 +315,7 @@ class _StreamReader {
   final StreamIterator<List<int>> _subscription;
 
   /// Chunks received but not yet fully consumed.
-  final List<Uint8List> _pending = <Uint8List>[];
+  final ListQueue<Uint8List> _pending = ListQueue<Uint8List>();
 
   /// Offset into `_pending.first` of the next unread byte.
   int _offset = 0;
@@ -342,7 +343,7 @@ class _StreamReader {
     }
     // The producer may reuse its buffer on the next moveNext().
     final bytes = Uint8List.fromList(chunk);
-    _pending.add(bytes);
+    _pending.addLast(bytes);
     _available += bytes.length;
     return true;
   }
@@ -373,7 +374,7 @@ class _StreamReader {
       if (_offset == chunk.length) {
         // Drop the chunk as soon as it is spent, so consumed bytes are not
         // retained for the life of the read.
-        _pending.removeAt(0);
+        _pending.removeFirst();
         _offset = 0;
       }
     }
