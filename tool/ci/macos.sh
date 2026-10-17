@@ -113,8 +113,4 @@ grep -Fq 'enable-swift-package-manager: false' "$cocoapods_root/example/pubspec.
 env DYLD_LIBRARY_PATH= bash "$cocoapods_root/tool/ci/drive.sh" \
   integration_test/native_app_runtime_smoke_test.dart macos
 
-if [[ -n "$(git -C "$repository_root" status --porcelain)" ]]; then
-  echo 'The run changed tracked files:' >&2
-  git -C "$repository_root" status --porcelain >&2
-  exit 1
-fi
+bash tool/ci/source_state.sh "$repository_root"
