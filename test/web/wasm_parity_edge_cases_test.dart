@@ -11,9 +11,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 
 void main() {
   if (!kIsWeb) {
-    test('web edge-case parity tests are skipped on non-web runtime', () {
-      expect(true, isTrue);
-    });
+    test('web edge-case parity tests are skipped on non-web runtime', () {}, skip: 'Requires a browser runtime and Web backend preparation.');
     return;
   }
 
@@ -262,32 +260,35 @@ void main() {
       expect(() => YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]), returnsNormally);
     });
 
-    test('specialized and generic constructors agree on a padded plane', () {
+    test('default constructors pack a padded plane', () {
       final specialized = YuvImage.bgra(2, 2, planes: <YuvPlane>[plane(2, 16)]);
       // ignore: deprecated_member_use_from_same_package
       final generic = YuvImage(YuvPixelFormat.bgra8888, 2, 2, yPixelStride: 4, planes: <YuvPlane>[plane(2, 16)]);
 
       for (final image in <YuvImage>[specialized, generic]) {
-        expect(image.yPlane.rowStride, 16);
+        expect(image.yPlane.rowStride, 8);
         expect(image.yPlane.pixelStride, 4);
-        expect(image.yPlane.bytes.length, 32);
+        expect(image.yPlane.bytes.length, 16);
       }
     });
 
-    test('copy keeps padded metadata and blank copy zeros the whole allocation', () {
+    test('preserve copy keeps padding and allocate returns tight zeroed storage', () {
       final source = plane(2, 16);
       for (int i = 0; i < source.bytes.length; i++) {
         source.bytes[i] = i + 1;
       }
-      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source]);
+      final image = YuvImage.bgra(2, 2, planes: <YuvPlane>[source], layout: YuvPlaneLayout.preserve);
 
       final copied = image.copy();
+      expect(image.yPlane.rowStride, 16);
+      expect(image.yPlane.bytes, hasLength(32));
       expect(copied.yPlane.rowStride, 16);
       expect(copied.yPlane.bytes, orderedEquals(image.yPlane.bytes));
 
       // ignore: deprecated_member_use_from_same_package
       final blank = YuvImage.allocate(image.format, image.width, image.height);
-      expect(blank.yPlane.rowStride, 16);
+      expect(blank.yPlane.rowStride, 8);
+      expect(blank.yPlane.bytes, hasLength(16));
       expect(blank.yPlane.bytes.every((b) => b == 0), isTrue);
     });
 

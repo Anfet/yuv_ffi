@@ -10,9 +10,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 
 void main() {
   if (!kIsWeb) {
-    test('web transform parity tests are skipped on non-web runtime', () {
-      expect(true, isTrue);
-    });
+    test('web transform parity tests are skipped on non-web runtime', () {}, skip: 'Requires a browser runtime and Web backend preparation.');
     return;
   }
 

@@ -64,4 +64,28 @@ void main() {
     expect(result.exitCode, 1);
     expect(result.stdout, contains('0/0 passed'));
   });
+  for (final fixture in ['hidden_only', 'hooks_skipped']) {
+    test('$fixture does not count successful hooks as executed tests', () async {
+      final result = await _runReporter(fixture);
+
+      expect(result.exitCode, 1);
+      expect(result.stdout, contains('0/0 passed'));
+      expect(result.stdout, isNot(contains('  Passed  ')));
+    });
+  }
+
+  test('successful hooks do not inflate the visible test count', () async {
+    final result = await _runReporter('hooks_visible');
+
+    expect(result.exitCode, 0);
+    expect(result.stdout, contains('test/example_test.dart  Passed  1'));
+    expect(result.stdout, contains('1/1 passed, 1 skipped, 0 failed'));
+  });
+
+  test('failed hidden hook still fails the run', () async {
+    final result = await _runReporter('hook_failure');
+
+    expect(result.exitCode, 1);
+    expect(result.stdout, contains('FAILED  (tearDownAll)'));
+  });
 }

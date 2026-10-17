@@ -38,10 +38,10 @@ if (( drive_exit_code != 0 )); then
   exit "$drive_exit_code"
 fi
 
-if ! grep -Fq 'All tests passed' "$output_file"; then
+if grep -Fq -e 'Some tests failed' -e 'Failure Details:' "$output_file" || ! grep -Fq 'All tests passed' "$output_file"; then
   marker_line="$(grep -n -m1 -E 'FAILED|EXCEPTION|Error' "$output_file" | cut -d: -f1 || true)"
   if [[ -n "$marker_line" ]]; then sed -n "${marker_line},$((marker_line + 199))p" "$output_file"; else tail -n 200 "$output_file"; fi
-  echo "flutter drive completed for $target on $device without the required All tests passed verdict" >&2
+  echo "flutter drive completed for $target on $device without a clean All tests passed verdict (missing success or explicit failure marker)" >&2
   exit 1
 fi
 

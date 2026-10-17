@@ -1,6 +1,8 @@
 @Tags(['contract'])
 library;
 
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
@@ -152,20 +154,59 @@ void main() {
     });
   });
 
-  group('getBytes contract', () {
-    test('concatenates every plane in format order', () {
-      final image = YuvImage.i420(4, 4);
-      final expected = image.planes.fold<int>(0, (sum, p) => sum + p.bytes.length);
-      // ignore: deprecated_member_use_from_same_package
-      expect(image.toBytes(), hasLength(expected));
+  group('toBytes contract', () {
+    const sizes = <({int w, int h})>[(w: 1, h: 1), (w: 3, h: 3), (w: 127, h: 255), (w: 512, h: 512)];
+
+    for (final size in sizes) {
+      test('returns exactly the summed plane length for ${size.w}x${size.h}', () {
+        for (final image in _imagesForEachFormat(size.w, size.h)) {
+          final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
+          // ignore: deprecated_member_use_from_same_package
+          expect(image.toBytes(), hasLength(expectedLength), reason: '${image.format.name} ${size.w}x${size.h} must not carry an alignment tail');
+        }
+      });
+
+      test('equals a direct concatenation for ${size.w}x${size.h}', () {
+        for (final image in _imagesForEachFormat(size.w, size.h)) {
+          _fillPlanesWithPattern(image);
+
+          expect(
+            // ignore: deprecated_member_use_from_same_package
+            image.toBytes(),
+            orderedEquals(_concatPlanesDirectly(image)),
+            reason: '${image.format.name} ${size.w}x${size.h} must concatenate planes in format order',
+          );
+        }
+      });
+    }
+
+    test('returns an independent copy in both directions', () {
+      for (final image in _imagesForEachFormat(4, 4)) {
+        _fillPlanesWithPattern(image);
+        // ignore: deprecated_member_use_from_same_package
+        final snapshot = image.toBytes();
+        final planeByteBefore = image.yPlane.bytes[0];
+
+        // Mutating the returned buffer must not reach back into the planes.
+        snapshot[0] = snapshot[0] ^ 0xFF;
+        expect(image.yPlane.bytes[0], planeByteBefore);
+
+        // Mutating a plane must not retroactively change an earlier result.
+        final snapshotByteBefore = snapshot[1];
+        image.yPlane.bytes[1] = image.yPlane.bytes[1] ^ 0xFF;
+        expect(snapshot[1], snapshotByteBefore);
+      }
     });
 
-    test('is a snapshot, not a view onto the live planes', () {
-      final image = YuvImage.bgra(2, 2);
+    test('I420 3x3 has no alignment tail', () {
+      final image = YuvImage.i420(3, 3);
+      final expectedLength = image.planes.fold<int>(0, (sum, plane) => sum + plane.bytes.length);
+
+      // Y: 3x3 = 9 bytes. Chroma: ceil(3/2) x ceil(3/2) = 2x2, one byte per
+      // sample for I420's planar (not interleaved) U and V, 4 bytes each.
+      expect(expectedLength, 17);
       // ignore: deprecated_member_use_from_same_package
-      final bytes = image.toBytes();
-      image.yPlane.setPixel(0, 0, 255);
-      expect(bytes[0], 0);
+      expect(image.toBytes(), hasLength(expectedLength));
     });
   });
 
@@ -191,4 +232,33 @@ YuvImage _blankWithSourceLayout(YuvImage source) {
     YuvPixelFormat.nv12 => YuvImage.nv12(source.width, source.height, planes: planes),
     YuvPixelFormat.bgra8888 => YuvImage.bgra(source.width, source.height, planes: planes),
   };
+}
+
+/// Builds each public format without invoking native operations.
+List<YuvImage> _imagesForEachFormat(int w, int h) => <YuvImage>[
+  YuvImage.bgra(w, h),
+  YuvImage.i420(w, h),
+  // ignore: deprecated_member_use_from_same_package
+  YuvImage.nv12(w, h),
+];
+
+/// Writes a per-plane pattern so a misordered or truncated concatenation cannot
+/// coincidentally match an all-zero buffer.
+void _fillPlanesWithPattern(YuvImage image) {
+  for (int i = 0; i < image.planes.length; i++) {
+    final bytes = image.planes[i].bytes;
+    for (int j = 0; j < bytes.length; j++) {
+      bytes[j] = ((i + 1) * 37 + j) & 0xFF;
+    }
+  }
+}
+
+/// Expected value built by direct concatenation rather than by the other
+/// backend, so a shared defect cannot hide in both sides of the comparison.
+Uint8List _concatPlanesDirectly(YuvImage image) {
+  final out = <int>[];
+  for (final plane in image.planes) {
+    out.addAll(plane.bytes);
+  }
+  return Uint8List.fromList(out);
 }

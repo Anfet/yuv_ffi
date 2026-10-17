@@ -40,20 +40,7 @@ void main() {
   });
 
   group('nv12 keeps the historical NV21 UV byte order', () {
-    test('a filled UV plane keeps the same (U, V) pair order as the legacy nv21 factory', () {
-      // ignore: deprecated_member_use_from_same_package
-      final legacy = YuvImage.nv12(4, 4);
-      final canonical = YuvImage.nv12(4, 4);
-
-      // Both share the same interleaved chroma pixel stride and layout: the
-      // truthful name introduces no reinterpretation of already-supplied
-      // bytes.
-      expect(canonical.uPlane.pixelStride, legacy.uPlane.pixelStride);
-      expect(canonical.uPlane.rowStride, legacy.uPlane.rowStride);
-      expect(canonical.format, legacy.format, reason: 'nv12 is canonical NV12 storage, which today is backed by the same legacy value as nv21');
-    });
-
-    test('YuvImage.allocate(nv12, ...) produces the same interleaved layout as nv21', () {
+    test('YuvImage.allocate(nv12, ...) produces the same interleaved layout as the named factory', () {
       final allocated = YuvImage.allocate(YuvPixelFormat.nv12, 4, 4);
       // ignore: deprecated_member_use_from_same_package
       final legacy = YuvImage.nv12(4, 4);
@@ -74,12 +61,6 @@ void main() {
       expect(describe(YuvImage.i420(2, 2)), 'i420');
       expect(describe(YuvImage.nv12(2, 2)), 'nv12');
       expect(describe(YuvImage.bgra(2, 2)), 'bgra8888');
-    });
-
-    test('a legacy nv21-labeled image reports YuvPixelFormat.nv12', () {
-      // ignore: deprecated_member_use_from_same_package
-      final legacy = YuvImage.nv12(2, 2);
-      expect(legacy.format, YuvPixelFormat.nv12);
     });
   });
 }

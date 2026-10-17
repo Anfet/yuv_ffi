@@ -1,0 +1,6 @@
+{"type": "suite", "suite": {"id": 0, "path": "test/example_test.dart"}}
+{"type": "testStart", "test": {"id": 1, "suiteID": 0, "name": "visible test"}}
+{"type": "testDone", "testID": 1, "result": "success", "skipped": false, "hidden": false}
+{"type": "testStart", "test": {"id": 2, "suiteID": 0, "name": "(tearDownAll)"}}
+{"type": "testDone", "testID": 2, "result": "error", "skipped": false, "hidden": true}
+{"type": "done", "success": false, "time": 5}

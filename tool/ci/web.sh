@@ -260,7 +260,6 @@ drive_web integration_test/reference_web_conversions_test.dart --profile
 stop_driver
 
 wasm_targets=(
-  integration_test/probe_web_test.dart
   integration_test/shader_probe_web_test.dart
   integration_test/all_web_test.dart
 )

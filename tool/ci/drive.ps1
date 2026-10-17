@@ -33,12 +33,13 @@ try {
     throw "flutter drive failed for $Target on $Device with exit code $driveExitCode"
   }
 
-  if (-not (Select-String -LiteralPath $outputFile -SimpleMatch 'All tests passed' -Quiet)) {
+  if ((Select-String -LiteralPath $outputFile -SimpleMatch @('Some tests failed', 'Failure Details:') -Quiet) -or
+      -not (Select-String -LiteralPath $outputFile -SimpleMatch 'All tests passed' -Quiet)) {
     $lines = @(Get-Content -LiteralPath $outputFile)
     $marker = [Array]::FindIndex($lines, [Predicate[string]]{ param($line) $line -match 'FAILED|EXCEPTION|Error' })
     if ($marker -ge 0) { $lines | Select-Object -Skip $marker -First 200 | Write-Output }
     else { $lines | Select-Object -Last 200 | Write-Output }
-    throw "flutter drive completed for $Target on $Device without the required All tests passed verdict"
+    throw "flutter drive completed for $Target on $Device without a clean All tests passed verdict (missing success or explicit failure marker)"
   }
 
   Write-Output "PASS $Target on $Device"

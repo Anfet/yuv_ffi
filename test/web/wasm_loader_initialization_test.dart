@@ -12,9 +12,7 @@ import 'package:yuv_ffi/src/loader/wasm_loader.dart';
 /// deleting or substituting real WASM assets.
 void main() {
   if (!kIsWeb) {
-    test('web loader initialization tests are skipped on non-web runtime', () {
-      expect(true, isTrue);
-    });
+    test('web loader initialization tests are skipped on non-web runtime', () {}, skip: 'Requires a browser runtime and Web backend preparation.');
     return;
   }
 

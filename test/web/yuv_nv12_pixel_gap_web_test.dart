@@ -16,9 +16,7 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// file runs the same shape of check against the WASM backend.
 void main() {
   if (!kIsWeb) {
-    test('nv12 pixel-gap Web parity test is skipped on non-web runtime', () {
-      expect(true, isTrue);
-    });
+    test('nv12 pixel-gap Web parity test is skipped on non-web runtime', () {}, skip: 'Requires a browser runtime and Web backend preparation.');
     return;
   }
 

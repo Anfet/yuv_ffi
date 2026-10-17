@@ -3,17 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
-/// Web analog of `test/nv_chroma_order_test.dart`'s hand-written byte-level
-/// UV round-trip check: the project contract
-/// keeps the public `nv21` label while the real byte order is UV, shared with
-/// the truthfully named `YuvPixelFormat.nv12`. That native-side test writes
-/// exact known chroma byte values directly through `applyPlanes()` -- no
-/// RGBA->YUV conversion, no rounding tolerance -- and checks both labels see
-/// identical bytes, plus that byte order survives a BGRA round trip. This
-/// file runs the same three checks against the real WASM backend served by a
-/// browser, through this package's integration harness (see
-/// `wasm_bootstrap_test.dart`) instead of `flutter test --platform chrome`,
-/// which serves no asset bundle and cannot load the WASM module.
+/// Checks hand-written U=37/V=219 chroma bytes and their order through a
+/// BGRA round trip on the real WASM backend, loaded by the integration harness.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -33,16 +24,12 @@ void main() {
     return YuvPlane(h ~/ 2, w, 2, bytes);
   }
 
-  testWidgets('nv12 and nv21 store identical hand-written chroma bytes on the real WASM backend', (tester) async {
+  testWidgets('nv12 stores hand-written UV chroma bytes on the real WASM backend', (tester) async {
     expect(kIsWeb, isTrue, reason: 'This required gate must run in a browser.');
 
     await YuvFfi.initialize();
 
     final nv12Labeled = YuvImage.nv12(w, h)..applyPlanes([buildYPlane(), buildUvPlane()]);
-    // ignore: deprecated_member_use
-    final nv21Labeled = YuvImage.nv12(w, h)..applyPlanes([buildYPlane(), buildUvPlane()]);
-
-    expect(nv12Labeled.uPlane.bytes, orderedEquals(nv21Labeled.uPlane.bytes), reason: 'nv12 and nv21 must store identical chroma bytes');
     for (int i = 0; i < nv12Labeled.uPlane.bytes.length; i += 2) {
       expect(nv12Labeled.uPlane.bytes[i], uSample, reason: 'byte $i (U) of the nv12-labeled chroma plane was not what was written');
       expect(nv12Labeled.uPlane.bytes[i + 1], vSample, reason: 'byte ${i + 1} (V) of the nv12-labeled chroma plane was not what was written');

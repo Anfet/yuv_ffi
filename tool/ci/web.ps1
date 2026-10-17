@@ -239,7 +239,6 @@ try {
     Invoke-WebDrive -Target 'integration_test/reference_web_conversions_test.dart' -Arguments @('--profile')
   }
   $wasmTargets = @(
-    'integration_test/probe_web_test.dart',
     'integration_test/shader_probe_web_test.dart',
     'integration_test/all_web_test.dart'
   )

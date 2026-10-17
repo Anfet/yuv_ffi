@@ -57,12 +57,12 @@ Future<void> main() async {
         final isLoad = name.startsWith('loading ');
         final result = event['result'] as String?;
         if (event['skipped'] == true) {
-          if (!isLoad) {
+          if (!isLoad && event['hidden'] != true) {
             suite.skipped.add(id);
             skipped++;
           }
         } else if (result == 'success') {
-          if (!isLoad) {
+          if (!isLoad && event['hidden'] != true) {
             suite.finished.add(id);
             passed++;
           }
@@ -98,7 +98,7 @@ Future<void> main() async {
   }
 
   final hasFailedSuite = suites.values.any((suite) => suite.failed.isNotEmpty);
-  final showPassedSuites = doneSuccessfully && sawTest && failed == 0 && !hasFailedSuite;
+  final showPassedSuites = doneSuccessfully && sawTest && passed > 0 && failed == 0 && !hasFailedSuite;
   for (final suite in suites.values) {
     final suiteFailures = suite.failed.toList();
     if (suiteFailures.isNotEmpty) {
@@ -122,8 +122,7 @@ Future<void> main() async {
     }
   }
 
-  final testCount = passed + skipped + failed;
-  final ok = doneSuccessfully && sawTest && testCount > 0 && failed == 0;
+  final ok = doneSuccessfully && sawTest && passed > 0 && failed == 0 && !hasFailedSuite;
   stdout.writeln('$passed/${passed + failed} passed, $skipped skipped, $failed failed');
   stdout.writeln('Total: ${(elapsedMilliseconds / 1000).toStringAsFixed(2)} s');
   exitCode = ok ? 0 : 1;

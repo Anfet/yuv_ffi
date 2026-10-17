@@ -13,15 +13,11 @@ import 'package:yuv_ffi/yuv_ffi.dart';
 /// aliasing, padded BGRA, and semantic-no-op contracts hold the same way on
 /// the WASM backend. Both runners follow the same publish contract.
 ///
-/// Follows the existing `test/web/wasm_parity_*` convention: skipped with a
-/// passing placeholder on a non-browser runtime, so this file participates in
-/// the normal `flutter test` run everywhere and only exercises the real WASM
-/// module under `flutter test -p chrome`.
+/// Non-browser runs explicitly skip this suite; they provide no WASM evidence.
+/// Browser execution needs the package WASM assets to be served by the harness.
 void main() {
   if (!kIsWeb) {
-    test('Web parity tests are skipped on non-web runtime', () {
-      expect(true, isTrue);
-    });
+    test('Web parity tests are skipped on non-web runtime', () {}, skip: 'Requires a browser runtime and Web backend preparation.');
     return;
   }
 
