@@ -45,13 +45,15 @@ resolves 0.4.0.
 | Web | Flutter JavaScript and `--wasm` builds; tested in Chrome |
 
 On iOS and macOS the plugin builds with either Swift Package Manager (the
-default in Flutter 3.44 and later) or CocoaPods, as Flutter's template sets it up:
-a Podfile with `use_frameworks!`, which links dynamic frameworks. Nothing needs to
-be added to your app in those setups. Static CocoaPods linkage (for example
-`use_frameworks! :linkage => :static`, or a Podfile without `use_frameworks!`) has
-not been verified and is not claimed; the plugin's symbols are looked up in the
-running process, so a static link would need to keep them. The Apple sources live
-in `darwin/`; the C sources stay in `src/`.
+default in Flutter 3.44 and later) or CocoaPods with the template's dynamic
+`use_frameworks!` setup. CocoaPods also supplies linker roots for the 11 ABI v1
+entry points so static archives retain the symbols used by Dart process lookups;
+no manual Runner linker flags are needed. Static `use_frameworks! :linkage => :static`
+was verified on an iOS 18.6 simulator in Debug with Firebase Core 3.15.2:
+Firebase initialization, native symbol loading and BGRA copy/rotate passed.
+A Podfile without `use_frameworks!`, macOS static runtime, Release static linkage
+and other Firebase versions remain unverified. The Apple sources live in
+`darwin/`; the C sources stay in `src/`.
 
 Web operations match the native backend in the checked cases on both the
 JavaScript and `--wasm` Flutter builds. `chromaSwap` supports NV12 only, as on
@@ -368,5 +370,5 @@ dart run ffigen --config ffigen.yaml
 
 The declared Flutter floor is 3.44.0; recorded release validation used Flutter 3.44.9, so it does not independently
 verify the minimum SDK. Safari, Firefox and mobile Web are unverified. Custom asset placement, CDN hosting and strict
-CSP for the WASM module, and static CocoaPods linkage, remain unverified.
+CSP for the WASM module remain unverified. Static CocoaPods verification is limited to the iOS simulator Debug scenario above.
 Image-operation `--wasm` evidence in Chrome does not establish camera `--wasm` support in `yuv_camera`.

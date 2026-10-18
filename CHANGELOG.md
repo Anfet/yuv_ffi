@@ -2,6 +2,8 @@
 
 ### Changed
 
+- Preserved all 11 ABI v1 entry points in CocoaPods consumer links, including static frameworks; verified iOS simulator Debug with Firebase Core 3.15.2 without manual Runner flags.
+
 - Added the `YuvFramePresenterLazyFrames.presentLazy` extension to load accepted frames synchronously while skipping
   loaders for rejected frames, preserving missed-paint recovery and the existing presenter interface.
 

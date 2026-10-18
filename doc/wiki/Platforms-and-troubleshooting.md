@@ -56,7 +56,7 @@ The README keeps the authoritative requirement and platform status tables
 | Platform | What to know |
 | --- | --- |
 | Android | API 26 or later; ABIs `armeabi-v7a`, `arm64-v8a` and `x86_64`. Android `x86` is not supported. |
-| iOS, macOS | Built into the app with Swift Package Manager or CocoaPods using the Flutter template's `use_frameworks!` (dynamic frameworks); nothing to add in those setups. The native symbols are linked into the process. Static CocoaPods linkage (for example `use_frameworks! :linkage => :static`, or no `use_frameworks!`) has not been verified and is not claimed. |
+| iOS, macOS | Built into the app with Swift Package Manager or CocoaPods dynamic frameworks. CocoaPods supplies roots for all 11 ABI v1 symbols; no manual Runner linker flags are required. Static `use_frameworks! :linkage => :static` passed on an iOS 18.6 simulator in Debug with Firebase Core 3.15.2 (Firebase init, native loading, BGRA copy/rotate). No `use_frameworks!`, macOS static runtime, Release static linkage and other Firebase versions remain unverified. |
 | Windows, Linux | Native FFI backend, built from `src/` with the app; the loader opens `yuv_ffi.dll` or `libyuv_ffi.so` by name. |
 | Web | WASM backend on Flutter's JavaScript and `--wasm` builds, checked in Chrome. See below. |
 
@@ -160,5 +160,5 @@ package's `tool/ci/vm.ps1` shows how on Windows). Tests that only create images 
 
 The declared Flutter floor is 3.44.0; recorded release validation used Flutter 3.44.9, so it does not independently
 verify the minimum SDK. Safari, Firefox and mobile Web are unverified. Custom asset placement, CDN hosting and strict
-CSP for the WASM module, and static CocoaPods linkage, remain unverified.
+CSP for the WASM module remain unverified. Static CocoaPods verification is limited to the iOS simulator Debug scenario above.
 Image-operation `--wasm` evidence in Chrome does not establish camera `--wasm` support in `yuv_camera`.

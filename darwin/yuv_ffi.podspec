@@ -29,5 +29,15 @@ yuv_ffi is a Flutter/Dart package for high-performance image processing on YUV/B
   # Flutter.framework does not contain a i386 slice.
   s.ios.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.osx.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
+  # Dart process lookups do not create linker references. Keep the ABI entry
+  # points in the consumer image when CocoaPods builds a static archive.
+  abi_symbols = %w[
+    yuv_convert_v1 yuv_black_white_v1 yuv_grayscale_v1 yuv_negate_v1
+    yuv_gaussian_blur_v1 yuv_mean_blur_v1 yuv_box_blur_v1 yuv_crop_v1
+    yuv_flip_v1 yuv_rotate_v1 yuv_chroma_swap_v1
+  ]
+  s.user_target_xcconfig = {
+    'OTHER_LDFLAGS' => '$(inherited) ' + abi_symbols.map { |symbol| "-Wl,-u,_#{symbol}" }.join(' ')
+  }
   s.swift_version = '5.0'
 end
