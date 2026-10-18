@@ -36,7 +36,7 @@ resolves 0.4.0.
 | Platform | Requirement |
 | --- | --- |
 | Dart | 3.12 or later |
-| Flutter | 3.44 or later |
+| Flutter | 3.44.0 or later; officially tested and supported: 3.44.9 |
 | Android | API 26 or later; `armeabi-v7a`, `arm64-v8a`, or `x86_64` |
 | iOS | 13 or later |
 | macOS | 10.15 or later |
@@ -368,7 +368,9 @@ dart run ffigen --config ffigen.yaml
 
 ## Verification boundaries
 
-The declared Flutter floor is 3.44.0; recorded release validation used Flutter 3.44.9, so it does not independently
-verify the minimum SDK. Safari, Firefox and mobile Web are unverified. Custom asset placement, CDN hosting and strict
+The package allows Flutter 3.44.0 or later. Flutter 3.44.9 is the officially tested and supported version.
+Earlier Flutter 3.44.x patch releases may work, but have not been verified.
+
+Safari, Firefox and mobile Web are unverified. Custom asset placement, CDN hosting and strict
 CSP for the WASM module remain unverified. Static CocoaPods verification is limited to the iOS simulator Debug scenario above.
 Image-operation `--wasm` evidence in Chrome does not establish camera `--wasm` support in `yuv_camera`.

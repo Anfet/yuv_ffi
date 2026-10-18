@@ -2,6 +2,9 @@
 
 ### Changed
 
+- Clarified Flutter support: the declared minimum remains 3.44.0; 3.44.9 is officially tested and supported.
+  Earlier 3.44.x patch releases may work, but have not been verified.
+
 - Preserved all 11 ABI v1 entry points in CocoaPods consumer links, including static frameworks; verified iOS simulator Debug with Firebase Core 3.15.2 without manual Runner flags.
 
 - Added the `YuvFramePresenterLazyFrames.presentLazy` extension to load accepted frames synchronously while skipping

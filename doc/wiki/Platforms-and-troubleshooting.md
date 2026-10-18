@@ -158,7 +158,9 @@ package's `tool/ci/vm.ps1` shows how on Windows). Tests that only create images 
 
 ## Verification boundaries
 
-The declared Flutter floor is 3.44.0; recorded release validation used Flutter 3.44.9, so it does not independently
-verify the minimum SDK. Safari, Firefox and mobile Web are unverified. Custom asset placement, CDN hosting and strict
+The package allows Flutter 3.44.0 or later. Flutter 3.44.9 is the officially tested and supported version.
+Earlier Flutter 3.44.x patch releases may work, but have not been verified.
+
+Safari, Firefox and mobile Web are unverified. Custom asset placement, CDN hosting and strict
 CSP for the WASM module remain unverified. Static CocoaPods verification is limited to the iOS simulator Debug scenario above.
 Image-operation `--wasm` evidence in Chrome does not establish camera `--wasm` support in `yuv_camera`.
