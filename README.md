@@ -26,10 +26,13 @@ dependencies:
 ```
 
 Version 0.5.2 moves the camera code out of the example into `yuv_camera`.
-Updating from 0.5.1 does not require API replacements; see
-[MIGRATION.md](MIGRATION.md) and [CHANGELOG.md](CHANGELOG.md). Version 0.4.0 was published and later retracted;
-the migration guidance below also applies to applications whose lockfile still
-resolves 0.4.0.
+This removes or renames no existing `yuv_ffi` calls, and adds
+`YuvFramePresenterLazyFrames.presentLazy`. There are visible behavior changes:
+the implicit `YuvFrameView` fit now scales the whole frame to `contain`, and
+input validation rejects malformed layouts earlier. See [MIGRATION.md](MIGRATION.md)
+and [CHANGELOG.md](CHANGELOG.md) for the before/after fit and validation details.
+Version 0.4.0 was published and later retracted; the migration guidance below
+also applies to applications whose lockfile still resolves 0.4.0.
 
 ## Requirements
 

@@ -1,5 +1,10 @@
 ## 0.5.2
 
+### Behavior changes
+
+- `YuvFrameView(presenter: presenter)` with no `fit` changed from natural-size decoded pixels in 0.5.1 (which could be clipped) to `YuvFrameFit.contain` geometry in 0.5.2. The whole frame now scales into the available bounds. Choose `contain` or `cover` explicitly when the layout depends on the fit; see [MIGRATION.md](MIGRATION.md).
+- Input validation is stricter. Malformed frame descriptors and layouts are rejected before backend access; examples include BGRA pixel strides below four, overlapping external storage in `applyPatch`, and reads from an empty `YuvPlane`. These checks may now throw `ArgumentError` earlier. Do not infer that every rejected input was valid in 0.5.1.
+
 ### Changed
 
 - Frame geometry returns independent copies of its source-to-view, view-to-source, and upright-to-view matrices;
@@ -13,8 +18,7 @@
 - Added the `YuvFramePresenterLazyFrames.presentLazy` extension to load accepted frames synchronously while skipping
   loaders for rejected frames, preserving missed-paint recovery and the existing presenter interface.
 
-- Documented the visible implicit frame-fit change from natural-size decoded pixels to contain geometry, and clarified
-  that shader availability does not identify the current frame's paint path.
+- Clarified that shader availability does not identify the current frame's paint path.
 
 - Web operations on partial WASM modules require only their own export and staging runtime; unrelated missing exports no longer block available operations.
 - ABI v1 rejects collisions between active destination plane bytes before writing, while accepting shared padding and disjoint interleaved samples.
@@ -30,13 +34,13 @@
   byte lengths, and empty or non-finite view geometry are validated before use. Asynchronous Flutter pixel-decode
   failures complete `toImage()` with an error and reach `errorBuilder`; rejected native-library initialization can be
   retried explicitly.
-- Image dimensions now match the native `INT32_MAX` ABI limit, plane fields and
-  byte lengths are checked against their uint32 codec representation before
-  allocation or decoding, and preserved BGRA planes require a pixel stride of
-  at least four while retaining larger pixel gaps.
-- `YuvImage.applyPatch` rejects source and destination planes that overlap the
-  same external storage. Reading an empty `YuvPlane` now throws
-  `ArgumentError` instead of reaching an invalid native access.
+- Image dimensions now match the native `INT32_MAX` ABI limit, and plane fields
+  and byte lengths are checked against their uint32 codec representation before
+  allocation or decoding.
+- Preserved BGRA planes require a pixel stride of at least four while retaining
+  larger pixel gaps. `YuvImage.applyPatch` rejects source and destination planes
+  that overlap the same external storage; reading an empty `YuvPlane` throws
+  `ArgumentError`.
 - Native builds retain CMake 3.10 compatibility, align Android ELF load segments for 16 KiB
   pages, and reuse the native build cache only when its checkout and
   configuration match. The example's image picker entitlement, SDK settings,
@@ -45,14 +49,17 @@
   face-detection demo moved from the example to the separate `yuv_camera`
   package, which depends on `yuv_ffi`. `yuv_ffi` no longer depends on
   `camera`, `camera_desktop`, `camera_platform_interface`, or ML Kit in its
-  example. The public `yuv_ffi` API is unchanged.
+  example. This move removes or renames no existing `yuv_ffi` calls; 0.5.2 also
+  adds the `YuvFramePresenterLazyFrames.presentLazy` extension described above.
 - The example keeps image loading, transforms, effects, and frame display
   without a camera dependency.
 
 ### Migration
 
-- Updating from 0.5.1 needs no API replacements. Applications that used the
-  example's camera code should depend on `yuv_camera` (which requires
+- Existing `yuv_ffi` calls need no replacements when updating image-only code
+  from 0.5.1; default fit and validation behavior still change as described
+  above. Applications that used the example's camera code should depend on
+  `yuv_camera` (which requires
   `yuv_ffi: ^0.5.2`) and add `camera_desktop` beside `camera` on desktop;
   Flutter registers the federated plugin. See [MIGRATION.md](MIGRATION.md).
 
