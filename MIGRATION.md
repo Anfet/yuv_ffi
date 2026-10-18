@@ -24,7 +24,7 @@ empty `YuvPlane`. Do not assume that every input rejected now was valid in 0.5.1
 boundaries, change the dependency to `yuv_ffi: ^0.5.2`, run `flutter pub upgrade yuv_ffi`, and check your supported
 targets.
 
-Camera code has moved out of the `yuv_ffi` example into `yuv_camera 0.0.1`. Image-only applications do not need the new
+Camera code has moved out of the `yuv_ffi` example into `yuv_camera 0.1.0`. Image-only applications do not need the new
 package. Applications that copied the example's camera code should follow
 the [camera migration guide](https://github.com/Anfet/yuv_camera/blob/main/MIGRATION.md): add `yuv_camera`, use its public
 imports, and keep ML Kit integration in the application. On desktop, add `camera_desktop` beside `camera`; Flutter
