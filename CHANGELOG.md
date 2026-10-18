@@ -2,6 +2,9 @@
 
 ### Changed
 
+- Frame geometry returns independent copies of its source-to-view, view-to-source, and upright-to-view matrices;
+  modifying a returned matrix or its storage leaves the original geometry unchanged.
+
 - Clarified Flutter support: the declared minimum remains 3.44.0; 3.44.9 is officially tested and supported.
   Earlier 3.44.x patch releases may work, but have not been verified.
 

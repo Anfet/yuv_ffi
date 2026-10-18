@@ -4,12 +4,45 @@ library;
 import 'dart:ui';
 import 'dart:typed_data';
 
-import 'package:flutter/widgets.dart' show Alignment, MatrixUtils;
+import 'package:flutter/widgets.dart' show Alignment, Matrix4, MatrixUtils;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yuv_ffi/yuv_ffi.dart';
 
 void main() {
   const sourceSize = Size(4, 3);
+
+  final matrices = <String, Matrix4 Function(YuvFrameGeometry)>{
+    'sourceToView': (geometry) => geometry.sourceToView,
+    'viewToSource': (geometry) => geometry.viewToSource,
+    'uprightToView': (geometry) => geometry.uprightToView,
+  };
+  for (final entry in matrices.entries) {
+    for (final initializeVisible in [false, true]) {
+      test('${entry.key} mutations preserve geometry, initialized=$initializeVisible', () {
+        final geometry = YuvFrameGeometry(sourceSize: const Size(4, 2), viewSize: const Size(8, 8));
+        final expected = geometry.copyWith();
+        final originalHash = geometry.hashCode;
+        if (initializeVisible) {
+          expect(MatrixUtils.transformPoint(geometry.viewToSource, const Offset(0, 2)), Offset.zero);
+          expect(geometry.visibleSourceRect, const Rect.fromLTWH(0, 0, 4, 2));
+        }
+
+        final matrix = entry.value(geometry);
+        matrix.setEntry(0, 3, 123);
+        matrix.storage[5] = 456;
+
+        expect(MatrixUtils.transformPoint(geometry.sourceToView, Offset.zero), const Offset(0, 2));
+        expect(entry.value(geometry).storage, entry.value(expected).storage);
+        expect(MatrixUtils.transformPoint(geometry.viewToSource, const Offset(0, 2)), Offset.zero);
+        expect(MatrixUtils.transformPoint(geometry.uprightToView, const Offset(4, 2)), const Offset(8, 6));
+        expect(MatrixUtils.transformRect(geometry.viewToSource, geometry.destinationRect), const Rect.fromLTWH(0, 0, 4, 2));
+        expect(geometry.visibleSourceRect, const Rect.fromLTWH(0, 0, 4, 2));
+        expect(geometry.copyWith(), expected);
+        expect(geometry, expected);
+        expect(geometry.hashCode, originalHash);
+      });
+    }
+  }
 
   group('YuvFrameGeometry source orientation', () {
     final cases = <({YuvImageRotation rotation, bool mirrored, List<Offset> corners})>[

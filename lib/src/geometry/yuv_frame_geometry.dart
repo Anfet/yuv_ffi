@@ -74,14 +74,24 @@ final class YuvFrameGeometry {
   /// Where the upright frame is drawn in view coordinates.
   late final Rect destinationRect = Rect.fromLTWH(_translationX, _translationY, _uprightSize.width * _scale, _uprightSize.height * _scale);
 
-  /// Maps source points to view coordinates.
-  late final Matrix4 sourceToView = _sourceToViewMatrix();
+  /// An independent matrix mapping source points to view coordinates.
+  ///
+  /// The caller owns this copy and may modify it or its storage without changing this geometry.
+  Matrix4 get sourceToView => Matrix4.copy(_sourceToView);
 
-  /// Maps view points back to source coordinates.
-  late final Matrix4 viewToSource = Matrix4.inverted(sourceToView);
+  /// An independent matrix mapping view points back to source coordinates.
+  ///
+  /// The caller owns this copy and may modify it or its storage without changing this geometry.
+  Matrix4 get viewToSource => Matrix4.copy(_viewToSource);
 
-  /// Maps ML Kit's upright points to view coordinates.
-  late final Matrix4 uprightToView = _affine(
+  /// An independent matrix mapping ML Kit's upright points to view coordinates.
+  ///
+  /// The caller owns this copy and may modify it or its storage without changing this geometry.
+  Matrix4 get uprightToView => Matrix4.copy(_uprightToView);
+
+  late final Matrix4 _sourceToView = _sourceToViewMatrix();
+  late final Matrix4 _viewToSource = Matrix4.inverted(_sourceToView);
+  late final Matrix4 _uprightToView = _affine(
     a: orientation.mirrored ? -_scale : _scale,
     d: _scale,
     tx: _translationX + (orientation.mirrored ? _scale * _uprightSize.width : 0),
@@ -181,7 +191,7 @@ final class YuvFrameGeometry {
 
   Rect _visibleSourceRect() {
     final visibleDestination = destinationRect.intersect(Offset.zero & viewSize);
-    return visibleDestination.isEmpty ? Rect.zero : MatrixUtils.transformRect(viewToSource, visibleDestination);
+    return visibleDestination.isEmpty ? Rect.zero : MatrixUtils.transformRect(_viewToSource, visibleDestination);
   }
 }
 
