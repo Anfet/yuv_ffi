@@ -34,31 +34,23 @@ Memory: D:\.projects\yuv\.memory\MEMORY.md
 
 ## Пробы
 
-- Проба проверяет backend, через который проходит изменённый код. Каждая карточка объявляет `Probe:` — `none` или
-  набор из `windows`, `pixel3`, `web` через `+` (например, `windows+pixel3+web`). Набор — объединение строк таблицы
-  для всех изменённых путей:
-
-  | Пути | Probe |
-  | --- | --- |
-  | `src/**`; native-путь Dart: `lib/src/yuv/impl/io/**`, `lib/src/functions/**`, `lib/src/loader/impl/*_io.dart` | `windows+pixel3` |
-  | ABI-контракт обоих backend: `lib/src/yuv/shared/yuv_abi_v1_*`, `lib/src/yuv/shared/yuv_native_status.dart` | `windows+pixel3+web` |
-  | Web-путь: `lib/src/yuv/impl/web/**`, `lib/src/web/**`, `lib/src/loader/impl/*_web.dart`, `assets/wasm/**`, `tool/wasm/**` | `web` |
-  | Прочий общий код операций: `lib/src/yuv/**` вне `impl/io` и `impl/web`, `lib/src/yuv_*.dart` | `windows+web` |
-  | Остальное в `lib/` (`widgets/`, `geometry/`), `example/`, `test/`, документы, `tool/` | `none` |
-
-  Утверждение о скорости добавляет пробу каждого backend, о котором оно сделано (native — `windows+pixel3`, Web —
-  `web`). Изменение `src/`, после которого пересобираются WASM-артефакты, добавляет `web`. Изменения только в
-  комментариях карточка может понизить явно, с причиной. Обязательные проверки по `scope_guard.sh` от пробы не
-  зависят.
-- Executor запускает пробы `windows` (в составе `tool/ci/windows.ps1`) и `web` (в составе `tool/ci/web.ps1`), когда
-  карточка называет их в части «До REVIEW»; иначе их запускает названный в карточке этап. Вердикты — в отчёт: `FAIL` не сдаётся, `SLOWER` объясняется или исправляется.
-- Для `pixel3` Reviewer запускает пробу на Pixel 3 arm64, для `src/` — ещё armv7. Обновление baseline — дело
-  Reviewer, отдельным коммитом с причиной.
+- Выбор проверок — по [общей политике](../doc/release-validation-policy.md). `Probe:` карточки — `none` или
+  выбранные `windows`, `pixel3`, `web`; каждый дополнительный backend обосновывается изменённым путём/риском
+  и недостаточностью VM/native. Наличие `src/` само по себе не требует Pixel/WASM.
+- Обычный численный C-fix: Windows VM с настоящей native-библиотекой и эталонными результатами изменённой операции;
+  существующий native unit target добавляется для отдельного риска. ABI/память сначала проверяются затронутыми
+  VM/native cases; ARM/NEON, WASM SIMD, ifdef и compiler flags — соответствующим target. Apple static linkage —
+  Apple static consumer, без подмены Windows PASS. Сборка изменённых WASM assets требует соответствующей Web-проверки.
+- Утверждение о скорости требует пробы именно backend/архитектуры, о которых сделано утверждение.
+  Срез задают `PROBE_OPS`/`PROBE_FORMATS`; фактический набор подтверждает `PROBE scope`.
+- Executor выполняет Validation карточки; Reviewer читает достаточные результаты без обязательного повтора Pixel
+  arm64/armv7. Обновление baseline остаётся отдельным обоснованным изменением Reviewer, не автоматическим шагом.
 
 ## Локальные проверки
 
 Ключи для изменённых путей печатает `bash tool/ci/scope_guard.sh <base>` (источник правды — `path_keys()` в
-скрипте); `all` — все команды таблицы, включая `bindings`. Документы (`*.md`, `doc/`, `tasks/`) проверок не требуют.
+скрипте); `all` перечисляет возможное влияние, включая `bindings`, а не обязательные команды. Документы требуют
+чтения diff/ссылок; runtime не нужен. Фактический набор — Validation карточки по общей политике.
 Каталог `tool/ci/` — имя каталога scripts; что каждый script заменяет из удалённых workflows — `doc/validation.md`.
 
 | Ключ | Команда | Где |
@@ -74,15 +66,16 @@ Memory: D:\.projects\yuv\.memory\MEMORY.md
 | `linux` | `bash tool/ci/linux.sh` | Ubuntu VM: clang, cmake, ninja, GTK 3, xvfb (machine-use) |
 | `bindings` | `bash tool/ci/bindings.sh` в чистой копии точного коммита (`git archive` или clone) | Mac, Xcode |
 
-Для `src/**` дополнительно: `flutter test --tags probe`, `flutter test --tags reference` и native CTest:
-
-```sh
-cmake -S . -B <temp> -DBUILD_TESTING=ON
-cmake --build <temp> --config Release
-ctest --test-dir <temp> -C Release --output-on-failure
-```
+Для `src/**` не назначать автоматически полные `probe`, `reference` и CTest. Выбрать регрессию изменённой
+операции и существующий native target, если он закрывает отдельный риск; конкретные команды фиксируются в карточке.
+Тесты и критерии PASS сохраняются, полный набор доступен для обоснованной задачи.
 
 ### Выборочные тесты
+
+- `tool/ci/vm.ps1`: `-TestPath`, `-Name`, `-Group`, `-List`; группы `codec`, `state`, `pixel-format`, `presenter`.
+  `-TestPath` и `-Group` взаимоисключающие; `-Name` фильтрует выбранный набор, `-List` только печатает выбор.
+  Targeted режим не делает общий analyze: нужен отдельный targeted analyze изменённого модуля.
+  Синтаксис одиночных drive targets и group `-OnlyRow` — в [общей политике](../doc/release-validation-policy.md#существующие-точечные-команды-и-автоматизация).
 
 - По тегам, из корня пакета: `flutter test --tags "smoke || contract"` (его запускает `vm.ps1`), `--tags probe`,
   `--tags reference`, `--tags release`; полный `flutter test` — только если требует карточка.
@@ -96,15 +89,15 @@ ctest --test-dir <temp> -C Release --output-on-failure
 
 - GitHub Actions workflows у пакета нет, CI не запускается и CI-теги не ставятся. Все проверки — команды таблицы выше
   на собственных машинах (Windows, Ubuntu VM, Mac) и устройствах; доступ к машинам — `D:\.projects\.tools\private-skills\machine-use\SKILL.md`.
-- Приёмка карточки: проверки из части «До REVIEW» её Validation. Ключи `scope_guard.sh` и `Probe:` — перечень для итогового
-  этапа (CHECK, gate), а не команда карточке: непоименованный ключ Executor записывает строкой `PENDING <этап>`.
-  Ключ `bindings` (`ffigen.yaml`, сгенерированные bindings, заголовки; входит в `all`) карточка с таким scope называет
-  в Validation сама.
-- Перед каждым выпуском каждой версии (`web.ps1` — с флагом `-Release`: пересборка WASM и `pub publish --dry-run`, нужен
-  закоммиченный кандидат) — полный обязательный набор на чистом закоммиченном кандидате, независимо от
-  scope последней карточки: все ключи таблицы, включая `linux` и `bindings`, полный `flutter test` корня и example,
-  устройства по релизному гейту group `todo.md`. Прежний PASS или перенос проверки в script не заменяет прогон.
-- Отчёт: `Validated at` (полный SHA), машина и версии SDK, команда, exit code и критерий PASS script. Результат на
-  другом SHA допустим только при пустом `git diff <Validated at>..<SHA> --stat -- <покрываемые пути>`.
+- Приёмка карточки: проверки её Validation по [общей политике](../doc/release-validation-policy.md).
+  Для рассмотренных scope/Probe ключей записать RUN / CARRIED / NOT_REQUIRED / PENDING с основанием;
+  требуемый отложенный результат имеет конкретный этап/владельца. `all` не требует полного прогона.
+- Перед выпуском проверить полноту необходимых результатов на чистом закоммиченном кандидате: новые результаты
+  только для изменённого поведения/config/dependencies, остальные — доказанный CARRIED. Версия/SHA не требуют
+  полного runtime. Изменённый publish payload требует inventory/dry-run; если нужен `web.ps1 -Release`, он включает
+  пересборку WASM и dry-run. Новая платформа/конфигурация требует своего первичного результата.
+- Отчёт: отдельный полный `Validated at` этого пакета, машина/SDK, команда, exit code и критерий PASS.
+  Перенос — по covered behavior/config/dependencies и правилам общей политики, включая комментарии без изменения поведения.
+  Windows PASS не заменяет Apple/WASM; machine actions выполняет агент, человек — только реальная подготовка/oracle.
 - `flutter drive` возвращает 0 и при провале: `tool/ci/drive.ps1` и `drive.sh` принимают результат только при exit 0 и
   строке `All tests passed`. Не вызывать `flutter drive` напрямую.
